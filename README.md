@@ -1,3 +1,3 @@
 # REST in pieces
 
- a collection of go snippets to build a performant and simple API REST server, trying to avoid 3-party modules as much as possible.
+ A collection of golang snippets (pieces) to build a performant and simple API REST server, trying to avoid 3-party modules as much as possible.
