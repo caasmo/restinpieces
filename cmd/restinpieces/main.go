@@ -105,5 +105,5 @@ func main() {
     router.Get("/about", commonHandlers.ThenFunc(aboutHandler))
     router.Get("/", commonHandlers.ThenFunc(indexHandler))
     router.Get("/teas/:id", commonHandlers.ThenFunc(appC.teaHandler))
-    http.ListenAndServe(":8080", router)
+    log.Fatal(http.ListenAndServe(":8080", router))
 }
