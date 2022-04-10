@@ -1,7 +1,6 @@
 package main
 
 import (
-    "database/sql"
     "encoding/json"
     //"errors"
     "fmt"
@@ -14,9 +13,6 @@ import (
     "github.com/caasmo/restinpieces/router"
 )
 
-type appContext struct {
-    db *sql.DB
-}
 
 func loggingHandler(next http.Handler) http.Handler {
     fn := func(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +25,7 @@ func loggingHandler(next http.Handler) http.Handler {
     return http.HandlerFunc(fn)
 }
 
-func (c *appContext) adminHandler(w http.ResponseWriter, r *http.Request) {
+func (c *App) adminHandler(w http.ResponseWriter, r *http.Request) {
 
     user := "testuser"
     //user := context.Get(r, "user")
@@ -37,7 +33,7 @@ func (c *appContext) adminHandler(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(user)
 }
 
-func (c *appContext) authHandler(next http.Handler) http.Handler {
+func (c *App) authHandler(next http.Handler) http.Handler {
     fn := func(w http.ResponseWriter, r *http.Request) {
         authToken := r.Header.Get("Authorization")
         //user, err := map[string]interface{}{}, errors.New("test")
@@ -59,7 +55,7 @@ func (c *appContext) authHandler(next http.Handler) http.Handler {
     return http.HandlerFunc(fn)
 }
 
-func (c *appContext) teaHandler(w http.ResponseWriter, r *http.Request) {
+func (c *App) teaHandler(w http.ResponseWriter, r *http.Request) {
     //params := context.Get(r, "params").(httprouter.Params)
     //log.Println(params.ByName("id"))
     // tea := getTea(c.db, params.ByName("id"))
@@ -76,12 +72,12 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-    appC := appContext{nil}
+    app := App{nil}
     commonHandlers := alice.New(loggingHandler)
     router := router.New()
-    router.Get("/admin", commonHandlers.Append(appC.authHandler).ThenFunc(appC.adminHandler))
+    router.Get("/admin", commonHandlers.Append(app.authHandler).ThenFunc(app.adminHandler))
     router.Get("/about", commonHandlers.ThenFunc(aboutHandler))
     router.Get("/", commonHandlers.ThenFunc(indexHandler))
-    router.Get("/teas/:id", commonHandlers.ThenFunc(appC.teaHandler))
+    router.Get("/teas/:id", commonHandlers.ThenFunc(app.teaHandler))
     log.Fatal(http.ListenAndServe(":8080", router))
 }
