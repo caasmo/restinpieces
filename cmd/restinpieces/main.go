@@ -9,27 +9,14 @@ import (
     "net/http"
     "time"
 
-    "github.com/julienschmidt/httprouter"
     "github.com/justinas/alice"
+
+    "github.com/caasmo/restinpieces/router"
 )
-
-// We could also put *httprouter.Router in a field to not get access to the original methods (GET, POST, etc. in uppercase)
-type router struct {
-    *httprouter.Router
-}
-
-func (r *router) Get(path string, handler http.Handler) {
-    r.Handler("GET", path, handler)
-}
-
-func NewRouter() *router {
-    return &router{httprouter.New()}
-}
 
 type appContext struct {
     db *sql.DB
 }
-
 
 func loggingHandler(next http.Handler) http.Handler {
     fn := func(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +78,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
     appC := appContext{nil}
     commonHandlers := alice.New(loggingHandler)
-    router := NewRouter()
+    router := router.New()
     router.Get("/admin", commonHandlers.Append(appC.authHandler).ThenFunc(appC.adminHandler))
     router.Get("/about", commonHandlers.ThenFunc(aboutHandler))
     router.Get("/", commonHandlers.ThenFunc(indexHandler))
