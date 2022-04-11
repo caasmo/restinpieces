@@ -1,7 +1,7 @@
 package main
 
 import (
-    "database/sql"
+    "github.com/caasmo/restinpieces/db"
 )
 
 // App is the application wide context.
@@ -9,7 +9,7 @@ import (
 //
 // Handlers that require the context should implement the receive pattern
 type App struct {
-    db *sql.DB
+    dbase *db.Db
 }
 
 

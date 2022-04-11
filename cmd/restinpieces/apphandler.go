@@ -3,7 +3,8 @@ package main
 import (
     "encoding/json"
     "net/http"
-    "log"
+    "math/rand"
+    "strconv"
 )
 
 func (c *App) adminHandler(w http.ResponseWriter, r *http.Request) {
@@ -14,31 +15,17 @@ func (c *App) adminHandler(w http.ResponseWriter, r *http.Request) {
     json.NewEncoder(w).Encode(user)
 }
 
-func (c *App) authHandler(next http.Handler) http.Handler {
-    fn := func(w http.ResponseWriter, r *http.Request) {
-        authToken := r.Header.Get("Authorization")
-        //user, err := map[string]interface{}{}, errors.New("test")
-        //user := authToken
-        // user, err := getUser(c.db, authToken)
-        log.Println(authToken)
-
-        // if return in middleware, no next, chain stopped
-        //if err != nil {
-        //    http.Error(w, http.StatusText(401), 401)
-        //    return
-        //}
-
-        // TODO communication betwwen handlers
-        //context.Set(r, "user", user)
-        next.ServeHTTP(w, r)
-    }
-
-    return http.HandlerFunc(fn)
-}
 
 func (c *App) teaHandler(w http.ResponseWriter, r *http.Request) {
     //params := context.Get(r, "params").(httprouter.Params)
     //log.Println(params.ByName("id"))
     // tea := getTea(c.db, params.ByName("id"))
     json.NewEncoder(w).Encode(nil)
+}
+
+func (c *App) testDb(w http.ResponseWriter, r *http.Request) {
+
+    id := rand.Intn(100000)+1
+    value := c.dbase.GetById(id)
+	w.Write([]byte(`{"id":` + strconv.Itoa(id) + `,"value":` + strconv.Itoa(value) + `}`))
 }
