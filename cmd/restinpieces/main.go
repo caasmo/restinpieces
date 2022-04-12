@@ -11,21 +11,20 @@ import (
 
 func main() {
 
-	//poolSize runtime.NumCPU()/2
 	db, err := db.New("bench.db")
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
 
-    app := App{db}
+    app := NewApp(db)
 
-    commonHandlers := alice.New(loggingHandler)
+    commonHandlers := alice.New(app.loggingMw)
     router := router.New()
-    router.Get("/admin", commonHandlers.Append(app.authHandler).ThenFunc(app.adminHandler))
-    router.Get("/about", commonHandlers.ThenFunc(aboutHandler))
-    router.Get("/", commonHandlers.ThenFunc(indexHandler))
-    router.Get("/db", commonHandlers.ThenFunc(app.testDb))
-    router.Get("/teas/:id", commonHandlers.ThenFunc(app.teaHandler))
+    router.Get("/admin", commonHandlers.Append(app.authMw).ThenFunc(app.adminHdl))
+    router.Get("/about", commonHandlers.ThenFunc(app.aboutHdl))
+    router.Get("/", commonHandlers.ThenFunc(app.indexHdl))
+    router.Get("/db", commonHandlers.ThenFunc(app.testDbHdl))
+    router.Get("/teas/:id", commonHandlers.ThenFunc(app.teaHdl))
     log.Fatal(http.ListenAndServe(":8080", router))
 }
