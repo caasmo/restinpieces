@@ -10,9 +10,9 @@ import (
 
 // all handlers should conform to fn(w http.ResponseWriter, r *http.Request) 
 //
-// Differentiate from the Handler by using suffix Hdl
+// Differentiate from the Handler by using suffix 
 
-func (c *App) adminHdl(w http.ResponseWriter, r *http.Request) {
+func (c *App) admin(w http.ResponseWriter, r *http.Request) {
 
     user := "testuser"
     //user := context.Get(r, "user")
@@ -21,14 +21,14 @@ func (c *App) adminHdl(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func (c *App) teaHdl(w http.ResponseWriter, r *http.Request) {
+func (c *App) tea(w http.ResponseWriter, r *http.Request) {
     //params := context.Get(r, "params").(httprouter.Params)
     //log.Println(params.ByName("id"))
     // tea := getTea(c.db, params.ByName("id"))
     json.NewEncoder(w).Encode(nil)
 }
 
-func (c *App) testDbHdl(w http.ResponseWriter, r *http.Request) {
+func (c *App) testDb(w http.ResponseWriter, r *http.Request) {
 
     id := rand.Intn(100000)+1
     value := c.dbase.GetById(id)
@@ -36,11 +36,11 @@ func (c *App) testDbHdl(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func (c *App) aboutHdl(w http.ResponseWriter, r *http.Request) {
+func (c *App) about(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, "You are on the about page.")
 }
 
-func (c *App) indexHdl(w http.ResponseWriter, r *http.Request) {
+func (c *App) index(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, "Welcome!")
 }
 

@@ -8,8 +8,8 @@ import (
 
 // all middleware should conform to fn(next http.Handler) http.Handler 
 //
-// Differentiate from the Handler by ussing suffix Mw
-func (c *App) authMw(next http.Handler) http.Handler {
+// Differentiate from the Handler by ussing suffix 
+func (c *App) auth(next http.Handler) http.Handler {
     fn := func(w http.ResponseWriter, r *http.Request) {
         authToken := r.Header.Get("Authorization")
         //user, err := map[string]interface{}{}, errors.New("test")
@@ -31,7 +31,7 @@ func (c *App) authMw(next http.Handler) http.Handler {
     return http.HandlerFunc(fn)
 }
 
-func (c *App) loggingMw(next http.Handler) http.Handler {
+func (c *App) logging(next http.Handler) http.Handler {
     fn := func(w http.ResponseWriter, r *http.Request) {
         t1 := time.Now()
         next.ServeHTTP(w, r)

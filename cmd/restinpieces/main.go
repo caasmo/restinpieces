@@ -19,12 +19,12 @@ func main() {
 
     app := NewApp(db)
 
-    commonHandlers := alice.New(app.loggingMw)
+    commonHandlers := alice.New(app.logging)
     router := router.New()
-    router.Get("/admin", commonHandlers.Append(app.authMw).ThenFunc(app.adminHdl))
-    router.Get("/about", commonHandlers.ThenFunc(app.aboutHdl))
-    router.Get("/", commonHandlers.ThenFunc(app.indexHdl))
-    router.Get("/db", commonHandlers.ThenFunc(app.testDbHdl))
-    router.Get("/teas/:id", commonHandlers.ThenFunc(app.teaHdl))
+    router.Get("/admin", commonHandlers.Append(app.auth).ThenFunc(app.admin))
+    router.Get("/about", commonHandlers.ThenFunc(app.about))
+    router.Get("/", commonHandlers.ThenFunc(app.index))
+    router.Get("/benchmark/sqlite/randompkread", commonHandlers.ThenFunc(app.testDb))
+    router.Get("/teas/:id", commonHandlers.ThenFunc(app.tea))
     log.Fatal(http.ListenAndServe(":8080", router))
 }
