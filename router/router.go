@@ -1,18 +1,18 @@
 package router
 
 import (
-    "net/http"
-    "github.com/julienschmidt/httprouter"
+	"github.com/julienschmidt/httprouter"
+	"net/http"
 )
 
 type Router struct {
-    *httprouter.Router
+	*httprouter.Router
 }
 
 func (r *Router) Get(path string, handler http.Handler) {
-    r.Handler("GET", path, handler)
+	r.Handler("GET", path, handler)
 }
 
 func New() *Router {
-    return &Router{httprouter.New()}
+	return &Router{httprouter.New()}
 }

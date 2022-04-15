@@ -1,43 +1,43 @@
 package main
 
 import (
-    "log"
-    "net/http"
-    "time"
+	"log"
+	"net/http"
+	"time"
 )
 
-// all middleware should conform to fn(next http.Handler) http.Handler 
+// all middleware should conform to fn(next http.Handler) http.Handler
 //
-// Differentiate from the Handler by ussing suffix 
+// Differentiate from the Handler by ussing suffix
 func (c *App) auth(next http.Handler) http.Handler {
-    fn := func(w http.ResponseWriter, r *http.Request) {
-        authToken := r.Header.Get("Authorization")
-        //user, err := map[string]interface{}{}, errors.New("test")
-        //user := authToken
-        // user, err := getUser(c.db, authToken)
-        log.Println(authToken)
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		authToken := r.Header.Get("Authorization")
+		//user, err := map[string]interface{}{}, errors.New("test")
+		//user := authToken
+		// user, err := getUser(c.db, authToken)
+		log.Println(authToken)
 
-        // if return in middleware, no next, chain stopped
-        //if err != nil {
-        //    http.Error(w, http.StatusText(401), 401)
-        //    return
-        //}
+		// if return in middleware, no next, chain stopped
+		//if err != nil {
+		//    http.Error(w, http.StatusText(401), 401)
+		//    return
+		//}
 
-        // TODO communication betwwen handlers
-        //context.Set(r, "user", user)
-        next.ServeHTTP(w, r)
-    }
+		// TODO communication betwwen handlers
+		//context.Set(r, "user", user)
+		next.ServeHTTP(w, r)
+	}
 
-    return http.HandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
 
 func (c *App) logging(next http.Handler) http.Handler {
-    fn := func(w http.ResponseWriter, r *http.Request) {
-        t1 := time.Now()
-        next.ServeHTTP(w, r)
-        t2 := time.Now()
-        log.Printf("[%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
-    }
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		t1 := time.Now()
+		next.ServeHTTP(w, r)
+		t2 := time.Now()
+		log.Printf("[%s] %q %v\n", r.Method, r.URL.String(), t2.Sub(t1))
+	}
 
-    return http.HandlerFunc(fn)
+	return http.HandlerFunc(fn)
 }
