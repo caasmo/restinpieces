@@ -1,5 +1,7 @@
 # 3fd3986 sqlite read and writes with ratio, no logging, 2 reads when reading, 1 write when writing
 
+the only write connection is accesible only by channel. Table 100000 
+
     // 80% reads 20% writes , 2 pk reads per request
     hey -n 100000  "http://localhost:8080/benchmark/sqlite/ratio/80/read/2"
     Requests/sec: 40408.4698
