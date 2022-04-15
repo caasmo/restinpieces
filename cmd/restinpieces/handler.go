@@ -92,6 +92,45 @@ func (c *App) benchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"random num":` + strconv.Itoa(nint)  + `,"sum":` + strconv.Itoa(sum) + `,"operation":"` + op +`"}`))
 }
 
+func (c *App) benchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request) {
+
+    params := httprouter.ParamsFromContext(r.Context())
+	//fmt.Fprintf(os.Stderr, "[restinpieces] %v\n", params)
+    ratioStr := params.ByName("ratio")
+    ratio, err := strconv.ParseInt(ratioStr, 10, 64); 
+    if err != nil {
+        panic(err) // TODO
+    }
+    numReadsStr := params.ByName("reads")
+    numReads, err := strconv.ParseInt(numReadsStr, 10, 64) 
+    if err != nil {
+
+        panic(err) // TODO
+    }
+
+    // determine db call based on ratio
+    nint := rand.Intn(100)+1
+    n64 := int64(nint)
+    sum := 0
+    var op string
+    if n64 >= ratio {
+
+        op = "write"
+        //just use the ratio as value
+        c.dbase.InsertWithPool(n64)
+    } else {
+        // how many reads
+        op = "read"
+        for i := 0; i< int(numReads); i++ {
+            value := c.dbase.GetById(n64)
+            sum=+value
+        }
+    }
+
+
+	w.Write([]byte(`{"random num":` + strconv.Itoa(nint)  + `,"sum":` + strconv.Itoa(sum) + `,"operation":"` + op +`"}`))
+}
+
 
 func (c *App) about(w http.ResponseWriter, r *http.Request) {
     fmt.Fprintf(w, "You are on the about page.")
