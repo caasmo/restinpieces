@@ -3,50 +3,68 @@ package db
 import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
-    "runtime"
-    "fmt"
+	"fmt"
+	"runtime"
 )
 
-// maybe interface? no: use 
 type Db struct {
-    *sqlitex.Pool
+	pool *sqlitex.Pool
+	//rwConn *sqlitex.Conn
+	rwCh chan *sqlite.Conn
 }
 
 //
 func New(path string) (*Db, error) {
 	poolSize := runtime.NumCPU()
-    initString := fmt.Sprintf("file:%s", path)
+	initString := fmt.Sprintf("file:%s", path)
 
-	db, err := sqlitex.Open(initString, 0, poolSize)
+	p, err := sqlitex.Open(initString, 0, poolSize)
 	if err != nil {
-        return &Db{}, err
+		return &Db{}, err
 	}
 
-    return &Db{db}, nil
+	conn := p.Get(nil)
+	// TODO keep track of closing
+	//defer db.Put(conn)
+	ch := make(chan *sqlite.Conn, 1)
+	go func(conn *sqlite.Conn, ch chan *sqlite.Conn) {
+		// TODO Use context to select with timeout to cleanly clean up goroutine
+		ch <- conn
+	}(conn, ch)
+
+	return &Db{pool: p, rwCh: ch}, nil
 }
 
 func (db *Db) Close() {
-    db.Close()
+	db.Close()
 }
 
-func (db *Db) GetById(id int) int {
-    conn := db.Get(nil)
-    defer db.Put(conn)
+func (db *Db) GetById(id int64) int {
+	conn := db.pool.Get(nil)
+	defer db.pool.Put(conn)
 
-    var value int
-    fn := func(stmt *sqlite.Stmt) error {
-        //id = int(stmt.GetInt64("id"))
-        value = int(stmt.GetInt64("value"))
-        return nil
-    }
+	var value int
+	fn := func(stmt *sqlite.Stmt) error {
+		//id = int(stmt.GetInt64("id"))
+		value = int(stmt.GetInt64("value"))
+		return nil
+	}
 
-    if err := sqlitex.Exec(conn, "select value from foo where rowid = ? limit 1", fn, id); err != nil {
-        // TODO
-        panic(err)
-    }
+	if err := sqlitex.Exec(conn, "select value from foo where rowid = ? limit 1", fn, id); err != nil {
+		// TODO
+		panic(err)
+	}
 
-    return value
+	return value
 }
 
+// TODO calue ist integer
+func (db *Db) Insert(value int64) {
+	rwConn := <-db.rwCh
+	defer func() { db.rwCh <- rwConn }()
 
-
+    if err := sqlitex.Exec(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", nil, value); err != nil {
+		// TODO
+		panic(err)
+	}
+}
