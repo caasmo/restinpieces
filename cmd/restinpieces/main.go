@@ -17,7 +17,7 @@ func main() {
 	}
 	defer db.Close()
 
-    np := router.NewHttpRouterNamedParams()
+	np := router.NewHttpRouterNamedParams()
 
 	app := NewApp(db, np)
 

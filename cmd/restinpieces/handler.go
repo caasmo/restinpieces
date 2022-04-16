@@ -95,10 +95,9 @@ func (c *App) benchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request)
 	//params := httprouter.ParamsFromContext(r.Context())
 	//fmt.Fprintf(os.Stderr, "[restinpieces] %v+\n", r.Context())
 	//ratioStr := params.ByName("ratio")
-    pams := c.nParams.Get(r.Context())
+	pams := c.nParams.Get(r.Context())
 	//fmt.Fprintf(os.Stderr, "[restinpieces] %v+\n", pams)
 	ratioStr := pams.ByName("ratio")
-
 
 	ratio, err := strconv.ParseInt(ratioStr, 10, 64)
 	if err != nil {

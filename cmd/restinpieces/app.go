@@ -11,8 +11,8 @@ import (
 // For simplicity, all handlers and middleware should have App as receiver.
 // That why App needs to be in the same package "main" as the handlers.
 type App struct {
-	dbase *db.Db
-    nParams router.NamedParams
+	dbase   *db.Db
+	nParams router.NamedParams
 }
 
 // just 1 method
@@ -20,5 +20,5 @@ type App struct {
 // param.ByName(ctx Context, name)
 
 func NewApp(d *db.Db, p router.NamedParams) *App {
-    return &App{dbase: d, nParams: p}
+	return &App{dbase: d, nParams: p}
 }

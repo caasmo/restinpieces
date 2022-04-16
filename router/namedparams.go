@@ -3,7 +3,7 @@ package router
 import "context"
 
 type NamedParams interface {
-    Get(ctx context.Context) Params
+	Get(ctx context.Context) Params
 }
 
 // Param is a single URL parameter, consisting of a key and a value.
@@ -27,4 +27,3 @@ func (ps Params) ByName(name string) string {
 	}
 	return ""
 }
-
