@@ -17,7 +17,9 @@ func main() {
 	}
 	defer db.Close()
 
-	app := NewApp(db)
+    np := router.NewHttpRouterNamedParams()
+
+	app := NewApp(db, np)
 
 	commonHandlers := alice.New(app.logging)
 	noMiddleware := alice.New()
