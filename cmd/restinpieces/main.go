@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/app"
 	router "github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/justinas/alice"
 )
@@ -18,19 +19,19 @@ func main() {
 	defer db.Close()
 
 	rp := router.NewParamGeter()
-	app := NewApp(db, rp)
+	ap := app.New(db, rp)
 
-	commonHandlers := alice.New(app.logging)
-	noMiddleware := alice.New()
+	commonMiddleware := alice.New(ap.Logger)
+
+
 	router := router.New()
-	router.Get("/admin", commonHandlers.Append(app.auth).ThenFunc(app.admin))
-	router.Get("/about", commonHandlers.ThenFunc(app.about))
-	router.Get("/", commonHandlers.ThenFunc(app.index))
-	router.Get("/example/sqlite/read/randompk", noMiddleware.ThenFunc(app.exampleSqliteReadRandom))
-	router.Get("/example/sqlite/writeone/:value", noMiddleware.ThenFunc(app.exampleWriteOne))
-	router.Get("/benchmark/baseline", http.HandlerFunc(app.benchmarkBaseline))
-	router.Get("/benchmark/sqlite/ratio/:ratio/read/:reads", noMiddleware.ThenFunc(app.benchmarkSqliteRWRatio))
-	router.Get("/benchmark/sqlite/pool/ratio/:ratio/read/:reads", noMiddleware.ThenFunc(app.benchmarkSqliteRWRatioPool))
-	router.Get("/teas/:id", commonHandlers.ThenFunc(app.tea))
+	router.Get("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
+	router.Get("/", commonMiddleware.ThenFunc(ap.Index))
+	router.Get("/example/sqlite/read/randompk",http.HandlerFunc(ap.ExampleSqliteReadRandom))
+	router.Get("/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
+	router.Get("/benchmark/baseline", http.HandlerFunc(ap.BenchmarkBaseline))
+	router.Get("/benchmark/sqlite/ratio/:ratio/read/:reads",http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
+	router.Get("/benchmark/sqlite/pool/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
+	router.Get("/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
