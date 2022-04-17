@@ -3,6 +3,7 @@
 - timeouts in server 
 - document design
 - fs, embed for html endpoint.
+- s3 integration
 - tls
 - integrate, benchmark ristretto
 - integrate 3 party middleware

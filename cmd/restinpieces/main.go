@@ -6,6 +6,7 @@ import (
 
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/app"
+	"github.com/caasmo/restinpieces/server"
 	router "github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/justinas/alice"
 )
@@ -23,7 +24,6 @@ func main() {
 
 	commonMiddleware := alice.New(ap.Logger)
 
-
 	router := router.New()
 	router.Get("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
 	router.Get("/", commonMiddleware.ThenFunc(ap.Index))
@@ -33,5 +33,9 @@ func main() {
 	router.Get("/benchmark/sqlite/ratio/:ratio/read/:reads",http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
 	router.Get("/benchmark/sqlite/pool/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
 	router.Get("/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
-	log.Fatal(http.ListenAndServe(":8080", router))
+    srv := server.New(":8080", router)
+    if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+        // unexpected error. port in use?
+        log.Fatalf("ListenAndServe(): %v", err)
+    }
 }

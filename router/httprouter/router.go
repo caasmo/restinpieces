@@ -9,15 +9,19 @@ import (
 
 // Implementation of the router interface
 type Router struct {
-	*jshttprouter.Router
+	rt *jshttprouter.Router
+}
+
+func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request){
+	r.rt.ServeHTTP(w, req)
 }
 
 func (r *Router) Get(path string, handler http.Handler) {
-	r.Handler("GET", path, handler)
+	r.rt.Handler("GET", path, handler)
 }
 
-func New() *Router {
-	return &Router{jshttprouter.New()}
+func New() router.Router {
+    return &Router{rt: jshttprouter.New()}
 }
 
 // Implementation of the router/ParamGeter interface
