@@ -1,7 +1,10 @@
 ### TODOs
 
-- timeouts server 
+- timeouts in server 
 - document design
+- fs, embed for html endpoint.
+- tls
+- integrate, benchmark ristretto
 - integrate 3 party middleware
 - proper error handling from sqlitex, timeouts.
 - rand source in app. performacen rand
