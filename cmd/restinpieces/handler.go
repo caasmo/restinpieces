@@ -86,6 +86,11 @@ func (app *App) benchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"random num":` + strconv.Itoa(nint) + `,"sum":` + strconv.Itoa(sum) + `,"operation":"` + op + `"}`))
 }
 
+func (app *App) benchmarkBaseline(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Fprintf(w, "Baseline")
+}
+
 func (app *App) benchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request) {
 
 	params := app.routerParam.Get(r.Context())

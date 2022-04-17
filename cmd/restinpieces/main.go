@@ -28,6 +28,7 @@ func main() {
 	router.Get("/", commonHandlers.ThenFunc(app.index))
 	router.Get("/example/sqlite/read/randompk", noMiddleware.ThenFunc(app.exampleSqliteReadRandom))
 	router.Get("/example/sqlite/writeone/:value", noMiddleware.ThenFunc(app.exampleWriteOne))
+	router.Get("/benchmark/baseline", http.HandlerFunc(app.benchmarkBaseline))
 	router.Get("/benchmark/sqlite/ratio/:ratio/read/:reads", noMiddleware.ThenFunc(app.benchmarkSqliteRWRatio))
 	router.Get("/benchmark/sqlite/pool/ratio/:ratio/read/:reads", noMiddleware.ThenFunc(app.benchmarkSqliteRWRatioPool))
 	router.Get("/teas/:id", commonHandlers.ThenFunc(app.tea))
