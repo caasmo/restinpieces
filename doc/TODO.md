@@ -1,6 +1,7 @@
 ### TODOs
 
 - timeouts server 
+- document design
 - integrate 3 party middleware
 - proper error handling from sqlitex, timeouts.
 - rand source in app. performacen rand
