@@ -3,7 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-
+    "os"
+    "os/signal"
+    "syscall"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/app"
 	"github.com/caasmo/restinpieces/server"
@@ -34,8 +36,26 @@ func main() {
 	router.Get("/benchmark/sqlite/pool/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
 	router.Get("/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
     srv := server.New(":8080", router)
-    if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-        // unexpected error. port in use?
-        log.Fatalf("ListenAndServe(): %v", err)
-    }
+	//log.Fatal(http.ListenAndServe(":8080", router))
+
+	go func() {
+		// always returns error. ErrServerClosed on graceful close
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			// unexpected error. port in use?
+			log.Fatalf("ListenAndServe(): %v", err)
+		}
+	}()
+
+    signalChan := make(chan os.Signal, 1)
+    signal.Notify(
+		signalChan,
+		syscall.SIGHUP,  // kill -SIGHUP XXXX
+		syscall.SIGINT,  // kill -SIGINT XXXX or Ctrl+c
+		syscall.SIGQUIT, // kill -SIGQUIT XXXX
+	)
+
+	<-signalChan
+
+	//log.Print("os.Interrupt - shutting down...\n")
+	log.Fatal("os.Kill - terminating...\n")
 }
