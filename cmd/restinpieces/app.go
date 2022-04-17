@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/caasmo/restinpieces/db"
+	dbIface "github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/router"
 )
 
@@ -11,14 +11,14 @@ import (
 // For simplicity, all handlers and middleware should have App as receiver.
 // That why App needs to be in the same package "main" as the handlers.
 type App struct {
-	dbase   *db.Db
-	nParams router.NamedParams
+	db          *dbIface.Db
+	routerParam router.ParamGeter
 }
 
 // just 1 method
 // params =+ app.NamedParams.Get(ctx Context)
 // param.ByName(ctx Context, name)
 
-func NewApp(d *db.Db, p router.NamedParams) *App {
-	return &App{dbase: d, nParams: p}
+func NewApp(d *dbIface.Db, p router.ParamGeter) *App {
+	return &App{db: d, routerParam: p}
 }

@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	//"os"
-	"github.com/julienschmidt/httprouter"
 	"math/rand"
 	"strconv"
 )
@@ -14,7 +12,7 @@ import (
 //
 // Differentiate from the Handler by using suffix
 
-func (c *App) admin(w http.ResponseWriter, r *http.Request) {
+func (app *App) admin(w http.ResponseWriter, r *http.Request) {
 
 	user := "testuser"
 	//user := context.Get(r, "user")
@@ -22,40 +20,38 @@ func (c *App) admin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-func (c *App) tea(w http.ResponseWriter, r *http.Request) {
+func (app *App) tea(w http.ResponseWriter, r *http.Request) {
 	//params := context.Get(r, "params").(httprouter.Params)
 	//log.Println(params.ByName("id"))
-	// tea := getTea(c.db, params.ByName("id"))
+	// tea := getTea(app.db, params.ByName("id"))
 	json.NewEncoder(w).Encode(nil)
 }
 
-func (c *App) exampleSqliteReadRandom(w http.ResponseWriter, r *http.Request) {
+func (app *App) exampleSqliteReadRandom(w http.ResponseWriter, r *http.Request) {
 
 	id := rand.Intn(100000) + 1
-	value := c.dbase.GetById(int64(id))
+	value := app.db.GetById(int64(id))
 	w.Write([]byte(`{"id":` + strconv.Itoa(id) + `,"value":` + strconv.Itoa(value) + `}`))
 }
 
-func (c *App) exampleWriteOne(w http.ResponseWriter, r *http.Request) {
+func (app *App) exampleWriteOne(w http.ResponseWriter, r *http.Request) {
 
-	params := httprouter.ParamsFromContext(r.Context())
-	//fmt.Fprintf(os.Stderr, "[restinpieces] %v\n", params)
+	params := app.routerParam.Get(r.Context())
 	valStr := params.ByName("value")
 	val, err := strconv.ParseInt(valStr, 10, 64)
 	if err != nil {
 		panic(err) // TODO
 	}
 
-	c.dbase.Insert(val)
+	app.db.Insert(val)
 
-	//value := c.dbase.Insert(r.Context())
+	//value := app.db.Insert(r.Context())
 	w.Write([]byte(`{"id":lipo` + `,"value":` + valStr + `}`))
 }
 
-func (c *App) benchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
+func (app *App) benchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
 
-	params := httprouter.ParamsFromContext(r.Context())
-	//fmt.Fprintf(os.Stderr, "[restinpieces] %v\n", params)
+	params := app.routerParam.Get(r.Context())
 	ratioStr := params.ByName("ratio")
 	ratio, err := strconv.ParseInt(ratioStr, 10, 64)
 	if err != nil {
@@ -77,12 +73,12 @@ func (c *App) benchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
 
 		op = "write"
 		//just use the ratio as value
-		c.dbase.Insert(n64)
+		app.db.Insert(n64)
 	} else {
 		// how many reads
 		op = "read"
 		for i := 0; i < int(numReads); i++ {
-			value := c.dbase.GetById(n64)
+			value := app.db.GetById(n64)
 			sum = +value
 		}
 	}
@@ -90,27 +86,24 @@ func (c *App) benchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"random num":` + strconv.Itoa(nint) + `,"sum":` + strconv.Itoa(sum) + `,"operation":"` + op + `"}`))
 }
 
-func (c *App) benchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request) {
+func (app *App) benchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request) {
 
-	//params := httprouter.ParamsFromContext(r.Context())
-	//fmt.Fprintf(os.Stderr, "[restinpieces] %v+\n", r.Context())
-	//ratioStr := params.ByName("ratio")
-	pams := c.nParams.Get(r.Context())
+	params := app.routerParam.Get(r.Context())
 	//fmt.Fprintf(os.Stderr, "[restinpieces] %v+\n", pams)
-	ratioStr := pams.ByName("ratio")
+	ratioStr := params.ByName("ratio")
 
 	ratio, err := strconv.ParseInt(ratioStr, 10, 64)
 	if err != nil {
 		panic(err) // TODO
 	}
-	numReadsStr := pams.ByName("reads")
+	numReadsStr := params.ByName("reads")
 	numReads, err := strconv.ParseInt(numReadsStr, 10, 64)
 	if err != nil {
 
 		panic(err) // TODO
 	}
 
-	// determine db call based on ratio
+	// determine db read or write based on ratio
 	nint := rand.Intn(100) + 1
 	n64 := int64(nint)
 	sum := 0
@@ -119,12 +112,12 @@ func (c *App) benchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request)
 
 		op = "write"
 		//just use the ratio as value
-		c.dbase.InsertWithPool(n64)
+		app.db.InsertWithPool(n64)
 	} else {
 		// how many reads
 		op = "read"
 		for i := 0; i < int(numReads); i++ {
-			value := c.dbase.GetById(n64)
+			value := app.db.GetById(n64)
 			sum = +value
 		}
 	}
@@ -132,10 +125,10 @@ func (c *App) benchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request)
 	w.Write([]byte(`{"random num":` + strconv.Itoa(nint) + `,"sum":` + strconv.Itoa(sum) + `,"operation":"` + op + `"}`))
 }
 
-func (c *App) about(w http.ResponseWriter, r *http.Request) {
+func (app *App) about(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "You are on the about page.")
 }
 
-func (c *App) index(w http.ResponseWriter, r *http.Request) {
+func (app *App) index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome!")
 }

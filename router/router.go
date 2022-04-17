@@ -2,43 +2,36 @@ package router
 
 import (
 	"context"
-	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
 
-// Move to interface and this to new package for wrapper
-// Route implmentations need to implement the interface
-// Get maybe, but mos imporant NamedParams()
-type Router struct {
-	*httprouter.Router
+type router interface {
+	// TODO
+	Get(string, http.Handler)
 }
 
-func (r *Router) Get(path string, handler http.Handler) {
-	r.Handler("GET", path, handler)
+// Param is a single URL parameter, consisting of a key and a value.
+type Param struct {
+	Key   string
+	Value string
 }
 
-func New() *Router {
-	return &Router{httprouter.New()}
-}
+// Params is a Param-slice, as returned by the router.
+// The slice is ordered, the first URL parameter is also the first slice value.
+// It is therefore safe to read values by the index.
+type Params []Param
 
-// Implementations of iface router should define also struct implementing NamedParams
-// TODO when own package, rename
-type HttpRouterNamedParams struct{}
-
-// Transform the httprouter context variable in touter independent Params
-func (np *HttpRouterNamedParams) Get(ctx context.Context) Params {
-	pms, _ := ctx.Value(httprouter.ParamsKey).(httprouter.Params)
-
-	var params Params
-
-	for _, v := range pms {
-		p := Param{Key: v.Key, Value: v.Value}
-		params = append(params, p)
+// ByName returns the value of the first Param which key matches the given name.
+// If no matching Param is found, an empty string is returned.
+func (ps Params) ByName(name string) string {
+	for i := range ps {
+		if ps[i].Key == name {
+			return ps[i].Value
+		}
 	}
-
-	return params
+	return ""
 }
 
-func NewHttpRouterNamedParams() *HttpRouterNamedParams {
-	return &HttpRouterNamedParams{}
+type ParamGeter interface {
+	Get(ctx context.Context) Params
 }

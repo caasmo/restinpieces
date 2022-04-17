@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/router"
+	router "github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/justinas/alice"
 )
 
@@ -17,9 +17,8 @@ func main() {
 	}
 	defer db.Close()
 
-	np := router.NewHttpRouterNamedParams()
-
-	app := NewApp(db, np)
+	rp := router.NewParamGeter()
+	app := NewApp(db, rp)
 
 	commonHandlers := alice.New(app.logging)
 	noMiddleware := alice.New()
