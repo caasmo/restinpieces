@@ -1,16 +1,14 @@
 ### TODOs
 
-- timeouts in server 
-- document design
-- fs, embed for html endpoint.
-- s3 integration
 - tls
-- integrate, benchmark ristretto
+- document design in doc. why all decision.
+- fs, embed for html endpoint.
+- move gratefull shutdown to server.go 
 - integrate 3 party middleware
+- s3 integration
 - proper error handling from sqlitex, timeouts.
 - rand source in app. performacen rand
 - document performance read/write 
-- signal to stop handling
 - make command line to copy files and perform changes in the codes based on preferences. maybe using generate
 - More backends: badger and boldb
 - add toml conf and config struct, add struct to app
@@ -18,6 +16,9 @@
 
 ### done
 
+- ~~timeouts in server~~
+- ~~integrate, benchmark ristretto~~
+- ~~signal to stop handling~~
 - ~~write normal pool insert~~
 - ~~encapsulate router, maybe later interface~~
 - ~~context/application package~~
