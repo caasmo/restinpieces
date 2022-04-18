@@ -111,7 +111,7 @@ func (a *App) BenchmarkRistrettoRead() http.HandlerFunc {
 
         v, _ := value.(string)
 
-	    w.Write([]byte(`{"Value from ristretto cache hi":` + v  + `"}`))
+	    w.Write([]byte(`{"Value from ristretto cache hi": "` + v  + `"}`))
     }
 }
 
