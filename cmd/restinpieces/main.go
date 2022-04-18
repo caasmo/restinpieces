@@ -6,6 +6,7 @@ import (
     "os"
     "os/signal"
     "syscall"
+    "context"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/app"
 	"github.com/caasmo/restinpieces/server"
@@ -52,6 +53,7 @@ func main() {
     srv := server.New(":8080", router)
 	//log.Fatal(http.ListenAndServe(":8080", router))
 
+    // move most to server
 	go func() {
 		// always returns error. ErrServerClosed on graceful close
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
@@ -60,16 +62,30 @@ func main() {
 		}
 	}()
 
-    signalChan := make(chan os.Signal, 1)
-    signal.Notify(
-		signalChan,
+    ctx, stop := signal.NotifyContext(
+		context.Background(),
 		syscall.SIGHUP,  // kill -SIGHUP XXXX
 		syscall.SIGINT,  // kill -SIGINT XXXX or Ctrl+c
 		syscall.SIGQUIT, // kill -SIGQUIT XXXX
 	)
 
-	<-signalChan
+    <-ctx.Done()
 
-	//log.Print("os.Interrupt - shutting down...\n")
-	log.Fatal("os.Kill - terminating...\n")
+    // Reset signals default behavior, similar to signal.Reset
+    stop()
+    log.Print("os.Interrupt - shutting down...\n")
+
+    //gracefullCtx, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
+    //defer cancelShutdown()
+
+    //if err := httpServer.Shutdown(gracefullCtx); err != nil {
+    //    log.Printf("shutdown error: %v\n", err)
+    //    defer os.Exit(1)
+    //    return
+    //} else {
+    //    log.Printf("gracefully stopped\n")
+    //}
+
+    //defer os.Exit(0)
+    os.Exit(0)
 }
