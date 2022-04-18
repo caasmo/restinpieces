@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"math/rand"
+	"os"
+	"time"
 	"strconv"
 )
 
@@ -89,6 +91,28 @@ func (a *App) BenchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
 func (a *App) BenchmarkBaseline(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "Baseline")
+}
+
+
+func (a *App) BenchmarkRistrettoRead() http.HandlerFunc {
+    // set one time 
+    b := a.cache.Set("hi", "hola", 1)
+	fmt.Fprintf(os.Stderr, "[restinpieces] set hi key in cache ristretto %v+\n", b)
+
+    time.Sleep(10 * time.Millisecond)
+
+    return func(w http.ResponseWriter, r *http.Request) {
+        value, found := a.cache.Get("hi")
+
+        if !found {
+		    http.Error(w, http.StatusText(401), 401)
+		    return
+        }
+
+        v, _ := value.(string)
+
+	    w.Write([]byte(`{"Value from ristretto cache hi":` + v  + `"}`))
+    }
 }
 
 func (a *App) BenchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request) {

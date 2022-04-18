@@ -3,6 +3,7 @@ package app
 import (
 	dbIface "github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/router"
+	"github.com/caasmo/restinpieces/cache"
 )
 
 // App is the application wide context.
@@ -13,12 +14,14 @@ import (
 type App struct {
 	db          *dbIface.Db
 	routerParam router.ParamGeter
+	cache          cache.Cache
+
 }
 
 // just 1 method
 // params =+ app.NamedParams.Get(ctx Context)
 // param.ByName(ctx Context, name)
 
-func New(d *dbIface.Db, p router.ParamGeter) *App {
-	return &App{db: d, routerParam: p}
+func New(d *dbIface.Db, p router.ParamGeter, c cache.Cache) *App {
+    return &App{db: d, routerParam: p, cache: c}
 }
