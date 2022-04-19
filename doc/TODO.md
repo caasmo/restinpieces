@@ -1,22 +1,26 @@
 ### TODOs
 
 - tls
+- signal, add baseContext
+- add logging
+- hardening: add headers CORS, etc
+- add toml conf and config struct, add struct to app, router, cache
 - document design in doc. why all decision.
-- fs, embed for html endpoint.
-- move gratefull shutdown to server.go 
+- frontend integration with fs embed 
 - integrate 3 party middleware
+- add prometheus.
 - s3 integration
 - proper error handling from sqlitex, timeouts.
-- rand source in app. performacen rand
 - document performance read/write 
+- rand source in app. performacen rand
 - make command line to copy files and perform changes in the codes based on preferences. maybe using generate
 - More backends: badger and boldb
-- add toml conf and config struct, add struct to app
 - the command (maybe based on configuration) creates dir, copy only needed packages and inserts custom code pa
 
 ### done
 
 - ~~timeouts in server~~
+- ~~move gratefull shutdown to server.go~~
 - ~~integrate, benchmark ristretto~~
 - ~~signal to stop handling~~
 - ~~write normal pool insert~~
