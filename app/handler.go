@@ -3,11 +3,11 @@ package app
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"math/rand"
+	"net/http"
 	"os"
-	"time"
 	"strconv"
+	"time"
 )
 
 // all handlers should conform to fn(w http.ResponseWriter, r *http.Request)
@@ -93,26 +93,25 @@ func (a *App) BenchmarkBaseline(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Baseline")
 }
 
-
 func (a *App) BenchmarkRistrettoRead() http.HandlerFunc {
-    // set one time 
-    b := a.cache.Set("hi", "hola", 1)
+	// set one time
+	b := a.cache.Set("hi", "hola", 1)
 	fmt.Fprintf(os.Stderr, "[restinpieces] set hi key in cache ristretto %v+\n", b)
 
-    time.Sleep(10 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 
-    return func(w http.ResponseWriter, r *http.Request) {
-        value, found := a.cache.Get("hi")
+	return func(w http.ResponseWriter, r *http.Request) {
+		value, found := a.cache.Get("hi")
 
-        if !found {
-		    http.Error(w, http.StatusText(401), 401)
-		    return
-        }
+		if !found {
+			http.Error(w, http.StatusText(401), 401)
+			return
+		}
 
-        v, _ := value.(string)
+		v, _ := value.(string)
 
-	    w.Write([]byte(`{"Value from ristretto cache hi": "` + v  + `"}`))
-    }
+		w.Write([]byte(`{"Value from ristretto cache hi": "` + v + `"}`))
+	}
 }
 
 func (a *App) BenchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request) {

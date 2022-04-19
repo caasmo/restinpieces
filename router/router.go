@@ -8,7 +8,7 @@ import (
 type Router interface {
 	// TODO
 	Get(string, http.Handler)
-    ServeHTTP(http.ResponseWriter, *http.Request)
+	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 
 // Param is a single URL parameter, consisting of a key and a value.
