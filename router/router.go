@@ -17,6 +17,8 @@ type Param struct {
 	Value string
 }
 
+// TODO all router should put the params in the request ex context. for jsroute we need only the key name.
+// 
 // Params is a Param-slice, as returned by the router.
 // The slice is ordered, the first URL parameter is also the first slice value.
 // It is therefore safe to read values by the index.
