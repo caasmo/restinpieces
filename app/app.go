@@ -17,12 +17,25 @@ type App struct {
 	cache       cache.Cache
 }
 
+type AppOption func(*App)
+
+// WithCache sets the cache implementation
+func WithCache(c cache.Cache) AppOption {
+	return func(a *App) {
+		a.cache = c
+	}
+}
+
 // just 1 method
 // params =+ app.NamedParams.Get(ctx Context)
 // param.ByName(ctx Context, name)
 
-func New(d *db.Db, r router.Router, c cache.Cache) *App {
-	return &App{db: d, router: r, cache: c}
+func New(d *db.Db, r router.Router, opts ...AppOption) *App {
+	a := &App{db: d, router: r}
+	for _, opt := range opts {
+		opt(a)
+	}
+	return a
 }
 
 // Router returns the application's router instance
