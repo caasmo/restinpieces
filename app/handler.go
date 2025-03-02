@@ -38,8 +38,7 @@ func (a *App) ExampleSqliteReadRandom(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) ExampleWriteOne(w http.ResponseWriter, r *http.Request) {
 
-	params := a.routerParam.Get(r.Context())
-	valStr := params.ByName("value")
+	valStr := a.Router().Param(r, "value")
 	val, err := strconv.ParseInt(valStr, 10, 64)
 	if err != nil {
 		panic(err) // TODO
