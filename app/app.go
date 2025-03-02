@@ -26,6 +26,11 @@ func New(d *dbIface.Db, r router.Router, p router.ParamGeter, c cache.Cache) *Ap
 	return &App{db: d, router: r, routerParam: p, cache: c}
 }
 
+// Router returns the application's router instance
+func (a *App) Router() router.Router {
+	return a.router
+}
+
 // Close all
 func (a *App) Close() {
 	a.db.Close()
