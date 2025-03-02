@@ -52,13 +52,12 @@ func (a *App) ExampleWriteOne(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) BenchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
 
-	params := a.routerParam.Get(r.Context())
-	ratioStr := params.ByName("ratio")
+	ratioStr := a.Router().Param(r, "ratio")
 	ratio, err := strconv.ParseInt(ratioStr, 10, 64)
 	if err != nil {
 		panic(err) // TODO
 	}
-	numReadsStr := params.ByName("reads")
+	numReadsStr := a.Router().Param(r, "reads")
 	numReads, err := strconv.ParseInt(numReadsStr, 10, 64)
 	if err != nil {
 
@@ -115,15 +114,14 @@ func (a *App) BenchmarkRistrettoRead() http.HandlerFunc {
 
 func (a *App) BenchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request) {
 
-	params := a.routerParam.Get(r.Context())
 	//fmt.Fprintf(os.Stderr, "[restinpieces] %v+\n", pams)
-	ratioStr := params.ByName("ratio")
+	ratioStr := a.Router().Param(r, "ratio")
 
 	ratio, err := strconv.ParseInt(ratioStr, 10, 64)
 	if err != nil {
 		panic(err) // TODO
 	}
-	numReadsStr := params.ByName("reads")
+	numReadsStr := a.Router().Param(r, "reads")
 	numReads, err := strconv.ParseInt(numReadsStr, 10, 64)
 	if err != nil {
 
