@@ -11,7 +11,3 @@ type Router interface {
 	ServeHTTP(http.ResponseWriter, *http.Request)
 	Param(*http.Request, string) string
 }
-
-type ParamGeter interface {
-	Get(ctx context.Context) Params
-}
