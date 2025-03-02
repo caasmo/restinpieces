@@ -43,9 +43,9 @@ func (r *Router) Handle(path string, handler http.Handler) {
 	r.rt.Handler(method, path, handler)
 }
 
-func (r *Router) HandleFunc(path string, handler func(http.ResponseWriter, *http.Request)) {
+func (r *Router) HandleFunc(path string, handleFunc func(http.ResponseWriter, *http.Request)) {
 	method, path := splitMethodPath(path)
-	r.rt.Handle(method, path, http.HandlerFunc(handler))
+	r.rt.HandlerFunc(method, path, handleFunc)
 }
 
 func New() router.Router {

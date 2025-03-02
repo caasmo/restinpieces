@@ -9,15 +9,15 @@ import (
 
 func route(r router.Router, ap *app.App) {
 	commonMiddleware := alice.New(ap.Logger)
-	r.Get("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
-	r.Get("/", commonMiddleware.ThenFunc(ap.Index))
-	r.Get("/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
-	r.Get("/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
-	//router.Get("/example/ristretto/writeread/:value", http.HandlerFunc(ap.ExampleRistrettoWriteRead))
-	r.Get("/benchmark/baseline", http.HandlerFunc(ap.BenchmarkBaseline))
-	r.Get("/benchmark/sqlite/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
-	r.Get("/benchmark/sqlite/pool/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
+	r.Handle("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
+	r.Handle("/", commonMiddleware.ThenFunc(ap.Index))
+	r.Handle("/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
+	r.Handle("/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
+	//router.Handle("/example/ristretto/writeread/:value", http.HandlerFunc(ap.ExampleRistrettoWriteRead))
+	r.Handle("/benchmark/baseline", http.HandlerFunc(ap.BenchmarkBaseline))
+	r.Handle("/benchmark/sqlite/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
+	r.Handle("/benchmark/sqlite/pool/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
 	// This is an example of init function
-	r.Get("/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
-	r.Get("/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
+	r.Handle("/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
+	r.Handle("/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
 }
