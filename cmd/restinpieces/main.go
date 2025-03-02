@@ -36,8 +36,7 @@ func main() {
 
 	defer ap.Close()
 
-	r := router.New()
-	route(r, ap)
+	route(ap)
 
 	server.Run(":8080", r)
 }
