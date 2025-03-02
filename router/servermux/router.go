@@ -22,9 +22,9 @@ func (s *ServerMuxRouter) HandleFunc(path string, handler func(http.ResponseWrit
 	s.ServeMux.HandleFunc(path, handler)
 }
 
-func (s *ServerMuxRouter) Param(*http.Request, string) string {
-	// stdlib ServeMux doesn't support params
-	return ""
+func (s *ServerMuxRouter) Param(req *http.Request, key string) string {
+	// Uses Go 1.22's PathValue which handles named parameters
+	return req.PathValue(key)
 }
 
 func New() router.Router {
