@@ -1,7 +1,6 @@
 package httprouter
 
 import (
-	"context"
 	"github.com/caasmo/restinpieces/router"
 	jshttprouter "github.com/julienschmidt/httprouter"
 	"net/http"
