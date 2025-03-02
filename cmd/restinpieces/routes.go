@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/caasmo/restinpieces/app"
-	"github.com/caasmo/restinpieces/router"
 	"github.com/justinas/alice"
 	"net/http"
 )

@@ -38,5 +38,5 @@ func main() {
 
 	route(ap)
 
-	server.Run(":8080", r)
+	server.Run(":8080", ap.Router())
 }
