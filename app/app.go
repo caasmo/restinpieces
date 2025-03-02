@@ -13,6 +13,7 @@ import (
 // That why App needs to be in the same package "main" as the handlers.
 type App struct {
 	db          *dbIface.Db
+	router      router.Router
 	routerParam router.ParamGeter
 	cache       cache.Cache
 }
@@ -21,8 +22,8 @@ type App struct {
 // params =+ app.NamedParams.Get(ctx Context)
 // param.ByName(ctx Context, name)
 
-func New(d *dbIface.Db, p router.ParamGeter, c cache.Cache) *App {
-	return &App{db: d, routerParam: p, cache: c}
+func New(d *dbIface.Db, r router.Router, p router.ParamGeter, c cache.Cache) *App {
+	return &App{db: d, router: r, routerParam: p, cache: c}
 }
 
 // Close all
