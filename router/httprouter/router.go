@@ -18,6 +18,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 // splitMethodPath extracts HTTP method from path pattern of form "METHOD /path"
 // Returns method and cleaned path
+// TODO code review and refactor, seems ugly
 func splitMethodPath(fullPath string) (string, string) {
 	if len(fullPath) == 0 || fullPath[0] == '/' {
 		return "GET", fullPath // Default to GET if no method specified
