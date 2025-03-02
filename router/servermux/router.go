@@ -22,7 +22,7 @@ func (s *ServerMuxRouter) HandleFunc(path string, handler func(http.ResponseWrit
 	s.ServeMux.HandleFunc(path, handler)
 }
 
-func (s *ServerMuxRouter) Params(context.Context) router.Params {
+func (s *ServerMuxRouter) Params(*http.Request) router.Params {
 	// stdlib ServeMux doesn't support params
 	return nil
 }
