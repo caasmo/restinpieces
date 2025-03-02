@@ -23,7 +23,7 @@ func initApp() (*app.App, error) {
 		return nil, err
 	}
 
-	return app.New(db, router.New(), cache), nil
+	return app.New(db, router.New(), app.WithCache(cache)), nil
 }
 
 func main() {
