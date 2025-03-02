@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"net/http"
 )
 
