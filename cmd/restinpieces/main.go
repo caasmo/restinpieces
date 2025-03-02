@@ -4,7 +4,7 @@ import (
 	"github.com/caasmo/restinpieces/app"
 	cacheRistretto "github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/db"
-	router "github.com/caasmo/restinpieces/router/httprouter"
+	"github.com/caasmo/restinpieces/router/servermux"
 	"github.com/caasmo/restinpieces/server"
 	"os"
 )
@@ -23,7 +23,7 @@ func initApp() (*app.App, error) {
 		return nil, err
 	}
 
-	return app.New(db, router.New(), app.WithCache(cache)), nil
+	return app.New(db, servermux.New(), app.WithCache(cache)), nil
 }
 
 func main() {
