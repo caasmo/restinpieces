@@ -6,8 +6,8 @@ import (
 )
 
 type Router interface {
-	// TODO
-	Get(string, http.Handler)
+	Handle(string, http.Handler)
+	HandleFunc(string, func(http.ResponseWriter, *http.Request))
 	ServeHTTP(http.ResponseWriter, *http.Request)
 }
 

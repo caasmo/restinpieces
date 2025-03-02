@@ -16,8 +16,12 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.rt.ServeHTTP(w, req)
 }
 
-func (r *Router) Get(path string, handler http.Handler) {
-	r.rt.Handler("GET", path, handler)
+func (r *Router) Handle(path string, handler http.Handler) {
+	r.rt.Handler("GET", path, handler) // Still use GET as default method
+}
+
+func (r *Router) HandleFunc(path string, handler func(http.ResponseWriter, *http.Request)) {
+	r.rt.Handle("GET", path, http.HandlerFunc(handler))
 }
 
 func New() router.Router {
