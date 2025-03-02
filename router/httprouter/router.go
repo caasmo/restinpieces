@@ -49,13 +49,14 @@ func (r *Router) HandleFunc(path string, handleFunc func(http.ResponseWriter, *h
 	r.rt.HandlerFunc(method, path, handleFunc)
 }
 
-func (r *Router) Params(req *http.Request) router.Params {
+func (r *Router) Param(req *http.Request, key string) string {
 	pms, _ := req.Context().Value(jshttprouter.ParamsKey).(jshttprouter.Params)
-	var params router.Params
-	for _, v := range pms {
-		params = append(params, router.Param{Key: v.Key, Value: v.Value})
+	for _, p := range pms {
+		if p.Key == key {
+			return p.Value
+		}
 	}
-	return params
+	return ""
 }
 
 func New() router.Router {
