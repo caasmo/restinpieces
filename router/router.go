@@ -9,6 +9,7 @@ type Router interface {
 	Handle(string, http.Handler)
 	HandleFunc(string, func(http.ResponseWriter, *http.Request))
 	ServeHTTP(http.ResponseWriter, *http.Request)
+	Params(context.Context) Params
 }
 
 // Param is a single URL parameter, consisting of a key and a value.

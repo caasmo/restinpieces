@@ -22,6 +22,11 @@ func (s *ServerMuxRouter) HandleFunc(path string, handler func(http.ResponseWrit
 	s.ServeMux.HandleFunc(path, handler)
 }
 
+func (s *ServerMuxRouter) Params(context.Context) router.Params {
+	// stdlib ServeMux doesn't support params
+	return nil
+}
+
 func New() router.Router {
 	return &ServerMuxRouter{ServeMux: http.NewServeMux()}
 }

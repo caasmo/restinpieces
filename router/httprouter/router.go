@@ -49,26 +49,16 @@ func (r *Router) HandleFunc(path string, handleFunc func(http.ResponseWriter, *h
 	r.rt.HandlerFunc(method, path, handleFunc)
 }
 
+func (r *Router) Params(ctx context.Context) router.Params {
+	pms, _ := ctx.Value(jshttprouter.ParamsKey).(jshttprouter.Params)
+	var params router.Params
+	for _, v := range pms {
+		params = append(params, router.Param{Key: v.Key, Value: v.Value})
+	}
+	return params
+}
+
 func New() router.Router {
 	return &Router{rt: jshttprouter.New()}
 }
 
-// Implementation of the router/ParamGeter interface
-type jsParams struct{}
-
-func (js *jsParams) Get(ctx context.Context) router.Params {
-	pms, _ := ctx.Value(jshttprouter.ParamsKey).(jshttprouter.Params)
-
-	var params router.Params
-
-	for _, v := range pms {
-		p := router.Param{Key: v.Key, Value: v.Value}
-		params = append(params, p)
-	}
-
-	return params
-}
-
-func NewParamGeter() router.ParamGeter {
-	return &jsParams{}
-}
