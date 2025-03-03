@@ -5,6 +5,7 @@ import (
 	cacheRistretto "github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/router/servermux"
+	//"github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/caasmo/restinpieces/server"
 	"os"
 )
