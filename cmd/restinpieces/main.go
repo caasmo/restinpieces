@@ -24,7 +24,7 @@ func initApp() (*app.App, error) {
 		return nil, err
 	}
 
-	return app.New(db, servermux.New(), app.WithCache(cache)), nil
+	return app.New(db, servemux.New(), app.WithCache(cache)), nil
 }
 
 func main() {

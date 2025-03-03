@@ -1,4 +1,4 @@
-package servermux
+package servemux
 
 import (
 	"net/http"
