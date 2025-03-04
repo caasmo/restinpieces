@@ -2,8 +2,8 @@ package zombiezen
 
 import (
 	"context"
-	"github.com/zombiezen/go-sqlite"
-	"github.com/zombiezen/go-sqlite/sqlitex"
+	"zombiezen.com/go/sqlite"
+	"zombiezen.com/go/sqlite/sqlitex"
 	"fmt"
 	"runtime"
 )
