@@ -19,7 +19,10 @@ func New(path string) (*Db, error) {
 	poolSize := runtime.NumCPU()
 	initString := fmt.Sprintf("file:%s", path)
 
-	p, err := sqlitex.NewPool(initString, sqlite.OpenReadWrite, poolSize)
+	p, err := sqlitex.NewPool(initString, sqlitex.PoolOptions{
+		Flags:    sqlite.OpenReadWrite,
+		PoolSize: poolSize,
+	})
 	if err != nil {
 		return nil, err
 	}
