@@ -15,6 +15,9 @@ type Db struct {
 	rwCh chan *sqlite.Conn
 }
 
+// Verify interface implementation (non-allocating check)
+var _ db.Db = (*Db)(nil)
+
 //
 func New(path string) (*Db, error) {
 	poolSize := runtime.NumCPU()
@@ -83,9 +86,6 @@ func (db *Db) Insert(value int64) {
 		panic(err)
 	}
 }
-
-// Verify interface implementation (non-allocating check)
-var _ db.Db = (*Db)(nil)
 
 func (db *Db) InsertWithPool(value int64) {
 	conn, err := db.pool.Take(context.TODO())
