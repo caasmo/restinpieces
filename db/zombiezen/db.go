@@ -27,7 +27,10 @@ func New(path string) (*Db, error) {
 		return nil, err
 	}
 
-	conn := p.Take(context.TODO())
+	conn, err := p.Take(context.TODO())
+	if err != nil {
+		return nil, err
+	}
 	// TODO keep track of closing
 	//defer db.Put(conn)
 	ch := make(chan *sqlite.Conn, 1)
