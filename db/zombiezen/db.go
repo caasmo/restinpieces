@@ -20,7 +20,7 @@ func New(path string) (*Db, error) {
 	initString := fmt.Sprintf("file:%s", path)
 
 	p, err := sqlitex.NewPool(initString, sqlitex.PoolOptions{
-		Flags:    sqlite.OpenReadWrite,
+		Flags:    0, // Use all default flags including WAL
 		PoolSize: poolSize,
 	})
 	if err != nil {
