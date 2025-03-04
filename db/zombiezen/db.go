@@ -47,7 +47,10 @@ func (db *Db) Close() {
 }
 
 func (db *Db) GetById(id int64) int {
-	conn := db.pool.Take(context.TODO())
+	conn, err := db.pool.Take(context.TODO())
+	if err != nil {
+		panic(err) // TODO: Proper error handling
+	}
 	defer db.pool.Put(conn)
 
 	var value int
