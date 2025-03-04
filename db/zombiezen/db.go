@@ -1,6 +1,7 @@
 package zombiezen
 
 import (
+	"context"
 	"github.com/zombiezen/go-sqlite"
 	"github.com/zombiezen/go-sqlite/sqlitex"
 	"fmt"
@@ -26,7 +27,7 @@ func New(path string) (*Db, error) {
 		return nil, err
 	}
 
-	conn := p.Get(nil)
+	conn := p.Take(context.TODO())
 	// TODO keep track of closing
 	//defer db.Put(conn)
 	ch := make(chan *sqlite.Conn, 1)
@@ -43,7 +44,7 @@ func (db *Db) Close() {
 }
 
 func (db *Db) GetById(id int64) int {
-	conn := db.pool.Get(nil)
+	conn := db.pool.Take(context.TODO())
 	defer db.pool.Put(conn)
 
 	var value int
