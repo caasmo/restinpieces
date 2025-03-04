@@ -1,7 +1,6 @@
 package crawshaw
 
 import (
-	"context"
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 	"fmt"
@@ -24,10 +23,7 @@ func New(path string) (*Db, error) {
 		return &Db{}, err
 	}
 
-	conn, err := p.Take(context.TODO())
-	if err != nil {
-		return nil, err
-	}
+	conn := p.Get(nil)
 	// TODO keep track of closing
 	//defer db.Put(conn)
 	ch := make(chan *sqlite.Conn, 1)
@@ -44,10 +40,7 @@ func (db *Db) Close() {
 }
 
 func (db *Db) GetById(id int64) int {
-	conn, err := db.pool.Take(context.TODO())
-	if err != nil {
-		panic(err) // TODO: Proper error handling
-	}
+	conn := db.pool.Get(nil)
 	defer db.pool.Put(conn)
 
 	var value int
@@ -76,10 +69,7 @@ func (db *Db) Insert(value int64) {
 }
 
 func (db *Db) InsertWithPool(value int64) {
-	conn, err := db.pool.Take(context.TODO())
-	if err != nil {
-		panic(err) // TODO: Proper error handling
-	}
+	conn := db.pool.Get(nil)
 	defer db.pool.Put(conn)
 
 	if err := sqlitex.Exec(conn, "INSERT INTO foo(id, value) values(1000000,?)", nil, any(value)); err != nil {
