@@ -1,7 +1,6 @@
 package zombiezen
 
 import (
-	"context"
 	"github.com/zombiezen/go-sqlite"
 	"github.com/zombiezen/go-sqlite/sqlitex"
 	"fmt"
@@ -70,8 +69,7 @@ func (db *Db) Insert(value int64) {
 	defer func() { db.rwCh <- rwConn }()
 
 	if err := sqlitex.Execute(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", &sqlitex.ExecOptions{
-		Context: context.Background(),
-		Args:    []interface{}{value},
+		Args: []interface{}{value},
 	}); err != nil {
 		// TODO
 		panic(err)
@@ -83,8 +81,7 @@ func (db *Db) InsertWithPool(value int64) {
 	defer db.pool.Put(conn)
 
 	if err := sqlitex.Execute(conn, "INSERT INTO foo(id, value) values(1000000,?)", &sqlitex.ExecOptions{
-		Context: context.Background(),
-		Args:    []interface{}{value},
+		Args: []interface{}{value},
 	}); err != nil {
 		// TODO
 		panic(err)
