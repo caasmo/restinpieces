@@ -69,8 +69,8 @@ func (db *Db) Insert(value int64) {
 	}
 }
 
-// Verify interface implementation
-var _ db.Db = &Db{}
+// Verify interface implementation (non-allocating check)
+var _ db.Db = (*Db)(nil)
 
 func (db *Db) InsertWithPool(value int64) {
 	conn := db.pool.Get(nil)
