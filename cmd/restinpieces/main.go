@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/caasmo/restinpieces/app"
 	cacheRistretto "github.com/caasmo/restinpieces/cache/ristretto"
-	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/db/crawshaw"
 	"github.com/caasmo/restinpieces/router/servemux"
 	//"github.com/caasmo/restinpieces/router/httprouter"
