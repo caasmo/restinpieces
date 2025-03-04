@@ -81,7 +81,10 @@ func (db *Db) Insert(value int64) {
 }
 
 func (db *Db) InsertWithPool(value int64) {
-	conn := db.pool.Get(nil)
+	conn, err := db.pool.Take(context.TODO())
+	if err != nil {
+		panic(err) // TODO: Proper error handling
+	}
 	defer db.pool.Put(conn)
 
 	if err := sqlitex.Execute(conn, "INSERT INTO foo(id, value) values(1000000,?)", &sqlitex.ExecOptions{
