@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/caasmo/restinpieces/app"
 	cacheRistretto "github.com/caasmo/restinpieces/cache/ristretto"
-	"github.com/caasmo/restinpieces/db/crawshaw"
+	"github.com/caasmo/restinpieces/db/zombiezen"
 	//"github.com/caasmo/restinpieces/router/servemux"
 	"github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/caasmo/restinpieces/server"
@@ -13,7 +13,7 @@ import (
 func initApp() (*app.App, error) {
 
 	// db
-	db, err := crawshaw.New("bench.db")
+	db, err := zombiezen.New("bench.db")
 	if err != nil {
 		return nil, err
 	}
