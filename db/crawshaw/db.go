@@ -68,6 +68,9 @@ func (db *Db) Insert(value int64) {
 	}
 }
 
+// Verify interface implementation
+var _ db.Db = &Db{}
+
 func (db *Db) InsertWithPool(value int64) {
 	conn := db.pool.Get(nil)
 	defer db.pool.Put(conn)
