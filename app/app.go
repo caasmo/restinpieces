@@ -12,7 +12,7 @@ import (
 // For simplicity, all handlers and middleware should have App as receiver.
 // That why App needs to be in the same package "main" as the handlers.
 type App struct {
-	db          *db.Db
+	db          db.Db
 	router      router.Router
 	cache       cache.Cache
 }
@@ -30,7 +30,7 @@ func WithCache(c cache.Cache) AppOption {
 // params =+ app.NamedParams.Get(ctx Context)
 // param.ByName(ctx Context, name)
 
-func New(d *db.Db, r router.Router, opts ...AppOption) *App {
+func New(d db.Db, r router.Router, opts ...AppOption) *App {
 	a := &App{db: d, router: r}
 	for _, opt := range opts {
 		opt(a)
