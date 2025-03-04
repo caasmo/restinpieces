@@ -59,7 +59,7 @@ func (db *Db) GetById(id int64) int {
 }
 
 func (db *Db) Insert(value int64) {
-	rwConn <-db.rwCh
+	rwConn := <-db.rwCh
 	defer func() { db.rwCh <- rwConn }()
 
 	if err := sqlitex.Exec(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", nil, value); err != nil {
