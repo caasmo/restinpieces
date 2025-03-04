@@ -50,7 +50,7 @@ func (db *Db) GetById(id int64) int {
 		return nil
 	}
 
-	if err := sqlitex.Exec(conn, "select value from foo where rowid = ? limit 1", fn, id); err != nil {
+	if err := sqlitex.Exec(conn, "select value from foo where rowid = ? limit 1", fn, any(id)); err != nil {
 		// TODO
 		panic(err)
 	}
@@ -62,7 +62,7 @@ func (db *Db) Insert(value int64) {
 	rwConn := <-db.rwCh
 	defer func() { db.rwCh <- rwConn }()
 
-	if err := sqlitex.Exec(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", nil, value); err != nil {
+	if err := sqlitex.Exec(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", nil, any(value)); err != nil {
 		// TODO
 		panic(err)
 	}
@@ -72,7 +72,7 @@ func (db *Db) InsertWithPool(value int64) {
 	conn := db.pool.Get(nil)
 	defer db.pool.Put(conn)
 
-	if err := sqlitex.Exec(conn, "INSERT INTO foo(id, value) values(1000000,?)", nil, value); err != nil {
+	if err := sqlitex.Exec(conn, "INSERT INTO foo(id, value) values(1000000,?)", nil, any(value)); err != nil {
 		// TODO
 		panic(err)
 	}
