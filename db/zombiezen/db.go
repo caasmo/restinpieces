@@ -1,8 +1,9 @@
-package crawshaw
+package zombiezen
 
 import (
-	"crawshaw.io/sqlite"
-	"crawshaw.io/sqlite/sqlitex"
+	"context"
+	"github.com/zombiezen/go-sqlite"
+	"github.com/zombiezen/go-sqlite/sqlitex"
 	"fmt"
 	"runtime"
 )
@@ -18,9 +19,9 @@ func New(path string) (*Db, error) {
 	poolSize := runtime.NumCPU()
 	initString := fmt.Sprintf("file:%s", path)
 
-	p, err := sqlitex.Open(initString, 0, poolSize)
+	p, err := sqlitex.NewPool(initString, sqlite.OpenReadWrite, poolSize)
 	if err != nil {
-		return &Db{}, err
+		return nil, err
 	}
 
 	conn := p.Get(nil)
@@ -36,7 +37,7 @@ func New(path string) (*Db, error) {
 }
 
 func (db *Db) Close() {
-	db.Close()
+	db.pool.Close()
 }
 
 func (db *Db) GetById(id int64) int {
@@ -46,7 +47,7 @@ func (db *Db) GetById(id int64) int {
 	var value int
 	fn := func(stmt *sqlite.Stmt) error {
 		//id = int(stmt.GetInt64("id"))
-		value = int(stmt.GetInt64("value"))
+		value = int(stmt.ColumnInt64(0))
 		return nil
 	}
 
@@ -62,7 +63,7 @@ func (db *Db) Insert(value int64) {
 	rwConn := <-db.rwCh
 	defer func() { db.rwCh <- rwConn }()
 
-	if err := sqlitex.Exec(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", nil, value); err != nil {
+	if err := sqlitex.Exec(context.Background(), rwConn, "INSERT INTO foo(id, value) values(1000000,?)", nil, value); err != nil {
 		// TODO
 		panic(err)
 	}
@@ -72,7 +73,7 @@ func (db *Db) InsertWithPool(value int64) {
 	conn := db.pool.Get(nil)
 	defer db.pool.Put(conn)
 
-	if err := sqlitex.Exec(conn, "INSERT INTO foo(id, value) values(1000000,?)", nil, value); err != nil {
+	if err := sqlitex.Exec(context.Background(), conn, "INSERT INTO foo(id, value) values(1000000,?)", nil, value); err != nil {
 		// TODO
 		panic(err)
 	}
