@@ -99,12 +99,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return new token in response following OAuth2 token exchange format
-	h := w.Header()
-	// Security headers
-	h["Strict-Transport-Security"] = []string{"max-age=63072000; includeSubDomains"}
-	h["Cache-Control"] = []string{"no-store"}
-	h["Pragma"] = []string{"no-cache"}
-	h["Content-Type"] = jsonHeader
+	w.Header()["Content-Type"] = jsonHeader
 	
 	// Standard OAuth2 token response format
 	fmt.Fprintf(w, `{

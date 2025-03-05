@@ -7,7 +7,7 @@ import (
 )
 
 func route(ap *app.App) {
-	commonMiddleware := alice.New(ap.Logger)
+	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
 	ap.Router().Handle("POST /auth-refresh", alice.New().ThenFunc(ap.RefreshAuthHandler))
 	ap.Router().Handle("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
 	ap.Router().Handle("/", commonMiddleware.ThenFunc(ap.Index))

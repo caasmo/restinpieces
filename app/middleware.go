@@ -6,7 +6,20 @@ import (
 	"time"
 )
 
-// all middleware should conform to fn(next http.Handler) http.Handler
+// SecurityHeadersMiddleware adds security headers to all responses
+func (a *App) SecurityHeadersMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		h := w.Header()
+		h.Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
+		h.Set("Cache-Control", "no-store")
+		h.Set("Pragma", "no-cache")
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		next.ServeHTTP(w, r)
+	})
+}
+
+// All middleware should conform to fn(next http.Handler) http.Handler
 //
 // Differentiate from the Handler by ussing suffix
 func (a *App) Auth(next http.Handler) http.Handler {
