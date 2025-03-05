@@ -35,7 +35,10 @@ type jsonError struct {
 var (
 	jwtSecret = []byte("your_jwt_secret_here")
 	jsonHeader = []string{"application/json; charset=utf-8"} // Precomputed header value
-	// Precomputed error responses with status codes
+)
+
+// Precomputed error responses with status codes
+var (
 	errorUnauthorized        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
 	errorInvalidFormat       = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
 	errorTokenExpired        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
