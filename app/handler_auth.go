@@ -100,6 +100,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Return new token in response
 	h := w.Header()
+    // TODO needed?
 	h["Authorization"] = []string{"Bearer " + newToken}
 	h["Content-Type"] = jsonHeader
 	fmt.Fprintf(w, `{"status":"token refreshed","token":"%s"}`, newToken)
