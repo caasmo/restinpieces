@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"log"
 )
 
 // all handlers should conform to fn(w http.ResponseWriter, r *http.Request)
@@ -146,8 +147,10 @@ func (a *App) BenchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request)
 			sum = +value
 		}
 	}
+	log.Printf("[%s] %q %v\n", r.Method, r.URL.String(), "BenchmarkSqliteRWRatioPool")
 
 	w.Write([]byte(`{"random num":` + strconv.Itoa(nint) + `,"sum":` + strconv.Itoa(sum) + `,"operation":"` + op + `"}`))
+
 }
 
 func (a *App) Index(w http.ResponseWriter, r *http.Request) {

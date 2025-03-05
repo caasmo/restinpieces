@@ -15,8 +15,10 @@ func route(ap *app.App) {
 	ap.Router().Handle("/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
 	//router.Handle("/example/ristretto/writeread/:value", http.HandlerFunc(ap.ExampleRistrettoWriteRead))
 	ap.Router().Handle("/benchmark/baseline", http.HandlerFunc(ap.BenchmarkBaseline))
-	ap.Router().Handle("/benchmark/sqlite/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
-	ap.Router().Handle("/benchmark/sqlite/pool/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
+	//ap.Router().Handle("/benchmark/sqlite/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
+	ap.Router().Handle("/benchmark/sqlite/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
+	//ap.Router().Handle("/benchmark/sqlite/pool/ratio/:ratio/read/:reads", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
+	ap.Router().Handle("GET /benchmark/sqlite/pool/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
 	// This is an example of init function
 	ap.Router().Handle("/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
 	ap.Router().Handle("/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
