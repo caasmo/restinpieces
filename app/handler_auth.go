@@ -37,21 +37,6 @@ var (
 	errorTokenGeneration     = struct{code int; body []byte}{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
 )
 
-// writeError handles all error responses with precomputed values
-func (a *App) writeError(w http.ResponseWriter, e struct{code int; body []byte}) {
-	h := w.Header()
-	h["Content-Type"] = jsonHeader
-	w.WriteHeader(e.code)
-	w.Write(e.body)
-}
-
-// writeDynamicError handles errors with variable messages
-func (a *App) writeDynamicError(w http.ResponseWriter, code int, format string, args ...any) {
-	h := w.Header()
-	h["Content-Type"] = jsonHeader
-	w.WriteHeader(code)
-	fmt.Fprintf(w, format, args...)
-}
 
 // Custom claims structure to include standard and custom fields
 type Claims struct {
@@ -64,33 +49,33 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract and validate Authorization header
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
-		a.writeError(w, errorUnauthorized)
+		writeError(w, errorUnauthorized)
 		return
 	}
 
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 	if tokenString == authHeader { // No Bearer prefix found
-		a.writeError(w, errorInvalidFormat)
+		writeError(w, errorInvalidFormat)
 		return
 	}
 
 	// Parse and validate token
 	claims, err := parseToken(tokenString)
 	if err != nil {
-		a.writeDynamicError(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
+		writeDynamicError(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
 		return
 	}
 
 	// Check token expiration
 	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
-		a.writeError(w, errorTokenExpired)
+		writeError(w, errorTokenExpired)
 		return
 	}
 
 	// Generate new token with extended expiration
 	newToken, err := createToken(claims.UserID)
 	if err != nil {
-		a.writeError(w, errorTokenGeneration)
+		writeError(w, errorTokenGeneration)
 		return
 	}
 
