@@ -48,10 +48,10 @@ func New(opts ...Option) (*App, error) {
 	}
 
 	if a.db == nil {
-		return nil, fmt.Errorf("db cannot be nil")
+		return nil, fmt.Errorf("db is required but was not provided")
 	}
 	if a.router == nil {
-		return nil, fmt.Errorf("router cannot be nil")
+		return nil, fmt.Errorf("router is required but was not provided")
 	}
 
 	return a, nil
