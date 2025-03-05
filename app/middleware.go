@@ -7,6 +7,7 @@ import (
 )
 
 // SecurityHeadersMiddleware adds security headers to all responses
+// TODO
 func (a *App) SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
