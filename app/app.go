@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/router"
@@ -26,16 +27,34 @@ func WithCache(c cache.Cache) Option {
 	}
 }
 
-// just 1 method
-// params =+ app.NamedParams.Get(ctx Context)
-// param.ByName(ctx Context, name)
+// WithDB sets the database implementation
+func WithDB(d db.Db) Option {
+	return func(a *App) {
+		a.db = d
+	}
+}
 
-func New(d db.Db, r router.Router, opts ...Option) *App {
-	a := &App{db: d, router: r}
+// WithRouter sets the router implementation
+func WithRouter(r router.Router) Option {
+	return func(a *App) {
+		a.router = r
+	}
+}
+
+func New(opts ...Option) (*App, error) {
+	a := &App{}
 	for _, opt := range opts {
 		opt(a)
 	}
-	return a
+
+	if a.db == nil {
+		return nil, fmt.Errorf("db cannot be nil")
+	}
+	if a.router == nil {
+		return nil, fmt.Errorf("router cannot be nil")
+	}
+
+	return a, nil
 }
 
 // Router returns the application's router instance

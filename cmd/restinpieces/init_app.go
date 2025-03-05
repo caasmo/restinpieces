@@ -23,5 +23,9 @@ func initApp() (*app.App, error) {
 		return nil, err
 	}
 
-	return app.New(db, r, app.WithCache(cache)), nil
+	return app.New(
+		app.WithDB(db),
+		app.WithRouter(r), 
+		app.WithCache(cache),
+	)
 }
