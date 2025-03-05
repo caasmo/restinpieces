@@ -12,13 +12,30 @@ import (
 )
 
 var (
-	jwtSecret = []byte(os.Getenv("JWT_SECRET")) // Consider using a dedicated config service
-	// Precomputed JSON error responses
-	errorUnauthorized        = []byte(`{"error":"Authorization header required"}`)
-	errorInvalidFormat       = []byte(`{"error":"Invalid authorization format"}`)
-	errorTokenExpired        = []byte(`{"error":"Token expired"}`)
-	errorTokenGeneration     = []byte(`{"error":"Failed to generate token"}`)
+	jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+	jsonHeader = []string{"application/json; charset=utf-8"} // Precomputed header value
+	// Precomputed error responses with status codes
+	errorUnauthorized        = struct{code int; body []byte}{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
+	errorInvalidFormat       = struct{code int; body []byte}{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
+	errorTokenExpired        = struct{code int; body []byte}{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
+	errorTokenGeneration     = struct{code int; body []byte}{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
 )
+
+// writeError handles all error responses with precomputed values
+func (a *App) writeError(w http.ResponseWriter, e struct{code int; body []byte}) {
+	h := w.Header()
+	h["Content-Type"] = jsonHeader
+	w.WriteHeader(e.code)
+	w.Write(e.body)
+}
+
+// writeDynamicError handles errors with variable messages
+func (a *App) writeDynamicError(w http.ResponseWriter, code int, format string, args ...any) {
+	h := w.Header()
+	h["Content-Type"] = jsonHeader
+	w.WriteHeader(code)
+	fmt.Fprintf(w, format, args...)
+}
 
 // Custom claims structure to include standard and custom fields
 type Claims struct {
@@ -31,50 +48,40 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract and validate Authorization header
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(errorUnauthorized)
+		a.writeError(w, errorUnauthorized)
 		return
 	}
 
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 	if tokenString == authHeader { // No Bearer prefix found
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(errorInvalidFormat)
+		a.writeError(w, errorInvalidFormat)
 		return
 	}
 
 	// Parse and validate token
 	claims, err := parseToken(tokenString)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, `{"error":"Invalid token: %s"}`, err.Error())
+		a.writeDynamicError(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
 		return
 	}
 
 	// Check token expiration
 	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
-		w.Write(errorTokenExpired)
+		a.writeError(w, errorTokenExpired)
 		return
 	}
 
 	// Generate new token with extended expiration
 	newToken, err := createToken(claims.UserID)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(errorTokenGeneration)
+		a.writeError(w, errorTokenGeneration)
 		return
 	}
 
 	// Return new token in response
-	setAuthHeader(w, newToken)
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "application/json")
+	h := w.Header()
+	h["Authorization"] = []string{"Bearer " + newToken}
+	h["Content-Type"] = jsonHeader
 	fmt.Fprintf(w, `{"status":"token refreshed","token":"%s"}`, newToken)
 }
 
