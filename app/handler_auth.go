@@ -13,6 +13,11 @@ import (
 
 var (
 	jwtSecret = []byte(os.Getenv("JWT_SECRET")) // Consider using a dedicated config service
+	// Precomputed JSON error responses
+	errorUnauthorized        = []byte(`{"error":"Authorization header required"}`)
+	errorInvalidFormat       = []byte(`{"error":"Invalid authorization format"}`)
+	errorTokenExpired        = []byte(`{"error":"Token expired"}`)
+	errorTokenGeneration     = []byte(`{"error":"Failed to generate token"}`)
 )
 
 // Custom claims structure to include standard and custom fields
@@ -28,7 +33,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	if authHeader == "" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Authorization header required"})
+		w.Write(errorUnauthorized)
 		return
 	}
 
@@ -36,7 +41,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	if tokenString == authHeader { // No Bearer prefix found
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid authorization format"})
+		w.Write(errorInvalidFormat)
 		return
 	}
 
@@ -45,7 +50,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid token: " + err.Error()})
+		fmt.Fprintf(w, `{"error":"Invalid token: %s"}`, err.Error())
 		return
 	}
 
@@ -53,7 +58,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Token expired"})
+		w.Write(errorTokenExpired)
 		return
 	}
 
@@ -62,7 +67,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to generate token"})
+		w.Write(errorTokenGeneration)
 		return
 	}
 
@@ -70,10 +75,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	setAuthHeader(w, newToken)
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"status": "token refreshed", 
-		"token":  newToken,
-	})
+	fmt.Fprintf(w, `{"status":"token refreshed","token":"%s"}`, newToken)
 }
 
 // parseToken validates and parses JWT claims
