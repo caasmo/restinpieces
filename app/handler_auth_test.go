@@ -53,7 +53,7 @@ func TestRefreshAuthHandler(t *testing.T) {
 			},
 			wantStatus: http.StatusUnauthorized,
 			wantBody: map[string]interface{}{
-				"error": "Token expired",
+				"error": "Invalid token: token has invalid claims: token is expired",
 			},
 		},
 		{
@@ -71,7 +71,7 @@ func TestRefreshAuthHandler(t *testing.T) {
 			},
 			wantStatus: http.StatusUnauthorized,
 			wantBody: map[string]interface{}{
-				"error": "Invalid authorization format",
+				"error": "Invalid token: token is malformed: token contains an invalid number of segments",
 			},
 		},
 		{
