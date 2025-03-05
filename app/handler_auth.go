@@ -27,14 +27,8 @@ import (
 // 
 //  # Test missing header
 //  curl -v -X POST http://localhost:8080/auth-refresh
-type jsonError struct {
-	code int
-	body []byte
-}
-
 var (
 	jwtSecret = []byte("your_jwt_secret_here")
-	jsonHeader = []string{"application/json; charset=utf-8"} // Precomputed header value
 )
 
 // Precomputed error responses with status codes
@@ -44,20 +38,6 @@ var (
 	errorTokenExpired        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
 	errorTokenGeneration     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
 )
-
-// writeJSONError writes a precomputed JSON error response
-func writeJSONError(w http.ResponseWriter, err jsonError) {
-	w.Header()["Content-Type"] = jsonHeader
-	w.WriteHeader(err.code)
-	w.Write(err.body)
-}
-
-// writeJSONErrorf writes a formatted JSON error response
-func writeJSONErrorf(w http.ResponseWriter, code int, format string, args ...interface{}) {
-	w.Header()["Content-Type"] = jsonHeader
-	w.WriteHeader(code)
-	fmt.Fprintf(w, format, args...)
-}
 
 
 // Custom claims structure to include standard and custom fields
