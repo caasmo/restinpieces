@@ -15,7 +15,6 @@ func (db *Db) Close() {
 
 func (db *Db) GetById(id int64) int {
 	conn := db.pool.Get(nil)
-
 	defer db.pool.Put(conn)
 
 	var value int

@@ -20,13 +20,18 @@ func initApp() (*app.App, error) {
 		return nil, err
 	}
 
+    // router
+    r := httprouter.New()
+    //r := servemux.New()
+
+
 	// cache
 	cache, err := cacheRistretto.New()
 	if err != nil {
 		return nil, err
 	}
 
-	return app.New(db, httprouter.New(), app.WithCache(cache)), nil
+	return app.New(db, r, app.WithCache(cache)), nil
 }
 
 func main() {
