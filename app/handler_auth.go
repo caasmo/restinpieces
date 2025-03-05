@@ -98,12 +98,20 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return new token in response
+	// Return new token in response following OAuth2 token exchange format
 	h := w.Header()
-    // TODO needed?
-	h["Authorization"] = []string{"Bearer " + newToken}
+	// Security headers
+	h["Strict-Transport-Security"] = []string{"max-age=63072000; includeSubDomains"}
+	h["Cache-Control"] = []string{"no-store"}
+	h["Pragma"] = []string{"no-cache"}
 	h["Content-Type"] = jsonHeader
-	fmt.Fprintf(w, `{"status":"token refreshed","token":"%s"}`, newToken)
+	
+	// Standard OAuth2 token response format
+	fmt.Fprintf(w, `{
+		"token_type": "Bearer",
+		"expires_in": 21600,
+		"access_token": "%s"
+	}`, newToken)
 }
 
 // parseToken validates and parses JWT claims
