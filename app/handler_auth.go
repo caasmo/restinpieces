@@ -21,8 +21,8 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// refreshAuthHandler handles JWT refresh requests
-func (a *App) refreshAuthHandler(w http.ResponseWriter, r *http.Request) {
+// RefreshAuthHandler handles JWT refresh requests
+func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract and validate Authorization header
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {

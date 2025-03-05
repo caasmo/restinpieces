@@ -9,7 +9,7 @@ import (
 func route(ap *app.App) {
 	commonMiddleware := alice.New(ap.Logger)
 	ap.Router().Handle("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
-	ap.Router().Handle("/auth-refresh", alice.New(ap.Auth).ThenFunc(ap.refreshAuthHandler))
+	ap.Router().Handle("/auth-refresh", alice.New(ap.Auth).ThenFunc(ap.RefreshAuthHandler))
 	ap.Router().Handle("/", commonMiddleware.ThenFunc(ap.Index))
 	ap.Router().Handle("/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
 	ap.Router().Handle("/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
