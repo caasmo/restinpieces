@@ -10,34 +10,15 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 )
 
-func New(path string) (*Db, error) {
-	poolSize := runtime.NumCPU()
-	initString := fmt.Sprintf("file:%s", path)
-
-	p, err := sqlitex.Open(initString, 0, poolSize)
-	if err != nil {
-		return &Db{}, err
-	}
-
-	conn, err := p.Take(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	
-	ch := make(chan *sqlite.Conn, 1)
-	go func(conn *sqlite.Conn, ch chan *sqlite.Conn) {
-		ch <- conn
-	}(conn, ch)
-
-	return &Db{pool: p, rwCh: ch}, nil
-}
+// Verify interface implementation (non-allocating check)
+var _ db.Db = (*Db)(nil)
 
 func (db *Db) Close() {
 	db.pool.Close()
 }
 
 func (db *Db) GetById(id int64) int {
-	conn, err := db.pool.Take(context.TODO())
+	conn := db.pool.Get(nil)
 	if err != nil {
 		panic(err)
 	}
@@ -65,7 +46,7 @@ func (db *Db) Insert(value int64) {
 }
 
 func (db *Db) InsertWithPool(value int64) {
-	conn, err := db.pool.Take(context.TODO())
+    conn := db.pool.Get(nil)
 	if err != nil {
 		panic(err)
 	}
