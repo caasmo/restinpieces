@@ -1,5 +1,6 @@
 ### TODOs
 
+- zombiezen, impl pool with timeout, split in files. 
 - zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
 - httprouter params to servemux $ 
 - tls

@@ -4,6 +4,7 @@ go 1.23
 
 require (
 	crawshaw.io/sqlite v0.3.3-0.20220618202545-d1964889ea3c
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/justinas/alice v1.2.0
 	github.com/outcaste-io/ristretto v0.1.1-0.20220408180327-81c196f2b5ef
