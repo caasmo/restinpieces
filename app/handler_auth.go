@@ -27,14 +27,19 @@ import (
 // 
 //  # Test missing header
 //  curl -v -X POST http://localhost:8080/auth-refresh
+type jsonError struct {
+	code int
+	body []byte
+}
+
 var (
 	jwtSecret = []byte("your_jwt_secret_here")
 	jsonHeader = []string{"application/json; charset=utf-8"} // Precomputed header value
 	// Precomputed error responses with status codes
-	errorUnauthorized        = struct{code int; body []byte}{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
-	errorInvalidFormat       = struct{code int; body []byte}{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
-	errorTokenExpired        = struct{code int; body []byte}{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
-	errorTokenGeneration     = struct{code int; body []byte}{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
+	errorUnauthorized        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
+	errorInvalidFormat       = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
+	errorTokenExpired        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
+	errorTokenGeneration     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
 )
 
 
@@ -49,33 +54,33 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Extract and validate Authorization header
 	authHeader := r.Header.Get("Authorization")
 	if authHeader == "" {
-		writeError(w, errorUnauthorized)
+		writeJSONError(w, errorUnauthorized)
 		return
 	}
 
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 	if tokenString == authHeader { // No Bearer prefix found
-		writeError(w, errorInvalidFormat)
+		writeJSONError(w, errorInvalidFormat)
 		return
 	}
 
 	// Parse and validate token
 	claims, err := parseToken(tokenString)
 	if err != nil {
-		writeDynamicError(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
+		writeJSONErrorf(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
 		return
 	}
 
 	// Check token expiration
 	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
-		writeError(w, errorTokenExpired)
+		writeJSONError(w, errorTokenExpired)
 		return
 	}
 
 	// Generate new token with extended expiration
 	newToken, err := createToken(claims.UserID)
 	if err != nil {
-		writeError(w, errorTokenGeneration)
+		writeJSONError(w, errorTokenGeneration)
 		return
 	}
 
