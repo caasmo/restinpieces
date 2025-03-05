@@ -47,7 +47,7 @@ func initApp() (*app.App, error) {
 
 	return app.New(
 		WithDBCrawshaw(),
-		WithRouterHttprouter(),
+		WithRouterServeMux(),
 		WithCacheRistretto(),
 	)
 }
