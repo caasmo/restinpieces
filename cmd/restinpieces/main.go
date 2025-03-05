@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/caasmo/restinpieces/server"
+	"log/slog"
 	"os"
 )
 
@@ -9,7 +10,7 @@ func main() {
 
 	ap, err := initApp()
 	if err != nil {
-		//log
+		slog.Error("failed to initialize app", "error", err)
 		os.Exit(1)
 	}
 
