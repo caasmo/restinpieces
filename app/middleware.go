@@ -11,11 +11,12 @@ import (
 func (a *App) SecurityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h := w.Header()
-		h.Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-		h.Set("Cache-Control", "no-store")
-		h.Set("Pragma", "no-cache")
-		h.Set("X-Content-Type-Options", "nosniff")
-		h.Set("X-Frame-Options", "DENY")
+		// Precomputed header values as []string for direct map assignment
+		h["Strict-Transport-Security"] = []string{"max-age=63072000; includeSubDomains"}
+		h["Cache-Control"] = []string{"no-store"}
+		h["Pragma"] = []string{"no-cache"} 
+		h["X-Content-Type-Options"] = []string{"nosniff"}
+		h["X-Frame-Options"] = []string{"DENY"}
 		next.ServeHTTP(w, r)
 	})
 }
