@@ -8,9 +8,9 @@ import (
 
 const defaultTimeout = 1 * time.Second
 
-// TakeWithTimeout attempts to acquire a connection from the pool with a timeout.
+// getWithTimeout attempts to acquire a connection from the pool with a timeout.
 // Returns the connection or error if context deadline is exceeded.
-func (db *Db) takeWithTimeout(ctx context.Context) *sqlite.Conn {
+func (db *Db) getWithTimeout(ctx context.Context) *sqlite.Conn {
     if ctx == nil {
         ctx = context.Background()
     }

@@ -1,7 +1,6 @@
 package crawshaw
 
 import (
-	"github.com/caasmo/restinpieces/db"
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 	"fmt"

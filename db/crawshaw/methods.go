@@ -1,10 +1,6 @@
 package crawshaw
 
 import (
-	"context"
-	"fmt"
-	"runtime"
-
 	"github.com/caasmo/restinpieces/db"
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
@@ -19,9 +15,7 @@ func (db *Db) Close() {
 
 func (db *Db) GetById(id int64) int {
 	conn := db.pool.Get(nil)
-	if err != nil {
-		panic(err)
-	}
+
 	defer db.pool.Put(conn)
 
 	var value int
@@ -47,9 +41,6 @@ func (db *Db) Insert(value int64) {
 
 func (db *Db) InsertWithPool(value int64) {
     conn := db.pool.Get(nil)
-	if err != nil {
-		panic(err)
-	}
 	defer db.pool.Put(conn)
 
 	if err := sqlitex.Exec(conn, "INSERT INTO foo(id, value) values(1000000,?)", nil, any(value)); err != nil {
