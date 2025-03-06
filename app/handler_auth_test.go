@@ -17,6 +17,9 @@ func testApp() *app.App {
 			JwtSecret:     []byte("test_secret"),
 			TokenDuration: 15 * time.Minute,
 		}),
+		// Add minimal required dependencies
+		app.WithDB(&db.Db{}),
+		app.WithRouter(&router.Router{}),
 	)
 	return a
 }
