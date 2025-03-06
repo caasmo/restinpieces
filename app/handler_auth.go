@@ -40,8 +40,8 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate new token
-	newToken, expiry, err := jwt.Refresh(userId, a.config.JwtSecret, a.config.TokenDuration)
+	// Generate new token with fresh expiration
+	newToken, expiry, err := jwt.Create(userId, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return

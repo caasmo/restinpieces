@@ -84,17 +84,3 @@ func Create(userID string, secret []byte, tokenDuration time.Duration) (string, 
 	return tokenString, expirationTime, nil
 }
 
-// Validate checks if a token is valid
-func Validate(tokenString string, secret []byte) (*Claims, error) {
-	claims, err := Parse(tokenString, secret)
-	if err != nil {
-		return nil, err
-	}
-
-	return claims, nil
-}
-
-// Refresh creates a new token based on the claims of an existing token
-func Refresh(userID string, secret []byte, tokenDuration time.Duration) (string, time.Time, error) {
-	return Create(userID, secret, tokenDuration)
-}

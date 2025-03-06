@@ -45,8 +45,8 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 			return
 		}
 
-		// Validate the token
-		claims, err := jwt.Validate(tokenString, a.config.JwtSecret)
+		// Parse and validate the token
+		claims, err := jwt.Parse(tokenString, a.config.JwtSecret)
 		if err != nil {
             // some common errors
 			if errors.Is(err, jwt.ErrTokenExpired) {

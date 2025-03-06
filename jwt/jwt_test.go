@@ -78,37 +78,6 @@ func TestCreateWithInvalidSecret(t *testing.T) {
 	}
 }
 
-func TestRefreshToken(t *testing.T) {
-	secret := []byte("test_secret_32_bytes_long_xxxxxx")
-	userID := "testuser456"
-	tokenDuration := 15 * time.Minute
-
-	originalToken, originalExpiry, err := Create(userID, secret, tokenDuration)
-	if err != nil {
-		t.Fatalf("Create() error = %v", err)
-	}
-
-	refreshedToken, refreshedExpiry, err := Refresh(userID, secret, tokenDuration)
-	if err != nil {
-		t.Fatalf("Refresh() error = %v", err)
-	}
-
-	if refreshedExpiry.Before(originalExpiry) {
-		t.Error("refreshed token expiry should be later than original")
-	}
-
-	// Verify refreshed token is valid
-	_, err = Parse(refreshedToken, secret)
-	if err != nil {
-		t.Errorf("Parse() refreshed token error = %v", err)
-	}
-
-	// Verify original token is still valid until expiration
-	_, err = Parse(originalToken, secret)
-	if err != nil {
-		t.Errorf("Parse() original token error = %v", err)
-	}
-}
 
 func generateValidToken(t *testing.T) string {
 	t.Helper()
