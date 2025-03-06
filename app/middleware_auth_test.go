@@ -1,7 +1,7 @@
 package app
 
 import (
-	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -67,6 +67,7 @@ func TestJwtValidateMiddleware(t *testing.T) {
 				if tc.expectUserID && !ok {
 					t.Error("Expected user ID in context but none found")
 				}
+				_ = userID // Silence unused var check
 				w.WriteHeader(http.StatusOK)
 			})
 
