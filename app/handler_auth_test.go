@@ -18,8 +18,8 @@ func testApp() *app.App {
 			TokenDuration: 15 * time.Minute,
 		}),
 		// Add minimal required dependencies that satisfy interfaces
-		app.WithDB(&db.MockDB{}),
-		app.WithRouter(&router.MockRouter{}),
+		app.WithDB(&MockDB{}),
+		app.WithRouter(&MockRouter{}),
 	)
 	return a
 }
