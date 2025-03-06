@@ -17,7 +17,7 @@ type App struct {
 	db          db.Db
 	router      router.Router
 	cache       cache.Cache
-	Config      Config
+	config      Config
 }
 
 // TODO move
@@ -52,7 +52,7 @@ func WithRouter(r router.Router) Option {
 // WithConfig sets the application configuration
 func WithConfig(cfg Config) Option {
 	return func(a *App) {
-		a.Config = cfg
+		a.config = cfg
 	}
 }
 
