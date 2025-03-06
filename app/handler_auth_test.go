@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/app"
+	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/router"
 )
 
 func testApp() *app.App {
@@ -17,9 +19,9 @@ func testApp() *app.App {
 			JwtSecret:     []byte("test_secret"),
 			TokenDuration: 15 * time.Minute,
 		}),
-		// Add minimal required dependencies
-		app.WithDB(&db.Db{}),
-		app.WithRouter(&router.Router{}),
+		// Add minimal required dependencies that satisfy interfaces
+		app.WithDB(&db.MockDB{}),
+		app.WithRouter(&router.MockRouter{}),
 	)
 	return a
 }
