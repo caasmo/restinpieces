@@ -16,41 +16,36 @@ import (
 
 func TestJwtValidateMiddleware(t *testing.T) {
 	testCases := []struct {
-		name           string
-		authHeader     string
-		wantStatus     int
-		wantError      string
-		expectUserID   bool
+		name         string
+		authHeader   string
+		wantError    *jsonError
+		expectUserID bool
 	}{
 		{
 			name:         "valid token",
 			authHeader:   "Bearer " + generateTestToken(t, "testuser123"),
-			wantStatus:   http.StatusOK,
+			wantError:    nil,
 			expectUserID: true,
 		},
 		{
 			name:       "missing authorization header",
 			authHeader: "",
-			wantStatus: http.StatusUnauthorized,
-			wantError:  "Authorization header required",
+			wantError:  &errorNoAuthHeader,
 		},
 		{
 			name:       "invalid token format",
 			authHeader: "InvalidToken",
-			wantStatus: http.StatusUnauthorized,
-			wantError:  "Invalid authorization format",
+			wantError:  &errorInvalidTokenFormat,
 		},
 		{
 			name:       "expired token",
 			authHeader: "Bearer " + generateExpiredTestToken(t, "testuser123"),
-			wantStatus: http.StatusUnauthorized,
-			wantError:  "Token expired",
+			wantError:  &errorTokenExpired,
 		},
 		{
 			name:       "invalid signing method",
 			authHeader: "Bearer " + generateInvalidSigningToken(t, "testuser123"),
-			wantStatus: http.StatusUnauthorized,
-			wantError:  "unexpected signing method",
+			wantError:  &errorTokenInvalidSignMethod,
 		},
 	}
 
@@ -85,18 +80,16 @@ func TestJwtValidateMiddleware(t *testing.T) {
 			middleware := a.JwtValidate(testHandler)
 			middleware.ServeHTTP(rr, req)
 
-			if rr.Code != tc.wantStatus {
-				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
-			}
-
-			if tc.wantError != "" {
-				var body map[string]interface{}
-				if err := json.NewDecoder(rr.Body).Decode(&body); err != nil {
-					t.Fatalf("failed to decode response body: %v", err)
+			if tc.wantError != nil {
+				if rr.Code != tc.wantError.code {
+					t.Errorf("expected status %d, got %d", tc.wantError.code, rr.Code)
 				}
-
-				if body["error"] != tc.wantError {
-					t.Errorf("expected error %q, got %q", tc.wantError, body["error"])
+				if rr.Body.String() != string(tc.wantError.body) {
+					t.Errorf("expected error response %q, got %q", string(tc.wantError.body), rr.Body.String())
+				}
+			} else {
+				if rr.Code != http.StatusOK {
+					t.Errorf("expected status OK, got %d", rr.Code)
 				}
 			}
 		})
