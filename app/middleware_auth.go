@@ -53,8 +53,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 				writeJSONError(w, errorTokenExpired)
 				return
 			}
-            // error from jwt package is 
-            //  >token is unverifiable: error while executing keyfunc: unexpected signing method"
+
 			if errors.Is(err, jwt.ErrInvalidSigningMethod) {
 				writeJSONError(w, errorTokenInvalidSignMethod)
 				return
