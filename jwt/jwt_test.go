@@ -73,8 +73,8 @@ func TestParseInvalidToken(t *testing.T) {
 
 func TestCreateWithInvalidSecret(t *testing.T) {
 	_, _, err := Create("user123", nil, 15*time.Minute)
-	if err == nil {
-		t.Error("expected error when creating token with empty secret")
+	if !errors.Is(err, ErrInvalidSecretLength) {
+		t.Errorf("expected ErrInvalidSecretLength, got %v", err)
 	}
 }
 
