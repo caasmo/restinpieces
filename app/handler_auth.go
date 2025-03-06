@@ -37,7 +37,7 @@ var (
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Get claims from context (added by JwtValidate middleware)
 	userId, ok := r.Context().Value(UserIDKey).(string)
-	if !ok {
+	if !ok || userId == "" {
 		writeJSONError(w, errorClaimsNotFound)
 		return
 	}
