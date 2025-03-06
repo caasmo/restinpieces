@@ -40,11 +40,6 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
 		    return nil, ErrInvalidSigningMethod
         }
         
-        var validationErr *jwt.ValidationError
-        if errors.As(err, &validationErr) {
-            return nil, ErrInvalidToken
-        }
-
 		return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
 	}
 
