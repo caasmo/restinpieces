@@ -8,7 +8,8 @@ import (
 
 func route(ap *app.App) {
 	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
-	ap.Router().Handle("POST /auth-refresh", alice.New().ThenFunc(ap.RefreshAuthHandler))
+	authMiddleware := alice.New(ap.JwtValidate)
+	ap.Router().Handle("POST /auth-refresh", authMiddleware.ThenFunc(ap.RefreshAuthHandler))
 	ap.Router().Handle("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
 	ap.Router().Handle("/", commonMiddleware.ThenFunc(ap.Index))
 	ap.Router().Handle("/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))

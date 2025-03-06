@@ -2,7 +2,6 @@ package main
 
 import (
 	"time"
-	"os"
 	"github.com/caasmo/restinpieces/app"
     // TOD0 problem cgo compile check?
 	"github.com/caasmo/restinpieces/db/crawshaw"
@@ -45,20 +44,18 @@ func WithCacheRistretto() app.Option {
 
 }
 
-func initApp(opts ...app.Option) (*app.App, error) {
+func initApp() (*app.App, error) {
+
 	// Create default config
 	cfg := app.Config{
-		JwtSecret:     []byte(os.Getenv("JWT_SECRET")), // Get secret from environment
+		JwtSecret:     []byte("the_jwt_secret"), // Get secret from environment
 		TokenDuration: 15 * time.Minute,               // 15 minute token duration
 	}
 
-	// Combine default options with any passed in
-	opts = append([]app.Option{
+	return app.New(
 		WithDBCrawshaw(),
 		WithRouterServeMux(),
 		WithCacheRistretto(),
-		app.WithConfig(cfg),
-	}, opts...)
-
-	return app.New(opts...)
+        app.WithConfig(cfg),
+	)
 }

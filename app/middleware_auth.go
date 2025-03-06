@@ -19,6 +19,7 @@ const (
 )
 
 // Precomputed error responses with status codes
+// TODO move to a file errors
 var (
 	errorNoAuthHeader        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
 	errorInvalidTokenFormat  = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}

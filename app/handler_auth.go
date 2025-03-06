@@ -28,6 +28,7 @@ import (
 // Precomputed error responses with status codes
 var (
 	errorTokenGeneration     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
+    errorClaimsNotFound     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token: Claims not found"}`)}
 )
 
 
@@ -37,7 +38,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Get claims from context (added by JwtValidate middleware)
 	userId, ok := r.Context().Value(UserIDKey).(string)
 	if !ok {
-		writeJSONError(w, errorTokenGeneration)
+		writeJSONError(w, errorClaimsNotFound)
 		return
 	}
 
