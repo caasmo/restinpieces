@@ -15,7 +15,6 @@ type contextKey string
 // Context keys
 // See also handler_auth.go
 const (
-	ClaimsKey contextKey = "claims"
 	UserIDKey contextKey = "user_id"
 )
 
