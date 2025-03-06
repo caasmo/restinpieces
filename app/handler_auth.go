@@ -25,10 +25,6 @@ import (
 // 
 //  # Test missing header
 //  curl -v -X POST http://localhost:8080/auth-refresh
-var (
-	jwtSecret = []byte("your_jwt_secret_here")
-)
-
 // Precomputed error responses with status codes
 var (
 	errorTokenGeneration     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}

@@ -12,10 +12,16 @@ import (
 //
 // For simplicity, all handlers and middleware should have App as receiver.
 // That why App needs to be in the same package "main" as the handlers.
+type Config struct {
+	JwtSecret     []byte
+	TokenDuration time.Duration
+}
+
 type App struct {
 	db          db.Db
 	router      router.Router
 	cache       cache.Cache
+	Config      Config
 }
 
 type Option func(*App)
@@ -34,10 +40,17 @@ func WithDB(d db.Db) Option {
 	}
 }
 
-// WithRouter sets the router implementation
+// WithRouter sets the router implementation 
 func WithRouter(r router.Router) Option {
 	return func(a *App) {
 		a.router = r
+	}
+}
+
+// WithConfig sets the application configuration
+func WithConfig(cfg Config) Option {
+	return func(a *App) {
+		a.Config = cfg
 	}
 }
 
