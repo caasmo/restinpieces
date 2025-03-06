@@ -38,7 +38,7 @@ func TestParseInvalidToken(t *testing.T) {
 		{
 			name:        "expired token",
 			tokenString: generateExpiredToken(t),
-			secret:      []byte("test_secret"),
+			secret:      []byte("test_secret_32_bytes_long_xxxxxx"),
 			wantError:   ErrTokenExpired,
 		},
 		{
