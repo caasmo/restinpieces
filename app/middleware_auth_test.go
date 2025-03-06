@@ -50,7 +50,7 @@ func TestJwtValidateMiddleware(t *testing.T) {
 			name:       "invalid signing method",
 			authHeader: "Bearer " + generateInvalidSigningToken(t, "testuser123"),
 			wantStatus: http.StatusUnauthorized,
-			wantError:  "Invalid token: unexpected signing method",
+			wantError:  "unexpected signing method",
 		},
 	}
 

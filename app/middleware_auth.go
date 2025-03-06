@@ -23,6 +23,7 @@ const (
 var (
 	errorNoAuthHeader       = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
 	errorInvalidTokenFormat = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
+	errorTokenInvalidSignMethod = jsonError{http.StatusUnauthorized, []byte(`{"error":"unexpected signing method"}`)}
 	errorTokenExpired       = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
 )
 
@@ -47,11 +48,17 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		// Validate the token
 		claims, err := jwt.Validate(tokenString, a.config.JwtSecret)
 		if err != nil {
+            // some common errors
 			if errors.Is(err, jwt.ErrTokenExpired) {
 				writeJSONError(w, errorTokenExpired)
 				return
 			}
-            // TODO sign algo?
+            // error from jwt package is 
+            //  >token is unverifiable: error while executing keyfunc: unexpected signing method"
+			if errors.Is(err, jwt.ErrInvalidSigningMethod) {
+				writeJSONError(w, errorTokenInvalidSignMethod)
+				return
+			}
 
 			writeJSONErrorf(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
 			return

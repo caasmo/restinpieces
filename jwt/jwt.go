@@ -36,6 +36,9 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
         if errors.Is(err, jwt.ErrTokenExpired) {
 		    return nil, ErrTokenExpired
         }
+        if errors.Is(err, jwt.ErrTokenUnverifiable) {
+		    return nil, ErrInvalidSigningMethod
+        }
 
 		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
