@@ -34,7 +34,7 @@ func splitMethodPath(fullPath string) (string, string) {
 			return method, "/" + path
 		}
 	}
-	
+
 	return "GET", fullPath // No separator found, treat entire string as path
 }
 
@@ -61,4 +61,3 @@ func (r *Router) Param(req *http.Request, key string) string {
 func New() router.Router {
 	return &Router{rt: jshttprouter.New()}
 }
-

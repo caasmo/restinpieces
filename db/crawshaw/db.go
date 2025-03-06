@@ -13,7 +13,6 @@ type Db struct {
 	rwCh chan *sqlite.Conn
 }
 
-
 func New(path string) (*Db, error) {
 	poolSize := runtime.NumCPU()
 	initString := fmt.Sprintf("file:%s", path)

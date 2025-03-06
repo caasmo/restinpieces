@@ -2,10 +2,10 @@ package app
 
 import (
 	"fmt"
-	"time"
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/router"
+	"time"
 )
 
 // App is the application wide context.
@@ -15,10 +15,10 @@ import (
 // That why App needs to be in the same package "main" as the handlers.
 
 type App struct {
-	db          db.Db
-	router      router.Router
-	cache       cache.Cache
-	config      *Config
+	db     db.Db
+	router router.Router
+	cache  cache.Cache
+	config *Config
 }
 
 // TODO move
@@ -43,7 +43,7 @@ func WithDB(d db.Db) Option {
 	}
 }
 
-// WithRouter sets the router implementation 
+// WithRouter sets the router implementation
 func WithRouter(r router.Router) Option {
 	return func(a *App) {
 		a.router = r

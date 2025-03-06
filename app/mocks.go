@@ -15,7 +15,7 @@ func (m *MockDB) InsertWithPool(value int64) {}
 // MockRouter implements router.Router interface for testing
 type MockRouter struct{}
 
-func (m *MockRouter) Handle(path string, handler http.Handler)          {}
+func (m *MockRouter) Handle(path string, handler http.Handler)                                 {}
 func (m *MockRouter) HandleFunc(path string, handler func(http.ResponseWriter, *http.Request)) {}
-func (m *MockRouter) ServeHTTP(w http.ResponseWriter, r *http.Request)  {}
-func (m *MockRouter) Param(req *http.Request, key string) string       { return "" }
+func (m *MockRouter) ServeHTTP(w http.ResponseWriter, r *http.Request)                         {}
+func (m *MockRouter) Param(req *http.Request, key string) string                               { return "" }

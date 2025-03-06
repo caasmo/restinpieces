@@ -1,9 +1,9 @@
 package crawshaw
 
 import (
-	"github.com/caasmo/restinpieces/db"
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
+	"github.com/caasmo/restinpieces/db"
 )
 
 // Verify interface implementation (non-allocating check)
@@ -39,7 +39,7 @@ func (db *Db) Insert(value int64) {
 }
 
 func (db *Db) InsertWithPool(value int64) {
-    conn := db.pool.Get(nil)
+	conn := db.pool.Get(nil)
 	defer db.pool.Put(conn)
 
 	if err := sqlitex.Exec(conn, "INSERT INTO foo(id, value) values(1000000,?)", nil, any(value)); err != nil {

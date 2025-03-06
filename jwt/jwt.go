@@ -8,7 +8,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-
 var (
 	// ErrTokenExpired is returned when the token has expired
 	ErrTokenExpired = errors.New("token expired")

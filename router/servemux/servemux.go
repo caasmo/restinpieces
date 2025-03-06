@@ -1,8 +1,8 @@
 package servemux
 
 import (
-	"net/http"
 	router "github.com/caasmo/restinpieces/router"
+	"net/http"
 )
 
 // ServeMuxRouter implements router.Router using net/http ServeMux

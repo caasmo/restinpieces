@@ -6,4 +6,3 @@ type Db interface {
 	Insert(value int64)
 	InsertWithPool(value int64)
 }
-

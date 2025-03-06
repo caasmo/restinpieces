@@ -14,7 +14,7 @@ func (a *App) SecurityHeadersMiddleware(next http.Handler) http.Handler {
 		// Precomputed header values as []string for direct map assignment
 		h["Strict-Transport-Security"] = []string{"max-age=63072000; includeSubDomains"}
 		h["Cache-Control"] = []string{"no-store"}
-		h["Pragma"] = []string{"no-cache"} 
+		h["Pragma"] = []string{"no-cache"}
 		h["X-Content-Type-Options"] = []string{"nosniff"}
 		h["X-Frame-Options"] = []string{"DENY"}
 		next.ServeHTTP(w, r)

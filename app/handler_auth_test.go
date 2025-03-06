@@ -39,7 +39,7 @@ func TestRefreshAuthHandler(t *testing.T) {
 				WithDB(&MockDB{}),
 				WithRouter(&MockRouter{}),
 			)
-			
+
 			// Add user ID to context directly since middleware would normally handle this
 			ctx := context.WithValue(req.Context(), UserIDKey, tc.userID)
 			a.RefreshAuthHandler(rr, req.WithContext(ctx))

@@ -21,49 +21,47 @@ const (
 // Precomputed error responses with status codes
 // TODO move to a file errors
 var (
-	errorNoAuthHeader        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
-	errorInvalidTokenFormat  = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
-	errorTokenExpired        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
+	errorNoAuthHeader       = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
+	errorInvalidTokenFormat = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
+	errorTokenExpired       = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
 )
-
 
 // JwtValidate middleware validates the JWT token
 func (a *App) JwtValidate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-	// Extract token from request
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		writeJSONError(w, errorNoAuthHeader)
-		return
-	}
+		// Extract token from request
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			writeJSONError(w, errorNoAuthHeader)
+			return
+		}
 
-	// Check for Bearer prefix
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenString == authHeader {
-		writeJSONError(w, errorInvalidTokenFormat)
-		return
-	}
+		// Check for Bearer prefix
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if tokenString == authHeader {
+			writeJSONError(w, errorInvalidTokenFormat)
+			return
+		}
 
-    // Validate the token
-    claims, err := jwt.Validate(tokenString, a.config.JwtSecret)
-    if err != nil {
-        if errors.Is(err, jwt.ErrTokenExpired) {
-		    writeJSONError(w, errorTokenExpired)
-            return
-        } 
+		// Validate the token
+		claims, err := jwt.Validate(tokenString, a.config.JwtSecret)
+		if err != nil {
+			if errors.Is(err, jwt.ErrTokenExpired) {
+				writeJSONError(w, errorTokenExpired)
+				return
+			}
 
-		writeJSONErrorf(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
-		return
-   }
+			writeJSONErrorf(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
+			return
+		}
 
-    // Store claims in context
-    // TODO do we need this.
-    //ctx := context.WithValue(r.Context(), ClaimsKey, claims)
-    ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
+		// Store claims in context
+		// TODO do we need this.
+		//ctx := context.WithValue(r.Context(), ClaimsKey, claims)
+		ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
 
-    // Call the next handler with the new context
-    next.ServeHTTP(w, r.WithContext(ctx))
-})
+		// Call the next handler with the new context
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
-

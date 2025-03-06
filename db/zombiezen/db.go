@@ -2,11 +2,11 @@ package zombiezen
 
 import (
 	"context"
+	"fmt"
 	"github.com/caasmo/restinpieces/db"
+	"runtime"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
-	"fmt"
-	"runtime"
 )
 
 type Db struct {
@@ -18,7 +18,6 @@ type Db struct {
 // Verify interface implementation (non-allocating check)
 var _ db.Db = (*Db)(nil)
 
-//
 func New(path string) (*Db, error) {
 	poolSize := runtime.NumCPU()
 	initString := fmt.Sprintf("file:%s", path)
