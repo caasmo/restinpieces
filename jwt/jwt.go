@@ -17,6 +17,8 @@ var (
 	ErrInvalidToken = errors.New("invalid token")
 	// ErrInvalidSigningMethod is returned when the signing method is not HMAC
 	ErrInvalidSigningMethod = errors.New("unexpected signing method")
+	// ErrEmptySecret is returned when no secret is provided
+	ErrEmptySecret = errors.New("empty secret")
 )
 
 // Claims extends standard JWT claims with custom fields
