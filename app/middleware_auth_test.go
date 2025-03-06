@@ -58,7 +58,7 @@ func TestJwtValidateMiddleware(t *testing.T) {
 			rr := httptest.NewRecorder()
 			a, _ := New(
 				WithConfig(&Config{
-					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"),
+					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
 					TokenDuration: 15 * time.Minute,
 				}),
 				WithDB(&MockDB{}),
@@ -97,7 +97,7 @@ func TestJwtValidateMiddleware(t *testing.T) {
 
 func generateTestToken(t *testing.T, userID string) string {
 	t.Helper()
-	token, _, err := jwt.Create(userID, []byte("test_secret"), 15*time.Minute)
+	token, _, err := jwt.Create(userID, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate test token: %v", err)
 	}
@@ -106,7 +106,7 @@ func generateTestToken(t *testing.T, userID string) string {
 
 func generateExpiredTestToken(t *testing.T, userID string) string {
 	t.Helper()
-	token, _, err := jwt.Create(userID, []byte("test_secret"), -30*time.Minute) // Negative duration for expired token
+	token, _, err := jwt.Create(userID, []byte("test_secret_32_bytes_long_xxxxxx"), -30*time.Minute) // Negative duration for expired token
 	if err != nil {
 		t.Fatalf("failed to generate expired test token: %v", err)
 	}
