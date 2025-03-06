@@ -1,6 +1,9 @@
 package app
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -8,6 +11,7 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/jwt"
+	jwtv5 "github.com/golang-jwt/jwt/v5"
 )
 
 func TestJwtValidateMiddleware(t *testing.T) {
@@ -120,7 +124,7 @@ func generateExpiredTestToken(t *testing.T, userID string) string {
 func generateInvalidSigningToken(t *testing.T, userID string) string {
 	t.Helper()
 	// Create token with invalid signing method (ES256 instead of HMAC)
-	token := jwtv5.NewWithClaims(jwtv5.SigningMethodES256, jwtv5.RegisteredClaims{
+	token := jwtv5.NewWithClaims(jwtv5.SigningMethodES256, &jwtv5.RegisteredClaims{
 		Subject:   userID,
 		ExpiresAt: jwtv5.NewNumericDate(time.Now().Add(15 * time.Minute)),
 	})
