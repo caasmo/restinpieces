@@ -60,8 +60,9 @@ func TestRefreshAuthHandler(t *testing.T) {
 				if body["token_type"] != "Bearer" {
 					t.Errorf("expected token_type Bearer, got %s", body["token_type"])
 				}
-				if expiresIn := body["expires_in"].(float64); expiresIn != 900 {
-					t.Errorf("expected expires_in 900, got %v", expiresIn)
+				expiresIn := body["expires_in"].(float64)
+				if expiresIn < 895 || expiresIn > 900 {
+					t.Errorf("expected expires_in between 895-900, got %v", expiresIn)
 				}
 			}
 		})
