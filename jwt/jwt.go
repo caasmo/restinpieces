@@ -31,19 +31,23 @@ type Claims struct {
 func Parse(tokenString string, secret []byte) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-            // the returned error is not passed to the parse err!!
+            // TODO the returned error is not passed to the parse err!!
 			return nil, ErrInvalidSigningMethod
 		}
 		return secret, nil
 	})
 
 	if err != nil {
+
+        // Common errors
         if errors.Is(err, jwt.ErrTokenExpired) {
 		    return nil, ErrTokenExpired
         }
 
+        // error from jwt package is 
+        //  >token is unverifiable: error while executing keyfunc: unexpected signing method"
         if errors.Is(err, jwt.ErrTokenUnverifiable) {
-		    return nil, ErrInvalidSigningMethod
+            return nil, ErrInvalidSigningMethod
         }
         
 		return nil, fmt.Errorf("%w: %w", ErrInvalidToken, err)
