@@ -17,8 +17,8 @@ var (
 	ErrInvalidToken = errors.New("invalid token")
 	// ErrInvalidSigningMethod is returned when the signing method is not HMAC
 	ErrInvalidSigningMethod = errors.New("unexpected signing method")
-	// ErrEmptySecret is returned when no secret is provided
-	ErrEmptySecret = errors.New("empty secret")
+	// ErrBadSecretLength is returned for invalid secret lengths
+	ErrBadSecretLength = errors.New("invalid secret length")
 )
 
 // Claims extends standard JWT claims with custom fields
@@ -62,13 +62,8 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
 
 // Create generates a new JWT token
 func Create(userID string, secret []byte, tokenDuration time.Duration) (string, time.Time, error) {
-	if len(secret) == 0 {
-		return "", time.Time{}, ErrEmptySecret
-	}
-	
-	// Require minimum secret length for HMAC-SHA256 (32 bytes)
-	if len(secret) < 32 {
-		return "", time.Time{}, fmt.Errorf("secret too weak: %w", fmt.Errorf("HMAC-SHA256 requires at least 32 bytes, got %d", len(secret)))
+	if len(secret) == 0 || len(secret) < 32 {
+		return "", time.Time{}, fmt.Errorf("%w: HMAC-SHA256 requires at least 32 bytes, got %d", ErrBadSecretLength, len(secret))
 	}
 
 	expirationTime := time.Now().Add(tokenDuration)
