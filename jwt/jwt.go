@@ -39,8 +39,13 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
         if errors.Is(err, jwt.ErrTokenUnverifiable) {
 		    return nil, ErrInvalidSigningMethod
         }
+        
+        var validationErr *jwt.ValidationError
+        if errors.As(err, &validationErr) {
+            return nil, ErrInvalidToken
+        }
 
-		return nil, fmt.Errorf("failed to parse token: %w", err)
+		return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
 	}
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
