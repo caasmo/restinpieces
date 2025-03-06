@@ -41,7 +41,7 @@ func TestRefreshAuthHandler(t *testing.T) {
 			)
 			
 			// Add user ID to context directly since middleware would normally handle this
-			ctx := context.WithValue(req.Context(), app.UserIDKey, tc.userID)
+			ctx := context.WithValue(req.Context(), UserIDKey, tc.userID)
 			a.RefreshAuthHandler(rr, req.WithContext(ctx))
 
 			if rr.Code != tc.wantStatus {
