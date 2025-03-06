@@ -79,7 +79,7 @@ func TestCreateWithInvalidSecret(t *testing.T) {
 }
 
 func TestRefreshToken(t *testing.T) {
-	secret := []byte("test_secret")
+	secret := []byte("test_secret_32_bytes_long_xxxxxx")
 	userID := "testuser456"
 	tokenDuration := 15 * time.Minute
 
@@ -121,7 +121,7 @@ func generateValidToken(t *testing.T) string {
 
 func generateExpiredToken(t *testing.T) string {
 	t.Helper()
-	token, _, err := Create("testuser", []byte("test_secret"), -15*time.Minute)
+	token, _, err := Create("testuser", []byte("test_secret_32_bytes_long_xxxxxx"), -15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate expired token: %v", err)
 	}
