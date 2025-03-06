@@ -58,7 +58,7 @@ func TestJwtValidateMiddleware(t *testing.T) {
 			rr := httptest.NewRecorder()
 			a, _ := New(
 				WithConfig(&Config{
-					JwtSecret:     []byte("test_secret"),
+					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"),
 					TokenDuration: 15 * time.Minute,
 				}),
 				WithDB(&MockDB{}),

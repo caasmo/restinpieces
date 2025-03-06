@@ -9,7 +9,7 @@ import (
 )
 
 func TestCreateAndParseValidToken(t *testing.T) {
-	secret := []byte("test_secret")
+	secret := []byte("test_secret_32_bytes_long_xxxxxx")
 	userID := "testuser123"
 	tokenDuration := 15 * time.Minute
 
