@@ -1,13 +1,11 @@
 package app
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/caasmo/restinpieces/jwt"
 )
 
 
@@ -33,97 +31,39 @@ var (
 
 // Precomputed error responses with status codes
 var (
-	errorUnauthorized        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
-	errorInvalidFormat       = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
-	errorTokenExpired        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
 	errorTokenGeneration     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
 )
 
 
-// Custom claims structure to include standard and custom fields
-type Claims struct {
-	UserID string `json:"user_id"`
-	jwt.RegisteredClaims
-}
 
-// RefreshAuthHandler handles JWT refresh requests
+// RefreshAuthHandler handles explicit token refresh requests
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
-	// Extract and validate Authorization header
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		writeJSONError(w, errorUnauthorized)
+	// Get claims from context (added by JwtValidate middleware)
+	userId, ok := r.Context().Value(UserIDKey).(string)
+	if !ok {
+		writeJSONError(w, errorTokenGeneration)
 		return
 	}
 
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenString == authHeader { // No Bearer prefix found
-		writeJSONError(w, errorInvalidFormat)
-		return
-	}
-
-	// Parse and validate token
-	claims, err := parseToken(tokenString)
-	if err != nil {
-		writeJSONErrorf(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
-		return
-	}
-
-	// Check token expiration
-	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
-		writeJSONError(w, errorTokenExpired)
-		return
-	}
-
-	// Generate new token with extended expiration
-	newToken, err := createToken(claims.UserID)
+	// Generate new token
+	newToken, expiry, err := jwt.Refresh(userId, a.Config.JwtSecret, a.Config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
 	}
 
+	// Calculate seconds until expiry
+	expiresIn := int(time.Until(expiry).Seconds())
+
 	// Return new token in response following OAuth2 token exchange format
 	w.Header()["Content-Type"] = jsonHeader
-	
+
 	// Standard OAuth2 token response format
 	fmt.Fprintf(w, `{
 		"token_type": "Bearer",
-		"expires_in": 21600,
+		"expires_in": %d,
 		"access_token": "%s"
-	}`, newToken)
-}
+	}`, expiresIn, newToken)
 
-// parseToken validates and parses JWT claims
-func parseToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return jwtSecret, nil
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
-		return claims, nil
-	}
-
-	return nil, errors.New("invalid token claims")
-}
-
-// createToken generates a new JWT with 6-hour expiration
-func createToken(userID string) (string, error) {
-	expirationTime := time.Now().Add(6 * time.Hour)
-	claims := &Claims{
-		UserID: userID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
 }
 
