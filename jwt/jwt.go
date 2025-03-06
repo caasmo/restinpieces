@@ -40,7 +40,7 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
 		    return nil, ErrInvalidSigningMethod
         }
         
-		return nil, fmt.Errorf("%w: %v", ErrInvalidToken, err)
+		return nil, fmt.Errorf("%w: %w", ErrInvalidToken, err)
 	}
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
