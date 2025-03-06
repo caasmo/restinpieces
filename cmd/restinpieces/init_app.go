@@ -47,7 +47,7 @@ func WithCacheRistretto() app.Option {
 func initApp() (*app.App, error) {
 
 	// Create default config
-	cfg := app.Config{
+	cfg := &app.Config{
 		JwtSecret:     []byte("the_jwt_secret"), // Get secret from environment
 		TokenDuration: 15 * time.Minute,               // 15 minute token duration
 	}

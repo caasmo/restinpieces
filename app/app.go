@@ -18,7 +18,7 @@ type App struct {
 	db          db.Db
 	router      router.Router
 	cache       cache.Cache
-	config      Config
+	config      *Config
 }
 
 // TODO move
@@ -51,7 +51,7 @@ func WithRouter(r router.Router) Option {
 }
 
 // WithConfig sets the application configuration
-func WithConfig(cfg Config) Option {
+func WithConfig(cfg *Config) Option {
 	return func(a *App) {
 		a.config = cfg
 	}
@@ -69,7 +69,7 @@ func New(opts ...Option) (*App, error) {
 	if a.router == nil {
 		return nil, fmt.Errorf("router is required but was not provided")
 	}
-	if a.config == (Config{}) {
+	if a.config == nil {
 		return nil, fmt.Errorf("config is required but was not provided")
 	}
 
