@@ -51,14 +51,13 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 				writeJSONError(w, errorTokenExpired)
 				return
 			}
+            // TODO sign algo?
 
 			writeJSONErrorf(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
 			return
 		}
 
 		// Store claims in context
-		// TODO do we need this.
-		//ctx := context.WithValue(r.Context(), ClaimsKey, claims)
 		ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
 
 		// Call the next handler with the new context

@@ -104,7 +104,7 @@ func generateTestToken(t *testing.T, userID string) string {
 
 func generateExpiredTestToken(t *testing.T, userID string) string {
 	t.Helper()
-	token, _, err := jwt.Create(userID, []byte("test_secret"), -15*time.Minute) // Negative duration for expired token
+	token, _, err := jwt.Create(userID, []byte("test_secret"), -30*time.Minute) // Negative duration for expired token
 	if err != nil {
 		t.Fatalf("failed to generate expired test token: %v", err)
 	}

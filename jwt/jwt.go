@@ -33,6 +33,10 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
 	})
 
 	if err != nil {
+        if errors.Is(err, jwt.ErrTokenExpired) {
+		    return nil, ErrTokenExpired
+        }
+
 		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}
 
@@ -68,11 +72,6 @@ func Validate(tokenString string, secret []byte) (*Claims, error) {
 	claims, err := Parse(tokenString, secret)
 	if err != nil {
 		return nil, err
-	}
-
-	// Check if token is expired
-	if claims.ExpiresAt != nil && claims.ExpiresAt.Before(time.Now()) {
-		return nil, ErrTokenExpired
 	}
 
 	return claims, nil
