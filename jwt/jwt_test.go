@@ -112,7 +112,7 @@ func TestRefreshToken(t *testing.T) {
 
 func generateValidToken(t *testing.T) string {
 	t.Helper()
-	token, _, err := Create("testuser", []byte("test_secret"), 15*time.Minute)
+	token, _, err := Create("testuser", []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate valid token: %v", err)
 	}
