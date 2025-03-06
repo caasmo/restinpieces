@@ -44,11 +44,9 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
 		    return nil, ErrTokenExpired
         }
 
-        // error from jwt package is 
-        //  >token is unverifiable: error while executing keyfunc: unexpected signing method"
-        if errors.Is(err, jwt.ErrTokenUnverifiable) {
-            return nil, ErrInvalidSigningMethod
-        }
+		if errors.Is(err, ErrInvalidSigningMethod) {
+			return nil, ErrInvalidSigningMethod
+		}
         
 		return nil, fmt.Errorf("%w: %w", ErrInvalidToken, err)
 	}
