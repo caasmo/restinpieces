@@ -1,4 +1,4 @@
-package app_test
+package app
 
 import (
 	"context"
@@ -7,22 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
-
-	"github.com/caasmo/restinpieces/app"
 )
-
-func testApp() *app.App {
-	a, _ := app.New(
-		app.WithConfig(&app.Config{
-			JwtSecret:     []byte("test_secret"),
-			TokenDuration: 15 * time.Minute,
-		}),
-		// Add minimal required dependencies that satisfy interfaces
-		app.WithDB(&MockDB{}),
-		app.WithRouter(&MockRouter{}),
-	)
-	return a
-}
 
 func TestRefreshAuthHandler(t *testing.T) {
 	testCases := []struct {
@@ -46,7 +31,14 @@ func TestRefreshAuthHandler(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			req := httptest.NewRequest("POST", "/auth-refresh", nil)
 			rr := httptest.NewRecorder()
-			a := testApp()
+			a, _ := New(
+				WithConfig(&Config{
+					JwtSecret:     []byte("test_secret"),
+					TokenDuration: 15 * time.Minute,
+				}),
+				WithDB(&MockDB{}),
+				WithRouter(&MockRouter{}),
+			)
 			
 			// Add user ID to context directly since middleware would normally handle this
 			ctx := context.WithValue(req.Context(), app.UserIDKey, tc.userID)
