@@ -8,6 +8,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// todo remove refresh and validate/create are wrappers
+
 var (
 	// ErrTokenExpired is returned when the token has expired
 	ErrTokenExpired = errors.New("token expired")
@@ -27,6 +29,7 @@ type Claims struct {
 func Parse(tokenString string, secret []byte) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+            // the returned error is not passed to the parse err!!
 			return nil, ErrInvalidSigningMethod
 		}
 		return secret, nil
@@ -36,6 +39,7 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
         if errors.Is(err, jwt.ErrTokenExpired) {
 		    return nil, ErrTokenExpired
         }
+
         if errors.Is(err, jwt.ErrTokenUnverifiable) {
 		    return nil, ErrInvalidSigningMethod
         }
