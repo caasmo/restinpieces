@@ -69,8 +69,8 @@ func New(opts ...Option) (*App, error) {
 	if a.router == nil {
 		return nil, fmt.Errorf("router is required but was not provided")
 	}
-	if a.config.JwtSecret == nil || a.config.TokenDuration == 0 {
-		return nil, fmt.Errorf("config with JwtSecret and TokenDuration is required but was not provided")
+	if a.config == (Config{}) {
+		return nil, fmt.Errorf("config is required but was not provided")
 	}
 
 	return a, nil
