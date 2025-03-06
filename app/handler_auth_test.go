@@ -1,7 +1,7 @@
 package app_test
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -9,16 +9,16 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/app"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func testApp() *app.App {
-	return &app.App{
-		config: &app.Config{
+	a, _ := app.New(
+		app.WithConfig(&app.Config{
 			JwtSecret:     []byte("test_secret"),
 			TokenDuration: 15 * time.Minute,
-		},
-	}
+		}),
+	)
+	return a
 }
 
 func TestRefreshAuthHandler(t *testing.T) {
