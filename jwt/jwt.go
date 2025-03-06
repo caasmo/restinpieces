@@ -31,6 +31,7 @@ type Claims struct {
 func Parse(tokenString string, secret []byte) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+            // jwt package wraps this error with jwt.ErrTokenUnverifiable 
 			return nil, ErrInvalidSigningMethod
 		}
 		return secret, nil
@@ -43,9 +44,10 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
 		    return nil, ErrTokenExpired
         }
 
-		if errors.Is(err, ErrInvalidSigningMethod) {
-			return nil, ErrInvalidSigningMethod
-		}
+        // we need to check here with Is instead of == because error wrapped. 
+        if errors.Is(err, ErrInvalidSigningMethod) {
+            return nil, ErrInvalidSigningMethod
+        }
         
 		return nil, fmt.Errorf("%w: %w", ErrInvalidToken, err)
 	}
