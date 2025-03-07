@@ -9,9 +9,6 @@ import (
 	"time"
 )
 
-// Verify interface implementation (non-allocating check)
-var _ db.Db = (*Db)(nil)
-
 func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)

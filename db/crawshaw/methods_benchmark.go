@@ -6,9 +6,6 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-// Verify interface implementation (non-allocating check)
-var _ db.Db = (*Db)(nil)
-
 func (d *Db) Close() {
 	d.pool.Close()
 }

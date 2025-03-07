@@ -13,6 +13,9 @@ type Db struct {
 	rwCh chan *sqlite.Conn
 }
 
+// Verify interface implementation (non-allocating check)
+var _ db.Db = (*Db)(nil)
+
 func New(path string) (*Db, error) {
 	poolSize := runtime.NumCPU()
 	initString := fmt.Sprintf("file:%s", path)
