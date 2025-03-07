@@ -22,8 +22,8 @@ const (
 var (
 	errorNoAuthHeader           = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
 	errorInvalidTokenFormat     = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
-	errorTokenInvalidSignMethod = jsonError{http.StatusUnauthorized, []byte(`{"error":"unexpected signing method"}`)}
-	errorTokenExpired           = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
+	errorJwtInvalidSignMethod   = jsonError{http.StatusUnauthorized, []byte(`{"error":"unexpected signing method"}`)}
+	errorJwtTokenExpired        = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
 )
 
 // JwtValidate middleware validates the JWT token
