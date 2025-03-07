@@ -9,11 +9,16 @@ import (
 	"time"
 )
 
+// GetUserByEmail retrieves a user by email address.
+// Returns:
+// - *db.User: User record if found, nil if no matching record exists
+// - error: Only returned for database errors, nil on successful query (even if no results)
+// Note: A nil user with nil error indicates no matching record was found
 func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
-	var user *db.User
+	var user *db.User  // Will remain nil if no rows found
 	err := sqlitex.Exec(conn, 
 		`SELECT id, email, name, password, created, updated, verified, tokenKey 
 		FROM users WHERE email = ? LIMIT 1`,
