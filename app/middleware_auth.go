@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -48,12 +47,12 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		claims, err := jwt.Parse(tokenString, a.config.JwtSecret)
 		if err != nil {
 			// some common errors
-			if errors.Is(err, jwt.ErrTokenExpired) {
+		    if err == jwt.ErrTokenExpired {
 				writeJSONError(w, errorTokenExpired)
 				return
 			}
 
-			if errors.Is(err, jwt.ErrInvalidSigningMethod) {
+		    if err == jwt.ErrInvalidSigningMethod{
 				writeJSONError(w, errorTokenInvalidSignMethod)
 				return
 			}
