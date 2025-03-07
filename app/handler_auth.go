@@ -1,7 +1,5 @@
 package app
 
-const UserIDKey = "userID"
-
 import (
 	"encoding/json"
 	"fmt"
@@ -12,6 +10,8 @@ import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 )
+
+const UserIDKey = "userID"
 
 //	export JWT_SECRET=$(openssl rand -base64 32)
 //
