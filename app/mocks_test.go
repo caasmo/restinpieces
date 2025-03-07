@@ -11,6 +11,16 @@ func (m *MockDB) Close()                     {}
 func (m *MockDB) GetById(id int64) int       { return 0 }
 func (m *MockDB) Insert(value int64)         {}
 func (m *MockDB) InsertWithPool(value int64) {}
+func (m *MockDB) CreateUser(email, hashedPassword, name string) (*db.User, error) {
+	return &db.User{
+		ID:        "mock-user",
+		Email:     email,
+		Name:      name,
+		Password:  hashedPassword,
+		Created:   time.Now().UTC().Format(time.RFC3339),
+		Updated:   time.Now().UTC().Format(time.RFC3339),
+	}, nil
+}
 
 // MockRouter implements router.Router interface for testing
 type MockRouter struct{}
