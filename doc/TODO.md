@@ -1,6 +1,6 @@
 ### TODOs
 
-- auth refresh: server send AUthorization header.
+- code review jwt tests
 - zombiezen, impl pool with timeout, split in files. 
 - zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
 - httprouter params to servemux $ 
