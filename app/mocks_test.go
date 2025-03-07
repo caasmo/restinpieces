@@ -2,6 +2,9 @@ package app
 
 import (
 	"net/http"
+	"time"
+	
+	"github.com/caasmo/restinpieces/db"
 )
 
 // MockDB implements db.Db interface for testing
@@ -17,8 +20,8 @@ func (m *MockDB) CreateUser(email, hashedPassword, name string) (*db.User, error
 		Email:     email,
 		Name:      name,
 		Password:  hashedPassword,
-		Created:   time.Now().UTC().Format(time.RFC3339),
-		Updated:   time.Now().UTC().Format(time.RFC3339),
+		Created:   "2024-01-01T00:00:00Z",
+		Updated:   "2024-01-01T00:00:00Z",
 	}, nil
 }
 
