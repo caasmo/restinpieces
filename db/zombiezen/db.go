@@ -91,6 +91,11 @@ func (db *Db) GetUserByEmail(email string) (string, string, error) {
 	return "", "", fmt.Errorf("not implemented for zombiezen SQLite variant")
 }
 
+// CreateUser TODO: Implement for zombiezen SQLite variant
+func (db *Db) CreateUser(email, hashedPassword, name string) (string, error) {
+	return "", fmt.Errorf("not implemented for zombiezen SQLite variant")
+}
+
 func (db *Db) InsertWithPool(value int64) {
 	conn, err := db.pool.Take(context.TODO())
 	if err != nil {

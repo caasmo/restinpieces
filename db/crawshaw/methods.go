@@ -62,3 +62,19 @@ func (db *Db) InsertWithPool(value int64) {
 		panic(err)
 	}
 }
+
+func (db *Db) CreateUser(email, hashedPassword, name string) (string, error) {
+	conn := db.pool.Get(nil)
+	defer db.pool.Put(conn)
+	
+	var userID string
+	err := sqlitex.Exec(conn, 
+		`INSERT INTO users (email, password, name) VALUES (?, ?, ?)
+		 RETURNING id`,
+		func(stmt *sqlite.Stmt) error {
+			userID = stmt.GetText("id")
+			return nil
+		}, email, hashedPassword, name)
+
+	return userID, err
+}
