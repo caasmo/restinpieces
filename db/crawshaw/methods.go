@@ -3,6 +3,8 @@ package crawshaw
 import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
+	"fmt"
+	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"time"
 )
@@ -19,7 +21,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	defer d.pool.Put(conn)
 
 	var user db.User
-	err := sqlitex.Exec(conn, 
+	err = sqlitex.Exec(conn, 
 		`SELECT id, email, name, password, created, updated, verified, token_key 
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
