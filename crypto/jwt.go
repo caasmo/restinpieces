@@ -27,8 +27,8 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// Parse validates and parses JWT claims
-func Parse(tokenString string, secret []byte) (*Claims, error) {
+// ParseJwt validates and parses JWT claims
+func ParseJwt(tokenString string, secret []byte) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidSigningMethod
@@ -52,8 +52,8 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
 	return nil, ErrInvalidToken
 }
 
-// Create generates a new JWT token
-func Create(userID string, secret []byte, tokenDuration time.Duration) (string, time.Time, error) {
+// CreateJwt generates a new JWT token
+func CreateJwt(userID string, secret []byte, tokenDuration time.Duration) (string, time.Time, error) {
 	if len(secret) < 32 {
 		return "", time.Time{}, ErrInvalidSecretLength
 	}

@@ -45,7 +45,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate new token with fresh expiration
-	newToken, expiry, err := crypto.Create(userId, a.config.JwtSecret, a.config.TokenDuration)
+	newToken, expiry, err := crypto.CreateJwt(userId, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
@@ -104,7 +104,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT token
-	token, _, err := crypto.Create(user.ID, a.config.JwtSecret, a.config.TokenDuration)
+	token, _, err := crypto.CreateJwt(user.ID, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
