@@ -46,16 +46,16 @@ func New(path string) (*Db, error) {
 	return &Db{pool: p, rwCh: ch}, nil
 }
 
-func (db *Db) Close() {
-	db.pool.Close()
+func (d *Db) Close() {
+	d.pool.Close()
 }
 
-func (db *Db) GetById(id int64) int {
-	conn, err := db.pool.Take(context.TODO())
+func (d *Db) GetById(id int64) int {
+	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
 		panic(err) // TODO: Proper error handling
 	}
-	defer db.pool.Put(conn)
+	defer d.pool.Put(conn)
 
 	var value int
 	fn := func(stmt *sqlite.Stmt) error {
@@ -75,9 +75,9 @@ func (db *Db) GetById(id int64) int {
 	return value
 }
 
-func (db *Db) Insert(value int64) {
-	rwConn := <-db.rwCh
-	defer func() { db.rwCh <- rwConn }()
+func (d *Db) Insert(value int64) {
+	rwConn := <-d.rwCh
+	defer func() { d.rwCh <- rwConn }()
 
 	if err := sqlitex.Execute(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", &sqlitex.ExecOptions{
 		Args: []any{value},
@@ -88,7 +88,7 @@ func (db *Db) Insert(value int64) {
 }
 
 // GetUserByEmail TODO: Implement for zombiezen SQLite variant
-func (db *Db) GetUserByEmail(email string) (string, string, error) {
+func (d *Db) GetUserByEmail(email string) (string, string, error) {
 	return "", "", fmt.Errorf("not implemented for zombiezen SQLite variant")
 }
 
@@ -109,12 +109,12 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 	}, fmt.Errorf("not implemented for zombiezen SQLite variant")
 }
 
-func (db *Db) InsertWithPool(value int64) {
-	conn, err := db.pool.Take(context.TODO())
+func (d *Db) InsertWithPool(value int64) {
+	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
 		panic(err) // TODO: Proper error handling
 	}
-	defer db.pool.Put(conn)
+	defer d.pool.Put(conn)
 
 	if err := sqlitex.Execute(conn, "INSERT INTO foo(id, value) values(1000000,?)", &sqlitex.ExecOptions{
 		Args: []any{value},
