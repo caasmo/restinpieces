@@ -11,7 +11,7 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-func createTestDB(t *testing.T) (*Db, func()) {
+func createTestDB(t *testing.T) *Db {
 	t.Helper()
 	
     // Using a named in-memory database with the URI format
@@ -54,14 +54,12 @@ func createTestDB(t *testing.T) (*Db, func()) {
 	return &Db{
 		pool: pool,
 		rwCh: make(chan *sqlite.Conn, 1),
-	}, func() {
-		pool.Close()
 	}
 }
 
 func TestGetUserByEmail(t *testing.T) {
-	testDB, cleanup := createTestDB(t)
-	defer cleanup()
+	testDB := createTestDB(t)
+	defer testDB.Close()
 	
 	tests := []struct {
 		name        string
@@ -125,8 +123,8 @@ func TestGetUserByEmail(t *testing.T) {
 }
 
 func TestCreateUser(t *testing.T) {
-	testDB, cleanup := createTestDB(t)
-	defer cleanup()
+	testDB := createTestDB(t)
+	defer testDB.Close()
 	
 	tests := []struct {
 		name        string
