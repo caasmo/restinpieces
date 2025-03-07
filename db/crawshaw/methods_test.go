@@ -24,17 +24,23 @@ func createTestDB(t *testing.T) *Db {
 	
 	err = sqlitex.ExecScript(conn, `
 		CREATE TABLE users (
-			id TEXT PRIMARY KEY,
-			email TEXT UNIQUE NOT NULL,
-			name TEXT NOT NULL,
-			password TEXT NOT NULL,
-			created TEXT NOT NULL,
-			updated TEXT NOT NULL,
-			verified BOOLEAN NOT NULL DEFAULT FALSE,
-			token_key TEXT
+			avatar TEXT DEFAULT '' NOT NULL,
+			created TEXT DEFAULT '' NOT NULL,
+			email TEXT DEFAULT '' NOT NULL,
+			emailVisibility BOOLEAN DEFAULT FALSE NOT NULL,
+			id TEXT PRIMARY KEY DEFAULT ('r'||lower(hex(randomblob(7)))) NOT NULL,
+			name TEXT DEFAULT '' NOT NULL,
+			password TEXT DEFAULT '' NOT NULL,
+			tokenKey TEXT DEFAULT '' NOT NULL,
+			updated TEXT DEFAULT '' NOT NULL,
+			verified BOOLEAN DEFAULT FALSE NOT NULL
 		);
-		INSERT INTO users (id, email, name, password, created, updated)
-		VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z');
+		
+		CREATE UNIQUE INDEX idx_tokenKey__pb_users_auth_ ON users(tokenKey);
+		CREATE UNIQUE INDEX idx_email__pb_users_auth_ ON users(email) WHERE email != '';
+		
+		INSERT INTO users (id, email, name, password, created, updated, verified)
+		VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE);
 	`)
 	if err != nil {
 		t.Fatalf("failed to create test schema: %v", err)
