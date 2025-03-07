@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/caasmo/restinpieces/jwt"
+	"github.com/caasmo/restinpieces/crypto"
 )
 
 // contextKey is a type for context keys
@@ -44,7 +44,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		}
 
 		// Parse and validate the token
-		claims, err := jwt.Parse(tokenString, a.config.JwtSecret)
+		claims, err := crypto.Parse(tokenString, a.config.JwtSecret)
 		if err != nil {
 			// some common errors
 		    if err == jwt.ErrTokenExpired {

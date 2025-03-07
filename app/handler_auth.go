@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/crypto"
-	"github.com/caasmo/restinpieces/jwt"
+	"github.com/caasmo/restinpieces/crypto"
 )
 
 //	export JWT_SECRET=$(openssl rand -base64 32)
@@ -105,7 +105,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT token
-	token, _, err := jwt.Create(user.ID, a.config.JwtSecret, a.config.TokenDuration)
+	token, _, err := crypto.Create(user.ID, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
