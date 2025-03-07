@@ -12,10 +12,6 @@ import (
 // Verify interface implementation (non-allocating check)
 var _ db.Db = (*Db)(nil)
 
-func (d *Db) Close() {
-	d.pool.Close()
-}
-
 func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
@@ -44,39 +40,6 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	return &user, nil
 }
 
-func (d *Db) GetById(id int64) int {
-	conn := d.pool.Get(nil)
-	defer d.pool.Put(conn)
-
-	var value int
-	fn := func(stmt *sqlite.Stmt) error {
-		value = int(stmt.GetInt64("value"))
-		return nil
-	}
-
-	if err := sqlitex.Exec(conn, "select value from foo where rowid = ? limit 1", fn, any(id)); err != nil {
-		panic(err)
-	}
-	return value
-}
-
-func (d *Db) Insert(value int64) {
-	rwConn := <-d.rwCh
-	defer func() { d.rwCh <- rwConn }()
-
-	if err := sqlitex.Exec(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", nil, any(value)); err != nil {
-		panic(err)
-	}
-}
-
-func (d *Db) InsertWithPool(value int64) {
-	conn := d.pool.Get(nil)
-	defer d.pool.Put(conn)
-
-	if err := sqlitex.Exec(conn, "INSERT INTO foo(id, value) values(1000000,?)", nil, any(value)); err != nil {
-		panic(err)
-	}
-}
 
 // CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
 // The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
