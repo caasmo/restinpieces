@@ -112,7 +112,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT token
-	token, _, err := jwt.Create(userID, a.config.JwtSecret, a.config.TokenDuration)
+	token, _, err := jwt.Create(user.ID, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
