@@ -4,6 +4,7 @@ import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 	"github.com/caasmo/restinpieces/db"
+	"time"
 )
 
 // Verify interface implementation (non-allocating check)
@@ -68,22 +69,26 @@ func (db *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 	defer db.pool.Put(conn)
 	
 	var user db.User
+	// Generate timestamps before insert
+	now := time.Now().UTC().Format(time.RFC3339)
+	
 	err := sqlitex.Exec(conn, 
-		`INSERT INTO users (email, password, name) VALUES (?, ?, ?)
-		 RETURNING id, email, name, password, created, updated, verified, token_key`,
+		`INSERT INTO users (email, password, name, created, updated) 
+		VALUES (?, ?, ?, ?, ?)
+		RETURNING id, email, name, password, created, updated, verified, token_key`,
 		func(stmt *sqlite.Stmt) error {
 			user = db.User{
 				ID:        stmt.GetText("id"),
 				Email:     stmt.GetText("email"),
 				Name:      stmt.GetText("name"),
 				Password:  stmt.GetText("password"),
-				Created:   stmt.GetText("created"),
-				Updated:   stmt.GetText("updated"),
+				Created:   stmt.GetText("created"),   // Will match our inserted RFC3339 value
+				Updated:   stmt.GetText("updated"),   // Will match our inserted RFC3339 value
 				Verified:  stmt.GetBool("verified"),
 				TokenKey:  stmt.GetText("token_key"),
 			}
 			return nil
-		}, email, hashedPassword, name)
+		}, email, hashedPassword, name, now, now)
 
 	return &user, err
 }

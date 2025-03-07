@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
 	"runtime"
+	"time"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
@@ -99,8 +100,8 @@ func (db *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 		Email:     email,
 		Name:      name,
 		Password:  hashedPassword,
-		Created:   time.Now().Format(time.RFC3339),
-		Updated:   time.Now().Format(time.RFC3339),
+		Created:   time.Now().UTC().Format(time.RFC3339),
+		Updated:   time.Now().UTC().Format(time.RFC3339),
 		Verified:  false,
 		TokenKey:  "temp-token-key",
 	}, fmt.Errorf("not implemented for zombiezen SQLite variant")
