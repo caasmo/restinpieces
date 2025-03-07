@@ -40,7 +40,12 @@ func createTestDB(t *testing.T) *crawshaw.Db {
 		t.Fatalf("failed to create test schema: %v", err)
 	}
 	
-	return &crawshaw.Db{pool: pool}
+	// Use proper constructor instead of accessing unexported field
+	db, err := crawshaw.New("file:testdb?mode=memory&cache=shared")
+	if err != nil {
+		t.Fatalf("failed to create test database: %v", err)
+	}
+	return db
 }
 
 func TestGetUserByEmail(t *testing.T) {
@@ -100,8 +105,6 @@ func TestGetUserByEmail(t *testing.T) {
 
 func TestCreateUser(t *testing.T) {
 	testDB := createTestDB(t)
-	
-	now := time.Now().UTC().Format(time.RFC3339)
 	
 	tests := []struct {
 		name        string
