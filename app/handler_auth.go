@@ -113,8 +113,52 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 // checkPasswordHash verifies Argon2id hashed password using constant-time comparison
 func checkPasswordHash(password, hash string) bool {
-	// TODO: Implement Argon2id hash verification
-	// This should be replaced with actual hash verification logic
-	// using golang.org/x/crypto/argon2 package
-	return password == "devpassword" // Temporary development override
+	// Decode stored hash
+	p, salt, storedHash, err := decodeHash(hash)
+	if err != nil {
+		return false
+	}
+
+	// Generate hash with same parameters
+	generatedHash := argon2.IDKey([]byte(password), salt, p.iterations, p.memory, p.parallelism, p.keyLength)
+
+	// Constant-time comparison
+	return bytes.Equal(storedHash, generatedHash)
+}
+
+// argon2Params represents the parameters used for Argon2id hashing
+type argon2Params struct {
+	memory      uint32
+	iterations  uint32
+	parallelism uint8
+	saltLength  uint32
+	keyLength   uint32
+}
+
+func decodeHash(encodedHash string) (*argon2Params, []byte, []byte, error) {
+	// Hash format: $argon2id$v=19$m=65536,t=3,p=4$salt$hash
+	vals := strings.Split(encodedHash, "$")
+	if len(vals) != 6 || vals[1] != "argon2id" || vals[2] != "v=19" {
+		return nil, nil, nil, fmt.Errorf("invalid hash format")
+	}
+
+	var p argon2Params
+	_, err := fmt.Sscanf(vals[3], "m=%d,t=%d,p=%d", &p.memory, &p.iterations, &p.parallelism)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	salt, err := base64.RawStdEncoding.DecodeString(vals[4])
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	p.saltLength = uint32(len(salt))
+
+	storedHash, err := base64.RawStdEncoding.DecodeString(vals[5])
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	p.keyLength = uint32(len(storedHash))
+
+	return &p, salt, storedHash, nil
 }
