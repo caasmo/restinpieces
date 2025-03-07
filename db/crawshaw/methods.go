@@ -3,8 +3,6 @@ package crawshaw
 import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
-	"fmt"
-	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"time"
 )
@@ -55,7 +53,11 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 	// Generate timestamps before insert
 	now := time.Now().UTC().Format(time.RFC3339)
 	
-	err = sqlitex.Exec(conn, 
+	var user db.User
+	// Generate timestamps before insert
+	now := time.Now().UTC().Format(time.RFC3339)
+	
+	err := sqlitex.Exec(conn, 
 		`INSERT INTO users (email, password, name, created, updated) 
 		VALUES (@email, @password, @name, @created, @updated)
 		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
