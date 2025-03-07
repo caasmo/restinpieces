@@ -3,6 +3,7 @@ package crawshaw
 import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
+	"fmt"
 	"github.com/caasmo/restinpieces/db"
 	"time"
 )
@@ -52,6 +53,9 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 	// Generate timestamps before insert
 	now := time.Now().UTC().Format(time.RFC3339)
 	
+	fmt.Printf("Attempting to create user with params:\nemail: %q\npassword: %q\nname: %q\ncreated: %q\nupdated: %q\n",
+		email, hashedPassword, name, now, now)
+	
 	var user *db.User
 	err := sqlitex.Exec(conn, 
 		`INSERT INTO users (email, password, name, created, updated) 
@@ -68,6 +72,7 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 				Verified:  stmt.GetInt64("verified") != 0,
 				TokenKey:  stmt.GetText("tokenKey"),
 			}
+			fmt.Printf("Created user: %+v\n", user)
 			return nil
 		},
 		"@email", email,
@@ -76,5 +81,9 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 		"@created", now,
 		"@updated", now)
 
+	if err != nil {
+		fmt.Printf("SQL error: %v\n", err)
+	}
+	
 	return user, err
 }
