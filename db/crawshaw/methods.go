@@ -55,7 +55,7 @@ func (d *Db) CreateUser(email, password, name string) (*db.User, error) {
 	
 	err = sqlitex.Exec(conn, 
 		`INSERT INTO users (email, password, name, created, updated) 
-		VALUES (?, ?, ?, ?, ?)
+		VALUES (@email, @password, @name, @created, @updated)
 		RETURNING id, email, name, password, created, updated, verified, token_key`,
 		func(stmt *sqlite.Stmt) error {
 			user = db.User{
@@ -63,13 +63,19 @@ func (d *Db) CreateUser(email, password, name string) (*db.User, error) {
 				Email:     stmt.GetText("email"),
 				Name:      stmt.GetText("name"),
 				Password:  stmt.GetText("password"),
-				Created:   stmt.GetText("created"),   // Will match our inserted RFC3339 value
-				Updated:   stmt.GetText("updated"),   // Will match our inserted RFC3339 value
+				Created:   stmt.GetText("created"),
+				Updated:   stmt.GetText("updated"),
 				Verified:  stmt.GetInt64("verified") != 0,
 				TokenKey:  stmt.GetText("token_key"),
 			}
 			return nil
-		}, email, hashedPassword, name, now, now)
+		}, sqlite.NamedArgs{
+			"@email":    email,
+			"@password": hashedPassword,
+			"@name":     name,
+			"@created":  now,
+			"@updated":  now,
+		})
 
 	return &user, err
 }
