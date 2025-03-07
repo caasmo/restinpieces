@@ -95,7 +95,7 @@ func (db *Db) GetUserByEmail(email string) (string, string, error) {
 // CreateUser TODO: Implement for zombiezen SQLite variant.
 // Temporary implementation returns RFC3339 formatted UTC timestamps.
 // Example: "2024-03-07T15:04:05Z"
-func (db *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
+func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 	// TODO: Implement proper database integration
 	return &db.User{
 		ID:        "temp-id",
