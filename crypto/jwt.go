@@ -31,7 +31,7 @@ type Claims struct {
 func ParseJwt(tokenString string, secret []byte) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, ErrInvalidSigningMethod
+			return nil, ErrJwtInvalidSigningMethod
 		}
 		return secret, nil
 	})
