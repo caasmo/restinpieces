@@ -49,7 +49,7 @@ func ParseJwt(tokenString string, secret []byte) (*Claims, error) {
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims, nil
 	}
-	return nil, ErrInvalidToken
+	return nil, ErrJwtInvalidToken
 }
 
 // CreateJwt generates a new JWT token
