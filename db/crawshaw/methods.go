@@ -49,20 +49,16 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 	
-	var user db.User
 	// Generate timestamps before insert
 	now := time.Now().UTC().Format(time.RFC3339)
 	
-	var user db.User
-	// Generate timestamps before insert
-	now := time.Now().UTC().Format(time.RFC3339)
-	
+	var user *db.User
 	err := sqlitex.Exec(conn, 
 		`INSERT INTO users (email, password, name, created, updated) 
 		VALUES (@email, @password, @name, @created, @updated)
 		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
 		func(stmt *sqlite.Stmt) error {
-			user = db.User{
+			user = &db.User{
 				ID:        stmt.GetText("id"),
 				Email:     stmt.GetText("email"),
 				Name:      stmt.GetText("name"),
@@ -80,5 +76,5 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 		"@created", now,
 		"@updated", now)
 
-	return &user, err
+	return user, err
 }
