@@ -34,6 +34,10 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	
+	if user.ID == "" {
+		return nil, nil // No error, just no results
+	}
 	return &user, nil
 }
 
