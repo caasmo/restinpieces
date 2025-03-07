@@ -92,8 +92,11 @@ func TestGetUserByEmail(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			user, err := testDB.GetUserByEmail(tt.email)
 			
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetUserByEmail() error = %v, wantErr %v", err, tt.wantErr)
+			if tt.wantErr && err == nil {
+				t.Error("expected error but got none")
+				return
+			} else if !tt.wantErr && err != nil {
+				t.Errorf("unexpected error: %v", err)
 				return
 			}
 			
