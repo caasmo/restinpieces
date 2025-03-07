@@ -43,14 +43,11 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 }
 
 
-// CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
+// CreateUser inserts a new user with RFC3339 formatted UTC timestamps and pre-hashed password.
 // The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
 // Example timestamp: "2024-03-07T15:04:05Z"
-func (d *Db) CreateUser(email, password, name string) (*db.User, error) {
-	hashedPassword, err := crypto.GenerateHash(password)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
-	}
+// Caller is responsible for hashing the password before calling this method
+func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 	
@@ -71,7 +68,7 @@ func (d *Db) CreateUser(email, password, name string) (*db.User, error) {
 				Created:   stmt.GetText("created"),
 				Updated:   stmt.GetText("updated"),
 				Verified:  stmt.GetInt64("verified") != 0,
-				TokenKey:  stmt.GetText("token_key"),
+				TokenKey:  stmt.GetText("tokenKey"),
 			}
 			return nil
 		},
