@@ -92,7 +92,9 @@ func (db *Db) GetUserByEmail(email string) (string, string, error) {
 	return "", "", fmt.Errorf("not implemented for zombiezen SQLite variant")
 }
 
-// CreateUser TODO: Implement for zombiezen SQLite variant
+// CreateUser TODO: Implement for zombiezen SQLite variant.
+// Temporary implementation returns RFC3339 formatted UTC timestamps.
+// Example: "2024-03-07T15:04:05Z"
 func (db *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 	// TODO: Implement proper database integration
 	return &db.User{
