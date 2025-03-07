@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -85,6 +86,11 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !isValidIdentity(req.Identity) {
+		writeJSONError(w, errorInvalidRequest)
+		return
+	}
+
 	// Get user from database
 	userID, hashedPassword, err := a.db.GetUserByEmail(req.Identity)
 	if err != nil || userID == "" {
@@ -118,4 +124,9 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 func checkPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+// isValidIdentity performs basic email format validation
+func isValidIdentity(email string) bool {
+	return strings.Contains(email, "@") && strings.Contains(email, ".")
 }
