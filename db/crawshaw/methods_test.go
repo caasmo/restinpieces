@@ -14,6 +14,9 @@ import (
 func createTestDB(t *testing.T) *Db {
 	t.Helper()
 	
+    // Using a named in-memory database with the URI format
+    // file:testdb?mode=memory&cache=shared allows multiple connections to
+    // access the same in-memory database
 	pool, err := sqlitex.Open("file:testdb?mode=memory&cache=shared", 0, 4)
 	if err != nil {
 		t.Fatalf("failed to create test database: %v", err)
