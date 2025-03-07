@@ -31,11 +31,11 @@ import (
 var (
 	errorTokenGeneration    = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
 	errorClaimsNotFound     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token: Claims not found"}`)}
-	errorInvalidRequest     = jsonError{http.StatusBadRequest, []byte(`{"error":"Invalid request format"}`)}
+	errorInvalidRequest     = jsonError{http.StatusBadRequest, []byte(`{"error":"Invalid request payload"}`)}
 	errorInvalidCredentials = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid credentials"}`)}
 )
 
-// RefreshAuthHandler handles explicit token refresh requests
+// RefreshAuthHandler handles explicit JWT token refresh requests
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Get claims from context (added by JwtValidate middleware)
 	userId, ok := r.Context().Value(UserIDKey).(string)
@@ -68,8 +68,10 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 
 // AuthWithPasswordHandler handles password-based authentication
 func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
+
+    // TODO loginReq
 	var req struct {
-		Identity string `json:"identity"`
+		Identity string `json:"identity"` // username or email
 		Password string `json:"password"`
 	}
 
