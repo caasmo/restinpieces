@@ -10,11 +10,11 @@ import (
 // Verify interface implementation (non-allocating check)
 var _ db.Db = (*Db)(nil)
 
-func (db *Db) Close() {
-	db.pool.Close()
+func (d *Db) Close() {
+	d.pool.Close()
 }
 
-func (db *Db) GetUserByEmail(email string) (string, string, error) {
+func (d *Db) GetUserByEmail(email string) (string, string, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
@@ -30,9 +30,9 @@ func (db *Db) GetUserByEmail(email string) (string, string, error) {
 	return userID, hashedPassword, err
 }
 
-func (db *Db) GetById(id int64) int {
-	conn := db.pool.Get(nil)
-	defer db.pool.Put(conn)
+func (d *Db) GetById(id int64) int {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
 
 	var value int
 	fn := func(stmt *sqlite.Stmt) error {
@@ -46,18 +46,18 @@ func (db *Db) GetById(id int64) int {
 	return value
 }
 
-func (db *Db) Insert(value int64) {
-	rwConn := <-db.rwCh
-	defer func() { db.rwCh <- rwConn }()
+func (d *Db) Insert(value int64) {
+	rwConn := <-d.rwCh
+	defer func() { d.rwCh <- rwConn }()
 
 	if err := sqlitex.Exec(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", nil, any(value)); err != nil {
 		panic(err)
 	}
 }
 
-func (db *Db) InsertWithPool(value int64) {
-	conn := db.pool.Get(nil)
-	defer db.pool.Put(conn)
+func (d *Db) InsertWithPool(value int64) {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
 
 	if err := sqlitex.Exec(conn, "INSERT INTO foo(id, value) values(1000000,?)", nil, any(value)); err != nil {
 		panic(err)
@@ -68,8 +68,8 @@ func (db *Db) InsertWithPool(value int64) {
 // The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
 // Example timestamp: "2024-03-07T15:04:05Z"
 func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
-	conn := db.pool.Get(nil)
-	defer db.pool.Put(conn)
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
 	
 	var user db.User
 	// Generate timestamps before insert
