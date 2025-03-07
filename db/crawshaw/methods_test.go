@@ -23,6 +23,7 @@ func createTestDB(t *testing.T) *Db {
 	defer pool.Put(conn)
 	
 	err = sqlitex.ExecScript(conn, `
+		DROP TABLE IF EXISTS users;
 		CREATE TABLE users (
 			avatar TEXT DEFAULT '' NOT NULL,
 			created TEXT DEFAULT '' NOT NULL,
