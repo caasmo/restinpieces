@@ -13,12 +13,12 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
-	var user db.User
-    err := sqlitex.Exec(conn, 
+	var user *db.User
+	err := sqlitex.Exec(conn, 
 		`SELECT id, email, name, password, created, updated, verified, tokenKey 
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
-			user = db.User{
+			user = &db.User{
 				ID:        stmt.GetText("id"),
 				Email:     stmt.GetText("email"),
 				Name:      stmt.GetText("name"),
@@ -26,7 +26,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 				Created:   stmt.GetText("created"),
 				Updated:   stmt.GetText("updated"),
 				Verified:  stmt.GetInt64("verified") != 0,
-				TokenKey:  stmt.GetText("token_key"),
+				TokenKey:  stmt.GetText("tokenKey"),
 			}
 			return nil
 		}, email)
@@ -34,11 +34,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	
-	if user.ID == "" {
-		return nil, nil // No error, just no results
-	}
-	return &user, nil
+	return user, nil
 }
 
 

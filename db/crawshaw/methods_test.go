@@ -101,6 +101,10 @@ func TestGetUserByEmail(t *testing.T) {
 			}
 			
 			if tt.wantUser != nil {
+				if user == nil {
+					t.Error("expected user but got nil")
+					return
+				}
 				if user.ID != tt.wantUser.ID ||
 					user.Email != tt.wantUser.Email ||
 					user.Name != tt.wantUser.Name ||
@@ -110,6 +114,8 @@ func TestGetUserByEmail(t *testing.T) {
 					user.Verified != tt.wantUser.Verified {
 					t.Errorf("GetUserByEmail() = %+v, want %+v", user, tt.wantUser)
 				}
+			} else if user != nil {
+				t.Error("expected nil user but got result")
 			}
 		})
 	}
