@@ -48,13 +48,13 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		claims, err := crypto.ParseJwt(tokenString, a.config.JwtSecret)
 		if err != nil {
 			// some common errors
-		    if errors.Is(err, crypto.ErrTokenExpired) {
-				writeJSONError(w, errorTokenExpired)
+		    if errors.Is(err, crypto.ErrJwtTokenExpired) {
+				writeJSONError(w, errorJwtTokenExpired)
 				return
 			}
 
-		    if errors.Is(err, crypto.ErrInvalidSigningMethod) {
-				writeJSONError(w, errorTokenInvalidSignMethod)
+		    if errors.Is(err, crypto.ErrJwtInvalidSigningMethod) {
+				writeJSONError(w, errorJwtInvalidSignMethod)
 				return
 			}
 
