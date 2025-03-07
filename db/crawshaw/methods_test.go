@@ -1,14 +1,14 @@
-package crawshaw_test
+package crawshaw
 
 import (
 	"context"
 	"testing"
 	"time"
 	
+	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/db/crawshaw"
 )
 
 func createTestDB(t *testing.T) *crawshaw.Db {
@@ -40,12 +40,11 @@ func createTestDB(t *testing.T) *crawshaw.Db {
 		t.Fatalf("failed to create test schema: %v", err)
 	}
 	
-	// Create new DB instance properly using exported constructor
-	db, err := crawshaw.New("file:testdb?mode=memory&cache=shared")
-	if err != nil {
-		t.Fatalf("failed to create db instance: %v", err)
+	// Return DB instance with the existing pool that has our schema
+	return &Db{
+		pool: pool,
+		rwCh: make(chan *sqlite.Conn, 1),
 	}
-	return db
 }
 
 func TestGetUserByEmail(t *testing.T) {
