@@ -70,7 +70,6 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 // AuthWithPasswordHandler handles password-based authentication
 func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
-    // TODO loginReq
 	var req struct {
 		Identity string `json:"identity"` // username or email
 		Password string `json:"password"`
