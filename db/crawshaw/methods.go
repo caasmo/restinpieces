@@ -15,7 +15,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 
 	var user db.User
     err := sqlitex.Exec(conn, 
-		`SELECT id, email, name, password, created, updated, verified, token_key 
+		`SELECT id, email, name, password, created, updated, verified, tokenKey 
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
 			user = db.User{
@@ -56,7 +56,7 @@ func (d *Db) CreateUser(email, password, name string) (*db.User, error) {
 	err = sqlitex.Exec(conn, 
 		`INSERT INTO users (email, password, name, created, updated) 
 		VALUES (@email, @password, @name, @created, @updated)
-		RETURNING id, email, name, password, created, updated, verified, token_key`,
+		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
 		func(stmt *sqlite.Stmt) error {
 			user = db.User{
 				ID:        stmt.GetText("id"),
