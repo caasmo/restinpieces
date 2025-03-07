@@ -98,12 +98,6 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if user is verified
-	if !user.Verified {
-		writeJSONError(w, jsonError{http.StatusForbidden, []byte(`{"error":"Account not verified"}`)})
-		return
-	}
-
 	// Verify password hash
 	if !checkPasswordHash(req.Password, user.Password) {
 		writeJSONError(w, errorInvalidCredentials)
