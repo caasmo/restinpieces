@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/crypto"
-	"github.com/caasmo/restinpieces/crypto"
 )
 
 //	export JWT_SECRET=$(openssl rand -base64 32)
@@ -46,7 +45,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate new token with fresh expiration
-	newToken, expiry, err := jwt.Create(userId, a.config.JwtSecret, a.config.TokenDuration)
+	newToken, expiry, err := crypto.Create(userId, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
