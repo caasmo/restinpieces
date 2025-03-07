@@ -13,12 +13,12 @@ func TestCreateAndParseValidToken(t *testing.T) {
 	userID := "testuser123"
 	tokenDuration := 15 * time.Minute
 
-	tokenString, _, err := Create(userID, secret, tokenDuration)
+	tokenString, _, err := CreateJwt(userID, secret, tokenDuration)
 	if err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
 
-	claims, err := Parse(tokenString, secret)
+	claims, err := ParseJwt(tokenString, secret)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -72,7 +72,7 @@ func TestParseInvalidToken(t *testing.T) {
 }
 
 func TestCreateWithInvalidSecret(t *testing.T) {
-	_, _, err := Create("user123", nil, 15*time.Minute)
+	_, _, err := CreateJwt("user123", nil, 15*time.Minute)
 	if !errors.Is(err, ErrInvalidSecretLength) {
 		t.Errorf("expected ErrInvalidSecretLength, got %v", err)
 	}
@@ -80,7 +80,7 @@ func TestCreateWithInvalidSecret(t *testing.T) {
 
 func generateValidToken(t *testing.T) string {
 	t.Helper()
-	token, _, err := Create("testuser", []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
+	token, _, err := CreateJwt("testuser", []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate valid token: %v", err)
 	}
@@ -89,7 +89,7 @@ func generateValidToken(t *testing.T) string {
 
 func generateExpiredToken(t *testing.T) string {
 	t.Helper()
-	token, _, err := Create("testuser", []byte("test_secret_32_bytes_long_xxxxxx"), -15*time.Minute)
+	token, _, err := CreateJwt("testuser", []byte("test_secret_32_bytes_long_xxxxxx"), -15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate expired token: %v", err)
 	}
