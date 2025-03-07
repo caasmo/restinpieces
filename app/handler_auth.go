@@ -86,6 +86,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+    // only email TODO
 	if !isValidIdentity(req.Identity) {
 		writeJSONError(w, errorInvalidRequest)
 		return
@@ -127,6 +128,7 @@ func checkPasswordHash(password, hash string) bool {
 }
 
 // isValidIdentity performs basic email format validation
+// todo better validation ozzo?
 func isValidIdentity(email string) bool {
 	return strings.Contains(email, "@") && strings.Contains(email, ".")
 }
