@@ -63,18 +63,27 @@ func (db *Db) InsertWithPool(value int64) {
 	}
 }
 
-func (db *Db) CreateUser(email, hashedPassword, name string) (string, error) {
+func (db *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 	conn := db.pool.Get(nil)
 	defer db.pool.Put(conn)
 	
-	var userID string
+	var user db.User
 	err := sqlitex.Exec(conn, 
 		`INSERT INTO users (email, password, name) VALUES (?, ?, ?)
-		 RETURNING id`,
+		 RETURNING id, email, name, password, created, updated, verified, token_key`,
 		func(stmt *sqlite.Stmt) error {
-			userID = stmt.GetText("id")
+			user = db.User{
+				ID:        stmt.GetText("id"),
+				Email:     stmt.GetText("email"),
+				Name:      stmt.GetText("name"),
+				Password:  stmt.GetText("password"),
+				Created:   stmt.GetText("created"),
+				Updated:   stmt.GetText("updated"),
+				Verified:  stmt.GetBool("verified"),
+				TokenKey:  stmt.GetText("token_key"),
+			}
 			return nil
 		}, email, hashedPassword, name)
 
-	return userID, err
+	return &user, err
 }

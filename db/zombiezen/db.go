@@ -92,8 +92,18 @@ func (db *Db) GetUserByEmail(email string) (string, string, error) {
 }
 
 // CreateUser TODO: Implement for zombiezen SQLite variant
-func (db *Db) CreateUser(email, hashedPassword, name string) (string, error) {
-	return "", fmt.Errorf("not implemented for zombiezen SQLite variant")
+func (db *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
+	// TODO: Implement proper database integration
+	return &db.User{
+		ID:        "temp-id",
+		Email:     email,
+		Name:      name,
+		Password:  hashedPassword,
+		Created:   time.Now().Format(time.RFC3339),
+		Updated:   time.Now().Format(time.RFC3339),
+		Verified:  false,
+		TokenKey:  "temp-token-key",
+	}, fmt.Errorf("not implemented for zombiezen SQLite variant")
 }
 
 func (db *Db) InsertWithPool(value int64) {
