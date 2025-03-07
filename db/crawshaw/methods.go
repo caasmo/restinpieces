@@ -87,7 +87,7 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 				Password:  stmt.GetText("password"),
 				Created:   stmt.GetText("created"),   // Will match our inserted RFC3339 value
 				Updated:   stmt.GetText("updated"),   // Will match our inserted RFC3339 value
-				Verified:  stmt.GetBool("verified"),
+				Verified:  stmt.GetInt64("verified") != 0,
 				TokenKey:  stmt.GetText("token_key"),
 			}
 			return nil
