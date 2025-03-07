@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/jwt"
-	"crawshaw.io/sqlite"
-	"crawshaw.io/sqlite/sqlitex"
 )
 
 //	export JWT_SECRET=$(openssl rand -base64 32)
