@@ -63,7 +63,7 @@ func TestParseInvalidToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := Parse(tc.tokenString, tc.secret)
+			_, err := ParseJwt(tc.tokenString, tc.secret)
 			if !errors.Is(err, tc.wantError) {
 				t.Errorf("Parse() error = %v, want %v", err, tc.wantError)
 			}
