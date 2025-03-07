@@ -69,12 +69,13 @@ func (d *Db) CreateUser(email, password, name string) (*db.User, error) {
 				TokenKey:  stmt.GetText("token_key"),
 			}
 			return nil
-		},
-		"@email", email,
-		"@password", hashedPassword,
-		"@name", name,
-		"@created", now,
-		"@updated", now)
+		}, []interface{}{
+			"@email", email,
+			"@password", hashedPassword,
+			"@name", name,
+			"@created", now,
+			"@updated", now,
+		})
 
 	return &user, err
 }
