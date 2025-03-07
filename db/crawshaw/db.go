@@ -5,6 +5,8 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 	"fmt"
 	"runtime"
+
+	"github.com/caasmo/restinpieces/db"
 )
 
 type Db struct {
