@@ -40,12 +40,11 @@ func createTestDB(t *testing.T) *crawshaw.Db {
 		t.Fatalf("failed to create test schema: %v", err)
 	}
 	
-	// Use proper constructor instead of accessing unexported field
-	db, err := crawshaw.New("file:testdb?mode=memory&cache=shared")
-	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
+	// Return DB instance with the existing pool that has our schema
+	return &crawshaw.Db{
+		pool: pool,
+		rwCh: make(chan *sqlite.Conn, 1),
 	}
-	return db
 }
 
 func TestGetUserByEmail(t *testing.T) {
