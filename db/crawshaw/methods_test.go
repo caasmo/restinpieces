@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 	
-	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
