@@ -3,7 +3,6 @@ package crawshaw
 import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
-	"github.com/caasmo/restinpieces/db"
 )
 
 func (d *Db) Close() {
