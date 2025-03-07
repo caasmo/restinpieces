@@ -93,14 +93,20 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user from database
-	userID, hashedPassword, err := a.db.GetUserByEmail(req.Identity)
-	if err != nil || userID == "" {
+	user, err := a.db.GetUserByEmail(req.Identity)
+	if err != nil || user == nil {
 		writeJSONError(w, errorInvalidCredentials)
 		return
 	}
 
+	// Check if user is verified
+	if !user.Verified {
+		writeJSONError(w, jsonError{http.StatusForbidden, []byte(`{"error":"Account not verified"}`)})
+		return
+	}
+
 	// Verify password hash
-	if !checkPasswordHash(req.Password, hashedPassword) {
+	if !checkPasswordHash(req.Password, user.Password) {
 		writeJSONError(w, errorInvalidCredentials)
 		return
 	}
@@ -115,8 +121,11 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token": token,
-		"record": map[string]string{
-			"id": userID,
+		"record": map[string]interface{}{
+			"id":       user.ID,
+			"email":    user.Email,
+			"name":     user.Name,
+			"verified": user.Verified,
 		},
 	})
 }

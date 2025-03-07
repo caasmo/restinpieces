@@ -88,8 +88,8 @@ func (d *Db) Insert(value int64) {
 }
 
 // GetUserByEmail TODO: Implement for zombiezen SQLite variant
-func (d *Db) GetUserByEmail(email string) (string, string, error) {
-	return "", "", fmt.Errorf("not implemented for zombiezen SQLite variant")
+func (d *Db) GetUserByEmail(email string) (*db.User, error) {
+	return nil, fmt.Errorf("not implemented for zombiezen SQLite variant")
 }
 
 // CreateUser TODO: Implement for zombiezen SQLite variant.

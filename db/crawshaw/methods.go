@@ -14,20 +14,32 @@ func (d *Db) Close() {
 	d.pool.Close()
 }
 
-func (d *Db) GetUserByEmail(email string) (string, string, error) {
+func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
-	var userID, hashedPassword string
+	var user db.User
 	err := sqlitex.Exec(conn, 
-		"SELECT id, password FROM users WHERE email = ? LIMIT 1",
+		`SELECT id, email, name, password, created, updated, verified, token_key 
+		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
-			userID = stmt.GetText("id")
-			hashedPassword = stmt.GetText("password")
+			user = db.User{
+				ID:        stmt.GetText("id"),
+				Email:     stmt.GetText("email"),
+				Name:      stmt.GetText("name"),
+				Password:  stmt.GetText("password"),
+				Created:   stmt.GetText("created"),
+				Updated:   stmt.GetText("updated"),
+				Verified:  stmt.GetInt64("verified") != 0,
+				TokenKey:  stmt.GetText("token_key"),
+			}
 			return nil
 		}, email)
 
-	return userID, hashedPassword, err
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (d *Db) GetById(id int64) int {
