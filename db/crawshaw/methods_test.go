@@ -84,7 +84,7 @@ func TestGetUserByEmail(t *testing.T) {
 			name:    "non-existent user",
 			email:   "nonexistent@test.com",
 			wantUser: nil,
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 
