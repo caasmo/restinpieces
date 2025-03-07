@@ -30,8 +30,11 @@ type Claims struct {
 // Parse validates and parses JWT claims
 func Parse(tokenString string, secret []byte) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		// to prevent what's known as an "algorithm switching attack" (also called
+		// a "signature stripping attack"
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-            // jwt package wraps this error with jwt.ErrTokenUnverifiable 
+			// jwt package wraps this error with jwt.ErrTokenUnverifiable
+			// This wrapped error is then returned from jwt.ParseWithClaims
 			return nil, ErrInvalidSigningMethod
 		}
 		return secret, nil
@@ -39,16 +42,16 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
 
 	if err != nil {
 
-        // Common errors
-        if errors.Is(err, jwt.ErrTokenExpired) {
-		    return nil, ErrTokenExpired
-        }
+		// Common errors
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, ErrTokenExpired
+		}
 
-        // we need to check here with Is instead of == because error wrapped. 
-        if errors.Is(err, ErrInvalidSigningMethod) {
-            return nil, ErrInvalidSigningMethod
-        }
-        
+		// we need to check here with Is instead of == because error wrapped.
+		if errors.Is(err, ErrInvalidSigningMethod) {
+			return nil, ErrInvalidSigningMethod
+		}
+
 		return nil, fmt.Errorf("%w: %w", ErrInvalidToken, err)
 	}
 
@@ -62,7 +65,7 @@ func Parse(tokenString string, secret []byte) (*Claims, error) {
 // Create generates a new JWT token
 func Create(userID string, secret []byte, tokenDuration time.Duration) (string, time.Time, error) {
 	if len(secret) == 0 || len(secret) < 32 {
-		return "", time.Time{}, ErrInvalidSecretLength 
+		return "", time.Time{}, ErrInvalidSecretLength
 	}
 
 	expirationTime := time.Now().Add(tokenDuration)
@@ -82,4 +85,3 @@ func Create(userID string, secret []byte, tokenDuration time.Duration) (string, 
 
 	return tokenString, expirationTime, nil
 }
-

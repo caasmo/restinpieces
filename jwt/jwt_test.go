@@ -78,7 +78,6 @@ func TestCreateWithInvalidSecret(t *testing.T) {
 	}
 }
 
-
 func generateValidToken(t *testing.T) string {
 	t.Helper()
 	token, _, err := Create("testuser", []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)

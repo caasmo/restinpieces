@@ -19,12 +19,11 @@ const (
 )
 
 // Precomputed error responses with status codes
-// TODO move to a file errors
 var (
-	errorNoAuthHeader       = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
-	errorInvalidTokenFormat = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
+	errorNoAuthHeader           = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
+	errorInvalidTokenFormat     = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
 	errorTokenInvalidSignMethod = jsonError{http.StatusUnauthorized, []byte(`{"error":"unexpected signing method"}`)}
-	errorTokenExpired       = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
+	errorTokenExpired           = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
 )
 
 // JwtValidate middleware validates the JWT token
@@ -48,7 +47,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		// Parse and validate the token
 		claims, err := jwt.Parse(tokenString, a.config.JwtSecret)
 		if err != nil {
-            // some common errors
+			// some common errors
 			if errors.Is(err, jwt.ErrTokenExpired) {
 				writeJSONError(w, errorTokenExpired)
 				return

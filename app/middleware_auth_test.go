@@ -120,13 +120,13 @@ func generateInvalidSigningToken(t *testing.T, userID string) string {
 		Subject:   userID,
 		ExpiresAt: jwtv5.NewNumericDate(time.Now().Add(15 * time.Minute)),
 	})
-	
+
 	// Generate EC key pair for testing
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		t.Fatalf("failed to generate EC key: %v", err)
 	}
-	
+
 	tokenString, err := token.SignedString(privateKey)
 	if err != nil {
 		t.Fatalf("failed to sign token: %v", err)
