@@ -154,9 +154,16 @@ func TestCreateUser(t *testing.T) {
 			hashedPassword, _ := crypto.GenerateHash(tt.password)
 			user, err := testDB.CreateUser(tt.email, hashedPassword, tt.username)
 			
-			if (err != nil) != tt.wantErr {
-				t.Errorf("CreateUser() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error but got none")
+					return
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+					return
+				}
 			}
 			
 			if !tt.wantErr {
