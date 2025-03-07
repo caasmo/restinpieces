@@ -11,8 +11,6 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 )
 
-const UserIDKey = "userID"
-
 //	export JWT_SECRET=$(openssl rand -base64 32)
 //
 //	First get a valid JWT token (replace JWT_SECRET with your actual secret)
