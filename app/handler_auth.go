@@ -1,11 +1,16 @@
 package app
 
+const UserIDKey = "userID"
+
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/caasmo/restinpieces/jwt"
+	"crawshaw.io/sqlite"
+	"crawshaw.io/sqlite/sqlitex"
 )
 
 //	export JWT_SECRET=$(openssl rand -base64 32)
