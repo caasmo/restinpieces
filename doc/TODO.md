@@ -1,5 +1,10 @@
 ### TODOs
 
+- make sh files inside repo for testing with curl different parst
+    - generate jwt sh maybe also signing method
+        - generate token 1`
+    - testendpoint send curl with different tokens. 
+    - provide file in docs to test all of them combined
 - code review jwt tests
 - zombiezen, impl pool with timeout, split in files. 
 - zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
