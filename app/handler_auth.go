@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
+	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/jwt"
 )
 
@@ -99,7 +99,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verify password hash
-	if !checkPasswordHash(req.Password, user.Password) {
+	if !crypto.CheckPassword(req.Password, user.Password) {
 		writeJSONError(w, errorInvalidCredentials)
 		return
 	}
@@ -123,11 +123,6 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// checkPasswordHash verifies bcrypt hashed password
-func checkPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
 
 // isValidIdentity performs basic email format validation
 // todo better validation ozzo?

@@ -79,7 +79,11 @@ func (d *Db) InsertWithPool(value int64) {
 // CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
 // The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
 // Example timestamp: "2024-03-07T15:04:05Z"
-func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
+func (d *Db) CreateUser(email, password, name string) (*db.User, error) {
+	hashedPassword, err := crypto.GenerateHash(password)
+	if err != nil {
+		return nil, fmt.Errorf("failed to hash password: %w", err)
+	}
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 	
