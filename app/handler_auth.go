@@ -29,6 +29,7 @@ import (
 var (
 	errorTokenGeneration = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
 	errorClaimsNotFound  = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token: Claims not found"}`)}
+	errorNotImplemented  = jsonError{http.StatusNotImplemented, []byte(`{"error":"Password authentication not implemented yet"}`)}
 )
 
 // RefreshAuthHandler handles explicit token refresh requests
@@ -68,7 +69,5 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	// TODO: Add rate limiting
 	// TODO: Add secure session/token generation
 	
-	w.Header()["Content-Type"] = jsonHeader
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprintf(w, `{"error":"Password authentication not implemented yet"}`)
+	writeJSONError(w, errorNotImplemented)
 }
