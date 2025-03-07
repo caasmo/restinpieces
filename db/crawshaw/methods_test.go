@@ -11,7 +11,7 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-func createTestDB(t *testing.T) *crawshaw.Db {
+func createTestDB(t *testing.T) *Db {
 	t.Helper()
 	
 	pool, err := sqlitex.Open("file:testdb?mode=memory&cache=shared", 0, 4)
