@@ -21,7 +21,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	defer d.pool.Put(conn)
 
 	var user db.User
-	err = sqlitex.Exec(conn, 
+    err := sqlitex.Exec(conn, 
 		`SELECT id, email, name, password, created, updated, verified, token_key 
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
@@ -93,7 +93,7 @@ func (d *Db) CreateUser(email, password, name string) (*db.User, error) {
 	// Generate timestamps before insert
 	now := time.Now().UTC().Format(time.RFC3339)
 	
-	err := sqlitex.Exec(conn, 
+	err = sqlitex.Exec(conn, 
 		`INSERT INTO users (email, password, name, created, updated) 
 		VALUES (?, ?, ?, ?, ?)
 		RETURNING id, email, name, password, created, updated, verified, token_key`,
