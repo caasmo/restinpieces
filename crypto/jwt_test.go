@@ -39,25 +39,25 @@ func TestParseInvalidToken(t *testing.T) {
 			name:        "expired token",
 			tokenString: generateExpiredToken(t),
 			secret:      []byte("test_secret_32_bytes_long_xxxxxx"),
-			wantError:   ErrTokenExpired,
+			wantError:   ErrJwtTokenExpired,
 		},
 		{
 			name:        "invalid signature",
 			tokenString: generateValidToken(t),
 			secret:      []byte("wrong_secret"),
-			wantError:   ErrInvalidToken,
+			wantError:   ErrJwtInvalidToken,
 		},
 		{
 			name:        "invalid signing method",
 			tokenString: generateES256Token(t),
 			secret:      []byte("test_secret"),
-			wantError:   ErrInvalidSigningMethod,
+			wantError:   ErrJwtInvalidSigningMethod,
 		},
 		{
 			name:        "malformed token",
 			tokenString: "malformed.token.string",
 			secret:      []byte("test_secret"),
-			wantError:   ErrInvalidToken,
+			wantError:   ErrJwtInvalidToken,
 		},
 	}
 
@@ -73,7 +73,7 @@ func TestParseInvalidToken(t *testing.T) {
 
 func TestCreateWithInvalidSecret(t *testing.T) {
 	_, _, err := CreateJwt("user123", nil, 15*time.Minute)
-	if !errors.Is(err, ErrInvalidSecretLength) {
+	if !errors.Is(err, ErrJwtInvalidSecretLength) {
 		t.Errorf("expected ErrInvalidSecretLength, got %v", err)
 	}
 }

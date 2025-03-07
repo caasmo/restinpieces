@@ -11,14 +11,14 @@ import (
 // todo remove refresh and validate/create are wrappers
 
 var (
-	// ErrTokenExpired is returned when the token has expired
-	ErrTokenExpired = errors.New("token expired")
-	// ErrInvalidToken is returned when the token is invalid
-	ErrInvalidToken = errors.New("invalid token")
-	// ErrInvalidSigningMethod is returned when the signing method is not HMAC
-	ErrInvalidSigningMethod = errors.New("unexpected signing method")
-	// ErrBadSecretLength is returned for invalid secret lengths
-	ErrInvalidSecretLength = errors.New("invalid secret length")
+	// ErrJwtTokenExpired is returned when the token has expired
+	ErrJwtTokenExpired = errors.New("token expired")
+	// ErrJwtInvalidToken is returned when the token is invalid
+	ErrJwtInvalidToken = errors.New("invalid token")
+	// ErrJwtInvalidSigningMethod is returned when the signing method is not HMAC
+	ErrJwtInvalidSigningMethod = errors.New("unexpected signing method")
+	// ErrJwtInvalidSecretLength is returned for invalid secret lengths
+	ErrJwtInvalidSecretLength = errors.New("invalid secret length")
 )
 
 // Claims extends standard JWT claims with custom fields
@@ -38,12 +38,12 @@ func ParseJwt(tokenString string, secret []byte) (*Claims, error) {
 
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return nil, ErrTokenExpired
+			return nil, ErrJwtTokenExpired
 		}
-		if errors.Is(err, ErrInvalidSigningMethod) {
-			return nil, ErrInvalidSigningMethod
+		if errors.Is(err, ErrJwtInvalidSigningMethod) {
+			return nil, ErrJwtInvalidSigningMethod
 		}
-		return nil, fmt.Errorf("%w: %w", ErrInvalidToken, err)
+		return nil, fmt.Errorf("%w: %w", ErrJwtInvalidToken, err)
 	}
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
@@ -55,7 +55,7 @@ func ParseJwt(tokenString string, secret []byte) (*Claims, error) {
 // CreateJwt generates a new JWT token
 func CreateJwt(userID string, secret []byte, tokenDuration time.Duration) (string, time.Time, error) {
 	if len(secret) < 32 {
-		return "", time.Time{}, ErrInvalidSecretLength
+		return "", time.Time{}, ErrJwtInvalidSecretLength
 	}
 
 	expirationTime := time.Now().Add(tokenDuration)

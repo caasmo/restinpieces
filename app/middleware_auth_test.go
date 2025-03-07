@@ -39,12 +39,12 @@ func TestJwtValidateMiddleware(t *testing.T) {
 		{
 			name:       "expired token",
 			authHeader: "Bearer " + generateExpiredTestToken(t, "testuser123"),
-			wantError:  &errorTokenExpired,
+			wantError:  &errorJwtTokenExpired,
 		},
 		{
 			name:       "invalid signing method",
 			authHeader: "Bearer " + generateInvalidSigningToken(t, "testuser123"),
-			wantError:  &errorTokenInvalidSignMethod,
+			wantError:  &errorJwtInvalidSignMethod,
 		},
 	}
 
