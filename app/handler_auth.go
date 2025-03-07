@@ -85,36 +85,20 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user from database
-	var user struct {
-		ID       string
-		Password string
-	}
-	
-	pool := a.db.(*crawshaw.Db).Pool()
-	conn := pool.Get(nil)
-	defer pool.Put(conn)
-
-	err := sqlitex.Exec(conn, 
-		"SELECT id, password FROM users WHERE email = ? LIMIT 1",
-		func(stmt *sqlite.Stmt) error {
-			user.ID = stmt.GetText("id")
-			user.Password = stmt.GetText("password")
-			return nil
-		}, req.Identity)
-
-	if err != nil || user.ID == "" {
+	userID, hashedPassword, err := a.db.GetUserByEmail(req.Identity)
+	if err != nil || userID == "" {
 		writeJSONError(w, errorInvalidCredentials)
 		return
 	}
 
 	// Verify password hash
-	if !checkPasswordHash(req.Password, user.Password) {
+	if !checkPasswordHash(req.Password, hashedPassword) {
 		writeJSONError(w, errorInvalidCredentials)
 		return
 	}
 
 	// Generate JWT token
-	token, _, err := jwt.Create(user.ID, a.config.JwtSecret, a.config.TokenDuration)
+	token, _, err := jwt.Create(userID, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
@@ -124,7 +108,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token": token,
 		"record": map[string]string{
-			"id": user.ID,
+			"id": userID,
 		},
 	})
 }
