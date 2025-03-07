@@ -61,3 +61,14 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	}`, expiresIn, newToken)
 
 }
+
+// AuthWithPasswordHandler handles password-based authentication
+func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
+	// TODO: Implement password validation logic
+	// TODO: Add rate limiting
+	// TODO: Add secure session/token generation
+	
+	w.Header()["Content-Type"] = jsonHeader
+	w.WriteHeader(http.StatusNotImplemented)
+	fmt.Fprintf(w, `{"error":"Password authentication not implemented yet"}`)
+}
