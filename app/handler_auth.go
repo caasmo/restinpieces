@@ -29,7 +29,7 @@ import (
 var (
 	errorTokenGeneration = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
 	errorClaimsNotFound  = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token: Claims not found"}`)}
-	errorNotImplemented  = jsonError{http.StatusNotImplemented, []byte(`{"error":"Password authentication not implemented yet"}`)}
+	errorNotImplemented  = jsonError{http.StatusNotImplemented, []byte(`{"error":"Not implemented yet"}`)}
 )
 
 // RefreshAuthHandler handles explicit token refresh requests
