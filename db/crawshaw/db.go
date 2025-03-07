@@ -37,3 +37,9 @@ func New(path string) (*Db, error) {
 	return &Db{pool: p, rwCh: ch}, nil
 }
 
+// Close implements db.Db interface and releases all database resources.
+// It should be called when the database connection is no longer needed.
+func (d *Db) Close() {
+	d.pool.Close()
+}
+
