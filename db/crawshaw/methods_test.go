@@ -60,8 +60,6 @@ func TestCreateUser(t *testing.T) {
 	testDB := createTestDB(t)
 	defer testDB.Close()
 
-	now := time.Now().UTC().Format(time.RFC3339)
-	
 	tests := []struct {
 		name        string
 		user        db.User
