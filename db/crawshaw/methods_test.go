@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	_ "embed"
+	"errors"
 	"testing"
 	"time"
 	
