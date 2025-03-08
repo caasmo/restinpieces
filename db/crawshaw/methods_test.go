@@ -103,11 +103,14 @@ func TestCreateUser(t *testing.T) {
 			if tt.wantErr {
 				if err == nil {
 					t.Error("expected error but got none")
+				} else {
+					t.Logf("expected error received: %v", err)
 				}
 				return
 			}
 			
 			if err != nil {
+				t.Logf("error details: %v", err)
 				t.Fatalf("unexpected error: %v", err)
 			}
 			
