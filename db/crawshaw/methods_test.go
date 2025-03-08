@@ -80,7 +80,7 @@ func TestCreateUser(t *testing.T) {
 		{
 			name: "duplicate email",
 			user: db.User{
-				Email:    "existing@test.com", // From test data setup
+				Email:    "existing@test.com", // Same email as test user created in createTestDB()
 				Password: "hashed_password_123",
 				Name:     "Duplicate User",
 			},
