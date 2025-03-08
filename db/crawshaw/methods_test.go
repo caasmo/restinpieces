@@ -84,6 +84,7 @@ func TestCreateUser(t *testing.T) {
 		name        string
 		user        db.User
 		wantErr     bool
+		errorType   error // Expected error type
 		checkFields []string // Fields to verify in returned user
 	}{
 		{
