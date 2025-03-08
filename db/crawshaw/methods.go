@@ -63,7 +63,7 @@ func validateUserFields(user db.User) error {
 	}
 	
 	if len(missingFields) > 0 {
-		return fmt.Errorf("%w: %s", ErrMissingFields, strings.Join(missingFields, ", "))
+		return fmt.Errorf("%w: %s", db.ErrMissingFields, strings.Join(missingFields, ", "))
 	}
 	return nil
 }
@@ -113,7 +113,7 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
          // Check for SQLITE_CONSTRAINT_UNIQUE (2067) error code
          if sqliteErr, ok := err.(sqlite.Error); ok {
              if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
-                 return nil, ErrConstraintUnique
+                 return nil, db.ErrConstraintUnique
              }
          }
          return nil, err
