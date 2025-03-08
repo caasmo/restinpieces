@@ -53,9 +53,6 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	// Generate timestamps before insert
 	now := time.Now().UTC().Format(time.RFC3339)
 	
-	fmt.Printf("Attempting to create user with params:\nemail: %q\npassword: %q\nname: %q\ncreated: %q\nupdated: %q\n",
-		user.Email, user.Password, user.Name, now, now)
-	
 	var createdUser *db.User
 	err := sqlitex.Exec(conn, 
 		`INSERT INTO users (email, password, name, created, updated, tokenKey) 
@@ -72,7 +69,6 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 				Verified:  stmt.GetInt64("verified") != 0,
 				TokenKey:  stmt.GetText("tokenKey"),
 			}
-			fmt.Printf("Created user: %+v\n", user)
 			return nil
 		},
 		user.Email,   // 1. email
@@ -83,7 +79,7 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		user.TokenKey) // 6. tokenKey
 
 	if err != nil {
-		fmt.Printf("SQL error: %v\n", err)
+		return nil, err
 	}
 	
 	return createdUser, err
