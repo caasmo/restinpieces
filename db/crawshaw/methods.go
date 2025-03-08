@@ -10,10 +10,6 @@ import (
 	"time"
 )
 
-var (
-	ErrMissingFields      = errors.New("missing required fields")
-	ErrConstraintUnique   = errors.New("unique constraint violation")
-)
 
 // GetUserByEmail retrieves a user by email address.
 // Returns:

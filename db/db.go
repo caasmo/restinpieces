@@ -15,6 +15,11 @@ type User struct {
 	TokenKey  string
 }
 
+var (
+	ErrMissingFields    = errors.New("missing required fields")
+	ErrConstraintUnique = errors.New("unique constraint violation")
+)
+
 type Db interface {
 	Close()
 	GetById(id int64) int
