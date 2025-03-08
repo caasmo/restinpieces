@@ -36,7 +36,7 @@ test_invalid_token() {
     http_request POST "/auth-refresh" status "$response_file" "" \
         "Authorization: Bearer invalid.token.here"
         
-    assert_status 401 "$status "Expected 401 for invalid token"
+    assert_status 401 "$status" "Expected 401 for invalid token"
     [ $? -eq 0 ] && log_success || true
 }
 
