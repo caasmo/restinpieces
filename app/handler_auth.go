@@ -187,7 +187,7 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		// Handle unique constraint violation (email already exists)
-		if errors.Is(err, crawshaw.ErrConstraintUnique) {
+		if errors.Is(err, db.ErrConstraintUnique) {
 			writeJSONError(w, errorEmailConflict)
 			return
 		}
