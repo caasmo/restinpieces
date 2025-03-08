@@ -73,7 +73,7 @@ test_missing_auth_header() {
     
     http_request POST "/auth-refresh" status "$response_file"
     
-    assert_status 400 "$status" "Expected 400 for missing auth header"
+    assert_status 401 "$status" "Expected 401 for missing auth header. From middleware"
     [ $? -eq 0 ] && log_success || true
 }
 
