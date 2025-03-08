@@ -95,6 +95,26 @@ test_valid_registration() {
     [ $? -eq 0 ] && log_success || true
 }
 
+test_invalid_registration() {
+    log_test_start "/register: Invalid registration (existing email)"
+    
+    local response_file="response_$$.txt"
+    local status
+    
+    # First registration
+    http_request POST "/register" status "$response_file" \
+        '{"identity":"existing@test.com","password":"pass1234","password_confirm":"pass1234"}' \
+        "Content-Type: application/json"
+        
+    # Second registration with same email
+    http_request POST "/register" status "$response_file" \
+        '{"identity":"existing@test.com","password":"pass1234","password_confirm":"pass1234"}' \
+        "Content-Type: application/json"
+        
+    assert_status 409 "$status" "Expected 409 for duplicate registration"
+    [ $? -eq 0 ] && log_success || true
+}
+
 main() {
     # Parse command line arguments
     while getopts "q" opt; do
@@ -111,6 +131,7 @@ main() {
     test_invalid_token
     test_missing_auth_header
     test_valid_registration
+    test_invalid_registration
     
     cleanup
     print_test_summary
