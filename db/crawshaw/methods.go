@@ -43,14 +43,9 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		}, email)
 
 	if err != nil {
-		// Check for SQLITE_CONSTRAINT_UNIQUE (2067) error code
-		if sqliteErr, ok := err.(sqlite.Error); ok {
-			if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
-				return nil, ErrConstraintUnique
-			}
-		}
 		return nil, err
 	}
+
 	return user, nil
 }
 
@@ -118,9 +113,15 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		now,          // 5. updated
 		user.TokenKey) // 6. tokenKey
 
-	if err != nil {
-		return nil, err
-	}
+    if err != nil {
+         // Check for SQLITE_CONSTRAINT_UNIQUE (2067) error code
+         if sqliteErr, ok := err.(sqlite.Error); ok {
+             if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
+                 return nil, ErrConstraintUnique
+             }
+         }
+         return nil, err
+     }
 	
 	return createdUser, err
 }
