@@ -70,7 +70,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
-		Identity string `json:"identity"` // username or email
+		Identity string `json:"identity"` // username or email, only mail implemented
 		Password string `json:"password"`
 	}
 

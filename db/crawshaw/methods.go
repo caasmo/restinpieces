@@ -22,7 +22,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		`SELECT id, email, name, password, created, updated, verified, tokenKey 
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
-			createdUser = &db.User{
+			user = &db.User{
 				ID:        stmt.GetText("id"),
 				Email:     stmt.GetText("email"),
 				Name:      stmt.GetText("name"),
@@ -62,7 +62,7 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		VALUES (?, ?, ?, ?, ?, ?)
 		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
 		func(stmt *sqlite.Stmt) error {
-			user = &db.User{
+			createdUser = &db.User{
 				ID:        stmt.GetText("id"),
 				Email:     stmt.GetText("email"),
 				Name:      stmt.GetText("name"),
