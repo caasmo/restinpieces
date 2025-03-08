@@ -48,12 +48,8 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 }
 
 
-// CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
-// The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
-// Example timestamp: "2024-03-07T15:04:05Z"
-// User struct should contain at minimum: Email, Password (pre-hashed), and Name
-func (d *Db) CreateUser(user db.User) (*db.User, error) {
-	// Validate required fields
+// validateUserFields checks that required user fields are present
+func validateUserFields(user db.User) error {
 	var missingFields []string
 	if user.Email == "" {
 		missingFields = append(missingFields, "Email")
@@ -69,7 +65,19 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	}
 	
 	if len(missingFields) > 0 {
-		return nil, fmt.Errorf("%w: %s", ErrMissingFields, strings.Join(missingFields, ", "))
+		return fmt.Errorf("%w: %s", ErrMissingFields, strings.Join(missingFields, ", "))
+	}
+	return nil
+}
+
+// CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
+// The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
+// Example timestamp: "2024-03-07T15:04:05Z"
+// User struct should contain at minimum: Email, Password (pre-hashed), and Name
+func (d *Db) CreateUser(user db.User) (*db.User, error) {
+	// Validate required fields
+	if err := validateUserFields(user); err != nil {
+		return nil, err
 	}
 
 	conn := d.pool.Get(nil)
