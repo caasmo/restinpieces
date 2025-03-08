@@ -127,35 +127,37 @@ func TestCreateUser(t *testing.T) {
 	defer testDB.Close()
 	
 	tests := []struct {
-		name        string
-		email       string
-		password    string
-		username    string
-		wantErr     bool
+		name    string
+		user    db.User
+		wantErr bool
 	}{
 		{
-			name:     "valid new user",
-			email:    "newuser@test.com",
-			password: "securepassword123",
-			username: "New User",
-			wantErr:  false,
+			name: "valid new user",
+			user: db.User{
+				Email:    "newuser@test.com",
+				Password: "securepassword123",
+				Name:     "New User",
+			},
+			wantErr: false,
 		},
 		{
-			name:     "duplicate email",
-			email:    "existing@test.com",
-			password: "password123",
-			username: "Duplicate User",
-			wantErr:  true,
+			name: "duplicate email",
+			user: db.User{
+				Email:    "existing@test.com",
+				Password: "password123", 
+				Name:     "Duplicate User",
+			},
+			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hashedPassword, _ := crypto.GenerateHash(tt.password)
+			hashedPassword, _ := crypto.GenerateHash(tt.user.Password)
 			user, err := testDB.CreateUser(db.User{
-				Email:    tt.email,
+				Email:    tt.user.Email,
 				Password: hashedPassword,
-				Name:     tt.username,
+				Name:     tt.user.Name,
 			})
 			
 			if tt.wantErr {
