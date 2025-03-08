@@ -19,7 +19,7 @@ import (
 // 3. Update knownHash in TestSchemaVersion with the new value
 // 4. Review test data in setupDB() for compatibility with schema changes
 
-//go:embed ../../../migrations/users.sql
+//go:embed ../../migrations/users.sql
 var usersSchema string
 
 // TestSchemaVersion ensures the embedded users.sql schema matches the known hash.
