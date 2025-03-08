@@ -57,6 +57,125 @@ func createTestDB(t *testing.T) *Db {
 	}
 }
 
+func TestCreateUser(t *testing.T) {
+	testDB := createTestDB(t)
+	defer testDB.Close()
+
+	now := time.Now().UTC().Format(time.RFC3339)
+	
+	tests := []struct {
+		name        string
+		user        db.User
+		wantErr     bool
+		checkFields []string // Fields to verify in returned user
+	}{
+		{
+			name: "valid user creation",
+			user: db.User{
+				Email:    "new@test.com",
+				Password: "hashed_password_123",
+				Name:     "New User",
+				TokenKey: "token_key_123",
+			},
+			wantErr: false,
+			checkFields: []string{"Email", "Name", "Password", "TokenKey"},
+		},
+		{
+			name: "duplicate email",
+			user: db.User{
+				Email:    "existing@test.com", // From test data setup
+				Password: "hashed_password_123",
+				Name:     "Duplicate User",
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing required fields",
+			user: db.User{
+				Email: "", // Empty email
+				Name:  "Invalid User",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			createdUser, err := testDB.CreateUser(tt.user)
+			
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error but got none")
+				}
+				return
+			}
+			
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			
+			if createdUser == nil {
+				t.Fatal("expected user but got nil")
+			}
+
+			// Verify returned fields match input
+			for _, field := range tt.checkFields {
+				switch field {
+				case "Email":
+					if createdUser.Email != tt.user.Email {
+						t.Errorf("Email mismatch: got %q, want %q", createdUser.Email, tt.user.Email)
+					}
+				case "Name":
+					if createdUser.Name != tt.user.Name {
+						t.Errorf("Name mismatch: got %q, want %q", createdUser.Name, tt.user.Name)
+					}
+				case "Password":
+					if createdUser.Password != tt.user.Password {
+						t.Errorf("Password mismatch: got %q, want %q", createdUser.Password, tt.user.Password)
+					}
+				case "TokenKey":
+					if createdUser.TokenKey != tt.user.TokenKey {
+						t.Errorf("TokenKey mismatch: got %q, want %q", createdUser.TokenKey, tt.user.TokenKey)
+					}
+				}
+			}
+
+			// Verify timestamps are set and valid
+			if createdUser.Created == "" || createdUser.Updated == "" {
+				t.Error("timestamps not set")
+			}
+			
+			createdTime, err := time.Parse(time.RFC3339, createdUser.Created)
+			if err != nil {
+				t.Errorf("invalid created timestamp format: %v", err)
+			}
+			
+			updatedTime, err := time.Parse(time.RFC3339, createdUser.Updated)
+			if err != nil {
+				t.Errorf("invalid updated timestamp format: %v", err)
+			}
+
+			// Verify timestamps are recent
+			if time.Since(createdTime) > time.Minute {
+				t.Error("created timestamp is too old")
+			}
+			if time.Since(updatedTime) > time.Minute {
+				t.Error("updated timestamp is too old")
+			}
+
+			// Verify user can be retrieved
+			retrievedUser, err := testDB.GetUserByEmail(tt.user.Email)
+			if err != nil {
+				t.Fatalf("failed to retrieve created user: %v", err)
+			}
+			
+			if retrievedUser.ID != createdUser.ID {
+				t.Errorf("retrieved user ID mismatch: got %q, want %q", retrievedUser.ID, createdUser.ID)
+			}
+		})
+	}
+}
+
 func TestGetUserByEmail(t *testing.T) {
 	testDB := createTestDB(t)
 	defer testDB.Close()
