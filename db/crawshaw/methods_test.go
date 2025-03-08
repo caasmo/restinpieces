@@ -106,6 +106,7 @@ func TestCreateUser(t *testing.T) {
 				TokenKey: "token_key_duplicate_email",
 			},
 			wantErr: true,
+			errorType: db.ErrConstraintUnique,
 		},
 		{
 			name: "missing email",
@@ -156,6 +157,7 @@ func TestCreateUser(t *testing.T) {
 				TokenKey: "token_key_setup", // Same token key as test user created in setupDB()
 			},
 			wantErr: true,
+			errorType: db.ErrConstraintUnique,
 		},
 	}
 
@@ -166,8 +168,11 @@ func TestCreateUser(t *testing.T) {
 			if tt.wantErr {
 				if err == nil {
 					t.Error("expected error but got none")
-				} else {
-					t.Logf("expected error received: %v", err)
+					return
+				}
+				
+				if tt.errorType != nil && !errors.Is(err, tt.errorType) {
+					t.Errorf("expected error type %v, got %v", tt.errorType, err)
 				}
 				return
 			}
