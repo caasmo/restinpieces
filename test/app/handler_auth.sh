@@ -158,12 +158,6 @@ cleanup_test_data() {
 main() {
     validate_environment
     
-    # Install jwt-cli if missing
-    if ! command -v jwt &>/dev/null; then
-        echo -e "${YELLOW}Installing jwt-cli...${NC}"
-        go install github.com/matiaskorhonen/jwt-cli@latest
-    fi
-
     # Run tests
     test_valid_token_refresh
     test_invalid_token
