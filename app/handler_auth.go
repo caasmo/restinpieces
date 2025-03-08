@@ -189,7 +189,7 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			writeJSONError(w, errorEmailConflict)
 			return
 		}
-		writeJSONError(w, errorRegistrationFailed)
+		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Registration failed: %s"}`, err.Error())
 		return
 	}
 
