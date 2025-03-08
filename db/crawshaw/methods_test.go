@@ -127,6 +127,16 @@ func TestCreateUser(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "duplicate token key",
+			user: db.User{
+				Email:    "duptoken@test.com",
+				Password: "hashed_password_123",
+				Name:     "Duplicate Token User",
+				TokenKey: "token_key_setup", // Same token key as test user created in setupDB()
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {
