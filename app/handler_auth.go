@@ -37,6 +37,7 @@ var (
 	errorPasswordMismatch    = jsonError{http.StatusBadRequest, []byte(`{"error":"Password and confirmation do not match"}`)}
 	errorMissingFields       = jsonError{http.StatusBadRequest, []byte(`{"error":"Missing required fields"}`)}
 	errorPasswordComplexity  = jsonError{http.StatusBadRequest, []byte(`{"error":"Password must be at least 8 characters"}`)}
+	errorEmailConflict       = jsonError{http.StatusConflict, []byte(`{"error":"Email already registered"}`)}
 	errorRegistrationFailed  = jsonError{http.StatusBadRequest, []byte(`{"error":"Registration failed"}`)}
 )
 
@@ -185,7 +186,7 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// Handle duplicate email error
 		if strings.Contains(err.Error(), "duplicate") {
-			writeJSONError(w, jsonError{http.StatusConflict, []byte(`{"error":"Email already registered"}`)})
+			writeJSONError(w, errorEmailConflict)
 			return
 		}
 		writeJSONError(w, errorRegistrationFailed)
