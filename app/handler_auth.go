@@ -8,8 +8,6 @@ import (
 	"time"
 	
 	"github.com/caasmo/restinpieces/crypto"
-
-	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 )
 
@@ -181,7 +179,7 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		Email:     req.Identity,
 		Password:  string(hashedPassword),
 		Name:      "", // Optional field
-		TokenKey:  crypto.generateSecureToken(32), // Generate secure token for email validation
+		TokenKey:  crypto.GenerateSecureToken(32), // Generate secure token TODO 
 	})
 
 	if err != nil {
