@@ -94,6 +94,16 @@ func TestCreateUser(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "missing multiple required fields",
+			user: db.User{
+				Email:    "", // Empty email
+				Name:     "", // Empty name
+				Password: "", // Empty password
+				TokenKey: "", // Empty token key
+			},
+			wantErr: true,
+		},
 	}
 
 	for _, tt := range tests {

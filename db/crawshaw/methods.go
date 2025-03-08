@@ -3,8 +3,15 @@ package crawshaw
 import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
+	"errors"
+	"fmt"
 	"github.com/caasmo/restinpieces/db"
+	"strings"
 	"time"
+)
+
+var (
+	ErrMissingFields = errors.New("missing required fields")
 )
 
 // GetUserByEmail retrieves a user by email address.
@@ -46,6 +53,25 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 // Example timestamp: "2024-03-07T15:04:05Z"
 // User struct should contain at minimum: Email, Password (pre-hashed), and Name
 func (d *Db) CreateUser(user db.User) (*db.User, error) {
+	// Validate required fields
+	var missingFields []string
+	if user.Email == "" {
+		missingFields = append(missingFields, "Email")
+	}
+	if user.Name == "" {
+		missingFields = append(missingFields, "Name")
+	}
+	if user.Password == "" {
+		missingFields = append(missingFields, "Password")
+	}
+	if user.TokenKey == "" {
+		missingFields = append(missingFields, "TokenKey")
+	}
+	
+	if len(missingFields) > 0 {
+		return nil, fmt.Errorf("%w: %s", ErrMissingFields, strings.Join(missingFields, ", "))
+	}
+
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 	
