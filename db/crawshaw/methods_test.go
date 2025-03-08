@@ -13,12 +13,23 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
+// Schema Hash Verification Process:
+// 1. Any changes to migrations/users.sql will break this test
+// 2. Calculate new hash with: sha256sum migrations/users.sql
+// 3. Update knownHash in TestSchemaVersion with the new value
+// 4. Review test data in setupDB() for compatibility with schema changes
+
 //go:embed ../../migrations/users.sql
 var usersSchema string
 
+// TestSchemaVersion ensures the embedded users.sql schema matches the known hash.
+// To update after schema changes:
+// 1. Run: sha256sum migrations/users.sql
+// 2. Replace knownHash with the output hash
+// 3. Verify test data still works with new schema
 func TestSchemaVersion(t *testing.T) {
 	currentHash := sha256.Sum256([]byte(usersSchema))
-	knownHash := "a1b2c3..." // Update when schema changes
+	knownHash := "a1b2c3..." // Replace with output from sha256sum
 	
 	if hex.EncodeToString(currentHash[:]) != knownHash {
 		t.Fatal("users.sql schema has changed - update tests and knownHash")
