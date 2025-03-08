@@ -59,7 +59,7 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	var createdUser *db.User
 	err := sqlitex.Exec(conn, 
 		`INSERT INTO users (email, password, name, created, updated, tokenKey) 
-		VALUES (?, ?, ?, ?, ?, hex(randomblob(16)))
+		VALUES (?, ?, ?, ?, ?, ?)
 		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
 		func(stmt *sqlite.Stmt) error {
 			user = &db.User{
@@ -79,7 +79,8 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		user.Password, // 2. password
 		user.Name,    // 3. name
 		now,          // 4. created
-		now)          // 5. updated
+		now,          // 5. updated
+		user.TokenKey) // 6. tokenKey
 
 	if err != nil {
 		fmt.Printf("SQL error: %v\n", err)
