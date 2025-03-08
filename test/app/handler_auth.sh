@@ -1,176 +1,73 @@
 #!/bin/bash
-set -o errexit
-set -o pipefail
-set -o nounset
+set -eo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Configuration
-SERVER_URL="http://localhost:8080"
-JWT_SECRET="test_secret_32_bytes_long_xxxxxx" # Must match app config
-
-jwt() {
-     # Usage: generate_jwt <secret> <user_id> [expiry_time]
-     local secret=$1
-     local user_id=$2
-     local expiry=${3:-"+5 minutes"}
-
-     local header=$(printf '{"alg":"HS256","typ":"JWT"}' | base64 | tr -d '=\n' | tr '/+' '_-')
-     local exp=$(date -d "$expiry" +%s)
-     local payload=$(printf '{"user_id":"%s","exp":%d}' "$user_id" "$exp" | base64 | tr -d '=\n' | tr '/+' '_-')
-
-     local signature=$(printf "%s.%s" "$header" "$payload" |
-                       openssl dgst -sha256 -hmac "$secret" -binary |
-                       base64 | tr -d '=\n' | tr '/+' '_-')
-
-     printf "%s.%s.%s\n" "$header" "$payload" "$signature"
- }
-
-TIMEOUT_SECONDS=5
-CURL_OPTS=("--silent" "--show-error" "--max-time" "$TIMEOUT_SECONDS")
-
-# Test counters
-TESTS_RUN=0
-TESTS_PASSED=0
-TESTS_FAILED=0
+# Source utilities
+TEST_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
+source "$TEST_ROOT/lib/utils.sh"
 
 test_valid_token_refresh() {
-    ((TESTS_RUN++))
-    echo -e "${YELLOW}=== TEST: Valid token refresh ===${NC}"
+    log_test_start "Valid token refresh"
     
-    # Generate valid test token
     local token
     if ! token=$(jwt "$JWT_SECRET" "testuser123" "+5 minutes"); then
-        echo -e "${RED}FAIL: Token generation failed${NC}"
-        ((TESTS_FAILED++))
+        log_failure "Token generation failed"
         return 1
     fi
     
-    # Make refresh request
-    local response
-    if ! response=$(curl "${CURL_OPTS[@]}" -o response.txt -w "%{http_code}" \
-        -X POST "$SERVER_URL/auth-refresh" \
-        -H "Authorization: Bearer $token"); then
-        echo -e "${RED}FAIL: Request failed${NC}"
-        ((TESTS_FAILED++))
-        return 1
-    fi
+    local response_file="response_$$.txt"
+    local status
+    
+    http_request POST "/auth-refresh" status "$response_file" "" \
+        "Authorization: Bearer $token"
         
-    # Validate response
-    if [ "$response" -ne 200 ]; then
-        echo -e "${RED}FAIL: Expected 200, got $response${NC}"
-        ((TESTS_FAILED++))
-        return 1
+    if assert_status 200 "$status"; then
+        assert_json_contains "access_token" "$response_file"
     fi
     
-    if ! jq -e '.access_token' response.txt >/dev/null; then
-        echo -e "${RED}FAIL: Missing access_token in response${NC}"
-        ((TESTS_FAILED++))
-        return 1
-    fi
-    
-    echo -e "${GREEN}PASS${NC}"
-    ((TESTS_PASSED++))
+    [ $? -eq 0 ] && log_success || true
 }
 
 test_invalid_token() {
-    ((TESTS_RUN++))
-    echo -e "${YELLOW}=== TEST: Invalid token ===${NC}"
+    log_test_start "Invalid token"
     
-    response=$(curl "${CURL_OPTS[@]}" -o /dev/null -w "%{http_code}" \
-        -X POST "$SERVER_URL/auth-refresh" \
-        -H "Authorization: Bearer invalid.token.here")
+    local response_file="response_$$.txt"
+    local status
+    
+    http_request POST "/auth-refresh" status "$response_file" "" \
+        "Authorization: Bearer invalid.token.here"
         
-    if [ "$response" -eq 401 ]; then
-        echo -e "${GREEN}PASS${NC}"
-        ((TESTS_PASSED++))
-    else
-        echo -e "${RED}FAIL: Expected 401, got $response${NC}"
-        ((TESTS_FAILED++))
-        return 1
-    fi
+    assert_status 401 "$status "Expected 401 for invalid token"
+    [ $? -eq 0 ] && log_success || true
 }
 
 test_missing_auth_header() {
-    ((TESTS_RUN++))
-    echo -e "${YELLOW}=== TEST: Missing authorization header ===${NC}"
+    log_test_start "Missing authorization header"
     
-    response=$(curl "${CURL_OPTS[@]}" -o /dev/null -w "%{http_code}" \
-        -X POST "$SERVER_URL/auth-refresh")
-        
-    if [ "$response" -eq 400 ]; then
-        echo -e "${GREEN}PASS${NC}"
-        ((TESTS_PASSED++))
-    else
-        echo -e "${RED}FAIL: Expected 400, got $response${NC}"
-        ((TESTS_FAILED++))
-        return 1
-    fi
+    local response_file="response_$$.txt"
+    local status
+    
+    http_request POST "/auth-refresh" status "$response_file"
+    
+    assert_status 400 "$status" "Expected 400 for missing auth header"
+    [ $? -eq 0 ] && log_success || true
 }
 
 test_valid_registration() {
-    ((TESTS_RUN++))
-    echo -e "${YELLOW}=== TEST: Valid user registration ===${NC}"
+    log_test_start "Valid user registration"
     
-    response=$(curl "${CURL_OPTS[@]}" -o response.txt -w "%{http_code}" \
-        -X POST "$SERVER_URL/register" \
-        -H "Content-Type: application/json" \
-        -d '{
-            "identity": "newuser@test.com",
-            "password": "securePass123!",
-            "password_confirm": "securePass123!"
-        }')
+    local response_file="response_$$.txt"
+    local status
+    
+    http_request POST "/register" status "$response_file" \
+        '{"identity":"new@test.com","password":"pass123","password_confirm":"pass123"}' \
+        "Content-Type: application/json"
         
-    if [ "$response" -ne 200 ]; then
-        echo -e "${RED}FAIL: Expected 200, got $response${NC}"
-        ((TESTS_FAILED++))
-        return 1
+    if assert_status 200 "$status"; then
+        assert_json_contains "token" "$response_file" && \
+        assert_json_contains "record.id" "$response_file"
     fi
     
-    if ! jq -e '.token' response.txt >/dev/null; then
-        echo -e "${RED}FAIL: Missing token in response${NC}"
-        ((TESTS_FAILED++))
-        return 1
-    fi
-    
-    if ! jq -e '.record.id' response.txt >/dev/null; then
-        echo -e "${RED}FAIL: Missing user record in response${NC}"
-        ((TESTS_FAILED++))
-        return 1
-    fi
-    
-    echo -e "${GREEN}PASS${NC}"
-    ((TESTS_PASSED++))
-}
-
-validate_environment() {
-    # Check required commands
-    local missing=()
-    for cmd in curl jq go; do
-        if ! command -v "$cmd" &>/dev/null; then
-            missing+=("$cmd")
-        fi
-    done
-    
-    if [ ${#missing[@]} -gt 0 ]; then
-        echo -e "${RED}Missing required commands: ${missing[*]}${NC}"
-        exit 1
-    fi
-    
-    # Check server connectivity
-    if ! curl "${CURL_OPTS[@]}" "$SERVER_URL" &>/dev/null; then
-        echo -e "${RED}Could not connect to server at $SERVER_URL${NC}"
-        exit 1
-    fi
-}
-
-cleanup_test_data() {
-    echo -e "${YELLOW}Cleaning up test data...${NC}"
-    # Add cleanup commands here as needed
+    [ $? -eq 0 ] && log_success || true
 }
 
 main() {
@@ -182,23 +79,8 @@ main() {
     test_missing_auth_header
     test_valid_registration
     
-    # Cleanup
-    cleanup_test_data
-    rm -f response.txt
-    
-    # Print summary
-    echo -e "\n${YELLOW}=== Test Summary ===${NC}"
-    echo -e "Tests Run:   $TESTS_RUN"
-    echo -e "Tests Passed: ${GREEN}$TESTS_PASSED${NC}"
-    echo -e "Tests Failed: ${RED}$TESTS_FAILED${NC}"
-    
-    if [ "$TESTS_FAILED" -gt 0 ]; then
-        echo -e "${RED}Some tests failed!${NC}"
-        exit 1
-    else
-        echo -e "${GREEN}All tests passed!${NC}"
-    fi
+    cleanup
+    print_test_summary
 }
 
-# Run main function
 main
