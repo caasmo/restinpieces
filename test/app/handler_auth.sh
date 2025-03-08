@@ -7,7 +7,7 @@ source "$TEST_ROOT/lib/utils.sh"
 
 test_valid_token_refresh() {
     log_test_start "Valid token refresh"
-    
+
     local token
     if ! token=$(jwt "$JWT_SECRET" "testuser123" "+5 minutes"); then
         log_failure "Token generation failed"
