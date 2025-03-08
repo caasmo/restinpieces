@@ -16,6 +16,23 @@ test_valid_token_refresh() {
     
     if $VERBOSE; then
         echo -e "${YELLOW}[DEBUG] Generated JWT token: $token${NC}"
+        
+        # Validate token format
+        if [[ $(grep -o '\.' <<< "$token" | wc -l) -ne 2 ]]; then
+            echo -e "${RED}[ERROR] Invalid JWT format - expected 3 parts${NC}"
+            return 1
+        fi
+        
+        # Verify secret length
+        if [ ${#JWT_SECRET} -lt 32 ]; then
+            echo -e "${RED}[ERROR] JWT_SECRET too short - needs 32 bytes${NC}"
+            return 1
+        fi
+        
+        # Decode token components for inspection
+        IFS=. read header payload _ <<< "$token"
+        echo -e "${YELLOW}[DEBUG] Header: $(base64 -d <<< "$header")${NC}"
+        echo -e "${YELLOW}[DEBUG] Payload: $(base64 -d <<< "$payload")${NC}"
     fi
     
     local response_file="response_$$.txt"
