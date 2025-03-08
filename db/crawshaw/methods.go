@@ -3,7 +3,6 @@ package crawshaw
 import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
-	"errors"
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
 	"strings"
