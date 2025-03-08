@@ -19,7 +19,7 @@ import (
 // 3. Update knownHash in TestSchemaVersion with the new value
 // 4. Review test data in setupDB() for compatibility with schema changes
 
-//go:embed ../../../migrations/users.sql
+//go:embed ../../migrations/users.sql
 var usersSchema string
 
 // TestSchemaVersion ensures the embedded users.sql schema matches the known hash.
@@ -29,7 +29,7 @@ var usersSchema string
 // 3. Verify test data still works with new schema
 func TestSchemaVersion(t *testing.T) {
 	currentHash := sha256.Sum256([]byte(usersSchema))
-	knownHash := "da48850b0d80821e5f8592071e657e5a4a917e2e846574e3736e4fe31d328258" 
+	knownHash := "da48850b0d80821e5f8592071e657e5a4a917e2e846574e3736e4fe31d328258" // Replace with output from sha256sum
 	
 	if hex.EncodeToString(currentHash[:]) != knownHash {
 		t.Fatal("users.sql schema has changed - update tests and knownHash")
