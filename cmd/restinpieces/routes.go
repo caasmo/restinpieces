@@ -11,6 +11,7 @@ func route(ap *app.App) {
 	authMiddleware := alice.New(ap.JwtValidate)
 	ap.Router().Handle("POST /auth-refresh", authMiddleware.ThenFunc(ap.RefreshAuthHandler))
 	ap.Router().Handle("POST /auth-with-password", http.HandlerFunc(ap.AuthWithPasswordHandler))
+	ap.Router().Handle("POST /register", http.HandlerFunc(ap.RegisterHandler))
 
 	ap.Router().Handle("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
 	ap.Router().Handle("/", commonMiddleware.ThenFunc(ap.Index))

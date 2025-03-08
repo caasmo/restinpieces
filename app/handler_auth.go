@@ -29,10 +29,14 @@ import (
 //
 // Precomputed error responses with status codes
 var (
-	errorTokenGeneration    = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
-	errorClaimsNotFound     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token: Claims not found"}`)}
-	errorInvalidRequest     = jsonError{http.StatusBadRequest, []byte(`{"error":"Invalid request payload"}`)}
-	errorInvalidCredentials = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid credentials"}`)}
+	errorTokenGeneration     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
+	errorClaimsNotFound      = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token: Claims not found"}`)}
+	errorInvalidRequest      = jsonError{http.StatusBadRequest, []byte(`{"error":"Invalid request payload"}`)}
+	errorInvalidCredentials  = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid credentials"}`)}
+	errorPasswordMismatch    = jsonError{http.StatusBadRequest, []byte(`{"error":"Password and confirmation do not match"}`)}
+	errorMissingFields       = jsonError{http.StatusBadRequest, []byte(`{"error":"Missing required fields"}`)}
+	errorPasswordComplexity  = jsonError{http.StatusBadRequest, []byte(`{"error":"Password must be at least 8 characters"}`)}
+	errorRegistrationFailed  = jsonError{http.StatusBadRequest, []byte(`{"error":"Registration failed"}`)}
 )
 
 // RefreshAuthHandler handles explicit JWT token refresh requests
@@ -127,4 +131,90 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 // todo better validation ozzo?
 func isValidIdentity(email string) bool {
 	return strings.Contains(email, "@") && strings.Contains(email, ".")
+}
+
+// RegisterHandler handles user registration with validation
+func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Identity        string `json:"identity"`
+		Password        string `json:"password"`
+		PasswordConfirm string `json:"password_confirm"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, errorInvalidRequest)
+		return
+	}
+
+	// Validate required fields
+	req.Identity = strings.TrimSpace(req.Identity)
+	req.Password = strings.TrimSpace(req.Password)
+	if req.Identity == "" || req.Password == "" || req.PasswordConfirm == "" {
+		writeJSONError(w, errorMissingFields)
+		return
+	}
+
+	// Validate password match
+	if req.Password != req.PasswordConfirm {
+		writeJSONError(w, errorPasswordMismatch)
+		return
+	}
+
+	// Validate password complexity
+	if len(req.Password) < 8 {
+		writeJSONError(w, errorPasswordComplexity)
+		return
+	}
+
+	// Hash password before storage
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		writeJSONError(w, errorTokenGeneration)
+		return
+	}
+
+	// Create user in database
+	user, err := a.db.CreateUser(db.User{
+		Email:     req.Identity,
+		Password:  string(hashedPassword),
+		Name:      "", // Optional field
+		TokenKey:  generateSecureToken(32), // Generate secure token for email validation
+	})
+
+	if err != nil {
+		// Handle duplicate email error
+		if strings.Contains(err.Error(), "duplicate") {
+			writeJSONError(w, jsonError{http.StatusConflict, []byte(`{"error":"Email already registered"}`)})
+			return
+		}
+		writeJSONError(w, errorRegistrationFailed)
+		return
+	}
+
+	// Generate JWT token for immediate authentication
+	token, _, err := crypto.CreateJwt(user.ID, a.config.JwtSecret, a.config.TokenDuration)
+	if err != nil {
+		writeJSONError(w, errorTokenGeneration)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"token": token,
+		"record": map[string]interface{}{
+			"id":       user.ID,
+			"email":    user.Email,
+			"name":     user.Name,
+			"verified": user.Verified,
+		},
+	})
+}
+
+// generateSecureToken creates a cryptographically secure random token
+func generateSecureToken(length int) string {
+	b := make([]byte, length)
+	if _, err := rand.Read(b); err != nil {
+		return ""
+	}
+	return fmt.Sprintf("%x", b)
 }
