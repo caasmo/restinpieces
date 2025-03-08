@@ -29,7 +29,7 @@ var usersSchema string
 // 3. Verify test data still works with new schema
 func TestSchemaVersion(t *testing.T) {
 	currentHash := sha256.Sum256([]byte(usersSchema))
-	knownHash := "a1b2c3..." // Replace with output from sha256sum
+	knownHash := "da48850b0d80821e5f8592071e657e5a4a917e2e846574e3736e4fe31d328258" 
 	
 	if hex.EncodeToString(currentHash[:]) != knownHash {
 		t.Fatal("users.sql schema has changed - update tests and knownHash")
