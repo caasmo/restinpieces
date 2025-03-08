@@ -35,24 +35,36 @@ jwt() {
 }
 
 validate_environment() {
+    echo -e "${YELLOW}=== Environment Validation ===${NC}"
+    
     # Check required commands
     local missing=()
+    echo -e "${YELLOW}Checking required commands...${NC}"
     for cmd in curl jq go; do
-        if ! command -v "$cmd" &>/dev/null; then
+        if command -v "$cmd" &>/dev/null; then
+            echo -e "  ${GREEN}✓${NC} $cmd found"
+        else
+            echo -e "  ${RED}✗${NC} $cmd missing"
             missing+=("$cmd")
         fi
     done
     
     if [ ${#missing[@]} -gt 0 ]; then
-        echo -e "${RED}Missing required commands: ${missing[*]}${NC}"
+        echo -e "${RED}Error: Missing required commands: ${missing[*]}${NC}"
         exit 1
     fi
     
     # Check server connectivity
-    if ! curl "${CURL_OPTS[@]}" "$SERVER_URL" &>/dev/null; then
-        echo -e "${RED}Could not connect to server at $SERVER_URL${NC}"
+    echo -e "${YELLOW}Checking server connection...${NC}"
+    if curl "${CURL_OPTS[@]}" "$SERVER_URL" &>/dev/null; then
+        echo -e "  ${GREEN}✓${NC} Successfully connected to ${SERVER_URL}"
+    else
+        echo -e "  ${RED}✗${NC} Could not connect to server at ${SERVER_URL}"
+        echo -e "${RED}Error: Verify the server is running and accessible${NC}"
         exit 1
     fi
+    
+    echo -e "${GREEN}Environment validation passed${NC}\n"
 }
 
 http_request() {
