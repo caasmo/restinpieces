@@ -12,6 +12,24 @@ NC='\033[0m' # No Color
 # Configuration
 SERVER_URL="http://localhost:8080"
 JWT_SECRET="test_secret_32_bytes_long_xxxxxx" # Must match app config
+
+jwt() {
+     # Usage: generate_jwt <secret> <user_id> [expiry_time]
+     local secret=$1
+     local user_id=$2
+     local expiry=${3:-"+5 minutes"}
+
+     local header=$(printf '{"alg":"HS256","typ":"JWT"}' | base64 | tr -d '=\n' | tr '/+' '_-')
+     local exp=$(date -d "$expiry" +%s)
+     local payload=$(printf '{"user_id":"%s","exp":%d}' "$user_id" "$exp" | base64 | tr -d '=\n' | tr '/+' '_-')
+
+     local signature=$(printf "%s.%s" "$header" "$payload" |
+                       openssl dgst -sha256 -hmac "$secret" -binary |
+                       base64 | tr -d '=\n' | tr '/+' '_-')
+
+     printf "%s.%s.%s\n" "$header" "$payload" "$signature"
+ }
+
 TIMEOUT_SECONDS=5
 CURL_OPTS=("--silent" "--show-error" "--max-time" "$TIMEOUT_SECONDS")
 
@@ -26,7 +44,7 @@ test_valid_token_refresh() {
     
     # Generate valid test token
     local token
-    if ! token=$(jwt encode --secret "$JWT_SECRET" --claim user_id=testuser123 --exp +5m); then
+    if ! token=$(jwt "$JWT_SECRET" "testuser123" "+5 minutes"); then
         echo -e "${RED}FAIL: Token generation failed${NC}"
         ((TESTS_FAILED++))
         return 1
