@@ -91,7 +91,8 @@ http_request() {
     done
     
     if [ -n "$data" ]; then
-        curl_cmd+=("-d" "$data")
+        # Use --data-binary to preserve exact JSON content
+        curl_cmd+=("--data-binary" "$data")
     fi
     
     if $VERBOSE; then
