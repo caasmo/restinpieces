@@ -18,6 +18,10 @@
       ]
     }
 
+## Data response structure
+
+- prefer flat. maybe data key. TODO
+
 #### TODO
 
 - details>message is the UI message shown. Can be dynamicaly created by server. 
