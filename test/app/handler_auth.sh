@@ -8,31 +8,27 @@ source "$TEST_ROOT/lib/utils.sh"
 test_valid_token_refresh() {
     log_test_start "Valid token refresh"
 
-    local token
-    if ! token=$(jwt "$JWT_SECRET" "testuser123" "+5 minutes"); then
-        log_failure "Token generation failed"
+    # Generate and display token first
+    local token=$(jwt "$JWT_SECRET" "testuser123" "+5 minutes")
+    
+    if $VERBOSE; then
+        echo -e "${YELLOW}[DEBUG] Raw JWT token: $token${NC}"
+        
+    # Basic token validation checks
+    if [[ -z "$token" ]]; then
+        log_failure "Empty token generated"
         return 1
     fi
     
-    if $VERBOSE; then
-        echo -e "${YELLOW}[DEBUG] Generated JWT token: $token${NC}"
-        
-        # Validate token format
-        if [[ $(grep -o '\.' <<< "$token" | wc -l) -ne 2 ]]; then
-            echo -e "${RED}[ERROR] Invalid JWT format - expected 3 parts${NC}"
-            return 1
-        fi
-        
-        # Verify secret length
-        if [ ${#JWT_SECRET} -lt 32 ]; then
-            echo -e "${RED}[ERROR] JWT_SECRET too short - needs 32 bytes${NC}"
-            return 1
-        fi
-        
-        # Decode token components for inspection
-        IFS=. read header payload _ <<< "$token"
-        echo -e "${YELLOW}[DEBUG] Header: $(base64 -d <<< "$header")${NC}"
-        echo -e "${YELLOW}[DEBUG] Payload: $(base64 -d <<< "$payload")${NC}"
+    if [[ $(grep -o '\.' <<< "$token" | wc -l) -ne 2 ]]; then
+        log_failure "Invalid JWT format - got ${RED}$(wc -l <<< "$token") parts${NC}, expected 3"
+        return 1
+    fi
+    
+    if [ ${#JWT_SECRET} -ne 32 ]; then
+        log_failure "JWT_SECRET must be 32 bytes, got ${#JWT_SECRET}"
+        return 1
+    fi
     fi
     
     local response_file="response_$$.txt"
