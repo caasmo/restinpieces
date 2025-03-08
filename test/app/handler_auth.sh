@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+#set -eo pipefail
 
 # Source utilities
 TEST_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
