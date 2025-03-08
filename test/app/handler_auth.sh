@@ -84,7 +84,7 @@ test_valid_registration() {
     local status
     
     http_request POST "/register" status "$response_file" \
-        '{"identity":"new@test.com","password":"pass123","password_confirm":"pass123"}' \
+        '{"identity":"new@test.com","password":"pass1234","password_confirm":"pass1234"}' \
         "Content-Type: application/json"
         
     if assert_status 200 "$status"; then
