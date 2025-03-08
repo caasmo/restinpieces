@@ -1,12 +1,13 @@
 package app
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
+	
+	"github.com/caasmo/restinpieces/crypto"
 
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
@@ -169,7 +170,7 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Hash password before storage
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
@@ -180,7 +181,7 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		Email:     req.Identity,
 		Password:  string(hashedPassword),
 		Name:      "", // Optional field
-		TokenKey:  generateSecureToken(32), // Generate secure token for email validation
+		TokenKey:  crypto.generateSecureToken(32), // Generate secure token for email validation
 	})
 
 	if err != nil {
@@ -212,11 +213,3 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// generateSecureToken creates a cryptographically secure random token
-func generateSecureToken(length int) string {
-	b := make([]byte, length)
-	if _, err := rand.Read(b); err != nil {
-		return ""
-	}
-	return fmt.Sprintf("%x", b)
-}
