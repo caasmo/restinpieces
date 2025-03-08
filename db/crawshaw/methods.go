@@ -22,7 +22,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		`SELECT id, email, name, password, created, updated, verified, tokenKey 
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
-			user = &db.User{
+			createdUser = &db.User{
 				ID:        stmt.GetText("id"),
 				Email:     stmt.GetText("email"),
 				Name:      stmt.GetText("name"),
@@ -56,7 +56,7 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	fmt.Printf("Attempting to create user with params:\nemail: %q\npassword: %q\nname: %q\ncreated: %q\nupdated: %q\n",
 		user.Email, user.Password, user.Name, now, now)
 	
-	var user *db.User
+	var createdUser *db.User
 	err := sqlitex.Exec(conn, 
 		`INSERT INTO users (email, password, name, created, updated, tokenKey) 
 		VALUES (?, ?, ?, ?, ?, hex(randomblob(16)))
@@ -85,5 +85,5 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		fmt.Printf("SQL error: %v\n", err)
 	}
 	
-	return user, err
+	return createdUser, err
 }
