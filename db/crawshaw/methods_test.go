@@ -135,8 +135,9 @@ func TestCreateUser(t *testing.T) {
 			name: "valid new user",
 			user: db.User{
 				Email:    "newuser@test.com",
-				Password: "securepassword123",
+				Password: "securepassword123", 
 				Name:     "New User",
+				TokenKey: "unique_token_123",
 			},
 			wantErr: false,
 		},
@@ -144,8 +145,9 @@ func TestCreateUser(t *testing.T) {
 			name: "duplicate email",
 			user: db.User{
 				Email:    "existing@test.com",
-				Password: "password123", 
+				Password: "password123",
 				Name:     "Duplicate User",
+				TokenKey: "duplicate_token_456",
 			},
 			wantErr: true,
 		},
@@ -193,7 +195,7 @@ func TestCreateUser(t *testing.T) {
 				}
 				
 				// Verify the user exists in DB
-				dbUser, err := testDB.GetUserByEmail(tt.email)
+				dbUser, err := testDB.GetUserByEmail(tt.user.Email)
 				if err != nil {
 					t.Errorf("Failed to retrieve created user: %v", err)
 				}
