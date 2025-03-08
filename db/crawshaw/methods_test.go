@@ -10,7 +10,7 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-func createTestDB(t *testing.T) *Db {
+func setupDB(t *testing.T) *Db {
 	t.Helper()
 	
     // Using a named in-memory database with the URI format
@@ -57,7 +57,7 @@ func createTestDB(t *testing.T) *Db {
 }
 
 func TestCreateUser(t *testing.T) {
-	testDB := createTestDB(t)
+	testDB := setupDB(t)
 	defer testDB.Close()
 
 	tests := []struct {
@@ -80,7 +80,7 @@ func TestCreateUser(t *testing.T) {
 		{
 			name: "duplicate email",
 			user: db.User{
-				Email:    "existing@test.com", // Same email as test user created in createTestDB()
+				Email:    "existing@test.com", // Same email as test user created in setupDB()
 				Password: "hashed_password_123",
 				Name:     "Duplicate User",
 			},
@@ -177,7 +177,7 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestGetUserByEmail(t *testing.T) {
-	testDB := createTestDB(t)
+	testDB := setupDB(t)
 	defer testDB.Close()
 	
 	tests := []struct {
