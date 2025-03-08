@@ -97,10 +97,10 @@ test_valid_registration() {
 
 main() {
     # Parse command line arguments
-    while getopts "v" opt; do
+    while getopts "q" opt; do
         case $opt in
-            v) VERBOSE=true ;;
-            *) echo "Usage: $0 [-v]" >&2; exit 1 ;;
+            q) VERBOSE=false ;;  # -q for quiet mode
+            *) echo "Usage: $0 [-q]" >&2; exit 1 ;;
         esac
     done
 
