@@ -11,6 +11,7 @@ import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/migrations"
 )
 
 // Schema Hash Verification Process:
@@ -28,7 +29,7 @@ var usersSchema string
 // 2. Replace knownHash with the output hash
 // 3. Verify test data still works with new schema
 func TestSchemaVersion(t *testing.T) {
-	currentHash := sha256.Sum256([]byte(usersSchema))
+	currentHash := sha256.Sum256([]byte(migrations.UsersSchema))
 	knownHash := "da48850b0d80821e5f8592071e657e5a4a917e2e846574e3736e4fe31d328258" // Replace with output from sha256sum
 	
 	if hex.EncodeToString(currentHash[:]) != knownHash {
@@ -56,7 +57,7 @@ func setupDB(t *testing.T) *Db {
 		t.Fatalf("failed to drop users table: %v", err)
 	}
 	
-	err = sqlitex.ExecScript(conn, usersSchema)
+	err = sqlitex.ExecScript(conn, migrations.UsersSchema)
 	if err != nil {
 		t.Fatalf("failed to create test schema: %v", err)
 	}
