@@ -42,8 +42,8 @@ func setupDB(t *testing.T) *Db {
 		CREATE UNIQUE INDEX idx_tokenKey__pb_users_auth_ ON users(tokenKey);
 		CREATE UNIQUE INDEX idx_email__pb_users_auth_ ON users(email) WHERE email != '';
 		
-		INSERT INTO users (id, email, name, password, created, updated, verified)
-		VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE);
+		INSERT INTO users (id, email, name, password, created, updated, verified, tokenKey)
+		VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE, 'token_key_existing_user');
 	`)
 	if err != nil {
 		t.Fatalf("failed to create test schema: %v", err)
