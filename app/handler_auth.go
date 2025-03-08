@@ -129,7 +129,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 
 // isValidIdentity performs basic email format validation
-// todo better validation ozzo?
+// TODO better validation ozzo?
 func isValidIdentity(email string) bool {
 	return strings.Contains(email, "@") && strings.Contains(email, ".")
 }
