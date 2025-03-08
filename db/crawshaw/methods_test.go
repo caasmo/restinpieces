@@ -152,7 +152,11 @@ func TestCreateUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hashedPassword, _ := crypto.GenerateHash(tt.password)
-			user, err := testDB.CreateUser(tt.email, hashedPassword, tt.username)
+			user, err := testDB.CreateUser(db.User{
+				Email:    tt.email,
+				Password: hashedPassword,
+				Name:     tt.username,
+			})
 			
 			if tt.wantErr {
 				if err == nil {

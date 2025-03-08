@@ -42,11 +42,11 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 }
 
 
-// CreateUser inserts a new user with RFC3339 formatted UTC timestamps and pre-hashed password.
+// CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
 // The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
 // Example timestamp: "2024-03-07T15:04:05Z"
-// Caller is responsible for hashing the password before calling this method
-func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
+// User struct should contain at minimum: Email, Password (pre-hashed), and Name
+func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 	
@@ -54,7 +54,7 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 	now := time.Now().UTC().Format(time.RFC3339)
 	
 	fmt.Printf("Attempting to create user with params:\nemail: %q\npassword: %q\nname: %q\ncreated: %q\nupdated: %q\n",
-		email, hashedPassword, name, now, now)
+		user.Email, user.Password, user.Name, now, now)
 	
 	var user *db.User
 	err := sqlitex.Exec(conn, 
@@ -75,9 +75,9 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 			fmt.Printf("Created user: %+v\n", user)
 			return nil
 		},
-		email,        // 1. email
-		hashedPassword, // 2. password
-		name,         // 3. name
+		user.Email,   // 1. email
+		user.Password, // 2. password
+		user.Name,    // 3. name
 		now,          // 4. created
 		now)          // 5. updated
 
