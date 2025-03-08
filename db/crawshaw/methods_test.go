@@ -72,7 +72,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "new@test.com",
 				Password: "hashed_password_123",
 				Name:     "New User",
-				TokenKey: "token_key_123",
+				TokenKey: "token_key_valid_user_creation",
 			},
 			wantErr: false,
 			checkFields: []string{"Email", "Name", "Password", "TokenKey"},
@@ -83,7 +83,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "existing@test.com", // Same email as test user created in setupDB()
 				Password: "hashed_password_123",
 				Name:     "Duplicate User",
-				TokenKey: "token_key_dup",
+				TokenKey: "token_key_duplicate_email",
 			},
 			wantErr: true,
 		},
@@ -93,7 +93,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "", // Empty email
 				Password: "hashed_password_123",
 				Name:     "Invalid User",
-				TokenKey: "token_key_123",
+				TokenKey: "token_key_missing_email",
 			},
 			wantErr: true,
 		},
@@ -103,7 +103,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "missingpass@test.com",
 				Password: "", // Empty password
 				Name:     "Invalid User",
-				TokenKey: "token_key_123",
+				TokenKey: "token_key_missing_password",
 			},
 			wantErr: true,
 		},
@@ -113,7 +113,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "missingname@test.com",
 				Password: "hashed_password_123",
 				Name:     "", // Empty name
-				TokenKey: "token_key_123",
+				TokenKey: "token_key_missing_name",
 			},
 			wantErr: true,
 		},
@@ -123,7 +123,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "missingtoken@test.com",
 				Password: "hashed_password_123",
 				Name:     "Invalid User",
-				TokenKey: "", // Empty token key
+				TokenKey: "token_key_missing_token_key", // Empty token key
 			},
 			wantErr: true,
 		},
