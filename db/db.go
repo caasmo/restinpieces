@@ -21,5 +21,5 @@ type Db interface {
 	Insert(value int64)
 	InsertWithPool(value int64)
 	GetUserByEmail(email string) (*User, error)
-	CreateUser(email, hashedPassword, name string) (*User, error)
+	CreateUser(user User) (*User, error)
 }

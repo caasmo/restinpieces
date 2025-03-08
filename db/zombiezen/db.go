@@ -92,21 +92,46 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	return nil, fmt.Errorf("not implemented for zombiezen SQLite variant")
 }
 
-// CreateUser TODO: Implement for zombiezen SQLite variant.
-// Temporary implementation returns RFC3339 formatted UTC timestamps.
-// Example: "2024-03-07T15:04:05Z"
-func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
-	// TODO: Implement proper database integration
-	return &db.User{
-		ID:        "temp-id",
-		Email:     email,
-		Name:      name,
-		Password:  hashedPassword,
-		Created:   time.Now().UTC().Format(time.RFC3339),
-		Updated:   time.Now().UTC().Format(time.RFC3339),
-		Verified:  false,
-		TokenKey:  "temp-token-key",
-	}, fmt.Errorf("not implemented for zombiezen SQLite variant")
+// CreateUser inserts a new user with RFC3339 formatted UTC timestamps
+func (d *Db) CreateUser(user db.User) (*db.User, error) {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	defer d.pool.Put(conn)
+
+	now := time.Now().UTC().Format(time.RFC3339)
+	
+	var createdUser db.User
+	err = sqlitex.Execute(conn,
+		`INSERT INTO users (email, password, name, created, updated, tokenKey)
+		VALUES (?, ?, ?, ?, ?, ?)
+		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
+		&sqlitex.ExecOptions{
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				createdUser = db.User{
+					ID:       stmt.GetText("id"),
+					Email:    stmt.GetText("email"),
+					Name:     stmt.GetText("name"),
+					Password: stmt.GetText("password"),
+					Created:  stmt.GetText("created"),
+					Updated:  stmt.GetText("updated"),
+					Verified: stmt.GetInt64("verified") != 0,
+					TokenKey: stmt.GetText("tokenKey"),
+				}
+				return nil
+			},
+			Args: []interface{}{
+				user.Email,
+				user.Password,
+				user.Name,
+				now,
+				now,
+				user.TokenKey,
+			},
+		})
+
+	return &createdUser, err
 }
 
 func (d *Db) InsertWithPool(value int64) {
