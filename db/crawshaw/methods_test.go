@@ -2,6 +2,9 @@ package crawshaw
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	_ "embed"
 	"testing"
 	"time"
 	
@@ -9,6 +12,18 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 	"github.com/caasmo/restinpieces/db"
 )
+
+//go:embed ../../migrations/users.sql
+var usersSchema string
+
+func TestSchemaVersion(t *testing.T) {
+	currentHash := sha256.Sum256([]byte(usersSchema))
+	knownHash := "a1b2c3..." // Update when schema changes
+	
+	if hex.EncodeToString(currentHash[:]) != knownHash {
+		t.Fatal("users.sql schema has changed - update tests and knownHash")
+	}
+}
 
 func setupDB(t *testing.T) *Db {
 	t.Helper()
@@ -24,24 +39,19 @@ func setupDB(t *testing.T) *Db {
 	conn := pool.Get(context.TODO())
 	defer pool.Put(conn)
 	
+	// Drop existing table and create fresh schema
+	err = sqlitex.ExecScript(conn, "DROP TABLE IF EXISTS users;")
+	if err != nil {
+		t.Fatalf("failed to drop users table: %v", err)
+	}
+	
+	err = sqlitex.ExecScript(conn, usersSchema)
+	if err != nil {
+		t.Fatalf("failed to create test schema: %v", err)
+	}
+	
+	// Insert test user
 	err = sqlitex.ExecScript(conn, `
-		DROP TABLE IF EXISTS users;
-		CREATE TABLE users (
-			avatar TEXT DEFAULT '' NOT NULL,
-			created TEXT DEFAULT '' NOT NULL,
-			email TEXT DEFAULT '' NOT NULL,
-			emailVisibility BOOLEAN DEFAULT FALSE NOT NULL,
-			id TEXT PRIMARY KEY DEFAULT ('r'||lower(hex(randomblob(7)))) NOT NULL,
-			name TEXT DEFAULT '' NOT NULL,
-			password TEXT DEFAULT '' NOT NULL,
-			tokenKey TEXT DEFAULT '' NOT NULL,
-			updated TEXT DEFAULT '' NOT NULL,
-			verified BOOLEAN DEFAULT FALSE NOT NULL
-		);
-		
-		CREATE UNIQUE INDEX idx_tokenKey__pb_users_auth_ ON users(tokenKey);
-		CREATE UNIQUE INDEX idx_email__pb_users_auth_ ON users(email) WHERE email != '';
-		
 		INSERT INTO users (id, email, name, password, created, updated, verified, tokenKey)
 		VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE, 'token_key_setup');
 	`)
