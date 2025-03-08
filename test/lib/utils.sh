@@ -21,24 +21,25 @@ declare -g TESTS_PASSED=0
 declare -g TESTS_FAILED=0
 
 jwt() {
-    # Usage: generate_jwt <secret> <user_id> [expiry_time]
-    local secret=$1
-    local user_id=$2
-    local expiry=${3:-"5 min"}
-    
-    # Generate expiration timestamp
-    local exp=$(date -d "$expiry" +%s)
-    
-    # Create header and payload with proper base64 encoding
-    local header=$(echo -n '{"alg":"HS256","typ":"JWT"}' | base64 -w 0 | tr '/+' '_-')
-    local payload=$(echo -n "{\"user_id\":\"$user_id\",\"exp\":$exp}" | base64 -w 0 | tr '/+' '_-')
-    
-    # Create signature
-    local sig_input="${header}.${payload}"
-    local signature=$(echo -n "$sig_input" | openssl dgst -sha256 -hmac "$secret" -binary | base64 -w 0 | tr '/+' '_-')
-    
-    printf "%s.%s.%s\n" "$header" "$payload" "$signature"
-}
+     # Usage: generate_jwt <secret> <user_id> [expiry_time]
+     # Example: generate_jwt "mysupersecret" "testuser123" "+5 minutes"
+     local secret=$1
+     local user_id=$2
+     local expiry=${3:-"+5 minutes"}  # Default to 5 minutes
+
+     # Create header and payload
+     local header=$(printf '{"alg":"HS256","typ":"JWT"}' | base64 | tr -d '=\n' | tr '/+' '_-')
+     local exp=$(date -d "$expiry" +%s)
+     local payload=$(printf '{"user_id":"%s","exp":%d}' "$user_id" "$exp" | base64 | tr -d '=\n' | tr '/+' '_-')
+
+     # Create signature
+     local signature=$(printf "%s.%s" "$header" "$payload" |
+                       openssl dgst -sha256 -hmac "$secret" -binary |
+                       base64 | tr -d '=\n' | tr '/+' '_-')
+
+     # Combine to form JWT
+     printf "%s.%s.%s\n" "$header" "$payload" "$signature"
+ }
 
 validate_environment() {
     echo -e "${YELLOW}=== Environment Validation ===${NC}"
