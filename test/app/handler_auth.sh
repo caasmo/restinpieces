@@ -6,7 +6,7 @@ TEST_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 source "$TEST_ROOT/lib/utils.sh"
 
 test_valid_token_refresh() {
-    log_test_start "Valid token refresh"
+    log_test_start "/auth-refresh: Valid token refresh"
 
     # Generate and display token first
     local token=$(jwt "$JWT_SECRET" "testuser123" "+5 minutes")
@@ -53,7 +53,7 @@ test_valid_token_refresh() {
 }
 
 test_invalid_token() {
-    log_test_start "Invalid token"
+    log_test_start "/auth-refresh: Invalid token"
     
     local response_file="response_$$.txt"
     local status
@@ -66,7 +66,7 @@ test_invalid_token() {
 }
 
 test_missing_auth_header() {
-    log_test_start "Missing authorization header"
+    log_test_start "/auth-refresh: Missing authorization header"
     
     local response_file="response_$$.txt"
     local status
@@ -78,7 +78,7 @@ test_missing_auth_header() {
 }
 
 test_valid_registration() {
-    log_test_start "Valid user registration"
+    log_test_start "/register: Valid user registration"
     
     local response_file="response_$$.txt"
     local status
