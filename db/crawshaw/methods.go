@@ -75,11 +75,11 @@ func (d *Db) CreateUser(email, hashedPassword, name string) (*db.User, error) {
 			fmt.Printf("Created user: %+v\n", user)
 			return nil
 		},
-		email,
-		hashedPassword,
-		name,
-		now,
-		now)
+		email,        // 1. email
+		hashedPassword, // 2. password
+		name,         // 3. name
+		now,          // 4. created
+		now)          // 5. updated
 
 	if err != nil {
 		fmt.Printf("SQL error: %v\n", err)
