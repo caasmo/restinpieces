@@ -174,7 +174,7 @@ func TestCreateUser(t *testing.T) {
 			
 			if !tt.wantErr {
 				// Validate returned user data
-				if user.Email != tt.email {
+				if user.Email != tt.user.Email {
 					t.Errorf("CreateUser() email = %v, want %v", user.Email, tt.email)
 				}
 				if user.Name != tt.username {
