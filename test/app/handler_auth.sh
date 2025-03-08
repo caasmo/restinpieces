@@ -14,6 +14,10 @@ test_valid_token_refresh() {
         return 1
     fi
     
+    if $VERBOSE; then
+        echo -e "${YELLOW}[DEBUG] Generated JWT token: $token${NC}"
+    fi
+    
     local response_file="response_$$.txt"
     local status
     
@@ -79,6 +83,14 @@ test_valid_registration() {
 }
 
 main() {
+    # Parse command line arguments
+    while getopts "v" opt; do
+        case $opt in
+            v) VERBOSE=true ;;
+            *) echo "Usage: $0 [-v]" >&2; exit 1 ;;
+        esac
+    done
+
     validate_environment
     
     # Run tests

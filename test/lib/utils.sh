@@ -6,6 +6,9 @@ export JWT_SECRET="test_secret_32_bytes_long_xxxxxx"
 export TIMEOUT_SECONDS=5
 export CURL_OPTS=("--silent" "--show-error" "--max-time" "$TIMEOUT_SECONDS")
 
+# Configuration flags
+declare -g VERBOSE=${VERBOSE:-false}
+
 # Color definitions
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -87,9 +90,19 @@ http_request() {
         curl_cmd+=("-d" "$data")
     fi
     
+    if $VERBOSE; then
+        echo -e "\n${YELLOW}[DEBUG] Curl command:${NC}"
+        echo "${curl_cmd[@]} $url"
+    fi
+    
     local status_code
     status_code=$("${curl_cmd[@]}" "$url")
     eval "$status_var=$status_code"
+    
+    if $VERBOSE; then
+        echo -e "${YELLOW}[DEBUG] Response status: $status_code${NC}"
+        [ -f "$response_file" ] && echo -e "${YELLOW}[DEBUG] Response body:\n$(cat "$response_file")${NC}"
+    fi
 }
 
 log_test_start() {
