@@ -1,6 +1,7 @@
 package app
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/crypto"
+	"github.com/caasmo/restinpieces/db"
 )
 
 //	export JWT_SECRET=$(openssl rand -base64 32)
