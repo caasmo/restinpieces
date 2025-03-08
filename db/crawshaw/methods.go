@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	ErrMissingFields = errors.New("missing required fields")
+	ErrMissingFields      = errors.New("missing required fields")
+	ErrConstraintUnique   = errors.New("unique constraint violation")
 )
 
 // GetUserByEmail retrieves a user by email address.
@@ -42,6 +43,12 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		}, email)
 
 	if err != nil {
+		// Check for SQLITE_CONSTRAINT_UNIQUE (2067) error code
+		if sqliteErr, ok := err.(sqlite.Error); ok {
+			if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
+				return nil, ErrConstraintUnique
+			}
+		}
 		return nil, err
 	}
 	return user, nil

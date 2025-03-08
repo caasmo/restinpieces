@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/db/crawshaw"
 )
 
 //	export JWT_SECRET=$(openssl rand -base64 32)
@@ -184,8 +186,8 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		// Handle duplicate email error
-		if strings.Contains(err.Error(), "duplicate") {
+		// Handle unique constraint violation (email already exists)
+		if errors.Is(err, crawshaw.ErrConstraintUnique) {
 			writeJSONError(w, errorEmailConflict)
 			return
 		}
