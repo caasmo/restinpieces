@@ -51,9 +51,6 @@ func validateUserFields(user db.User) error {
 	if user.Email == "" {
 		missingFields = append(missingFields, "Email")
 	}
-	if user.Name == "" {
-		missingFields = append(missingFields, "Name")
-	}
 	if user.Password == "" {
 		missingFields = append(missingFields, "Password")
 	}
