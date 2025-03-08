@@ -83,23 +83,46 @@ func TestCreateUser(t *testing.T) {
 				Email:    "existing@test.com", // Same email as test user created in setupDB()
 				Password: "hashed_password_123",
 				Name:     "Duplicate User",
+				TokenKey: "token_key_dup",
 			},
 			wantErr: true,
 		},
 		{
-			name: "missing required fields",
-			user: db.User{
-				Email: "", // Empty email
-				Name:  "Invalid User",
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing multiple required fields",
+			name: "missing email",
 			user: db.User{
 				Email:    "", // Empty email
-				Name:     "", // Empty name
+				Password: "hashed_password_123",
+				Name:     "Invalid User",
+				TokenKey: "token_key_123",
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing password",
+			user: db.User{
+				Email:    "missingpass@test.com",
 				Password: "", // Empty password
+				Name:     "Invalid User",
+				TokenKey: "token_key_123",
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing name",
+			user: db.User{
+				Email:    "missingname@test.com",
+				Password: "hashed_password_123",
+				Name:     "", // Empty name
+				TokenKey: "token_key_123",
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing token key",
+			user: db.User{
+				Email:    "missingtoken@test.com",
+				Password: "hashed_password_123",
+				Name:     "Invalid User",
 				TokenKey: "", // Empty token key
 			},
 			wantErr: true,
