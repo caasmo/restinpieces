@@ -22,9 +22,17 @@ test_valid_token_refresh() {
         
     if assert_status 200 "$status"; then
         assert_json_contains "access_token" "$response_file"
+    else
+        echo -e "${RED}Response status: $status${NC}"
+        [ -f "$response_file" ] && echo -e "${YELLOW}Response body:\n$(cat "$response_file")${NC}"
     fi
     
-    [ $? -eq 0 ] && log_success || true
+    if [ $? -eq 0 ]; then
+        log_success
+    else
+        log_failure "Token refresh failed"
+        return 1
+    fi
 }
 
 test_invalid_token() {
