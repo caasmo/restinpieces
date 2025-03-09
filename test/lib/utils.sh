@@ -140,7 +140,7 @@ log_error() {
 }
 
 log_warning() {
-    echo -e "${BLUE}[WARNING] $*${NC}" >&2
+    echo -e "${YELLOW}[WARNING] $*${NC}" >&2
 }
 
 # Start server with given database file
