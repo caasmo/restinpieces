@@ -185,6 +185,7 @@ start_server() {
 
 # Improved stop function that takes PID as argument
 stop_server() {
+    log_info "Stopping server"
     local pid=$1
 
     if [[ -z "$pid" ]]; then
