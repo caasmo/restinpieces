@@ -158,11 +158,6 @@ test_invalid_registration() {
     assert_status 409 "$status" "Expected 409 for duplicate registration" || test_result=1
     assert_json_contains "error" "$response_file" "Response missing error details" || test_result=1
 
-    if [ $test_result -ne 0 ]; then
-        log_debug "Response status: $status"
-        [ -f "$response_file" ] && log_debug "Response body:\n$(cat "$response_file")"
-    fi
-
     end_test $test_result "One or more assertions failed"
     return $test_result
 }
@@ -199,11 +194,10 @@ main() {
     test_invalid_token
     test_missing_auth_header
     test_valid_registration
-    #test_invalid_registration
+    test_invalid_registration
     
     print_test_summary
     stop_server "$server_pid"
-    log_info "to cleanup"
     cleanup
 }
 
