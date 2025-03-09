@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+
 	cfg := &config.Config{
 		JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
 		TokenDuration: 15 * time.Minute,

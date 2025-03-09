@@ -2,13 +2,13 @@ package main
 
 import (
 	"github.com/caasmo/restinpieces/app"
-	"time"
 	// TOD0 problem cgo compile check?
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/db/crawshaw"
 	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/caasmo/restinpieces/router/servemux"
+	"github.com/caasmo/restinpieces/config"
 )
 
 func WithDBCrawshaw(dbPath string) app.Option {

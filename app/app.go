@@ -5,7 +5,7 @@ import (
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/router"
-	"time"
+	"github.com/caasmo/restinpieces/config"
 )
 
 // App is the application wide context.
@@ -46,7 +46,7 @@ func WithRouter(r router.Router) Option {
 }
 
 // WithConfig sets the application configuration
-func WithConfig(cfg *Config) Option {
+func WithConfig(cfg *config.Config) Option {
 	return func(a *App) {
 		a.config = cfg
 	}
