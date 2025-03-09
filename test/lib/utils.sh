@@ -15,11 +15,6 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Test counters
-declare -g TESTS_RUN=0
-declare -g TESTS_PASSED=0
-declare -g TESTS_FAILED=0
-
 jwt() {
      # Usage: generate_jwt <secret> <user_id> [expiry_time]
      # Example: generate_jwt "mysupersecret" "testuser123" "+5 minutes"
@@ -78,36 +73,118 @@ http_request() {
     # Generic HTTP request helper
     local method=$1
     local path=$2
-    local status_var=$3
+    local -n status_ref=$3  # Use nameref
     local response_file=$4
     local data=$5
     local headers=("${@:6}")
-    
+
     local url="${SERVER_URL}${path}"
     local curl_cmd=("curl" "${CURL_OPTS[@]}" "-X" "$method" "-o" "$response_file" "-w" "%{http_code}")
-    
+
     for header in "${headers[@]}"; do
         curl_cmd+=("-H" "$header")
     done
-    
+
     if [ -n "$data" ]; then
         curl_cmd+=("--data-binary" "$data")
     fi
-    
+
     if $VERBOSE; then
         echo -e "\n${YELLOW}[DEBUG] Curl command:${NC}"
         echo "${curl_cmd[@]} $url"
     fi
-    
-    local status_code
-    status_code=$("${curl_cmd[@]}" "$url")
-    eval "$status_var=$status_code"
-    
+
+    # Execute curl and capture both exit status and HTTP status code
+    local curl_exit_status
+    status_ref=$("${curl_cmd[@]}" "$url")
+    curl_exit_status=$?
+
+    # Check if curl itself failed (network error, timeout, etc.)
+    if [ $curl_exit_status -ne 0 ]; then
+        echo -e "${RED}[ERROR] Curl command failed with exit code $curl_exit_status${NC}" >&2
+        status_ref=-1  # Set a special status code to indicate curl failure
+    fi
+
     if $VERBOSE; then
-        echo -e "${YELLOW}[DEBUG] Response status: $status_code${NC}"
+        echo -e "${YELLOW}[DEBUG] Response status: $status_ref${NC}"
         [ -f "$response_file" ] && echo -e "${YELLOW}[DEBUG] Response body:\n$(cat "$response_file")${NC}"
     fi
+
+    return $curl_exit_status  # Return the curl exit status
 }
+
+# Test counters
+declare -g TESTS_RUN=0
+declare -g TESTS_PASSED=0
+declare -g TESTS_FAILED=0
+
+# Start a new test case
+begin_test() {
+    local test_name=$1
+    echo -e "${YELLOW}=== TEST: $test_name ===${NC}"
+    ((TESTS_RUN++))
+    return 0
+}
+
+# End a test case with success or failure
+end_test() {
+    local result=$1
+    local message=$2
+
+    if [ $result -eq 0 ]; then
+        echo -e "${GREEN}PASS${NC}"
+        ((TESTS_PASSED++))
+    else
+        echo -e "${RED}FAIL: $message${NC}"
+        ((TESTS_FAILED++))
+    fi
+
+    return $result
+}
+
+# Assertion functions that don't modify counters
+assert_status() {
+    local expected=$1
+    local actual=$2
+    local message=${3:-"Expected status $expected, got $actual"}
+
+    if [ "$actual" -ne "$expected" ]; then
+        echo -e "  ${RED}× Status assertion failed: $message${NC}"
+        return 1
+    fi
+    echo -e "  ${GREEN}✓ Status assertion passed${NC}"
+    return 0
+}
+
+assert_json_contains() {
+    local key=$1
+    local file=$2
+
+    if ! jq -e ".$key" "$file" >/dev/null; then
+        echo -e "  ${RED}× JSON assertion failed: Missing $key in response${NC}"
+        return 1
+    fi
+    echo -e "  ${GREEN}✓ JSON assertion passed${NC}"
+    return 0
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 log_test_start() {
     local test_name=$1
@@ -126,7 +203,7 @@ log_failure() {
     ((TESTS_FAILED++))
 }
 
-assert_status() {
+aassert_status() {
     local expected=$1
     local actual=$2
     local message=${3:-"Expected status $expected, got $actual"}
@@ -138,7 +215,7 @@ assert_status() {
     return 0
 }
 
-assert_json_contains() {
+aassert_json_contains() {
     local key=$1
     local file=$2
     if ! jq -e ".$key" "$file" >/dev/null; then

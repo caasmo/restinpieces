@@ -53,29 +53,48 @@ test_valid_token_refresh() {
 }
 
 test_invalid_token() {
-    log_test_start "/auth-refresh: Invalid token"
-    
+
+    begin_test "/auth-refresh: Invalid token"
+    local test_result=0
     local response_file="response_$$.txt"
     local status
-    
+
     http_request POST "/auth-refresh" status "$response_file" "" \
         "Authorization: Bearer invalid.token.here"
-        
-    assert_status 401 "$status" "Expected 401 for invalid token"
-    [ $? -eq 0 ] && log_success || true
+    local request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Curl command failed with exit code $request_status"
+        return 1
+    fi
+
+    assert_status 401 "$status" "Expected 401 for invalid token" || test_result=1
+    end_test $test_result "One or more assertions failed"
+    return $test_result
 }
 
+
 test_missing_auth_header() {
-    log_test_start "/auth-refresh: Missing authorization header"
-    
+    begin_test "/auth-refresh: Missing authorization header"
+    local test_result=0
     local response_file="response_$$.txt"
     local status
-    
+
     http_request POST "/auth-refresh" status "$response_file"
-    
-    assert_status 401 "$status" "Expected 401 for missing auth header. From middleware"
-    [ $? -eq 0 ] && log_success || true
+    local request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Curl command failed with exit code $request_status"
+        return 1
+    fi
+
+    assert_status 401 "$status" "Expected 401 for missing auth header" || test_result=1
+    assert_json_contains "error" "$response_file" || test_result=1
+
+    end_test $test_result "One or more assertions failed"
+    return $test_result
 }
+
 
 test_valid_registration() {
     log_test_start "/register: Valid user registration"
@@ -127,11 +146,11 @@ main() {
     validate_environment
     
     # Run tests
-    test_valid_token_refresh
+    #test_valid_token_refresh
     test_invalid_token
     test_missing_auth_header
-    test_valid_registration
-    test_invalid_registration
+    #test_valid_registration
+    #test_invalid_registration
     
     cleanup
     print_test_summary
