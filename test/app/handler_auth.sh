@@ -171,7 +171,7 @@ test_register_duplicate_email() {
     return $test_result
 }
 
-test_auth_password_valid() {
+test_auth_with_password_valid() {
     begin_test "/auth-with-password: Valid credentials"
     local test_result=0
     local response_file="response_$$.txt"
@@ -286,7 +286,7 @@ main() {
     test_register_duplicate_email
     
     # /auth-with-password endpoint tests
-    test_auth_password_valid
+    test_auth_with_password_valid
     test_auth_password_invalid
     test_auth_password_missing_fields
     
