@@ -157,10 +157,7 @@ main() {
     fi
 
     # Start server with test database
-    echo -e "${YELLOW}[DEBUG] Starting server with DB: $db_file${NC}"
-    go run ./cmd/restinpieces/... -dbfile "$db_file" > /dev/null 2>&1 &
-    server_pid=$!
-    sleep 3 # Give server time to start
+    server_pid=$(start_server "$db_file")
 
     validate_environment
     

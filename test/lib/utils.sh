@@ -252,6 +252,24 @@ setup_test_db() {
     sqlite3 "$db_file" < migrations/users.sql
 }
 
+# Start server with given database file
+start_server() {
+    local db_file=$1
+    if $VERBOSE; then
+        echo -e "${YELLOW}[DEBUG] Starting server with DB: $db_file${NC}"
+    fi
+    
+    go run ./cmd/restinpieces/... -dbfile "$db_file" > /dev/null 2>&1 &
+    server_pid=$!
+    sleep 3 # Give server time to start
+    
+    if $VERBOSE; then
+        echo -e "${YELLOW}[DEBUG] Server started with PID: $server_pid${NC}"
+    fi
+    
+    echo "$server_pid"
+}
+
 # Cleanup database files
 cleanup_test_db() {
     rm -f testdb_*.db
