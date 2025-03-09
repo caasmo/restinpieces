@@ -315,28 +315,6 @@ log_failure() {
     ((TESTS_FAILED++))
 }
 
-aassert_status() {
-    local expected=$1
-    local actual=$2
-    local message=${3:-"Expected status $expected, got $actual"}
-    
-    if [ "$actual" -ne "$expected" ]; then
-        log_failure "$message"
-        return 1
-    fi
-    return 0
-}
-
-aassert_json_contains() {
-    local key=$1
-    local file=$2
-    if ! jq -e ".$key" "$file" >/dev/null; then
-        log_failure "Missing $key in response"
-        return 1
-    fi
-    return 0
-}
-
 cleanup() {
     rm -f response*.txt
     cleanup_test_db
