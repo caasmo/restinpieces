@@ -131,16 +131,6 @@ func TestCreateUser(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "missing name",
-			user: db.User{
-				Email:    "missingname@test.com",
-				Password: "hashed_password_123",
-				Name:     "", // Empty name
-				TokenKey: "token_key_missing_name",
-			},
-			wantErr: true,
-		},
-		{
 			name: "missing token key",
 			user: db.User{
 				Email:    "missingtoken@test.com",

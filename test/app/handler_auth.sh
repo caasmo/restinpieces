@@ -91,7 +91,7 @@ test_valid_registration() {
         assert_json_contains "token" "$response_file" && \
         assert_json_contains "record.id" "$response_file"
     fi
-    
+
     [ $? -eq 0 ] && log_success || true
 }
 
