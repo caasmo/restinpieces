@@ -230,8 +230,7 @@ stop_server() {
 # Start a new test case
 begin_test() {
     local test_name=$1
-    echo -e "\n${BLUE}🧪 🚀 [TEST]${NC} ${YELLOW}$test_name${NC}"
-    echo -e "${BLUE}════════════════════════════════════════════════════════════${NC}"
+    echo -e "${BLUE}🚀 [TEST]${NC} ${BLUE}$test_name${NC}"
     ((TESTS_RUN++))
     return 0
 }
