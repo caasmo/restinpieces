@@ -170,7 +170,7 @@ test_register_duplicate_email() {
     return $test_result
 }
 
-test_auth_with_password_valid() {
+test_auth_with_password_valid_credentials() {
     begin_test "/auth-with-password: Valid credentials"
     local test_result=0
     local response_file="response_$$.txt"
@@ -206,7 +206,7 @@ test_auth_with_password_valid() {
     return $test_result
 }
 
-test_auth_password_invalid() {
+test_auth_with_password_invalid_credentials() {
     begin_test "/auth-with-password: Invalid credentials"
     local test_result=0
     local response_file="response_$$.txt"
@@ -230,7 +230,7 @@ test_auth_password_invalid() {
     return $test_result
 }
 
-test_auth_password_missing_fields() {
+test_auth_with_password_missing_fields() {
     begin_test "/auth-with-password: Missing required fields"
     local test_result=0
     local response_file="response_$$.txt"
@@ -285,9 +285,9 @@ main() {
     test_register_duplicate_email
     
     # /auth-with-password endpoint tests
-    test_auth_with_password_valid
-    test_auth_password_invalid
-    test_auth_password_missing_fields
+    test_auth_with_password_valid_credentials
+    test_auth_with_password_invalid_credentials
+    test_auth_with_password_missing_fields
     
     print_test_summary
     stop_server "$server_pid"
