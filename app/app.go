@@ -18,7 +18,7 @@ type App struct {
 	db     db.Db
 	router router.Router
 	cache  cache.Cache
-	config *Config
+	config *config.Config
 }
 
 // TODO move

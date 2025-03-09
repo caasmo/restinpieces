@@ -8,10 +8,17 @@ import (
 )
 
 func main() {
-	dbfile := flag.String("dbfile", "bench.db", "SQLite database file path")
-	flag.Parse()
+	cfg := &config.Config{
+		JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
+		TokenDuration: 15 * time.Minute,
+		DBFile:        "bench.db",
+	}
 
-	ap, err := initApp(*dbfile)
+	dbfile := flag.String("dbfile", cfg.DBFile, "SQLite database file path")
+	flag.Parse()
+	cfg.DBFile = *dbfile
+
+	ap, err := initApp(cfg)
 	if err != nil {
 		slog.Error("failed to initialize app", "error", err)
 		os.Exit(1)

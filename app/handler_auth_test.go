@@ -32,7 +32,7 @@ func TestRefreshAuthHandler(t *testing.T) {
 			req := httptest.NewRequest("POST", "/auth-refresh", nil)
 			rr := httptest.NewRecorder()
 			a, _ := New(
-				WithConfig(&Config{
+				WithConfig(&config.Config{
 					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
 					TokenDuration: 15 * time.Minute,
 				}),

@@ -43,15 +43,9 @@ func WithCacheRistretto() app.Option {
 
 }
 
-func initApp(dbPath string) (*app.App, error) {
-	// Create default config
-	cfg := &app.Config{
-		JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
-		TokenDuration: 15 * time.Minute,                           // 15 minute token duration
-	}
-
+func initApp(cfg *config.Config) (*app.App, error) {
 	return app.New(
-		WithDBCrawshaw(dbPath),
+		WithDBCrawshaw(cfg.DBFile),
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		app.WithConfig(cfg),
