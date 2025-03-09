@@ -224,7 +224,7 @@ test_auth_with_password_valid_credentials() {
 
     # First register a test user
     http_request POST "/register" status "$response_file" \
-        '{"identity":"auth-with-password_valid@test.com","password":"password-auth-with-password","password_confirm":"password-auth-with-password"}' \
+        '{"identity":"auth-with-password_valid@test.com","password":"password-register","password_confirm":"password-register"}' \
         "Content-Type: application/json"
     local request_status=$?
 
@@ -235,7 +235,7 @@ test_auth_with_password_valid_credentials() {
 
     # Test authentication with valid credentials
     http_request POST "/auth-with-password" status "$response_file" \
-        '{"identity":"auth-with-password_valid@test.com","password":"password-auth-with-password"}' \
+        '{"identity":"auth-with-password_valid@test.com","password":"password-register"}' \
         "Content-Type: application/json"
     request_status=$?
 
@@ -260,7 +260,7 @@ test_auth_with_password_invalid_credentials() {
 
     # Test authentication with invalid password
     http_request POST "/auth-with-password" status "$response_file" \
-        '{"identity":"auth-with-password_valid@test.com","password":"wrong-password-auth-with-password"}' \
+        '{"identity":"auth-with-password_valid@test.com","password":"password-auth-with-password-wrong"}' \
         "Content-Type: application/json"
     local request_status=$?
 
