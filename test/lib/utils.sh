@@ -296,16 +296,19 @@ cleanup() {
 # Setup a temporary test database with schema
 setup_test_db() {
     local db_file=$(mktemp -t testdb_XXXXXX.db)
-    echo "$db_file"  # Return generated filename
+    log_debug "Creating test database: $db_file"
     
     # Load schema from migrations/users.sql
-    sqlite3 "$db_file" < migrations/users.sql
+    if ! sqlite3 "$db_file" < migrations/users.sql; then
+        log_error "Failed to initialize test database schema"
+        rm -f "$db_file"
+        return 1
+    fi
+    
+    echo "$db_file"  # Return generated filename
+    return 0
 }
 
-# Cleanup database files
-cleanup_test_db() {
-    rm -f testdb_*.db
-}
 
 print_test_summary() {
     echo -e "\n${YELLOW}=== Test Summary ===${NC}"
