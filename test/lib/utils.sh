@@ -42,7 +42,7 @@ validate_environment() {
     
     # Check required commands
     local missing=()
-    echo -e "${BLUE}Checking required commands...${NC}"
+    log_info "Checking required commands...$"
     for cmd in curl jq go netstat lsof sqlite3; do
         if command -v "$cmd" &>/dev/null; then
             echo -e "  ${GREEN}✅${NC} $cmd found"
