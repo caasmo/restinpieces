@@ -6,50 +6,50 @@ TEST_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 source "$TEST_ROOT/lib/utils.sh"
 
 test_valid_token_refresh() {
-    log_test_start "/auth-refresh: Valid token refresh"
+    begin_test "/auth-refresh: Valid token refresh"
+    local test_result=0
+    local response_file="response_$$.txt"
+    local status
 
-    # Generate and display token first
+    # Generate token
     local token=$(jwt "$JWT_SECRET" "testuser123" "+5 minutes")
-    
-    if $VERBOSE; then
-        echo -e "${YELLOW}[DEBUG] Raw JWT token: $token${NC}"
-        
-    # Basic token validation checks
+    log_debug "Generated JWT token: $token"
+
+    # Basic token validation
     if [[ -z "$token" ]]; then
-        log_failure "Empty token generated"
+        end_test 1 "Empty token generated"
         return 1
     fi
     
     if [[ $(grep -o '\.' <<< "$token" | wc -l) -ne 2 ]]; then
-        log_failure "Invalid JWT format - got ${RED}$(wc -l <<< "$token") parts${NC}, expected 3"
+        end_test 1 "Invalid JWT format - got $(wc -l <<< "$token") parts, expected 3"
         return 1
     fi
     
     if [ ${#JWT_SECRET} -ne 32 ]; then
-        log_failure "JWT_SECRET must be 32 bytes, got ${#JWT_SECRET}"
+        end_test 1 "JWT_SECRET must be 32 bytes, got ${#JWT_SECRET}"
         return 1
     fi
-    fi
-    
-    local response_file="response_$$.txt"
-    local status
-    
+
     http_request POST "/auth-refresh" status "$response_file" "" \
         "Authorization: Bearer $token"
-        
-    if assert_status 200 "$status"; then
-        assert_json_contains "access_token" "$response_file"
-    else
-        echo -e "${RED}Response status: $status${NC}"
-        [ -f "$response_file" ] && echo -e "${YELLOW}Response body:\n$(cat "$response_file")${NC}"
-    fi
-    
-    if [ $? -eq 0 ]; then
-        log_success
-    else
-        log_failure "Token refresh failed"
+    local request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Curl command failed with exit code $request_status"
         return 1
     fi
+
+    assert_status 200 "$status" "Expected 200 for valid token refresh" || test_result=1
+    assert_json_contains "access_token" "$response_file" || test_result=1
+
+    if [ $test_result -ne 0 ]; then
+        log_error "Response status: $status"
+        [ -f "$response_file" ] && log_debug "Response body:\n$(cat "$response_file")"
+    fi
+
+    end_test $test_result "One or more assertions failed"
+    return $test_result
 }
 
 test_invalid_token() {
