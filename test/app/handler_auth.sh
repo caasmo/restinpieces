@@ -149,7 +149,6 @@ main() {
         esac
     done
 
-    validate_environment
     
     # Setup test database for all tests in this file
     db_file=$(setup_test_db)
@@ -161,7 +160,9 @@ main() {
     echo -e "${YELLOW}[DEBUG] Starting server with DB: $db_file${NC}"
     go run cmd/restinpieces/main.go -dbfile "$db_file" > /dev/null 2>&1 &
     server_pid=$!
-    sleep 1 # Give server time to start
+    sleep 3 # Give server time to start
+
+    validate_environment
     
     # Run tests
     #test_valid_token_refresh
