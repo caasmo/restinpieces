@@ -102,9 +102,6 @@ test_valid_registration() {
     local response_file="response_$$.txt"
     local status
 
-    # Create test database
-    local db_file=$(setup_test_db)
-    
     http_request POST "/register" status "$response_file" \
         '{"identity":"new@test.com","password":"pass1234","password_confirm":"pass1234"}' \
         "Content-Type: application/json"
@@ -153,6 +150,12 @@ main() {
     done
 
     validate_environment
+    
+    # Setup test database for all tests in this file
+    db_file=$(setup_test_db)
+    if $VERBOSE; then
+        echo -e "${YELLOW}[DEBUG] Using test database: $db_file${NC}"
+    fi
     
     # Run tests
     #test_valid_token_refresh
