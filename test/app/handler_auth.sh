@@ -275,11 +275,17 @@ main() {
 
     
     # Run tests
+    
+    # /auth-refresh endpoint tests
     test_valid_token_refresh
     test_invalid_token
     test_missing_auth_header
+    
+    # /register endpoint tests
     test_valid_registration
     test_invalid_registration
+    
+    # /auth-with-password endpoint tests
     test_auth_with_password
     test_auth_with_invalid_password
     test_auth_with_missing_fields
