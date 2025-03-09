@@ -14,7 +14,7 @@ done
 TEST_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 source "$TEST_ROOT/lib/utils.sh"
 
-test_valid_token_refresh() {
+test_auth_refresh_valid() {
     begin_test "/auth-refresh: Valid token refresh"
     local test_result=0
     local response_file="response_$$.txt"
@@ -84,7 +84,7 @@ test_invalid_token() {
 }
 
 
-test_missing_auth_header() {
+test_auth_refresh_missing_header() {
     begin_test "/auth-refresh: Missing authorization header"
     local test_result=0
     local response_file="response_$$.txt"
@@ -106,7 +106,7 @@ test_missing_auth_header() {
 }
 
 
-test_valid_registration() {
+test_register_valid() {
     begin_test "/register: Valid user registration"
     local test_result=0
     local response_file="response_$$.txt"
@@ -130,7 +130,7 @@ test_valid_registration() {
     return $test_result
 }
 
-test_invalid_registration() {
+test_register_duplicate_email() {
     begin_test "/register: Invalid registration (existing email)"
     local test_result=0
     local response_file="response_$$.txt"
@@ -171,7 +171,7 @@ test_invalid_registration() {
     return $test_result
 }
 
-test_auth_with_password() {
+test_auth_password_valid() {
     begin_test "/auth-with-password: Valid credentials"
     local test_result=0
     local response_file="response_$$.txt"
@@ -207,7 +207,7 @@ test_auth_with_password() {
     return $test_result
 }
 
-test_auth_with_invalid_password() {
+test_auth_password_invalid() {
     begin_test "/auth-with-password: Invalid credentials"
     local test_result=0
     local response_file="response_$$.txt"
@@ -231,7 +231,7 @@ test_auth_with_invalid_password() {
     return $test_result
 }
 
-test_auth_with_missing_fields() {
+test_auth_password_missing_fields() {
     begin_test "/auth-with-password: Missing required fields"
     local test_result=0
     local response_file="response_$$.txt"
@@ -277,18 +277,18 @@ main() {
     # Run tests
     
     # /auth-refresh endpoint tests
-    test_valid_token_refresh
-    test_invalid_token
-    test_missing_auth_header
+    test_auth_refresh_valid
+    test_auth_refresh_invalid_token
+    test_auth_refresh_missing_header
     
     # /register endpoint tests
-    test_valid_registration
-    test_invalid_registration
+    test_register_valid
+    test_register_duplicate_email
     
     # /auth-with-password endpoint tests
-    test_auth_with_password
-    test_auth_with_invalid_password
-    test_auth_with_missing_fields
+    test_auth_password_valid
+    test_auth_password_invalid
+    test_auth_password_missing_fields
     
     print_test_summary
     stop_server "$server_pid"
