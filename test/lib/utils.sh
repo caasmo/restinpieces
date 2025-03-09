@@ -280,41 +280,6 @@ assert_json_contains() {
     return 0
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-log_test_start() {
-    local test_name=$1
-    echo -e "${YELLOW}=== TEST: $test_name ===${NC}"
-    ((TESTS_RUN++))
-}
-
-log_success() {
-    echo -e "${GREEN}PASS${NC}"
-    ((TESTS_PASSED++))
-}
-
-log_failure() {
-    local message=$1
-    echo -e "${RED}FAIL: $message${NC}"
-    ((TESTS_FAILED++))
-}
-
 cleanup() {
     rm -f response*.txt
     cleanup_test_db
