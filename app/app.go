@@ -22,11 +22,6 @@ type App struct {
 }
 
 // TODO move
-type Config struct {
-	JwtSecret     []byte
-	TokenDuration time.Duration
-}
-
 type Option func(*App)
 
 // WithCache sets the cache implementation
