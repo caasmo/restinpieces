@@ -40,15 +40,15 @@ validate_environment() {
     echo -e "${YELLOW}=== Environment Validation ===${NC}"
     
     # Verify test server is running
-    if ! curl "${CURL_OPTS[@]}" "$SERVER_URL" &>/dev/null; then
-        echo -e "${RED}Error: Test server is not running at ${SERVER_URL}${NC}"
-        exit 1
-    fi
+    #if ! curl "${CURL_OPTS[@]}" "$SERVER_URL" &>/dev/null; then
+    #    echo -e "${RED}Error: Test server is not running at ${SERVER_URL}${NC}"
+    #    exit 1
+    #fi
     
     # Check required commands
     local missing=()
     echo -e "${YELLOW}Checking required commands...${NC}"
-    for cmd in curl jq go; do
+    for cmd in curl jq go netstat lsof; do
         if command -v "$cmd" &>/dev/null; then
             echo -e "  ${GREEN}✓${NC} $cmd found"
         else
@@ -63,16 +63,16 @@ validate_environment() {
     fi
     
     # Check server connectivity
-    echo -e "${YELLOW}Checking server connection...${NC}"
-    if curl "${CURL_OPTS[@]}" "$SERVER_URL" &>/dev/null; then
-        echo -e "  ${GREEN}✓${NC} Successfully connected to ${SERVER_URL}"
-    else
-        echo -e "  ${RED}✗${NC} Could not connect to server at ${SERVER_URL}"
-        echo -e "${RED}Error: Verify the server is running and accessible${NC}"
-        exit 1
-    fi
-    
-    echo -e "${GREEN}Environment validation passed${NC}\n"
+    #echo -e "${YELLOW}Checking server connection...${NC}"
+    #if curl "${CURL_OPTS[@]}" "$SERVER_URL" &>/dev/null; then
+    #    echo -e "  ${GREEN}✓${NC} Successfully connected to ${SERVER_URL}"
+    #else
+    #    echo -e "  ${RED}✗${NC} Could not connect to server at ${SERVER_URL}"
+    #    echo -e "${RED}Error: Verify the server is running and accessible${NC}"
+    #    exit 1
+    #fi
+    #
+    #echo -e "${GREEN}Environment validation passed${NC}\n"
 }
 
 http_request() {
@@ -123,6 +123,112 @@ http_request() {
 declare -g TESTS_RUN=0
 declare -g TESTS_PASSED=0
 declare -g TESTS_FAILED=0
+
+# Logging functions
+log_debug() {
+    if $VERBOSE; then
+        echo -e "${YELLOW}[DEBUG] $*${NC}" >&2
+    fi
+}
+
+log_info() {
+    echo -e "${GREEN}[INFO] $*${NC}" >&2
+}
+
+log_error() {
+    echo -e "${RED}[ERROR] $*${NC}" >&2
+}
+
+log_warning() {
+    echo -e "${BLUE}[WARNING] $*${NC}" >&2
+}
+
+# Start server with given database file
+start_server() {
+    local db_file=$1
+    local port=${2:-8080}  # Default port 8080 if not specified
+
+    # Validate input
+    if [[ -z "$db_file" ]]; then
+        log_error "Database file not provided"
+        return 1
+    fi
+
+    # Check if port is already in use
+    if netstat -tuln | grep -q ":$port "; then
+        local existing_pid=$(lsof -ti:$port)
+        if [[ -n "$existing_pid" ]]; then
+            log_error "Port $port is already in use by PID $existing_pid"
+            return 1
+        else
+            log_error "Port $port is already in use but couldn't identify the process"
+            return 1
+        fi
+    fi
+
+    #if [[ ! -f "$db_file" ]]; then
+    #    log_warning "Database file '$db_file' doesn't exist. It will be created."
+    #fi
+
+    log_debug "Starting server with DB: $db_file"
+
+    go run ./cmd/restinpieces/... -dbfile "$db_file" > /dev/null 2>&1 &
+    log_debug "Waiting for server to initialize..."
+    sleep 3 # Give server time to start
+
+
+    # The $! variable captures the PID of the most recently executed background
+    # process, which in this case is the go run command. However, go run is a
+    # tool that compiles and then executes your Go program. The actual server
+    # process is a child process of go run, not the go run process itself.
+
+    # Find the actual PID bound to the port
+    local pid=$(lsof -ti:$port)
+    if [[ -z "$pid" ]]; then
+        log_error "Failed to find process using port $port"
+        return 1
+    fi
+
+    # Verify server is running
+    if ! ps -p $pid > /dev/null; then
+        log_error "Server failed to start"
+        return 1
+    fi
+
+    log_info "Server started with PID: $pid"
+    log_info "Server running at http://localhost:8080"
+
+    # Return only the PID
+    echo "$pid"
+}
+
+# Improved stop function that takes PID as argument
+stop_server() {
+    local pid=$1
+
+    if [[ -z "$pid" ]]; then
+        log_error "No PID provided to stop_server"
+        return 1
+    fi
+
+    if ! ps -p $pid > /dev/null; then
+        log_warning "No process found with PID $pid"
+        return 0
+    fi
+
+    log_info "Stopping server with PID: $pid"
+    kill $pid
+
+    # Optionally wait to confirm process stopped
+    sleep 1
+    if ps -p $pid > /dev/null; then
+        log_warning "Process $pid did not stop, attempting force kill"
+        kill -9 $pid
+    fi
+
+    log_info "Server stopped"
+    return 0
+}
 
 # Start a new test case
 begin_test() {
@@ -250,24 +356,6 @@ setup_test_db() {
     
     # Load schema from migrations/users.sql
     sqlite3 "$db_file" < migrations/users.sql
-}
-
-# Start server with given database file
-start_server() {
-    local db_file=$1
-    if $VERBOSE; then
-        echo -e "${YELLOW}[DEBUG] Starting server with DB: $db_file${NC}"
-    fi
-    
-    go run ./cmd/restinpieces/... -dbfile "$db_file" > /dev/null 2>&1 &
-    server_pid=$!
-    sleep 3 # Give server time to start
-    
-    if $VERBOSE; then
-        echo -e "${YELLOW}[DEBUG] Server started with PID: $server_pid${NC}"
-    fi
-    
-    echo "$server_pid"
 }
 
 # Cleanup database files

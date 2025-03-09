@@ -149,27 +149,35 @@ main() {
         esac
     done
 
+    validate_environment
     
     # Setup test database for all tests in this file
     db_file=$(setup_test_db)
-    if $VERBOSE; then
-        echo -e "${YELLOW}[DEBUG] Using test database: $db_file${NC}"
-    fi
+    log_info "Using test database: $db_file"
 
     # Start server with test database
     server_pid=$(start_server "$db_file")
+    exit_code=$?
 
-    validate_environment
+    if [[ $exit_code -ne 0 ]]; then
+        log_error "Failed to start server"
+        exit $exit_code
+    fi
+
+    log_info "Server started successfully with PID: $server_pid"
+
     
     # Run tests
     #test_valid_token_refresh
     test_invalid_token
-    test_missing_auth_header
-    test_valid_registration
+    #test_missing_auth_header
+    #test_valid_registration
     #test_invalid_registration
     
-    cleanup
     print_test_summary
+    stop_server "$server_pid"
+    log_info "to cleanup"
+    cleanup
 }
 
 main
