@@ -158,7 +158,7 @@ main() {
 
     # Start server with test database
     echo -e "${YELLOW}[DEBUG] Starting server with DB: $db_file${NC}"
-    go run cmd/restinpieces/main.go -dbfile "$db_file" > /dev/null 2>&1 &
+    go run ./cmd/restinpieces/... -dbfile "$db_file" > /dev/null 2>&1 &
     server_pid=$!
     sleep 3 # Give server time to start
 
