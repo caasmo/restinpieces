@@ -7,7 +7,7 @@ export TIMEOUT_SECONDS=5
 export CURL_OPTS=("--silent" "--show-error" "--max-time" "$TIMEOUT_SECONDS")
 
 # Configuration flags
-declare -g VERBOSE=${VERBOSE:-true}  # Verbose by default
+VERBOSE=${VERBOSE:-true}  # Verbose by default
 
 # Color definitions
 RED='\033[0;31m'

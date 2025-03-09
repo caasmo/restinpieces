@@ -170,6 +170,9 @@ main() {
             *) echo "Usage: $0 [-q]" >&2; exit 1 ;;
         esac
     done
+    
+    # Export VERBOSE so it's available to all functions
+    export VERBOSE
 
     validate_environment
     
