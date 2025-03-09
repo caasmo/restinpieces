@@ -319,7 +319,7 @@ setup_test_db() {
 
 
 print_test_summary() {
-    echo -e "\n${BLUE}📊 [SUMMARY]${NC} ${BLUE}Test Results${NC}"
+    echo -e "📊${BLUE} [SUMMARY]${NC} ${BLUE}Test Results${NC}"
     echo -e "Tests Run:   $TESTS_RUN"
     echo -e "Tests Passed: ${GREEN}$TESTS_PASSED${NC}"
     echo -e "Tests Failed: ${RED}$TESTS_FAILED${NC}"
