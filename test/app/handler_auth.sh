@@ -61,6 +61,52 @@ test_auth_refresh_valid() {
     return $test_result
 }
 
+test_auth_refresh_valid_after_register() {
+    begin_test "/auth-refresh: Valid token refresh after registration"
+    local test_result=0
+    local response_file="response_$$.txt"
+    local status
+
+    # Register new user
+    http_request POST "/register" status "$response_file" \
+        '{"identity":"refresh_test@test.com","password":"testpass123","password_confirm":"testpass123"}' \
+        "Content-Type: application/json"
+    local request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Failed to register test user"
+        return 1
+    fi
+
+    # Extract token from registration response
+    local token=$(jq -r '.token' "$response_file")
+    if [[ -z "$token" ]]; then
+        end_test 1 "Failed to extract token from registration response"
+        return 1
+    fi
+
+    # Test token refresh
+    http_request POST "/auth-refresh" status "$response_file" "" \
+        "Authorization: Bearer $token"
+    request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Curl command failed with exit code $request_status"
+        return 1
+    fi
+
+    assert_status 200 "$status" "Expected 200 for valid token refresh" || test_result=1
+    assert_json_contains "access_token" "$response_file" "Response missing access_token" || test_result=1
+
+    if [ $test_result -ne 0 ]; then
+        log_debug "Response status: $status"
+        [ -f "$response_file" ] && log_debug "Response body:\n$(cat "$response_file")"
+    fi
+
+    end_test $test_result "One or more assertions failed"
+    return $test_result
+}
+
 test_auth_refresh_invalid_token() {
     begin_test "/auth-refresh: Invalid token"
     local test_result=0
@@ -277,6 +323,7 @@ main() {
     
     # /auth-refresh endpoint tests
     test_auth_refresh_valid
+    test_auth_refresh_valid_after_register
     test_auth_refresh_invalid_token
     test_auth_refresh_missing_header
     
