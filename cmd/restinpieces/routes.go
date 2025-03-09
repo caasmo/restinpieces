@@ -14,7 +14,7 @@ func route(ap *app.App) {
 	ap.Router().Handle("POST /register", http.HandlerFunc(ap.RegisterHandler))
 
 	ap.Router().Handle("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
-	ap.Router().Handle("/", commonMiddleware.ThenFunc(ap.Index))
+	ap.Router().Handle("/", authMiddleware.ThenFunc(ap.Index))
 	ap.Router().Handle("/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
 	ap.Router().Handle("/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
 	//router.Handle("/example/ristretto/writeread/:value", http.HandlerFunc(ap.ExampleRistrettoWriteRead))
