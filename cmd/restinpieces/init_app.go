@@ -11,9 +11,8 @@ import (
 	"github.com/caasmo/restinpieces/router/servemux"
 )
 
-func WithDBCrawshaw() app.Option {
-
-	db, _ := crawshaw.New("bench.db")
+func WithDBCrawshaw(dbPath string) app.Option {
+	db, _ := crawshaw.New(dbPath)
 	// TODO erro log fatal
 
 	return app.WithDB(db)
@@ -44,8 +43,7 @@ func WithCacheRistretto() app.Option {
 
 }
 
-func initApp() (*app.App, error) {
-
+func initApp(dbPath string) (*app.App, error) {
 	// Create default config
 	cfg := &app.Config{
 		JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
@@ -53,7 +51,7 @@ func initApp() (*app.App, error) {
 	}
 
 	return app.New(
-		WithDBCrawshaw(),
+		WithDBCrawshaw(dbPath),
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		app.WithConfig(cfg),
