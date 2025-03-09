@@ -69,7 +69,7 @@ test_auth_refresh_valid_after_register() {
 
     # Register new user
     http_request POST "/register" status "$response_file" \
-        '{"identity":"refresh_test@test.com","password":"testpass123","password_confirm":"testpass123"}' \
+        '{"identity":"auth-refresh_valid@test.com","password":"password-auth-refresh","password_confirm":"password-auth-refresh"}' \
         "Content-Type: application/json"
     local request_status=$?
 
@@ -158,7 +158,7 @@ test_register_valid() {
     local status
 
     http_request POST "/register" status "$response_file" \
-        '{"identity":"new@test.com","password":"pass1234","password_confirm":"pass1234"}' \
+        '{"identity":"register_valid@test.com","password":"password-register","password_confirm":"password-register"}' \
         "Content-Type: application/json"
     local request_status=$?
 
@@ -183,7 +183,7 @@ test_register_duplicate_email() {
 
     # First registration should succeed
     http_request POST "/register" status "$response_file" \
-        '{"identity":"existing@test.com","password":"pass1234","password_confirm":"pass1234"}' \
+        '{"identity":"register_duplicate@test.com","password":"password-register","password_confirm":"password-register"}' \
         "Content-Type: application/json"
     local request_status=$?
 
@@ -199,7 +199,7 @@ test_register_duplicate_email() {
 
     # Second registration with same email should fail
     http_request POST "/register" status "$response_file" \
-        '{"identity":"existing@test.com","password":"pass1234","password_confirm":"pass1234"}' \
+        '{"identity":"register_duplicate@test.com","password":"password-register","password_confirm":"password-register"}' \
         "Content-Type: application/json"
     request_status=$?
 
@@ -224,7 +224,7 @@ test_auth_with_password_valid_credentials() {
 
     # First register a test user
     http_request POST "/register" status "$response_file" \
-        '{"identity":"auth_test@test.com","password":"testpass123","password_confirm":"testpass123"}' \
+        '{"identity":"auth-with-password_valid@test.com","password":"password-auth-with-password","password_confirm":"password-auth-with-password"}' \
         "Content-Type: application/json"
     local request_status=$?
 
@@ -235,7 +235,7 @@ test_auth_with_password_valid_credentials() {
 
     # Test authentication with valid credentials
     http_request POST "/auth-with-password" status "$response_file" \
-        '{"identity":"auth_test@test.com","password":"testpass123"}' \
+        '{"identity":"auth-with-password_valid@test.com","password":"password-auth-with-password"}' \
         "Content-Type: application/json"
     request_status=$?
 
@@ -260,7 +260,7 @@ test_auth_with_password_invalid_credentials() {
 
     # Test authentication with invalid password
     http_request POST "/auth-with-password" status "$response_file" \
-        '{"identity":"auth_test@test.com","password":"wrongpassword"}' \
+        '{"identity":"auth-with-password_valid@test.com","password":"wrong-password-auth-with-password"}' \
         "Content-Type: application/json"
     local request_status=$?
 
@@ -284,7 +284,7 @@ test_auth_with_password_missing_fields() {
 
     # Test authentication with missing password
     http_request POST "/auth-with-password" status "$response_file" \
-        '{"identity":"auth_test@test.com"}' \
+        '{"identity":"auth-with-password_missing@test.com"}' \
         "Content-Type: application/json"
     local request_status=$?
 
