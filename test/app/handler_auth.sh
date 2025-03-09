@@ -149,7 +149,7 @@ main() {
     #test_valid_token_refresh
     test_invalid_token
     test_missing_auth_header
-    #test_valid_registration
+    test_valid_registration
     #test_invalid_registration
     
     cleanup
