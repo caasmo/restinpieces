@@ -45,9 +45,9 @@ validate_environment() {
     log_info "Checking required commands...$"
     for cmd in curl jq go netstat lsof sqlite3; do
         if command -v "$cmd" &>/dev/null; then
-            echo -e "  ${GREEN}✅${NC} $cmd found"
+            echo -e "  ${GREEN}✓${NC} $cmd found"
         else
-            echo -e "  ${RED}❌${NC} $cmd missing"
+            echo -e "  ${RED}✗${NC} $cmd missing"
             missing+=("$cmd")
         fi
     done
@@ -57,7 +57,7 @@ validate_environment() {
         exit 1
     fi
     
-    echo -e "${GREEN}✅ Environment validation passed${NC}\n"
+    echo -e "${GREEN}✓ Environment validation passed${NC}\n"
 }
 
 http_request() {
