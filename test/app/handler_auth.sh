@@ -41,10 +41,10 @@ test_valid_token_refresh() {
     fi
 
     assert_status 200 "$status" "Expected 200 for valid token refresh" || test_result=1
-    assert_json_contains "access_token" "$response_file" || test_result=1
+    assert_json_contains "access_token" "$response_file" "Response missing access_token" || test_result=1
 
     if [ $test_result -ne 0 ]; then
-        log_error "Response status: $status"
+        log_debug "Response status: $status"
         [ -f "$response_file" ] && log_debug "Response body:\n$(cat "$response_file")"
     fi
 
@@ -69,6 +69,7 @@ test_invalid_token() {
     fi
 
     assert_status 401 "$status" "Expected 401 for invalid token" || test_result=1
+    assert_json_contains "error" "$response_file" "Response missing error details" || test_result=1
     end_test $test_result "One or more assertions failed"
     return $test_result
 }
@@ -89,7 +90,7 @@ test_missing_auth_header() {
     fi
 
     assert_status 401 "$status" "Expected 401 for missing auth header" || test_result=1
-    assert_json_contains "error" "$response_file" || test_result=1
+    assert_json_contains "error" "$response_file" "Response missing error details" || test_result=1
 
     end_test $test_result "One or more assertions failed"
     return $test_result
@@ -113,8 +114,8 @@ test_valid_registration() {
     fi
 
     assert_status 200 "$status" "Expected 200 for valid registration" || test_result=1
-    assert_json_contains "token" "$response_file" || test_result=1
-    assert_json_contains "record.id" "$response_file" || test_result=1
+    assert_json_contains "token" "$response_file" "Response missing token" || test_result=1
+    assert_json_contains "record.id" "$response_file" "Response missing record ID" || test_result=1
 
     end_test $test_result "One or more assertions failed"
     return $test_result
@@ -137,6 +138,7 @@ test_invalid_registration() {
         "Content-Type: application/json"
         
     assert_status 409 "$status" "Expected 409 for duplicate registration"
+    assert_json_contains "error" "$response_file" "Response missing error details"
     [ $? -eq 0 ] && log_success || true
 }
 
