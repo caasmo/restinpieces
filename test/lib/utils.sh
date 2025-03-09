@@ -48,7 +48,7 @@ validate_environment() {
     # Check required commands
     local missing=()
     echo -e "${YELLOW}Checking required commands...${NC}"
-    for cmd in curl jq go netstat lsof; do
+    for cmd in curl jq go netstat lsof sqlite3; do
         if command -v "$cmd" &>/dev/null; then
             echo -e "  ${GREEN}✓${NC} $cmd found"
         else
@@ -281,6 +281,7 @@ assert_json_contains() {
 }
 
 cleanup() {
+    log_info "IN cleanup"
     rm -f response*.txt
     cleanup_test_db
     
