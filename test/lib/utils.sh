@@ -95,10 +95,7 @@ http_request() {
         curl_cmd+=("--data-binary" "$data")
     fi
 
-    if $VERBOSE; then
-        echo -e "\n${YELLOW}[DEBUG] Curl command:${NC}"
-        echo "${curl_cmd[@]} $url"
-    fi
+    log_debug "Curl command: ${curl_cmd[@]} $url"
 
     # Execute curl and capture both exit status and HTTP status code
     local curl_exit_status
@@ -111,10 +108,8 @@ http_request() {
         status_ref=-1  # Set a special status code to indicate curl failure
     fi
 
-    if $VERBOSE; then
-        echo -e "${YELLOW}[DEBUG] Response status: $status_ref${NC}"
-        [ -f "$response_file" ] && echo -e "${YELLOW}[DEBUG] Response body:\n$(cat "$response_file")${NC}"
-    fi
+    log_debug "Response status: $status_ref"
+    [ -f "$response_file" ] && log_debug "Response body:\n$(cat "$response_file")"
 
     return $curl_exit_status  # Return the curl exit status
 }
