@@ -27,20 +27,19 @@ The test suite contains two types of tests:
   ```bash
   ./test/app/handler_auth.sh
   ```
+  Use `-q` flag for quiet mode:
+  ```bash
+  ./test/app/handler_auth.sh -q
+  ```
 
 ## Running Tests
 
-1. **Start the server** first in development mode:
-```bash
-make run-dev
-```
-
-2. **Run all Go tests**:
+1. **Run all Go tests**:
 ```bash
 go test -v ./...
 ```
 
-3. **Run integration tests**:
+2. **Run integration tests**:
 ```bash
 # Make scripts executable
 chmod +x test/app/*.sh
@@ -52,6 +51,12 @@ chmod +x test/app/*.sh
 find test/app -name '*.sh' -exec {} \;
 ```
 
+The integration tests automatically:
+- Start the test server
+- Set up test database
+- Run test cases
+- Clean up resources
+
 ## Environment Setup
 Tests require these environment variables:
 ```bash
@@ -62,7 +67,7 @@ export JWT_SECRET="test_secret_32_bytes_long_xxxxxx" # Must match app config
 ## Script Structure
 Integration tests follow this pattern:
 1. Source utilities from `test/lib/utils.sh`
-2. Define test functions with `log_test_start` and assertions
+2. Define test functions with `begin_test` and assertions
 3. Use `http_request` helper for API calls
 4. Validate responses with `assert_status` and `assert_json_contains`
 5. Clean up temporary files
