@@ -198,7 +198,7 @@ main() {
     
     print_test_summary
     stop_server "$server_pid"
-    cleanup
+    cleanup "$db_file"
 }
 
 main

@@ -281,16 +281,27 @@ assert_json_contains() {
 }
 
 cleanup() {
-    log_info "IN cleanup"
-    rm -f response*.txt
-    cleanup_test_db
+    local db_file=$1
     
-    # Kill server if running
-    if ps -p $server_pid > /dev/null; then
-        echo -e "${YELLOW}[DEBUG] Stopping test server (PID: $server_pid)${NC}"
-        kill -TERM $server_pid
-        wait $server_pid 2>/dev/null
+    if [[ -z "$db_file" ]]; then
+        log_error "No database file provided for cleanup"
+        return 1
     fi
+
+    log_info "Cleaning up test artifacts"
+    
+    # Remove response files
+    rm -f response*.txt
+    
+    # Remove test database file
+    if [[ -f "$db_file" ]]; then
+        log_debug "Removing test database: $db_file"
+        rm -f "$db_file"
+    else
+        log_warning "Test database file not found: $db_file"
+    fi
+    
+    return 0
 }
 
 # Setup a temporary test database with schema
