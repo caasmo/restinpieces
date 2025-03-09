@@ -10,6 +10,9 @@ while getopts "q" opt; do
     esac
 done
 
+# The endpoint to test - should be one that requires authorization
+PROTECTED_ENDPOINT="/"
+
 # Source utilities
 TEST_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 source "$TEST_ROOT/lib/utils.sh"
@@ -23,7 +26,7 @@ test_middleware_auth_valid() {
     # Generate valid token
     local token=$(jwt "$JWT_SECRET" "middleware_valid" "+5 minutes")
     
-    http_request GET "/" status "$response_file" "" \
+    http_request GET "$PROTECTED_ENDPOINT" status "$response_file" "" \
         "Authorization: Bearer $token"
     local request_status=$?
 
@@ -43,7 +46,7 @@ test_middleware_auth_missing_header() {
     local response_file="response_$$.txt"
     local status
 
-    http_request GET "/" status "$response_file"
+    http_request GET "$PROTECTED_ENDPOINT" status "$response_file"
     local request_status=$?
 
     if [ $request_status -ne 0 ]; then
@@ -63,7 +66,7 @@ test_middleware_auth_invalid_format() {
     local response_file="response_$$.txt"
     local status
 
-    http_request GET "/" status "$response_file" "" \
+    http_request GET "$PROTECTED_ENDPOINT" status "$response_file" "" \
         "Authorization: Bearer invalid.token.format"
     local request_status=$?
 
@@ -87,7 +90,7 @@ test_middleware_auth_expired_token() {
     # Generate expired token
     local token=$(jwt "$JWT_SECRET" "middleware_expired" "-1 minute")
     
-    http_request GET "/" status "$response_file" "" \
+    http_request GET "$PROTECTED_ENDPOINT" status "$response_file" "" \
         "Authorization: Bearer $token"
     local request_status=$?
 
@@ -111,7 +114,7 @@ test_middleware_auth_invalid_signing() {
     # Generate token with different secret
     local token=$(jwt "invalid_secret_32_bytes_long_xxxxxx" "middleware_invalid_sig" "+5 minutes")
     
-    http_request GET "/" status "$response_file" "" \
+    http_request GET "$PROTECTED_ENDPOINT" status "$response_file" "" \
         "Authorization: Bearer $token"
     local request_status=$?
 
