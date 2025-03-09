@@ -122,24 +122,49 @@ test_valid_registration() {
 }
 
 test_invalid_registration() {
-    log_test_start "/register: Invalid registration (existing email)"
-    
+    begin_test "/register: Invalid registration (existing email)"
+    local test_result=0
     local response_file="response_$$.txt"
     local status
-    
-    # First registration
+
+    # First registration should succeed
     http_request POST "/register" status "$response_file" \
         '{"identity":"existing@test.com","password":"pass1234","password_confirm":"pass1234"}' \
         "Content-Type: application/json"
-        
-    # Second registration with same email
+    local request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Curl command failed with exit code $request_status"
+        return 1
+    fi
+
+    # Verify first registration succeeded
+    assert_status 200 "$status" "Expected 200 for first registration" || test_result=1
+    assert_json_contains "token" "$response_file" "Response missing token" || test_result=1
+    assert_json_contains "record.id" "$response_file" "Response missing record ID" || test_result=1
+
+    # Second registration with same email should fail
     http_request POST "/register" status "$response_file" \
         '{"identity":"existing@test.com","password":"pass1234","password_confirm":"pass1234"}' \
         "Content-Type: application/json"
-        
-    assert_status 409 "$status" "Expected 409 for duplicate registration"
-    assert_json_contains "error" "$response_file" "Response missing error details"
-    [ $? -eq 0 ] && log_success || true
+    request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Curl command failed with exit code $request_status"
+        return 1
+    fi
+
+    # Verify second registration failed
+    assert_status 409 "$status" "Expected 409 for duplicate registration" || test_result=1
+    assert_json_contains "error" "$response_file" "Response missing error details" || test_result=1
+
+    if [ $test_result -ne 0 ]; then
+        log_debug "Response status: $status"
+        [ -f "$response_file" ] && log_debug "Response body:\n$(cat "$response_file")"
+    fi
+
+    end_test $test_result "One or more assertions failed"
+    return $test_result
 }
 
 main() {
