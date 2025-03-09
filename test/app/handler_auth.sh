@@ -223,7 +223,7 @@ test_auth_with_password_invalid_credentials() {
         return 1
     fi
 
-    assert_status 400 "$status" "Expected 400 for invalid credentials" || test_result=1
+    assert_status 401 "$status" "Expected 401 for invalid credentials" || test_result=1
     assert_json_contains "error" "$response_file" "Response missing error details" || test_result=1
 
     end_test $test_result "One or more assertions failed"
