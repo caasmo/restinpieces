@@ -311,8 +311,9 @@ print_test_summary() {
     
     if [ "$TESTS_FAILED" -gt 0 ]; then
         echo -e "${RED}❌ Some tests failed!${NC}"
-        exit 1
+        return 1
     else
         echo -e "${GREEN}✅ All tests passed!${NC}"
+        return 0
     fi
 }
