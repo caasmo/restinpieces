@@ -121,7 +121,8 @@ declare -g TESTS_FAILED=0
 
 # Logging functions
 log_debug() {
-    if $VERBOSE; then
+      # Don't rely on the value when sourced, check current value each time
+    if [[ "${VERBOSE:-true}" == "true" ]]; then
         echo -e "${YELLOW}[DEBUG] $*${NC}" >&2
     fi
 }

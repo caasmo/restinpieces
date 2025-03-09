@@ -1,6 +1,15 @@
 #!/bin/bash
 #set -eo pipefail
 
+# Process command line args first
+VERBOSE=true  # Default value
+while getopts "q" opt; do
+    case $opt in
+        q) VERBOSE=false ;;  # -q for quiet mode
+        *) echo "Usage: $0 [-q]" >&2; exit 1 ;;
+    esac
+done
+
 # Source utilities
 TEST_ROOT=$(dirname "${BASH_SOURCE[0]}")/..
 source "$TEST_ROOT/lib/utils.sh"
@@ -163,14 +172,6 @@ test_invalid_registration() {
 }
 
 main() {
-    # Parse command line arguments
-    while getopts "q" opt; do
-        case $opt in
-            q) VERBOSE=false ;;  # -q for quiet mode
-            *) echo "Usage: $0 [-q]" >&2; exit 1 ;;
-        esac
-    done
-
     validate_environment
     
     # Setup test database for all tests in this file
