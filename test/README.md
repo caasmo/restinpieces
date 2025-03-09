@@ -51,11 +51,22 @@ chmod +x test/app/*.sh
 find test/app -name '*.sh' -exec {} \;
 ```
 
-The integration tests automatically:
-- Start the test server
-- Set up test database
-- Run test cases
-- Clean up resources
+The integration tests automatically handle the full test lifecycle:
+1. Create a temporary SQLite database file
+2. Load the database schema from migrations/users.sql
+3. Start the test server using the temporary database
+4. Run all test cases against the live server
+5. Stop the server
+6. Clean up temporary files and database
+
+Each test script:
+- Creates a fresh database for isolation
+- Starts a new server instance
+- Runs tests with clean state
+- Cleans up all resources when done
+
+The temporary database is stored in a uniquely named file like:
+`/tmp/testdb_XXXXXX.db` and automatically deleted after tests complete.
 
 ## Environment Setup
 Tests require these environment variables:
