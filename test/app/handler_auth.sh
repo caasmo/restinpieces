@@ -171,6 +171,90 @@ test_invalid_registration() {
     return $test_result
 }
 
+test_auth_with_password() {
+    begin_test "/auth-with-password: Valid credentials"
+    local test_result=0
+    local response_file="response_$$.txt"
+    local status
+
+    # First register a test user
+    http_request POST "/register" status "$response_file" \
+        '{"identity":"auth_test@test.com","password":"testpass123","password_confirm":"testpass123"}' \
+        "Content-Type: application/json"
+    local request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Failed to register test user"
+        return 1
+    fi
+
+    # Test authentication with valid credentials
+    http_request POST "/auth-with-password" status "$response_file" \
+        '{"identity":"auth_test@test.com","password":"testpass123"}' \
+        "Content-Type: application/json"
+    request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Curl command failed with exit code $request_status"
+        return 1
+    fi
+
+    assert_status 200 "$status" "Expected 200 for valid credentials" || test_result=1
+    assert_json_contains "token" "$response_file" "Response missing token" || test_result=1
+    assert_json_contains "record" "$response_file" "Response missing user record" || test_result=1
+
+    end_test $test_result "One or more assertions failed"
+    return $test_result
+}
+
+test_auth_with_invalid_password() {
+    begin_test "/auth-with-password: Invalid credentials"
+    local test_result=0
+    local response_file="response_$$.txt"
+    local status
+
+    # Test authentication with invalid password
+    http_request POST "/auth-with-password" status "$response_file" \
+        '{"identity":"auth_test@test.com","password":"wrongpassword"}' \
+        "Content-Type: application/json"
+    local request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Curl command failed with exit code $request_status"
+        return 1
+    fi
+
+    assert_status 400 "$status" "Expected 400 for invalid credentials" || test_result=1
+    assert_json_contains "error" "$response_file" "Response missing error details" || test_result=1
+
+    end_test $test_result "One or more assertions failed"
+    return $test_result
+}
+
+test_auth_with_missing_fields() {
+    begin_test "/auth-with-password: Missing required fields"
+    local test_result=0
+    local response_file="response_$$.txt"
+    local status
+
+    # Test authentication with missing password
+    http_request POST "/auth-with-password" status "$response_file" \
+        '{"identity":"auth_test@test.com"}' \
+        "Content-Type: application/json"
+    local request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Curl command failed with exit code $request_status"
+        return 1
+    fi
+
+    assert_status 400 "$status" "Expected 400 for missing fields" || test_result=1
+    assert_json_contains "error" "$response_file" "Response missing error details" || test_result=1
+
+    end_test $test_result "One or more assertions failed"
+    return $test_result
+}
+
 main() {
     validate_environment
     
@@ -196,6 +280,9 @@ main() {
     test_missing_auth_header
     test_valid_registration
     test_invalid_registration
+    test_auth_with_password
+    test_auth_with_invalid_password
+    test_auth_with_missing_fields
     
     print_test_summary
     stop_server "$server_pid"
