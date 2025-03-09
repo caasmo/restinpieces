@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/caasmo/restinpieces/config"
 )
 
 func TestRefreshAuthHandler(t *testing.T) {

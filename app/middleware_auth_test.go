@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
 	jwtv5 "github.com/golang-jwt/jwt/v5"
 )
