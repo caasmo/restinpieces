@@ -2,9 +2,12 @@ package main
 
 import (
 	"flag"
-	"github.com/caasmo/restinpieces/server"
 	"log/slog"
 	"os"
+	"time"
+
+	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/server"
 )
 
 func main() {
