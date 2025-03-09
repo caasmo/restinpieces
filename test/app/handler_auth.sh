@@ -97,21 +97,30 @@ test_missing_auth_header() {
 
 
 test_valid_registration() {
-    log_test_start "/register: Valid user registration"
-    
+    begin_test "/register: Valid user registration"
+    local test_result=0
     local response_file="response_$$.txt"
     local status
+
+    # Create test database
+    local db_file=$(setup_test_db)
     
     http_request POST "/register" status "$response_file" \
         '{"identity":"new@test.com","password":"pass1234","password_confirm":"pass1234"}' \
         "Content-Type: application/json"
-        
-    if assert_status 200 "$status"; then
-        assert_json_contains "token" "$response_file" && \
-        assert_json_contains "record.id" "$response_file"
+    local request_status=$?
+
+    if [ $request_status -ne 0 ]; then
+        end_test 1 "Curl command failed with exit code $request_status"
+        return 1
     fi
 
-    [ $? -eq 0 ] && log_success || true
+    assert_status 200 "$status" "Expected 200 for valid registration" || test_result=1
+    assert_json_contains "token" "$response_file" || test_result=1
+    assert_json_contains "record.id" "$response_file" || test_result=1
+
+    end_test $test_result "One or more assertions failed"
+    return $test_result
 }
 
 test_invalid_registration() {

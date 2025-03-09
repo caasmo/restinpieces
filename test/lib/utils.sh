@@ -227,7 +227,21 @@ aassert_json_contains() {
 
 cleanup() {
     rm -f response*.txt
-    # Add other cleanup tasks here
+    cleanup_test_db
+}
+
+# Setup a temporary test database with schema
+setup_test_db() {
+    local db_file=$(mktemp -t testdb_XXXXXX.db)
+    echo "$db_file"  # Return generated filename
+    
+    # Load schema from migrations/users.sql
+    sqlite3 "$db_file" < migrations/users.sql
+}
+
+# Cleanup database files
+cleanup_test_db() {
+    rm -f testdb_*.db
 }
 
 print_test_summary() {
