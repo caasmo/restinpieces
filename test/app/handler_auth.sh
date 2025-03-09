@@ -61,8 +61,7 @@ test_auth_refresh_valid() {
     return $test_result
 }
 
-test_invalid_token() {
-
+test_auth_refresh_invalid_token() {
     begin_test "/auth-refresh: Invalid token"
     local test_result=0
     local response_file="response_$$.txt"
