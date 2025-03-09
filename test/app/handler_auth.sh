@@ -156,6 +156,12 @@ main() {
     if $VERBOSE; then
         echo -e "${YELLOW}[DEBUG] Using test database: $db_file${NC}"
     fi
+
+    # Start server with test database
+    echo -e "${YELLOW}[DEBUG] Starting server with DB: $db_file${NC}"
+    go run cmd/restinpieces/main.go -dbfile "$db_file" > /dev/null 2>&1 &
+    server_pid=$!
+    sleep 1 # Give server time to start
     
     # Run tests
     #test_valid_token_refresh

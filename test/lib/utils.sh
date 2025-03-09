@@ -39,6 +39,12 @@ jwt() {
 validate_environment() {
     echo -e "${YELLOW}=== Environment Validation ===${NC}"
     
+    # Verify test server is running
+    if ! curl "${CURL_OPTS[@]}" "$SERVER_URL" &>/dev/null; then
+        echo -e "${RED}Error: Test server is not running at ${SERVER_URL}${NC}"
+        exit 1
+    fi
+    
     # Check required commands
     local missing=()
     echo -e "${YELLOW}Checking required commands...${NC}"
@@ -228,6 +234,13 @@ aassert_json_contains() {
 cleanup() {
     rm -f response*.txt
     cleanup_test_db
+    
+    # Kill server if running
+    if ps -p $server_pid > /dev/null; then
+        echo -e "${YELLOW}[DEBUG] Stopping test server (PID: $server_pid)${NC}"
+        kill -TERM $server_pid
+        wait $server_pid 2>/dev/null
+    fi
 }
 
 # Setup a temporary test database with schema
