@@ -92,6 +92,11 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	)
 
 	if err != nil {
+		if sqliteErr, ok := err.(sqlite.Error); ok {
+			if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
+				return db.ErrConstraintUnique
+			}
+		}
 		return fmt.Errorf("queue insert failed: %w", err)
 	}
 	return nil
