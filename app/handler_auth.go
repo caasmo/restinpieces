@@ -212,3 +212,80 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// /request-verification endpoint
+
+// r1
+// 
+// HTTP Status Codes:
+// 
+//  • 202 Accepted (Primary success response - indicates request accepted for processing)
+//  • 400 Bad Request (Invalid/missing email format)
+//  • 404 Not Found (Email not found in system - if you want to reveal existence)
+//  • 429 Too Many Requests (Rate limiting)
+//  • 500 Internal Server Error (Unexpected backend failures)
+//  • 503 Service Unavailable (If email queue is overloaded)
+// 
+// Key Considerations:
+// 
+//  1 Validation Layer:
+//     • Strict email format validation (RFC 5322 + DNS MX record check)
+//     • Existence check in DB before queueing
+//     • Rate limiting per IP/email (prevent abuse)
+//  2 Security:
+//     • Generic success response regardless of email existence ("If found, verification email sent")
+//     • Input sanitization against SQLi
+//     • Request timeout handling
+//     • HMAC signature for queue jobs
+//  3 Data Integrity:
+//     • DB transactions (user check + queue insert atomic operation)
+//     • Deduplication mechanism (unique constraint on email+timestamp)
+//  4 Async Processing:
+//     • Exponential backoff for failed email attempts
+//     • Dead letter queue for permanent failures
+//     • Idempotency keys in queue
+
+// CREATE TABLE verification_queue (
+//      id UUID PRIMARY KEY,
+//      email VARCHAR(320) NOT NULL,
+//      token_hash CHAR(64) NOT NULL, -- HMAC-SHA256 of verification token
+//      scheduled_at TIMESTAMPTZ NOT NULL,
+//      attempt_count INT DEFAULT 0,
+//      last_attempt TIMESTAMPTZ,
+//      status VARCHAR(20) DEFAULT 'pending'
+//          CHECK (status IN ('pending', 'processing', 'sent', 'failed')),
+//      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+//      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+//  );
+// 
+//  -- Indexes
+//  CREATE INDEX idx_verification_pending ON verification_queue (scheduled_at)
+//      WHERE status = 'pending';
+//  CREATE UNIQUE INDEX idx_verification_dedupe ON verification_queue (email, token_hash);
+// 
+// 
+// Additional Tables Needed:
+//  -- For actual verification attempts
+//  CREATE TABLE verification_tokens (
+//      user_id UUID REFERENCES users(id),
+//      token CHAR(64) PRIMARY KEY,
+//      expires_at TIMESTAMPTZ NOT NULL,
+//      consumed BOOLEAN DEFAULT false
+//  );
+// 
+//  -- For rate limiting audit
+//  CREATE TABLE verification_attempts (
+//      email VARCHAR(320) NOT NULL,
+//      attempt_ip INET NOT NULL,
+//      attempted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+//  );
+
+
+
+
+
+
+
+
+
+
+
