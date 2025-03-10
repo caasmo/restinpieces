@@ -15,9 +15,11 @@ CREATE TABLE job_queue (
     last_error TEXT          -- Last error message if failed
     
     -- Indexes for efficient querying (using CREATE INDEX instead of inline INDEX)
+    UNIQUE (payload, job_type)
 );
 
 -- Create separate index statements
+CREATE UNIQUE INDEX idx_job_unique ON job_queue (payload, job_type);
 CREATE INDEX idx_job_status ON job_queue (status, scheduled_for);
 CREATE INDEX idx_job_type ON job_queue (job_type, status);
 --CREATE INDEX idx_locked_by ON job_queue (locked_by);

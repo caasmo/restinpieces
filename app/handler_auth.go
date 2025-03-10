@@ -38,7 +38,11 @@ var (
 	errorMissingFields       = jsonError{http.StatusBadRequest, []byte(`{"error":"Missing required fields"}`)}
 	errorPasswordComplexity  = jsonError{http.StatusBadRequest, []byte(`{"error":"Password must be at least 8 characters"}`)}
 	errorEmailConflict       = jsonError{http.StatusConflict, []byte(`{"error":"Email already registered"}`)}
+	errorNotFound            = jsonError{http.StatusNotFound, []byte(`{"error":"Email not found"}`)}
+	errorConflict            = jsonError{http.StatusConflict, []byte(`{"error":"Verification already requested"}`)}
 	errorRegistrationFailed  = jsonError{http.StatusBadRequest, []byte(`{"error":"Registration failed"}`)}
+	errorTooManyRequests     = jsonError{http.StatusTooManyRequests, []byte(`{"error":"Too many requests"}`)}
+	errorServiceUnavailable  = jsonError{http.StatusServiceUnavailable, []byte(`{"error":"Service unavailable"}`)}
 )
 
 // RefreshAuthHandler handles explicit JWT token refresh requests
@@ -129,10 +133,54 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 
-// isValidIdentity performs basic email format validation
-// TODO better validation ozzo?
-func isValidIdentity(email string) bool {
-	return strings.Contains(email, "@") && strings.Contains(email, ".")
+// isValidEmail performs RFC 5322 validation using net/mail
+func isValidEmail(email string) bool {
+	_, err := mail.ParseAddress(email)
+	return err == nil
+}
+
+// RequestVerificationHandler handles email verification requests
+func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, errorInvalidRequest)
+		return
+	}
+
+	req.Email = strings.TrimSpace(req.Email)
+	if req.Email == "" || !isValidEmail(req.Email) {
+		writeJSONError(w, errorInvalidRequest)
+		return
+	}
+
+	// Check if email exists in system
+	user, err := a.db.GetUserByEmail(req.Email)
+	if err != nil || user == nil {
+		writeJSONError(w, errorNotFound)
+		return
+	}
+
+	// Create job payload
+	payload := map[string]string{"email": req.Email}
+	payloadJSON, _ := json.Marshal(payload)
+
+	// Insert into job queue with deduplication
+	err = a.db.insertQueueJob("email_verification", string(payloadJSON))
+	if err != nil {
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			writeJSONError(w, errorConflict)
+			return
+		}
+		writeJSONError(w, errorServiceUnavailable)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	fmt.Fprint(w, `{"message":"email will be sent soon. Check your mailbox"}`)
 }
 
 // RegisterHandler handles user registration with validation
