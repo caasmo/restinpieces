@@ -22,10 +22,8 @@ type QueueJob struct {
 	LastError    *string         `json:"last_error"`
 }
 
-// EmailVerificationPayload defines the structure for email verification job payloads
-type EmailVerificationPayload struct {
-	Email string `json:"email"`
-}
+// EmailVerificationPayload is the email string to verify
+type EmailVerificationPayload = string
 
 // Job types
 const (
