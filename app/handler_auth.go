@@ -279,6 +279,119 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 //      attempted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 //  );
 
+// Grok 3
+//
+
+//CREATE TABLE job_queue (
+//    id INTEGER PRIMARY KEY AUTOINCREMENT,
+//    job_type TEXT NOT NULL,
+//    payload TEXT NOT NULL,
+//    status TEXT NOT NULL DEFAULT 'pending',
+//    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+//);
+//CREATE INDEX idx_status ON job_queue(status);
+//CREATE INDEX idx_job_type ON job_queue(job_type);
+
+// id: A unique identifier for each job, auto-incremented by SQLite.
+// 
+// job_type: A string indicating the type of job (e.g., "send_verification_email" for this task, or "process_payment" for another). This allows the table to support multiple job types.
+// 
+// payload: A text field storing job-specific data in a flexible format, such as JSON. For this task, it might be {"email": "user@example.com"}. Using TEXT keeps it general-purpose; JSON parsing can be handled in Go with the encoding/json package.
+// 
+// status: Tracks the job’s state, with values like:
+// "pending": Job is queued and awaiting processing.
+// 
+// "processing": A worker has claimed the job.
+// 
+// "completed": Job finished successfully.
+// 
+// "failed": Job failed after processing.
+// 
+// Default is "pending".
+// 
+// created_at: Timestamp of when the job was added, useful for auditing and ordering.
+// 
+// updated_at: Timestamp of the last status update, helping track progress or detect stale jobs.
+
+
+// To prevent multiple workers from processing the same job:
+// Use an atomic update like:
+// sql
+// 
+// UPDATE job_queue 
+// SET status = 'processing', updated_at = CURRENT_TIMESTAMP 
+// WHERE id = ? AND status = 'pending';
+
+// claude
+// 429 Too Many Requests: When rate limiting is triggered (e.g., too many requests from same IP/email)
+// 409 Conflict: When a verification request for this email already exists and is pending
+
+// Idempotency:
+// Generate and accept idempotency keys
+// Prevent duplicate requests within a time window
+
+//Implement CSRF protection
+//Set appropriate request size limits
+
+// -- Main jobs queue table
+// CREATE TABLE job_queue (
+//     id INTEGER PRIMARY KEY AUTOINCREMENT,
+//     job_type TEXT NOT NULL,  -- Type of job (email_verification, password_reset, etc.)
+//     priority INTEGER DEFAULT 1, -- Higher number = higher priority
+//     payload TEXT NOT NULL,   -- JSON payload with job-specific data
+//     status TEXT NOT NULL DEFAULT 'pending', -- pending, processing, completed, failed
+//     attempts INTEGER NOT NULL DEFAULT 0, -- Number of processing attempts
+//     max_attempts INTEGER NOT NULL DEFAULT 3, -- Maximum retry attempts
+//     created_at TEXT NOT NULL DEFAULT (datetime('now')), -- ISO8601 string format
+//     updated_at TEXT NOT NULL DEFAULT (datetime('now')), -- ISO8601 string format
+//     scheduled_for TEXT NOT NULL DEFAULT (datetime('now')), -- When to process this job
+//     locked_by TEXT,          -- Worker ID that claimed this job
+//     locked_at TEXT,          -- When the job was claimed
+//     completed_at TEXT,       -- When the job was completed
+//     last_error TEXT,         -- Last error message if failed
+//     
+//     -- Indexes for efficient querying (using CREATE INDEX instead of inline INDEX)
+// );
+// 
+// -- Create separate index statements
+// CREATE INDEX idx_job_status ON job_queue (status, scheduled_for);
+// CREATE INDEX idx_job_type ON job_queue (job_type, status);
+// CREATE INDEX idx_locked_by ON job_queue (locked_by);
+// 
+// -- Job-specific metadata table
+// CREATE TABLE job_metadata (
+//     job_id INTEGER NOT NULL,
+//     key TEXT NOT NULL,
+//     value TEXT NOT NULL,
+//     FOREIGN KEY (job_id) REFERENCES job_queue (id) ON DELETE CASCADE,
+//     PRIMARY KEY (job_id, key)
+// );
+// 
+// -- Rate limiting table to prevent abuse
+// CREATE TABLE rate_limits (
+//     identifier TEXT NOT NULL PRIMARY KEY, -- Can be email, IP, or combination
+//     counter INTEGER NOT NULL DEFAULT 1,
+//     reset_at TEXT NOT NULL,  -- ISO8601 datetime string
+//     created_at TEXT NOT NULL DEFAULT (datetime('now')),
+//     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+// );
+// 
+// -- Job results table for maintaining history
+// CREATE TABLE job_results (
+//     id INTEGER PRIMARY KEY AUTOINCREMENT,
+//     job_id INTEGER NOT NULL,
+//     result_type TEXT NOT NULL, -- success, failure, etc.
+//     result_data TEXT,          -- Result details in JSON
+//     created_at TEXT NOT NULL DEFAULT (datetime('now')),
+//     FOREIGN KEY (job_id) REFERENCES job_queue (id) ON DELETE CASCADE
+// );
+
+// email verification
+// https://github.com/AfterShip/email-verifier
+// but use first standard library net/mail 
+
+
 
 
 
