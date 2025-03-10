@@ -16,10 +16,10 @@ type QueueJob struct {
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
 	ScheduledFor time.Time       `json:"scheduled_for"`
-	LockedBy     *string         `json:"locked_by"`
-	LockedAt     *time.Time      `json:"locked_at"`
-	CompletedAt  *time.Time      `json:"completed_at"`
-	LastError    *string         `json:"last_error"`
+	LockedBy     string          `json:"locked_by,omitempty"`
+	LockedAt     time.Time       `json:"locked_at,omitempty"`
+	CompletedAt  time.Time       `json:"completed_at,omitempty"`
+	LastError    string          `json:"last_error,omitempty"`
 }
 
 // EmailVerificationPayload is the email string to verify
