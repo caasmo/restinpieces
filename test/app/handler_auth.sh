@@ -1,14 +1,8 @@
 #!/bin/bash
 #set -eo pipefail
 
-# Process command line args first
-VERBOSE=true  # Default value
-while getopts "q" opt; do
-    case $opt in
-        q) VERBOSE=false ;;  # -q for quiet mode
-        *) echo "Usage: $0 [-q]" >&2; exit 1 ;;
-    esac
-done
+# Process command line options
+process_options "$@"
 
 # Source utilities
 TEST_ROOT=$(dirname "${BASH_SOURCE[0]}")/..

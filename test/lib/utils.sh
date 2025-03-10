@@ -9,6 +9,16 @@ export CURL_OPTS=("--silent" "--show-error" "--max-time" "$TIMEOUT_SECONDS")
 # Configuration flags
 VERBOSE=${VERBOSE:-true}  # Verbose by default
 
+process_options() {
+    while getopts "q" opt; do
+        case $opt in
+            q) VERBOSE=false ;;  # -q for quiet mode
+            *) echo "Usage: $0 [-q]" >&2; exit 1 ;;
+        esac
+    done
+    shift $((OPTIND-1))  # Remove processed options from arguments
+}
+
 # Color definitions
 RED='\033[0;31m'
 GREEN='\033[0;32m'
