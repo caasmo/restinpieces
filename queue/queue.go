@@ -11,11 +11,6 @@ type QueueJob struct {
 	JobType      string          `json:"job_type"`
 	Payload      json.RawMessage `json:"payload"`
 	Status       string          `json:"status"`
-
-// EmailVerificationPayload defines the structure for email verification job payloads
-type EmailVerificationPayload struct {
-	Email string `json:"email"`
-}
 	Attempts     int             `json:"attempts"`
 	MaxAttempts  int             `json:"max_attempts"`
 	CreatedAt    time.Time       `json:"created_at"`
@@ -25,6 +20,11 @@ type EmailVerificationPayload struct {
 	LockedAt     *time.Time      `json:"locked_at"`
 	CompletedAt  *time.Time      `json:"completed_at"`
 	LastError    *string         `json:"last_error"`
+}
+
+// EmailVerificationPayload defines the structure for email verification job payloads
+type EmailVerificationPayload struct {
+	Email string `json:"email"`
 }
 
 // Job types
