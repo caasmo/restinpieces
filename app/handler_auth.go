@@ -164,12 +164,18 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Create job payload
-	payload := map[string]string{"email": req.Email}
-	payloadJSON, _ := json.Marshal(payload)
+	// Create queue job
+	payload, _ := json.Marshal(map[string]string{"email": req.Email})
+	job := queue.QueueJob{
+		JobType:      queue.JobTypeEmailVerification,
+		Payload:      payload,
+		Status:       queue.StatusPending,
+		MaxAttempts:  3,
+		ScheduledFor: time.Now().UTC(),
+	}
 
 	// Insert into job queue with deduplication
-	err = a.db.InsertQueueJob("email_verification", string(payloadJSON))
+	err = a.db.InsertQueueJob(job)
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			writeJSONError(w, errorConflict)

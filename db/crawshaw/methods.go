@@ -68,15 +68,25 @@ func validateUserFields(user db.User) error {
 // The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
 // Example timestamp: "2024-03-07T15:04:05Z"
 // User struct should contain at minimum: Email, Password (pre-hashed), and Name
-func (d *Db) InsertQueueJob(jobType string, payload string) error {
+func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
+	payloadJSON, _ := json.Marshal(job.Payload)
+	now := time.Now().UTC().Format(time.RFC3339)
+
 	stmt := conn.Prep(`INSERT OR IGNORE INTO job_queue 
-		(job_type, payload, status, scheduled_for) 
-		VALUES (?, ?, 'pending', datetime('now'))`)
-	stmt.BindText(1, jobType)
-	stmt.BindText(2, payload)
+		(job_type, payload, status, attempts, max_attempts, 
+		created_at, updated_at, scheduled_for) 
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
+	stmt.BindText(1, job.JobType)
+	stmt.BindText(2, string(payloadJSON))
+	stmt.BindText(3, queue.StatusPending)
+	stmt.BindInt(4, job.Attempts)
+	stmt.BindInt(5, job.MaxAttempts)
+	stmt.BindText(6, now)
+	stmt.BindText(7, now)
+	stmt.BindText(8, job.ScheduledFor.Format(time.RFC3339))
 	
 	if _, err := stmt.Step(); err != nil {
 		return fmt.Errorf("queue insert failed: %w", err)

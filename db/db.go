@@ -29,5 +29,5 @@ type Db interface {
 	InsertWithPool(value int64)
 	GetUserByEmail(email string) (*User, error)
 	CreateUser(user User) (*User, error)
-	InsertQueueJob(jobType string, payload string) error
+	InsertQueueJob(job queue.QueueJob) error
 }
