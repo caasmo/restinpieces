@@ -6,18 +6,16 @@ export JWT_SECRET="test_secret_32_bytes_long_xxxxxx"
 export TIMEOUT_SECONDS=5
 export CURL_OPTS=("--silent" "--show-error" "--max-time" "$TIMEOUT_SECONDS")
 
+while getopts "q" opt; do
+    case $opt in
+        q) VERBOSE=false ;;  # -q for quiet mode
+        *) echo "Usage: $0 [-q]" >&2; exit 1 ;;
+    esac
+done
+shift $((OPTIND-1))  # Remove processed options from arguments
+
 # Configuration flags
 VERBOSE=${VERBOSE:-true}  # Verbose by default
-
-process_options() {
-    while getopts "q" opt; do
-        case $opt in
-            q) VERBOSE=false ;;  # -q for quiet mode
-            *) echo "Usage: $0 [-q]" >&2; exit 1 ;;
-        esac
-    done
-    shift $((OPTIND-1))  # Remove processed options from arguments
-}
 
 # Color definitions
 RED='\033[0;31m'
