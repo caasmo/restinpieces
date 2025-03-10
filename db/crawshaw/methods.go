@@ -111,6 +111,7 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	defer d.pool.Put(conn)
 	
 	// Generate timestamps before insert
+	//TODO utc shoudl be already in user 
 	now := time.Now().UTC().Format(time.RFC3339)
 	
 	var createdUser *db.User
