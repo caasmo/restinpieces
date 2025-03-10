@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/mail"
@@ -178,7 +179,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	// Insert into job queue with deduplication
 	err = a.db.InsertQueueJob(job)
 	if err != nil {
-		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+		if errors.Is(err, db.ErrConstraintUnique) {
 			writeJSONError(w, errorConflict)
 			return
 		}
