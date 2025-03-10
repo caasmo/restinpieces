@@ -10,6 +10,7 @@ import (
 	
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/queue"
 )
 
 //	export JWT_SECRET=$(openssl rand -base64 32)
