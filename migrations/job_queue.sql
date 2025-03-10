@@ -12,7 +12,7 @@ CREATE TABLE job_queue (
     locked_by TEXT,          -- Worker ID that claimed this job
     locked_at TEXT,          -- When the job was claimed
     completed_at TEXT,       -- When the job was completed
-    last_error TEXT,         -- Last error message if failed
+    last_error TEXT          -- Last error message if failed
     
     -- Indexes for efficient querying (using CREATE INDEX instead of inline INDEX)
 );
