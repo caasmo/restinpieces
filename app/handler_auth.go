@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/mail"
 	"strings"
 	"time"
 	
@@ -95,7 +96,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
     // only email TODO
-	if !isValidIdentity(req.Identity) {
+	if !isValidEmail(req.Identity) {
 		writeJSONError(w, errorInvalidRequest)
 		return
 	}
@@ -168,7 +169,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	payloadJSON, _ := json.Marshal(payload)
 
 	// Insert into job queue with deduplication
-	err = a.db.insertQueueJob("email_verification", string(payloadJSON))
+	err = a.db.InsertQueueJob("email_verification", string(payloadJSON))
 	if err != nil {
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			writeJSONError(w, errorConflict)

@@ -68,7 +68,7 @@ func validateUserFields(user db.User) error {
 // The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
 // Example timestamp: "2024-03-07T15:04:05Z"
 // User struct should contain at minimum: Email, Password (pre-hashed), and Name
-func (d *Db) insertQueueJob(jobType string, payload string) error {
+func (d *Db) InsertQueueJob(jobType string, payload string) error {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
