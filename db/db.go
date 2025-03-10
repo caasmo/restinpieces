@@ -1,6 +1,9 @@
 package db
 
-import "errors"
+import (
+	"errors"
+	"github.com/caasmo/restinpieces/queue"
+)
 
 // User represents a user from the database.
 // Timestamps (Created and Updated) use RFC3339 format in UTC timezone.
