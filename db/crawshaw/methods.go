@@ -66,10 +66,6 @@ func validateUserFields(user db.User) error {
 	return nil
 }
 
-// CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
-// The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
-// Example timestamp: "2024-03-07T15:04:05Z"
-// User struct should contain at minimum: Email, Password (pre-hashed), and Name
 func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
@@ -96,6 +92,10 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
+// CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
+// The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
+// Example timestamp: "2024-03-07T15:04:05Z"
+// User struct should contain at minimum: Email, Password (pre-hashed), and Name
 func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	// Validate required fields
 	if err := validateUserFields(user); err != nil {
