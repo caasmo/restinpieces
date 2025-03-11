@@ -453,7 +453,7 @@ func TestInsertQueueJobDuplicate(t *testing.T) {
 		return
 	}
 
-	if !errors.Is(err, db.ErrConstraintUnique) {
+	if err != db.ErrConstraintUnique {
 		t.Errorf("expected error type %v, got %v", db.ErrConstraintUnique, err)
 	}
 }
