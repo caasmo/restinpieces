@@ -18,13 +18,6 @@ const (
 	UserIDKey contextKey = "user_id"
 )
 
-// Precomputed error responses with status codes
-var (
-	errorNoAuthHeader         = jsonError{http.StatusUnauthorized, []byte(`{"error":"Authorization header required"}`)}
-	errorInvalidTokenFormat   = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
-	errorJwtInvalidSignMethod = jsonError{http.StatusUnauthorized, []byte(`{"error":"unexpected signing method"}`)}
-	errorJwtTokenExpired      = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
-)
 
 // JwtValidate middleware validates the JWT token
 func (a *App) JwtValidate(next http.Handler) http.Handler {

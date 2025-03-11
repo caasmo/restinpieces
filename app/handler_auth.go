@@ -30,22 +30,6 @@ import (
 //	# Test missing header
 //	curl -v -X POST http://localhost:8080/auth-refresh
 //
-// Precomputed error responses with status codes
-var (
-	errorTokenGeneration    = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
-	errorClaimsNotFound     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token: Claims not found"}`)}
-	errorInvalidRequest     = jsonError{http.StatusBadRequest, []byte(`{"error":"Invalid request payload"}`)}
-	errorInvalidCredentials = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid credentials"}`)}
-	errorPasswordMismatch   = jsonError{http.StatusBadRequest, []byte(`{"error":"Password and confirmation do not match"}`)}
-	errorMissingFields      = jsonError{http.StatusBadRequest, []byte(`{"error":"Missing required fields"}`)}
-	errorPasswordComplexity = jsonError{http.StatusBadRequest, []byte(`{"error":"Password must be at least 8 characters"}`)}
-	errorEmailConflict      = jsonError{http.StatusConflict, []byte(`{"error":"Email already registered"}`)}
-	errorNotFound           = jsonError{http.StatusNotFound, []byte(`{"error":"Email not found"}`)}
-	errorConflict           = jsonError{http.StatusConflict, []byte(`{"error":"Verification already requested"}`)}
-	errorRegistrationFailed = jsonError{http.StatusBadRequest, []byte(`{"error":"Registration failed"}`)}
-	errorTooManyRequests    = jsonError{http.StatusTooManyRequests, []byte(`{"error":"Too many requests"}`)}
-	errorServiceUnavailable = jsonError{http.StatusServiceUnavailable, []byte(`{"error":"Service unavailable"}`)}
-)
 
 // RefreshAuthHandler handles explicit JWT token refresh requests
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
