@@ -122,8 +122,8 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 
 	var createdUser *db.User
 	err := sqlitex.Exec(conn,
-		`INSERT INTO users (email, password, name, created, updated, tokenKey) 
-		VALUES (?, ?, ?, ?, ?, ?)
+		`INSERT INTO users (email, password, name, tokenKey) 
+		VALUES (?, ?, ?, ?)
 		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
 		func(stmt *sqlite.Stmt) error {
 			// Get and parse timestamps from database
@@ -155,9 +155,7 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		user.Email,    // 1. email
 		user.Password, // 2. password
 		user.Name,     // 3. name
-		db.TimeFormat(user.Created),  // 4. created 
-		db.TimeFormat(user.Updated),  // 5. updated 
-		user.TokenKey) // 6. tokenKey
+		user.TokenKey) // 4. tokenKey
 
 	if err != nil {
 		// Check for SQLITE_CONSTRAINT_UNIQUE (2067) error code

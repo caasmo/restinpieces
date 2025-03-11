@@ -28,7 +28,7 @@ import (
 // 3. Verify test data still works with new schema
 func TestSchemaVersion(t *testing.T) {
 	currentHash := sha256.Sum256([]byte(migrations.UsersSchema))
-	knownHash := "9abfe466a4e1202dc55dbd3d13b35ad53478298be10edb690a9a08b52662e3af" // Replace with output from sha256sum
+	knownHash := "cd6c8992ee383a88b0e86754400afea6ef89cb7475339a898435395d208726fd" // Replace with output from sha256sum
 
 	if hex.EncodeToString(currentHash[:]) != knownHash {
 		t.Fatal("users.sql schema has changed - update tests and knownHash")
@@ -155,6 +155,7 @@ func TestCreateUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			createdUser, err := testDB.CreateUser(tt.user)
+			t.Logf("error details: %v", createdUser)
 
 			if tt.wantErr {
 				if err == nil {
