@@ -76,14 +76,14 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 		created_at, updated_at, scheduled_for) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		nil, // No results needed for INSERT
-		job.JobType,
-		string(job.Payload),
-		queue.StatusPending,
-		job.Attempts,
-		job.MaxAttempts,
-		now,
-		now,
-		job.ScheduledFor.Format(time.RFC3339),
+		job.JobType,                    // 1. job_type
+		string(job.Payload),            // 2. payload
+		queue.StatusPending,            // 3. status
+		job.Attempts,                   // 4. attempts
+		job.MaxAttempts,                // 5. max_attempts
+		now,                            // 6. created_at
+		now,                            // 7. updated_at
+		job.ScheduledFor.Format(time.RFC3339), // 8. scheduled_for
 	)
 
 	if err != nil {
