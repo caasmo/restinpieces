@@ -42,4 +42,3 @@ func New(path string) (*Db, error) {
 func (d *Db) Close() {
 	d.pool.Close()
 }
-

@@ -7,7 +7,7 @@ import (
 	"net/mail"
 	"strings"
 	"time"
-	
+
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
@@ -32,19 +32,19 @@ import (
 //
 // Precomputed error responses with status codes
 var (
-	errorTokenGeneration     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
-	errorClaimsNotFound      = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token: Claims not found"}`)}
-	errorInvalidRequest      = jsonError{http.StatusBadRequest, []byte(`{"error":"Invalid request payload"}`)}
-	errorInvalidCredentials  = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid credentials"}`)}
-	errorPasswordMismatch    = jsonError{http.StatusBadRequest, []byte(`{"error":"Password and confirmation do not match"}`)}
-	errorMissingFields       = jsonError{http.StatusBadRequest, []byte(`{"error":"Missing required fields"}`)}
-	errorPasswordComplexity  = jsonError{http.StatusBadRequest, []byte(`{"error":"Password must be at least 8 characters"}`)}
-	errorEmailConflict       = jsonError{http.StatusConflict, []byte(`{"error":"Email already registered"}`)}
-	errorNotFound            = jsonError{http.StatusNotFound, []byte(`{"error":"Email not found"}`)}
-	errorConflict            = jsonError{http.StatusConflict, []byte(`{"error":"Verification already requested"}`)}
-	errorRegistrationFailed  = jsonError{http.StatusBadRequest, []byte(`{"error":"Registration failed"}`)}
-	errorTooManyRequests     = jsonError{http.StatusTooManyRequests, []byte(`{"error":"Too many requests"}`)}
-	errorServiceUnavailable  = jsonError{http.StatusServiceUnavailable, []byte(`{"error":"Service unavailable"}`)}
+	errorTokenGeneration    = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token"}`)}
+	errorClaimsNotFound     = jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to generate token: Claims not found"}`)}
+	errorInvalidRequest     = jsonError{http.StatusBadRequest, []byte(`{"error":"Invalid request payload"}`)}
+	errorInvalidCredentials = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid credentials"}`)}
+	errorPasswordMismatch   = jsonError{http.StatusBadRequest, []byte(`{"error":"Password and confirmation do not match"}`)}
+	errorMissingFields      = jsonError{http.StatusBadRequest, []byte(`{"error":"Missing required fields"}`)}
+	errorPasswordComplexity = jsonError{http.StatusBadRequest, []byte(`{"error":"Password must be at least 8 characters"}`)}
+	errorEmailConflict      = jsonError{http.StatusConflict, []byte(`{"error":"Email already registered"}`)}
+	errorNotFound           = jsonError{http.StatusNotFound, []byte(`{"error":"Email not found"}`)}
+	errorConflict           = jsonError{http.StatusConflict, []byte(`{"error":"Verification already requested"}`)}
+	errorRegistrationFailed = jsonError{http.StatusBadRequest, []byte(`{"error":"Registration failed"}`)}
+	errorTooManyRequests    = jsonError{http.StatusTooManyRequests, []byte(`{"error":"Too many requests"}`)}
+	errorServiceUnavailable = jsonError{http.StatusServiceUnavailable, []byte(`{"error":"Service unavailable"}`)}
 )
 
 // RefreshAuthHandler handles explicit JWT token refresh requests
@@ -96,7 +96,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    // only email TODO
+	// only email TODO
 	if !isValidEmail(req.Identity) {
 		writeJSONError(w, errorInvalidRequest)
 		return
@@ -133,7 +133,6 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 }
-
 
 // isValidEmail performs RFC 5322 validation using net/mail
 func isValidEmail(email string) bool {
@@ -233,10 +232,10 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create user in database
 	user, err := a.db.CreateUser(db.User{
-		Email:     req.Identity,
-		Password:  string(hashedPassword),
-		Name:      "", // Optional field
-		TokenKey:  crypto.GenerateSecureToken(32), // Generate secure token TODO 
+		Email:    req.Identity,
+		Password: string(hashedPassword),
+		Name:     "",                             // Optional field
+		TokenKey: crypto.GenerateSecureToken(32), // Generate secure token TODO
 	})
 
 	if err != nil {
@@ -271,18 +270,18 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 // /request-verification endpoint
 
 // r1
-// 
+//
 // HTTP Status Codes:
-// 
+//
 //  • 202 Accepted (Primary success response - indicates request accepted for processing)
 //  • 400 Bad Request (Invalid/missing email format)
 //  • 404 Not Found (Email not found in system - if you want to reveal existence)
 //  • 429 Too Many Requests (Rate limiting)
 //  • 500 Internal Server Error (Unexpected backend failures)
 //  • 503 Service Unavailable (If email queue is overloaded)
-// 
+//
 // Key Considerations:
-// 
+//
 //  1 Validation Layer:
 //     • Strict email format validation (RFC 5322 + DNS MX record check)
 //     • Existence check in DB before queueing
@@ -312,13 +311,13 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 //      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 //      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 //  );
-// 
+//
 //  -- Indexes
 //  CREATE INDEX idx_verification_pending ON verification_queue (scheduled_at)
 //      WHERE status = 'pending';
 //  CREATE UNIQUE INDEX idx_verification_dedupe ON verification_queue (email, token_hash);
-// 
-// 
+//
+//
 // Additional Tables Needed:
 //  -- For actual verification attempts
 //  CREATE TABLE verification_tokens (
@@ -327,7 +326,7 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 //      expires_at TIMESTAMPTZ NOT NULL,
 //      consumed BOOLEAN DEFAULT false
 //  );
-// 
+//
 //  -- For rate limiting audit
 //  CREATE TABLE verification_attempts (
 //      email VARCHAR(320) NOT NULL,
@@ -350,33 +349,32 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 //CREATE INDEX idx_job_type ON job_queue(job_type);
 
 // id: A unique identifier for each job, auto-incremented by SQLite.
-// 
+//
 // job_type: A string indicating the type of job (e.g., "send_verification_email" for this task, or "process_payment" for another). This allows the table to support multiple job types.
-// 
+//
 // payload: A text field storing job-specific data in a flexible format, such as JSON. For this task, it might be {"email": "user@example.com"}. Using TEXT keeps it general-purpose; JSON parsing can be handled in Go with the encoding/json package.
-// 
+//
 // status: Tracks the job’s state, with values like:
 // "pending": Job is queued and awaiting processing.
-// 
+//
 // "processing": A worker has claimed the job.
-// 
+//
 // "completed": Job finished successfully.
-// 
+//
 // "failed": Job failed after processing.
-// 
+//
 // Default is "pending".
-// 
+//
 // created_at: Timestamp of when the job was added, useful for auditing and ordering.
-// 
+//
 // updated_at: Timestamp of the last status update, helping track progress or detect stale jobs.
-
 
 // To prevent multiple workers from processing the same job:
 // Use an atomic update like:
 // sql
-// 
-// UPDATE job_queue 
-// SET status = 'processing', updated_at = CURRENT_TIMESTAMP 
+//
+// UPDATE job_queue
+// SET status = 'processing', updated_at = CURRENT_TIMESTAMP
 // WHERE id = ? AND status = 'pending';
 
 // claude
@@ -406,15 +404,15 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 //     locked_at TEXT,          -- When the job was claimed
 //     completed_at TEXT,       -- When the job was completed
 //     last_error TEXT,         -- Last error message if failed
-//     
+//
 //     -- Indexes for efficient querying (using CREATE INDEX instead of inline INDEX)
 // );
-// 
+//
 // -- Create separate index statements
 // CREATE INDEX idx_job_status ON job_queue (status, scheduled_for);
 // CREATE INDEX idx_job_type ON job_queue (job_type, status);
 // CREATE INDEX idx_locked_by ON job_queue (locked_by);
-// 
+//
 // -- Job-specific metadata table
 // CREATE TABLE job_metadata (
 //     job_id INTEGER NOT NULL,
@@ -423,7 +421,7 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 //     FOREIGN KEY (job_id) REFERENCES job_queue (id) ON DELETE CASCADE,
 //     PRIMARY KEY (job_id, key)
 // );
-// 
+//
 // -- Rate limiting table to prevent abuse
 // CREATE TABLE rate_limits (
 //     identifier TEXT NOT NULL PRIMARY KEY, -- Can be email, IP, or combination
@@ -432,7 +430,7 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 //     created_at TEXT NOT NULL DEFAULT (datetime('now')),
 //     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 // );
-// 
+//
 // -- Job results table for maintaining history
 // CREATE TABLE job_results (
 //     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -445,16 +443,4 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 // email verification
 // https://github.com/AfterShip/email-verifier
-// but use first standard library net/mail 
-
-
-
-
-
-
-
-
-
-
-
-
+// but use first standard library net/mail

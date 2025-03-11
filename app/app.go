@@ -3,9 +3,9 @@ package app
 import (
 	"fmt"
 	"github.com/caasmo/restinpieces/cache"
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/router"
-	"github.com/caasmo/restinpieces/config"
 )
 
 // App is the application wide context.

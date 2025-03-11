@@ -3,12 +3,12 @@ package crawshaw
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/hex"
 	_ "embed"
+	"encoding/hex"
 	"errors"
 	"testing"
 	"time"
-	
+
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 	"github.com/caasmo/restinpieces/db"
@@ -21,7 +21,6 @@ import (
 // 3. Update knownHash in TestSchemaVersion with the new value
 // 4. Review test data in setupDB() for compatibility with schema changes
 
-
 // TestSchemaVersion ensures the embedded users.sql schema matches the known hash.
 // To update after schema changes:
 // 1. Run: sha256sum migrations/users.sql
@@ -30,7 +29,7 @@ import (
 func TestSchemaVersion(t *testing.T) {
 	currentHash := sha256.Sum256([]byte(migrations.UsersSchema))
 	knownHash := "da48850b0d80821e5f8592071e657e5a4a917e2e846574e3736e4fe31d328258" // Replace with output from sha256sum
-	
+
 	if hex.EncodeToString(currentHash[:]) != knownHash {
 		t.Fatal("users.sql schema has changed - update tests and knownHash")
 	}
@@ -38,29 +37,29 @@ func TestSchemaVersion(t *testing.T) {
 
 func setupDB(t *testing.T) *Db {
 	t.Helper()
-	
-    // Using a named in-memory database with the URI format
-    // file:testdb?mode=memory&cache=shared allows multiple connections to
-    // access the same in-memory database
+
+	// Using a named in-memory database with the URI format
+	// file:testdb?mode=memory&cache=shared allows multiple connections to
+	// access the same in-memory database
 	pool, err := sqlitex.Open("file:testdb?mode=memory&cache=shared", 0, 4)
 	if err != nil {
 		t.Fatalf("failed to create test database: %v", err)
 	}
-	
+
 	conn := pool.Get(context.TODO())
 	defer pool.Put(conn)
-	
+
 	// Drop existing table and create fresh schema
 	err = sqlitex.ExecScript(conn, "DROP TABLE IF EXISTS users;")
 	if err != nil {
 		t.Fatalf("failed to drop users table: %v", err)
 	}
-	
+
 	err = sqlitex.ExecScript(conn, migrations.UsersSchema)
 	if err != nil {
 		t.Fatalf("failed to create test schema: %v", err)
 	}
-	
+
 	// Insert test user
 	err = sqlitex.ExecScript(conn, `
 		INSERT INTO users (id, email, name, password, created, updated, verified, tokenKey)
@@ -69,7 +68,7 @@ func setupDB(t *testing.T) *Db {
 	if err != nil {
 		t.Fatalf("failed to create test schema: %v", err)
 	}
-	
+
 	// Return DB instance with the existing pool that has our schema
 	return &Db{
 		pool: pool,
@@ -85,7 +84,7 @@ func TestCreateUser(t *testing.T) {
 		name        string
 		user        db.User
 		wantErr     bool
-		errorType   error // Expected error type
+		errorType   error    // Expected error type
 		checkFields []string // Fields to verify in returned user
 	}{
 		{
@@ -96,7 +95,7 @@ func TestCreateUser(t *testing.T) {
 				Name:     "New User",
 				TokenKey: "token_key_valid_user_creation",
 			},
-			wantErr: false,
+			wantErr:     false,
 			checkFields: []string{"Email", "Name", "Password", "TokenKey"},
 		},
 		{
@@ -107,7 +106,7 @@ func TestCreateUser(t *testing.T) {
 				Name:     "Duplicate User",
 				TokenKey: "token_key_duplicate_email",
 			},
-			wantErr: true,
+			wantErr:   true,
 			errorType: db.ErrConstraintUnique,
 		},
 		{
@@ -148,7 +147,7 @@ func TestCreateUser(t *testing.T) {
 				Name:     "Duplicate Token User",
 				TokenKey: "token_key_setup", // Same token key as test user created in setupDB()
 			},
-			wantErr: true,
+			wantErr:   true,
 			errorType: db.ErrConstraintUnique,
 		},
 	}
@@ -156,24 +155,24 @@ func TestCreateUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			createdUser, err := testDB.CreateUser(tt.user)
-			
+
 			if tt.wantErr {
 				if err == nil {
 					t.Error("expected error but got none")
 					return
 				}
-				
+
 				if tt.errorType != nil && !errors.Is(err, tt.errorType) {
 					t.Errorf("expected error type %v, got %v", tt.errorType, err)
 				}
 				return
 			}
-			
+
 			if err != nil {
 				t.Logf("error details: %v", err)
 				t.Fatalf("unexpected error: %v", err)
 			}
-			
+
 			if createdUser == nil {
 				t.Fatal("expected user but got nil")
 			}
@@ -204,12 +203,12 @@ func TestCreateUser(t *testing.T) {
 			if createdUser.Created == "" || createdUser.Updated == "" {
 				t.Error("timestamps not set")
 			}
-			
+
 			createdTime, err := time.Parse(time.RFC3339, createdUser.Created)
 			if err != nil {
 				t.Errorf("invalid created timestamp format: %v", err)
 			}
-			
+
 			updatedTime, err := time.Parse(time.RFC3339, createdUser.Updated)
 			if err != nil {
 				t.Errorf("invalid updated timestamp format: %v", err)
@@ -228,7 +227,7 @@ func TestCreateUser(t *testing.T) {
 			if err != nil {
 				t.Fatalf("failed to retrieve created user: %v", err)
 			}
-			
+
 			if retrievedUser.ID != createdUser.ID {
 				t.Errorf("retrieved user ID mismatch: got %q, want %q", retrievedUser.ID, createdUser.ID)
 			}
@@ -239,12 +238,12 @@ func TestCreateUser(t *testing.T) {
 func TestGetUserByEmail(t *testing.T) {
 	testDB := setupDB(t)
 	defer testDB.Close()
-	
+
 	tests := []struct {
-		name        string
-		email       string
-		wantUser    *db.User
-		wantErr     bool
+		name     string
+		email    string
+		wantUser *db.User
+		wantErr  bool
 	}{
 		{
 			name:  "existing user",
@@ -261,17 +260,17 @@ func TestGetUserByEmail(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "non-existent user",
-			email:   "nonexistent@test.com",
+			name:     "non-existent user",
+			email:    "nonexistent@test.com",
 			wantUser: nil,
-			wantErr: false,
+			wantErr:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			user, err := testDB.GetUserByEmail(tt.email)
-			
+
 			if tt.wantErr && err == nil {
 				t.Error("expected error but got none")
 				return
@@ -279,7 +278,7 @@ func TestGetUserByEmail(t *testing.T) {
 				t.Errorf("unexpected error: %v", err)
 				return
 			}
-			
+
 			if tt.wantUser != nil {
 				if user == nil {
 					t.Error("expected user but got nil")
@@ -300,4 +299,3 @@ func TestGetUserByEmail(t *testing.T) {
 		})
 	}
 }
-

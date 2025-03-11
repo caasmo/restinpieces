@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 	"net/http"
-	
+
 	"github.com/caasmo/restinpieces/db"
 )
 
@@ -16,13 +16,13 @@ func (m *MockDB) Insert(value int64)         {}
 func (m *MockDB) InsertWithPool(value int64) {}
 func (m *MockDB) CreateUser(user db.User) (*db.User, error) {
 	return &db.User{
-		ID:        "mock-user",
-		Email:     user.Email,
-		Name:      user.Name,
-		Password:  user.Password,
-		Created:   "2024-01-01T00:00:00Z",
-		Updated:   "2024-01-01T00:00:00Z",
-		TokenKey:  user.TokenKey,
+		ID:       "mock-user",
+		Email:    user.Email,
+		Name:     user.Name,
+		Password: user.Password,
+		Created:  "2024-01-01T00:00:00Z",
+		Updated:  "2024-01-01T00:00:00Z",
+		TokenKey: user.TokenKey,
 	}, nil
 }
 

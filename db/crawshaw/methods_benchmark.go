@@ -5,7 +5,6 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 )
 
-
 func (d *Db) GetById(id int64) int {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)

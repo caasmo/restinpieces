@@ -10,7 +10,6 @@ import (
 	"time"
 )
 
-
 // GetUserByEmail retrieves a user by email address.
 // Returns:
 // - *db.User: User record if found, nil if no matching record exists
@@ -20,20 +19,20 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
-	var user *db.User  // Will remain nil if no rows found
-	err := sqlitex.Exec(conn, 
+	var user *db.User // Will remain nil if no rows found
+	err := sqlitex.Exec(conn,
 		`SELECT id, email, name, password, created, updated, verified, tokenKey 
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
 			user = &db.User{
-				ID:        stmt.GetText("id"),
-				Email:     stmt.GetText("email"),
-				Name:      stmt.GetText("name"),
-				Password:  stmt.GetText("password"),
-				Created:   stmt.GetText("created"),
-				Updated:   stmt.GetText("updated"),
-				Verified:  stmt.GetInt64("verified") != 0,
-				TokenKey:  stmt.GetText("tokenKey"),
+				ID:       stmt.GetText("id"),
+				Email:    stmt.GetText("email"),
+				Name:     stmt.GetText("name"),
+				Password: stmt.GetText("password"),
+				Created:  stmt.GetText("created"),
+				Updated:  stmt.GetText("updated"),
+				Verified: stmt.GetInt64("verified") != 0,
+				TokenKey: stmt.GetText("tokenKey"),
 			}
 			return nil
 		}, email)
@@ -44,7 +43,6 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 
 	return user, nil
 }
-
 
 // validateUserFields checks that required user fields are present
 func validateUserFields(user db.User) error {
@@ -58,7 +56,7 @@ func validateUserFields(user db.User) error {
 	if user.TokenKey == "" {
 		missingFields = append(missingFields, "TokenKey")
 	}
-	
+
 	if len(missingFields) > 0 {
 		return fmt.Errorf("%w: %s", db.ErrMissingFields, strings.Join(missingFields, ", "))
 	}
@@ -75,14 +73,14 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 		(job_type, payload, status, attempts, max_attempts, 
 		created_at, updated_at, scheduled_for) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		nil, // No results needed for INSERT
-		job.JobType,                    // 1. job_type
-		string(job.Payload),            // 2. payload
-		queue.StatusPending,            // 3. status
-		job.Attempts,                   // 4. attempts
-		job.MaxAttempts,                // 5. max_attempts
-		now,                            // 6. created_at
-		now,                            // 7. updated_at
+		nil,                                   // No results needed for INSERT
+		job.JobType,                           // 1. job_type
+		string(job.Payload),                   // 2. payload
+		queue.StatusPending,                   // 3. status
+		job.Attempts,                          // 4. attempts
+		job.MaxAttempts,                       // 5. max_attempts
+		now,                                   // 6. created_at
+		now,                                   // 7. updated_at
 		job.ScheduledFor.Format(time.RFC3339), // 8. scheduled_for
 	)
 
@@ -109,45 +107,45 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
-	
+
 	// Generate timestamps before insert
-	//TODO utc shoudl be already in user 
+	//TODO utc shoudl be already in user
 	now := TimeNow()
-	
+
 	var createdUser *db.User
-	err := sqlitex.Exec(conn, 
+	err := sqlitex.Exec(conn,
 		`INSERT INTO users (email, password, name, created, updated, tokenKey) 
 		VALUES (?, ?, ?, ?, ?, ?)
 		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
 		func(stmt *sqlite.Stmt) error {
 			createdUser = &db.User{
-				ID:        stmt.GetText("id"),
-				Email:     stmt.GetText("email"),
-				Name:      stmt.GetText("name"),
-				Password:  stmt.GetText("password"),
-				Created:   stmt.GetText("created"),
-				Updated:   stmt.GetText("updated"),
-				Verified:  stmt.GetInt64("verified") != 0,
-				TokenKey:  stmt.GetText("tokenKey"),
+				ID:       stmt.GetText("id"),
+				Email:    stmt.GetText("email"),
+				Name:     stmt.GetText("name"),
+				Password: stmt.GetText("password"),
+				Created:  stmt.GetText("created"),
+				Updated:  stmt.GetText("updated"),
+				Verified: stmt.GetInt64("verified") != 0,
+				TokenKey: stmt.GetText("tokenKey"),
 			}
 			return nil
 		},
-		user.Email,   // 1. email
+		user.Email,    // 1. email
 		user.Password, // 2. password
-		user.Name,    // 3. name
-		now,          // 4. created
-		now,          // 5. updated
+		user.Name,     // 3. name
+		now,           // 4. created
+		now,           // 5. updated
 		user.TokenKey) // 6. tokenKey
 
-    if err != nil {
-         // Check for SQLITE_CONSTRAINT_UNIQUE (2067) error code
-         if sqliteErr, ok := err.(sqlite.Error); ok {
-             if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
-                 return nil, db.ErrConstraintUnique
-             }
-         }
-         return nil, err
-     }
-	
+	if err != nil {
+		// Check for SQLITE_CONSTRAINT_UNIQUE (2067) error code
+		if sqliteErr, ok := err.(sqlite.Error); ok {
+			if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
+				return nil, db.ErrConstraintUnique
+			}
+		}
+		return nil, err
+	}
+
 	return createdUser, err
 }
