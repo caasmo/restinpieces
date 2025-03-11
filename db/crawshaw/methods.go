@@ -127,8 +127,8 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		user.Email,    // 1. email
 		user.Password, // 2. password
 		user.Name,     // 3. name
-		now,           // 4. created
-		now,           // 5. updated
+		user.Created,  // 4. created (pre-formatted)
+		user.Updated,  // 5. updated (pre-formatted)
 		user.TokenKey) // 6. tokenKey
 
 	if err != nil {
