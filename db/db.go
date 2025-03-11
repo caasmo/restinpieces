@@ -21,21 +21,18 @@ type User struct {
 	TokenKey  string
 }
 
-// Time provides utilities for handling RFC3339 timestamps
-type Time struct{}
-
-// Format converts a time.Time to RFC3339 string in UTC
-func (t Time) Format(tt time.Time) string {
+// TimeFormat converts a time.Time to RFC3339 string in UTC
+func TimeFormat(tt time.Time) string {
 	return tt.UTC().Format(time.RFC3339)
 }
 
-// Now returns the current time formatted in UTC RFC3339
-func (t Time) Now() string {
+// TimeNow returns the current time formatted in UTC RFC3339
+func TimeNow() string {
 	return time.Now().UTC().Format(time.RFC3339)
 }
 
-// Parse parses a RFC3339 string into a time.Time
-func (t Time) Parse(s string) (time.Time, error) {
+// TimeParse parses a RFC3339 string into a time.Time
+func TimeParse(s string) (time.Time, error) {
 	return time.Parse(time.RFC3339, s)
 }
 
