@@ -3,7 +3,6 @@ package crawshaw
 import (
 	"context"
 	"crypto/sha256"
-	_ "embed"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
