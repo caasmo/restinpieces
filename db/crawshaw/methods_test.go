@@ -49,21 +49,33 @@ func setupDB(t *testing.T) *Db {
 	conn := pool.Get(context.TODO())
 	defer pool.Put(conn)
 
-	// Drop existing table and create fresh schema
-	err = sqlitex.ExecScript(conn, "DROP TABLE IF EXISTS users;")
+	// Drop existing tables and create fresh schema
+	err = sqlitex.ExecScript(conn, `
+		DROP TABLE IF EXISTS users;
+		DROP TABLE IF EXISTS job_queue;
+	`)
 	if err != nil {
-		t.Fatalf("failed to drop users table: %v", err)
+		t.Fatalf("failed to drop tables: %v", err)
 	}
 
+	// Create tables
 	err = sqlitex.ExecScript(conn, migrations.UsersSchema)
 	if err != nil {
-		t.Fatalf("failed to create test schema: %v", err)
+		t.Fatalf("failed to create users table: %v", err)
+	}
+	
+	err = sqlitex.ExecScript(conn, migrations.JobsSchema)
+	if err != nil {
+		t.Fatalf("failed to create job_queue table: %v", err)
 	}
 
-	// Insert test user
+	// Insert test data
 	err = sqlitex.ExecScript(conn, `
 		INSERT INTO users (id, email, name, password, created, updated, verified, tokenKey)
 		VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE, 'token_key_setup');
+		
+		INSERT INTO job_queue (job_type, payload, status, attempts, max_attempts)
+		VALUES ('test_job', '{"key":"value"}', 'pending', 0, 3);
 	`)
 	if err != nil {
 		t.Fatalf("failed to create test schema: %v", err)
