@@ -24,10 +24,29 @@ import (
 // 3. Update knownHash in TestSchemaVersion with the new value
 // 4. Review test data in setupDB() for compatibility with schema changes
 
-type tableSchemaCheck struct {
+type tableSchema struct {
 	name      string
 	schema    string
+	inserts   []string
 	knownHash string
+}
+
+var tables = []tableSchema{
+	{
+		name:   "users",
+		schema: migrations.UsersSchema,
+		inserts: []string{
+			`INSERT INTO users (id, email, name, password, created, updated, verified, tokenKey)
+			 VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE, 'token_key_setup')`,
+		},
+		knownHash: "cd6c8992ee383a88b0e86754400afea6ef89cb7475339a898435395d208726fd",
+	},
+	{
+		name:      "job_queue",
+		schema:    migrations.JobQueueSchema,
+		inserts:   []string{},
+		knownHash: "REPLACE_WITH_ACTUAL_JOB_QUEUE_SCHEMA_HASH",
+	},
 }
 
 // TestSchemaVersion ensures embedded schemas match known hashes.
@@ -36,18 +55,6 @@ type tableSchemaCheck struct {
 // 2. Replace knownHash with the output hash
 // 3. Verify test data still works with new schema
 func TestSchemaVersion(t *testing.T) {
-	tables := []tableSchemaCheck{
-		{
-			name:      "users",
-			schema:    migrations.UsersSchema,
-			knownHash: "cd6c8992ee383a88b0e86754400afea6ef89cb7475339a898435395d208726fd",
-		},
-		{
-			name:      "job_queue",
-			schema:    migrations.JobQueueSchema,
-			knownHash: "REPLACE_WITH_ACTUAL_JOB_QUEUE_SCHEMA_HASH",
-		},
-	}
 
 	for _, tbl := range tables {
 		currentHash := sha256.Sum256([]byte(tbl.schema))
@@ -71,28 +78,7 @@ func setupDB(t *testing.T) *Db {
 	conn := pool.Get(context.TODO())
 	defer pool.Put(conn)
 
-	// Table setup definitions
-	type tableSetup struct {
-		name    string
-		schema  string
-		inserts []string
-	}
-
-	tables := []tableSetup{
-		{
-			name:   "users",
-			schema: migrations.UsersSchema,
-			inserts: []string{
-				`INSERT INTO users (id, email, name, password, created, updated, verified, tokenKey)
-				 VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE, 'token_key_setup')`,
-			},
-		},
-		{
-			name:    "job_queue",
-			schema:  migrations.JobQueueSchema,
-			inserts: []string{}, // No initial inserts for job_queue
-		},
-	}
+	// Use shared tables configuration
 
 	// Process each table
 	for _, tbl := range tables {
