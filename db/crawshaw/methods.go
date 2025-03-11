@@ -77,9 +77,9 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 		queue.StatusPending,                   // 3. status
 		job.Attempts,                          // 4. attempts
 		job.MaxAttempts,                       // 5. max_attempts
-		job.CreatedAt,                                   // 6. created_at
-		job.UpdatedAt,                                   // 6. created_at
-		job.ScheduledFor.Format(time.RFC3339), // 8. scheduled_for TODO
+		job.CreatedAt,                   // 6. created_at
+		job.UpdatedAt,                   // 7. updated_at
+		job.ScheduledFor,                // 8. scheduled_for
 	)
 
 	if err != nil {
