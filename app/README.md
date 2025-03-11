@@ -3,7 +3,7 @@
       "status": 400,
       "code": "invalid_input", // Machine-readable 
       "message": "The request contains invalid data.", // Human-readable explanation
-      "details?": [ // optional
+      "data?": [ // optional details
         {
           "code": "max_length",        // Machine-readable issue type
           "message": "Password exceeds maximum length of 20 characters", // Human-readable explanation
@@ -21,6 +21,18 @@
 ## Data response structure
 
 - prefer flat. maybe data key. TODO
+= trying to be mostly equssl toi error
+
+    {
+      "status": 400,
+      "code": "invalid_input", // Machine-readable 
+      "message": "The request contains invalid data.", // Human-readable explanation
+      "data?": [ // always array
+            { custom data structure
+
+            
+
+
 
 #### TODO
 
