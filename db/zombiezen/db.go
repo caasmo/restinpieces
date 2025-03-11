@@ -109,6 +109,17 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	}
 	defer d.pool.Put(conn)
 
+	// Parse timestamps from database strings
+	created, err := db.TimeParse(stmt.GetText("created"))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing created time: %w", err)
+	}
+		
+	updated, err := db.TimeParse(stmt.GetText("updated"))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing updated time: %w", err)
+	}
+
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	var createdUser db.User
@@ -123,8 +134,8 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 					Email:    stmt.GetText("email"),
 					Name:     stmt.GetText("name"),
 					Password: stmt.GetText("password"),
-					Created:  stmt.GetText("created"),
-					Updated:  stmt.GetText("updated"),
+					Created:  created,
+					Updated:  updated,
 					Verified: stmt.GetInt64("verified") != 0,
 					TokenKey: stmt.GetText("tokenKey"),
 				}
