@@ -440,8 +440,8 @@ func TestInsertQueueJobDuplicate(t *testing.T) {
 
 	// Second insert with duplicate payload
 	dupJob := queue.QueueJob{
-		JobType:     "test_job",
-		Payload:     json.RawMessage(`{"key":"duplicate"}`),
+		JobType:     "test_job",  // Same job type as initial insert
+		Payload:     json.RawMessage(`{"key":"unique_value"}`),  // Same payload as initial insert
 		Status:      queue.StatusPending,
 		MaxAttempts: 3,
 	}
