@@ -27,7 +27,7 @@ type EmailVerificationPayload = string
 
 // Job types
 const (
-	JobTypeEmailVerification = "email_verification"
+	JobTypeEmailVerification = "job_type_email_verification"
 )
 
 // Job statuses
