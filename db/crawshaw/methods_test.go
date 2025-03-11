@@ -71,10 +71,7 @@ func setupDB(t *testing.T) *Db {
 		{
 			name:    "job_queue",
 			schema:  migrations.JobQueueSchema,
-			inserts: []string{
-				`INSERT INTO job_queue (job_type, payload, status, attempts, max_attempts)
-				 VALUES ('test_job', '{"key":"value"}', 'pending', 0, 3)`,
-			},
+			inserts: []string{}, // No initial inserts for job_queue
 		},
 	}
 
@@ -351,17 +348,24 @@ func TestInsertQueueJob(t *testing.T) {
 			name: "duplicate job payload",
 			job: queue.QueueJob{
 				JobType:     "test_job",
-				Payload:     json.RawMessage(`{"key":"value"}`), // Same as setupDB insert
+				Payload:     json.RawMessage(`{"key":"value"}`),
 				Status:      queue.StatusPending,
 				MaxAttempts: 3,
 			},
 			wantErr:   true,
 			errorType: db.ErrConstraintUnique,
+			checkFields: []string{"JobType"}, // Minimal check since we're testing duplication
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// First insert should succeed
+			if err := testDB.InsertQueueJob(tt.job); err != nil {
+				t.Fatalf("unexpected error on first insert: %v", err)
+			}
+			
+			// Second insert should trigger duplicate error
 			err := testDB.InsertQueueJob(tt.job)
 
 			if tt.wantErr {
