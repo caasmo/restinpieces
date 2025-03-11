@@ -70,19 +70,15 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
-	payloadJSON, err := json.Marshal(job.Payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
 	now := time.Now().UTC().Format(time.RFC3339)
 
-	err = sqlitex.Exec(conn, `INSERT OR IGNORE INTO job_queue 
+	err := sqlitex.Exec(conn, `INSERT OR IGNORE INTO job_queue 
 		(job_type, payload, status, attempts, max_attempts, 
 		created_at, updated_at, scheduled_for) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		nil, // No results needed for INSERT
 		job.JobType,
-		string(payloadJSON),
+		string(job.Payload),
 		queue.StatusPending,
 		job.Attempts,
 		job.MaxAttempts,
