@@ -322,3 +322,102 @@ func TestGetUserByEmail(t *testing.T) {
 		})
 	}
 }
+
+func TestInsertQueueJob(t *testing.T) {
+	testDB := setupDB(t)
+	defer testDB.Close()
+
+	tests := []struct {
+		name        string
+		job         queue.QueueJob
+		wantErr     bool
+		errorType   error
+		checkFields []string
+	}{
+		{
+			name: "valid job insertion",
+			job: queue.QueueJob{
+				JobType:     "test_job",
+				Payload:     json.RawMessage(`{"key":"value"}`),
+				Status:      queue.StatusPending,
+				MaxAttempts: 3,
+			},
+			wantErr:     false,
+			checkFields: []string{"JobType", "Status", "MaxAttempts"},
+		},
+		{
+			name: "duplicate job payload",
+			job: queue.QueueJob{
+				JobType:     "test_job",
+				Payload:     json.RawMessage(`{"key":"value"}`), // Same as setupDB insert
+				Status:      queue.StatusPending,
+				MaxAttempts: 3,
+			},
+			wantErr:   true,
+			errorType: db.ErrConstraintUnique,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := testDB.InsertQueueJob(tt.job)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error but got none")
+					return
+				}
+
+				if tt.errorType != nil && !errors.Is(err, tt.errorType) {
+					t.Errorf("expected error type %v, got %v", tt.errorType, err)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			// Verify job was inserted correctly
+			conn := testDB.pool.Get(nil)
+			defer testDB.pool.Put(conn)
+
+			var job queue.QueueJob
+			err = sqlitex.Exec(conn,
+				`SELECT job_type, payload, status, attempts, max_attempts 
+				FROM job_queue WHERE payload = ? LIMIT 1`,
+				func(stmt *sqlite.Stmt) error {
+					job = queue.QueueJob{
+						JobType:     stmt.GetText("job_type"),
+						Payload:     json.RawMessage(stmt.GetText("payload")),
+						Status:      stmt.GetText("status"),
+						Attempts:    stmt.GetInt64("attempts"),
+						MaxAttempts: stmt.GetInt64("max_attempts"),
+					}
+					return nil
+				}, string(tt.job.Payload))
+
+			if err != nil {
+				t.Fatalf("failed to verify job insertion: %v", err)
+			}
+
+			// Verify fields match
+			for _, field := range tt.checkFields {
+				switch field {
+				case "JobType":
+					if job.JobType != tt.job.JobType {
+						t.Errorf("JobType mismatch: got %q, want %q", job.JobType, tt.job.JobType)
+					}
+				case "Status":
+					if job.Status != tt.job.Status {
+						t.Errorf("Status mismatch: got %q, want %q", job.Status, tt.job.Status)
+					}
+				case "MaxAttempts":
+					if job.MaxAttempts != tt.job.MaxAttempts {
+						t.Errorf("MaxAttempts mismatch: got %d, want %d", job.MaxAttempts, tt.job.MaxAttempts)
+					}
+				}
+			}
+		})
+	}
+}
