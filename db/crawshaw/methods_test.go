@@ -49,34 +49,53 @@ func setupDB(t *testing.T) *Db {
 	conn := pool.Get(context.TODO())
 	defer pool.Put(conn)
 
-	// Drop existing tables and create fresh schema
-	err = sqlitex.ExecScript(conn, `
-		DROP TABLE IF EXISTS users;
-		DROP TABLE IF EXISTS job_queue;
-	`)
-	if err != nil {
-		t.Fatalf("failed to drop tables: %v", err)
+	// Table setup definitions
+	type tableSetup struct {
+		name    string
+		schema  string
+		inserts []string
 	}
 
-	// Create tables
-	err = sqlitex.ExecScript(conn, migrations.UsersSchema)
-	if err != nil {
-		t.Fatalf("failed to create users table: %v", err)
-	}
-	
-	err = sqlitex.ExecScript(conn, migrations.JobsSchema)
-	if err != nil {
-		t.Fatalf("failed to create job_queue table: %v", err)
+	tables := []tableSetup{
+		{
+			name:    "users",
+			schema:  migrations.UsersSchema,
+			inserts: []string{
+				`INSERT INTO users (id, email, name, password, created, updated, verified, tokenKey)
+				 VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE, 'token_key_setup')`,
+			},
+		},
+		{
+			name:    "job_queue",
+			schema:  migrations.JobsSchema,
+			inserts: []string{
+				`INSERT INTO job_queue (job_type, payload, status, attempts, max_attempts)
+				 VALUES ('test_job', '{"key":"value"}', 'pending', 0, 3)`,
+			},
+		},
 	}
 
-	// Insert test data
-	err = sqlitex.ExecScript(conn, `
-		INSERT INTO users (id, email, name, password, created, updated, verified, tokenKey)
-		VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE, 'token_key_setup');
-		
-		INSERT INTO job_queue (job_type, payload, status, attempts, max_attempts)
-		VALUES ('test_job', '{"key":"value"}', 'pending', 0, 3);
-	`)
+	// Process each table
+	for _, tbl := range tables {
+		// Drop table
+		if err := sqlitex.ExecScript(conn, fmt.Sprintf("DROP TABLE IF EXISTS %s", tbl.name)); err != nil {
+			t.Fatalf("failed to drop %s table: %v", tbl.name, err)
+		}
+
+		// Create table
+		if err := sqlitex.ExecScript(conn, tbl.schema); err != nil {
+			t.Fatalf("failed to create %s table: %v", tbl.name, err)
+		}
+	}
+
+	// Insert test data after all tables are created
+	for _, tbl := range tables {
+		for _, insertSQL := range tbl.inserts {
+			if err := sqlitex.ExecScript(conn, insertSQL); err != nil {
+				t.Fatalf("failed to insert into %s table: %v", tbl.name, err)
+			}
+		}
+	}
 	if err != nil {
 		t.Fatalf("failed to create test schema: %v", err)
 	}
