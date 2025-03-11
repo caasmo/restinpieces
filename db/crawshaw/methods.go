@@ -105,12 +105,11 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	defer d.pool.Put(conn)
 
 	err := sqlitex.Exec(conn, `INSERT INTO job_queue 
-		(job_type, payload, status, attempts, max_attempts) 
-		VALUES (?, ?, ?, ?, ?)`,
+		(job_type, payload, attempts, max_attempts) 
+		VALUES (?, ?, ?, ?)`,
 		nil,                 // No results needed for INSERT
 		job.JobType,         // 1. job_type
 		string(job.Payload), // 2. payload
-		queue.StatusPending, // 3. status
 		job.Attempts,        // 4. attempts
 		job.MaxAttempts,     // 5. max_attempts
 	)
