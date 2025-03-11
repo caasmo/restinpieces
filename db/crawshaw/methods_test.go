@@ -24,17 +24,36 @@ import (
 // 3. Update knownHash in TestSchemaVersion with the new value
 // 4. Review test data in setupDB() for compatibility with schema changes
 
-// TestSchemaVersion ensures the embedded users.sql schema matches the known hash.
+type tableSchemaCheck struct {
+	name      string
+	schema    string
+	knownHash string
+}
+
+// TestSchemaVersion ensures embedded schemas match known hashes.
 // To update after schema changes:
-// 1. Run: sha256sum migrations/users.sql
+// 1. Run: sha256sum migrations/<schema>.sql
 // 2. Replace knownHash with the output hash
 // 3. Verify test data still works with new schema
 func TestSchemaVersion(t *testing.T) {
-	currentHash := sha256.Sum256([]byte(migrations.UsersSchema))
-	knownHash := "cd6c8992ee383a88b0e86754400afea6ef89cb7475339a898435395d208726fd" // Replace with output from sha256sum
+	tables := []tableSchemaCheck{
+		{
+			name:      "users",
+			schema:    migrations.UsersSchema,
+			knownHash: "cd6c8992ee383a88b0e86754400afea6ef89cb7475339a898435395d208726fd",
+		},
+		{
+			name:      "job_queue",
+			schema:    migrations.JobQueueSchema,
+			knownHash: "REPLACE_WITH_ACTUAL_JOB_QUEUE_SCHEMA_HASH",
+		},
+	}
 
-	if hex.EncodeToString(currentHash[:]) != knownHash {
-		t.Fatal("users.sql schema has changed - update tests and knownHash")
+	for _, tbl := range tables {
+		currentHash := sha256.Sum256([]byte(tbl.schema))
+		if hex.EncodeToString(currentHash[:]) != tbl.knownHash {
+			t.Fatalf("%s schema has changed - update tests and knownHash", tbl.name)
+		}
 	}
 }
 
