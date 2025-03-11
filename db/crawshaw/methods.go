@@ -60,6 +60,24 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 }
 
 // validateUserFields checks that required user fields are present
+func validateQueueJob(job queue.QueueJob) error {
+	var missingFields []string
+	if job.JobType == "" {
+		missingFields = append(missingFields, "JobType")
+	}
+	if len(job.Payload) == 0 {
+		missingFields = append(missingFields, "Payload")
+	}
+	if job.MaxAttempts < 1 {
+		missingFields = append(missingFields, "MaxAttempts must be ≥1")
+	}
+
+	if len(missingFields) > 0 {
+		return fmt.Errorf("%w: %s", db.ErrMissingFields, strings.Join(missingFields, ", "))
+	}
+	return nil
+}
+
 func validateUserFields(user db.User) error {
 	var missingFields []string
 	if user.Email == "" {
@@ -79,6 +97,10 @@ func validateUserFields(user db.User) error {
 }
 
 func (d *Db) InsertQueueJob(job queue.QueueJob) error {
+	if err := validateQueueJob(job); err != nil {
+		return err
+	}
+
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
