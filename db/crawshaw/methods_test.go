@@ -337,7 +337,7 @@ func TestInsertQueueJob(t *testing.T) {
 			name: "valid job insertion",
 			job: queue.QueueJob{
 				JobType:     "test_job",
-				Payload:     json.RawMessage(`{"key":"value"}`),
+				Payload:     json.RawMessage(`{"key":"unique_${uuid}"}`),
 				Status:      queue.StatusPending,
 				MaxAttempts: 3,
 			},
@@ -348,25 +348,33 @@ func TestInsertQueueJob(t *testing.T) {
 			name: "duplicate job payload",
 			job: queue.QueueJob{
 				JobType:     "test_job",
-				Payload:     json.RawMessage(`{"key":"value"}`),
+				Payload:     json.RawMessage(`{"key":"duplicate"}`),
 				Status:      queue.StatusPending,
 				MaxAttempts: 3,
 			},
 			wantErr:   true,
 			errorType: db.ErrConstraintUnique,
-			checkFields: []string{"JobType"}, // Minimal check since we're testing duplication
+			checkFields: []string{"JobType"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// First insert should succeed
-			if err := testDB.InsertQueueJob(tt.job); err != nil {
-				t.Fatalf("unexpected error on first insert: %v", err)
-			}
-			
-			// Second insert should trigger duplicate error
+			// For valid test, do single insert
 			err := testDB.InsertQueueJob(tt.job)
+			
+			// For duplicate test, add unique identifier to payload
+			if tt.wantErr {
+				// First insert with unique payload
+				uniqueJob := tt.job
+				uniqueJob.Payload = json.RawMessage(`{"key":"unique_value"}`)
+				if err := testDB.InsertQueueJob(uniqueJob); err != nil {
+					t.Fatalf("unexpected error on first insert: %v", err)
+				}
+				
+				// Second insert with duplicate payload
+				err = testDB.InsertQueueJob(tt.job)
+			}
 
 			if tt.wantErr {
 				if err == nil {
