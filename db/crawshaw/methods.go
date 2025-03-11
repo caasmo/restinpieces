@@ -85,16 +85,13 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	err := sqlitex.Exec(conn, `INSERT OR IGNORE INTO job_queue 
 		(job_type, payload, status, attempts, max_attempts, 
 		created_at, updated_at, scheduled_for) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		VALUES (?, ?, ?, ?, ?)`,
 		nil,                                   // No results needed for INSERT
 		job.JobType,                           // 1. job_type
 		string(job.Payload),                   // 2. payload
 		queue.StatusPending,                   // 3. status
 		job.Attempts,                          // 4. attempts
 		job.MaxAttempts,                       // 5. max_attempts
-		job.CreatedAt,                   // 6. created_at
-		job.UpdatedAt,                   // 7. updated_at
-		job.ScheduledFor,                // 8. scheduled_for
 	)
 
 	if err != nil {

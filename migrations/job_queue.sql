@@ -1,4 +1,10 @@
 -- All time fields are UTC, RFC3339
+-- we put unique in payload. This means if your job payload contains any maps
+-- (map[string]interface{} or similar), the serialization might not be
+-- deterministic across different json.Marshal calls with equivalent map contents.
+-- To ensure deterministic serialization in Go, Use only structs (no maps) for
+-- your job payloads. If payload too long, consider deterministic serialization
+-- + hash
 CREATE TABLE job_queue (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_type TEXT NOT NULL DEFAULT '',  -- Type of job (email_verification, password_reset, etc.)
@@ -6,7 +12,7 @@ CREATE TABLE job_queue (
     payload TEXT NOT NULL DEFAULT '',   -- JSON payload with job-specific data
     status TEXT NOT NULL DEFAULT 'pending', -- pending, processing, completed, failed
     attempts INTEGER NOT NULL DEFAULT 0, -- Number of processing attempts
-    max_attempts INTEGER NOT NULL DEFAULT 3, -- Maximum retry attempts
+    max_attempts INTEGER NOT NULL DEFAULT 0, -- Maximum retry attempts
 	-- The parentheses around the strftime() function call are necessary for
     -- SQLite to recognize this as a valid default value expression
 	-- format UTC, RFC3339. 
