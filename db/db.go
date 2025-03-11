@@ -25,8 +25,8 @@ type User struct {
 	Name     string
 	Password string
 	Avatar   string
-	Created  string
-	Updated  string
+	Created  time.Time
+	Updated  time.Time
 	Verified bool
 	TokenKey string
 }
@@ -37,14 +37,6 @@ type User struct {
 // Example: "2024-03-11T15:04:05Z"
 func TimeFormat(tt time.Time) string {
 	return tt.UTC().Format(time.RFC3339)
-}
-
-// TimeNow returns the current time formatted in UTC RFC3339.
-// This should be used when creating new timestamps for database records.
-// Handlers and middleware should use this when setting Created/Updated fields.
-// Example: "2024-03-11T15:04:05Z"
-func TimeNow() string {
-	return time.Now().UTC().Format(time.RFC3339)
 }
 
 // TimeParse parses a RFC3339 string into a time.Time.

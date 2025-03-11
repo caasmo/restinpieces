@@ -24,13 +24,28 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		`SELECT id, email, name, password, created, updated, verified, tokenKey 
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
+
+            // Get the date strings
+            createdStr = stmt.GetText("created")
+            updatedStr = stmt.GetText("updated")
+            
+            created, err := db.TimeParse(createdStr)
+            if err != nil {
+                return fmt.Errorf("error parsing created time: %w", err)
+            }
+            
+            updated, err := db.TimeParse(updatedStr)
+			if err != nil {
+				return fmt.Errorf("error parsing updated time: %w", err)
+			}
+             
 			user = &db.User{
 				ID:       stmt.GetText("id"),
 				Email:    stmt.GetText("email"),
 				Name:     stmt.GetText("name"),
 				Password: stmt.GetText("password"),
-				Created:  stmt.GetText("created"),
-				Updated:  stmt.GetText("updated"),
+				Created:  created 
+				Updated:  updated
 				Verified: stmt.GetInt64("verified") != 0,
 				TokenKey: stmt.GetText("tokenKey"),
 			}
@@ -112,6 +127,13 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		VALUES (?, ?, ?, ?, ?, ?)
 		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
 		func(stmt *sqlite.Stmt) error {
+
+
+
+
+
+
+
 			createdUser = &db.User{
 				ID:       stmt.GetText("id"),
 				Email:    stmt.GetText("email"),
@@ -127,7 +149,7 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		user.Email,    // 1. email
 		user.Password, // 2. password
 		user.Name,     // 3. name
-		user.Created,  // 4. created (pre-formatted)
+		db.Time user.Created,  // 4. created (pre-formatted)
 		user.Updated,  // 5. updated (pre-formatted)
 		user.TokenKey) // 6. tokenKey
 

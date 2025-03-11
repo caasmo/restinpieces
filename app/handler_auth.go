@@ -230,11 +230,15 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	now := time.Now() 
+
 	// Create user in database
 	user, err := a.db.CreateUser(db.User{
 		Email:    req.Identity,
 		Password: string(hashedPassword),
-		Name:     "",                             // Optional field
+		Name:     "",                             // Optional field TODO
+		Created:     now,                             
+		Updated:     now,                             
 		TokenKey: crypto.GenerateSecureToken(32), // Generate secure token TODO
 	})
 
