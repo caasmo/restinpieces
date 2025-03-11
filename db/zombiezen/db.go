@@ -109,17 +109,8 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	}
 	defer d.pool.Put(conn)
 
-	// Parse timestamps from database strings
-	created, err := db.TimeParse(stmt.GetText("created"))
-	if err != nil {
-		return nil, fmt.Errorf("error parsing created time: %w", err)
-	}
-		
-	updated, err := db.TimeParse(stmt.GetText("updated"))
-	if err != nil {
-		return nil, fmt.Errorf("error parsing updated time: %w", err)
-	}
 
+// TODO no time object generation in db functions, only formating
 	now := time.Now().UTC().Format(time.RFC3339)
 
 	var createdUser db.User
@@ -129,6 +120,19 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
+
+	// Parse timestamps from database strings
+	created, err := db.TimeParse(stmt.GetText("created"))
+	if err != nil {
+		return fmt.Errorf("error parsing created time: %w", err)
+	}
+		
+	updated, err := db.TimeParse(stmt.GetText("updated"))
+	if err != nil {
+		return fmt.Errorf("error parsing updated time: %w", err)
+	}
+
+
 				createdUser = db.User{
 					ID:       stmt.GetText("id"),
 					Email:    stmt.GetText("email"),

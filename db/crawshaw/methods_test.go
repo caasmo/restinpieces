@@ -200,25 +200,15 @@ func TestCreateUser(t *testing.T) {
 			}
 
 			// Verify timestamps are set and valid
-			if createdUser.Created == "" || createdUser.Updated == "" {
+			if createdUser.Created.IsZero() || createdUser.Updated.IsZero() {
 				t.Error("timestamps not set")
 			}
 
-			createdTime, err := time.Parse(time.RFC3339, createdUser.Created)
-			if err != nil {
-				t.Errorf("invalid created timestamp format: %v", err)
-			}
-
-			updatedTime, err := time.Parse(time.RFC3339, createdUser.Updated)
-			if err != nil {
-				t.Errorf("invalid updated timestamp format: %v", err)
-			}
-
 			// Verify timestamps are recent
-			if time.Since(createdTime) > time.Minute {
+			if time.Since(createdUser.Created) > time.Minute {
 				t.Error("created timestamp is too old")
 			}
-			if time.Since(updatedTime) > time.Minute {
+			if time.Since(createdUser.Updated) > time.Minute {
 				t.Error("updated timestamp is too old")
 			}
 

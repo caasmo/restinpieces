@@ -14,14 +14,17 @@ func (m *MockDB) Close()                     {}
 func (m *MockDB) GetById(id int64) int       { return 0 }
 func (m *MockDB) Insert(value int64)         {}
 func (m *MockDB) InsertWithPool(value int64) {}
+func (m *MockDB) InsertQueueJob(job queue.QueueJob) error {
+	return nil
+}
 func (m *MockDB) CreateUser(user db.User) (*db.User, error) {
 	return &db.User{
 		ID:       "mock-user",
 		Email:    user.Email,
 		Name:     user.Name,
 		Password: user.Password,
-		Created:  "2024-01-01T00:00:00Z",
-		Updated:  "2024-01-01T00:00:00Z",
+		Created:  time.time{},
+		Updated:  time.time{},
 		TokenKey: user.TokenKey,
 	}, nil
 }
@@ -33,8 +36,8 @@ func (m *MockDB) GetUserByEmail(email string) (*db.User, error) {
 			Email:    email,
 			Name:     "Test User",
 			Password: "hash123",
-			Created:  "2024-01-01T00:00:00Z",
-			Updated:  "2024-01-01T00:00:00Z",
+			Created:  time.time{},
+			Updated:  time.time{},
 		}, nil
 	}
 	return nil, fmt.Errorf("user not found")
