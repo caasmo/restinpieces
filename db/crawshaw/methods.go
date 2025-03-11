@@ -134,13 +134,27 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 
 
 
+			// Get and parse timestamps from database
+			createdStr := stmt.GetText("created")
+			updatedStr := stmt.GetText("updated")
+			
+			created, err := db.TimeParse(createdStr)
+			if err != nil {
+				return fmt.Errorf("error parsing created time: %w", err)
+			}
+			
+			updated, err := db.TimeParse(updatedStr)
+			if err != nil {
+				return fmt.Errorf("error parsing updated time: %w", err)
+			}
+
 			createdUser = &db.User{
 				ID:       stmt.GetText("id"),
 				Email:    stmt.GetText("email"),
 				Name:     stmt.GetText("name"),
 				Password: stmt.GetText("password"),
-				Created:  stmt.GetText("created"),
-				Updated:  stmt.GetText("updated"),
+				Created:  created,
+				Updated:  updated,
 				Verified: stmt.GetInt64("verified") != 0,
 				TokenKey: stmt.GetText("tokenKey"),
 			}
