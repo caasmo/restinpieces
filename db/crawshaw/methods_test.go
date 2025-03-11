@@ -393,8 +393,8 @@ func TestInsertQueueJob(t *testing.T) {
 						JobType:     stmt.GetText("job_type"),
 						Payload:     json.RawMessage(stmt.GetText("payload")),
 						Status:      stmt.GetText("status"),
-						Attempts:    stmt.GetInt64("attempts"),
-						MaxAttempts: stmt.GetInt64("max_attempts"),
+						Attempts:    int(stmt.GetInt64("attempts")),
+						MaxAttempts: int(stmt.GetInt64("max_attempts")),
 					}
 					return nil
 				}, string(tt.job.Payload))
