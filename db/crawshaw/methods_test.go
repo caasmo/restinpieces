@@ -322,116 +322,87 @@ func TestGetUserByEmail(t *testing.T) {
 	}
 }
 
-func TestInsertQueueJob(t *testing.T) {
+func TestInsertQueueJobValid(t *testing.T) {
 	testDB := setupDB(t)
 	defer testDB.Close()
 
-	tests := []struct {
-		name        string
-		job         queue.QueueJob
-		wantErr     bool
-		errorType   error
-		checkFields []string
-	}{
-		{
-			name: "valid job insertion",
-			job: queue.QueueJob{
-				JobType:     "test_job",
-				Payload:     json.RawMessage(`{"key":"unique_${uuid}"}`),
-				Status:      queue.StatusPending,
-				MaxAttempts: 3,
-			},
-			wantErr:     false,
-			checkFields: []string{"JobType", "Status", "MaxAttempts"},
-		},
-		{
-			name: "duplicate job payload",
-			job: queue.QueueJob{
-				JobType:     "test_job",
-				Payload:     json.RawMessage(`{"key":"duplicate"}`),
-				Status:      queue.StatusPending,
-				MaxAttempts: 3,
-			},
-			wantErr:   true,
-			errorType: db.ErrConstraintUnique,
-			checkFields: []string{"JobType"},
-		},
+	job := queue.QueueJob{
+		JobType:     "test_job",
+		Payload:     json.RawMessage(`{"key":"unique_value"}`),
+		Status:      queue.StatusPending,
+		MaxAttempts: 3,
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// For valid test, do single insert
-			err := testDB.InsertQueueJob(tt.job)
-			
-			// For duplicate test, add unique identifier to payload
-			if tt.wantErr {
-				// First insert with unique payload
-				uniqueJob := tt.job
-				uniqueJob.Payload = json.RawMessage(`{"key":"unique_value"}`)
-				if err := testDB.InsertQueueJob(uniqueJob); err != nil {
-					t.Fatalf("unexpected error on first insert: %v", err)
-				}
-				
-				// Second insert with duplicate payload
-				err = testDB.InsertQueueJob(tt.job)
+	err := testDB.InsertQueueJob(job)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Verify job was inserted correctly
+	conn := testDB.pool.Get(nil)
+	defer testDB.pool.Put(conn)
+
+	var retrievedJob queue.QueueJob
+	err = sqlitex.Exec(conn,
+		`SELECT job_type, payload, status, attempts, max_attempts 
+		FROM job_queue WHERE payload = ? LIMIT 1`,
+		func(stmt *sqlite.Stmt) error {
+			retrievedJob = queue.QueueJob{
+				JobType:     stmt.GetText("job_type"),
+				Payload:     json.RawMessage(stmt.GetText("payload")),
+				Status:      stmt.GetText("status"),
+				Attempts:    int(stmt.GetInt64("attempts")),
+				MaxAttempts: int(stmt.GetInt64("max_attempts")),
 			}
+			return nil
+		}, string(job.Payload))
 
-			if tt.wantErr {
-				if err == nil {
-					t.Error("expected error but got none")
-					return
-				}
+	if err != nil {
+		t.Fatalf("failed to verify job insertion: %v", err)
+	}
 
-				if tt.errorType != nil && !errors.Is(err, tt.errorType) {
-					t.Errorf("expected error type %v, got %v", tt.errorType, err)
-				}
-				return
-			}
+	if retrievedJob.JobType != job.JobType {
+		t.Errorf("JobType mismatch: got %q, want %q", retrievedJob.JobType, job.JobType)
+	}
+	if retrievedJob.Status != job.Status {
+		t.Errorf("Status mismatch: got %q, want %q", retrievedJob.Status, job.Status)
+	}
+	if retrievedJob.MaxAttempts != job.MaxAttempts {
+		t.Errorf("MaxAttempts mismatch: got %d, want %d", retrievedJob.MaxAttempts, job.MaxAttempts)
+	}
+}
 
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
+func TestInsertQueueJobDuplicate(t *testing.T) {
+	testDB := setupDB(t)
+	defer testDB.Close()
 
-			// Verify job was inserted correctly
-			conn := testDB.pool.Get(nil)
-			defer testDB.pool.Put(conn)
+	// First insert with unique payload
+	uniqueJob := queue.QueueJob{
+		JobType:     "test_job",
+		Payload:     json.RawMessage(`{"key":"unique_value"}`),
+		Status:      queue.StatusPending,
+		MaxAttempts: 3,
+	}
+	
+	if err := testDB.InsertQueueJob(uniqueJob); err != nil {
+		t.Fatalf("unexpected error on first insert: %v", err)
+	}
 
-			var job queue.QueueJob
-			err = sqlitex.Exec(conn,
-				`SELECT job_type, payload, status, attempts, max_attempts 
-				FROM job_queue WHERE payload = ? LIMIT 1`,
-				func(stmt *sqlite.Stmt) error {
-					job = queue.QueueJob{
-						JobType:     stmt.GetText("job_type"),
-						Payload:     json.RawMessage(stmt.GetText("payload")),
-						Status:      stmt.GetText("status"),
-						Attempts:    int(stmt.GetInt64("attempts")),
-						MaxAttempts: int(stmt.GetInt64("max_attempts")),
-					}
-					return nil
-				}, string(tt.job.Payload))
+	// Second insert with duplicate payload
+	dupJob := queue.QueueJob{
+		JobType:     "test_job",
+		Payload:     json.RawMessage(`{"key":"duplicate"}`),
+		Status:      queue.StatusPending,
+		MaxAttempts: 3,
+	}
+	err := testDB.InsertQueueJob(dupJob)
 
-			if err != nil {
-				t.Fatalf("failed to verify job insertion: %v", err)
-			}
+	if err == nil {
+		t.Error("expected error but got none")
+		return
+	}
 
-			// Verify fields match
-			for _, field := range tt.checkFields {
-				switch field {
-				case "JobType":
-					if job.JobType != tt.job.JobType {
-						t.Errorf("JobType mismatch: got %q, want %q", job.JobType, tt.job.JobType)
-					}
-				case "Status":
-					if job.Status != tt.job.Status {
-						t.Errorf("Status mismatch: got %q, want %q", job.Status, tt.job.Status)
-					}
-				case "MaxAttempts":
-					if job.MaxAttempts != tt.job.MaxAttempts {
-						t.Errorf("MaxAttempts mismatch: got %d, want %d", job.MaxAttempts, tt.job.MaxAttempts)
-					}
-				}
-			}
-		})
+	if !errors.Is(err, db.ErrConstraintUnique) {
+		t.Errorf("expected error type %v, got %v", db.ErrConstraintUnique, err)
 	}
 }
