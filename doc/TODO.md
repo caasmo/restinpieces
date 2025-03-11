@@ -1,10 +1,15 @@
 ### TODOs
 
-- make sh files inside repo for testing with curl different parst
-    - generate jwt sh maybe also signing method
-        - generate token 1`
-    - testendpoint send curl with different tokens. 
-    - provide file in docs to test all of them combined
+
+- /impl backend job to verification email
+    - reads from job_queue 
+    - generates token
+    - put in user tokenkey?????
+    - sends email with mailyak
+    - status processinnf in job, each job has steps laststep issaved in jobqueue steps are label with humman code explanation
+    - /confirm-verification endpoint 
+        - returns 204, or error 400
+        - get generated token from db, compares to token from request
 - code review jwt tests
 - zombiezen, impl pool with timeout, split in files. 
 - zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
@@ -42,3 +47,8 @@
   know the key in the context, we should not need the router. After router
   init, find the context key and pass to the app. or just harcoded conf in toml
   Or just used explicite params.~~
+- make sh files inside repo for testing with curl different parst
+    - generate jwt sh maybe also signing method
+        - generate token 1`
+    - testendpoint send curl with different tokens. 
+    - provide file in docs to test all of them combined

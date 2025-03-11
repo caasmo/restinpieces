@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"time"
 
+    "crypto/hmac"
+    "crypto/sha256"
+    "os"
+
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -28,6 +32,8 @@ type Claims struct {
 }
 
 // ParseJwt validates and parses JWT claims
+// TODO make func keyFunc(token *jwt.Token) (interface{}, error) {
+
 func ParseJwt(tokenString string, secret []byte) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -74,3 +80,43 @@ func CreateJwt(userID string, secret []byte, tokenDuration time.Duration) (strin
 	}
 	return tokenString, expirationTime, nil
 }
+
+
+// createJwtSigningKey creates a JWT signing key using HMAC-SHA256.
+//
+// Using HMAC prevents length-extension attacks, unlike simple hash concatenation.
+// It derives a unique key by combining user-specific data (email, passwordHash)
+// with a server secret (JWT_SECRET). Tokens are invalidated when the user's
+// email or password changes, or globally by rotating JWT_SECRET.
+// 
+// The function uses a null byte (\x00) as a delimiter to prevent collisions
+// between the email and passwordHash inputs. It returns the key as a byte slice,
+// suitable for use with github.com/golang-jwt/jwt/v5's SignedString method,
+// and an error if the server secret is unset or inputs are invalid.
+// 
+// Note: JWT_SECRET should be a strong, random value (e.g., 32+ bytes).
+func createJwtSigningKey(email, passwordHash string) ([]byte, error) {
+    // Validate inputs
+    if email == "" || passwordHash == "" {
+        return nil, errors.New("email and passwordHash must not be empty")
+    }
+
+    // Retrieve the server secret
+// TODO to signature
+    secret := os.Getenv("JWT_SECRET")
+    if secret == "" {
+        return nil, errors.New("JWT_SECRET environment variable not set")
+    }
+
+    // Create HMAC hasher with server secret as key
+    h := hmac.New(sha256.New, []byte(secret))
+
+    // Add user-specific data with null byte delimiter
+    h.Write([]byte(email))
+    h.Write([]byte{0}) // Null byte to avoid collisions
+    h.Write([]byte(passwordHash))
+
+    // Return the HMAC sum as a raw byte slice
+    return h.Sum(nil), nil
+}
+
