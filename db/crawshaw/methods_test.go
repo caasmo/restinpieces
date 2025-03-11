@@ -5,15 +5,17 @@ import (
 	"crypto/sha256"
 	_ "embed"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
-	"fmt"
 
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/migrations"
+	"github.com/caasmo/restinpieces/queue"
 )
 
 // Schema Hash Verification Process:
