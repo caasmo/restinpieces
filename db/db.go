@@ -31,17 +31,26 @@ type User struct {
 	TokenKey string
 }
 
-// TimeFormat converts a time.Time to RFC3339 string in UTC
+// TimeFormat converts a time.Time to RFC3339 string in UTC.
+// This should be used when sending time values to SQLite since it doesn't have
+// a native datetime type. All timestamps in the database should use this format.
+// Example: "2024-03-11T15:04:05Z"
 func TimeFormat(tt time.Time) string {
 	return tt.UTC().Format(time.RFC3339)
 }
 
-// TimeNow returns the current time formatted in UTC RFC3339
+// TimeNow returns the current time formatted in UTC RFC3339.
+// This should be used when creating new timestamps for database records.
+// Handlers and middleware should use this when setting Created/Updated fields.
+// Example: "2024-03-11T15:04:05Z"
 func TimeNow() string {
 	return time.Now().UTC().Format(time.RFC3339)
 }
 
-// TimeParse parses a RFC3339 string into a time.Time
+// TimeParse parses a RFC3339 string into a time.Time.
+// This should be used when reading timestamps from SQLite to convert them
+// back to time.Time values. Returns an error if the input string is not
+// in RFC3339 format.
 func TimeParse(s string) (time.Time, error) {
 	return time.Parse(time.RFC3339, s)
 }
