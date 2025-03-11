@@ -171,7 +171,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 		Payload:      payload,
 		Status:       queue.StatusPending,
 		MaxAttempts:  3,
-		ScheduledFor: time.Now().UTC(),
+		ScheduledFor: db.TimeParse(db.TimeNow()),
 	}
 
 	// Insert into job queue with deduplication
