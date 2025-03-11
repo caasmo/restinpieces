@@ -12,7 +12,7 @@ CREATE TABLE job_queue (
 	-- format UTC, RFC3339. 
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')), 
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')), 
-    scheduled_for TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')), -- When to process this job
+    scheduled_for TEXT NOT NULL DEFAULT '', -- When to process this job
     locked_by TEXT,          -- Worker ID that claimed this job
     locked_at TEXT NOT NULL DEFAULT '',          -- When the job was claimed
     completed_at TEXT NOT NULL DEFAULT '',       -- When the job was completed
