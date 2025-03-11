@@ -67,8 +67,6 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
-	now := TimeNow()
-
 	err := sqlitex.Exec(conn, `INSERT OR IGNORE INTO job_queue 
 		(job_type, payload, status, attempts, max_attempts, 
 		created_at, updated_at, scheduled_for) 
@@ -79,9 +77,9 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 		queue.StatusPending,                   // 3. status
 		job.Attempts,                          // 4. attempts
 		job.MaxAttempts,                       // 5. max_attempts
-		now,                                   // 6. created_at
-		now,                                   // 7. updated_at
-		job.ScheduledFor.Format(time.RFC3339), // 8. scheduled_for
+		job.CreatedAt,                                   // 6. created_at
+		job.UpdatedAt,                                   // 6. created_at
+		job.ScheduledFor.Format(time.RFC3339), // 8. scheduled_for TODO
 	)
 
 	if err != nil {
@@ -107,10 +105,6 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
-
-	// Generate timestamps before insert
-	//TODO utc shoudl be already in user
-	now := TimeNow()
 
 	var createdUser *db.User
 	err := sqlitex.Exec(conn,
