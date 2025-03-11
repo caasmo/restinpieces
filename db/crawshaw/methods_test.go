@@ -387,6 +387,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 			}
 
 			// Verify job was inserted correctly
+			// TODO remoe this when select method implemented
 			conn := testDB.pool.Get(nil)
 			defer testDB.pool.Put(conn)
 

@@ -18,7 +18,6 @@ const (
 	UserIDKey contextKey = "user_id"
 )
 
-
 // JwtValidate middleware validates the JWT token
 func (a *App) JwtValidate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

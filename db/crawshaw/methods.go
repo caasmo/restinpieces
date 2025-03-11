@@ -25,20 +25,20 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
 
-            // Get the date strings
-            createdStr := stmt.GetText("created")
-            updatedStr := stmt.GetText("updated")
-            
-            created, err := db.TimeParse(createdStr)
-            if err != nil {
-                return fmt.Errorf("error parsing created time: %w", err)
-            }
-            
-            updated, err := db.TimeParse(updatedStr)
+			// Get the date strings
+			createdStr := stmt.GetText("created")
+			updatedStr := stmt.GetText("updated")
+
+			created, err := db.TimeParse(createdStr)
+			if err != nil {
+				return fmt.Errorf("error parsing created time: %w", err)
+			}
+
+			updated, err := db.TimeParse(updatedStr)
 			if err != nil {
 				return fmt.Errorf("error parsing updated time: %w", err)
 			}
-             
+
 			user = &db.User{
 				ID:       stmt.GetText("id"),
 				Email:    stmt.GetText("email"),
@@ -107,12 +107,12 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	err := sqlitex.Exec(conn, `INSERT INTO job_queue 
 		(job_type, payload, status, attempts, max_attempts) 
 		VALUES (?, ?, ?, ?, ?)`,
-		nil,                                   // No results needed for INSERT
-		job.JobType,                           // 1. job_type
-		string(job.Payload),                   // 2. payload
-		queue.StatusPending,                   // 3. status
-		job.Attempts,                          // 4. attempts
-		job.MaxAttempts,                       // 5. max_attempts
+		nil,                 // No results needed for INSERT
+		job.JobType,         // 1. job_type
+		string(job.Payload), // 2. payload
+		queue.StatusPending, // 3. status
+		job.Attempts,        // 4. attempts
+		job.MaxAttempts,     // 5. max_attempts
 	)
 
 	if err != nil {
@@ -148,12 +148,12 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 			// Get and parse timestamps from database
 			createdStr := stmt.GetText("created")
 			updatedStr := stmt.GetText("updated")
-			
+
 			created, err := db.TimeParse(createdStr)
 			if err != nil {
 				return fmt.Errorf("error parsing created time: %w", err)
 			}
-			
+
 			updated, err := db.TimeParse(updatedStr)
 			if err != nil {
 				return fmt.Errorf("error parsing updated time: %w", err)
