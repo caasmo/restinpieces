@@ -7,7 +7,6 @@ import (
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
 	"strings"
-	"time"
 )
 
 // GetUserByEmail retrieves a user by email address.
@@ -26,8 +25,8 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		func(stmt *sqlite.Stmt) error {
 
             // Get the date strings
-            createdStr = stmt.GetText("created")
-            updatedStr = stmt.GetText("updated")
+            createdStr := stmt.GetText("created")
+            updatedStr := stmt.GetText("updated")
             
             created, err := db.TimeParse(createdStr)
             if err != nil {
@@ -44,8 +43,8 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 				Email:    stmt.GetText("email"),
 				Name:     stmt.GetText("name"),
 				Password: stmt.GetText("password"),
-				Created:  created 
-				Updated:  updated
+				Created:  created,
+				Updated:  updated,
 				Verified: stmt.GetInt64("verified") != 0,
 				TokenKey: stmt.GetText("tokenKey"),
 			}
@@ -127,13 +126,6 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		VALUES (?, ?, ?, ?, ?, ?)
 		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
 		func(stmt *sqlite.Stmt) error {
-
-
-
-
-
-
-
 			// Get and parse timestamps from database
 			createdStr := stmt.GetText("created")
 			updatedStr := stmt.GetText("updated")
@@ -163,8 +155,8 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		user.Email,    // 1. email
 		user.Password, // 2. password
 		user.Name,     // 3. name
-		db.Time user.Created,  // 4. created (pre-formatted)
-		user.Updated,  // 5. updated (pre-formatted)
+		db.TimeFormat(user.Created),  // 4. created 
+		db.TimeFormat(user.Updated),  // 5. updated 
 		user.TokenKey) // 6. tokenKey
 
 	if err != nil {
