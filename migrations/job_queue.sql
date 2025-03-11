@@ -15,7 +15,7 @@ CREATE TABLE job_queue (
     max_attempts INTEGER NOT NULL DEFAULT 0, -- Maximum retry attempts
 	-- The parentheses around the strftime() function call are necessary for
     -- SQLite to recognize this as a valid default value expression
-	-- format UTC, RFC3339. 
+-- 	-- format UTC, RFC3339. 
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')), 
     updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')), 
     scheduled_for TEXT NOT NULL DEFAULT '', -- When to process this job
@@ -32,4 +32,4 @@ CREATE TABLE job_queue (
 CREATE UNIQUE INDEX idx_job_unique ON job_queue (payload, job_type);
 CREATE INDEX idx_job_status ON job_queue (status, scheduled_for);
 CREATE INDEX idx_job_type ON job_queue (job_type, status);
---CREATE INDEX idx_locked_by ON job_queue (locked_by);
+-- CREATE INDEX idx_locked_by ON job_queue (locked_by);

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"testing"
 	"time"
+	"fmt"
 
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
@@ -67,7 +68,7 @@ func setupDB(t *testing.T) *Db {
 		},
 		{
 			name:    "job_queue",
-			schema:  migrations.JobsSchema,
+			schema:  migrations.JobQueueSchema,
 			inserts: []string{
 				`INSERT INTO job_queue (job_type, payload, status, attempts, max_attempts)
 				 VALUES ('test_job', '{"key":"value"}', 'pending', 0, 3)`,
