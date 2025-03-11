@@ -61,8 +61,8 @@ func setupDB(t *testing.T) *Db {
 
 	tables := []tableSetup{
 		{
-			name:    "users",
-			schema:  migrations.UsersSchema,
+			name:   "users",
+			schema: migrations.UsersSchema,
 			inserts: []string{
 				`INSERT INTO users (id, email, name, password, created, updated, verified, tokenKey)
 				 VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE, 'token_key_setup')`,
@@ -327,9 +327,9 @@ func TestInsertQueueJobValid(t *testing.T) {
 	defer testDB.Close()
 
 	tests := []struct {
-		name        string
-		job         queue.QueueJob
-		wantErr     bool
+		name    string
+		job     queue.QueueJob
+		wantErr bool
 	}{
 		{
 			name: "valid job",
@@ -424,7 +424,7 @@ func TestInsertQueueJobDuplicate(t *testing.T) {
 		Status:      queue.StatusPending,
 		MaxAttempts: 3,
 	}
-	
+
 	if err := testDB.InsertQueueJob(uniqueJob); err != nil {
 		t.Fatalf("unexpected error on first insert: %v", err)
 	}
