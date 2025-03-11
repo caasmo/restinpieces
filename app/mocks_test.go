@@ -3,8 +3,10 @@ package app
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/queue"
 )
 
 // MockDB implements db.Db interface for testing
@@ -23,8 +25,8 @@ func (m *MockDB) CreateUser(user db.User) (*db.User, error) {
 		Email:    user.Email,
 		Name:     user.Name,
 		Password: user.Password,
-		Created:  time.time{},
-		Updated:  time.time{},
+		Created:  time.Time{},
+		Updated:  time.Time{},
 		TokenKey: user.TokenKey,
 	}, nil
 }
@@ -36,8 +38,8 @@ func (m *MockDB) GetUserByEmail(email string) (*db.User, error) {
 			Email:    email,
 			Name:     "Test User",
 			Password: "hash123",
-			Created:  time.time{},
-			Updated:  time.time{},
+			Created:  time.Time{},
+			Updated:  time.Time{},
 		}, nil
 	}
 	return nil, fmt.Errorf("user not found")
