@@ -169,9 +169,6 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	job := queue.QueueJob{
 		JobType:      queue.JobTypeEmailVerification,
 		Payload:      payload,
-		Status:       queue.StatusPending,
-		MaxAttempts:  3,
-		ScheduledFor: db.TimeParse(db.TimeNow()),
 	}
 
 	// Insert into job queue with deduplication

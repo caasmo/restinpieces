@@ -12,6 +12,7 @@ import (
 // GetUserByEmail retrieves a user by email address.
 // Returns:
 // - *db.User: User record if found, nil if no matching record exists
+// - returned time Fields are in UTC, RFC3339
 // - error: Only returned for database errors, nil on successful query (even if no results)
 // Note: A nil user with nil error indicates no matching record was found
 func (d *Db) GetUserByEmail(email string) (*db.User, error) {
@@ -108,7 +109,6 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 }
 
 // CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
-// The Created and Updated fields will be set automatically using time.Now().UTC().Format(time.RFC3339)
 // Example timestamp: "2024-03-07T15:04:05Z"
 // User struct should contain at minimum: Email, Password (pre-hashed), and Name
 func (d *Db) CreateUser(user db.User) (*db.User, error) {
