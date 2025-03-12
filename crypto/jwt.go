@@ -7,7 +7,6 @@ import (
 
     "crypto/hmac"
     "crypto/sha256"
-    "os"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -106,7 +105,7 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 func NewJwtCredentialsSigningKey(email, passwordHash string, secret []byte) ([]byte, error) {
     // Validate inputs
     if email == "" || passwordHash == "" {
-        return nil, errors.New("email and passwordHash must not be empty")
+        return nil, ErrJwtInvalidSecretLength 
     }
 
     // Validate server secret length
