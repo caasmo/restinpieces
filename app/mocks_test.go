@@ -30,18 +30,6 @@ func (m *MockDB) InsertWithPool(value int64) {}
 func (m *MockDB) InsertQueueJob(job queue.QueueJob) error {
 	return nil
 }
-func (m *MockDB) CreateUser(user db.User) (*db.User, error) {
-	return &db.User{
-		ID:       "mock-user",
-		Email:    user.Email,
-		Name:     user.Name,
-		Password: user.Password,
-		Created:  time.Time{},
-		Updated:  time.Time{},
-		TokenKey: user.TokenKey,
-	}, nil
-}
-
 func (m *MockDB) GetUserByEmail(email string) (*db.User, error) {
     return m.GetUserByEmailConfig.User, m.GetUserByEmailConfig.Error
 }
