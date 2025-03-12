@@ -48,34 +48,12 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
 			
-			// Setup mock DB if configured
-			if tc.setup != nil {
-				tc.setup(mockDB)
-			}
-			
 			rr := httptest.NewRecorder()
-			mockDB := &MockDB{
-                GetUserByEmailConfig: struct {
-                    User  *db.User
-                    Error error
-                }{
-                    User: &db.User{
-                        ID:       "test456",
-                        Email:    tc.email,
-                        Name:     "Test User",
-                        Password: "hash123",
-                        Created:  time.Time{},
-                        Updated:  time.Time{},
-                        Verified: tc.email == "verified@example.com",
-                    },
-                },
-            }
 			a, _ := New(
 				WithConfig(&config.Config{
 					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"),
 					TokenDuration: 15 * time.Minute,
 				}),
-				WithDB(mockDB),
 				WithRouter(&MockRouter{}),
 			)
 
