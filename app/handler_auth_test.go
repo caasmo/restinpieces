@@ -17,28 +17,26 @@ import (
 func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 	testCases := []struct {
 		name       string
-		email      string
+		json       string
 		wantStatus int
 	}{
 		{
 			name:       "invalid email format",
-			email:      "not-an-email",
+			json:       `{"email":"not-an-email"}`,
 			wantStatus: http.StatusBadRequest,
 		},
 		{
 			name:       "empty email",
-			email:      "",
+			json:       `{"email":""}`,
 			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:       "missing email field",
-			email:      "", // Test case for missing email in JSON
+			name:       "missing email field", 
 			json:       `{}`,
 			wantStatus: http.StatusBadRequest,
 		},
 		{
 			name:       "invalid JSON",
-			email:      "",
 			json:       `{"email": invalid}`,
 			wantStatus: http.StatusBadRequest,
 		},
@@ -46,11 +44,7 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Use custom JSON if provided, otherwise generate from email
 			reqBody := tc.json
-			if reqBody == "" {
-				reqBody = fmt.Sprintf(`{"email":"%s"}`, tc.email)
-			}
 			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
 			
