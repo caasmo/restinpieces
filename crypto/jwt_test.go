@@ -13,7 +13,8 @@ func TestCreateAndParseValidToken(t *testing.T) {
 	userID := "testuser123"
 	tokenDuration := 15 * time.Minute
 
-	tokenString, _, err := CreateJwt(userID, secret, tokenDuration)
+	claims := jwt.MapClaims{"user_id": userID}
+	tokenString, _, err := NewJWT(claims, string(secret), tokenDuration)
 	if err != nil {
 		t.Fatalf("Create() error = %v", err)
 	}
@@ -72,7 +73,8 @@ func TestParseInvalidToken(t *testing.T) {
 }
 
 func TestCreateWithInvalidSecret(t *testing.T) {
-	_, _, err := CreateJwt("user123", nil, 15*time.Minute)
+	claims := jwt.MapClaims{"user_id": "user123"}
+	_, _, err := NewJWT(claims, "", 15*time.Minute)
 	if !errors.Is(err, ErrJwtInvalidSecretLength) {
 		t.Errorf("expected ErrInvalidSecretLength, got %v", err)
 	}
@@ -90,7 +92,8 @@ func generateValidToken(t *testing.T) string {
 
 func generateExpiredToken(t *testing.T) string {
 	t.Helper()
-	token, _, err := CreateJwt("testuser", []byte("test_secret_32_bytes_long_xxxxxx"), -15*time.Minute)
+	claims := jwt.MapClaims{"user_id": "testuser"}
+	token, _, err := NewJWT(claims, "test_secret_32_bytes_long_xxxxxx", -15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate expired token: %v", err)
 	}
