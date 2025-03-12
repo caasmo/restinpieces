@@ -14,7 +14,7 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-func TestRequestVerificationHandler(t *testing.T) {
+func TestRequestVerificationHandlerValidation(t *testing.T) {
 	testCases := []struct {
 		name       string
 		email      string
