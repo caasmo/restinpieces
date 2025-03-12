@@ -111,7 +111,7 @@ func NewJwtCredentialsSigningKey(email, passwordHash string, secret []byte) ([]b
 
     // Validate server secret length
     if len(secret) < MinKeyLength {
-        return nil, fmt.Errorf("server secret must be at least %d bytes", MinKeyLength)
+        return nil, ErrJwtInvalidSecretLength
     }
 
     // Create HMAC hasher with server secret as key
