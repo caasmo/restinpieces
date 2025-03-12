@@ -164,7 +164,11 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 
 	// Check if email exists in system
 	user, err := a.db.GetUserByEmail(req.Email)
-	if err != nil || user == nil {
+	if err != nil {
+		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Database error: %s"}`, err.Error())
+		return
+	}
+	if user == nil {
 		writeJSONError(w, errorNotFound)
 		return
 	}
