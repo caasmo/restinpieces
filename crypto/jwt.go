@@ -26,20 +26,18 @@ var (
 )
 
 // Claims extends standard JWT claims with custom fields
+// TODO not needed
 type Claims struct {
 	UserID string `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
-// ParseJwt validates and parses JWT claims
-// TODO make func keyFunc(token *jwt.Token) (interface{}, error) {
+// ParseJwt verifies and parses JWT and returns its claims.
+func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
+	parser := jwt.NewParser(jwt.WithValidMethods([]string{"HS256"}))
 
-func ParseJwt(tokenString string, secret []byte) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, ErrJwtInvalidSigningMethod
-		}
-		return secret, nil
+	parsedToken, err := parser.Parse(token, func(t *jwt.Token) (any, error) {
+		return verificationKey, nil
 	})
 
 	if err != nil {
@@ -52,9 +50,10 @@ func ParseJwt(tokenString string, secret []byte) (*Claims, error) {
 		return nil, fmt.Errorf("%w: %w", ErrJwtInvalidToken, err)
 	}
 
-	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
 		return claims, nil
 	}
+
 	return nil, ErrJwtInvalidToken
 }
 

@@ -23,8 +23,8 @@ func TestCreateAndParseValidToken(t *testing.T) {
 		t.Fatalf("Parse() error = %v", err)
 	}
 
-	if claims.UserID != userID {
-		t.Errorf("expected UserID %q, got %q", userID, claims.UserID)
+	if claims["user_id"] != userID {
+		t.Errorf("expected UserID %q, got %q", userID, claims["user_id"])
 	}
 }
 
