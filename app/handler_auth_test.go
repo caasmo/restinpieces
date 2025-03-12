@@ -77,6 +77,11 @@ func TestRequestVerificationHandlerVerifiedEmail(t *testing.T) {
 			email:      "verified@example.com",
 			wantStatus: http.StatusConflict,
 		},
+		{
+			name:       "valid verification request",
+			email:      "unverified@example.com",
+			wantStatus: http.StatusAccepted,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -98,7 +103,7 @@ func TestRequestVerificationHandlerVerifiedEmail(t *testing.T) {
                         Password: "hash123",
                         Created:  time.Time{},
                         Updated:  time.Time{},
-                        Verified: true,
+                        Verified: tc.email == "verified@example.com",
                     },
                 },
             }
