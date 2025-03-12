@@ -31,6 +31,8 @@ var (
 	errorInvalidTokenFormat   = jsonError{http.StatusUnauthorized, []byte(`{"error":"Invalid authorization format"}`)}
 	errorJwtInvalidSignMethod = jsonError{http.StatusUnauthorized, []byte(`{"error":"unexpected signing method"}`)}
 	errorJwtTokenExpired      = jsonError{http.StatusUnauthorized, []byte(`{"error":"Token expired"}`)}
+    errorAlreadyVerified      = jsonError{http.StatusConflict, []byte(`{"error":"Already verified"}`)}
+
 )
 
 // writeJSONError writes a precomputed JSON error response

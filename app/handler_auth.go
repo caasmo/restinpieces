@@ -55,6 +55,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header()["Content-Type"] = jsonHeader
 
 	// Standard OAuth2 token response format
+    // TODO do we need the expires_in, remove from NewJwt
 	fmt.Fprintf(w, `{
 		"token_type": "Bearer",
 		"expires_in": %d,
@@ -129,10 +130,9 @@ func isValidEmail(email string) bool {
 
 // confirm-
 // receives token
-// get id builds sig key with verification email secret
+// get id, builds sig key with verification email secret
 // jwt validate signed
 // set verified
-
 // key := (m.TokenKey() + m.Collection().VerificationToken.Secret)
 // is a jwt 
 // {
