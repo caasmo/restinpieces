@@ -90,12 +90,13 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 
 
 // NewJwtCredentialsSigningKey creates a JWT signing key using HMAC-SHA256.
-//
-// Using HMAC prevents length-extension attacks, unlike simple hash concatenation.
+
 // It derives a unique key by combining user-specific data (email, passwordHash)
 // with a server secret (JWT_SECRET). Tokens are invalidated when the user's
 // email or password changes, or globally by rotating JWT_SECRET.
 // 
+// Using HMAC prevents length-extension attacks, unlike simple hash concatenation.
+//
 // The function uses a null byte (\x00) as a delimiter to prevent collisions
 // between the email and passwordHash inputs. It returns the key as a byte slice,
 // suitable for use with github.com/golang-jwt/jwt/v5's SignedString method,
