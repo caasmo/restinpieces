@@ -1,10 +1,12 @@
 ### TODOs
 
 
+- jwt signing key invalidation
+- test requestverification: test also insertion in queue, now only mock nil.
 - /impl backend job to verification email
     - reads from job_queue 
     - generates token
-    - put in user tokenkey?????
+    - put in user tokenkey????? no is jwt
     - sends email with mailyak
     - status processinnf in job, each job has steps laststep issaved in jobqueue steps are label with humman code explanation
     - /confirm-verification endpoint 

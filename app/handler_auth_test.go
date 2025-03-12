@@ -3,12 +3,12 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+	"errors"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
@@ -149,7 +149,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			reqBody := fmt.Sprintf(`{"email":"%s"}`, tc.email)
+			reqBody := tc.json
 			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
 			
