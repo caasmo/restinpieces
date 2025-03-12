@@ -41,7 +41,8 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate new token with fresh expiration
-	newToken, expiry, err := crypto.CreateJwt(userId, a.config.JwtSecret, a.config.TokenDuration)
+	claims := map[string]any{"user_id": userId}
+	newToken, expiry, err := crypto.NewJwt(claims, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
@@ -100,8 +101,10 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT token with user ID claim
-	claims := jwt.MapClaims{"user_id": user.ID}
-	token, _, err := crypto.NewJWT(claims, string(a.config.JwtSecret), a.config.TokenDuration)
+	//claims := jwt.MapClaims{"user_id": user.ID}
+	claims := map[string]any{"user_id": user.ID}
+
+	token, _, err := crypto.NewJwt(claims, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
@@ -253,7 +256,8 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT token for immediate authentication
-	token, _, err := crypto.CreateJwt(user.ID, a.config.JwtSecret, a.config.TokenDuration)
+	claims := map[string]any{"user_id": user.ID}
+	token, _, err := crypto.NewJwt(claims, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return

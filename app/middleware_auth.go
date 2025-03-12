@@ -14,6 +14,7 @@ type contextKey string
 
 // Context keys
 // See also handler_auth.go
+// TODO remove this
 const (
 	UserIDKey contextKey = "user_id"
 )
@@ -55,7 +56,8 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		}
 
 		// Store claims in context
-		ctx := context.WithValue(r.Context(), UserIDKey, claims.UserID)
+        // TODO "user_id" more visibility why, make constant in crypto
+		ctx := context.WithValue(r.Context(), UserIDKey, claims["user_id"])
 
 		// Call the next handler with the new context
 		next.ServeHTTP(w, r.WithContext(ctx))

@@ -40,7 +40,7 @@ type Claims struct {
 }
 
 // ParseJwt verifies and parses JWT and returns its claims.
-// returns a map map[string]interface{} that you can access like any other Go map. 
+// returns a map map[string]any that you can access like any other Go map. 
 // 		 exp := claims["exp"].(float64)
 func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 	parser := jwt.NewParser(jwt.WithValidMethods([]string{"HS256"}))
@@ -67,7 +67,9 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 }
 
 // NewJWT generates a new JWT token with the provided claims
-func NewJWT(payload jwt.MapClaims, signingKey string, duration time.Duration) (string, time.Time, error) {
+// payload is jwt.MapClaims which is just map[string]any
+// you can just call payload := map[string]any{"user_id": userID}
+func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (string, time.Time, error) {
 	if len(signingKey) < MinSecretLength {
 		return "", time.Time{}, ErrJwtInvalidSecretLength
 	}
@@ -80,7 +82,7 @@ func NewJWT(payload jwt.MapClaims, signingKey string, duration time.Duration) (s
 
 	// Create and sign the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
-	tokenString, err := token.SignedString([]byte(signingKey))
+	tokenString, err := token.SignedString(signingKey)
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("failed to sign token: %w", err)
 	}
