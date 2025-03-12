@@ -11,6 +11,59 @@ import (
 	"github.com/caasmo/restinpieces/config"
 )
 
+func TestRequestVerificationHandler(t *testing.T) {
+	testCases := []struct {
+		name       string
+		email      string
+		wantStatus int
+	}{
+		{
+			name:       "valid email request",
+			email:      "test@example.com",
+			wantStatus: http.StatusAccepted,
+		},
+		{
+			name:       "invalid email format",
+			email:      "not-an-email",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "empty email",
+			email:      "",
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "non-existent email",
+			email:      "nonexistent@example.com",
+			wantStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			reqBody := fmt.Sprintf(`{"email":"%s"}`, tc.email)
+			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
+			req.Header.Set("Content-Type", "application/json")
+			
+			rr := httptest.NewRecorder()
+			a, _ := New(
+				WithConfig(&config.Config{
+					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"),
+					TokenDuration: 15 * time.Minute,
+				}),
+				WithDB(&MockDB{}),
+				WithRouter(&MockRouter{}),
+			)
+
+			a.RequestVerificationHandler(rr, req)
+
+			if rr.Code != tc.wantStatus {
+				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
+			}
+		})
+	}
+}
+
 func TestRefreshAuthHandler(t *testing.T) {
 	testCases := []struct {
 		name       string
