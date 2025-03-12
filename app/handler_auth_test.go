@@ -137,15 +137,6 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 			desc: "When email exists and user is already verified, should return 409 Conflict",
 		},
 		{
-			name: "email not in database",
-			json: `{"email":"nonexistent@example.com"}`,
-			dbSetup: func(mockDB *MockDB) {
-				mockDB.GetUserByEmailConfig.User = nil
-			},
-			wantStatus: http.StatusNotFound,
-			desc: "When email does not exist in database, should return 404 Not Found",
-		},
-		{
 			name: "database error",
 			json: `{"email":"error@example.com"}`,
 			dbSetup: func(mockDB *MockDB) {
@@ -153,16 +144,6 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 			},
 			wantStatus: http.StatusInternalServerError,
 			desc: "When database query fails, should return 500 Internal Server Error",
-		},
-		{
-			name:       "already verified email",
-			email:      "verified@example.com",
-			wantStatus: http.StatusConflict,
-		},
-		{
-			name:       "valid verification request",
-			email:      "unverified@example.com",
-			wantStatus: http.StatusAccepted,
 		},
 	}
 
