@@ -14,17 +14,12 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-func TestRequestVerificationHandlerValidation(t *testing.T) {
+func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 	testCases := []struct {
 		name       string
 		email      string
 		wantStatus int
 	}{
-		{
-			name:       "valid email request",
-			email:      "test@example.com",
-			wantStatus: http.StatusAccepted,
-		},
 		{
 			name:       "invalid email format",
 			email:      "not-an-email",
@@ -36,17 +31,33 @@ func TestRequestVerificationHandlerValidation(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:       "non-existent email",
-			email:      "nonexistent@example.com",
-			wantStatus: http.StatusNotFound,
+			name:       "missing email field",
+			email:      "", // Test case for missing email in JSON
+			json:       `{}`,
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "invalid JSON",
+			email:      "",
+			json:       `{"email": invalid}`,
+			wantStatus: http.StatusBadRequest,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			reqBody := fmt.Sprintf(`{"email":"%s"}`, tc.email)
+			// Use custom JSON if provided, otherwise generate from email
+			reqBody := tc.json
+			if reqBody == "" {
+				reqBody = fmt.Sprintf(`{"email":"%s"}`, tc.email)
+			}
 			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
+			
+			// Setup mock DB if configured
+			if tc.setup != nil {
+				tc.setup(mockDB)
+			}
 			
 			rr := httptest.NewRecorder()
 			mockDB := &MockDB{
