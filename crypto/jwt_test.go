@@ -45,7 +45,7 @@ func TestParseInvalidToken(t *testing.T) {
 			name:        "invalid signature",
 			tokenString: generateValidToken(t),
 			secret:      []byte("wrong_secret"),
-			wantError:   ErrJwtInvalidToken,
+			wantError:   ErrJwtInvalidSigningMethod,
 		},
 		{
 			name:        "invalid signing method",
