@@ -90,7 +90,7 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 }
 
 
-// createJwtSigningKey creates a JWT signing key using HMAC-SHA256.
+// NewJwtCredentialsSigningKey creates a JWT signing key using HMAC-SHA256.
 //
 // Using HMAC prevents length-extension attacks, unlike simple hash concatenation.
 // It derives a unique key by combining user-specific data (email, passwordHash)
@@ -103,7 +103,7 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 // and an error if the server secret is unset or inputs are invalid.
 // 
 // Note: JWT_SECRET should be a strong, random value (e.g., 32+ bytes).
-func createJwtSigningKey(email, passwordHash string) ([]byte, error) {
+func NewJwtCredentialsSigningKey(email, passwordHash string) ([]byte, error) {
     // Validate inputs
     if email == "" || passwordHash == "" {
         return nil, errors.New("email and passwordHash must not be empty")
