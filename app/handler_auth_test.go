@@ -40,6 +40,55 @@ func TestRequestVerificationHandler(t *testing.T) {
 			email:      "nonexistent@example.com",
 			wantStatus: http.StatusNotFound,
 		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			reqBody := fmt.Sprintf(`{"email":"%s"}`, tc.email)
+			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
+			req.Header.Set("Content-Type", "application/json")
+			
+			rr := httptest.NewRecorder()
+			mockDB := &MockDB{
+                GetUserByEmailConfig: struct {
+                    User  *db.User
+                    Error error
+                }{
+                    User: &db.User{
+                        ID:       "test456",
+                        Email:    tc.email,
+                        Name:     "Test User",
+                        Password: "hash123",
+                        Created:  time.Time{},
+                        Updated:  time.Time{},
+                        Verified: tc.email == "verified@example.com",
+                    },
+                },
+            }
+			a, _ := New(
+				WithConfig(&config.Config{
+					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"),
+					TokenDuration: 15 * time.Minute,
+				}),
+				WithDB(mockDB),
+				WithRouter(&MockRouter{}),
+			)
+
+			a.RequestVerificationHandler(rr, req)
+
+			if rr.Code != tc.wantStatus {
+				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
+			}
+		})
+	}
+}
+
+func TestRequestVerificationHandler_VerifiedEmail(t *testing.T) {
+	testCases := []struct {
+		name       string
+		email      string
+		wantStatus int
+	}{
 		{
 			name:       "already verified email",
 			email:      "verified@example.com",
@@ -66,7 +115,7 @@ func TestRequestVerificationHandler(t *testing.T) {
                         Password: "hash123",
                         Created:  time.Time{},
                         Updated:  time.Time{},
-                        Verified: tc.email == "verified@example.com",
+                        Verified: true,
                     },
                 },
             }
