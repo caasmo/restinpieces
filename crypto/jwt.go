@@ -37,12 +37,6 @@ var (
 	ErrJwtInvalidSecretLength = errors.New("invalid secret length")
 )
 
-// Claims extends standard JWT claims with custom fields
-// TODO not needed
-type Claims struct {
-	UserID string `json:"user_id"`
-	jwt.RegisteredClaims
-}
 
 // ParseJwt verifies and parses JWT and returns its claims.
 // returns a map map[string]any that you can access like any other Go map. 

@@ -102,11 +102,9 @@ func generateExpiredToken(t *testing.T) string {
 
 func generateES256Token(t *testing.T) string {
 	t.Helper()
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, &Claims{
-		UserID: "testuser",
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(15 * time.Minute)),
-		},
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
+		"user_id": "testuser",
+		"exp":     jwt.NewNumericDate(time.Now().Add(15 * time.Minute)).Unix(),
 	})
 	privateKey, err := jwt.ParseECPrivateKeyFromPEM([]byte(`-----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIOVgr0F8R8V7+ZGuDGpckbGexDqzu8lQw0Aehp7RVfWRoAoGCCqGSM49
