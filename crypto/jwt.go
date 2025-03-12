@@ -36,6 +36,47 @@ var (
 	ErrJwtInvalidSecretLength = errors.New("invalid secret length")
 )
 
+func ParseUnverifiedJWT(tokenString string) (jwt.MapClaims, error) {
+    // Pre-allocate the claims map for better performance
+    claims := make(jwt.MapClaims)
+
+    _, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
+    if err != nil {
+        return nil, err
+    }
+}
+
+// like the validator above
+//If the token has an "iat" claim
+//If the "iat" time is valid (properly formatted as a numeric value)
+//Most importantly, it verifies that the "iat" time is not in the future (meaning the token hasn't been used before it was issued)
+// for ath jwt, validate id
+// If you need validation of specific claims, do it selectively
+	// rather than using the full validator
+//	if iat, ok := claims["iat"]; ok {
+//		if iatTime, ok := iat.(float64); ok {
+//			if time.Unix(int64(iatTime), 0).After(time.Now()) {
+//				return nil, jwt.ErrTokenUsedBeforeIssued
+//			}
+//		}
+//	}
+
+// validate userId
+// Validate user_id exists and is a non-empty string
+	//if userID, ok := claims["user_id"]; ok {
+	//	if userIDStr, ok := userID.(string); ok {
+	//		if userIDStr == "" {
+	//			return nil, fmt.Errorf("user_id claim is empty")
+	//		}
+	//		// Additional validation for user_id format could be added here
+	//	} else {
+	//		return nil, fmt.Errorf("user_id claim is not a string")
+	//	}
+	//} else {
+	//	return nil, fmt.Errorf("user_id claim is required but not found")
+	//}
+
+
 
 // ParseJwt verifies and parses JWT and returns its claims.
 // returns a map map[string]any that you can access like any other Go map. 
