@@ -103,21 +103,19 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 // and an error if the server secret is unset or inputs are invalid.
 // 
 // Note: JWT_SECRET should be a strong, random value (e.g., 32+ bytes).
-func NewJwtCredentialsSigningKey(email, passwordHash string) ([]byte, error) {
+func NewJwtCredentialsSigningKey(email, passwordHash string, secret []byte) ([]byte, error) {
     // Validate inputs
     if email == "" || passwordHash == "" {
         return nil, errors.New("email and passwordHash must not be empty")
     }
 
-    // Retrieve the server secret
-// TODO to signature
-    secret := os.Getenv("JWT_SECRET")
-    if secret == "" {
-        return nil, errors.New("JWT_SECRET environment variable not set")
+    // Validate server secret length
+    if len(secret) < MinKeyLength {
+        return nil, fmt.Errorf("server secret must be at least %d bytes", MinKeyLength)
     }
 
     // Create HMAC hasher with server secret as key
-    h := hmac.New(sha256.New, []byte(secret))
+    h := hmac.New(sha256.New, secret)
 
     // Add user-specific data with null byte delimiter
     h.Write([]byte(email))
