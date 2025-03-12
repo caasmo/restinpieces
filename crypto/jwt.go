@@ -14,6 +14,13 @@ import (
 
 // todo remove refresh and validate/create are wrappers
 
+const (
+	// MinSecretLength is the minimum required length for JWT signing secrets.
+	// 32 bytes (256 bits) is the minimum recommended length for HMAC-SHA256 keys
+	// to provide sufficient security against brute force attacks.
+	MinSecretLength = 32
+)
+
 var (
 	// ErrJwtTokenExpired is returned when the token has expired
 	ErrJwtTokenExpired = errors.New("token expired")
@@ -61,7 +68,7 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 
 // CreateJwt generates a new JWT token
 func CreateJwt(userID string, secret []byte, tokenDuration time.Duration) (string, time.Time, error) {
-	if len(secret) < 32 {
+	if len(secret) < MinSecretLength {
 		return "", time.Time{}, ErrJwtInvalidSecretLength
 	}
 
