@@ -99,8 +99,9 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate JWT token
-	token, _, err := crypto.CreateJwt(user.ID, a.config.JwtSecret, a.config.TokenDuration)
+	// Generate JWT token with user ID claim
+	claims := jwt.MapClaims{"user_id": user.ID}
+	token, _, err := crypto.NewJWT(claims, string(a.config.JwtSecret), a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return

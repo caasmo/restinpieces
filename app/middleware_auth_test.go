@@ -98,7 +98,8 @@ func TestJwtValidateMiddleware(t *testing.T) {
 
 func generateTestToken(t *testing.T, userID string) string {
 	t.Helper()
-	token, _, err := crypto.CreateJwt(userID, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
+	claims := jwt.MapClaims{"user_id": userID}
+	token, _, err := crypto.NewJWT(claims, "test_secret_32_bytes_long_xxxxxx", 15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate test token: %v", err)
 	}

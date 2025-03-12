@@ -66,26 +66,25 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 	return nil, ErrJwtInvalidToken
 }
 
-// CreateJwt generates a new JWT token
-func CreateJwt(userID string, secret []byte, tokenDuration time.Duration) (string, time.Time, error) {
-	if len(secret) < MinSecretLength {
+// NewJWT generates a new JWT token with the provided claims
+func NewJWT(payload jwt.MapClaims, signingKey string, duration time.Duration) (string, time.Time, error) {
+	if len(signingKey) < MinSecretLength {
 		return "", time.Time{}, ErrJwtInvalidSecretLength
 	}
 
-	expirationTime := time.Now().Add(tokenDuration)
-	claims := &Claims{
-		UserID: userID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
+	// Set standard claims
+	now := time.Now()
+	expirationTime := now.Add(duration)
+	payload["iat"] = now.Unix()
+	payload["exp"] = expirationTime.Unix()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(secret)
+	// Create and sign the token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
+	tokenString, err := token.SignedString([]byte(signingKey))
 	if err != nil {
 		return "", time.Time{}, fmt.Errorf("failed to sign token: %w", err)
 	}
+
 	return tokenString, expirationTime, nil
 }
 

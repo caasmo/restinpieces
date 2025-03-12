@@ -80,7 +80,8 @@ func TestCreateWithInvalidSecret(t *testing.T) {
 
 func generateValidToken(t *testing.T) string {
 	t.Helper()
-	token, _, err := CreateJwt("testuser", []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
+	claims := jwt.MapClaims{"user_id": "testuser"}
+	token, _, err := NewJWT(claims, "test_secret_32_bytes_long_xxxxxx", 15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate valid token: %v", err)
 	}
