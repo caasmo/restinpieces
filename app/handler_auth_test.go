@@ -83,7 +83,7 @@ func TestRequestVerificationHandler(t *testing.T) {
 	}
 }
 
-func TestRequestVerificationHandler_VerifiedEmail(t *testing.T) {
+func TestRequestVerificationHandlerVerifiedEmail(t *testing.T) {
 	testCases := []struct {
 		name       string
 		email      string
