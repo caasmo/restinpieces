@@ -66,7 +66,7 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 	}
 }
 
-func TestRequestVerificationHandlerVerifiedEmail(t *testing.T) {
+func TestRequestVerificationHandlerVerifiedValid(t *testing.T) {
 	testCases := []struct {
 		name       string
 		email      string
