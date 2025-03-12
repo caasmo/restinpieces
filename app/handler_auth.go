@@ -169,6 +169,12 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Check if user is already verified
+	if user.Verified {
+		writeJSONError(w, errorAlreadyVerified)
+		return
+	}
+
 	// Create queue job
 	payload, _ := json.Marshal(queue.PayloadEmailVerification{Email: req.Email})
 	job := queue.QueueJob{
