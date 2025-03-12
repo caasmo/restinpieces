@@ -62,6 +62,18 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			if rr.Code != tc.wantStatus {
 				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
 			}
+			
+			// Validate error response body when expected
+			if tc.wantStatus >= 400 {
+				var resp map[string]interface{}
+				if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
+					t.Fatalf("failed to decode error response: %v", err)
+				}
+				
+				if _, ok := resp["error"]; !ok {
+					t.Error("error response missing 'error' field")
+				}
+			}
 		})
 	}
 }
