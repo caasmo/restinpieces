@@ -43,29 +43,11 @@ func (m *MockDB) CreateUser(user db.User) (*db.User, error) {
 }
 
 func (m *MockDB) GetUserByEmail(email string) (*db.User, error) {
-	switch email {
-	case "existing@test.com":
-		return &db.User{
-			ID:       "test123",
-			Email:    email,
-			Name:     "Test User",
-			Password: "hash123",
-			Created:  time.Time{},
-			Updated:  time.Time{},
-		}, nil
-	case "test@example.com":
-		return &db.User{
-			ID:       "test456",
-			Email:    email,
-			Name:     "Test Example",
-			Password: "hash456",
-			Created:  time.Time{},
-			Updated:  time.Time{},
-			Verified: false,
-		}, nil
-	default:
-		return nil, fmt.Errorf("user not found")
-	}
+    return m.GetUserByEmailConfig.User, m.GetUserByEmailConfig.Error
+}
+
+func (m *MockDB) CreateUser(user db.User) (*db.User, error) {
+    return m.CreateUserConfig.User, m.CreateUserConfig.Error
 }
 
 // MockRouter implements router.Router interface for testing
