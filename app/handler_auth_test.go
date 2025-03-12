@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/db"
 )
 
 func TestRequestVerificationHandler(t *testing.T) {
