@@ -33,6 +33,8 @@ type Claims struct {
 }
 
 // ParseJwt verifies and parses JWT and returns its claims.
+// returns a map map[string]interface{} that you can access like any other Go map. 
+// 		 exp := claims["exp"].(float64)
 func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 	parser := jwt.NewParser(jwt.WithValidMethods([]string{"HS256"}))
 
@@ -44,7 +46,7 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 		if errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, ErrJwtTokenExpired
 		}
-		if errors.Is(err, ErrJwtInvalidSigningMethod) {
+		if errors.Is(err, jwt.ErrTokenSignatureInvalid) {
 			return nil, ErrJwtInvalidSigningMethod
 		}
 		return nil, fmt.Errorf("%w: %w", ErrJwtInvalidToken, err)
