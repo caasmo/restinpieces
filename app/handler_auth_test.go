@@ -48,12 +48,13 @@ func TestRequestVerificationHandler(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			
 			rr := httptest.NewRecorder()
+			mockDB := &MockDB{}
 			a, _ := New(
 				WithConfig(&config.Config{
 					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"),
 					TokenDuration: 15 * time.Minute,
 				}),
-				WithDB(&MockDB{}),
+				WithDB(mockDB),
 				WithRouter(&MockRouter{}),
 			)
 
