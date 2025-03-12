@@ -62,7 +62,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// AuthWithPasswordHandler handles password-based authentication
+// AuthWithPasswordHandler handles password-based authentication (login)
 func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
@@ -124,6 +124,24 @@ func isValidEmail(email string) bool {
 	return err == nil
 }
 
+// confirm-
+// receives token
+// get id builds sig key with verification email secret
+// jwt validate signed
+// set verified
+
+// key := (m.TokenKey() + m.Collection().VerificationToken.Secret)
+// is a jwt 
+// {
+//  "collectionId": "_pb_users_auth_",
+//  "email": "caasmo@protonmail.com",
+//  "exp": 1736630179,
+//  "id": "m648zm0q421yfc0",
+//  "type": "verification"
+//}
+//http://localhost:8090/_/#/auth/confirm-verification/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb2xsZWN0aW9uSWQiOiJfcGJfdXNlcnNfYXV0aF8iLCJlbWFpbCI6ImNhYXNtb0Bwcm90b25tYWlsLmNvbSIsImV4cCI6MTczNjYzMDE3OSwiaWQiOiJtNjQ4em0wcTQyMXlmYzAiLCJ0eXBlIjoidmVyaWZpY2F0aW9uIn0.FcaLmZDe6RfZUR9l73O1umV1j_mXr0xHXHJgtqqBNDo
+// todo already verified.
+// goroutine generates token 
 // RequestVerificationHandler handles email verification requests
 func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
