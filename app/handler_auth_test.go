@@ -39,6 +39,11 @@ func TestRequestVerificationHandler(t *testing.T) {
 			email:      "nonexistent@example.com",
 			wantStatus: http.StatusNotFound,
 		},
+		{
+			name:       "already verified email",
+			email:      "verified@example.com",
+			wantStatus: http.StatusConflict,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -48,7 +53,22 @@ func TestRequestVerificationHandler(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			
 			rr := httptest.NewRecorder()
-			mockDB := &MockDB{}
+			mockDB := &MockDB{
+                GetUserByEmailConfig: struct {
+                    User  *db.User
+                    Error error
+                }{
+                    User: &db.User{
+                        ID:       "test456",
+                        Email:    tc.email,
+                        Name:     "Test User",
+                        Password: "hash123",
+                        Created:  time.Time{},
+                        Updated:  time.Time{},
+                        Verified: tc.email == "verified@example.com",
+                    },
+                },
+            }
 			a, _ := New(
 				WithConfig(&config.Config{
 					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"),

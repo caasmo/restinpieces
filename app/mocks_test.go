@@ -10,7 +10,18 @@ import (
 )
 
 // MockDB implements db.Db interface for testing
-type MockDB struct{}
+type MockDB struct {
+    // Method-specific configurations
+    GetUserByEmailConfig struct {
+        User  *db.User
+        Error error
+    }
+    CreateUserConfig struct {
+        User  *db.User
+        Error error
+    }
+    // Add more method configs as needed
+}
 
 func (m *MockDB) Close()                     {}
 func (m *MockDB) GetById(id int64) int       { return 0 }
