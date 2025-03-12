@@ -19,13 +19,13 @@ func TestCreateAndParseValidToken(t *testing.T) {
 		t.Fatalf("Create() error = %v", err)
 	}
 
-	claims, err := ParseJwt(tokenString, secret)
+	parsedClaims, err := ParseJwt(tokenString, secret)
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
 
-	if claims["user_id"] != userID {
-		t.Errorf("expected UserID %q, got %q", userID, claims["user_id"])
+	if parsedClaims["user_id"] != userID {
+		t.Errorf("expected UserID %q, got %q", userID, parsedClaims["user_id"])
 	}
 }
 
