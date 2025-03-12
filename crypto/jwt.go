@@ -15,10 +15,10 @@ import (
 // todo remove refresh and validate/create are wrappers
 
 const (
-	// MinSecretLength is the minimum required length for JWT signing secrets.
+	// MinKeyLength is the minimum required length for JWT signing keys.
 	// 32 bytes (256 bits) is the minimum recommended length for HMAC-SHA256 keys
 	// to provide sufficient security against brute force attacks.
-	MinSecretLength = 32
+	MinKeyLength = 32
 
 	// JWT claim constants
 	ClaimIssuedAt  = "iat"     // JWT Issued At claim key
@@ -69,7 +69,7 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 // payload is jwt.MapClaims which is just map[string]any
 // you can just call payload := map[string]any{"user_id": userID}
 func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (string, time.Time, error) {
-	if len(signingKey) < MinSecretLength {
+	if len(signingKey) < MinKeyLength {
 		return "", time.Time{}, ErrJwtInvalidSecretLength
 	}
 
