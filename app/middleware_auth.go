@@ -56,8 +56,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		}
 
 		// Store claims in context
-        // TODO "user_id" more visibility why, make constant in crypto
-		ctx := context.WithValue(r.Context(), UserIDKey, claims["user_id"])
+		ctx := context.WithValue(r.Context(), UserIDKey, claims[crypto.ClaimUserID])
 
 		// Call the next handler with the new context
 		next.ServeHTTP(w, r.WithContext(ctx))

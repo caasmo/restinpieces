@@ -19,6 +19,11 @@ const (
 	// 32 bytes (256 bits) is the minimum recommended length for HMAC-SHA256 keys
 	// to provide sufficient security against brute force attacks.
 	MinSecretLength = 32
+
+	// JWT claim constants
+	ClaimIssuedAt  = "iat"     // JWT Issued At claim key
+	ClaimExpiresAt = "exp"     // JWT Expiration Time claim key
+	ClaimUserID    = "user_id" // JWT User ID claim key
 )
 
 var (
@@ -77,8 +82,8 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 	// Set standard claims
 	now := time.Now()
 	expirationTime := now.Add(duration)
-	payload["iat"] = now.Unix()
-	payload["exp"] = expirationTime.Unix()
+	payload[ClaimIssuedAt] = now.Unix()
+	payload[ClaimExpiresAt] = expirationTime.Unix()
 
 	// Create and sign the token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)

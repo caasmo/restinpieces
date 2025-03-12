@@ -100,7 +100,7 @@ func generateTestToken(t *testing.T, userID string) string {
 	t.Helper()
 
     // jwt.MapClaims is just map[string]any
-	claims := map[string]any{"user_id": userID}
+	claims := map[string]any{crypto.ClaimUserID: userID}
 
 	token, _, err := crypto.NewJwt(claims, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
 	if err != nil {
@@ -112,7 +112,7 @@ func generateTestToken(t *testing.T, userID string) string {
 func generateExpiredTestToken(t *testing.T, userID string) string {
 	t.Helper()
 
-	claims := map[string]any{"user_id": userID}
+	claims := map[string]any{crypto.ClaimUserID: userID}
 	token, _, err := crypto.NewJwt(claims, []byte("test_secret_32_bytes_long_xxxxxx"), -30*time.Minute) // Negative duration for expired token
 	if err != nil {
 		t.Fatalf("failed to generate expired test token: %v", err)
@@ -123,9 +123,9 @@ func generateExpiredTestToken(t *testing.T, userID string) string {
 func generateInvalidSigningToken(t *testing.T, userID string) string {
 	t.Helper()
 	// Create token with invalid signing method (ES256 instead of HMAC)
-	token := jwtv5.NewWithClaims(jwtv5.SigningMethodES256, &jwtv5.RegisteredClaims{
-		Subject:   userID,
-		ExpiresAt: jwtv5.NewNumericDate(time.Now().Add(15 * time.Minute)),
+	token := jwtv5.NewWithClaims(jwtv5.SigningMethodES256, jwtv5.MapClaims{
+		crypto.ClaimUserID:   userID,
+		crypto.ClaimExpiresAt: jwtv5.NewNumericDate(time.Now().Add(15 * time.Minute)),
 	})
 
 	// Generate EC key pair for testing
