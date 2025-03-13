@@ -36,6 +36,14 @@ func (m *MockDB) CreateUser(user db.User) (*db.User, error) {
     return m.CreateUserConfig.User, m.CreateUserConfig.Error
 }
 
+func (m *MockDB) GetUserById(id string) (*db.User, error) {
+    return &db.User{
+        ID:       id,
+        Email:    "test@example.com",
+        Password: "hashed_password",
+    }, nil
+}
+
 // MockRouter implements router.Router interface for testing
 type MockRouter struct{}
 
