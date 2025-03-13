@@ -90,7 +90,7 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 				mockDB.GetUserByIdConfig.User = testUser
 			},
 			tokenSetup: func(t *testing.T) string {
-				return generateTestToken(t, testUser.ID, testUser.Email, testUser.Password)
+				return generateTestToken(t, testUser.ID)
 			},
 			wantError: nil,
 		},
@@ -100,7 +100,7 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 				mockDB.GetUserByIdConfig.User = testUser
 			},
 			tokenSetup: func(t *testing.T) string {
-				return generateTestToken(t, testUser.ID, testUser.Email, testUser.Password, -30*time.Minute)
+				return generateExpiredTestToken(t, testUser.ID)
 			},
 			wantError: &errorJwtTokenExpired,
 		},
@@ -110,7 +110,7 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 				mockDB.GetUserByIdConfig.User = nil
 			},
 			tokenSetup: func(t *testing.T) string {
-				return generateTestToken(t, testUser.ID, testUser.Email, testUser.Password)
+				return generateTestToken(t, testUser.ID)
 			},
 			wantError: &errorJwtInvalidToken,
 		},
