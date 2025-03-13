@@ -143,6 +143,50 @@ func TestValidateClaimUserID(t *testing.T) {
 	}
 }
 
+func TestValidateClaimIssuedAt(t *testing.T) {
+	now := time.Now()
+	testCases := []struct {
+		name      string
+		claims    jwt.MapClaims
+		wantError error
+	}{
+		{
+			name:      "valid iat",
+			claims:    jwt.MapClaims{ClaimIssuedAt: now.Add(-1 * time.Minute).Unix()},
+			wantError: nil,
+		},
+		{
+			name:      "missing iat",
+			claims:    jwt.MapClaims{},
+			wantError: ErrClaimNotFound,
+		},
+		{
+			name:      "iat in future",
+			claims:    jwt.MapClaims{ClaimIssuedAt: now.Add(1 * time.Minute).Unix()},
+			wantError: ErrTokenUsedBeforeIssued,
+		},
+		{
+			name:      "invalid iat type",
+			claims:    jwt.MapClaims{ClaimIssuedAt: "not a number"},
+			wantError: ErrInvalidClaimFormat,
+		},
+		{
+			name:      "iat in non-empty claims",
+			claims:    jwt.MapClaims{"foo": "bar", ClaimIssuedAt: now.Add(-1 * time.Minute).Unix()},
+			wantError: nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateClaimIssuedAt(tc.claims)
+			if !errors.Is(err, tc.wantError) {
+				t.Errorf("ValidateClaimIssuedAt() error = %v, want %v", err, tc.wantError)
+			}
+		})
+	}
+}
+
 func generateES256Token(t *testing.T) string {
 	t.Helper()
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
