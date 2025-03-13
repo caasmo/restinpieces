@@ -34,6 +34,9 @@ var (
 	ErrJwtInvalidSigningMethod = errors.New("unexpected signing method")
 	// ErrJwtInvalidSecretLength is returned for invalid secret lengths
 	ErrJwtInvalidSecretLength = errors.New("invalid secret length")
+	// ErrTokenUsedBeforeIssued is returned when a token's "iat" (issued at) claim
+	// is in the future, indicating the token is being used before it was issued
+	ErrTokenUsedBeforeIssued = errors.New("token used before issued")
 )
 
 
