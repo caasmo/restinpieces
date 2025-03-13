@@ -58,7 +58,7 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 }
 
 func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
-	if iat, ok := claims["iat"]; ok {
+	if iat, ok := claims[ClaimIssuedAt]; ok {
 		if iatTime, ok := iat.(float64); ok {
 			if int64(iatTime) > time.Now().Unix() {
 				return ErrTokenUsedBeforeIssued
@@ -74,7 +74,7 @@ func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
 // that can be called separately when needed
 func ValidateClaimUserID(claims jwt.MapClaims) error {
 	// Check if user_id exists
-	if userID, exists := claims["user_id"]; exists {
+	if userID, exists := claims[ClaimUserID]; exists {
 		// Verify it's a string and not empty
 		if userIDStr, ok := userID.(string); ok {
 			if userIDStr == "" {
