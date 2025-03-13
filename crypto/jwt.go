@@ -37,6 +37,10 @@ var (
 	// ErrTokenUsedBeforeIssued is returned when a token's "iat" (issued at) claim
 	// is in the future, indicating the token is being used before it was issued
 	ErrTokenUsedBeforeIssued = errors.New("token used before issued")
+	// ErrInvalidClaimFormat is returned when a claim has the wrong type
+	ErrInvalidClaimFormat = errors.New("invalid claim format")
+	// ErrClaimNotFound is returned when a required claim is missing
+	ErrClaimNotFound = errors.New("claim not found")
 )
 
 
@@ -61,9 +65,9 @@ func ValidateIssuedAt(claims jwt.MapClaims) error {
 			}
 			return nil
 		}
-		return fmt.Errorf("iat claim is not a number")
+		return ErrInvalidClaimFormat
 	}
-	return fmt.Errorf("iat claim is required but not found")
+	return ErrClaimNotFound
 }
 
 // ValidateUserID is a standalone function to validate the user_id claim
@@ -74,14 +78,14 @@ func ValidateUserID(claims jwt.MapClaims) error {
 		// Verify it's a string and not empty
 		if userIDStr, ok := userID.(string); ok {
 			if userIDStr == "" {
-				return fmt.Errorf("user_id claim is empty")
+				return ErrInvalidClaimFormat
 			}
 			// Additional user_id validation could go here
 			return nil
 		}
-		return fmt.Errorf("user_id claim is not a string")
+		return ErrInvalidClaimFormat
 	}
-	return fmt.Errorf("user_id claim is required but not found")
+	return ErrClaimNotFound
 }
 
 // ParseJwt verifies and parses JWT and returns its claims.
