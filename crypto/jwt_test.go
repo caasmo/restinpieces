@@ -250,7 +250,31 @@ func TestParseJwtUnverified(t *testing.T) {
 }
 
 
-func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
+func TestNewJwtSigningKeyWithCredentials_Valid(t *testing.T) {
+	validSecret := []byte("test_secret_32_bytes_long_xxxxxx")
+	testEmail := "test@example.com"
+	testPasswordHash := "hashed_password_123"
+
+	key, err := NewJwtSigningKeyWithCredentials(testEmail, testPasswordHash, validSecret)
+	if err != nil {
+		t.Fatalf("NewJwtSigningKeyWithCredentials() error = %v, want nil", err)
+	}
+
+	if len(key) != 32 { // SHA256 hash length
+		t.Errorf("NewJwtSigningKeyWithCredentials() key length = %d, want 32", len(key))
+	}
+
+	// Test deterministic output for same inputs
+	key2, err := NewJwtSigningKeyWithCredentials(testEmail, testPasswordHash, validSecret)
+	if err != nil {
+		t.Fatalf("Second call returned unexpected error: %v", err)
+	}
+	if !hmac.Equal(key, key2) {
+		t.Error("NewJwtSigningKeyWithCredentials() returned different keys for same inputs")
+	}
+}
+
+func TestNewJwtSigningKeyWithCredentials_Errors(t *testing.T) {
 	validSecret := []byte("test_secret_32_bytes_long_xxxxxx")
 	testEmail := "test@example.com"
 	testPasswordHash := "hashed_password_123"
@@ -261,23 +285,13 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 		password    string
 		secret      []byte
 		wantError   error
-		wantKeyLen  int
 	}{
-		{
-			name:       "valid inputs",
-			email:      testEmail,
-			password:   testPasswordHash,
-			secret:     validSecret,
-			wantError:  nil,
-			wantKeyLen: 32, // SHA256 hash length
-		},
 		{
 			name:       "empty email",
 			email:      "",
 			password:   testPasswordHash,
 			secret:     validSecret,
 			wantError:  ErrInvalidSigningKeyParts,
-			wantKeyLen: 0,
 		},
 		{
 			name:       "empty password hash",
@@ -285,7 +299,6 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 			password:   "",
 			secret:     validSecret,
 			wantError:  ErrInvalidSigningKeyParts,
-			wantKeyLen: 0,
 		},
 		{
 			name:       "short server secret",
@@ -293,32 +306,14 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 			password:   testPasswordHash,
 			secret:     []byte("short"),
 			wantError:  ErrJwtInvalidSecretLength,
-			wantKeyLen: 0,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key, err := NewJwtSigningKeyWithCredentials(tt.email, tt.password, tt.secret)
-			
+			_, err := NewJwtSigningKeyWithCredentials(tt.email, tt.password, tt.secret)
 			if !errors.Is(err, tt.wantError) {
 				t.Errorf("NewJwtSigningKeyWithCredentials() error = %v, want %v", err, tt.wantError)
-				return
-			}
-			
-			if tt.wantError == nil && len(key) != tt.wantKeyLen {
-				t.Errorf("NewJwtSigningKeyWithCredentials() key length = %d, want %d", len(key), tt.wantKeyLen)
-			}
-			
-			// Test deterministic output for same inputs
-			if tt.wantError == nil {
-				key2, err := NewJwtSigningKeyWithCredentials(tt.email, tt.password, tt.secret)
-				if err != nil {
-					t.Errorf("Second call returned unexpected error: %v", err)
-				}
-				if !hmac.Equal(key, key2) {
-					t.Error("NewJwtSigningKeyWithCredentials() returned different keys for same inputs")
-				}
 			}
 		})
 	}
