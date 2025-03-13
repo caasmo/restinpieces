@@ -208,23 +208,3 @@ func generateToken(email, passwordHash string, secret []byte, expiresIn time.Dur
 	return token, nil
 }
 
-func generateInvalidSigningToken(t *testing.T, userID string) string {
-	t.Helper()
-	// Create token with invalid signing method (ES256 instead of HMAC)
-	token := jwtv5.NewWithClaims(jwtv5.SigningMethodES256, jwtv5.MapClaims{
-		crypto.ClaimUserID:   userID,
-		crypto.ClaimExpiresAt: jwtv5.NewNumericDate(time.Now().Add(15 * time.Minute)),
-	})
-
-	// Generate EC key pair for testing
-	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		t.Fatalf("failed to generate EC key: %v", err)
-	}
-
-	tokenString, err := token.SignedString(privateKey)
-	if err != nil {
-		t.Fatalf("failed to sign token: %v", err)
-	}
-	return tokenString
-}
