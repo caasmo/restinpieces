@@ -88,9 +88,18 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 			name: "valid token",
 			userSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByIdConfig.User = testUser
+				// Set up user's email and password to match expected signing key
+				testUser.Email = "test@example.com"
+				testUser.Password = "hashed_password"
 			},
 			tokenSetup: func(t *testing.T) string {
-				return generateTestToken(t, testUser.ID)
+				// Generate token with test secret
+				claims := map[string]any{crypto.ClaimUserID: testUser.ID}
+				token, _, err := crypto.NewJwt(claims, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
+				if err != nil {
+					t.Fatalf("failed to generate test token: %v", err)
+				}
+				return token
 			},
 			wantError: nil,
 		},
@@ -134,6 +143,7 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 				}),
 				WithDB(mockDB),
 				WithRouter(&MockRouter{}),
+				WithCache(&cache.MockCache{}), // Add cache
 			)
 
 			var capturedUserID string
