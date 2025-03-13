@@ -248,6 +248,81 @@ func TestParseJwtUnverified(t *testing.T) {
 	}
 }
 
+
+func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
+	validSecret := []byte("test_secret_32_bytes_long_xxxxxx")
+	testEmail := "test@example.com"
+	testPasswordHash := "hashed_password_123"
+
+	tests := []struct {
+		name        string
+		email       string
+		password    string
+		secret      []byte
+		wantError   error
+		wantKeyLen  int
+	}{
+		{
+			name:       "valid inputs",
+			email:      testEmail,
+			password:   testPasswordHash,
+			secret:     validSecret,
+			wantError:  nil,
+			wantKeyLen: 32, // SHA256 hash length
+		},
+		{
+			name:       "empty email",
+			email:      "",
+			password:   testPasswordHash,
+			secret:     validSecret,
+			wantError:  ErrJwtInvalidSecretLength,
+			wantKeyLen: 0,
+		},
+		{
+			name:       "empty password hash",
+			email:      testEmail,
+			password:   "",
+			secret:     validSecret,
+			wantError:  ErrJwtInvalidSecretLength,
+			wantKeyLen: 0,
+		},
+		{
+			name:       "short server secret",
+			email:      testEmail,
+			password:   testPasswordHash,
+			secret:     []byte("short"),
+			wantError:  ErrJwtInvalidSecretLength,
+			wantKeyLen: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			key, err := NewJwtSigningKeyWithCredentials(tt.email, tt.password, tt.secret)
+			
+			if !errors.Is(err, tt.wantError) {
+				t.Errorf("NewJwtSigningKeyWithCredentials() error = %v, want %v", err, tt.wantError)
+				return
+			}
+			
+			if tt.wantError == nil && len(key) != tt.wantKeyLen {
+				t.Errorf("NewJwtSigningKeyWithCredentials() key length = %d, want %d", len(key), tt.wantKeyLen)
+			}
+			
+			// Test deterministic output for same inputs
+			if tt.wantError == nil {
+				key2, err := NewJwtSigningKeyWithCredentials(tt.email, tt.password, tt.secret)
+				if err != nil {
+					t.Errorf("Second call returned unexpected error: %v", err)
+				}
+				if !hmac.Equal(key, key2) {
+					t.Error("NewJwtSigningKeyWithCredentials() returned different keys for same inputs")
+				}
+			}
+		})
+	}
+}
+
 func generateES256Token(t *testing.T) string {
 	t.Helper()
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
