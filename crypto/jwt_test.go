@@ -152,7 +152,7 @@ func TestValidateClaimIssuedAt(t *testing.T) {
 	}{
 		{
 			name:      "valid iat",
-			claims:    jwt.MapClaims{ClaimIssuedAt: now.Add(-1 * time.Minute).Unix()},
+			claims:    jwt.MapClaims{ClaimIssuedAt: float64(now.Add(-1 * time.Minute).Unix())},
 			wantError: nil,
 		},
 		{
