@@ -114,7 +114,19 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 				mockDB.GetUserByIdConfig.User = testUser
 			},
 			tokenSetup: func(t *testing.T) string {
-				return generateExpiredTestToken(t, testUser.ID)
+				// Generate signing key using user credentials and test secret
+				signingKey, err := crypto.NewJwtSigningKeyWithCredentials(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"))
+				if err != nil {
+					t.Fatalf("failed to generate signing key: %v", err)
+				}
+
+				// Generate token with derived signing key and negative duration
+				claims := map[string]any{crypto.ClaimUserID: testUser.ID}
+				token, _, err := crypto.NewJwt(claims, signingKey, -30*time.Minute)
+				if err != nil {
+					t.Fatalf("failed to generate test token: %v", err)
+				}
+				return token
 			},
 			wantError: &errorJwtTokenExpired,
 		},
