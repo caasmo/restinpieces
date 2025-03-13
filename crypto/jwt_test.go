@@ -263,6 +263,7 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 	if len(key) != 32 { // SHA256 hash length
 		t.Errorf("NewJwtSigningKeyWithCredentials() key length = %d, want 32", len(key))
 	}
+	t.Logf("Generated signing key (hex): %x", key)
 
 	// Test deterministic output for same inputs
 	key2, err := NewJwtSigningKeyWithCredentials(testEmail, testPasswordHash, validSecret)
