@@ -1,9 +1,10 @@
 package app
 
 import (
-	"crypto/ecdsa"
+	"crypto/ecdsa" 
 	"crypto/elliptic"
 	"crypto/rand"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
