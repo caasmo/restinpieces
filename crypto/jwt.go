@@ -57,7 +57,7 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func ValidateIssuedAt(claims jwt.MapClaims) error {
+func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
 	if iat, ok := claims["iat"]; ok {
 		if iatTime, ok := iat.(float64); ok {
 			if int64(iatTime) > time.Now().Unix() {
@@ -70,9 +70,9 @@ func ValidateIssuedAt(claims jwt.MapClaims) error {
 	return ErrClaimNotFound
 }
 
-// ValidateUserID is a standalone function to validate the user_id claim
+// ValidateClaimUserID is a standalone function to validate the user_id claim
 // that can be called separately when needed
-func ValidateUserID(claims jwt.MapClaims) error {
+func ValidateClaimUserID(claims jwt.MapClaims) error {
 	// Check if user_id exists
 	if userID, exists := claims["user_id"]; exists {
 		// Verify it's a string and not empty
