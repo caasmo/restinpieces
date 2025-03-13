@@ -162,7 +162,7 @@ func TestValidateClaimIssuedAt(t *testing.T) {
 		},
 		{
 			name:      "iat in future",
-			claims:    jwt.MapClaims{ClaimIssuedAt: now.Add(1 * time.Minute).Unix()},
+			claims:    jwt.MapClaims{ClaimIssuedAt: float64(now.Add(1 * time.Minute).Unix())},
 			wantError: ErrTokenUsedBeforeIssued,
 		},
 		{
