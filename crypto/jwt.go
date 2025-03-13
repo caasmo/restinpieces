@@ -37,6 +37,8 @@ var (
 	ErrJwtInvalidSigningMethod = errors.New("unexpected signing method")
 	// ErrJwtInvalidSecretLength is returned for invalid secret lengths
 	ErrJwtInvalidSecretLength = errors.New("invalid secret length")
+	// ErrInvalidSigningKeyParts is returned when email or password hash are empty
+	ErrInvalidSigningKeyParts = errors.New("invalid signing key parts")
 	// ErrTokenUsedBeforeIssued is returned when a token's "iat" (issued at) claim
 	// is in the future, indicating the token is being used before it was issued
 	ErrTokenUsedBeforeIssued = errors.New("token used before issued")
@@ -175,7 +177,7 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 func NewJwtSigningKeyWithCredentials(email, passwordHash string, secret []byte) ([]byte, error) {
     // Validate inputs
     if email == "" || passwordHash == "" {
-        return nil, ErrJwtInvalidSecretLength 
+        return nil, ErrInvalidSigningKeyParts 
     }
 
     // Validate server secret length

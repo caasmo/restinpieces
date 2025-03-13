@@ -276,7 +276,7 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 			email:      "",
 			password:   testPasswordHash,
 			secret:     validSecret,
-			wantError:  ErrJwtInvalidSecretLength,
+			wantError:  ErrInvalidSigningKeyParts,
 			wantKeyLen: 0,
 		},
 		{
@@ -284,7 +284,7 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 			email:      testEmail,
 			password:   "",
 			secret:     validSecret,
-			wantError:  ErrJwtInvalidSecretLength,
+			wantError:  ErrInvalidSigningKeyParts,
 			wantKeyLen: 0,
 		},
 		{
