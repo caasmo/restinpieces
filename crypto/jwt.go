@@ -58,15 +58,12 @@ func ValidateIssuedAt(claims jwt.MapClaims) error {
 		if iatTime, ok := iat.(float64); ok {
 			now := time.Now().Unix()
 			if int64(iatTime) > now {
-				fmt.Errorf("token used before issued (iat: %v, now: %v)", int64(iatTime), now)
+				return ErrTokenUsedBeforeIssued
 			}
-			// Additional user_id validation could go here
 			return nil
-		} 
-
+		}
 		return fmt.Errorf("iat claim is not a number")
-	} 
-
+	}
 	return fmt.Errorf("iat claim is required but not found")
 }
 
