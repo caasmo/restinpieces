@@ -25,7 +25,7 @@ func TestJwtValidate_RequestValidation(t *testing.T) {
 	}{
 		{
 			name:       "invalid signing method",
-			authHeader: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE6MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c", // Malformed token with invalid time format
+			authHeader: generateES256Token(t),
 			wantError:  &errorJwtInvalidSignMethod,
 		},
 		{
@@ -195,6 +195,30 @@ func generateTestToken(t *testing.T, userID string) string {
 		t.Fatalf("failed to generate test token: %v", err)
 	}
 	return token
+}
+
+func generateES256Token(t *testing.T) string {
+	t.Helper()
+	
+	// Generate EC private key
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("failed to generate EC key: %v", err)
+	}
+
+	// Create token with ES256 signing method
+	token := jwtv5.NewWithClaims(jwtv5.SigningMethodES256, jwtv5.MapClaims{
+		"user_id": "testuser",
+		"exp":     time.Now().Add(15 * time.Minute).Unix(),
+	})
+
+	// Sign the token
+	tokenString, err := token.SignedString(privateKey)
+	if err != nil {
+		t.Fatalf("failed to sign token: %v", err)
+	}
+
+	return tokenString
 }
 
 func generateToken(email, passwordHash string, secret []byte, expiresIn time.Duration) (string, error) {
