@@ -250,7 +250,7 @@ func TestParseJwtUnverified(t *testing.T) {
 }
 
 
-func TestNewJwtSigningKeyWithCredentials_Valid(t *testing.T) {
+func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 	validSecret := []byte("test_secret_32_bytes_long_xxxxxx")
 	testEmail := "test@example.com"
 	testPasswordHash := "hashed_password_123"
@@ -274,7 +274,7 @@ func TestNewJwtSigningKeyWithCredentials_Valid(t *testing.T) {
 	}
 }
 
-func TestNewJwtSigningKeyWithCredentials_Errors(t *testing.T) {
+func TestNewJwtSigningKeyWithCredentials_ErrorCases(t *testing.T) {
 	validSecret := []byte("test_secret_32_bytes_long_xxxxxx")
 	testEmail := "test@example.com"
 	testPasswordHash := "hashed_password_123"
