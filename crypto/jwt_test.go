@@ -192,6 +192,62 @@ func TestValidateClaimIssuedAt(t *testing.T) {
 	}
 }
 
+func TestParseJwtUnverified(t *testing.T) {
+	testCases := []struct {
+		name        string
+		tokenString string
+		wantClaims  jwt.MapClaims
+		wantError   error
+	}{
+		{
+			name:        "valid token",
+			tokenString: generateValidToken(t),
+			wantClaims:  jwt.MapClaims{"user_id": "testuser"},
+			wantError:   nil,
+		},
+		{
+			name:        "malformed token",
+			tokenString: "malformed.token.string",
+			wantClaims:  nil,
+			wantError:   jwt.ErrTokenMalformed,
+		},
+		{
+			name:        "invalid token format",
+			tokenString: "invalid.token",
+			wantClaims:  nil,
+			wantError:   jwt.ErrTokenMalformed,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			claims, err := ParseJwtUnverified(tc.tokenString)
+			
+			// Check error expectations
+			if (err != nil && tc.wantError == nil) || (err == nil && tc.wantError != nil) {
+				t.Errorf("ParseJwtUnverified() error = %v, want %v", err, tc.wantError)
+				return
+			}
+			
+			// Check claims expectations
+			if tc.wantClaims != nil {
+				if claims == nil {
+					t.Error("expected non-nil claims, got nil")
+					return
+				}
+				
+				for k, v := range tc.wantClaims {
+					if claims[k] != v {
+						t.Errorf("expected claim %q = %v, got %v", k, v, claims[k])
+					}
+				}
+			} else if claims != nil {
+				t.Error("expected nil claims, got non-nil")
+			}
+		})
+	}
+}
+
 func generateES256Token(t *testing.T) string {
 	t.Helper()
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
