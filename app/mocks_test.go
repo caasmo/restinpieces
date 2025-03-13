@@ -14,6 +14,10 @@ type MockDB struct {
         User  *db.User
         Error error
     }
+    GetUserByIdConfig struct {
+        User  *db.User
+        Error error
+    }
     CreateUserConfig struct {
         User  *db.User
         Error error
@@ -37,11 +41,7 @@ func (m *MockDB) CreateUser(user db.User) (*db.User, error) {
 }
 
 func (m *MockDB) GetUserById(id string) (*db.User, error) {
-    return &db.User{
-        ID:       id,
-        Email:    "test@example.com",
-        Password: "hashed_password",
-    }, nil
+    return m.GetUserByIdConfig.User, m.GetUserByIdConfig.Error
 }
 
 // MockRouter implements router.Router interface for testing

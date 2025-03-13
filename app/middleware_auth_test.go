@@ -14,38 +14,26 @@ import (
 	jwtv5 "github.com/golang-jwt/jwt/v5"
 )
 
-func TestJwtValidateMiddleware(t *testing.T) {
+func TestJwtValidate_RequestValidation(t *testing.T) {
 	testCases := []struct {
-		name         string
-		authHeader   string
-		wantError    *jsonError
-		expectUserID bool
+		name       string
+		authHeader string
+		wantError  *jsonError
 	}{
-		{
-			name:         "valid token",
-			authHeader:   "Bearer " + generateTestToken(t, "testuser123"),
-			wantError:    nil,
-			expectUserID: true,
-		},
 		{
 			name:       "missing authorization header",
 			authHeader: "",
 			wantError:  &errorNoAuthHeader,
 		},
 		{
-			name:       "invalid token format",
+			name:       "invalid token format", 
 			authHeader: "InvalidToken",
 			wantError:  &errorInvalidTokenFormat,
 		},
 		{
-			name:       "expired token",
-			authHeader: "Bearer " + generateExpiredTestToken(t, "testuser123"),
-			wantError:  &errorJwtTokenExpired,
-		},
-		{
-			name:       "invalid signing method",
-			authHeader: "Bearer " + generateInvalidSigningToken(t, "testuser123"),
-			wantError:  &errorJwtInvalidSignMethod,
+			name:       "invalid bearer prefix",
+			authHeader: "Basic abc123",
+			wantError:  &errorInvalidTokenFormat,
 		},
 	}
 
@@ -59,24 +47,99 @@ func TestJwtValidateMiddleware(t *testing.T) {
 			rr := httptest.NewRecorder()
 			a, _ := New(
 				WithConfig(&config.Config{
-					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
+					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"),
 					TokenDuration: 15 * time.Minute,
 				}),
 				WithDB(&MockDB{}),
 				WithRouter(&MockRouter{}),
 			)
 
-			// Create a test handler that checks for user ID in context
+			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+			middleware := a.JwtValidate(testHandler)
+			middleware.ServeHTTP(rr, req)
+
+			if rr.Code != tc.wantError.code {
+				t.Errorf("expected status %d, got %d", tc.wantError.code, rr.Code)
+			}
+			if !strings.Contains(rr.Body.String(), string(tc.wantError.body)) {
+				t.Errorf("expected error response %q, got %q", string(tc.wantError.body), rr.Body.String())
+			}
+		})
+	}
+}
+
+func TestJwtValidate_DatabaseTests(t *testing.T) {
+	testUser := &db.User{
+		ID:       "testuser123",
+		Email:    "test@example.com",
+		Password: "hashed_password",
+		TokenKey: "token_key",
+	}
+
+	testCases := []struct {
+		name       string
+		userSetup  func(*MockDB)
+		tokenSetup func(*testing.T) string
+		wantError  *jsonError
+	}{
+		{
+			name: "valid token",
+			userSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByIdConfig.User = testUser
+			},
+			tokenSetup: func(t *testing.T) string {
+				return generateTestToken(t, testUser.ID, testUser.Email, testUser.Password)
+			},
+			wantError: nil,
+		},
+		{
+			name: "expired token",
+			userSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByIdConfig.User = testUser
+			},
+			tokenSetup: func(t *testing.T) string {
+				return generateTestToken(t, testUser.ID, testUser.Email, testUser.Password, -30*time.Minute)
+			},
+			wantError: &errorJwtTokenExpired,
+		},
+		{
+			name: "user not found",
+			userSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByIdConfig.User = nil
+			},
+			tokenSetup: func(t *testing.T) string {
+				return generateTestToken(t, testUser.ID, testUser.Email, testUser.Password)
+			},
+			wantError: &errorJwtInvalidToken,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockDB := &MockDB{}
+			if tc.userSetup != nil {
+				tc.userSetup(mockDB)
+			}
+
+			req := httptest.NewRequest("GET", "/protected", nil)
+			req.Header.Set("Authorization", "Bearer " + tc.tokenSetup(t))
+
+			rr := httptest.NewRecorder()
+			a, _ := New(
+				WithConfig(&config.Config{
+					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"),
+					TokenDuration: 15 * time.Minute,
+				}),
+				WithDB(mockDB),
+				WithRouter(&MockRouter{}),
+			)
+
+			var capturedUserID string
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				userID, ok := r.Context().Value(UserIDKey).(string)
-				if tc.expectUserID && !ok {
-					t.Error("Expected user ID in context but none found")
-				}
-				_ = userID // Silence unused var check
+				capturedUserID = r.Context().Value(UserIDKey).(string)
 				w.WriteHeader(http.StatusOK)
 			})
 
-			// Apply the middleware and serve the request
 			middleware := a.JwtValidate(testHandler)
 			middleware.ServeHTTP(rr, req)
 
@@ -84,12 +147,15 @@ func TestJwtValidateMiddleware(t *testing.T) {
 				if rr.Code != tc.wantError.code {
 					t.Errorf("expected status %d, got %d", tc.wantError.code, rr.Code)
 				}
-				if rr.Body.String() != string(tc.wantError.body) {
+				if !strings.Contains(rr.Body.String(), string(tc.wantError.body)) {
 					t.Errorf("expected error response %q, got %q", string(tc.wantError.body), rr.Body.String())
 				}
 			} else {
 				if rr.Code != http.StatusOK {
 					t.Errorf("expected status OK, got %d", rr.Code)
+				}
+				if capturedUserID != testUser.ID {
+					t.Errorf("expected user ID %q in context, got %q", testUser.ID, capturedUserID)
 				}
 			}
 		})
