@@ -69,8 +69,12 @@ func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
 		// JSON which represents all numbers as float64
 		// Sub-second Precision
 		if iatTime, ok := iat.(float64); ok {
-			if int64(iatTime) > time.Now().Unix() {
-				return ErrTokenUsedBeforeIssued
+			iatUnix := int64(iatTime)
+			if iatUnix > time.Now().Unix() {
+				return ErrTokenUsedBeforeIssued 
+			}
+			if time.Since(time.Unix(iatUnix, 0)) > MaxTokenAge {
+				return ErrTokenTooOld
 			}
 			return nil
 		}
