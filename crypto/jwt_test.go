@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"crypto/hmac"
 	"errors"
 	"testing"
 	"time"
