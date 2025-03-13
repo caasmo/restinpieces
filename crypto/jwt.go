@@ -112,6 +112,10 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 	return nil, ErrJwtInvalidToken
 }
 
+
+
+
+
 // NewJWT generates a new JWT token with the provided claims
 // payload is jwt.MapClaims which is just map[string]any
 // you can just call payload := map[string]any{"user_id": userID}
