@@ -175,6 +175,11 @@ func TestValidateClaimIssuedAt(t *testing.T) {
 			claims:    jwt.MapClaims{"foo": "bar", ClaimIssuedAt: now.Add(-1 * time.Minute).Unix()},
 			wantError: nil,
 		},
+		{
+			name:      "token too old",
+			claims:    jwt.MapClaims{ClaimIssuedAt: now.Add(-8 * 24 * time.Hour).Unix()},
+			wantError: ErrTokenTooOld,
+		},
 	}
 
 	for _, tc := range testCases {
