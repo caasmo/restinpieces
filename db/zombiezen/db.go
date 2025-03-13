@@ -101,6 +101,51 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	return fmt.Errorf("InsertQueueJob not implemented for zombiezen SQLite variant")
 }
 
+func (d *Db) GetUserById(id string) (*db.User, error) {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	defer d.pool.Put(conn)
+
+	var user *db.User
+	err = sqlitex.Execute(conn,
+		`SELECT id, email, name, password, created, updated, verified, tokenKey 
+		FROM users WHERE id = ? LIMIT 1`,
+		&sqlitex.ExecOptions{
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				created, err := db.TimeParse(stmt.GetText("created"))
+				if err != nil {
+					return fmt.Errorf("error parsing created time: %w", err)
+				}
+
+				updated, err := db.TimeParse(stmt.GetText("updated"))
+				if err != nil {
+					return fmt.Errorf("error parsing updated time: %w", err)
+				}
+
+				user = &db.User{
+					ID:       stmt.GetText("id"),
+					Email:    stmt.GetText("email"),
+					Name:     stmt.GetText("name"),
+					Password: stmt.GetText("password"),
+					Created:  created,
+					Updated:  updated,
+					Verified: stmt.GetInt64("verified") != 0,
+					TokenKey: stmt.GetText("tokenKey"),
+				}
+				return nil
+			},
+			Args: []interface{}{id},
+		})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {

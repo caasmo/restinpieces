@@ -12,6 +12,7 @@ type Db interface {
 	Insert(value int64)
 	InsertWithPool(value int64)
 	GetUserByEmail(email string) (*User, error)
+	GetUserById(id string) (*User, error)
 	CreateUser(user User) (*User, error)
 	InsertQueueJob(job queue.QueueJob) error
 }

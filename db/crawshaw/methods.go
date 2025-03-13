@@ -78,6 +78,56 @@ func validateQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
+// GetUserById retrieves a user by their unique ID.
+// Returns:
+// - *db.User: User record if found, nil if no matching record exists
+// - returned time Fields are in UTC, RFC3339
+// - error: Only returned for database errors, nil on successful query (even if no results)
+// Note: A nil user with nil error indicates no matching record was found
+func (d *Db) GetUserById(id string) (*db.User, error) {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	var user *db.User // Will remain nil if no rows found
+	err := sqlitex.Exec(conn,
+		`SELECT id, email, name, password, created, updated, verified, tokenKey 
+		FROM users WHERE id = ? LIMIT 1`,
+		func(stmt *sqlite.Stmt) error {
+
+			// Get the date strings
+			createdStr := stmt.GetText("created")
+			updatedStr := stmt.GetText("updated")
+
+			created, err := db.TimeParse(createdStr)
+			if err != nil {
+				return fmt.Errorf("error parsing created time: %w", err)
+			}
+
+			updated, err := db.TimeParse(updatedStr)
+			if err != nil {
+				return fmt.Errorf("error parsing updated time: %w", err)
+			}
+
+			user = &db.User{
+				ID:       stmt.GetText("id"),
+				Email:    stmt.GetText("email"),
+				Name:     stmt.GetText("name"),
+				Password: stmt.GetText("password"),
+				Created:  created,
+				Updated:  updated,
+				Verified: stmt.GetInt64("verified") != 0,
+				TokenKey: stmt.GetText("tokenKey"),
+			}
+			return nil
+		}, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func validateUserFields(user db.User) error {
 	var missingFields []string
 	if user.Email == "" {
