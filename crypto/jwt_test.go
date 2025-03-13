@@ -172,7 +172,7 @@ func TestValidateClaimIssuedAt(t *testing.T) {
 		},
 		{
 			name:      "iat in non-empty claims",
-			claims:    jwt.MapClaims{"foo": "bar", ClaimIssuedAt: now.Add(-1 * time.Minute).Unix()},
+			claims:    jwt.MapClaims{"foo": "bar", ClaimIssuedAt: float64(now.Add(-1 * time.Minute).Unix())},
 			wantError: nil,
 		},
 		{
