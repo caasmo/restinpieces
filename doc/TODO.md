@@ -1,6 +1,10 @@
 ### TODOs
 
 
+- refresh jwt
+- generate new jwt register 
+- jwt invalidation go tests
+- integration sh test post invalidation jwt 
 - User schema, remove tokenKey
 - jwt signing key invalidation
 - test requestverification: test also insertion in queue, now only mock nil.

@@ -118,7 +118,7 @@ func TestValidateClaimUserID(t *testing.T) {
 			wantError: ErrClaimNotFound,
 		},
 		{
-			name:      "missing user_id in non-empty claims", 
+			name:      "missing user_id in non-empty claims",
 			claims:    jwt.MapClaims{"foo": "bar"},
 			wantError: ErrClaimNotFound,
 		},
@@ -223,20 +223,20 @@ func TestParseJwtUnverified(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			claims, err := ParseJwtUnverified(tc.tokenString)
-			
+
 			// Check error expectations
 			if (err != nil && tc.wantError == nil) || (err == nil && tc.wantError != nil) {
 				t.Errorf("ParseJwtUnverified() error = %v, want %v", err, tc.wantError)
 				return
 			}
-			
+
 			// Check claims expectations
 			if tc.wantClaims != nil {
 				if claims == nil {
 					t.Error("expected non-nil claims, got nil")
 					return
 				}
-				
+
 				for k, v := range tc.wantClaims {
 					if claims[k] != v {
 						t.Errorf("expected claim %q = %v, got %v", k, v, claims[k])
@@ -248,7 +248,6 @@ func TestParseJwtUnverified(t *testing.T) {
 		})
 	}
 }
-
 
 func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 	validSecret := []byte("test_secret_32_bytes_long_xxxxxx")
@@ -281,32 +280,32 @@ func TestNewJwtSigningKeyWithCredentialsErrors(t *testing.T) {
 	testPasswordHash := "hashed_password_123"
 
 	tests := []struct {
-		name        string
-		email       string
-		password    string
-		secret      []byte
-		wantError   error
+		name      string
+		email     string
+		password  string
+		secret    []byte
+		wantError error
 	}{
 		{
-			name:       "empty email",
-			email:      "",
-			password:   testPasswordHash,
-			secret:     validSecret,
-			wantError:  ErrInvalidSigningKeyParts,
+			name:      "empty email",
+			email:     "",
+			password:  testPasswordHash,
+			secret:    validSecret,
+			wantError: ErrInvalidSigningKeyParts,
 		},
 		{
-			name:       "empty password hash",
-			email:      testEmail,
-			password:   "",
-			secret:     validSecret,
-			wantError:  ErrInvalidSigningKeyParts,
+			name:      "empty password hash",
+			email:     testEmail,
+			password:  "",
+			secret:    validSecret,
+			wantError: ErrInvalidSigningKeyParts,
 		},
 		{
-			name:       "short server secret",
-			email:      testEmail,
-			password:   testPasswordHash,
-			secret:     []byte("short"),
-			wantError:  ErrJwtInvalidSecretLength,
+			name:      "short server secret",
+			email:     testEmail,
+			password:  testPasswordHash,
+			secret:    []byte("short"),
+			wantError: ErrJwtInvalidSecretLength,
 		},
 	}
 

@@ -377,7 +377,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := testDB.InsertQueueJob(tt.job)
-			
+
 			if tt.wantErr {
 				if err == nil {
 					t.Error("expected error but got none")
@@ -445,8 +445,8 @@ func TestInsertQueueJobDuplicate(t *testing.T) {
 
 	// Second insert with duplicate payload
 	dupJob := queue.QueueJob{
-		JobType:     "test_job",  // Same job type as initial insert
-		Payload:     json.RawMessage(`{"key":"unique_value"}`),  // Same payload as initial insert
+		JobType:     "test_job",                                // Same job type as initial insert
+		Payload:     json.RawMessage(`{"key":"unique_value"}`), // Same payload as initial insert
 		Status:      queue.StatusPending,
 		MaxAttempts: 3,
 	}

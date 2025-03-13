@@ -3,12 +3,12 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
-	"errors"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
@@ -31,7 +31,7 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:       "missing email field", 
+			name:       "missing email field",
 			json:       `{}`,
 			wantStatus: http.StatusBadRequest,
 		},
@@ -46,7 +46,7 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			wantStatus: http.StatusBadRequest,
 		},
 		{
-			name:       "missing email field", 
+			name:       "missing email field",
 			json:       `{}`,
 			wantStatus: http.StatusBadRequest,
 		},
@@ -62,7 +62,7 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			reqBody := tc.json
 			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
-			
+
 			rr := httptest.NewRecorder()
 			a, _ := New(
 				WithConfig(&config.Config{
@@ -77,14 +77,14 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			if rr.Code != tc.wantStatus {
 				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
 			}
-			
+
 			// Validate error response body when expected
 			if tc.wantStatus >= 400 {
 				var resp map[string]interface{}
 				if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
 					t.Fatalf("failed to decode error response: %v", err)
 				}
-				
+
 				if _, ok := resp["error"]; !ok {
 					t.Error("error response missing 'error' field")
 				}
@@ -108,7 +108,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				mockDB.GetUserByEmailConfig.User = nil
 			},
 			wantStatus: http.StatusNotFound,
-			desc: "When email exists but GetUserByEmail returns nil user, should return 404",
+			desc:       "When email exists but GetUserByEmail returns nil user, should return 404",
 		},
 		{
 			name: "email exists but user not verified",
@@ -121,7 +121,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				}
 			},
 			wantStatus: http.StatusAccepted,
-			desc: "When email exists and user is not verified, should return 202 Accepted",
+			desc:       "When email exists and user is not verified, should return 202 Accepted",
 		},
 		{
 			name: "email exists and user is verified",
@@ -134,7 +134,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				}
 			},
 			wantStatus: http.StatusConflict,
-			desc: "When email exists and user is already verified, should return 409 Conflict",
+			desc:       "When email exists and user is already verified, should return 409 Conflict",
 		},
 		{
 			name: "database error",
@@ -143,7 +143,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				mockDB.GetUserByEmailConfig.Error = errors.New("database connection failed")
 			},
 			wantStatus: http.StatusInternalServerError,
-			desc: "When database query fails, should return 500 Internal Server Error",
+			desc:       "When database query fails, should return 500 Internal Server Error",
 		},
 	}
 
@@ -152,12 +152,12 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 			reqBody := tc.json
 			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
-			
+
 			rr := httptest.NewRecorder()
-            mockDB := &MockDB{}
-            if tc.dbSetup != nil {
-                tc.dbSetup(mockDB)
-            }
+			mockDB := &MockDB{}
+			if tc.dbSetup != nil {
+				tc.dbSetup(mockDB)
+			}
 
 			a, _ := New(
 				WithConfig(&config.Config{

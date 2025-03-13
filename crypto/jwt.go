@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-    "crypto/hmac"
-    "crypto/sha256"
+	"crypto/hmac"
+	"crypto/sha256"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -51,16 +51,15 @@ var (
 	ErrTokenTooOld = errors.New("token too old")
 )
 
-
 // Implement only the validation you need rather than using the full validator
 func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
-    // Pre-allocate the claims map for better performance
-    claims := make(jwt.MapClaims)
+	// Pre-allocate the claims map for better performance
+	claims := make(jwt.MapClaims)
 
-    _, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
-    if err != nil {
-        return nil, err
-    }
+	_, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
+	if err != nil {
+		return nil, err
+	}
 
 	return claims, nil
 }
@@ -74,9 +73,9 @@ func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
 			iatUnix := int64(iatTime)
 			nowUnix := time.Now().Unix()
 			if iatUnix > nowUnix {
-				return ErrTokenUsedBeforeIssued 
+				return ErrTokenUsedBeforeIssued
 			}
-			if nowUnix - iatUnix > MaxTokenAge {
+			if nowUnix-iatUnix > MaxTokenAge {
 				return ErrTokenTooOld
 			}
 			return nil
@@ -105,8 +104,9 @@ func ValidateClaimUserID(claims jwt.MapClaims) error {
 }
 
 // ParseJwt verifies and parses JWT and returns its claims.
-// returns a map map[string]any that you can access like any other Go map. 
-// 		 exp := claims["exp"].(float64)
+// returns a map map[string]any that you can access like any other Go map.
+//
+//	exp := claims["exp"].(float64)
 func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 	parser := jwt.NewParser(jwt.WithValidMethods([]string{"HS256"}))
 
@@ -130,10 +130,6 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 
 	return nil, ErrJwtInvalidToken
 }
-
-
-
-
 
 // NewJWT generates a new JWT token with the provided claims
 // payload is jwt.MapClaims which is just map[string]any
@@ -159,41 +155,39 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 	return tokenString, expirationTime, nil
 }
 
-
 // NewJwtSigningKeyWithCredentials creates a JWT signing key using HMAC-SHA256.
 
 // It derives a unique key by combining user-specific data (email, passwordHash)
 // with a server secret (JWT_SECRET). Tokens are invalidated when the user's
 // email or password changes, or globally by rotating JWT_SECRET.
-// 
+//
 // Using HMAC prevents length-extension attacks, unlike simple hash concatenation.
 //
 // The function uses a null byte (\x00) as a delimiter to prevent collisions
 // between the email and passwordHash inputs. It returns the key as a byte slice,
 // suitable for use with github.com/golang-jwt/jwt/v5's SignedString method,
 // and an error if the server secret is unset or inputs are invalid.
-// 
+//
 // Note: JWT_SECRET should be a strong, random value (e.g., 32+ bytes).
 func NewJwtSigningKeyWithCredentials(email, passwordHash string, secret []byte) ([]byte, error) {
-    // Validate inputs
-    if email == "" || passwordHash == "" {
-        return nil, ErrInvalidSigningKeyParts 
-    }
+	// Validate inputs
+	if email == "" || passwordHash == "" {
+		return nil, ErrInvalidSigningKeyParts
+	}
 
-    // Validate server secret length
-    if len(secret) < MinKeyLength {
-        return nil, ErrJwtInvalidSecretLength
-    }
+	// Validate server secret length
+	if len(secret) < MinKeyLength {
+		return nil, ErrJwtInvalidSecretLength
+	}
 
-    // Create HMAC hasher with server secret as key
-    h := hmac.New(sha256.New, secret)
+	// Create HMAC hasher with server secret as key
+	h := hmac.New(sha256.New, secret)
 
-    // Add user-specific data with null byte delimiter
-    h.Write([]byte(email))
-    h.Write([]byte{0}) // Null byte to avoid collisions
-    h.Write([]byte(passwordHash))
+	// Add user-specific data with null byte delimiter
+	h.Write([]byte(email))
+	h.Write([]byte{0}) // Null byte to avoid collisions
+	h.Write([]byte(passwordHash))
 
-    // Return the HMAC sum as a raw byte slice
-    return h.Sum(nil), nil
+	// Return the HMAC sum as a raw byte slice
+	return h.Sum(nil), nil
 }
-

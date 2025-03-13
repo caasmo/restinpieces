@@ -9,20 +9,20 @@ import (
 
 // MockDB implements db.Db interface for testing
 type MockDB struct {
-    // Method-specific configurations
-    GetUserByEmailConfig struct {
-        User  *db.User
-        Error error
-    }
-    GetUserByIdConfig struct {
-        User  *db.User
-        Error error
-    }
-    CreateUserConfig struct {
-        User  *db.User
-        Error error
-    }
-    // Add more method configs as needed
+	// Method-specific configurations
+	GetUserByEmailConfig struct {
+		User  *db.User
+		Error error
+	}
+	GetUserByIdConfig struct {
+		User  *db.User
+		Error error
+	}
+	CreateUserConfig struct {
+		User  *db.User
+		Error error
+	}
+	// Add more method configs as needed
 }
 
 func (m *MockDB) Close()                     {}
@@ -33,15 +33,15 @@ func (m *MockDB) InsertQueueJob(job queue.QueueJob) error {
 	return nil
 }
 func (m *MockDB) GetUserByEmail(email string) (*db.User, error) {
-    return m.GetUserByEmailConfig.User, m.GetUserByEmailConfig.Error
+	return m.GetUserByEmailConfig.User, m.GetUserByEmailConfig.Error
 }
 
 func (m *MockDB) CreateUser(user db.User) (*db.User, error) {
-    return m.CreateUserConfig.User, m.CreateUserConfig.Error
+	return m.CreateUserConfig.User, m.CreateUserConfig.Error
 }
 
 func (m *MockDB) GetUserById(id string) (*db.User, error) {
-    return m.GetUserByIdConfig.User, m.GetUserByIdConfig.Error
+	return m.GetUserByIdConfig.User, m.GetUserByIdConfig.Error
 }
 
 // MockRouter implements router.Router interface for testing

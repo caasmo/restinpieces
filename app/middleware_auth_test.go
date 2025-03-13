@@ -1,7 +1,7 @@
 package app
 
 import (
-	"crypto/ecdsa" 
+	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
@@ -24,12 +24,12 @@ func TestJwtValidate_RequestValidation(t *testing.T) {
 		wantError  *jsonError
 	}{
 		{
-			name:       "missing authorization header", 
+			name:       "missing authorization header",
 			authHeader: "",
 			wantError:  &errorNoAuthHeader,
 		},
 		{
-			name:       "invalid token format", 
+			name:       "invalid token format",
 			authHeader: "InvalidToken",
 			wantError:  &errorInvalidTokenFormat,
 		},
@@ -150,7 +150,7 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 			}
 
 			req := httptest.NewRequest("GET", "/protected", nil)
-			req.Header.Set("Authorization", "Bearer " + tc.tokenSetup(t))
+			req.Header.Set("Authorization", "Bearer "+tc.tokenSetup(t))
 
 			rr := httptest.NewRecorder()
 			a, _ := New(
@@ -229,4 +229,3 @@ func generateToken(email, passwordHash string, secret []byte, expiresIn time.Dur
 	}
 	return token, nil
 }
-
