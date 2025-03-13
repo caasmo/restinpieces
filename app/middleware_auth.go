@@ -39,7 +39,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		// Parse unverified token to get claims
 		claims, err := crypto.ParseJwtUnverified(tokenString)
 		if err != nil {
-			writeJSONError(w, errorInvalidToken)
+			writeJSONError(w, errorJwtInvalidToken)
 			return
 		}
 
@@ -49,13 +49,13 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 				writeJSONError(w, errorJwtTokenExpired)
 				return
 			}
-			writeJSONError(w, errorInvalidToken)
+			writeJSONError(w, errorJwtInvalidToken)
 			return
 		}
 
 		// Validate user ID claim
 		if err := crypto.ValidateClaimUserID(claims); err != nil {
-			writeJSONError(w, errorInvalidToken)
+			writeJSONError(w, errorJwtInvalidToken)
 			return
 		}
 
