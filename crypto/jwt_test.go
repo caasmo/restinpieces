@@ -274,7 +274,7 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 	}
 }
 
-func TestNewJwtSigningKeyWithCredentials_ErrorCases(t *testing.T) {
+func TestNewJwtSigningKeyWithCredentialsErrors(t *testing.T) {
 	validSecret := []byte("test_secret_32_bytes_long_xxxxxx")
 	testEmail := "test@example.com"
 	testPasswordHash := "hashed_password_123"
