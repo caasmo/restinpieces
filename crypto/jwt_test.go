@@ -117,8 +117,8 @@ func TestValidateClaimUserID(t *testing.T) {
 			wantError: ErrClaimNotFound,
 		},
 		{
-			name:      "missing user_id in non-empty claims",
-			claims:    jwt.MapClaims{"iat": time.Now().Unix(), "exp": time.Now().Add(time.Hour).Unix()},
+			name:      "missing user_id in non-empty claims", 
+			claims:    jwt.MapClaims{"foo": "bar"},
 			wantError: ErrClaimNotFound,
 		},
 		{
