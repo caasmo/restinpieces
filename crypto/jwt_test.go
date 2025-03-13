@@ -177,7 +177,7 @@ func TestValidateClaimIssuedAt(t *testing.T) {
 		},
 		{
 			name:      "token too old",
-			claims:    jwt.MapClaims{ClaimIssuedAt: now.Add(-8 * 24 * time.Hour).Unix()},
+			claims:    jwt.MapClaims{ClaimIssuedAt: float64(now.Add(-8 * 24 * time.Hour).Unix())},
 			wantError: ErrTokenTooOld,
 		},
 	}
