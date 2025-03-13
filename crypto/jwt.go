@@ -23,6 +23,9 @@ const (
 	ClaimIssuedAt  = "iat"     // JWT Issued At claim key
 	ClaimExpiresAt = "exp"     // JWT Expiration Time claim key
 	ClaimUserID    = "user_id" // JWT User ID claim key
+
+	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old
+	MaxTokenAge = 7 * 24 * time.Hour
 )
 
 var (
@@ -41,6 +44,9 @@ var (
 	ErrInvalidClaimFormat = errors.New("invalid claim format")
 	// ErrClaimNotFound is returned when a required claim is missing
 	ErrClaimNotFound = errors.New("claim not found")
+	// ErrTokenTooOld is returned when a token's "iat" (issued at) claim
+	// is older than the maximum allowed age (one week)
+	ErrTokenTooOld = errors.New("token too old")
 )
 
 
