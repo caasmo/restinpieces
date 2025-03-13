@@ -36,7 +36,9 @@ var (
 	ErrJwtInvalidSecretLength = errors.New("invalid secret length")
 )
 
-func ParseUnverifiedJWT(tokenString string) (jwt.MapClaims, error) {
+
+// Implement only the validation you need rather than using the full validator
+func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
     // Pre-allocate the claims map for better performance
     claims := make(jwt.MapClaims)
 
@@ -44,39 +46,44 @@ func ParseUnverifiedJWT(tokenString string) (jwt.MapClaims, error) {
     if err != nil {
         return nil, err
     }
+
+	return claims, nil
 }
 
-// like the validator above
-//If the token has an "iat" claim
-//If the "iat" time is valid (properly formatted as a numeric value)
-//Most importantly, it verifies that the "iat" time is not in the future (meaning the token hasn't been used before it was issued)
-// for ath jwt, validate id
-// If you need validation of specific claims, do it selectively
-	// rather than using the full validator
-//	if iat, ok := claims["iat"]; ok {
-//		if iatTime, ok := iat.(float64); ok {
-//			if time.Unix(int64(iatTime), 0).After(time.Now()) {
-//				return nil, jwt.ErrTokenUsedBeforeIssued
-//			}
-//		}
-//	}
+func ValidateIssuedAt(claims jwt.MapClaims) error {
+	if iat, ok := claims["iat"]; ok {
+		if iatTime, ok := iat.(float64); ok {
+			now := time.Now().Unix()
+			if int64(iatTime) > now {
+				fmt.Errorf("token used before issued (iat: %v, now: %v)", int64(iatTime), now)
+			}
+			// Additional user_id validation could go here
+			return nil
+		} 
 
-// validate userId
-// Validate user_id exists and is a non-empty string
-	//if userID, ok := claims["user_id"]; ok {
-	//	if userIDStr, ok := userID.(string); ok {
-	//		if userIDStr == "" {
-	//			return nil, fmt.Errorf("user_id claim is empty")
-	//		}
-	//		// Additional validation for user_id format could be added here
-	//	} else {
-	//		return nil, fmt.Errorf("user_id claim is not a string")
-	//	}
-	//} else {
-	//	return nil, fmt.Errorf("user_id claim is required but not found")
-	//}
+		return fmt.Errorf("iat claim is not a number")
+	} 
 
+	return fmt.Errorf("iat claim is required but not found")
+}
 
+// ValidateUserID is a standalone function to validate the user_id claim
+// that can be called separately when needed
+func ValidateUserID(claims jwt.MapClaims) error {
+	// Check if user_id exists
+	if userID, exists := claims["user_id"]; exists {
+		// Verify it's a string and not empty
+		if userIDStr, ok := userID.(string); ok {
+			if userIDStr == "" {
+				return fmt.Errorf("user_id claim is empty")
+			}
+			// Additional user_id validation could go here
+			return nil
+		}
+		return fmt.Errorf("user_id claim is not a string")
+	}
+	return fmt.Errorf("user_id claim is required but not found")
+}
 
 // ParseJwt verifies and parses JWT and returns its claims.
 // returns a map map[string]any that you can access like any other Go map. 
