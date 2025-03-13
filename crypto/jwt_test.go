@@ -112,8 +112,13 @@ func TestValidateClaimUserID(t *testing.T) {
 			wantError: nil,
 		},
 		{
-			name:      "missing user_id",
+			name:      "missing user_id in empty claims",
 			claims:    jwt.MapClaims{},
+			wantError: ErrClaimNotFound,
+		},
+		{
+			name:      "missing user_id in non-empty claims",
+			claims:    jwt.MapClaims{"iat": time.Now().Unix(), "exp": time.Now().Add(time.Hour).Unix()},
 			wantError: ErrClaimNotFound,
 		},
 		{
