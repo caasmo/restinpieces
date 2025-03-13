@@ -24,8 +24,8 @@ const (
 	ClaimExpiresAt = "exp"     // JWT Expiration Time claim key
 	ClaimUserID    = "user_id" // JWT User ID claim key
 
-	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old
-	MaxTokenAge = 7 * 24 * time.Hour
+	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)
+	MaxTokenAge = 7 * 24 * 60 * 60
 )
 
 var (
@@ -70,10 +70,11 @@ func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
 		// Sub-second Precision
 		if iatTime, ok := iat.(float64); ok {
 			iatUnix := int64(iatTime)
-			if iatUnix > time.Now().Unix() {
+			nowUnix := time.Now().Unix()
+			if iatUnix > nowUnix {
 				return ErrTokenUsedBeforeIssued 
 			}
-			if time.Since(time.Unix(iatUnix, 0)) > MaxTokenAge {
+			if nowUnix - iatUnix > MaxTokenAge {
 				return ErrTokenTooOld
 			}
 			return nil
