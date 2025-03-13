@@ -6,11 +6,13 @@ import (
 	"crypto/rand"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
+	"github.com/caasmo/restinpieces/db"
 	jwtv5 "github.com/golang-jwt/jwt/v5"
 )
 
