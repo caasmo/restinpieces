@@ -75,7 +75,6 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 		ID:       "testuser123",
 		Email:    "test@example.com",
 		Password: "hashed_password",
-		TokenKey: "token_key",
 	}
 
 	testCases := []struct {
@@ -89,8 +88,8 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 			userSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByIdConfig.User = testUser
 				// Set up user's email and password to match expected signing key
-				testUser.Email = "test@example.com"
-				testUser.Password = "hashed_password"
+				//testUser.Email = "test@example.com"
+				//testUser.Password = "hashed_password"
 			},
 			tokenSetup: func(t *testing.T) string {
 				// Generate token with test secret
