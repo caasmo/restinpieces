@@ -100,6 +100,44 @@ func generateExpiredToken(t *testing.T) string {
 	return token
 }
 
+func TestValidateClaimUserID(t *testing.T) {
+	testCases := []struct {
+		name      string
+		claims    jwt.MapClaims
+		wantError error
+	}{
+		{
+			name:      "valid user_id",
+			claims:    jwt.MapClaims{ClaimUserID: "user123"},
+			wantError: nil,
+		},
+		{
+			name:      "missing user_id",
+			claims:    jwt.MapClaims{},
+			wantError: ErrClaimNotFound,
+		},
+		{
+			name:      "user_id as number",
+			claims:    jwt.MapClaims{ClaimUserID: 123},
+			wantError: ErrInvalidClaimFormat,
+		},
+		{
+			name:      "empty user_id string",
+			claims:    jwt.MapClaims{ClaimUserID: ""},
+			wantError: ErrInvalidClaimFormat,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateClaimUserID(tc.claims)
+			if !errors.Is(err, tc.wantError) {
+				t.Errorf("ValidateClaimUserID() error = %v, want %v", err, tc.wantError)
+			}
+		})
+	}
+}
+
 func generateES256Token(t *testing.T) string {
 	t.Helper()
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
