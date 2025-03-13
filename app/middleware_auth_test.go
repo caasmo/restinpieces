@@ -24,11 +24,6 @@ func TestJwtValidate_RequestValidation(t *testing.T) {
 		wantError  *jsonError
 	}{
 		{
-			name:       "invalid signing method",
-			authHeader: generateES256Token(t),
-			wantError:  &errorJwtInvalidSignMethod,
-		},
-		{
 			name:       "missing authorization header", 
 			authHeader: "",
 			wantError:  &errorNoAuthHeader,
@@ -90,12 +85,19 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 		wantError  *jsonError
 	}{
 		{
+			name: "invalid signing method",
+			userSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByIdConfig.User = testUser
+			},
+			tokenSetup: func(t *testing.T) string {
+				return generateES256Token(t)
+			},
+			wantError: &errorJwtInvalidSignMethod,
+		},
+		{
 			name: "valid token",
 			userSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByIdConfig.User = testUser
-				// Set up user's email and password to match expected signing key
-				//testUser.Email = "test@example.com"
-				//testUser.Password = "hashed_password"
 			},
 			tokenSetup: func(t *testing.T) string {
 				token, err := generateToken(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
