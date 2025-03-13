@@ -59,6 +59,9 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 
 func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
 	if iat, ok := claims[ClaimIssuedAt]; ok {
+		// there are two main reasons why the JWT library uses float64
+		// JSON which represents all numbers as float64
+		// Sub-second Precision
 		if iatTime, ok := iat.(float64); ok {
 			if int64(iatTime) > time.Now().Unix() {
 				return ErrTokenUsedBeforeIssued
