@@ -56,8 +56,7 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 func ValidateIssuedAt(claims jwt.MapClaims) error {
 	if iat, ok := claims["iat"]; ok {
 		if iatTime, ok := iat.(float64); ok {
-			now := time.Now().Unix()
-			if int64(iatTime) > now {
+			if int64(iatTime) > time.Now().Unix() {
 				return ErrTokenUsedBeforeIssued
 			}
 			return nil
