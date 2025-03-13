@@ -92,19 +92,7 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 				//testUser.Password = "hashed_password"
 			},
 			tokenSetup: func(t *testing.T) string {
-				// Generate signing key using user credentials and test secret
-				signingKey, err := crypto.NewJwtSigningKeyWithCredentials(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"))
-				if err != nil {
-					t.Fatalf("failed to generate signing key: %v", err)
-				}
-
-				// Generate token with derived signing key
-				claims := map[string]any{crypto.ClaimUserID: testUser.ID}
-				token, _, err := crypto.NewJwt(claims, signingKey, 15*time.Minute)
-				if err != nil {
-					t.Fatalf("failed to generate test token: %v", err)
-				}
-				return token
+				return generateToken(t, testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
 			},
 			wantError: nil,
 		},
@@ -114,19 +102,7 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 				mockDB.GetUserByIdConfig.User = testUser
 			},
 			tokenSetup: func(t *testing.T) string {
-				// Generate signing key using user credentials and test secret
-				signingKey, err := crypto.NewJwtSigningKeyWithCredentials(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"))
-				if err != nil {
-					t.Fatalf("failed to generate signing key: %v", err)
-				}
-
-				// Generate token with derived signing key and negative duration
-				claims := map[string]any{crypto.ClaimUserID: testUser.ID}
-				token, _, err := crypto.NewJwt(claims, signingKey, -30*time.Minute)
-				if err != nil {
-					t.Fatalf("failed to generate test token: %v", err)
-				}
-				return token
+				return generateToken(t, testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), -30*time.Minute)
 			},
 			wantError: &errorJwtTokenExpired,
 		},
@@ -136,19 +112,7 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 				mockDB.GetUserByIdConfig.User = nil
 			},
 			tokenSetup: func(t *testing.T) string {
-				// Generate signing key using user credentials and test secret
-				signingKey, err := crypto.NewJwtSigningKeyWithCredentials(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"))
-				if err != nil {
-					t.Fatalf("failed to generate signing key: %v", err)
-				}
-
-				// Generate token with derived signing key
-				claims := map[string]any{crypto.ClaimUserID: testUser.ID}
-				token, _, err := crypto.NewJwt(claims, signingKey, 15*time.Minute)
-				if err != nil {
-					t.Fatalf("failed to generate test token: %v", err)
-				}
-				return token
+				return generateToken(t, testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
 			},
 			wantError: &errorJwtInvalidToken,
 		},
@@ -215,13 +179,20 @@ func generateTestToken(t *testing.T, userID string) string {
 	return token
 }
 
-func generateExpiredTestToken(t *testing.T, userID string) string {
+func generateToken(t *testing.T, email, passwordHash string, secret []byte, expiresIn time.Duration) string {
 	t.Helper()
-
-	claims := map[string]any{crypto.ClaimUserID: userID}
-	token, _, err := crypto.NewJwt(claims, []byte("test_secret_32_bytes_long_xxxxxx"), -30*time.Minute) // Negative duration for expired token
+	
+	// Generate signing key using user credentials and secret
+	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
-		t.Fatalf("failed to generate expired test token: %v", err)
+		t.Fatalf("failed to generate signing key: %v", err)
+	}
+
+	// Generate token with derived signing key
+	claims := map[string]any{crypto.ClaimUserID: "testuser123"} // Use fixed test user ID
+	token, _, err := crypto.NewJwt(claims, signingKey, expiresIn)
+	if err != nil {
+		t.Fatalf("failed to generate test token: %v", err)
 	}
 	return token
 }
