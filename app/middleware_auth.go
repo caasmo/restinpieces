@@ -39,7 +39,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		// Parse unverified token to get claims
 		claims, err := crypto.ParseJwtUnverified(tokenString)
 		if err != nil {
-			writeJSONErrorf(w, http.StatusUnauthorized, `{"error":"Invalid token format: %s"}`, err.Error())
+			writeJSONError(w, errorInvalidToken)
 			return
 		}
 
