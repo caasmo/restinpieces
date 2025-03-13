@@ -90,7 +90,11 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 				mockDB.GetUserByIdConfig.User = testUser
 			},
 			tokenSetup: func(t *testing.T) string {
-				return generateES256Token(t)
+				token, err := generateES256Token(testUser.ID)
+				if err != nil {
+					t.Fatalf("failed to generate ES256 token: %v", err)
+				}
+				return token
 			},
 			wantError: &errorJwtInvalidSignMethod,
 		},
@@ -186,41 +190,28 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 	}
 }
 
-func generateTestToken(t *testing.T, userID string) string {
-	t.Helper()
-
-    // jwt.MapClaims is just map[string]any
-	claims := map[string]any{crypto.ClaimUserID: userID}
-
-	token, _, err := crypto.NewJwt(claims, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
-	if err != nil {
-		t.Fatalf("failed to generate test token: %v", err)
-	}
-	return token
-}
-
-func generateES256Token(t *testing.T) string {
-	t.Helper()
-	
+func generateES256Token(userID string) (string, error) {
 	// Generate EC private key
 	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
-		t.Fatalf("failed to generate EC key: %v", err)
+		return "", fmt.Errorf("failed to generate EC key: %w", err)
 	}
 
-	// Create token with ES256 signing method
+	// Create token with ES256 signing method and proper claims
+	now := time.Now()
 	token := jwtv5.NewWithClaims(jwtv5.SigningMethodES256, jwtv5.MapClaims{
-		"user_id": "testuser",
-		"exp":     time.Now().Add(15 * time.Minute).Unix(),
+		"user_id": userID,
+		"iat":     now.Unix(),
+		"exp":     now.Add(15 * time.Minute).Unix(),
 	})
 
 	// Sign the token
 	tokenString, err := token.SignedString(privateKey)
 	if err != nil {
-		t.Fatalf("failed to sign token: %v", err)
+		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
 
-	return tokenString
+	return tokenString, nil
 }
 
 func generateToken(email, passwordHash string, secret []byte, expiresIn time.Duration) (string, error) {

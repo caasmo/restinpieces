@@ -1,6 +1,7 @@
 ### TODOs
 
 
+- User schema, remove tokenKey
 - jwt signing key invalidation
 - test requestverification: test also insertion in queue, now only mock nil.
 - more bash test all endpoints
