@@ -63,7 +63,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		userID := claims[crypto.ClaimUserID].(string)
 		user, err := a.db.GetUserById(userID)
 		if err != nil || user == nil {
-			writeJSONError(w, errorInvalidToken)
+			writeJSONError(w, errorJwtInvalidToken)
 			return
 		}
 
