@@ -143,7 +143,6 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 				}),
 				WithDB(mockDB),
 				WithRouter(&MockRouter{}),
-				WithCache(&cache.MockCache{}), // Add cache
 			)
 
 			var capturedUserID string
