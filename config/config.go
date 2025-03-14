@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	ProviderGoogle = "google"
-	ProviderGitHub = "github"
+	OAuth2ProviderGoogle = "google"
+	OAuth2ProviderGitHub = "github"
 )
 
 type OAuth2ProviderConfig struct {
