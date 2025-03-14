@@ -33,32 +33,29 @@ func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 				},
 			}
 			
-			var authURL string
+			// Create base provider info
+			info := providerInfo{
+				Name:        name,
+				DisplayName: provider.DisplayName,
+				State:       state,
+			}
+
+			// Handle PKCE if enabled
 			if provider.PKCE {
 				codeVerifier := crypto.Oauth2CodeVerifier()
 				codeChallenge := crypto.S256Challenge(codeVerifier)
-				authURL = oauth2Config.AuthCodeURL(state, 
+				info.AuthURL = oauth2Config.AuthCodeURL(state, 
 					oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 					oauth2.SetAuthURLParam("code_challenge_method", "S256"),
 				)
-				providers = append(providers, providerInfo{
-					Name:               name,
-					DisplayName:        provider.DisplayName,
-					State:              state,
-					AuthURL:            authURL,
-					CodeVerifier:       codeVerifier,
-					CodeChallenge:      codeChallenge,
-					CodeChallengeMethod: "S256",
-				})
+				info.CodeVerifier = codeVerifier
+				info.CodeChallenge = codeChallenge
+				info.CodeChallengeMethod = "S256"
 			} else {
-				authURL = oauth2Config.AuthCodeURL(state)
-				providers = append(providers, providerInfo{
-					Name:        name,
-					DisplayName: provider.DisplayName,
-					State:       state,
-					AuthURL:     authURL,
-				})
+				info.AuthURL = oauth2Config.AuthCodeURL(state)
 			}
+
+			providers = append(providers, info)
 		}
 	}
 
