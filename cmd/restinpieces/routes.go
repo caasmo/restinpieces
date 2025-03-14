@@ -7,6 +7,10 @@ import (
 )
 
 func route(ap *app.App) {
+	// Serve static files from /assets/ prefix
+	fs := http.FileServer(http.Dir("public"))
+	ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
+
 	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
 	authMiddleware := alice.New(ap.JwtValidate)
 	ap.Router().Handle("POST /auth-refresh", authMiddleware.ThenFunc(ap.RefreshAuthHandler))
