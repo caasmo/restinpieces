@@ -29,6 +29,7 @@ type oauth2Request struct {
 	RedirectURI  string `json:"redirect_uri"`
 }
 
+// TODO more fields, provider dependent?
 type oauth2UserInfo struct {
 	Email string `json:"email"`
 	Name  string `json:"name"`
