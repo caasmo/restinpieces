@@ -7,36 +7,40 @@
 <body>
     <pre id="content">Authenticating...</pre>
 
-    <script type="module">
-        import PocketBase from "https://cdn.jsdelivr.net/gh/pocketbase/js-sdk@master/dist/pocketbase.es.mjs"
-
-        const pb          = new PocketBase("http://127.0.0.1:8090");
-        const redirectURL = "http://127.0.0.1:8090/redirect.html";
-        const contentEl   = document.getElementById("content");
+    <script>
+        const contentEl = document.getElementById("content");
 
         // parse the query parameters from the redirected url
-        const params = (new URL(window.location)).searchParams;
+        const params = new URLSearchParams(window.location.search);
 
         // load the previously stored provider's data
-        const provider = JSON.parse(localStorage.getItem("provider"))
+        const provider = JSON.parse(localStorage.getItem("provider"));
 
         // compare the redirect's state param and the stored provider's one
         if (provider.state !== params.get("state")) {
             contentEl.innerText = "State parameters don't match.";
         } else {
-            // authenticate
-            pb.collection("users").authWithOAuth2Code(
-                provider.name,
-                params.get("code"),
-                provider.codeVerifier,
-                redirectURL,
-                // pass any optional user create data
-                {
-                    emailVisibility: false,
-                }
-            ).then((authData) => {
-                contentEl.innerText = JSON.stringify(authData, null, 2);
-            }).catch((err) => {
+            // Prepare auth request
+            const authRequest = {
+                provider: provider.name,
+                code: params.get("code"),
+                code_verifier: provider.codeVerifier,
+                redirect_uri: window.location.origin + window.location.pathname
+            };
+
+            // Send auth request to backend
+            fetch('/api/auth-with-oauth2', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(authRequest)
+            })
+            .then(response => response.json())
+            .then(data => {
+                contentEl.innerText = JSON.stringify(data, null, 2);
+            })
+            .catch(err => {
                 contentEl.innerText = "Failed to exchange code.\n" + err;
             });
         }
