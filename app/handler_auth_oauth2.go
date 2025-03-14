@@ -63,7 +63,6 @@ func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 
 			providers = append(providers, info)
 		}
-	}
 
 	if len(providers) == 0 {
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"No OAuth2 providers configured"}`)})
