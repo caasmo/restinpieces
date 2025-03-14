@@ -5,6 +5,25 @@ import (
 )
 
 const (
+	EnvGoogleClientID     = "OAUTH2_GOOGLE_CLIENT_ID"
+	EnvGoogleClientSecret = "OAUTH2_GOOGLE_CLIENT_SECRET"
+	EnvGithubClientID     = "OAUTH2_GITHUB_CLIENT_ID"
+	EnvGithubClientSecret = "OAUTH2_GITHUB_CLIENT_SECRET"
+)
+
+type envOauth2 struct {
+	Name  string
+	Value string
+}
+
+type env struct {
+	GoogleClientID     envOauth2
+	GoogleClientSecret envOauth2
+	GithubClientID     envOauth2
+	GithubClientSecret envOauth2
+}
+
+const (
 	OAuth2ProviderGoogle = "google"
 	OAuth2ProviderGitHub = "github"
 )

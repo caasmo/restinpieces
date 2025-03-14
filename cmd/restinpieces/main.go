@@ -25,12 +25,20 @@ func main() {
 		CallbackURL: "http://localhost:8080",
 	}
 
+	// Load environment variables
+	env := config.env{
+		GoogleClientID:     config.envOauth2{Name: config.EnvGoogleClientID, Value: os.Getenv(config.EnvGoogleClientID)},
+		GoogleClientSecret: config.envOauth2{Name: config.EnvGoogleClientSecret, Value: os.Getenv(config.EnvGoogleClientSecret)},
+		GithubClientID:     config.envOauth2{Name: config.EnvGithubClientID, Value: os.Getenv(config.EnvGithubClientID)},
+		GithubClientSecret: config.envOauth2{Name: config.EnvGithubClientSecret, Value: os.Getenv(config.EnvGithubClientSecret)},
+	}
+
 	// Configure OAuth2 providers only if both client ID and secret are present
-	if googleClientID, googleClientSecret := os.Getenv("OAUTH2_GOOGLE_CLIENT_ID"), os.Getenv("OAUTH2_GOOGLE_CLIENT_SECRET"); googleClientID != "" && googleClientSecret != "" {
+	if env.GoogleClientID.Value != "" && env.GoogleClientSecret.Value != "" {
 		cfg.OAuth2Providers[config.OAuth2ProviderGoogle] = config.OAuth2ProviderConfig{
 			Name:         config.OAuth2ProviderGoogle,
-			ClientID:     googleClientID,
-			ClientSecret: googleClientSecret,
+			ClientID:     env.GoogleClientID.Value,
+			ClientSecret: env.GoogleClientSecret.Value,
 			DisplayName:  "Google",
 			RedirectURL:  "http://localhost:8080/callback/google",
 			AuthURL:      "https://accounts.google.com/o/oauth2/auth",
@@ -41,11 +49,11 @@ func main() {
 		}
 	}
 
-	if githubClientID, githubClientSecret := os.Getenv("OAUTH2_GITHUB_CLIENT_ID"), os.Getenv("OAUTH2_GITHUB_CLIENT_SECRET"); githubClientID != "" && githubClientSecret != "" {
+	if env.GithubClientID.Value != "" && env.GithubClientSecret.Value != "" {
 		cfg.OAuth2Providers[config.OAuth2ProviderGitHub] = config.OAuth2ProviderConfig{
 			Name:         config.OAuth2ProviderGitHub,
-			ClientID:     githubClientID,
-			ClientSecret: githubClientSecret,
+			ClientID:     env.GithubClientID.Value,
+			ClientSecret: env.GithubClientSecret.Value,
 			DisplayName:  "GitHub",
 			RedirectURL:  "http://localhost:8080/callback/github",
 			AuthURL:      "https://github.com/login/oauth/authorize",
