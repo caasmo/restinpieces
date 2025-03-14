@@ -15,8 +15,8 @@ type providerInfo struct {
 
 	// technically could be omitted if the provider doesn't support PKCE,
 	// but to avoid breaking existing typed clients we'll return them as empty string
-	//CodeVerifier        string `json:"codeVerifier"`
-	//CodeChallenge       string `json:"codeChallenge"`
-	//CodeChallengeMethod string `json:"codeChallengeMethod"`
+	CodeVerifier        string `json:"codeVerifier"`
+	CodeChallenge       string `json:"codeChallenge"`
+	CodeChallengeMethod string `json:"codeChallengeMethod"`
 }
 
