@@ -1,6 +1,9 @@
 package crypto
 
 import (
+	"crypto/sha256"
+	"encoding/base64"
+	"strings"
 )
 
 // Defined in RFC 7636 (PKCE). Allowed characters: A-Z, a-z, 0-9, and the symbols -, ., _, ~.
