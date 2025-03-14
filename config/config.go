@@ -12,21 +12,20 @@ const (
 )
 
 type Env struct {
-	Type  string
 	Name  string
 	Value string
 }
 
-type Envs []Env
-
-func NewEnvs() Envs {
-	return Envs{
-		{Type: "oauth2_secret", Name: EnvGoogleClientID, Value: ""},
-		{Type: "oauth2_secret", Name: EnvGoogleClientSecret, Value: ""},
-		{Type: "oauth2_secret", Name: EnvGithubClientID, Value: ""},
-		{Type: "oauth2_secret", Name: EnvGithubClientSecret, Value: ""},
-	}
-}
+//type Envs []Env
+//
+//func NewEnvs() Envs {
+//	return Envs{
+//		{Name: EnvGoogleClientID, Value: ""},
+//		{Name: EnvGoogleClientSecret, Value: ""},
+//		{Name: EnvGithubClientID, Value: ""},
+//		{Name: EnvGithubClientSecret, Value: ""},
+//	}
+//}
 
 const (
 	OAuth2ProviderGoogle = "google"
