@@ -4,10 +4,10 @@ import (
 )
 
 type oauth2Response struct {
-	Providers []providerInfo `json:"providers"`
+	Providers []responseProviderInfo `json:"providers"`
 }
 
-type providerInfo struct {
+type responseProviderInfo struct {
 	Name               string `json:"name"`
 	DisplayName        string `json:"displayName"`
 	State              string `json:"state"`

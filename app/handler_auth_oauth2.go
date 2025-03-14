@@ -8,7 +8,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type providerInfo struct {
+type responseProviderInfo struct {
 	Name                string `json:"name"`
 	DisplayName         string `json:"displayName"`
 	State              string `json:"state"`
@@ -19,7 +19,7 @@ type providerInfo struct {
 }
 
 func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
-	var providers []providerInfo
+	var providers []responseProviderInfo
 	
 	// Loop through configured providers
 	for name, provider := range a.config.OAuth2Providers {
@@ -37,7 +37,7 @@ func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			
 			// Create base provider info
-			info := providerInfo{
+			info := responseProviderInfo{
 				Name:        name,
 				DisplayName: provider.DisplayName,
 				State:       state,
