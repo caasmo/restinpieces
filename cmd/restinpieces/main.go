@@ -20,7 +20,6 @@ func main() {
 		TokenDuration:   15 * time.Minute,
 		DBFile:          *dbfile,
 		OAuth2Providers: make(map[string]config.OAuth2ProviderConfig),
-		CallbackURL:     "http://localhost:8080",
 	}
 
 	// Configure Google OAuth2 provider

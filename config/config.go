@@ -51,5 +51,4 @@ type Config struct {
 	DBFile        string
 
 	OAuth2Providers map[string]OAuth2ProviderConfig
-	CallbackURL     string
 }
