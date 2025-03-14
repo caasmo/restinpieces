@@ -11,17 +11,13 @@ const (
 	EnvGithubClientSecret = "OAUTH2_GITHUB_CLIENT_SECRET"
 )
 
-type envOauth2 struct {
+type Env struct {
+	Type  string
 	Name  string
 	Value string
 }
 
-type env struct {
-	GoogleClientID     envOauth2
-	GoogleClientSecret envOauth2
-	GithubClientID     envOauth2
-	GithubClientSecret envOauth2
-}
+type Envs []Env
 
 const (
 	OAuth2ProviderGoogle = "google"
