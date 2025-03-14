@@ -17,6 +17,7 @@ type responseProviderInfo struct {
 	DisplayName         string `json:"displayName"`
 	State               string `json:"state"`
 	AuthURL             string `json:"authURL"`
+	RedirectURL         string `json:"redirectURL"`
 	CodeVerifier        string `json:"codeVerifier,omitempty"`
 	CodeChallenge       string `json:"codeChallenge,omitempty"`
 	CodeChallengeMethod string `json:"codeChallengeMethod,omitempty"`
@@ -168,6 +169,7 @@ func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 			Name:        name,
 			DisplayName: provider.DisplayName,
 			State:       state,
+			RedirectURL: provider.RedirectURL,
 		}
 
 		// Handle PKCE if enabled
