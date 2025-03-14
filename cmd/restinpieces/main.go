@@ -39,9 +39,7 @@ func main() {
 		PKCE:         true,
 	}
 	googleConfig.FillEnvVars()
-	if googleConfig.hasEnvVars() {
-		cfg.OAuth2Providers[config.OAuth2ProviderGoogle] = googleConfig
-	}
+	cfg.OAuth2Providers[config.OAuth2ProviderGoogle] = googleConfig
 
 	// Configure GitHub OAuth2 provider
 	githubConfig := config.OAuth2ProviderConfig{
@@ -57,9 +55,7 @@ func main() {
 		PKCE:         true,
 	}
 	githubConfig.FillEnvVars()
-	if githubConfig.hasEnvVars() {
-		cfg.OAuth2Providers[config.OAuth2ProviderGitHub] = githubConfig
-	}
+	cfg.OAuth2Providers[config.OAuth2ProviderGitHub] = githubConfig
 
 	ap, err := initApp(cfg)
 	if err != nil {
