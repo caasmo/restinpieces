@@ -11,8 +11,6 @@ func route(ap *app.App) {
 	fs := http.FileServer(http.Dir("public"))
 	ap.Router().Handle("/", fs)
 	ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
-	ap.Router().Handle("/callback/google", fs)
-	ap.Router().Handle("/callback/github", fs)
 
 	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
 	authMiddleware := alice.New(ap.JwtValidate)
