@@ -14,7 +14,8 @@ func route(ap *app.App) {
 
 	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
 	authMiddleware := alice.New(ap.JwtValidate)
-	// API routes prefixed with /api
+	// API routes with /api prefix - we add prefix directly since our router
+	// interface doesn't support PathPrefix/Subrouter functionality
 	apiRouter := ap.Router().PathPrefix("/api").Subrouter()
 	apiRouter.Handle("POST /auth-refresh", authMiddleware.ThenFunc(ap.RefreshAuthHandler))
 	apiRouter.Handle("POST /auth-with-password", http.HandlerFunc(ap.AuthWithPasswordHandler))
