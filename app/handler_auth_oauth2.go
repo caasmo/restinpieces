@@ -23,7 +23,7 @@ func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Loop through configured providers
 	for name, provider := range a.config.OAuth2Providers {
-		if !provider.hasEnvVars() {
+		if !provider.HasEnvVars() {
 			continue
 		}
 

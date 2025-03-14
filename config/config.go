@@ -40,8 +40,8 @@ func (c *OAuth2ProviderConfig) FillEnvVars() {
 	c.ClientSecret.Value = os.Getenv(c.ClientSecret.Name)
 }
 
-// hasEnvVars checks if both ClientID and ClientSecret have non-empty values
-func (c *OAuth2ProviderConfig) hasEnvVars() bool {
+// HasEnvVars checks if both ClientID and ClientSecret have non-empty values
+func (c *OAuth2ProviderConfig) HasEnvVars() bool {
 	return c.ClientID.Value != "" && c.ClientSecret.Value != ""
 }
 
