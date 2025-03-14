@@ -39,7 +39,7 @@ func main() {
 		PKCE:         true,
 	}
 	googleConfig.FillEnvVars()
-	if googleConfig.ClientID.Value != "" && googleConfig.ClientSecret.Value != "" {
+	if googleConfig.hasEnvVars() {
 		cfg.OAuth2Providers[config.OAuth2ProviderGoogle] = googleConfig
 	}
 
@@ -57,7 +57,7 @@ func main() {
 		PKCE:         true,
 	}
 	githubConfig.FillEnvVars()
-	if githubConfig.ClientID.Value != "" && githubConfig.ClientSecret.Value != "" {
+	if githubConfig.hasEnvVars() {
 		cfg.OAuth2Providers[config.OAuth2ProviderGitHub] = githubConfig
 	}
 

@@ -51,6 +51,11 @@ func (c *OAuth2ProviderConfig) FillEnvVars() {
 	c.ClientSecret.Value = os.Getenv(c.ClientSecret.Name)
 }
 
+// hasEnvVars checks if both ClientID and ClientSecret have non-empty values
+func (c *OAuth2ProviderConfig) hasEnvVars() bool {
+	return c.ClientID.Value != "" && c.ClientSecret.Value != ""
+}
+
 type Config struct {
 	JwtSecret     []byte
 	TokenDuration time.Duration
