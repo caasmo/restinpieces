@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OAuth2 Callback</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"></script>
+</head>
+<body>
+    <div id="status">Processing OAuth2 callback...</div>
+
+    <script>
+        $(document).ready(function() {
+            // Get URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            const error = urlParams.get('error');
+            
+            if (error) {
+                $('#status').text(`Error: ${error}`);
+                return;
+            }
+
+            // Get stored provider info from localStorage
+            const provider = JSON.parse(localStorage.getItem('provider'));
+            if (!provider) {
+                $('#status').text('Error: No provider information found');
+                return;
+            }
+
+            // Prepare the request data
+            const requestData = {
+                provider: provider.name,
+                code: code,
+                code_verifier: provider.codeVerifier,
+                redirect_uri: window.location.origin + window.location.pathname
+            };
+
+            // Send the code to our backend
+            $.ajax({
+                url: '/api/auth-with-oauth2',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(requestData),
+                success: function(response) {
+                    // Handle successful authentication
+                    localStorage.removeItem('provider');
+                    window.location.href = '/'; // Redirect to home or dashboard
+                },
+                error: function(xhr) {
+                    $('#status').text('Authentication failed: ' + xhr.responseJSON?.error || 'Unknown error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
