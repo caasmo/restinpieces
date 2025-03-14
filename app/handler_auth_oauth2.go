@@ -75,4 +75,4 @@ func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to encode providers"}`)})
 		return
 	}
-
+}
