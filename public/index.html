@@ -23,10 +23,10 @@
                 const listItems = [];
                 
                 for (const provider of providers) {
-                    const $li = $(`<li><a>Login with ${provider.DisplayName}</a></li>`);
+                    const $li = $(`<li><a>Login with ${provider.displayName}</a></li>`);
                     
                     $li.find("a")
-                        .attr("href", provider.AuthURL)
+                        .attr("href", provider.authURL)
                         .data("provider", provider)
                         .click(function() {
                             localStorage.setItem("provider", JSON.stringify($(this).data("provider")));
