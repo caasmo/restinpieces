@@ -47,7 +47,6 @@ func main() {
 			Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 			PKCE:         true,
 		}
-	}
 
 	if env.GithubClientID.Value != "" && env.GithubClientSecret.Value != "" {
 		cfg.OAuth2Providers[config.OAuth2ProviderGitHub] = config.OAuth2ProviderConfig{
