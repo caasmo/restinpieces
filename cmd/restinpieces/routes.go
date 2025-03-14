@@ -9,6 +9,7 @@ import (
 func route(ap *app.App) {
 	// Serve static files from public directory
 	fs := http.FileServer(http.Dir("public"))
+	ap.Router().Handle("/", fs)
 	ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
