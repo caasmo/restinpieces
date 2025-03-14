@@ -16,6 +16,26 @@ func main() {
 	dbfile := flag.String("dbfile", "bench.db", "SQLite database file path")
 	flag.Parse()
 
+	// Check required environment variables
+	requiredEnvs := map[string]string{
+		"OAUTH2_GOOGLE_CLIENT_ID":     "",
+		"OAUTH2_GOOGLE_CLIENT_SECRET": "",
+		"OAUTH2_GITHUB_CLIENT_ID":     "",
+		"OAUTH2_GITHUB_CLIENT_SECRET": "",
+	}
+
+	var missingEnvs []string
+	for env := range requiredEnvs {
+		if value := os.Getenv(env); value == "" {
+			missingEnvs = append(missingEnvs, env)
+		}
+	}
+
+	if len(missingEnvs) > 0 {
+		slog.Error("missing required environment variables", "variables", missingEnvs)
+		os.Exit(1)
+	}
+
 	cfg := &config.Config{
 		JwtSecret:         []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
 		TokenDuration:     15 * time.Minute,
