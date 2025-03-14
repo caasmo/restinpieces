@@ -1,11 +1,8 @@
 package app
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/caasmo/restinpieces/crypto"
 	"golang.org/x/oauth2"
@@ -64,13 +61,13 @@ func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(providers) == 0 {
-		writeJSONError(w, errorBadRequest)
+		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"No OAuth2 providers configured"}`)})
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(providers); err != nil {
-		writeJSONError(w, errorInternalServer)
+		writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to encode providers"}`)})
 		return
 	}
 }
