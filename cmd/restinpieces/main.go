@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"time"
+	"strings"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/server"
@@ -22,8 +23,8 @@ func main() {
 		OAuth2Providers: map[string]config.OAuth2ProviderConfig{
 			config.OAuth2ProviderGoogle: {
 				Name:         config.OAuth2ProviderGoogle,
-				ClientID:     "google_client_id_example",
-				ClientSecret: "google_client_secret_example",
+				ClientID:     os.Getenv("OAUTH2_GOOGLE_CLIENT_ID"),
+				ClientSecret: os.Getenv("OAUTH2_GOOGLE_CLIENT_SECRET"),
 				DisplayName:  "Google",
 				RedirectURL:  "http://localhost:8080/callback/google",
 				AuthURL:      "https://accounts.google.com/o/oauth2/auth",
@@ -34,8 +35,8 @@ func main() {
 			},
 			config.OAuth2ProviderGitHub: {
 				Name:         config.OAuth2ProviderGitHub,
-				ClientID:     "github_client_id_example",
-				ClientSecret: "github_client_secret_example",
+				ClientID:     os.Getenv("OAUTH2_GITHUB_CLIENT_ID"),
+				ClientSecret: os.Getenv("OAUTH2_GITHUB_CLIENT_SECRET"),
 				DisplayName:  "GitHub",
 				RedirectURL:  "http://localhost:8080/callback/github",
 				AuthURL:      "https://github.com/login/oauth/authorize",
