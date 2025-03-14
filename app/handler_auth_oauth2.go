@@ -49,11 +49,11 @@ func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 				codeChallenge := crypto.S256Challenge(codeVerifier)
 				info.AuthURL = oauth2Config.AuthCodeURL(state, 
 					oauth2.SetAuthURLParam("code_challenge", codeChallenge),
-					oauth2.SetAuthURLParam("code_challenge_method", "S256"),
+					oauth2.SetAuthURLParam("code_challenge_method", crypto.PKCECodeChallengeMethod),
 				)
 				info.CodeVerifier = codeVerifier
 				info.CodeChallenge = codeChallenge
-				info.CodeChallengeMethod = "S256"
+				info.CodeChallengeMethod = crypto.PKCECodeChallengeMethod
 			} else {
 				info.AuthURL = oauth2Config.AuthCodeURL(state)
 			}

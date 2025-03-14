@@ -9,6 +9,9 @@ import (
 // Defined in RFC 7636 (PKCE). Allowed characters: A-Z, a-z, 0-9, and the symbols -, ., _, ~.
 const pkceAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~"
 
+// PKCE code challenge method as defined in RFC 7636
+const PKCECodeChallengeMethod = "S256"
+
 
 // The OAuth2 specification (RFC 6749) doesn’t mandate a specific length. It
 // recommends a random, unguessable string.
