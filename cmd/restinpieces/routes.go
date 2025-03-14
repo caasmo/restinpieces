@@ -27,4 +27,5 @@ func route(ap *app.App) {
 	// This is an example of init function
 	ap.Router().Handle("/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
 	ap.Router().Handle("/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
+	ap.Router().Handle("GET /oauth2-providers", commonMiddleware.ThenFunc(ap.OAuth2ProvidersHandler))
 }
