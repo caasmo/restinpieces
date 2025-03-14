@@ -21,6 +21,7 @@ func route(ap *app.App) {
 	apiRouter.Handle("POST /auth-with-oauth2", http.HandlerFunc(ap.AuthWithOAuth2Handler))
 	apiRouter.Handle("POST /request-verification", http.HandlerFunc(ap.RequestVerificationHandler))
 	apiRouter.Handle("POST /register", http.HandlerFunc(ap.RegisterHandler))
+	apiRouter.Handle("GET /oauth2-providers", commonMiddleware.ThenFunc(ap.OAuth2ProvidersHandler))
 
 	apiRouter.Handle("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
 	apiRouter.Handle("", authMiddleware.ThenFunc(ap.Index)) // /api
@@ -31,5 +32,4 @@ func route(ap *app.App) {
 	apiRouter.Handle("GET /benchmark/sqlite/pool/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
 	apiRouter.Handle("/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
 	apiRouter.Handle("/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
-	apiRouter.Handle("GET /oauth2-providers", commonMiddleware.ThenFunc(ap.OAuth2ProvidersHandler))
 }
