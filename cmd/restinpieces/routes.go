@@ -7,13 +7,10 @@ import (
 )
 
 func route(ap *app.App) {
-	// Serve HTML files from root
-	htmlFS := http.FileServer(http.Dir("public"))
-	ap.Router().Handle("/", htmlFS)
-
-	// Serve static assets from /assets/ prefix
-	assetsFS := http.FileServer(http.Dir("public/assets"))
-	ap.Router().Handle("/assets/", http.StripPrefix("/assets/", assetsFS))
+	// Serve static files from public directory
+	fs := http.FileServer(http.Dir("public"))
+	ap.Router().Handle("/", fs)
+	ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
 	authMiddleware := alice.New(ap.JwtValidate)
@@ -24,7 +21,7 @@ func route(ap *app.App) {
 	ap.Router().Handle("POST /register", http.HandlerFunc(ap.RegisterHandler))
 
 	ap.Router().Handle("/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
-	ap.Router().Handle("/", authMiddleware.ThenFunc(ap.Index))
+	ap.Router().Handle("/api", authMiddleware.ThenFunc(ap.Index))
 	ap.Router().Handle("/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
 	ap.Router().Handle("/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
 	//router.Handle("/example/ristretto/writeread/:value", http.HandlerFunc(ap.ExampleRistrettoWriteRead))
