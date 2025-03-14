@@ -253,7 +253,6 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		Name:     "", // Optional field TODO
 		Created:  now,
 		Updated:  now,
-		TokenKey: crypto.GenerateSecureToken(32), // Generate secure token TODO
 	})
 
 	if err != nil {

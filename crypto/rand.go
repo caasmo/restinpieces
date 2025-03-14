@@ -1,12 +1,13 @@
 package crypto
 
 import (
+	"math/big"
 	"crypto/rand"
 )
 
 const alphanumericAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 
-func RandomString(length int, alphabet string) (string, error) {
+func RandomString(length int, alphabet string) string {
 
     b := make([]byte, length)
 
@@ -21,7 +22,7 @@ func RandomString(length int, alphabet string) (string, error) {
         // The first parameter rand is an io.Reader that provides the random bytes.
         // Here, cryptoRand.Reader is used, which is a globally shared source of
         // cryptographic randomness.
-        n, err := cryptoRand.Int(cryptoRand.Reader, max)
+        n, err := rand.Int(rand.Reader, max)
         if err != nil {
             // The Go documentation specifically states that the function
             // returns an error if the random number generator fails, which is
@@ -33,7 +34,7 @@ func RandomString(length int, alphabet string) (string, error) {
         b[i] = alphabet[n.Int64()]
     }
     
-    return string(b), nil
+    return string(b)
 }
 
 
