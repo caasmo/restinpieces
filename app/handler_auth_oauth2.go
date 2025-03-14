@@ -11,22 +11,22 @@ import (
 type responseProviderInfo struct {
 	Name                string `json:"name"`
 	DisplayName         string `json:"displayName"`
-	State              string `json:"state"`
-	AuthURL            string `json:"authURL"`
-	CodeVerifier       string `json:"codeVerifier,omitempty"`
-	CodeChallenge      string `json:"codeChallenge,omitempty"`
+	State               string `json:"state"`
+	AuthURL             string `json:"authURL"`
+	CodeVerifier        string `json:"codeVerifier,omitempty"`
+	CodeChallenge       string `json:"codeChallenge,omitempty"`
 	CodeChallengeMethod string `json:"codeChallengeMethod,omitempty"`
 }
 
 func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 	var providers []responseProviderInfo
-	
+
 	// Loop through configured providers
 	for name, provider := range a.config.OAuth2Providers {
 		if !provider.hasEnvVars() {
 			continue
 		}
-		
+
 		state := crypto.Oauth2State()
 		oauth2Config := oauth2.Config{
 			ClientID:     provider.ClientID.Value,
@@ -38,31 +38,31 @@ func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 				TokenURL: provider.TokenURL,
 			},
 		}
-			
-			// Create base provider info
-			info := responseProviderInfo{
-				Name:        name,
-				DisplayName: provider.DisplayName,
-				State:       state,
-			}
 
-			// Handle PKCE if enabled
-			if provider.PKCE {
-				codeVerifier := crypto.Oauth2CodeVerifier()
-				codeChallenge := crypto.S256Challenge(codeVerifier)
-				info.AuthURL = oauth2Config.AuthCodeURL(state, 
-					oauth2.SetAuthURLParam("code_challenge", codeChallenge),
-					oauth2.SetAuthURLParam("code_challenge_method", crypto.PKCECodeChallengeMethod),
-				)
-				info.CodeVerifier = codeVerifier
-				info.CodeChallenge = codeChallenge
-				info.CodeChallengeMethod = crypto.PKCECodeChallengeMethod
-			} else {
-				info.AuthURL = oauth2Config.AuthCodeURL(state)
-			}
-
-			providers = append(providers, info)
+		// Create base provider info
+		info := responseProviderInfo{
+			Name:        name,
+			DisplayName: provider.DisplayName,
+			State:       state,
 		}
+
+		// Handle PKCE if enabled
+		if provider.PKCE {
+			codeVerifier := crypto.Oauth2CodeVerifier()
+			codeChallenge := crypto.S256Challenge(codeVerifier)
+			info.AuthURL = oauth2Config.AuthCodeURL(state,
+				oauth2.SetAuthURLParam("code_challenge", codeChallenge),
+				oauth2.SetAuthURLParam("code_challenge_method", crypto.PKCECodeChallengeMethod),
+			)
+			info.CodeVerifier = codeVerifier
+			info.CodeChallenge = codeChallenge
+			info.CodeChallengeMethod = crypto.PKCECodeChallengeMethod
+		} else {
+			info.AuthURL = oauth2Config.AuthCodeURL(state)
+		}
+
+		providers = append(providers, info)
+	}
 
 	if len(providers) == 0 {
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"No OAuth2 providers configured"}`)})

@@ -4,8 +4,8 @@ import (
 	"flag"
 	"log/slog"
 	"os"
-	"time"
 	"strings"
+	"time"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/server"
@@ -16,13 +16,12 @@ func main() {
 	dbfile := flag.String("dbfile", "bench.db", "SQLite database file path")
 	flag.Parse()
 
-
 	cfg := &config.Config{
-		JwtSecret:         []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
-		TokenDuration:     15 * time.Minute,
-		DBFile:            *dbfile,
+		JwtSecret:       []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
+		TokenDuration:   15 * time.Minute,
+		DBFile:          *dbfile,
 		OAuth2Providers: make(map[string]config.OAuth2ProviderConfig),
-		CallbackURL: "http://localhost:8080",
+		CallbackURL:     "http://localhost:8080",
 	}
 
 	// Configure Google OAuth2 provider

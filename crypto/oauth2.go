@@ -12,7 +12,6 @@ const pkceAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012345
 // PKCE code challenge method as defined in RFC 7636
 const PKCECodeChallengeMethod = "S256"
 
-
 // The OAuth2 specification (RFC 6749) doesn’t mandate a specific length. It
 // recommends a random, unguessable string.
 // At least 16 characters, though 32 to 64 characters is common
@@ -26,10 +25,10 @@ const OauthCodeVerifierLength = 43
 // by linking the authorization request to its callback.
 // Should be URL-safe, Here alphanumeric characters.
 func Oauth2State() string {
-    return RandomString(Oauth2StateLength, alphanumericAlphabet)
+	return RandomString(Oauth2StateLength, alphanumericAlphabet)
 }
 func Oauth2CodeVerifier() string {
-    return RandomString(OauthCodeVerifierLength, pkceAlphabet)
+	return RandomString(OauthCodeVerifierLength, pkceAlphabet)
 }
 
 // S256Challenge creates base64 encoded sha256 challenge string derived from code.
@@ -41,6 +40,3 @@ func S256Challenge(code string) string {
 	h.Write([]byte(code))
 	return strings.TrimRight(base64.URLEncoding.EncodeToString(h.Sum(nil)), "=")
 }
-
-
-

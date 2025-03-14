@@ -49,7 +49,7 @@ type Config struct {
 	JwtSecret     []byte
 	TokenDuration time.Duration
 	DBFile        string
-	
+
 	OAuth2Providers map[string]OAuth2ProviderConfig
 	CallbackURL     string
 }
