@@ -103,7 +103,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Check if user exists or create new
 	user, err := a.db.GetUserByEmail(userInfo.Email)
-	if err != nil && !errors.Is(err, db.ErrNotFound) {
+	if err != nil {
 		writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"Database error: %s"}`, err.Error()))})
 		return
 	}
