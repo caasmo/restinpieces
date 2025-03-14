@@ -7,9 +7,13 @@ import (
 )
 
 func route(ap *app.App) {
-	// Serve static files from /assets/ prefix
-	fs := http.FileServer(http.Dir("public"))
-	ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
+	// Serve HTML files from root
+	htmlFS := http.FileServer(http.Dir("public"))
+	ap.Router().Handle("/", htmlFS)
+
+	// Serve static assets from /assets/ prefix
+	assetsFS := http.FileServer(http.Dir("public/assets"))
+	ap.Router().Handle("/assets/", http.StripPrefix("/assets/", assetsFS))
 
 	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
 	authMiddleware := alice.New(ap.JwtValidate)
