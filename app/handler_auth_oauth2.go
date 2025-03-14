@@ -18,50 +18,29 @@ type providerInfo struct {
 func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 	var providers []providerInfo
 	
-	// Google OAuth2
-	if a.config.OAuth2Google.ClientID != "" && a.config.OAuth2Google.ClientSecret != "" {
-		state := crypto.Oauth2State()
-		googleConfig := oauth2.Config{
-			ClientID:     a.config.OAuth2Google.ClientID,
-			ClientSecret: a.config.OAuth2Google.ClientSecret,
-			RedirectURL:  a.config.OAuth2Google.RedirectURL,
-			Scopes:       a.config.OAuth2Google.Scopes,
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  a.config.OAuth2Google.AuthURL,
-				TokenURL: a.config.OAuth2Google.TokenURL,
-			},
+	// Loop through configured providers
+	for name, provider := range a.config.OAuth2Providers {
+		if provider.ClientID != "" && provider.ClientSecret != "" {
+			state := crypto.Oauth2State()
+			oauth2Config := oauth2.Config{
+				ClientID:     provider.ClientID,
+				ClientSecret: provider.ClientSecret,
+				RedirectURL:  provider.RedirectURL,
+				Scopes:       provider.Scopes,
+				Endpoint: oauth2.Endpoint{
+					AuthURL:  provider.AuthURL,
+					TokenURL: provider.TokenURL,
+				},
+			}
+			
+			authURL := oauth2Config.AuthCodeURL(state)
+			providers = append(providers, providerInfo{
+				Name:        name,
+				DisplayName: provider.DisplayName,
+				State:       state,
+				AuthURL:     authURL,
+			})
 		}
-		
-		authURL := googleConfig.AuthCodeURL(state)
-		providers = append(providers, providerInfo{
-			Name:        "google",
-			DisplayName: a.config.OAuth2Google.DisplayName,
-			State:       state,
-			AuthURL:     authURL,
-		})
-	}
-
-	// GitHub OAuth2
-	if a.config.OAuth2Github.ClientID != "" && a.config.OAuth2Github.ClientSecret != "" {
-		state := crypto.Oauth2State()
-		githubConfig := oauth2.Config{
-			ClientID:     a.config.OAuth2Github.ClientID,
-			ClientSecret: a.config.OAuth2Github.ClientSecret,
-			RedirectURL:  a.config.OAuth2Github.RedirectURL,
-			Scopes:       a.config.OAuth2Github.Scopes,
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  a.config.OAuth2Github.AuthURL,
-				TokenURL: a.config.OAuth2Github.TokenURL,
-			},
-		}
-		
-		authURL := githubConfig.AuthCodeURL(state)
-		providers = append(providers, providerInfo{
-			Name:        "github",
-			DisplayName: a.config.OAuth2Github.DisplayName,
-			State:       state,
-			AuthURL:     authURL,
-		})
 	}
 
 	if len(providers) == 0 {

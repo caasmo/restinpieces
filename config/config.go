@@ -5,6 +5,7 @@ import (
 )
 
 type OAuth2ProviderConfig struct {
+	Name         string
 	ClientID     string
 	ClientSecret string
 	DisplayName  string
@@ -21,7 +22,6 @@ type Config struct {
 	TokenDuration time.Duration
 	DBFile        string
 	
-	OAuth2Google OAuth2ProviderConfig
-	OAuth2Github OAuth2ProviderConfig
-	CallbackURL  string
+	OAuth2Providers map[string]OAuth2ProviderConfig
+	CallbackURL     string
 }
