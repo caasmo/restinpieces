@@ -4,7 +4,6 @@ import (
 	"flag"
 	"log/slog"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
