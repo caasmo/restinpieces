@@ -17,17 +17,6 @@ type Env struct {
 	Value string
 }
 
-//type Envs []Env
-//
-//func NewEnvs() Envs {
-//	return Envs{
-//		{Name: EnvGoogleClientID, Value: ""},
-//		{Name: EnvGoogleClientSecret, Value: ""},
-//		{Name: EnvGithubClientID, Value: ""},
-//		{Name: EnvGithubClientSecret, Value: ""},
-//	}
-//}
-
 const (
 	OAuth2ProviderGoogle = "google"
 	OAuth2ProviderGitHub = "github"
