@@ -19,3 +19,4 @@ type providerInfo struct {
 	//CodeChallenge       string `json:"codeChallenge"`
 	//CodeChallengeMethod string `json:"codeChallengeMethod"`
 }
+

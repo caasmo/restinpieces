@@ -26,5 +26,15 @@ func Oauth2CodeVerifier() string {
     return RandomString(OauthCodeVerifierLength, pkceAlphabet)
 }
 
+// S256Challenge creates base64 encoded sha256 challenge string derived from code.
+// The padding of the result base64 string is stripped per [RFC 7636].
+//
+// [RFC 7636]: https://datatracker.ietf.org/doc/html/rfc7636#section-4.2
+func S256Challenge(code string) string {
+	h := sha256.New()
+	h.Write([]byte(code))
+	return strings.TrimRight(base64.URLEncoding.EncodeToString(h.Sum(nil)), "=")
+}
+
 
 

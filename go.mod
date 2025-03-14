@@ -11,10 +11,12 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/outcaste-io/ristretto v0.1.1-0.20220408180327-81c196f2b5ef
 	golang.org/x/crypto v0.36.0
+	golang.org/x/oauth2 v0.28.0
 	zombiezen.com/go/sqlite v1.4.0
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
