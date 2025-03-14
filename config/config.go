@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"time"
 )
 
@@ -34,8 +35,8 @@ const (
 
 type OAuth2ProviderConfig struct {
 	Name         string
-	ClientID     string
-	ClientSecret string
+	ClientID     Env
+	ClientSecret Env
 	DisplayName  string
 	RedirectURL  string
 	AuthURL      string
@@ -43,6 +44,11 @@ type OAuth2ProviderConfig struct {
 	UserInfoURL  string
 	Scopes       []string
 	PKCE         bool
+}
+
+func (c *OAuth2ProviderConfig) FillEnvVars() {
+	c.ClientID.Value = os.Getenv(c.ClientID.Name)
+	c.ClientSecret.Value = os.Getenv(c.ClientSecret.Name)
 }
 
 type Config struct {
