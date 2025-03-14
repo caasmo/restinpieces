@@ -9,41 +9,32 @@
 
     <script>
         const contentEl = document.getElementById("content");
-
-        // parse the query parameters from the redirected url
         const params = new URLSearchParams(window.location.search);
-
-        // load the previously stored provider's data
         const provider = JSON.parse(localStorage.getItem("provider"));
 
-        // compare the redirect's state param and the stored provider's one
-        if (provider.state !== params.get("state")) {
-            contentEl.innerText = "State parameters don't match.";
-        } else {
-            // Prepare auth request
-            const authRequest = {
-                provider: provider.name,
-                code: params.get("code"),
-                code_verifier: provider.codeVerifier,
-                redirect_uri: window.location.origin + window.location.pathname
-            };
+        // Prepare auth request
+        const authRequest = {
+            provider: provider.name,
+            code: params.get("code"),
+            code_verifier: provider.codeVerifier,
+            redirect_uri: provider.redirectURL
+        };
 
-            // Send auth request to backend
-            fetch('/api/auth-with-oauth2', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(authRequest)
-            })
-            .then(response => response.json())
-            .then(data => {
-                contentEl.innerText = JSON.stringify(data, null, 2);
-            })
-            .catch(err => {
-                contentEl.innerText = "Failed to exchange code.\n" + err;
-            });
-        }
+        // Send auth request to backend
+        fetch('/api/auth-with-oauth2', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(authRequest)
+        })
+        .then(response => response.json())
+        .then(data => {
+            contentEl.innerText = JSON.stringify(data, null, 2);
+        })
+        .catch(err => {
+            contentEl.innerText = "Failed to exchange code.\n" + err;
+        });
     </script>
 </body>
 </html>
