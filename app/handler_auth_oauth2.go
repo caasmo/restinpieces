@@ -23,18 +23,21 @@ func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 	
 	// Loop through configured providers
 	for name, provider := range a.config.OAuth2Providers {
-		if provider.hasEnvVars() {
-			state := crypto.Oauth2State()
-			oauth2Config := oauth2.Config{
-				ClientID:     provider.ClientID.Value,
-				ClientSecret: provider.ClientSecret.Value,
-				RedirectURL:  provider.RedirectURL,
-				Scopes:       provider.Scopes,
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  provider.AuthURL,
-					TokenURL: provider.TokenURL,
-				},
-			}
+		if !provider.hasEnvVars() {
+			continue
+		}
+		
+		state := crypto.Oauth2State()
+		oauth2Config := oauth2.Config{
+			ClientID:     provider.ClientID.Value,
+			ClientSecret: provider.ClientSecret.Value,
+			RedirectURL:  provider.RedirectURL,
+			Scopes:       provider.Scopes,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  provider.AuthURL,
+				TokenURL: provider.TokenURL,
+			},
+		}
 			
 			// Create base provider info
 			info := responseProviderInfo{
