@@ -20,6 +20,7 @@ type Db interface {
 // User represents a user from the database.
 // Timestamps (Created and Updated) use RFC3339 format in UTC timezone.
 // Example: "2024-03-07T15:04:05Z"
+// TODO move 
 type User struct {
 	ID       string
 	Email    string
@@ -29,7 +30,6 @@ type User struct {
 	Created  time.Time
 	Updated  time.Time
 	Verified bool
-	TokenKey string
 }
 
 // TimeFormat converts a time.Time to RFC3339 string in UTC.

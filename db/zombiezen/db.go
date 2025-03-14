@@ -132,7 +132,6 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 					Created:  created,
 					Updated:  updated,
 					Verified: stmt.GetInt64("verified") != 0,
-					TokenKey: stmt.GetText("tokenKey"),
 				}
 				return nil
 			},
@@ -183,7 +182,6 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 					Created:  created,
 					Updated:  updated,
 					Verified: stmt.GetInt64("verified") != 0,
-					TokenKey: stmt.GetText("tokenKey"),
 				}
 				return nil
 			},
@@ -193,7 +191,6 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 				user.Name,
 				now,
 				now,
-				user.TokenKey,
 			},
 		})
 

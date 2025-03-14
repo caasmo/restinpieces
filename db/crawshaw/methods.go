@@ -47,7 +47,6 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 				Created:  created,
 				Updated:  updated,
 				Verified: stmt.GetInt64("verified") != 0,
-				TokenKey: stmt.GetText("tokenKey"),
 			}
 			return nil
 		}, email)
@@ -116,7 +115,6 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 				Created:  created,
 				Updated:  updated,
 				Verified: stmt.GetInt64("verified") != 0,
-				TokenKey: stmt.GetText("tokenKey"),
 			}
 			return nil
 		}, id)
@@ -135,9 +133,6 @@ func validateUserFields(user db.User) error {
 	}
 	if user.Password == "" {
 		missingFields = append(missingFields, "Password")
-	}
-	if user.TokenKey == "" {
-		missingFields = append(missingFields, "TokenKey")
 	}
 
 	if len(missingFields) > 0 {
@@ -179,6 +174,7 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 // Example timestamp: "2024-03-07T15:04:05Z"
 // User struct should contain at minimum: Email, Password (pre-hashed), and Name
 // time fields are ignores in favor of default sqlite values
+// TODO 3 values signature
 func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	// Validate required fields
 	if err := validateUserFields(user); err != nil {
@@ -190,9 +186,9 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 
 	var createdUser *db.User
 	err := sqlitex.Exec(conn,
-		`INSERT INTO users (email, password, name, tokenKey) 
-		VALUES (?, ?, ?, ?)
-		RETURNING id, email, name, password, created, updated, verified, tokenKey`,
+		`INSERT INTO users (email, password, name) 
+		VALUES (?, ?, ?)
+		RETURNING id, email, name, password, created, updated, verified`,
 		func(stmt *sqlite.Stmt) error {
 			// Get and parse timestamps from database
 			createdStr := stmt.GetText("created")
@@ -216,14 +212,12 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 				Created:  created,
 				Updated:  updated,
 				Verified: stmt.GetInt64("verified") != 0,
-				TokenKey: stmt.GetText("tokenKey"),
 			}
 			return nil
 		},
 		user.Email,    // 1. email
 		user.Password, // 2. password
-		user.Name,     // 3. name
-		user.TokenKey) // 4. tokenKey
+		user.Name)     // 3. name
 
 	if err != nil {
 		// Check for SQLITE_CONSTRAINT_UNIQUE (2067) error code
