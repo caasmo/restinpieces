@@ -20,8 +20,8 @@ func main() {
 		TokenDuration:     15 * time.Minute,
 		DBFile:            *dbfile,
 		OAuth2Providers: map[string]config.OAuth2ProviderConfig{
-			"google": {
-				Name:         "google",
+			config.ProviderGoogle: {
+				Name:         config.ProviderGoogle,
 				ClientID:     "google_client_id_example",
 				ClientSecret: "google_client_secret_example",
 				DisplayName:  "Google",
@@ -32,8 +32,8 @@ func main() {
 				Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 				PKCE:         true,
 			},
-			"github": {
-				Name:         "github",
+			config.ProviderGitHub: {
+				Name:         config.ProviderGitHub,
 				ClientID:     "github_client_id_example",
 				ClientSecret: "github_client_secret_example",
 				DisplayName:  "GitHub",

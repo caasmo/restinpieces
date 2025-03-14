@@ -4,6 +4,11 @@ import (
 	"time"
 )
 
+const (
+	ProviderGoogle = "google"
+	ProviderGitHub = "github"
+)
+
 type OAuth2ProviderConfig struct {
 	Name         string
 	ClientID     string
