@@ -11,31 +11,36 @@
         <li>Loading OAuth2 providers...</li>
     </ul>
 
-    <script type="module">
-        import PocketBase from "https://cdn.jsdelivr.net/gh/pocketbase/js-sdk@master/dist/pocketbase.es.mjs"
+    <script>
+        $(document).ready(async function() {
+            try {
+                const response = await fetch('/oauth2-providers');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch providers');
+                }
+                
+                const providers = await response.json();
+                const listItems = [];
+                
+                for (const provider of providers) {
+                    const $li = $(`<li><a>Login with ${provider.DisplayName}</a></li>`);
+                    
+                    $li.find("a")
+                        .attr("href", provider.AuthURL)
+                        .data("provider", provider)
+                        .click(function() {
+                            localStorage.setItem("provider", JSON.stringify($(this).data("provider")));
+                        });
+                    
+                    listItems.push($li);
+                }
 
-        const pb          = new PocketBase("http://127.0.0.1:8090");
-        const redirectURL = "http://127.0.0.1:8090/redirect.html";
-
-        const authMethods = await pb.collection("users").listAuthMethods();
-        const providers   = authMethods.oauth2?.providers || [];
-        const listItems   = [];
-
-        for (const provider of providers) {
-            const $li = $(`<li><a>Login with ${provider.name}</a></li>`);
-
-            $li.find("a")
-                .attr("href", provider.authURL + redirectURL)
-                .data("provider", provider)
-                .click(function () {
-                    // store provider's data on click for verification in the redirect page
-                    localStorage.setItem("provider", JSON.stringify($(this).data("provider")));
-                });
-
-            listItems.push($li);
-        }
-
-        $("#list").html(listItems.length ? listItems : "<li>No OAuth2 providers.</li>");
+                $("#list").html(listItems.length ? listItems : "<li>No OAuth2 providers.</li>");
+            } catch (error) {
+                console.error('Error loading OAuth2 providers:', error);
+                $("#list").html("<li>Error loading providers</li>");
+            }
+        });
     </script>
 </body>
 </html>
