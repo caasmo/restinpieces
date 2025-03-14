@@ -29,16 +29,20 @@ func main() {
 		ClientSecret: config.Env{Name: config.EnvGoogleClientSecret},
 		DisplayName:  "Google",
 		RedirectURL:  "http://localhost:8080/callback/google",
-		AuthURL:      "https://accounts.google.com/o/oauth2/auth",
+		AuthURL:     "https://accounts.google.com/o/oauth2/v2/auth",
 		TokenURL:     "https://oauth2.googleapis.com/token",
 		UserInfoURL:  "https://www.googleapis.com/oauth2/v3/userinfo",
-		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
+		scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.profile",
+			"https://www.googleapis.com/auth/userinfo.email",
+		},
 		PKCE:         true,
 	}
 	googleConfig.FillEnvVars()
 	cfg.OAuth2Providers[config.OAuth2ProviderGoogle] = googleConfig
 
 	// Configure GitHub OAuth2 provider
+    // TODO not tested
 	githubConfig := config.OAuth2ProviderConfig{
 		Name:         config.OAuth2ProviderGitHub,
 		ClientID:     config.Env{Name: config.EnvGithubClientID},
@@ -48,7 +52,7 @@ func main() {
 		AuthURL:      "https://github.com/login/oauth/authorize",
 		TokenURL:     "https://github.com/login/oauth/access_token",
 		UserInfoURL:  "https://api.github.com/user",
-		Scopes:       []string{"user:email"},
+		scopes:      []string{"read:user", "user:email"},
 		PKCE:         true,
 	}
 	githubConfig.FillEnvVars()
