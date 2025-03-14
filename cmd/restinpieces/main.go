@@ -76,4 +76,3 @@ func main() {
 	route(ap)
 
 	server.Run(":8080", ap.Router())
-}
