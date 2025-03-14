@@ -38,11 +38,13 @@ func main() {
 		},
 		PKCE:         true,
 	}
-	googleConfig.FillEnvVars()
-	cfg.OAuth2Providers[config.OAuth2ProviderGoogle] = googleConfig
+	if err := googleConfig.FillEnvVars(); err != nil {
+		slog.Warn("skipping Google OAuth2 provider", "error", err)
+	} else {
+		cfg.OAuth2Providers[config.OAuth2ProviderGoogle] = googleConfig
+	}
 
 	// Configure GitHub OAuth2 provider
-    // TODO not tested
 	githubConfig := config.OAuth2ProviderConfig{
 		Name:         config.OAuth2ProviderGitHub,
 		ClientID:     config.Env{Name: config.EnvGithubClientID},
@@ -55,8 +57,11 @@ func main() {
 		scopes:      []string{"read:user", "user:email"},
 		PKCE:         true,
 	}
-	githubConfig.FillEnvVars()
-	cfg.OAuth2Providers[config.OAuth2ProviderGitHub] = githubConfig
+	if err := githubConfig.FillEnvVars(); err != nil {
+		slog.Warn("skipping GitHub OAuth2 provider", "error", err)
+	} else {
+		cfg.OAuth2Providers[config.OAuth2ProviderGitHub] = githubConfig
+	}
 
 	ap, err := initApp(cfg)
 	if err != nil {

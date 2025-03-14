@@ -35,14 +35,15 @@ type OAuth2ProviderConfig struct {
 	PKCE         bool
 }
 
-func (c *OAuth2ProviderConfig) FillEnvVars() {
+func (c *OAuth2ProviderConfig) FillEnvVars() error {
 	c.ClientID.Value = os.Getenv(c.ClientID.Name)
 	c.ClientSecret.Value = os.Getenv(c.ClientSecret.Name)
-}
-
-// HasEnvVars checks if both ClientID and ClientSecret have non-empty values
-func (c *OAuth2ProviderConfig) HasEnvVars() bool {
-	return c.ClientID.Value != "" && c.ClientSecret.Value != ""
+	
+	if c.ClientID.Value == "" || c.ClientSecret.Value == "" {
+		return fmt.Errorf("missing environment variables for %s: %s and %s must be set", 
+			c.Name, c.ClientID.Name, c.ClientSecret.Name)
+	}
+	return nil
 }
 
 type Config struct {
