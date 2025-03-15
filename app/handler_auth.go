@@ -91,7 +91,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Validate email format
 	if err := ValidateEmail(req.Identity); err != nil {
-		writeJSONErrorf(w, http.StatusBadRequest, `{"error":"%s"}`, err.Error())
+		writeJSONError(w, errorInvalidRequest)
 		return
 	}
 
@@ -156,7 +156,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err := ValidateEmail(req.Email); err != nil {
-		writeJSONErrorf(w, http.StatusBadRequest, `{"error":"%s"}`, err.Error())
+		writeJSONError(w, errorInvalidRequest)
 		return
 	}
 
