@@ -6,12 +6,13 @@ import "time"
 // Timestamps (Created and Updated) use RFC3339 format in UTC timezone.
 // Example: "2024-03-07T15:04:05Z"
 type User struct {
-	ID       string
-	Email    string
-	Name     string
-	Password string
-	Avatar   string
-	Created  time.Time
-	Updated  time.Time
-	Verified bool
+	ID           string
+	Email        string
+	Name         string
+	Password     string
+	Avatar       string
+	Created      time.Time
+	Updated      time.Time
+	Verified     bool
+	ExternalAuth string // Stores external auth provider identifier (e.g. "google", "github")
 }
