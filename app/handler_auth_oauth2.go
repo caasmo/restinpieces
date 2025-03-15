@@ -15,10 +15,6 @@ import (
 
 // oauth2TokenExchangeTimeout defines the maximum duration for OAuth2 token exchange operations.
 // This timeout prevents hanging if the OAuth2 provider is unresponsive.
-// The value of 10 seconds is chosen as a balance between:
-// - Allowing enough time for network latency and provider processing
-// - Providing a reasonable user experience
-// - Preventing resource exhaustion from hanging requests
 const oauth2TokenExchangeTimeout = 10 * time.Second
 
 type responseProviderInfo struct {
@@ -37,12 +33,6 @@ type oauth2Request struct {
 	Code         string `json:"code"`
 	CodeVerifier string `json:"code_verifier"`
 	RedirectURI  string `json:"redirect_uri"`
-}
-
-// TODO more fields, provider dependent?
-type oauth2UserInfo struct {
-	Email string `json:"email"`
-	Name  string `json:"name"`
 }
 
 // AuthWithOAuth2Handler handles OAuth2 authentication
