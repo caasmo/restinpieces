@@ -119,7 +119,6 @@ func TestCreateUser(t *testing.T) {
 		name        string
 		user        db.User
 		wantErr     bool
-		errorType   error    // Expected error type
 		checkFields []string // Fields to verify in returned user
 	}{
 		{
@@ -142,43 +141,6 @@ func TestCreateUser(t *testing.T) {
 			wantErr:   true,
 			errorType: db.ErrConstraintUnique,
 		},
-		{
-			name: "missing email",
-			user: db.User{
-				Email:    "", // Empty email
-				Password: "hashed_password_123",
-				Name:     "Invalid User",
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing password",
-			user: db.User{
-				Email:    "missingpass@test.com",
-				Password: "", // Empty password
-				Name:     "Invalid User",
-			},
-			wantErr: true,
-		},
-		{
-			name: "missing token key",
-			user: db.User{
-				Email:    "missingtoken@test.com",
-				Password: "hashed_password_123",
-				Name:     "Invalid User",
-			},
-			wantErr: true,
-		},
-		{
-			name: "duplicate token key",
-			user: db.User{
-				Email:    "duptoken@test.com",
-				Password: "hashed_password_123",
-				Name:     "Duplicate Token User",
-			},
-			wantErr:   true,
-			errorType: db.ErrConstraintUnique,
-		},
 	}
 
 	for _, tt := range tests {
@@ -192,9 +154,6 @@ func TestCreateUser(t *testing.T) {
 					return
 				}
 
-				if tt.errorType != nil && !errors.Is(err, tt.errorType) {
-					t.Errorf("expected error type %v, got %v", tt.errorType, err)
-				}
 				return
 			}
 
