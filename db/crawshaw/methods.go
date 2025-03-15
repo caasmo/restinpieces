@@ -128,21 +128,6 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 	return user, nil
 }
 
-func validateUserFields(user db.User) error {
-	var missingFields []string
-	if user.Email == "" {
-		missingFields = append(missingFields, "Email")
-	}
-	if user.Password == "" {
-		missingFields = append(missingFields, "Password")
-	}
-
-	if len(missingFields) > 0 {
-		return fmt.Errorf("%w: %s", db.ErrMissingFields, strings.Join(missingFields, ", "))
-	}
-	return nil
-}
-
 func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	if err := validateQueueJob(job); err != nil {
 		return err
