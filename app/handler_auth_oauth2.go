@@ -44,7 +44,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-		slog.Debug("Missing required OAuth2 fields", 
+		slog.Debug("OAuth2 fields", 
 			"provider", req.Provider,
 			"code", req.Code,
 			"codeVerifier", req.CodeVerifier,
