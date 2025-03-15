@@ -20,5 +20,6 @@ type User struct {
 	// Example of methods are "oauth2", "otp".
 	// the structure is a comma separated string
 	// in future a colon separated string (not implmented) could be used for mfa
-	ExternalAuth string
+	ExternalAuth    string
+	EmailVisibility bool
 }

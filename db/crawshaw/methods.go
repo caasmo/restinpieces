@@ -200,6 +200,7 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 				ExternalAuth:   stmt.GetText("externalAuth"),
 				Avatar:         stmt.GetText("avatar"),
 				Email:          stmt.GetText("email"),
+				EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
 				Created:        created,
 				Updated:        updated,
 			}
@@ -211,7 +212,7 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		user.ExternalAuth,    // 4. externalAuth
 		user.Avatar,          // 5. avatar
 		user.Email,           // 6. email
-		false,                // 7. emailVisibility (default false)
+		user.EmailVisibility, // 7. emailVisibility
 	)
 
 	if err != nil {
