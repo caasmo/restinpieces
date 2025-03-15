@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Global configuration
-export SERVER_URL="http://localhost:8080"
+export SERVER_URL="http://localhost:8080/api"
 export JWT_SECRET="test_secret_32_bytes_long_xxxxxx"
 export TIMEOUT_SECONDS=5
 export CURL_OPTS=("--silent" "--show-error" "--max-time" "$TIMEOUT_SECONDS")
