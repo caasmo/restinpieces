@@ -253,46 +253,47 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 	validSecret := []byte("test_secret_32_bytes_long_xxxxxx")
 	testEmail := "test@example.com"
 	testPasswordHash := "hashed_password_123"
+	testCases := []struct {
+		name      string
+		email     string
+		password  string
+		wantError error
+	}{
+		{
+			name:      "with password",
+			email:     testEmail,
+			password:  testPasswordHash,
+			wantError: nil,
+		},
+		{
+			name:      "without password",
+			email:     testEmail,
+			password:  "",
+			wantError: nil,
+		},
+	}
 
-	t.Run("with password", func(t *testing.T) {
-		key, err := NewJwtSigningKeyWithCredentials(testEmail, testPasswordHash, validSecret)
-		if err != nil {
-			t.Fatalf("NewJwtSigningKeyWithCredentials() error = %v, want nil", err)
-		}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			key1, err := NewJwtSigningKeyWithCredentials(tc.email, tc.password, validSecret)
+			if !errors.Is(err, tc.wantError) {
+				t.Fatalf("NewJwtSigningKeyWithCredentials() error = %v, want %v", err, tc.wantError)
+			}
 
-		if len(key) != 32 { // SHA256 hash length
-			t.Errorf("NewJwtSigningKeyWithCredentials() key length = %d, want 32", len(key))
-		}
+			if len(key1) != 32 { // SHA256 hash length
+				t.Errorf("key length = %d, want 32", len(key1))
+			}
 
-		// Test deterministic output for same inputs
-		key2, err := NewJwtSigningKeyWithCredentials(testEmail, testPasswordHash, validSecret)
-		if err != nil {
-			t.Fatalf("Second call returned unexpected error: %v", err)
-		}
-		if !hmac.Equal(key, key2) {
-			t.Error("NewJwtSigningKeyWithCredentials() returned different keys for same inputs")
-		}
-	})
-
-	t.Run("without password", func(t *testing.T) {
-		key, err := NewJwtSigningKeyWithCredentials(testEmail, "", validSecret)
-		if err != nil {
-			t.Fatalf("NewJwtSigningKeyWithCredentials() error = %v, want nil", err)
-		}
-
-		if len(key) != 32 { // SHA256 hash length
-			t.Errorf("NewJwtSigningKeyWithCredentials() key length = %d, want 32", len(key))
-		}
-
-		// Test deterministic output for same inputs
-		key2, err := NewJwtSigningKeyWithCredentials(testEmail, "", validSecret)
-		if err != nil {
-			t.Fatalf("Second call returned unexpected error: %v", err)
-		}
-		if !hmac.Equal(key, key2) {
-			t.Error("NewJwtSigningKeyWithCredentials() returned different keys for same inputs")
-		}
-	})
+			// Verify deterministic output
+			key2, err := NewJwtSigningKeyWithCredentials(tc.email, tc.password, validSecret)
+			if err != nil {
+				t.Fatalf("Second call failed unexpectedly: %v", err)
+			}
+			if !hmac.Equal(key1, key2) {
+				t.Error("returned different keys for same inputs")
+			}
+		})
+	}
 }
 
 func TestNewJwtSigningKeyWithCredentialsErrors(t *testing.T) {
