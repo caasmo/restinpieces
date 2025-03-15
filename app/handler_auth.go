@@ -202,9 +202,9 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	fmt.Fprint(w, `{"message":"email will be sent soon. Check your mailbox"}`)
 }
 
-// RegisterHandler handles user registration with validation
-// Endpoint: POST /register
-func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
+// RegisterWithPasswordHandler handles password-based user registration with validation
+// Endpoint: POST /register-with-password
+func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Identity        string `json:"identity"`
 		Password        string `json:"password"`
