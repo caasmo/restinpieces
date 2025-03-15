@@ -40,9 +40,15 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generate new token with fresh expiration
-	claims := map[string]any{crypto.ClaimUserID: userId}
-	newToken, expiry, err := crypto.NewJwt(claims, a.config.JwtSecret, a.config.TokenDuration)
+	// Get user from database to get email for signing key
+	user, err := a.db.GetUserById(userId)
+	if err != nil || user == nil {
+		writeJSONError(w, errorInvalidCredentials)
+		return
+	}
+
+	// Generate new token with fresh expiration using NewJwtSession
+	newToken, expiry, err := crypto.NewJwtSession(userId, user.Email, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
