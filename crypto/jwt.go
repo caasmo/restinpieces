@@ -171,7 +171,7 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 // Note: JWT_SECRET should be a strong, random value (e.g., 32+ bytes).
 func NewJwtSigningKeyWithCredentials(email, passwordHash string, secret []byte) ([]byte, error) {
 	// Validate inputs
-	if email == "" || passwordHash == "" {
+	if email == "" {
 		return nil, ErrInvalidSigningKeyParts
 	}
 
@@ -183,10 +183,12 @@ func NewJwtSigningKeyWithCredentials(email, passwordHash string, secret []byte) 
 	// Create HMAC hasher with server secret as key
 	h := hmac.New(sha256.New, secret)
 
-	// Add user-specific data with null byte delimiter
+	// Add user-specific data, handle empty passwordHash
 	h.Write([]byte(email))
 	h.Write([]byte{0}) // Null byte to avoid collisions
-	h.Write([]byte(passwordHash))
+	if passwordHash != "" {
+		h.Write([]byte(passwordHash))
+	}
 
 	// Return the HMAC sum as a raw byte slice
 	return h.Sum(nil), nil
