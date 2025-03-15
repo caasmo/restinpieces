@@ -252,7 +252,6 @@ func TestParseJwtUnverified(t *testing.T) {
 func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 	validSecret := []byte("test_secret_32_bytes_long_xxxxxx")
 	testEmail := "test@example.com"
-	testPasswordHash := "hashed_password_123"
 	testCases := []struct {
 		name      string
 		email     string
@@ -262,7 +261,7 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 		{
 			name:      "with password",
 			email:     testEmail,
-			password:  testPasswordHash,
+			password:  "hashed_password_123",
 			wantError: nil,
 		},
 		{
@@ -299,7 +298,6 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 func TestNewJwtSigningKeyWithCredentialsErrors(t *testing.T) {
 	validSecret := []byte("test_secret_32_bytes_long_xxxxxx")
 	testEmail := "test@example.com"
-	testPasswordHash := "hashed_password_123"
 
 	tests := []struct {
 		name      string
@@ -311,7 +309,7 @@ func TestNewJwtSigningKeyWithCredentialsErrors(t *testing.T) {
 		{
 			name:      "empty email",
 			email:     "",
-			password:  testPasswordHash,
+			password:  "hashed_password_123",
 			secret:    validSecret,
 			wantError: ErrInvalidSigningKeyParts,
 		},
@@ -325,7 +323,7 @@ func TestNewJwtSigningKeyWithCredentialsErrors(t *testing.T) {
 		{
 			name:      "short server secret",
 			email:     testEmail,
-			password:  testPasswordHash,
+			password:  "hashed_password_123",
 			secret:    []byte("short"),
 			wantError: ErrJwtInvalidSecretLength,
 		},
