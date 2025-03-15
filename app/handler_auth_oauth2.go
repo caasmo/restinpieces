@@ -45,6 +45,8 @@ type oauth2UserInfo struct {
 	Name  string `json:"name"`
 }
 
+// AuthWithOAuth2Handler handles OAuth2 authentication
+// Endpoint: POST /auth-with-oauth2
 func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	var req oauth2Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -161,6 +163,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	writeAuthOkResponse(w, jwtToken, user)
 }
 
+// OAuth2ProvidersHandler returns available OAuth2 providers
+// Endpoint: GET /oauth2-providers
 func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 	var providers []responseProviderInfo
 

@@ -32,6 +32,7 @@ import (
 //
 
 // RefreshAuthHandler handles explicit JWT token refresh requests
+// Endpoint: POST /auth-refresh
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Get claims from context (added by JwtValidate middleware)
 	userId, ok := r.Context().Value(UserIDKey).(string)
@@ -71,6 +72,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // AuthWithPasswordHandler handles password-based authentication (login)
+// Endpoint: POST /auth-with-password
 func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
@@ -143,6 +145,7 @@ func isValidEmail(email string) bool {
 // todo already verified.
 // goroutine generates token
 // RequestVerificationHandler handles email verification requests
+// Endpoint: POST /request-verification
 func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email string `json:"email"`
@@ -200,6 +203,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 }
 
 // RegisterHandler handles user registration with validation
+// Endpoint: POST /register
 func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Identity        string `json:"identity"`
