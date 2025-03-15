@@ -8,19 +8,19 @@ import (
 	"time"
 	"log/slog"
 
-	// oauth2TokenExchangeTimeout defines the maximum duration for OAuth2 token exchange operations.
-	// This timeout prevents hanging if the OAuth2 provider is unresponsive.
-	// The value of 10 seconds is chosen as a balance between:
-	// - Allowing enough time for network latency and provider processing
-	// - Providing a reasonable user experience
-	// - Preventing resource exhaustion from hanging requests
-	oauth2TokenExchangeTimeout = 10 * time.Second
-
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	oauth2provider "github.com/caasmo/restinpieces/oauth2"
 	"golang.org/x/oauth2"
 )
+
+// oauth2TokenExchangeTimeout defines the maximum duration for OAuth2 token exchange operations.
+// This timeout prevents hanging if the OAuth2 provider is unresponsive.
+// The value of 10 seconds is chosen as a balance between:
+// - Allowing enough time for network latency and provider processing
+// - Providing a reasonable user experience
+// - Preventing resource exhaustion from hanging requests
+const oauth2TokenExchangeTimeout = 10 * time.Second
 
 type responseProviderInfo struct {
 	Name                string `json:"name"`
