@@ -52,7 +52,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		func(stmt *sqlite.Stmt) error {
 
 			var err error
-			user, err := newUserFromStmt(stmt)
+			user, err = newUserFromStmt(stmt)
 			if err != nil {
 				return err
 			}
@@ -101,6 +101,7 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 		FROM users WHERE id = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
 
+			var err error
 			user, err = newUserFromStmt(stmt)
 			if err != nil {
 				return err
@@ -156,7 +157,8 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		RETURNING id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated`,
 		func(stmt *sqlite.Stmt) error {
 
-			createdUser, err := newUserFromStmt(stmt)
+			var err error
+			createdUser, err = newUserFromStmt(stmt)
 			if err != nil {
 				return err
 			}
