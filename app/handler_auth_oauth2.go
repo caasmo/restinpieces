@@ -147,10 +147,17 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Generate JWT signing key using email and secret
+	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(user.Email, "", a.config.JwtSecret)
+	if err != nil {
+		writeJSONError(w, errorTokenGeneration)
+		return
+	}
+
 	// Generate JWT token
 	claims := map[string]any{crypto.ClaimUserID: user.ID}
 	slog.Debug("Generating JWT for authenticated user", "userID", user.ID)
-	jwtToken, _, err := crypto.NewJwt(claims, a.config.JwtSecret, a.config.TokenDuration)
+	jwtToken, _, err := crypto.NewJwt(claims, signingKey, a.config.TokenDuration)
 	slog.Debug("JWT generation completed", "success", err == nil)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
