@@ -51,6 +51,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
 
+			var err error
 			user, err = newUserFromStmt(stmt)
 			if err != nil {
 				return err
