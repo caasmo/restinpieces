@@ -23,15 +23,15 @@ func newUserFromStmt(stmt *sqlite.Stmt) (*db.User, error) {
 
 	return &db.User{
 		ID:              stmt.GetText("id"),
-		Name:           stmt.GetText("name"),
-		Password:       stmt.GetText("password"),
-		Verified:       stmt.GetInt64("verified") != 0,
-		ExternalAuth:   stmt.GetText("externalAuth"),
-		Avatar:         stmt.GetText("avatar"),
-		Email:          stmt.GetText("email"),
+		Name:            stmt.GetText("name"),
+		Password:        stmt.GetText("password"),
+		Verified:        stmt.GetInt64("verified") != 0,
+		ExternalAuth:    stmt.GetText("externalAuth"),
+		Avatar:          stmt.GetText("avatar"),
+		Email:           stmt.GetText("email"),
 		EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-		Created:        created,
-		Updated:        updated,
+		Created:         created,
+		Updated:         updated,
 	}, nil
 }
 

@@ -17,7 +17,6 @@ type Db interface {
 	InsertQueueJob(job queue.QueueJob) error
 }
 
-
 // TimeFormat converts a time.Time to RFC3339 string in UTC.
 // This should be used when sending time values to SQLite since it doesn't have
 // a native datetime type. All timestamps in the database should use this format.

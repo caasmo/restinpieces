@@ -39,9 +39,9 @@ type OAuth2ProviderConfig struct {
 func (c *OAuth2ProviderConfig) FillEnvVars() error {
 	c.ClientID.Value = os.Getenv(c.ClientID.Name)
 	c.ClientSecret.Value = os.Getenv(c.ClientSecret.Name)
-	
+
 	if c.ClientID.Value == "" || c.ClientSecret.Value == "" {
-		return fmt.Errorf("missing environment variables for %s: %s and %s must be set", 
+		return fmt.Errorf("missing environment variables for %s: %s and %s must be set",
 			c.Name, c.ClientID.Name, c.ClientSecret.Name)
 	}
 	return nil

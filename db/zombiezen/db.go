@@ -125,13 +125,13 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 				}
 
 				user = &db.User{
-					ID:           stmt.GetText("id"),
-					Email:        stmt.GetText("email"),
-					Name:         stmt.GetText("name"),
-					Password:     stmt.GetText("password"),
-					Created:      created,
-					Updated:      updated,
-					Verified:     stmt.GetInt64("verified") != 0,
+					ID:              stmt.GetText("id"),
+					Email:           stmt.GetText("email"),
+					Name:            stmt.GetText("name"),
+					Password:        stmt.GetText("password"),
+					Created:         created,
+					Updated:         updated,
+					Verified:        stmt.GetInt64("verified") != 0,
 					ExternalAuth:    stmt.GetText("externalAuth"),
 					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
 				}

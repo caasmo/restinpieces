@@ -6,16 +6,16 @@ import "time"
 // Timestamps (Created and Updated) use RFC3339 format in UTC timezone.
 // Example: "2024-03-07T15:04:05Z"
 type User struct {
-	ID           string
-	Email        string
-	Name         string
-	// Non empty password means password authentication is active 
+	ID    string
+	Email string
+	Name  string
+	// Non empty password means password authentication is active
 	// Password can be empty for passwordless methods like oauth2, otp over email...
-	Password     string
-	Avatar       string
-	Created      time.Time
-	Updated      time.Time
-	Verified     bool
+	Password string
+	Avatar   string
+	Created  time.Time
+	Updated  time.Time
+	Verified bool
 	// ExternalAuth identifies authentication methods (password authentication excluded)
 	// Example of methods are "oauth2", "otp".
 	// the structure is a comma separated string

@@ -29,14 +29,14 @@ func main() {
 		ClientSecret: config.Env{Name: config.EnvGoogleClientSecret},
 		DisplayName:  "Google",
 		RedirectURL:  "http://localhost:8080/oauth2/callback/",
-		AuthURL:     "https://accounts.google.com/o/oauth2/v2/auth",
+		AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
 		TokenURL:     "https://oauth2.googleapis.com/token",
 		UserInfoURL:  "https://www.googleapis.com/oauth2/v3/userinfo",
 		Scopes: []string{
 			"https://www.googleapis.com/auth/userinfo.profile",
 			"https://www.googleapis.com/auth/userinfo.email",
 		},
-		PKCE:         true,
+		PKCE: true,
 	}
 	if err := googleConfig.FillEnvVars(); err != nil {
 		slog.Warn("skipping Google OAuth2 provider", "error", err)
@@ -54,7 +54,7 @@ func main() {
 		AuthURL:      "https://github.com/login/oauth/authorize",
 		TokenURL:     "https://github.com/login/oauth/access_token",
 		UserInfoURL:  "https://api.github.com/user",
-		Scopes:      []string{"read:user", "user:email"},
+		Scopes:       []string{"read:user", "user:email"},
 		PKCE:         true,
 	}
 	if err := githubConfig.FillEnvVars(); err != nil {

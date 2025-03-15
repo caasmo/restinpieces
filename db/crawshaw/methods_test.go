@@ -137,7 +137,7 @@ func TestCreateUser(t *testing.T) {
 				Password: "hashed_password_123",
 				Name:     "Duplicate User",
 			},
-			wantErr:   true,
+			wantErr: true,
 		},
 	}
 

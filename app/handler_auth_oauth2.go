@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
-	"log/slog"
 
 	"github.com/caasmo/restinpieces/crypto"
 	oauth2provider "github.com/caasmo/restinpieces/oauth2"
@@ -44,11 +44,11 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-		slog.Debug("OAuth2 fields", 
-			"provider", req.Provider,
-			"code", req.Code,
-			"codeVerifier", req.CodeVerifier,
-			"redirectURI", req.RedirectURI)
+	slog.Debug("OAuth2 fields",
+		"provider", req.Provider,
+		"code", req.Code,
+		"codeVerifier", req.CodeVerifier,
+		"redirectURI", req.RedirectURI)
 	// Validate required fields
 	if req.Provider == "" || req.Code == "" || req.CodeVerifier == "" || req.RedirectURI == "" {
 		writeJSONError(w, errorMissingFields)
