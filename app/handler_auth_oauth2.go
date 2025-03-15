@@ -104,18 +104,15 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	var userInfo oauth2UserInfo
-	slog.Debug("Decoding user info response")
-	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
-		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to decode user info: %s"}`, err.Error()))})
+	user, err := oauth2.UserFromInfoResponse(resp, req.Provider)
+	if err != nil {
+		slog.Debug("Failed to map provider user info", "error", err)
+		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to process user info: %s"}`, err.Error()))})
 		return
 	}
-	slog.Debug("Successfully decoded user info", "email", userInfo.Email, "name", userInfo.Name)
-	// TODO each provider has own fields, we need a traslation from raw response to our stanrdat user. 
-	// See BaseProvider pocketbase, FetchRawUser  
+	slog.Debug("Successfully mapped provider user info", "email", user.Email, "name", user.Name)
 
-	slog.Debug("Received user info", "email", userInfo.Email, "name", userInfo.Name)
-	if userInfo.Email == "" {
+	if user.Email == "" {
 		slog.Debug("OAuth2 provider did not return email")
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"OAuth2 provider did not return email"}`)})
 		return
