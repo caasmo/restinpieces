@@ -24,7 +24,7 @@ func route(ap *app.App) {
 	ap.Router().Handle("GET /api/oauth2-providers", commonMiddleware.ThenFunc(ap.OAuth2ProvidersHandler))
 
 	ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
-	ap.Router().Handle("/api", authMiddleware.ThenFunc(ap.Index))
+	ap.Router().Handle("GET /api", authMiddleware.ThenFunc(ap.Index))
 	ap.Router().Handle("/api/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
 	ap.Router().Handle("/api/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
 	ap.Router().Handle("/api/benchmark/baseline", http.HandlerFunc(ap.BenchmarkBaseline))
