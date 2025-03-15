@@ -131,6 +131,27 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 	return nil, ErrJwtInvalidToken
 }
 
+// NewJwtSession creates a new JWT session token for a user
+// It handles the complete token generation process including:
+// - Creating the signing key from user credentials
+// - Setting up standard claims
+// - Generating and signing the token
+func NewJwtSession(userID, email string, secret []byte, duration time.Duration) (string, time.Time, error) {
+	// Create signing key from email and secret
+	signingKey, err := NewJwtSigningKeyWithCredentials(email, "", secret)
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("failed to create signing key: %w", err)
+	}
+
+	// Set up claims
+	claims := jwt.MapClaims{
+		ClaimUserID: userID,
+	}
+
+	// Generate and return token
+	return NewJwt(claims, signingKey, duration)
+}
+
 // NewJWT generates a new JWT token with the provided claims
 // payload is jwt.MapClaims which is just map[string]any
 // you can just call payload := map[string]any{"user_id": userID}
