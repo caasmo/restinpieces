@@ -35,8 +35,8 @@ var tables = []tableSchema{
 		name:   "users",
 		schema: migrations.UsersSchema,
 		inserts: []string{
-			`INSERT INTO users (id, email, name, password, created, updated, verified, tokenKey)
-			 VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE, 'token_key_setup')`,
+			`INSERT INTO users (id, email, name, password, created, updated, verified)
+			 VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE)`,
 		},
 		knownHash: "cd6c8992ee383a88b0e86754400afea6ef89cb7475339a898435395d208726fd",
 	},
@@ -128,7 +128,6 @@ func TestCreateUser(t *testing.T) {
 				Email:    "new@test.com",
 				Password: "hashed_password_123",
 				Name:     "New User",
-				TokenKey: "token_key_valid_user_creation",
 			},
 			wantErr:     false,
 			checkFields: []string{"Email", "Name", "Password", "TokenKey"},
@@ -139,7 +138,6 @@ func TestCreateUser(t *testing.T) {
 				Email:    "existing@test.com", // Same email as test user created in setupDB()
 				Password: "hashed_password_123",
 				Name:     "Duplicate User",
-				TokenKey: "token_key_duplicate_email",
 			},
 			wantErr:   true,
 			errorType: db.ErrConstraintUnique,
@@ -150,7 +148,6 @@ func TestCreateUser(t *testing.T) {
 				Email:    "", // Empty email
 				Password: "hashed_password_123",
 				Name:     "Invalid User",
-				TokenKey: "token_key_missing_email",
 			},
 			wantErr: true,
 		},
@@ -160,7 +157,6 @@ func TestCreateUser(t *testing.T) {
 				Email:    "missingpass@test.com",
 				Password: "", // Empty password
 				Name:     "Invalid User",
-				TokenKey: "token_key_missing_password",
 			},
 			wantErr: true,
 		},
@@ -170,7 +166,6 @@ func TestCreateUser(t *testing.T) {
 				Email:    "missingtoken@test.com",
 				Password: "hashed_password_123",
 				Name:     "Invalid User",
-				TokenKey: "", // Empty token key
 			},
 			wantErr: true,
 		},
@@ -180,7 +175,6 @@ func TestCreateUser(t *testing.T) {
 				Email:    "duptoken@test.com",
 				Password: "hashed_password_123",
 				Name:     "Duplicate Token User",
-				TokenKey: "token_key_setup", // Same token key as test user created in setupDB()
 			},
 			wantErr:   true,
 			errorType: db.ErrConstraintUnique,
@@ -227,10 +221,6 @@ func TestCreateUser(t *testing.T) {
 				case "Password":
 					if createdUser.Password != tt.user.Password {
 						t.Errorf("Password mismatch: got %q, want %q", createdUser.Password, tt.user.Password)
-					}
-				case "TokenKey":
-					if createdUser.TokenKey != tt.user.TokenKey {
-						t.Errorf("TokenKey mismatch: got %q, want %q", createdUser.TokenKey, tt.user.TokenKey)
 					}
 				}
 			}
