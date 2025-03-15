@@ -72,11 +72,13 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
+	slog.Debug("Exchanging OAuth2 code for token", "provider", req.Provider)
 	token, err := oauth2Config.Exchange(
 		ctx,
 		req.Code,
 		oauth2.SetAuthURLParam("code_verifier", req.CodeVerifier),
 	)
+	slog.Debug("OAuth2 token exchange completed", "provider", req.Provider, "token", token != nil)
 	if err != nil {
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to exchange token: %s"}`, err.Error()))})
 		return
@@ -84,7 +86,9 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Get user info
 	client := oauth2Config.Client(ctx, token)
+	slog.Debug("Fetching user info from OAuth2 provider", "url", provider.UserInfoURL)
 	resp, err := client.Get(provider.UserInfoURL)
+	slog.Debug("Received user info response", "status", resp.StatusCode)
 	if err != nil {
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to get user info: %s"}`, err.Error()))})
 		return
@@ -99,13 +103,17 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// TODO each provider has own fields, we need a traslation from raw response to our stanrdat user. 
 	// See BaseProvider pocketbase, FetchRawUser  
 
+	slog.Debug("Received user info", "email", userInfo.Email, "name", userInfo.Name)
 	if userInfo.Email == "" {
+		slog.Debug("OAuth2 provider did not return email")
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"OAuth2 provider did not return email"}`)})
 		return
 	}
 
 	// Check if user exists or create new
+	slog.Debug("Looking up user by email", "email", userInfo.Email)
 	user, err := a.db.GetUserByEmail(userInfo.Email)
+	slog.Debug("User lookup result", "found", user != nil, "error", err)
 	if err != nil {
 		writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"Database error: %s"}`, err.Error()))})
 		return
@@ -114,6 +122,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 	if user == nil {
 		// Create new user
+		slog.Debug("Creating new user from OAuth2 info")
 		user, err = a.db.CreateUser(db.User{
 			Email:    userInfo.Email,
 			Name:     userInfo.Name,
@@ -129,7 +138,9 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Generate JWT token
 	claims := map[string]any{crypto.ClaimUserID: user.ID}
+	slog.Debug("Generating JWT for authenticated user", "userID", user.ID)
 	jwtToken, _, err := crypto.NewJwt(claims, a.config.JwtSecret, a.config.TokenDuration)
+	slog.Debug("JWT generation completed", "success", err == nil)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
