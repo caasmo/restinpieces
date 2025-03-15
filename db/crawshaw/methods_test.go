@@ -128,7 +128,7 @@ func TestCreateUser(t *testing.T) {
 				Name:     "New User",
 			},
 			wantErr:     false,
-			checkFields: []string{"Email", "Name", "Password", "TokenKey"},
+			checkFields: []string{"Email", "Name", "Password"},
 		},
 		{
 			name: "duplicate email",

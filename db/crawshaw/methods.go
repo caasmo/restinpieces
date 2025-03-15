@@ -51,20 +51,6 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
 
-			// Get the date strings
-			createdStr := stmt.GetText("created")
-			updatedStr := stmt.GetText("updated")
-
-			created, err := db.TimeParse(createdStr)
-			if err != nil {
-				return fmt.Errorf("error parsing created time: %w", err)
-			}
-
-			updated, err := db.TimeParse(updatedStr)
-			if err != nil {
-				return fmt.Errorf("error parsing updated time: %w", err)
-			}
-
 			user, err = newUserFromStmt(stmt)
 			if err != nil {
 				return err
@@ -113,20 +99,6 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 		`SELECT id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated
 		FROM users WHERE id = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
-
-			// Get the date strings
-			createdStr := stmt.GetText("created")
-			updatedStr := stmt.GetText("updated")
-
-			created, err := db.TimeParse(createdStr)
-			if err != nil {
-				return fmt.Errorf("error parsing created time: %w", err)
-			}
-
-			updated, err := db.TimeParse(updatedStr)
-			if err != nil {
-				return fmt.Errorf("error parsing updated time: %w", err)
-			}
 
 			user, err = newUserFromStmt(stmt)
 			if err != nil {
@@ -182,15 +154,6 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 		RETURNING id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated`,
 		func(stmt *sqlite.Stmt) error {
-			created, err := db.TimeParse(stmt.GetText("created"))
-			if err != nil {
-				return fmt.Errorf("error parsing created time: %w", err)
-			}
-
-			updated, err := db.TimeParse(stmt.GetText("updated"))
-			if err != nil {
-				return fmt.Errorf("error parsing updated time: %w", err)
-			}
 
 			createdUser, err = newUserFromStmt(stmt)
 			if err != nil {
