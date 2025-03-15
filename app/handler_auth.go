@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/mail"
 	"strings"
 	"time"
 
@@ -91,7 +90,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// only email TODO
-	if !isValidEmail(req.Identity) {
+	if !ValidateEmail(req.Identity) {
 		writeJSONError(w, errorInvalidRequest)
 		return
 	}
@@ -152,7 +151,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	req.Email = strings.TrimSpace(req.Email)
-	if req.Email == "" || !isValidEmail(req.Email) {
+	if req.Email == "" || !ValidateEmail(req.Email) {
 		writeJSONError(w, errorInvalidRequest)
 		return
 	}
