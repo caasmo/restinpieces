@@ -49,8 +49,8 @@ func writeJSONErrorf(w http.ResponseWriter, code int, format string, args ...int
 	fmt.Fprintf(w, format, args...)
 }
 
-// writeAuthResponse writes a standardized authentication response
-func writeAuthResponse(w http.ResponseWriter, token string, user *db.User) {
+// writeAuthOkResponse writes a standardized successful authentication response
+func writeAuthOkResponse(w http.ResponseWriter, token string, user *db.User) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token": token,

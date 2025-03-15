@@ -158,7 +158,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Return same response format as password auth
 	slog.Debug("Preparing successful authentication response")
-	writeAuthResponse(w, jwtToken, user)
+	writeAuthOkResponse(w, jwtToken, user)
 }
 
 func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
