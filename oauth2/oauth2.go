@@ -28,7 +28,7 @@ func UserFromInfoResponse(resp *http.Response, providerName string) (*db.User, e
 	switch providerName {
 	case "google":
 
-		// raw info endpoint fields:
+		// raw info endpoint fields (from pocketbase)
 		var raw struct {
 			Id            string `json:"sub"`
 			Name          string `json:"name"`
