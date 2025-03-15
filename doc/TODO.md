@@ -49,6 +49,25 @@
 		- oauth2 registration always produce verified true
 	- db methods shoudl not make validation, handlers should make it, like create user with verified and no password.
 
+- mapping go struct <=> sqlite queries (insert queries, only those use default)
+	- using crawshaw Exec only allow for determined number of placeholder
+	- example a insert for createUser, we want sqlite to write the default created, updated. but the go struct is empty
+		- each method (query) should write all values in go 
+		- each method determine the list of arguments, which argumetn will update, and the number of placeholders.
+			- createUser for oauth2
+				- created and updated do not write
+
+			- createUser for password
+				- created and updated do not write
+	- i think the idea is
+		- check the schema definition, look for DEFAULT in schema that are not zero
+			- if schema has a default it means it wants to write it, let it
+		- for each query, method, determine which values come from go, and which ones are writen by the db
+		- it should check all posssible callers of the method
+			- oauth2 creation of user has avatar, password no -> but default is fine argument
+			- all creation we let dn write
+		- normally if the zero value in go is not the zero value in db. do not let go write it.*as always we are taking about INSERTS)
+
 - refresh jwt
 - generate new jwt register 
 - jwt invalidation go tests
