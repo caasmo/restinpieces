@@ -104,23 +104,23 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	user, err := oauth2.UserFromInfoResponse(resp, req.Provider)
+	oauthUser, err := UserFromInfoResponse(resp, req.Provider)
 	if err != nil {
 		slog.Debug("Failed to map provider user info", "error", err)
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to process user info: %s"}`, err.Error()))})
 		return
 	}
-	slog.Debug("Successfully mapped provider user info", "user", user)
+	slog.Debug("Successfully mapped provider user info", "user", oauthUser)
 
-	if user.Email == "" {
+	if oauthUser.Email == "" {
 		slog.Debug("OAuth2 provider did not return email")
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"OAuth2 provider did not return email"}`)})
 		return
 	}
 
 	// Check if user exists or create new
-	slog.Debug("Looking up user by email", "email", userInfo.Email)
-	user, err := a.db.GetUserByEmail(userInfo.Email)
+	slog.Debug("Looking up user by email", "email", oauthUser.Email)
+	user, err := a.db.GetUserByEmail(oauthUser.Email)
 	slog.Debug("User lookup result", "found", user != nil, "error", err)
 	if err != nil {
 		writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"Database error: %s"}`, err.Error()))})
@@ -132,8 +132,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		// Create new user
 		slog.Debug("Creating new user from OAuth2 info")
 		user, err = a.db.CreateUser(db.User{
-			Email:    userInfo.Email,
-			Name:     userInfo.Name,
+			Email:    oauthUser.Email,
+			Name:     oauthUser.Name,
 			Created:  now,
 			Updated:  now,
 			Verified: true, // OAuth2 users are considered verified
