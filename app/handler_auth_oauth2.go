@@ -129,9 +129,11 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user == nil {
-		// Create new user from OAuth2 info
+		// Create new user from OAuth2 info with ExternalAuth set
 		slog.Debug("Creating new user in users")
-		user, err = a.db.CreateUser(*oauthUser)
+		userToCreate := *oauthUser
+		userToCreate.ExternalAuth = oauth2.ExternalAuthOAuth2
+		user, err = a.db.CreateUser(userToCreate)
 		slog.Debug("New user created", "user", user)
 		if err != nil {
 			writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"Failed to create user: %s"}`, err.Error()))})

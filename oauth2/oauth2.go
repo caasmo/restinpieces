@@ -9,6 +9,12 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
+const (
+	// ExternalAuthOAuth2 is the value used in the ExternalAuth field
+	// to indicate OAuth2 authentication
+	ExternalAuthOAuth2 = "oauth2"
+)
+
 // AuthUser defines a standardized OAuth2 user data structure.
 // we already havr user. remove.
 //type AuthUser struct {
