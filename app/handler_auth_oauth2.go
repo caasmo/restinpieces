@@ -148,7 +148,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT session token
-	slog.Debug("Generating JWT for authenticated user", "userID", user.ID)
+	slog.Debug("Generating JWT for user", "userID", user.ID)
 	jwtToken, _, err := crypto.NewJwtSession(user.ID, user.Email, a.config.JwtSecret, a.config.TokenDuration)
 	slog.Debug("JWT generation completed", "success", err == nil)
 	if err != nil {
