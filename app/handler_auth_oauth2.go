@@ -8,6 +8,14 @@ import (
 	"time"
 	"log/slog"
 
+	// oauth2TokenExchangeTimeout defines the maximum duration for OAuth2 token exchange operations.
+	// This timeout prevents hanging if the OAuth2 provider is unresponsive.
+	// The value of 10 seconds is chosen as a balance between:
+	// - Allowing enough time for network latency and provider processing
+	// - Providing a reasonable user experience
+	// - Preventing resource exhaustion from hanging requests
+	oauth2TokenExchangeTimeout = 10 * time.Second
+
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	oauth2provider "github.com/caasmo/restinpieces/oauth2"
@@ -77,8 +85,9 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Exchange code for token with timeout
+	// Using a timeout prevents hanging if the OAuth2 provider is unresponsive
 	slog.Debug("Setting up context with timeout for token exchange")
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), oauth2TokenExchangeTimeout)
 	defer cancel()
 
 	slog.Debug("Exchanging OAuth2 code for token", "provider", req.Provider)
