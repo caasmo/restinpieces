@@ -127,15 +127,14 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	now := time.Now()
 	if user == nil {
-		// Create new user
+		// Create new user from OAuth2 info
 		slog.Debug("Creating new user from OAuth2 info")
 		user, err = a.db.CreateUser(db.User{
+			ID:       oauthUser.ID,
 			Email:    oauthUser.Email,
 			Name:     oauthUser.Name,
-			Created:  now,
-			Updated:  now,
+			Avatar:   oauthUser.Avatar,
 			Verified: true, // OAuth2 users are considered verified
 		})
 		slog.Debug("New user created", "id", user.ID)
