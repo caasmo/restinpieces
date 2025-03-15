@@ -140,13 +140,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		// Create new user from OAuth2 info
 		slog.Debug("Creating new user from OAuth2 info")
-		user, err = a.db.CreateUser(db.User{
-			ID:       oauthUser.ID,
-			Email:    oauthUser.Email,
-			Name:     oauthUser.Name,
-			Avatar:   oauthUser.Avatar,
-			Verified: true, // OAuth2 users are considered verified
-		})
+		user, err = a.db.CreateUser(*oauthUser)
 		slog.Debug("New user created", "id", user.ID)
 		if err != nil {
 			writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"Failed to create user: %s"}`, err.Error()))})
