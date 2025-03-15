@@ -20,7 +20,9 @@ import ()
 func UserFromInfoResponse(resp *http.Response, providerName string) (*db.User, error) {
 	switch providerName {
 	case "google":
-		var userInfo struct {
+
+		// raw info endpoint fields:
+		var raw struct {
 			Id            string `json:"sub"`
 			Name          string `json:"name"`
 			Picture       string `json:"picture"`
@@ -28,20 +30,20 @@ func UserFromInfoResponse(resp *http.Response, providerName string) (*db.User, e
 			EmailVerified bool   `json:"email_verified"`
 		}
 
-		if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
 			return nil, fmt.Errorf("failed to decode google user info: %w", err)
 		}
 
-		if !userInfo.EmailVerified {
+		if !raw.EmailVerified {
 			return nil, errors.New("google email not verified")
 		}
 
 		return &db.User{
-			ID:     userInfo.Id,
-			Email:  userInfo.Email,
-			Name:   userInfo.Name,
-			Avatar: userInfo.Picture,
-			Verified: true, // Google users are automatically verified
+			ID:     raw.Id,
+			Email:  raw.Email,
+			Name:   raw.Name,
+			Avatar: raw.Picture,
+			Verified: true, 
 		}, nil
 
 	default:
