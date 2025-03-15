@@ -119,11 +119,6 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	writeAuthOkResponse(w, token, user)
 }
 
-// isValidEmail performs RFC 5322 validation using net/mail
-func isValidEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
-}
 
 // confirm-
 // receives token

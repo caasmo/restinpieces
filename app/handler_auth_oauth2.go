@@ -113,9 +113,9 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.Debug("Successfully mapped provider user info", "user", oauthUser)
 
-	if oauthUser.Email == "" {
-		slog.Debug("OAuth2 provider did not return email")
-		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"OAuth2 provider did not return email"}`)})
+	if oauthUser.Email == "" || !ValidateEmail(oauthUser.Email) {
+		slog.Debug("OAuth2 provider did not return valid email", "email", oauthUser.Email)
+		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"OAuth2 provider did not return valid email"}`)})
 		return
 	}
 
