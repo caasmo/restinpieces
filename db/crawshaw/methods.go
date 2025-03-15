@@ -173,10 +173,7 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 
 // CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
 // Example timestamp: "2024-03-07T15:04:05Z"
-// TODO
-// User struct should contain at minimum: Email, Password (hashed), and Name
-// time fields are ignores in favor of default sqlite values
-// TODO 3 values signature
+// TODO only fields that can be set in the signature?
 func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	// Validate required fields
 	if err := validateUserFields(user); err != nil {
