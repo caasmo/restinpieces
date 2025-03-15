@@ -14,5 +14,7 @@ type User struct {
 	Created      time.Time
 	Updated      time.Time
 	Verified     bool
-	ExternalAuth string // Stores external auth provider identifier (e.g. "google", "github")
+	// ExternalAuth identifies the authentication provider method, excluding password
+	// (e.g. "google", "github"). Empty string indicates password authentication.
+	ExternalAuth string
 }
