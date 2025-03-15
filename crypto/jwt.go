@@ -161,6 +161,10 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 // with a server secret (JWT_SECRET). Tokens are invalidated when the user's
 // email or password changes, or globally by rotating JWT_SECRET.
 //
+// The passwordHash parameter can be empty to support passwordless authentication
+// methods like OAuth2. In this case, the signing key is derived only from the
+// email and server secret.
+//
 // Using HMAC prevents length-extension attacks, unlike simple hash concatenation.
 //
 // The function uses a null byte (\x00) as a delimiter to prevent collisions
