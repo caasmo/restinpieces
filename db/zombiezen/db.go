@@ -132,9 +132,8 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 					Created:      created,
 					Updated:      updated,
 					Verified:     stmt.GetInt64("verified") != 0,
-					ExternalAuth: stmt.GetText("externalAuth"),
+					ExternalAuth:    stmt.GetText("externalAuth"),
 					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-					ExternalAuth: stmt.GetText("externalAuth"),
 				}
 				return nil
 			},
