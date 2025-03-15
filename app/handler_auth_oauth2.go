@@ -9,7 +9,6 @@ import (
 	"log/slog"
 
 	"github.com/caasmo/restinpieces/crypto"
-	"github.com/caasmo/restinpieces/db"
 	oauth2provider "github.com/caasmo/restinpieces/oauth2"
 	"golang.org/x/oauth2"
 )
@@ -139,7 +138,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	if user == nil {
 		// Create new user from OAuth2 info
-		slog.Debug("Creating new user from OAuth2 info")
+		slog.Debug("Creating new user in users")
 		user, err = a.db.CreateUser(*oauthUser)
 		slog.Debug("New user created", "user", user)
 		if err != nil {
