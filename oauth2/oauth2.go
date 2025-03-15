@@ -4,17 +4,17 @@ import ()
 
 // AuthUser defines a standardized OAuth2 user data structure.
 // we already havr user. remove.
-type AuthUser struct {
-	Expiry       types.DateTime `json:"expiry"`
-	RawUser      map[string]any `json:"rawUser"`
-	Id           string         `json:"id"`
-	Name         string         `json:"name"`
-	Username     string         `json:"username"`
-	Email        string         `json:"email"`
-	AvatarURL    string         `json:"avatarURL"`
-	AccessToken  string         `json:"accessToken"`
-	RefreshToken string         `json:"refreshToken"`
-}
+//type AuthUser struct {
+//	Expiry       types.DateTime `json:"expiry"`
+//	RawUser      map[string]any `json:"rawUser"`
+//	Id           string         `json:"id"`
+//	Name         string         `json:"name"`
+//	Username     string         `json:"username"`
+//	Email        string         `json:"email"`
+//	AvatarURL    string         `json:"avatarURL"`
+//	AccessToken  string         `json:"accessToken"`
+//	RefreshToken string         `json:"refreshToken"`
+//}
 
 // for the moment each porvider has here a function to return the User given the raw extracted (pb) field from the provider
 // data, err := p.FetchRawUserInfo(token)
