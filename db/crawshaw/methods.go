@@ -9,6 +9,32 @@ import (
 	"strings"
 )
 
+// newUserFromStmt creates a User struct from a SQLite statement
+func newUserFromStmt(stmt *sqlite.Stmt) (*db.User, error) {
+	created, err := db.TimeParse(stmt.GetText("created"))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing created time: %w", err)
+	}
+
+	updated, err := db.TimeParse(stmt.GetText("updated"))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing updated time: %w", err)
+	}
+
+	return &db.User{
+		ID:              stmt.GetText("id"),
+		Name:           stmt.GetText("name"),
+		Password:       stmt.GetText("password"),
+		Verified:       stmt.GetInt64("verified") != 0,
+		ExternalAuth:   stmt.GetText("externalAuth"),
+		Avatar:         stmt.GetText("avatar"),
+		Email:          stmt.GetText("email"),
+		EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
+		Created:        created,
+		Updated:        updated,
+	}, nil
+}
+
 // GetUserByEmail retrieves a user by email address.
 // Returns:
 // - *db.User: User record if found, nil if no matching record exists
@@ -39,17 +65,9 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 				return fmt.Errorf("error parsing updated time: %w", err)
 			}
 
-			user = &db.User{
-				ID:              stmt.GetText("id"),
-				Name:           stmt.GetText("name"),
-				Password:       stmt.GetText("password"),
-				Verified:       stmt.GetInt64("verified") != 0,
-				ExternalAuth:   stmt.GetText("externalAuth"),
-				Avatar:         stmt.GetText("avatar"),
-				Email:          stmt.GetText("email"),
-				EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-				Created:        created,
-				Updated:        updated,
+			user, err = newUserFromStmt(stmt)
+			if err != nil {
+				return err
 			}
 			return nil
 		}, email)
@@ -110,17 +128,9 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 				return fmt.Errorf("error parsing updated time: %w", err)
 			}
 
-			user = &db.User{
-				ID:              stmt.GetText("id"),
-				Name:           stmt.GetText("name"),
-				Password:       stmt.GetText("password"),
-				Verified:       stmt.GetInt64("verified") != 0,
-				ExternalAuth:   stmt.GetText("externalAuth"),
-				Avatar:         stmt.GetText("avatar"),
-				Email:          stmt.GetText("email"),
-				EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-				Created:        created,
-				Updated:        updated,
+			user, err = newUserFromStmt(stmt)
+			if err != nil {
+				return err
 			}
 			return nil
 		}, id)
@@ -182,17 +192,9 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 				return fmt.Errorf("error parsing updated time: %w", err)
 			}
 
-			createdUser = &db.User{
-				ID:              stmt.GetText("id"),
-				Name:           stmt.GetText("name"),
-				Password:       stmt.GetText("password"),
-				Verified:       stmt.GetInt64("verified") != 0,
-				ExternalAuth:   stmt.GetText("externalAuth"),
-				Avatar:         stmt.GetText("avatar"),
-				Email:          stmt.GetText("email"),
-				EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-				Created:        created,
-				Updated:        updated,
+			createdUser, err = newUserFromStmt(stmt)
+			if err != nil {
+				return err
 			}
 			return nil
 		},
