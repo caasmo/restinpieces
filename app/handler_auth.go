@@ -267,17 +267,7 @@ func (a *App) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// todo to response
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"token": token,
-		"record": map[string]interface{}{
-			"id":       user.ID,
-			"email":    user.Email,
-			"name":     user.Name,
-			"verified": user.Verified,
-		},
-	})
+	writeAuthOkResponse(w, token, user)
 }
 
 // /request-verification endpoint
