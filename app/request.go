@@ -5,7 +5,11 @@ import (
 )
 
 // ValidateEmail checks if an email address is valid according to RFC 5322
-func ValidateEmail(email string) bool {
+// Returns nil if valid, or an error describing why the email is invalid
+func ValidateEmail(email string) error {
 	_, err := mail.ParseAddress(email)
-	return err == nil
+	if err != nil {
+		return fmt.Errorf("invalid email format: %w", err)
+	}
+	return nil
 }
