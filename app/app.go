@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"log/slog"
+	"os"
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
@@ -53,6 +55,12 @@ func WithConfig(cfg *config.Config) Option {
 }
 
 func New(opts ...Option) (*App, error) {
+	// Activate debug logging
+	logHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})
+	slog.SetDefault(slog.New(logHandler))
+
 	a := &App{}
 	for _, opt := range opts {
 		opt(a)
