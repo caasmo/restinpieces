@@ -10,6 +10,7 @@ import (
 
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/oauth2"
 	"golang.org/x/oauth2"
 )
 
@@ -104,7 +105,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	oauthUser, err := UserFromInfoResponse(resp, req.Provider)
+	oauthUser, err := oauth2.UserFromInfoResponse(resp, req.Provider)
 	if err != nil {
 		slog.Debug("Failed to map provider user info", "error", err)
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to process user info: %s"}`, err.Error()))})
