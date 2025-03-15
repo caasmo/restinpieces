@@ -1,6 +1,13 @@
 package oauth2
 
-import ()
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/caasmo/restinpieces/db"
+)
 
 // AuthUser defines a standardized OAuth2 user data structure.
 // we already havr user. remove.
