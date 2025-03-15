@@ -17,7 +17,7 @@ import ()
 //}
 
 // UserFromUserInfo maps provider-specific user info to our standard User struct
-func UserFromUserInfo(resp *http.Response, providerName string) (*db.User, error) {
+func UserFromInfoResponse(resp *http.Response, providerName string) (*db.User, error) {
 	switch providerName {
 	case "google":
 		var userInfo struct {
