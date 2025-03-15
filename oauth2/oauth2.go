@@ -52,11 +52,12 @@ func UserFromInfoResponse(resp *http.Response, providerName string) (*db.User, e
 		}
 
 		return &db.User{
-			ID:       raw.Id,
-			Email:    raw.Email,
-			Name:     raw.Name,
-			Avatar:   raw.Picture,
-			Verified: true,
+			ID:           raw.Id,
+			Email:        raw.Email,
+			Name:         raw.Name,
+			Avatar:       raw.Picture,
+			Verified:     true,
+			ExternalAuth: ExternalAuthOAuth2,
 		}, nil
 
 	default:
