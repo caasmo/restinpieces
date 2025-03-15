@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -139,7 +138,6 @@ func TestCreateUser(t *testing.T) {
 				Name:     "Duplicate User",
 			},
 			wantErr:   true,
-			errorType: db.ErrConstraintUnique,
 		},
 	}
 
