@@ -110,7 +110,7 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 
 	var user *db.User
 	err = sqlitex.Execute(conn,
-		`SELECT id, email, name, password, created, updated, verified
+		`SELECT id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated
 		FROM users WHERE id = ? LIMIT 1`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
