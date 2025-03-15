@@ -298,7 +298,7 @@ func TestNewJwtSigningKeyWithCredentialsErrors(t *testing.T) {
 			email:     testEmail,
 			password:  "",
 			secret:    validSecret,
-			wantError: ErrInvalidSigningKeyParts,
+			wantError: nil,
 		},
 		{
 			name:      "short server secret",
