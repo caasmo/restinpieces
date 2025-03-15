@@ -171,55 +171,50 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
-// CreateUser inserts a new user with RFC3339 formatted UTC timestamps.
-// Example timestamp: "2024-03-07T15:04:05Z"
-// TODO only fields that can be set in the signature?
+// CreateUser inserts a new user with all fields from users.sql schema
 func (d *Db) CreateUser(user db.User) (*db.User, error) {
-	// Validate required fields
-	if err := validateUserFields(user); err != nil {
-		return nil, err
-	}
-
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
 	var createdUser *db.User
 	err := sqlitex.Exec(conn,
-		`INSERT INTO users (email, password, name) 
-		VALUES (?, ?, ?)
-		RETURNING id, email, name, password, created, updated, verified`,
+		`INSERT INTO users (name, password, verified, externalAuth, avatar, email, emailVisibility) 
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+		RETURNING id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated`,
 		func(stmt *sqlite.Stmt) error {
-			// Get and parse timestamps from database
-			createdStr := stmt.GetText("created")
-			updatedStr := stmt.GetText("updated")
-
-			created, err := db.TimeParse(createdStr)
+			created, err := db.TimeParse(stmt.GetText("created"))
 			if err != nil {
 				return fmt.Errorf("error parsing created time: %w", err)
 			}
 
-			updated, err := db.TimeParse(updatedStr)
+			updated, err := db.TimeParse(stmt.GetText("updated"))
 			if err != nil {
 				return fmt.Errorf("error parsing updated time: %w", err)
 			}
 
 			createdUser = &db.User{
-				ID:       stmt.GetText("id"),
-				Email:    stmt.GetText("email"),
-				Name:     stmt.GetText("name"),
-				Password: stmt.GetText("password"),
-				Created:  created,
-				Updated:  updated,
-				Verified: stmt.GetInt64("verified") != 0,
+				ID:              stmt.GetText("id"),
+				Name:           stmt.GetText("name"),
+				Password:       stmt.GetText("password"),
+				Verified:       stmt.GetInt64("verified") != 0,
+				ExternalAuth:   stmt.GetText("externalAuth"),
+				Avatar:         stmt.GetText("avatar"),
+				Email:          stmt.GetText("email"),
+				Created:        created,
+				Updated:        updated,
 			}
 			return nil
 		},
-		user.Email,    // 1. email
-		user.Password, // 2. password
-		user.Name)     // 3. name
+		user.Name,            // 1. name
+		user.Password,        // 2. password
+		user.Verified,        // 3. verified
+		user.ExternalAuth,    // 4. externalAuth
+		user.Avatar,          // 5. avatar
+		user.Email,           // 6. email
+		false,                // 7. emailVisibility (default false)
+	)
 
 	if err != nil {
-		// Check for SQLITE_CONSTRAINT_UNIQUE (2067) error code
 		if sqliteErr, ok := err.(sqlite.Error); ok {
 			if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
 				return nil, db.ErrConstraintUnique
@@ -228,5 +223,5 @@ func (d *Db) CreateUser(user db.User) (*db.User, error) {
 		return nil, err
 	}
 
-	return createdUser, err
+	return createdUser, nil
 }
