@@ -158,16 +158,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Return same response format as password auth
 	slog.Debug("Preparing successful authentication response")
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"token": jwtToken,
-		"record": map[string]interface{}{
-			"id":       user.ID,
-			"email":    user.Email,
-			"name":     user.Name,
-			"verified": user.Verified,
-		},
-	})
+	writeAuthResponse(w, jwtToken, user)
 }
 
 func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
