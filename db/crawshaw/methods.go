@@ -21,7 +21,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 
 	var user *db.User // Will remain nil if no rows found
 	err := sqlitex.Exec(conn,
-		`SELECT id, email, name, password, created, updated, verified, tokenKey 
+		`SELECT id, email, name, password, created, updated, verified
 		FROM users WHERE email = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
 
@@ -47,9 +47,8 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 				Created:      created,
 				Updated:      updated,
 				Verified:     stmt.GetInt64("verified") != 0,
-				ExternalAuth: stmt.GetText("externalAuth"),
+				ExternalAuth:    stmt.GetText("externalAuth"),
 				EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-				ExternalAuth: stmt.GetText("externalAuth"),
 			}
 			return nil
 		}, email)
