@@ -65,6 +65,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create OAuth2 config
+	slog.Debug("Creating OAuth2 config", "provider", req.Provider, "scopes", provider.Scopes)
 	oauth2Config := oauth2.Config{
 		ClientID:     provider.ClientID.Value,
 		ClientSecret: provider.ClientSecret.Value,
@@ -77,6 +78,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Exchange code for token with timeout
+	slog.Debug("Setting up context with timeout for token exchange")
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -93,6 +95,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user info
+	slog.Debug("Creating OAuth2 client with token")
 	client := oauth2Config.Client(ctx, token)
 	slog.Debug("Fetching user info from OAuth2 provider", "url", provider.UserInfoURL)
 	resp, err := client.Get(provider.UserInfoURL)
@@ -104,10 +107,12 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 
 	var userInfo oauth2UserInfo
+	slog.Debug("Decoding user info response")
 	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to decode user info: %s"}`, err.Error()))})
 		return
 	}
+	slog.Debug("Successfully decoded user info", "email", userInfo.Email, "name", userInfo.Name)
 	// TODO each provider has own fields, we need a traslation from raw response to our stanrdat user. 
 	// See BaseProvider pocketbase, FetchRawUser  
 
@@ -138,6 +143,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 			Updated:  now,
 			Verified: true, // OAuth2 users are considered verified
 		})
+		slog.Debug("New user created", "id", user.ID)
 		if err != nil {
 			writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"Failed to create user: %s"}`, err.Error()))})
 			return
@@ -155,6 +161,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return same response format as password auth
+	slog.Debug("Preparing successful authentication response")
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token": jwtToken,
