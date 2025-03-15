@@ -20,7 +20,7 @@ func route(ap *app.App) {
 	ap.Router().Handle("POST /api/auth-with-password", http.HandlerFunc(ap.AuthWithPasswordHandler))
 	ap.Router().Handle("POST /api/auth-with-oauth2", http.HandlerFunc(ap.AuthWithOAuth2Handler))
 	ap.Router().Handle("POST /api/request-verification", http.HandlerFunc(ap.RequestVerificationHandler))
-	ap.Router().Handle("POST /api/register", http.HandlerFunc(ap.RegisterHandler))
+	ap.Router().Handle("POST /api/register-with-password", http.HandlerFunc(ap.RegisterWithPasswordHandler))
 	ap.Router().Handle("GET /api/oauth2-providers", commonMiddleware.ThenFunc(ap.OAuth2ProvidersHandler))
 
 	ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
