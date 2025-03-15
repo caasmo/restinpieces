@@ -96,6 +96,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to decode user info: %s"}`, err.Error()))})
 		return
 	}
+	// TODO each provider has own fields, we need a traslation from raw response to our stanrdat user. 
+	// See BaseProvider pocketbase, FetchRawUser  
 
 	if userInfo.Email == "" {
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"OAuth2 provider did not return email"}`)})
