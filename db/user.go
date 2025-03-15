@@ -9,12 +9,16 @@ type User struct {
 	ID           string
 	Email        string
 	Name         string
+	// Non empty password means password authentication is active 
+	// Password can be empty for passwordless methods like oauth2, otp over email...
 	Password     string
 	Avatar       string
 	Created      time.Time
 	Updated      time.Time
 	Verified     bool
-	// ExternalAuth identifies the authentication method (e.g. "oauth2", "otp").
-	// Empty string indicates password authentication.
+	// ExternalAuth identifies authentication methods (password authentication excluded)
+	// Example of methods are "oauth2", "otp".
+	// the structure is a comma separated string
+	// in future a colon separated string (not implmented) could be used for mfa
 	ExternalAuth string
 }
