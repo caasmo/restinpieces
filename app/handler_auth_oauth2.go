@@ -39,12 +39,19 @@ type oauth2UserInfo struct {
 func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	var req oauth2Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		slog.Debug("Failed to decode OAuth2 request", "error", err)
 		writeJSONError(w, errorInvalidRequest)
 		return
 	}
+	slog.Debug("Decoded OAuth2 request", "provider", req.Provider, "code", req.Code)
 
 	// Validate required fields
 	if req.Provider == "" || req.Code == "" || req.CodeVerifier == "" || req.RedirectURI == "" {
+		slog.Debug("Missing required OAuth2 fields", 
+			"provider", req.Provider,
+			"code", req.Code,
+			"codeVerifier", req.CodeVerifier,
+			"redirectURI", req.RedirectURI)
 		writeJSONError(w, errorMissingFields)
 		return
 	}
@@ -52,6 +59,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// Get provider config
 	provider, ok := a.config.OAuth2Providers[req.Provider]
 	if !ok {
+		slog.Debug("Invalid OAuth2 provider", "provider", req.Provider)
 		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"Invalid OAuth2 provider"}`)})
 		return
 	}
