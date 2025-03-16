@@ -1,6 +1,6 @@
 ### TODOs
 
-
+- Implementaion of race condition-free auth-with-oauth2
 - handling of flow for oauth2/passwords:
 	- Implemetation Conclusions
 		- add field externalAuth: string. if string contains oauth2, that means
@@ -14,6 +14,10 @@
 			- also method AuthMethods() contain password, by lookin presence of password
 		- we do not want to write redundant info in that field, existence of password is enough to know auth with password
 			
+    - testcases to test, 
+        - user register with password, login later with oaut2 with the same email -> we shoudl update the External
+        - user with two auth method and refresh endpoint: it has password, 
+        - 
 	- we could implment in the future mfa, do not forget with the following considerations.
 	- a user can log with many oauth2 providers IF they all are realted to one email account
 	- email is always UNIQUE for the user, we do not allow two emails, 
@@ -22,7 +26,7 @@
 	- oauth is passwordless, we should maintain that in the Users table, password field is the key field to controls the endpoints interaction
 	- jwt signing key should be possible without password
 		- make tests 
-	- if user has password login and uses that same email with a oauth2, that is posssible, we just add auth field oauth2
+	- if user has password login and uses that same email with a oauth2, that is posssible, we just add auth field oauth2, YES
 	- if user request /request-email-change, whithout password,  it should be denied with error indicating not possible
 		- we could say request a request-password-reset if your intention is to login in the future with password
 		- lets say user uses oauth2 google, want to get rid of that:
@@ -32,6 +36,7 @@
 	- if user request /request-verification whitout password, we should show
 	  alreadu validated, because we only allow exterval auth methods that produce
 	  verified email
+    - if user login with auth2 after having password, that is possible we must update only ExternalAuth
 	- if user request request-password-reset whithout password, we allow it, it is the way to possibly remove the oauth2 provider
 		- there must be a way to transition from oauth2 to password based auth
 		- this produce a user that can login with oauth2 and with password 
@@ -41,7 +46,7 @@
 				about to change the email but that will invalidate login with oauth2 providers asssociated with that email"
 					- we do not list the providers, it could be many if user hast same email by many.
 	- if user uses many oauth2 providers (with same email) we do not update avatar, name etc
-			- after first login/register the name avatar is appropieated by the app. in the future can or can not be edited
+			- after first login/register the name avatar is appropieated by the app. in the future it can or can not be edited
 	- we could allow delete password, only having alternative login nmethod like oauth2.
 	- double pasword, oauth2?
 		- only through request-password-reset 

@@ -17,6 +17,7 @@ import (
 // This timeout prevents hanging if the OAuth2 provider is unresponsive.
 const oauth2TokenExchangeTimeout = 10 * time.Second
 
+// TODO move to response
 type responseProviderInfo struct {
 	Name                string `json:"name"`
 	DisplayName         string `json:"displayName"`
@@ -28,6 +29,7 @@ type responseProviderInfo struct {
 	CodeChallengeMethod string `json:"codeChallengeMethod,omitempty"`
 }
 
+// TODO move to request
 type oauth2Request struct {
 	Provider     string `json:"provider"`
 	Code         string `json:"code"`
@@ -121,6 +123,17 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, errorInvalidRequest)
 		return
 	}
+
+    // TODO At this point we can say the user has registered.
+    // - if the user exists and have ExternalAuth oauth2, we do not create, the user registeres before with auth
+    // - if the user exists and have ExternalAuth "", the user has already
+    //   registered with password, we should just update the field ExternalAuth 
+    // - if the user does not exists, we create record with auth
+    // Below there is a get with a potencial create, which could be a source of race condition
+    // TODO race condition, transaction? 
+    // sqlite has one writer at a time, is not table lock, even database file lock
+    // if below, two concurrent INSERT are made on the table, ex one for password register and one for oauth2 with same email
+    // or two oauth2 providers at the same time
 
 	// Check if user exists or create new
 	slog.Debug("Looking up user by email", "email", oauthUser.Email)

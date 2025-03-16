@@ -20,6 +20,11 @@ type User struct {
 	// Example of methods are "oauth2", "otp".
 	// the structure is a comma separated string
 	// in future a colon separated string (not implmented) could be used for mfa
+    //
+    // The only reason for this field is the use case of a user having password and oauth2 login with the same email,
+    // if the user request a change of email, and after that tries to  log with the
+    // the old email a new user is created which may surprise the user.
+    // having this field, we now it has two auth methods and we can remember the user before changing email.
 	ExternalAuth    string
 	EmailVisibility bool
 }
