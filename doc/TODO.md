@@ -30,7 +30,8 @@
 	- if user request /request-email-change, whithout password,  it should be denied with error indicating not possible
 		- we could say request a request-password-reset if your intention is to login in the future with password
 		- lets say user uses oauth2 google, want to get rid of that:
-			- only solution is request-password-reset, 
+            - Users can only change password if they have one, they can though register with email!!!!!!!!!!!!!!!!! YES
+			- only solution is request-password-reset, NO ->>> the user can now try register with passsword if exist email but no password we allow it and do no send email verification
 				- the UI can see user has no password and change text of
 				  request-password-reset, "Allow also login with password"
 	- if user request /request-verification whitout password, we should show

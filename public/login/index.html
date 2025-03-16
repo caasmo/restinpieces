@@ -14,7 +14,7 @@
     <script>
         $(document).ready(async function() {
             try {
-                const response = await fetch('/api/oauth2-providers');
+                const response = await fetch('/api/list-oauth2-providers');
                 if (!response.ok) {
                     throw new Error('Failed to fetch providers');
                 }

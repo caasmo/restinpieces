@@ -146,9 +146,23 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 }
 
 // CreateUser inserts a new user with all fields from users.sql schema
+// TODO updated has to be explicite set in the struct, DEFAULT only works on create.
+// Document EmailVisibility
+// TODO move TO CreateUserWithPassword and CreateUserWithOauthj2
+// TODO method will not return error unique, let the aplication handle
+// if password are diferent say user already exist user 
+// if password match and oauth2 user has already oauth2 auth and does not need email validation
+// if password match and no aoutj2, record created
+//do not forget to update on conflich
 func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
+
+//ON CONFLICT(email) DO UPDATE SET
+//      password = CASE 
+//	          WHEN password = '' THEN excluded.password 
+//			          ELSE password 
+//					        END,
 
 	var createdUser *db.User
 	err := sqlitex.Exec(conn,

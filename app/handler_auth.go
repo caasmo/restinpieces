@@ -202,6 +202,10 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 
 // RegisterWithPasswordHandler handles password-based user registration with validation
 // Endpoint: POST /register-with-password
+// TODO we allow register with password after the user has oauth, we just
+// update the password and do not require validated email as we trust the oauth2
+// provider
+// TODO if password exists unique must trigger. we can not update the password!!!
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Identity        string `json:"identity"`
@@ -228,7 +232,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Validate password complexity
+	// Validate password complexity TODO
 	if len(req.Password) < 8 {
 		writeJSONError(w, errorPasswordComplexity)
 		return
@@ -252,6 +256,9 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		Updated:  now,
 	})
 
+// TODO we will have a CreateUserWithPassword with update password, update, remove unique 
+// after that we check the verified value, if not veried, insert in queue
+
 	if err != nil {
 		// Handle unique constraint violation (email already exists)
 		if err == db.ErrConstraintUnique {
@@ -269,6 +276,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+// TODO diferent workflow depending on verified.
 	writeAuthOkResponse(w, token, user)
 }
 
