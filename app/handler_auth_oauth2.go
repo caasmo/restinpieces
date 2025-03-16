@@ -169,9 +169,9 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	writeAuthOkResponse(w, jwtToken, user)
 }
 
-// OAuth2ProvidersHandler returns available OAuth2 providers
-// Endpoint: GET /oauth2-providers
-func (a *App) OAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
+// ListOAuth2ProvidersHandler returns available OAuth2 providers
+// Endpoint: GET /list-oauth2-providers
+func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 	var providers []responseProviderInfo
 
 	// Loop through configured providers
