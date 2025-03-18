@@ -15,6 +15,7 @@ type Db interface {
 	GetUserById(id string) (*User, error)
 	CreateUser(user User) (*User, error)
 	CreateUserWithPassword(user User) (*User, error)
+	CreateUserWithOauth2(user User) (*User, error)
 	InsertQueueJob(job queue.QueueJob) error
 }
 

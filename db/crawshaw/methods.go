@@ -149,7 +149,7 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 //- Password registration updates password-specific fields
 //- OAuth2 registration updates OAuth-specific fields
 //The resulting user will have both authentication methods properly set up without either one completely overwriting the other.
-func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
+func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
@@ -158,7 +158,7 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 		`INSERT INTO users (name, password, verified, externalAuth, avatar, email, emailVisibility) 
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(email) DO UPDATE SET 
-			password = IIF(password = '', excluded.password, password),
+			externalAuth = 'oauth2',
 			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 		RETURNING id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated`,
 		func(stmt *sqlite.Stmt) error {
