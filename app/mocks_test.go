@@ -40,6 +40,14 @@ func (m *MockDB) CreateUser(user db.User) (*db.User, error) {
 	return m.CreateUserConfig.User, m.CreateUserConfig.Error
 }
 
+func (m *MockDB) CreateUserWithPassword(user db.User) (*db.User, error) {
+	return m.CreateUserConfig.User, m.CreateUserConfig.Error
+}
+
+func (m *MockDB) CreateUserWithOauth2(user db.User) (*db.User, error) {
+	return m.CreateUserConfig.User, m.CreateUserConfig.Error
+}
+
 func (m *MockDB) GetUserById(id string) (*db.User, error) {
 	return m.GetUserByIdConfig.User, m.GetUserByIdConfig.Error
 }
