@@ -172,11 +172,6 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 	)
 
 	if err != nil {
-		if sqliteErr, ok := err.(sqlite.Error); ok {
-			if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
-				return nil, db.ErrConstraintUnique
-			}
-		}
 		return nil, err
 	}
 
@@ -214,11 +209,6 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 	)
 
 	if err != nil {
-		if sqliteErr, ok := err.(sqlite.Error); ok {
-			if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
-				return nil, db.ErrConstraintUnique
-			}
-		}
 		return nil, err
 	}
 
