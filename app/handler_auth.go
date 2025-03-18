@@ -260,14 +260,18 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 	// Create user with password authentication
 	createdUser, err := a.db.CreateUserWithPassword(newUser)
-
 	if err != nil {
+		// If user exists and has a different password, return error
+		if existingUser != nil && existingUser.Password != "" && existingUser.Password != newUser.Password {
+			writeJSONError(w, errorEmailConflict)
+			return
+		}
 		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Registration failed: %s"}`, err.Error())
 		return
 	}
 
 	// If user is not verified, add verification job to queue
-	if !user.Verified {
+	if !createdUser.Verified {
 		payload, _ := json.Marshal(queue.PayloadEmailVerification{Email: user.Email})
 		job := queue.QueueJob{
 			JobType: queue.JobTypeEmailVerification,
