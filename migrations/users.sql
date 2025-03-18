@@ -12,11 +12,8 @@ CREATE TABLE `users`(
   `oauth2` BOOLEAN DEFAULT FALSE NOT NULL,
   `externalAuth` TEXT DEFAULT '' NOT NULL,
   `avatar` TEXT DEFAULT '' NOT NULL,
-  `email` TEXT DEFAULT '' NOT NULL,
+  `email` TEXT DEFAULT '' NOT NULL UNIQUE,
   `emailVisibility` BOOLEAN DEFAULT FALSE NOT NULL,
   `created` TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
   `updated` TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
-CREATE UNIQUE INDEX `idx_email__pb_users_auth_` ON `users`(
-  `email`
-) WHERE `email` != '';
