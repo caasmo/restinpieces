@@ -259,11 +259,6 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	})
 
 	if err != nil {
-		// Handle unique constraint violation (email already exists)
-		if err == db.ErrConstraintUnique {
-			writeJSONError(w, errorEmailConflict)
-			return
-		}
 		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Registration failed: %s"}`, err.Error())
 		return
 	}
