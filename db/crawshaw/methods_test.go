@@ -279,6 +279,80 @@ func TestInsertQueueJobValid(t *testing.T) {
 	}
 }
 
+func TestCreateUserWithOauth2(t *testing.T) {
+	testDB := setupDB(t)
+	defer testDB.Close()
+
+	tests := []struct {
+		name        string
+		user        db.User
+		shouldCreate bool
+		wantErr    bool
+	}{
+		{
+			name: "successful creation",
+			user: db.User{
+				Email:           "test@example.com",
+				Name:            "Test User",
+				Avatar:          "avatar.jpg",
+				Verified:        true,
+				Oauth2:          true,
+				EmailVisibility: true,
+			},
+			shouldCreate: true,
+			wantErr:     false,
+		},
+		{
+			name: "update existing user to oauth2",
+			user: db.User{
+				Email:           "existing@test.com",
+				Name:            "Existing User",
+				Verified:        false,
+				Oauth2:          false,
+			},
+			shouldCreate: true,
+			wantErr:     false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.shouldCreate {
+				// Create initial user
+				_, err := testDB.CreateUserWithOauth2(tt.user)
+				if err != nil {
+					t.Fatalf("Failed to create initial user: %v", err)
+				}
+			}
+
+			createdUser, err := testDB.CreateUserWithOauth2(tt.user)
+			
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error but got none")
+				}
+				return
+			} else if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			// Validate fields
+			if createdUser.Email != tt.user.Email {
+				t.Errorf("Email mismatch: got %q, want %q", createdUser.Email, tt.user.Email)
+			}
+			if !createdUser.Verified {
+				t.Error("User should be verified after OAuth2 creation")
+			}
+			if createdUser.Password != "" {
+				t.Error("Password should be empty for OAuth2 users")
+			}
+			if !createdUser.Oauth2 {
+				t.Error("Oauth2 flag should be true")
+			}
+		})
+	}
+}
+
 func TestCreateUserWithPassword(t *testing.T) {
 	testDB := setupDB(t)
 	defer testDB.Close()
