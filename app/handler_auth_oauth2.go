@@ -167,9 +167,9 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Create or update user with OAuth2 info if user doesn't exist or has empty ExternalAuth
-	if user == nil || user.ExternalAuth == "" {
-		slog.Debug("Creating/updating user with OAuth2", "userExists", user != nil, "hasExternalAuth", user != nil && user.ExternalAuth != "")
+	// Create or update user with OAuth2 info if user doesn't exist or has false Oauth2
+	if user == nil || !user.Oauth2 {
+		slog.Debug("Creating/updating user with OAuth2", "userExists", user != nil, "hasOauth2", user != nil && user.Oauth2)
 		user, err = a.db.CreateUserWithOauth2(*oauthUser)
 		slog.Debug("User created/updated", "user", user)
 		if err != nil {
