@@ -145,6 +145,40 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
+// CreateUserWithPassword creates a new user with email and password authentication
+// Returns ErrConstraintUnique if user with same email already exists
+func (d *Db) CreateUserWithPassword(email, password string) (*db.User, error) {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	var createdUser *db.User
+	err := sqlitex.Exec(conn,
+		`INSERT INTO users (email, password, verified, emailVisibility) 
+		VALUES (?, ?, ?, ?)
+		RETURNING id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated`,
+		func(stmt *sqlite.Stmt) error {
+			var err error
+			createdUser, err = newUserFromStmt(stmt)
+			return err
+		},
+		email,      // 1. email
+		password,   // 2. password
+		false,      // 3. verified (starts unverified)
+		false,      // 4. emailVisibility (default private)
+	)
+
+	if err != nil {
+		if sqliteErr, ok := err.(sqlite.Error); ok {
+			if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
+				return nil, db.ErrConstraintUnique
+			}
+		}
+		return nil, err
+	}
+
+	return createdUser, nil
+}
+
 // CreateUser inserts a new user with all fields from users.sql schema
 // TODO updated has to be explicite set in the struct, DEFAULT only works on create.
 // Document EmailVisibility
