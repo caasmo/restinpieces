@@ -182,6 +182,7 @@ func TestRefreshAuthHandler(t *testing.T) {
 		name       string
 		userID     string
 		wantStatus int
+		dbSetup    func(*MockDB)
 	}{
 		{
 			name:       "valid token refresh",
