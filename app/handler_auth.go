@@ -247,17 +247,17 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 	now := time.Now()
 
-	// Create user in database
-	user, err := a.db.CreateUser(db.User{
-		Email:    req.Identity,
-		Password: string(hashedPassword),
-		Name:     "", // Optional field TODO
-		Created:  now,
-		Updated:  now,
+	// Create user with password authentication
+	user, err := a.db.CreateUserWithPassword(db.User{
+		Email:            req.Identity,
+		Password:         string(hashedPassword),
+		Name:             "", // Optional field TODO
+		Created:          now,
+		Updated:          now,
+		Verified:         false,
+		Oauth2:           false,
+		EmailVisibility:  false,
 	})
-
-// TODO we will have a CreateUserWithPassword with update password, update, remove unique 
-// after that we check the verified value, if not veried, insert in queue
 
 	if err != nil {
 		// Handle unique constraint violation (email already exists)
@@ -267,6 +267,21 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		}
 		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Registration failed: %s"}`, err.Error())
 		return
+	}
+
+	// If user is not verified, add verification job to queue
+	if !user.Verified {
+		payload, _ := json.Marshal(queue.PayloadEmailVerification{Email: user.Email})
+		job := queue.QueueJob{
+			JobType: queue.JobTypeEmailVerification,
+			Payload: payload,
+		}
+		
+		err = a.db.InsertQueueJob(job)
+		if err != nil {
+			writeJSONError(w, errorServiceUnavailable)
+			return
+		}
 	}
 
 	// Generate JWT session token for immediate authentication
