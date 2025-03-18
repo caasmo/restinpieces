@@ -147,6 +147,59 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 	return user, nil
 }
 
+func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	defer d.pool.Put(conn)
+
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	var createdUser db.User
+	err = sqlitex.Execute(conn,
+		`INSERT INTO users (name, password, verified, externalAuth, avatar, email, emailVisibility) 
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(email) DO UPDATE SET
+			password = IIF(password = '', excluded.password, password),
+			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		RETURNING id, email, name, password, created, updated, verified`,
+		&sqlitex.ExecOptions{
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				created, err := db.TimeParse(stmt.GetText("created"))
+				if err != nil {
+					return fmt.Errorf("error parsing created time: %w", err)
+				}
+
+				updated, err := db.TimeParse(stmt.GetText("updated"))
+				if err != nil {
+					return fmt.Errorf("error parsing updated time: %w", err)
+				}
+
+				createdUser = db.User{
+					ID:       stmt.GetText("id"),
+					Email:    stmt.GetText("email"),
+					Password: stmt.GetText("password"),
+					Created:  created,
+					Updated:  updated,
+					Verified: stmt.GetInt64("verified") != 0,
+				}
+				return nil
+			},
+			Args: []interface{}{
+				user.Name,            // 1. name
+				user.Password,        // 2. password
+				user.Verified,        // 3. verified
+				user.ExternalAuth,    // 4. externalAuth
+				user.Avatar,          // 5. avatar
+				user.Email,           // 6. email
+				user.EmailVisibility, // 7. emailVisibility
+			},
+		})
+
+	return &createdUser, err
+}
+
 func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {

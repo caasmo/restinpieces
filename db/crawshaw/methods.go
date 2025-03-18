@@ -145,6 +145,44 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
+func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	var createdUser *db.User
+	err := sqlitex.Exec(conn,
+		`INSERT INTO users (name, password, verified, externalAuth, avatar, email, emailVisibility) 
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(email) DO UPDATE SET 
+			password = IIF(password = '', excluded.password, password),
+			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		RETURNING id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated`,
+		func(stmt *sqlite.Stmt) error {
+			var err error
+			createdUser, err = newUserFromStmt(stmt)
+			return err
+		},
+		user.Name,            // 1. name
+		user.Password,        // 2. password
+		user.Verified,        // 3. verified
+		user.ExternalAuth,    // 4. externalAuth
+		user.Avatar,          // 5. avatar
+		user.Email,           // 6. email
+		user.EmailVisibility, // 7. emailVisibility
+	)
+
+	if err != nil {
+		if sqliteErr, ok := err.(sqlite.Error); ok {
+			if sqliteErr.Code == sqlite.SQLITE_CONSTRAINT_UNIQUE {
+				return nil, db.ErrConstraintUnique
+			}
+		}
+		return nil, err
+	}
+
+	return createdUser, nil
+}
+
 //So if these happen concurrently:
 //- Password registration updates password-specific fields
 //- OAuth2 registration updates OAuth-specific fields
