@@ -9,6 +9,7 @@ CREATE TABLE `users`(
   `name` TEXT DEFAULT '' NOT NULL,
   `password` TEXT DEFAULT '' NOT NULL,
   `verified` BOOLEAN DEFAULT FALSE NOT NULL,
+  `oauth2` BOOLEAN DEFAULT FALSE NOT NULL,
   `externalAuth` TEXT DEFAULT '' NOT NULL,
   `avatar` TEXT DEFAULT '' NOT NULL,
   `email` TEXT DEFAULT '' NOT NULL,

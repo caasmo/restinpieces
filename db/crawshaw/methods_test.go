@@ -37,7 +37,7 @@ var tables = []tableSchema{
 			`INSERT INTO users (id, email, name, password, created, updated, verified)
 			 VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE)`,
 		},
-		knownHash: "27add8bcdc16088f2ba675b765192e52409d2b18c93ef20bff1729cf0e60964a",
+		knownHash: "0a4bfef98fec7eb870b21e55084902f6b4130532d1bb50ad6b04f0c5abd5de92",
 	},
 	{
 		name:      "job_queue",
