@@ -151,8 +151,8 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 
 	var createdUser *db.User
 	err := sqlitex.Exec(conn,
-		`INSERT INTO users (name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated) 
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`INSERT INTO users (name, password, verified, externalAuth, avatar, email, emailVisibility) 
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(email) DO UPDATE SET 
 			password = IIF(password = '', excluded.password, password),
 			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
