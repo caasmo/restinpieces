@@ -368,25 +368,32 @@ func TestCreateUserWithOauth2(t *testing.T) {
 
 	// Test adding password to OAuth2 user
 	t.Run("add password to oauth2 user", func(t *testing.T) {
-		// Verify we start with an oauth2 user
-		initialUser, err := testDB.GetUserByEmail(email)
-		if err != nil || initialUser == nil {
-			t.Fatal("Test setup failed - no initial user")
+		// First create OAuth2 user
+		oauthUser := db.User{
+			Email:    "oauth2@test.com",
+			Name:     "OAuth2 User",
+			Avatar:   "avatar.jpg",
+			Verified: true, 
+			Oauth2:   true,
+		}
+		_, err := testDB.CreateUserWithOauth2(oauthUser)
+		if err != nil {
+			t.Fatalf("Failed to create oauth2 user: %v", err)
 		}
 
 		// Add password auth
 		passwordUser := db.User{
-			Email:    email,
+			Email:    "oauth2@test.com", 
 			Password: "new_hashed_password",
-			Verified: initialUser.Verified,
-			Oauth2:   initialUser.Oauth2,
+			Verified: true,
+			Oauth2:   true,
 		}
 		createdUser, err := testDB.CreateUserWithPassword(passwordUser)
 		if err != nil {
 			t.Fatalf("Failed to add password auth: %v", err)
 		}
 
-		// Verify oauth2 remains and password is updated
+		// Verify password is updated and oauth2 remains
 		if createdUser.Password != passwordUser.Password {
 			t.Error("Password should be updated")
 		}
