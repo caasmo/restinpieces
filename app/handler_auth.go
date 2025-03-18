@@ -204,7 +204,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 // TODO we allow register with password after the user has oauth, we just
 // update the password and do not require validated email as we trust the oauth2
 // provider
-// TODO if password exists unique must trigger. we can not update the password!!!
+// if password exist CreateUserWithPassword will succeed but the password will be not updated.
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Identity        string `json:"identity"`
