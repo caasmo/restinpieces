@@ -134,7 +134,9 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
     // sqlite has one writer at a time, is not table lock, even database file lock
     // if below, two concurrent INSERT are made on the table, ex one for password register and one for oauth2 with same email
     // or two oauth2 providers at the same time
-
+	// TODO document we try not to make transactions
+	// with two concurrent writes our Creuite Queries provide the same as transactions, data integrity
+	// if two concurent oauth with same email, or two concurrent wiht password and oauth2
 	// Check if user exists or create new
 	slog.Debug("Looking up user by email", "email", oauthUser.Email)
 	user, err := a.db.GetUserByEmail(oauthUser.Email)
