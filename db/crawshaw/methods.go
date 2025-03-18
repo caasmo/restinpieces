@@ -145,6 +145,10 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
+//So if these happen concurrently:
+//- Password registration updates password-specific fields
+//- OAuth2 registration updates OAuth-specific fields
+//The resulting user will have both authentication methods properly set up without either one completely overwriting the other.
 func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
