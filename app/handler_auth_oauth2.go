@@ -157,8 +157,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
     // be informed that the user already exist by seeing the difference in its intended
     // avatar and the present (or other fields).
     // in the case of two conflicting auth methods, each one will write its
-    // relevant fields, and the looser gorotuine can also inform the user of
-    // existing user.  
+    // relevant fields (password, ExternalAuth), and the looser gorotuine can
+    // also inform the user of existing user.  
 	slog.Debug("Looking up user by email", "email", oauthUser.Email)
 	user, err := a.db.GetUserByEmail(oauthUser.Email)
 	slog.Debug("User lookup result", "found", user != nil, "error", err)
@@ -167,6 +167,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+    // TODO if user nil or oauth2 empty (will just update ExternalAuth, updated record in db
+    // we coudl also update avatar if not already present
 	if user == nil {
 		// Create new user from OAuth2 info
 		slog.Debug("Creating new user in users")
