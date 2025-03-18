@@ -266,7 +266,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
     // If passwords are different CreateUserWithPassword did not write the new
-    // password on conflict because already existing password. User has already a password.
+    // password on conflict because the user had already a password. 
     if retrievedUser.Password != newUser.Password {
         writeJSONError(w, errorEmailConflict)
         return
