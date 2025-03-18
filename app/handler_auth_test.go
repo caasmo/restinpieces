@@ -183,6 +183,7 @@ func TestRefreshAuthHandler(t *testing.T) {
 		userID     string
 		wantStatus int
 		dbSetup    func(*MockDB)
+		desc       string
 	}{
 		{
 			name:       "valid token refresh",
@@ -194,23 +195,42 @@ func TestRefreshAuthHandler(t *testing.T) {
 					Email: "test@example.com",
 				}
 			},
+			desc: "When valid user ID is present in context and user exists in database, should return new token",
 		},
 		{
 			name:       "missing user claims",
 			userID:     "",
 			wantStatus: http.StatusInternalServerError,
+			desc:       "When user ID is missing from context, should return 500 error",
+		},
+		{
+			name:       "user not found",
+			userID:     "nonexistent",
+			wantStatus: http.StatusUnauthorized,
+			dbSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByIdConfig.User = nil
+			},
+			desc: "When user ID exists but user is not found in database, should return 401 unauthorized",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Setup request with context
 			req := httptest.NewRequest("POST", "/auth-refresh", nil)
+			ctx := context.WithValue(req.Context(), UserIDKey, tc.userID)
+			req = req.WithContext(ctx)
+
+			// Setup response recorder
 			rr := httptest.NewRecorder()
+
+			// Configure mock DB if needed
 			mockDB := &MockDB{}
 			if tc.dbSetup != nil {
 				tc.dbSetup(mockDB)
 			}
 
+			// Create app with test config
 			a, _ := New(
 				WithConfig(&config.Config{
 					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
@@ -220,23 +240,30 @@ func TestRefreshAuthHandler(t *testing.T) {
 				WithRouter(&MockRouter{}),
 			)
 
-			// Add user ID to context directly since middleware would normally handle this
-			ctx := context.WithValue(req.Context(), UserIDKey, tc.userID)
-			a.RefreshAuthHandler(rr, req.WithContext(ctx))
+			// Execute handler
+			a.RefreshAuthHandler(rr, req)
 
+			// Verify status code
 			if rr.Code != tc.wantStatus {
 				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
 			}
 
+			// For successful responses, verify token format
 			if tc.wantStatus == http.StatusOK {
 				var body map[string]interface{}
 				if err := json.NewDecoder(rr.Body).Decode(&body); err != nil {
 					t.Fatalf("failed to decode response body: %v", err)
 				}
 
-				if _, ok := body["access_token"]; !ok {
-					t.Error("response missing access_token")
+				// Verify required token fields
+				requiredFields := []string{"access_token", "token_type", "expires_in"}
+				for _, field := range requiredFields {
+					if _, ok := body[field]; !ok {
+						t.Errorf("response missing required field: %s", field)
+					}
 				}
+
+				// Verify token type
 				if body["token_type"] != "Bearer" {
 					t.Errorf("expected token_type Bearer, got %s", body["token_type"])
 				}
