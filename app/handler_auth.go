@@ -259,9 +259,10 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Create user with password authentication
-	createdUser, err := a.db.CreateUserWithPassword(newUser)
+	retrievedUser, err := a.db.CreateUserWithPassword(newUser)
 	if err != nil {
 		// If user exists and has a different password, return error
+        // CreateUserWithPassword did not write the password
 		if existingUser != nil && existingUser.Password != "" && existingUser.Password != newUser.Password {
 			writeJSONError(w, errorEmailConflict)
 			return
@@ -271,7 +272,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// If user is not verified, add verification job to queue
-	if !createdUser.Verified {
+	if !retrievedUser.Verified {
 		payload, _ := json.Marshal(queue.PayloadEmailVerification{Email: user.Email})
 		job := queue.QueueJob{
 			JobType: queue.JobTypeEmailVerification,
@@ -286,14 +287,14 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Generate JWT session token for immediate authentication
-	token, _, err := crypto.NewJwtSession(user.ID, user.Email, a.config.JwtSecret, a.config.TokenDuration)
+	token, _, err := crypto.NewJwtSession(retrievedUser.ID, retrievedUser.Email, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
 	}
 
 	// TODO diferent workflow depending on verified.
-	writeAuthOkResponse(w, token, user)
+	writeAuthOkResponse(w, token, retrievedUser)
 }
 
 // /request-verification endpoint

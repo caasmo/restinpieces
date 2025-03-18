@@ -142,6 +142,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// the same row(same email):
 	// - user login/register with two different oauths providers at the same time
 	// - user login/register one oauth2 provider, one with password
+	// - user login/register with two different passwords, ?????TODO
 	//
 	// with sqlite beeing just "one writer at at time" we can avoid transactions by using simply a UNIQUE in the table.
 	// If the two goroutines write, the last will lose an the goroutine will

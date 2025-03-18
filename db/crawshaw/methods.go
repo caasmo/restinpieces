@@ -145,6 +145,8 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
+// writing os two consecutive writes with two different password will succeed but the password will be not written.
+// its responsability of the caller to check if interested.
 func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
