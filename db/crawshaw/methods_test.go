@@ -385,8 +385,8 @@ func TestCreateUserWithOauth2(t *testing.T) {
 		passwordUser := db.User{
 			Email:    "oauth2@test.com", 
 			Password: "new_hashed_password",
-			Verified: true,
-			Oauth2:   true,
+			Verified: false,
+			Oauth2:   false,
 		}
 		createdUser, err := testDB.CreateUserWithPassword(passwordUser)
 		if err != nil {
