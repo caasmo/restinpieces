@@ -277,6 +277,82 @@ func TestInsertQueueJobValid(t *testing.T) {
 	}
 }
 
+func TestCreateUserWithPassword(t *testing.T) {
+	testDB := setupDB(t)
+	defer testDB.Close()
+
+	// Test valid user creation
+	t.Run("successful creation", func(t *testing.T) {
+		user := db.User{
+			Email:           "test@example.com",
+			Password:        "hashed_password", 
+			Name:            "Test User",
+			Verified:        false,
+			Oauth2:          false,
+			Avatar:          "avatar.jpg",
+			EmailVisibility: false,
+		}
+
+		createdUser, err := testDB.CreateUserWithPassword(user)
+		if err != nil {
+			t.Fatalf("CreateUserWithPassword failed: %v", err)
+		}
+
+		// Verify returned fields
+		if createdUser.Email != user.Email {
+			t.Errorf("Email mismatch: got %q, want %q", createdUser.Email, user.Email)
+		}
+		if createdUser.Password != user.Password {
+			t.Errorf("Password mismatch: got %q, want %q", createdUser.Password, user.Password)
+		}
+		if createdUser.Name != user.Name {
+			t.Errorf("Name mismatch: got %q, want %q", createdUser.Name, user.Name)
+		}
+		if createdUser.Verified != user.Verified {
+			t.Errorf("Verified mismatch: got %v, want %v", createdUser.Verified, user.Verified)
+		}
+		if createdUser.Oauth2 != user.Oauth2 {
+			t.Errorf("Oauth2 mismatch: got %v, want %v", createdUser.Oauth2, user.Oauth2)
+		}
+
+		// Verify timestamps
+		if createdUser.Created.IsZero() {
+			t.Error("Created timestamp not set")
+		}
+		if createdUser.Updated.IsZero() {
+			t.Error("Updated timestamp not set")
+		}
+	})
+
+	// Test email conflict with different password
+	t.Run("email conflict with different password", func(t *testing.T) {
+		// First create user
+		user1 := db.User{
+			Email:    "conflict@test.com",
+			Password: "hash1",
+		}
+		_, err := testDB.CreateUserWithPassword(user1)
+		if err != nil {
+			t.Fatalf("Failed to create initial user: %v", err)
+		}
+
+		// Try to create user with same email but different password
+		user2 := db.User{
+			Email:    "conflict@test.com",
+			Password: "hash2",
+		}
+		createdUser, err := testDB.CreateUserWithPassword(user2)
+		if err != nil {
+			t.Fatalf("CreateUserWithPassword failed: %v", err)
+		}
+
+		// Should return existing user with original password
+		if createdUser.Password != user1.Password {
+			t.Errorf("Password was updated, expected %q got %q", user1.Password, createdUser.Password)
+		}
+	})
+}
+
 func TestInsertQueueJobDuplicate(t *testing.T) {
 	testDB := setupDB(t)
 	defer testDB.Close()
