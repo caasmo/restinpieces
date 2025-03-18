@@ -261,15 +261,16 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// Create user with password authentication
 	retrievedUser, err := a.db.CreateUserWithPassword(newUser)
 	if err != nil {
-		// If user exists and has a different password, return error
-        // CreateUserWithPassword did not write the password
-		if existingUser != nil && existingUser.Password != "" && existingUser.Password != newUser.Password {
-			writeJSONError(w, errorEmailConflict)
-			return
-		}
 		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Registration failed: %s"}`, err.Error())
 		return
 	}
+
+    // If passwords are different CreateUserWithPassword did not write the new
+    // password on conflict because already existing password. User has already a password.
+    if retrievedUser.Password != newUser.Password {
+        writeJSONError(w, errorEmailConflict)
+        return
+    }
 
 	// If user is not verified, add verification job to queue
 	if !retrievedUser.Verified {
