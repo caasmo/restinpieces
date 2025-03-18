@@ -33,10 +33,7 @@ var tables = []tableSchema{
 	{
 		name:   "users",
 		schema: migrations.UsersSchema,
-		inserts: []string{
-			`INSERT INTO users (id, email, name, password, created, updated, verified)
-			 VALUES ('test123', 'existing@test.com', 'Test User', 'hash123', '2024-01-01T00:00:00Z', '2024-01-01T00:00:00Z', FALSE)`,
-		},
+		inserts: []string{},
 		knownHash: "0a4bfef98fec7eb870b21e55084902f6b4130532d1bb50ad6b04f0c5abd5de92",
 	},
 	{
