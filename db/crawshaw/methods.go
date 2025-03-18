@@ -178,10 +178,10 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 	return createdUser, nil
 }
 
-//So if these happen concurrently:
-//- Password registration updates password-specific fields
-//- OAuth2 registration updates OAuth-specific fields
-//The resulting user will have both authentication methods properly set up without either one completely overwriting the other.
+// So if these happen concurrently:
+// - Password registration updates password-specific fields
+// - OAuth2 registration updates OAuth-specific fields
+// The resulting user will have both authentication methods properly set up without either one completely overwriting the other.
 func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
@@ -201,8 +201,8 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 		},
 		user.Name,            // 1. name
 		"",                   // 2. password
-		user.Verified,                 // 3. verified
-		true,                 // 4. oauth2  
+		user.Verified,        // 3. verified
+		true,                 // 4. oauth2
 		user.Avatar,          // 5. avatar
 		user.Email,           // 6. email
 		user.EmailVisibility, // 7. emailVisibility
@@ -214,4 +214,3 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 
 	return createdUser, nil
 }
-

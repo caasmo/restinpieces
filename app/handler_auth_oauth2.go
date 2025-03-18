@@ -124,41 +124,41 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    // At this point we can say the user has registered from the point of the provider adn the user.
-    // - if the user exists and have ExternalAuth oauth2, we do not need to
-    //   create: the user registered before with this or another auth provider
-    // - if the user exists and have ExternalAuth "", the user has already register with another method, like password.
-    // - if the user does not exists, we create record with auth
-    // 
-    // Below we try to read from the Users table and then potentially write.
-    // We coudl choose not to read but given that oauth2 distintion between
-    // login and register is minimal, we want to minimize the number of writes. 
-    //
-    // This could be a source of race condition and as result data inconsistency.
-    //
-    // we want though avoid transactions, and make a design that allow no
-    // transactions while keeping data integrity.
-    // the potential race condition could be two goroutines trying to write in
-    // the same row(same email):
-    // - user login/register with two different oauths providers at the same time
-    // - user login/register one oauth2 provider, one with password
-    // 
-    // with sqlite beeing just "one writer at at time" we can avoid transactions by using simply a UNIQUE in the table. 
-    // If the two goroutines write, the last will lose an the goroutine will
-    // provide a error: that is the same as we would have a transaction.
-    //
-    // But we go one step further: 
-    // 
-    // with the design of the methods CreateUserWithPassword and
-    // CreateUserWithOauth2, we allow both competing goroutines to both always
-    // succeed (on email conflict): ON CONFLICT updates the record by modifying fields that do not create
-    // data inconsistency: In the case of two oauth2 registers, the first
-    // will succeed and the second will just not write any new fields. the second user can
-    // be informed that the user already exist by seeing the difference in its intended
-    // avatar and the present (or other fields).
-    // in the case of two conflicting auth methods, each one will write its
-    // relevant fields (password, ExternalAuth), and the looser gorotuine can
-    // also inform the user of existing user.  
+	// At this point we can say the user has registered from the point of the provider adn the user.
+	// - if the user exists and have ExternalAuth oauth2, we do not need to
+	//   create: the user registered before with this or another auth provider
+	// - if the user exists and have ExternalAuth "", the user has already register with another method, like password.
+	// - if the user does not exists, we create record with auth
+	//
+	// Below we try to read from the Users table and then potentially write.
+	// We coudl choose not to read but given that oauth2 distintion between
+	// login and register is minimal, we want to minimize the number of writes.
+	//
+	// This could be a source of race condition and as result data inconsistency.
+	//
+	// we want though avoid transactions, and make a design that allow no
+	// transactions while keeping data integrity.
+	// the potential race condition could be two goroutines trying to write in
+	// the same row(same email):
+	// - user login/register with two different oauths providers at the same time
+	// - user login/register one oauth2 provider, one with password
+	//
+	// with sqlite beeing just "one writer at at time" we can avoid transactions by using simply a UNIQUE in the table.
+	// If the two goroutines write, the last will lose an the goroutine will
+	// provide a error: that is the same as we would have a transaction.
+	//
+	// But we go one step further:
+	//
+	// with the design of the methods CreateUserWithPassword and
+	// CreateUserWithOauth2, we allow both competing goroutines to both always
+	// succeed (on email conflict): ON CONFLICT updates the record by modifying fields that do not create
+	// data inconsistency: In the case of two oauth2 registers, the first
+	// will succeed and the second will just not write any new fields. the second user can
+	// be informed that the user already exist by seeing the difference in its intended
+	// avatar and the present (or other fields).
+	// in the case of two conflicting auth methods, each one will write its
+	// relevant fields (password, ExternalAuth), and the looser gorotuine can
+	// also inform the user of existing user.
 	slog.Debug("Looking up user by email", "email", oauthUser.Email)
 	user, err := a.db.GetUserByEmail(oauthUser.Email)
 	slog.Debug("User lookup result", "found", user != nil, "error", err)

@@ -16,17 +16,17 @@ type User struct {
 	Created  time.Time
 	Updated  time.Time
 	Verified bool
-    //deprecated
+	//deprecated
 	// ExternalAuth identifies authentication methods (password authentication excluded)
 	// Example of methods are "oauth2", "otp".
 	// the structure is a comma separated string
 	// in future a colon separated string (not implmented) could be used for mfa
-    //
-    // The only reason for this field is the use case of a user having password and oauth2 login with the same email,
-    // if the user request a change of email, and after that tries to  log with the
-    // the old email a new user is created which may surprise the user.
-    // having this field, we now it has two auth methods and we can remember the user before changing email.
+	//
+	// The only reason for this field is the use case of a user having password and oauth2 login with the same email,
+	// if the user request a change of email, and after that tries to  log with the
+	// the old email a new user is created which may surprise the user.
+	// having this field, we now it has two auth methods and we can remember the user before changing email.
 	//ExternalAuth    string
-	Oauth2 bool
+	Oauth2          bool
 	EmailVisibility bool
 }

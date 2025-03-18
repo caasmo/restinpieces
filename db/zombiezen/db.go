@@ -92,7 +92,7 @@ func (d *Db) Insert(value int64) {
 
 // GetUserByEmail retrieves a user by email address.
 // Returns:
-// - *db.User: User record if found, nil if no matching record exists  
+// - *db.User: User record if found, nil if no matching record exists
 // - returned time fields are in UTC, RFC3339
 // - error: Only returned for database errors, nil on successful query (even if no results)
 // Note: A nil user with nil error indicates no matching record was found
@@ -126,7 +126,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 					Verified:        stmt.GetInt64("verified") != 0,
 					Oauth2:          stmt.GetInt64("oauth2") != 0,
 					Avatar:          stmt.GetText("avatar"),
-					Email:           stmt.GetText("email"), 
+					Email:           stmt.GetText("email"),
 					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
 					Created:         created,
 					Updated:         updated,
@@ -300,7 +300,6 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 
 	return &createdUser, err
 }
-
 
 func (d *Db) InsertWithPool(value int64) {
 	conn, err := d.pool.Take(context.TODO())

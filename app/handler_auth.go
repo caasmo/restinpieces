@@ -118,7 +118,6 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	writeAuthOkResponse(w, token, user)
 }
 
-
 // confirm-
 // receives token
 // get id, builds sig key with verification email secret
@@ -249,14 +248,14 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 	// Create user with password authentication
 	user, err := a.db.CreateUserWithPassword(db.User{
-		Email:            req.Identity,
-		Password:         string(hashedPassword),
-		Name:             "", // Optional field TODO
-		Created:          now,
-		Updated:          now,
-		Verified:         false,
-		Oauth2:           false,
-		EmailVisibility:  false,
+		Email:           req.Identity,
+		Password:        string(hashedPassword),
+		Name:            "", // Optional field TODO
+		Created:         now,
+		Updated:         now,
+		Verified:        false,
+		Oauth2:          false,
+		EmailVisibility: false,
 	})
 
 	if err != nil {
@@ -276,7 +275,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 			JobType: queue.JobTypeEmailVerification,
 			Payload: payload,
 		}
-		
+
 		err = a.db.InsertQueueJob(job)
 		if err != nil {
 			writeJSONError(w, errorServiceUnavailable)
@@ -291,7 +290,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-// TODO diferent workflow depending on verified.
+	// TODO diferent workflow depending on verified.
 	writeAuthOkResponse(w, token, user)
 }
 
