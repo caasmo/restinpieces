@@ -167,15 +167,15 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    // TODO if user nil or oauth2 empty (will just update ExternalAuth, updated record in db
-    // we coudl also update avatar if not already present
-	// Create or update user with OAuth2 info
-	slog.Debug("Creating/updating user with OAuth2")
-	user, err = a.db.CreateUserWithOauth2(*oauthUser)
-	slog.Debug("User created/updated", "user", user)
-	if err != nil {
-		writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"Failed to create/update user: %s"}`, err.Error()))})
-		return
+	// Create or update user with OAuth2 info if user doesn't exist or has empty ExternalAuth
+	if user == nil || user.ExternalAuth == "" {
+		slog.Debug("Creating/updating user with OAuth2", "userExists", user != nil, "hasExternalAuth", user != nil && user.ExternalAuth != "")
+		user, err = a.db.CreateUserWithOauth2(*oauthUser)
+		slog.Debug("User created/updated", "user", user)
+		if err != nil {
+			writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"Failed to create/update user: %s"}`, err.Error()))})
+			return
+		}
 	}
 
 	// Generate JWT session token
