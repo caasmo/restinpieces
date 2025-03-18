@@ -160,6 +160,8 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 	err = sqlitex.Execute(conn,
 		`INSERT INTO users (email, password, created, updated, verified, emailVisibility) 
 		VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT(email) DO UPDATE SET
+			password = IIF(password = '', excluded.password, password)
 		RETURNING id, email, name, password, created, updated, verified`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
