@@ -12,7 +12,7 @@ CREATE TABLE `users`(
   `oauth2` BOOLEAN DEFAULT FALSE NOT NULL,
   `externalAuth` TEXT DEFAULT '' NOT NULL,
   `avatar` TEXT DEFAULT '' NOT NULL,
-  `email` TEXT DEFAULT '' NOT NULL UNIQUE,
+  `email` TEXT DEFAULT '' NOT NULL UNIQUE, -- Ensures email uniqueness for user accounts
   `emailVisibility` BOOLEAN DEFAULT FALSE NOT NULL,
   `created` TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
   `updated` TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
