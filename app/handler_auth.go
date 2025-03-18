@@ -246,8 +246,8 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 	now := time.Now()
 
-	// Create user with password authentication
-	user, err := a.db.CreateUserWithPassword(db.User{
+	// Prepare user data
+	newUser := db.User{
 		Email:           req.Identity,
 		Password:        string(hashedPassword),
 		Name:            "", // Optional field TODO
@@ -256,7 +256,10 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		Verified:        false,
 		Oauth2:          false,
 		EmailVisibility: false,
-	})
+	}
+
+	// Create user with password authentication
+	createdUser, err := a.db.CreateUserWithPassword(newUser)
 
 	if err != nil {
 		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Registration failed: %s"}`, err.Error())
