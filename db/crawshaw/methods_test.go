@@ -34,7 +34,7 @@ var tables = []tableSchema{
 		name:   "users",
 		schema: migrations.UsersSchema,
 		inserts: []string{},
-		knownHash: "0a4bfef98fec7eb870b21e55084902f6b4130532d1bb50ad6b04f0c5abd5de92",
+		knownHash: "a8442a840a7adb04578fe2f1b3a14debd9f669a3e7cd48eda8ff365cf027398d",
 	},
 	{
 		name:      "job_queue",
