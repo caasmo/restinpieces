@@ -154,8 +154,6 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 	}
 	defer d.pool.Put(conn)
 
-	now := time.Now().UTC().Format(time.RFC3339)
-
 	var createdUser db.User
 	err = sqlitex.Execute(conn,
 		`INSERT INTO users (name, password, verified, externalAuth, avatar, email, emailVisibility) 
