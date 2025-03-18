@@ -145,7 +145,7 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
-func (d *Db) CreateUserWithPassword(email, password string) (*db.User, error) {
+func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 

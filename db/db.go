@@ -14,7 +14,7 @@ type Db interface {
 	GetUserByEmail(email string) (*User, error)
 	GetUserById(id string) (*User, error)
 	CreateUser(user User) (*User, error)
-	CreateUserWithPassword(email, password string) (*User, error)
+	CreateUserWithPassword(user User) (*User, error)
 	InsertQueueJob(job queue.QueueJob) error
 }
 
