@@ -188,21 +188,21 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 
 	var createdUser *db.User
 	err := sqlitex.Exec(conn,
-		`INSERT INTO users (name, password, verified, externalAuth, avatar, email, emailVisibility) 
+		`INSERT INTO users (name, password, verified, oauth2, avatar, email, emailVisibility) 
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(email) DO UPDATE SET 
-			externalAuth = 'oauth2',
+			oauth2 = true,
 			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-		RETURNING id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated`,
+		RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`,
 		func(stmt *sqlite.Stmt) error {
 			var err error
 			createdUser, err = newUserFromStmt(stmt)
 			return err
 		},
 		user.Name,            // 1. name
-		"",        // 2. password
-		true,        // 3. verified
-		user.ExternalAuth,    // 4. externalAuth TODO
+		"",                   // 2. password
+		true,                 // 3. verified
+		true,                 // 4. oauth2  
 		user.Avatar,          // 5. avatar
 		user.Email,           // 6. email
 		user.EmailVisibility, // 7. emailVisibility
