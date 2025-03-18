@@ -253,57 +253,6 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 	return &createdUser, err
 }
 
-func (d *Db) CreateUser(user db.User) (*db.User, error) {
-	conn, err := d.pool.Take(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	defer d.pool.Put(conn)
-
-	// TODO no time object generation in db functions, only formating
-	now := time.Now().UTC().Format(time.RFC3339)
-
-	var createdUser db.User
-	err = sqlitex.Execute(conn,
-		`INSERT INTO users (email, password, name, created, updated)
-		VALUES (?, ?, ?, ?, ?)
-		RETURNING id, email, name, password, created, updated, verified`,
-		&sqlitex.ExecOptions{
-			ResultFunc: func(stmt *sqlite.Stmt) error {
-
-				// Parse timestamps from database strings
-				created, err := db.TimeParse(stmt.GetText("created"))
-				if err != nil {
-					return fmt.Errorf("error parsing created time: %w", err)
-				}
-
-				updated, err := db.TimeParse(stmt.GetText("updated"))
-				if err != nil {
-					return fmt.Errorf("error parsing updated time: %w", err)
-				}
-
-				createdUser = db.User{
-					ID:       stmt.GetText("id"),
-					Email:    stmt.GetText("email"),
-					Name:     stmt.GetText("name"),
-					Password: stmt.GetText("password"),
-					Created:  created,
-					Updated:  updated,
-					Verified: stmt.GetInt64("verified") != 0,
-				}
-				return nil
-			},
-			Args: []interface{}{
-				user.Email,
-				user.Password,
-				user.Name,
-				now,
-				now,
-			},
-		})
-
-	return &createdUser, err
-}
 
 func (d *Db) InsertWithPool(value int64) {
 	conn, err := d.pool.Take(context.TODO())
