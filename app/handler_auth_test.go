@@ -187,6 +187,12 @@ func TestRefreshAuthHandler(t *testing.T) {
 			name:       "valid token refresh",
 			userID:     "testuser123",
 			wantStatus: http.StatusOK,
+			dbSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByIdConfig.User = &db.User{
+					ID:    "testuser123",
+					Email: "test@example.com",
+				}
+			},
 		},
 		{
 			name:       "missing user claims",
@@ -199,12 +205,17 @@ func TestRefreshAuthHandler(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			req := httptest.NewRequest("POST", "/auth-refresh", nil)
 			rr := httptest.NewRecorder()
+			mockDB := &MockDB{}
+			if tc.dbSetup != nil {
+				tc.dbSetup(mockDB)
+			}
+
 			a, _ := New(
 				WithConfig(&config.Config{
 					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
 					TokenDuration: 15 * time.Minute,
 				}),
-				WithDB(&MockDB{}),
+				WithDB(mockDB),
 				WithRouter(&MockRouter{}),
 			)
 
