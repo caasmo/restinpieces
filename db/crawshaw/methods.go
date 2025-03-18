@@ -151,8 +151,8 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 
 	var createdUser *db.User
 	err := sqlitex.Exec(conn,
-		`INSERT INTO users (email, password, verified, emailVisibility) 
-		VALUES (?, ?, ?, ?)
+		`INSERT INTO users (name, password, verified, externalAuth, avatar, email, emailVisibility) 
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(email) DO UPDATE SET 
 			password = IIF(password = '', excluded.password, password)
 		RETURNING id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated`,
@@ -161,10 +161,13 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 			createdUser, err = newUserFromStmt(stmt)
 			return err
 		},
-		email,      // 1. email
+		"",         // 1. name
 		password,   // 2. password
-		false,      // 3. verified (starts unverified)
-		false,      // 4. emailVisibility (default private)
+		false,      // 3. verified
+		"",         // 4. externalAuth
+		"",         // 5. avatar
+		email,      // 6. email
+		false,      // 7. emailVisibility
 	)
 
 	if err != nil {
