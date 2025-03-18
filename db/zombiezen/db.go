@@ -161,7 +161,8 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 		`INSERT INTO users (name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated) 
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(email) DO UPDATE SET
-			password = IIF(password = '', excluded.password, password)
+			password = IIF(password = '', excluded.password, password),
+			updated = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
 		RETURNING id, email, name, password, created, updated, verified`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
