@@ -145,8 +145,6 @@ func (d *Db) InsertQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
-// CreateUserWithPassword creates a new user with email and password authentication
-// Returns ErrConstraintUnique if user with same email already exists
 func (d *Db) CreateUserWithPassword(email, password string) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
