@@ -124,20 +124,41 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    // TODO At this point we can say the user has registered.
-    // - if the user exists and have ExternalAuth oauth2, we do not create, the user registeres before with auth
-    // - if the user exists and have ExternalAuth "", the user has already
-    //   registered with password, we should just update the field ExternalAuth 
+    // At this point we can say the user has registered from the point of the provider adn the user.
+    // - if the user exists and have ExternalAuth oauth2, we do not need to
+    //   create: the user registered before with this or another auth provider
+    // - if the user exists and have ExternalAuth "", the user has already register with another method, like password.
     // - if the user does not exists, we create record with auth
-    // Below there is a get with a potencial create, which could be a source of race condition
-    // TODO race condition, transaction? 
-    // sqlite has one writer at a time, is not table lock, even database file lock
-    // if below, two concurrent INSERT are made on the table, ex one for password register and one for oauth2 with same email
-    // or two oauth2 providers at the same time
-	// TODO document we try not to make transactions
-	// with two concurrent writes our Creuite Queries provide the same as transactions, data integrity
-	// if two concurent oauth with same email, or two concurrent wiht password and oauth2
-	// Check if user exists or create new
+    // 
+    // Below we try to read from the Users table and then potentially write.
+    // We coudl choose not to read but given that oauth2 distintion between
+    // login and register is minimal, we want to minimize the number of writes. 
+    //
+    // This could be a source of race condition and as result data inconsistency.
+    //
+    // we want though avoid transactions, and make a design that allow no
+    // transactions while keeping data integrity.
+    // the potential race condition could be two goroutines trying to write in
+    // the same row(same email):
+    // - user login/register with two different oauths providers at the same time
+    // - user login/register one oauth2 provider, one with password
+    // 
+    // with sqlite beeing just "one writer at at time" we can avoid transactions by using simply a UNIQUE in the table. 
+    // If the two goroutines write, the last will lose an the goroutine will
+    // provide a error: that is the same as we would have a transaction.
+    //
+    // But we go one step further: 
+    // 
+    // with the design of the methods CreateUserWithPassword and
+    // CreateUserWithOauth2, we allow both competing goroutines to both always
+    // succeed (on email conflict): ON CONFLICT updates the record by modifying fields that do not create
+    // data inconsistency: In the case of two oauth2 registers, the first
+    // will succeed and the second will just not write any new fields. the second user can
+    // be informed that the user already exist by seeing the difference in its intended
+    // avatar and the present (or other fields).
+    // in the case of two conflicting auth methods, each one will write its
+    // relevant fields, and the looser gorotuine can also inform the user of
+    // existing user.  
 	slog.Debug("Looking up user by email", "email", oauthUser.Email)
 	user, err := a.db.GetUserByEmail(oauthUser.Email)
 	slog.Debug("User lookup result", "found", user != nil, "error", err)
