@@ -161,13 +161,13 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 			createdUser, err = newUserFromStmt(stmt)
 			return err
 		},
-		"",         // 1. name
-		password,   // 2. password
-		false,      // 3. verified
-		"",         // 4. externalAuth
-		"",         // 5. avatar
-		email,      // 6. email
-		false,      // 7. emailVisibility
+		user.Name,            // 1. name
+		user.Password,        // 2. password
+		user.Verified,        // 3. verified
+		user.ExternalAuth,    // 4. externalAuth
+		user.Avatar,          // 5. avatar
+		user.Email,           // 6. email
+		user.EmailVisibility, // 7. emailVisibility
 	)
 
 	if err != nil {
