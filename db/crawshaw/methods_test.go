@@ -112,6 +112,20 @@ func TestGetUserByEmail(t *testing.T) {
 	testDB := setupDB(t)
 	defer testDB.Close()
 
+	// Create test user first
+	testEmail := "test@example.com"
+	testUser := &db.User{
+		Email:    testEmail,
+		Password: "testhash",
+		Name:     "Test User",
+		Verified: false,
+	}
+
+	createdUser, err := testDB.CreateUserWithPassword(*testUser)
+	if err != nil {
+		t.Fatalf("Failed to create test user: %v", err)
+	}
+
 	tests := []struct {
 		name     string
 		email    string
@@ -119,21 +133,13 @@ func TestGetUserByEmail(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name:  "existing user",
-			email: "existing@test.com",
-			wantUser: &db.User{
-				ID:       "test123",
-				Email:    "existing@test.com",
-				Name:     "Test User",
-				Password: "hash123",
-				Created:  time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
-				Updated:  time.Date(2024, time.January, 1, 0, 0, 0, 0, time.UTC),
-				Verified: false,
-			},
-			wantErr: false,
+			name:     "existing user",
+			email:    testEmail,
+			wantUser: createdUser,
+			wantErr:  false,
 		},
 		{
-			name:     "non-existent user",
+			name:     "non-existent user", 
 			email:    "nonexistent@test.com",
 			wantUser: nil,
 			wantErr:  false,
