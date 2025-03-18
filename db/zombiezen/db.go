@@ -180,7 +180,7 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 					Created:         created,
 					Updated:         updated,
 					Verified:        stmt.GetInt64("verified") != 0,
-					ExternalAuth:    stmt.GetText("externalAuth"),
+					Oauth2:          stmt.GetInt64("oauth2") != 0,
 					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
 				}
 				return nil
