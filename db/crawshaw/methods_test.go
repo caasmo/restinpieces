@@ -400,6 +400,12 @@ func TestCreateUserWithOauth2(t *testing.T) {
 		if !createdUser.Oauth2 {
 			t.Error("Oauth2 flag should remain true")
 		}
+		if !createdUser.Verified {
+			t.Error("User should remain verified")
+		}
+		if createdUser.Avatar != oauthUser.Avatar {
+			t.Errorf("Avatar should remain as oauth value, got %q", createdUser.Avatar)
+		}
 	})
 }
 
