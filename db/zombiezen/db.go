@@ -147,6 +147,55 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 	return user, nil
 }
 
+func (d *Db) CreateUserWithPassword(email, password string) (*db.User, error) {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return nil, err
+	}
+	defer d.pool.Put(conn)
+
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	var createdUser db.User
+	err = sqlitex.Execute(conn,
+		`INSERT INTO users (email, password, created, updated, verified, emailVisibility) 
+		VALUES (?, ?, ?, ?, ?, ?)
+		RETURNING id, email, name, password, created, updated, verified`,
+		&sqlitex.ExecOptions{
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				created, err := db.TimeParse(stmt.GetText("created"))
+				if err != nil {
+					return fmt.Errorf("error parsing created time: %w", err)
+				}
+
+				updated, err := db.TimeParse(stmt.GetText("updated"))
+				if err != nil {
+					return fmt.Errorf("error parsing updated time: %w", err)
+				}
+
+				createdUser = db.User{
+					ID:       stmt.GetText("id"),
+					Email:    stmt.GetText("email"),
+					Password: stmt.GetText("password"),
+					Created:  created,
+					Updated:  updated,
+					Verified: stmt.GetInt64("verified") != 0,
+				}
+				return nil
+			},
+			Args: []interface{}{
+				email,
+				password,
+				now,
+				now,
+				false, // verified
+				false, // emailVisibility
+			},
+		})
+
+	return &createdUser, err
+}
+
 func (d *Db) CreateUser(user db.User) (*db.User, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
