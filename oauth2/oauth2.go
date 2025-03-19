@@ -12,8 +12,8 @@ import (
 
 // UserFromUserInfoURL maps provider-specific user info to our standard User struct
 func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2Provider) (*db.User, error) {
-	// Decode into string map
-	var raw map[string]string
+	// Decode into interface map to handle both string and boolean values
+	var raw map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
 		return nil, fmt.Errorf("failed to decode %s user info: %w", providerConfig.Name, err)
 	}
@@ -38,7 +38,7 @@ func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2Provi
 
 		switch field {
 		case config.UserInfoFieldEmail:
-			user.Email = value
+			user.Email = fmt.Sprintf("%v", value)
 		}
 	}
 
@@ -56,11 +56,11 @@ func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2Provi
 
 		switch field {
 		case config.UserInfoFieldName:
-			user.Name = value
+			user.Name = fmt.Sprintf("%v", value)
 		case config.UserInfoFieldAvatar:
-			user.Avatar = value
+			user.Avatar = fmt.Sprintf("%v", value)
 		case config.UserInfoFieldEmailVerified:
-			if value == "false" {
+			if verified, ok := value.(bool); ok && !verified {
 				return nil, errors.New("email not verified")
 			}
 		}
