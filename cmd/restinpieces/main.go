@@ -19,11 +19,11 @@ func main() {
 		JwtSecret:       []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
 		TokenDuration:   15 * time.Minute,
 		DBFile:          *dbfile,
-		OAuth2Providers: make(map[string]config.OAuth2ProviderConfig),
+		OAuth2Providers: make(map[string]config.OAuth2Provider),
 	}
 
 	// Configure Google OAuth2 provider
-	googleConfig := config.OAuth2ProviderConfig{
+	googleConfig := config.OAuth2Provider{
 		Name:         config.OAuth2ProviderGoogle,
 		ClientID:     config.EnvVar{Name: config.EnvGoogleClientID},
 		ClientSecret: config.EnvVar{Name: config.EnvGoogleClientSecret},
@@ -52,7 +52,7 @@ func main() {
 	}
 
 	// Configure GitHub OAuth2 provider
-	githubConfig := config.OAuth2ProviderConfig{
+	githubConfig := config.OAuth2Provider{
 		Name:         config.OAuth2ProviderGitHub,
 		ClientID:     config.EnvVar{Name: config.EnvGithubClientID},
 		ClientSecret: config.EnvVar{Name: config.EnvGithubClientSecret},

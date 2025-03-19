@@ -23,7 +23,7 @@ const (
 	OAuth2ProviderGitHub = "github"
 )
 
-type OAuth2ProviderConfig struct {
+type OAuth2Provider struct {
 	Name         string
 	ClientID     EnvVar
 	ClientSecret EnvVar
@@ -38,7 +38,7 @@ type OAuth2ProviderConfig struct {
 	UserInfoFields map[string]string `json:"userInfoFields"`
 }
 
-func (c *OAuth2ProviderConfig) FillEnvVars() error {
+func (c *OAuth2Provider) FillEnvVars() error {
 	c.ClientID.Value = os.Getenv(c.ClientID.Name)
 	c.ClientSecret.Value = os.Getenv(c.ClientSecret.Name)
 
@@ -54,5 +54,5 @@ type Config struct {
 	TokenDuration time.Duration
 	DBFile        string
 
-	OAuth2Providers map[string]OAuth2ProviderConfig
+	OAuth2Providers map[string]OAuth2Provider
 }
