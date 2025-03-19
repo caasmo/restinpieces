@@ -23,6 +23,9 @@ const (
 	OAuth2ProviderGitHub = "github"
 )
 
+// UserInfoFields defines mappings between provider-specific fields and our standard fields
+type UserInfoFields map[string]string
+
 type OAuth2Provider struct {
 	Name         string
 	ClientID     EnvVar
@@ -35,7 +38,7 @@ type OAuth2Provider struct {
 	Scopes       []string
 	PKCE         bool
 	// UserInfoFields defines the mapping between provider-specific fields and our standard fields
-	UserInfoFields map[string]string `json:"userInfoFields"`
+	UserInfoFields UserInfoFields `json:"userInfoFields"`
 }
 
 func (c *OAuth2Provider) FillEnvVars() error {
