@@ -30,7 +30,7 @@ const (
 //}
 
 // UserFromUserInfo maps provider-specific user info to our standard User struct
-func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2Provider) (*db.User, error) {
+func UserFromUserInfoURL(resp *http.Response, providerName string) (*db.User, error) {
 	switch providerName {
 	case "google":
 		
