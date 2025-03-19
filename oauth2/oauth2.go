@@ -30,8 +30,8 @@ const (
 //	RefreshToken string         `json:"refreshToken"`
 //}
 
-// UserFromInfoResponse maps provider-specific user info to our standard User struct
-func UserFromInfoResponse(resp *http.Response, providerConfig *config.OAuth2ProviderConfig) (*db.User, error) {
+// UserFromUserInfoURL maps provider-specific user info to our standard User struct
+func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2ProviderConfig) (*db.User, error) {
 	// Decode into generic map
 	var raw map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
