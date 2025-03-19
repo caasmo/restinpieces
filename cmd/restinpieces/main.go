@@ -37,12 +37,12 @@ func main() {
 			"https://www.googleapis.com/auth/userinfo.email",
 		},
 		PKCE: true,
-		UserInfoFields: map[string]string{
-			"id":             "sub",
-			"email":          "email",
-			"name":           "name",
-			"avatar":         "picture",
-			"email_verified": "email_verified",
+		UserInfoFields: config.UserInfoFields{
+			config.UserInfoFieldID:            "sub",
+			config.UserInfoFieldEmail:         "email",
+			config.UserInfoFieldName:          "name",
+			config.UserInfoFieldAvatar:        "picture",
+			config.UserInfoFieldEmailVerified: "email_verified",
 		},
 	}
 	if err := googleConfig.FillEnvVars(); err != nil {

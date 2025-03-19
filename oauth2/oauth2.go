@@ -42,6 +42,7 @@ func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2Provi
 	user := &db.User{
 		Verified: true,
 		Oauth2:   true,
+		ExternalAuth: config.ExternalAuthOAuth2,
 	}
 
 	// Required fields

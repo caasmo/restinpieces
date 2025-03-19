@@ -26,23 +26,23 @@ const (
 // UserInfoFields defines mappings between provider-specific fields and our standard fields
 // Standard OAuth2 user info field names
 const (
-	FieldID            = "id"
-	FieldEmail         = "email"
-	FieldName          = "name"
-	FieldAvatar        = "avatar"
-	FieldEmailVerified = "email_verified"
+	UserInfoFieldID            = "id"
+	UserInfoFieldEmail         = "email"
+	UserInfoFieldName          = "name"
+	UserInfoFieldAvatar        = "avatar"
+	UserInfoFieldEmailVerified = "email_verified"
 )
 
 type UserInfoFields map[string]string
 
 // Required returns a slice of required field names
 func (f UserInfoFields) Required() []string {
-	return []string{FieldID, FieldEmail}
+	return []string{UserInfoFieldID, UserInfoFieldEmail}
 }
 
 // Optional returns a slice of optional field names
 func (f UserInfoFields) Optional() []string {
-	return []string{FieldName, FieldAvatar, FieldEmailVerified}
+	return []string{UserInfoFieldName, UserInfoFieldAvatar, UserInfoFieldEmailVerified}
 }
 
 type OAuth2Provider struct {
