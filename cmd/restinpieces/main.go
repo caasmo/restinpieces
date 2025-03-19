@@ -37,7 +37,7 @@ func main() {
 			"https://www.googleapis.com/auth/userinfo.email",
 		},
 		PKCE: true,
-		ResponseFields: map[string]string{
+		UserInfoFields: map[string]string{
 			"id":             "sub",
 			"email":          "email",
 			"name":           "name",
