@@ -45,34 +45,43 @@ func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2Provi
 		ExternalAuth: config.ExternalAuthOAuth2,
 	}
 
-	// Required fields
-	emailField := providerConfig.UserInfoFields["email"]
-	if emailField == "" {
-		return nil, fmt.Errorf("missing required field mapping: email")
-	}
-	if email, ok := raw[emailField]; ok {
-		user.Email = fmt.Sprintf("%v", email)
-	} else {
-		return nil, fmt.Errorf("missing required field: %s", emailField)
-	}
+	// Process required fields
+	for _, field := range providerConfig.UserInfoFields.Required() {
+		fieldMapping := providerConfig.UserInfoFields[field]
+		if fieldMapping == "" {
+			return nil, fmt.Errorf("missing required field mapping for: %s", field)
+		}
+		
+		value, ok := raw[fieldMapping]
+		if !ok {
+			return nil, fmt.Errorf("missing required field: %s", fieldMapping)
+		}
 
-	// Optional fields
-	if nameField := providerConfig.UserInfoFields["name"]; nameField != "" {
-		if name, ok := raw[nameField]; ok {
-			user.Name = fmt.Sprintf("%v", name)
+		switch field {
+		case config.UserInfoFieldEmail:
+			user.Email = fmt.Sprintf("%v", value)
 		}
 	}
 
-	if avatarField := providerConfig.UserInfoFields["avatar"]; avatarField != "" {
-		if avatar, ok := raw[avatarField]; ok {
-			user.Avatar = fmt.Sprintf("%v", avatar)
+	// Process optional fields  
+	for _, field := range providerConfig.UserInfoFields.Optional() {
+		fieldMapping := providerConfig.UserInfoFields[field]
+		if fieldMapping == "" {
+			continue
 		}
-	}
+		
+		value, ok := raw[fieldMapping]
+		if !ok {
+			continue
+		}
 
-	// Email verification
-	if verifiedField := providerConfig.UserInfoFields["email_verified"]; verifiedField != "" {
-		if verified, ok := raw[verifiedField]; ok {
-			if verifiedBool, ok := verified.(bool); ok && !verifiedBool {
+		switch field {
+		case config.UserInfoFieldName:
+			user.Name = fmt.Sprintf("%v", value)
+		case config.UserInfoFieldAvatar:
+			user.Avatar = fmt.Sprintf("%v", value)
+		case config.UserInfoFieldEmailVerified:
+			if verifiedBool, ok := value.(bool); ok && !verifiedBool {
 				return nil, errors.New("email not verified")
 			}
 		}
