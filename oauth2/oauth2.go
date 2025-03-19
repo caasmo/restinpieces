@@ -6,65 +6,61 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 )
 
-// UserFromUserInfoURL maps provider-specific user info to our standard User struct
+const (
+	// ExternalAuthOAuth2 is the value used in the ExternalAuth field
+	// to indicate OAuth2 authentication
+	ExternalAuthOAuth2 = "oauth2"
+)
+
+// AuthUser defines a standardized OAuth2 user data structure.
+// we already havr user. remove.
+//type AuthUser struct {
+//	Expiry       types.DateTime `json:"expiry"`
+//	RawUser      map[string]any `json:"rawUser"`
+//	Id           string         `json:"id"`
+//	Name         string         `json:"name"`
+//	Username     string         `json:"username"`
+//	Email        string         `json:"email"`
+//	AvatarURL    string         `json:"avatarURL"`
+//	AccessToken  string         `json:"accessToken"`
+//	RefreshToken string         `json:"refreshToken"`
+//}
+
+// UserFromUserInfo maps provider-specific user info to our standard User struct
 func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2Provider) (*db.User, error) {
-	// Decode into interface map to handle both string and boolean values
-	var raw map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
-		return nil, fmt.Errorf("failed to decode %s user info: %w", providerConfig.Name, err)
+	switch providerName {
+	case "google":
+		
+		// raw info endpoint response fields (from pocketbase)
+		var raw struct {
+			Id            string `json:"sub"`
+			Name          string `json:"name"`
+			Picture       string `json:"picture"`
+			Email         string `json:"email"`
+			EmailVerified bool   `json:"email_verified"`
+		}
+
+		if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
+			return nil, fmt.Errorf("failed to decode google user info: %w", err)
 	}
 
-	// Create user with default values
-	user := &db.User{
-		Verified: true,
-		Oauth2:   true,
-	}
-
-	// Process required fields
-	for _, field := range providerConfig.UserInfoFields.Required() {
-		fieldMapping := providerConfig.UserInfoFields[field]
-		if fieldMapping == "" {
-			return nil, fmt.Errorf("missing required field mapping for: %s", field)
+		if !raw.EmailVerified {
+			return nil, errors.New("google email not verified")
 		}
 		
-		value, ok := raw[fieldMapping]
-		if !ok {
-			return nil, fmt.Errorf("missing required field: %s", fieldMapping)
-		}
+		return &db.User{
+			ID:       raw.Id,
+			Email:    raw.Email,
+			Name:     raw.Name,
+			Avatar:   raw.Picture,
+			Verified: true,
+			Oauth2:   true,
+		}, nil
 
-		switch field {
-		case config.UserInfoFieldEmail:
-			user.Email = value.(string)
-		}
-	}
-
-	// Process optional fields  
-	for _, field := range providerConfig.UserInfoFields.Optional() {
-		fieldMapping := providerConfig.UserInfoFields[field]
-		if fieldMapping == "" {
-			continue
-		}
-		
-		value, ok := raw[fieldMapping]
-		if !ok {
-			continue
-		}
-
-		switch field {
-		case config.UserInfoFieldName:
-			user.Name = value.(string)
-		case config.UserInfoFieldAvatar:
-			user.Avatar = value.(string)
-		case config.UserInfoFieldEmailVerified:
-			if verified, ok := value.(bool); ok && !verified {
-				return nil, errors.New("email not verified")
+	default:
+		return nil, fmt.Errorf("unsupported provider: %s", providerName)
 			}
-		}
-	}
-
-	return user, nil
 }
