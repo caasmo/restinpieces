@@ -13,7 +13,7 @@ const (
 	EnvGithubClientSecret = "OAUTH2_GITHUB_CLIENT_SECRET"
 )
 
-type Env struct {
+type EnvVar struct {
 	Name  string
 	Value string
 }
@@ -25,8 +25,8 @@ const (
 
 type OAuth2ProviderConfig struct {
 	Name         string
-	ClientID     Env
-	ClientSecret Env
+	ClientID     EnvVar
+	ClientSecret EnvVar
 	DisplayName  string
 	RedirectURL  string
 	AuthURL      string

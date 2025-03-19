@@ -25,8 +25,8 @@ func main() {
 	// Configure Google OAuth2 provider
 	googleConfig := config.OAuth2ProviderConfig{
 		Name:         config.OAuth2ProviderGoogle,
-		ClientID:     config.Env{Name: config.EnvGoogleClientID},
-		ClientSecret: config.Env{Name: config.EnvGoogleClientSecret},
+		ClientID:     config.EnvVar{Name: config.EnvGoogleClientID},
+		ClientSecret: config.EnvVar{Name: config.EnvGoogleClientSecret},
 		DisplayName:  "Google",
 		RedirectURL:  "http://localhost:8080/oauth2/callback/",
 		AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
@@ -54,8 +54,8 @@ func main() {
 	// Configure GitHub OAuth2 provider
 	githubConfig := config.OAuth2ProviderConfig{
 		Name:         config.OAuth2ProviderGitHub,
-		ClientID:     config.Env{Name: config.EnvGithubClientID},
-		ClientSecret: config.Env{Name: config.EnvGithubClientSecret},
+		ClientID:     config.EnvVar{Name: config.EnvGithubClientID},
+		ClientSecret: config.EnvVar{Name: config.EnvGithubClientSecret},
 		DisplayName:  "GitHub",
 		RedirectURL:  "http://localhost:8080/oauth2/callback/",
 		AuthURL:      "https://github.com/login/oauth/authorize",
