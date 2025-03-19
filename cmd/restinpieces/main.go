@@ -37,12 +37,6 @@ func main() {
 			"https://www.googleapis.com/auth/userinfo.email",
 		},
 		PKCE: true,
-		UserInfoFields: config.UserInfoFields{
-			config.UserInfoFieldEmail:         "email",
-			config.UserInfoFieldName:          "name",
-			config.UserInfoFieldAvatar:        "picture",
-			config.UserInfoFieldEmailVerified: "email_verified",
-		},
 	}
 	if err := googleConfig.FillEnvVars(); err != nil {
 		slog.Warn("skipping Google OAuth2 provider", "error", err)

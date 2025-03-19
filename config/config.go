@@ -23,26 +23,6 @@ const (
 	OAuth2ProviderGitHub = "github"
 )
 
-// UserInfoFields defines mappings between provider-specific fields and our standard fields
-// Standard OAuth2 user info field names
-const (
-	UserInfoFieldEmail         = "email"
-	UserInfoFieldName          = "name"
-	UserInfoFieldAvatar        = "avatar"
-	UserInfoFieldEmailVerified = "email_verified"
-)
-
-type UserInfoFields map[string]string
-
-// Required returns a slice of required field names
-func (f UserInfoFields) Required() []string {
-	return []string{UserInfoFieldEmail}
-}
-
-// Optional returns a slice of optional field names
-func (f UserInfoFields) Optional() []string {
-	return []string{UserInfoFieldName, UserInfoFieldAvatar, UserInfoFieldEmailVerified}
-}
 
 type OAuth2Provider struct {
 	Name         string
