@@ -38,7 +38,7 @@ func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2Provi
 
 		switch field {
 		case config.UserInfoFieldEmail:
-			user.Email = fmt.Sprintf("%v", value)
+			user.Email = value.(string)
 		}
 	}
 
@@ -56,9 +56,9 @@ func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2Provi
 
 		switch field {
 		case config.UserInfoFieldName:
-			user.Name = fmt.Sprintf("%v", value)
+			user.Name = value.(string)
 		case config.UserInfoFieldAvatar:
-			user.Avatar = fmt.Sprintf("%v", value)
+			user.Avatar = value.(string)
 		case config.UserInfoFieldEmailVerified:
 			if verified, ok := value.(bool); ok && !verified {
 				return nil, errors.New("email not verified")
