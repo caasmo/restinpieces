@@ -35,8 +35,6 @@ type OAuth2Provider struct {
 	UserInfoURL  string
 	Scopes       []string
 	PKCE         bool
-	// UserInfoFields defines the mapping between provider-specific fields and our standard fields
-	UserInfoFields UserInfoFields `json:"userInfoFields"`
 }
 
 func (c *OAuth2Provider) FillEnvVars() error {
