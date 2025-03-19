@@ -46,16 +46,6 @@ func UserFromUserInfoURL(resp *http.Response, providerConfig *config.OAuth2Provi
 	}
 
 	// Required fields
-	idField := providerConfig.UserInfoFields["id"]
-	if idField == "" {
-		return nil, fmt.Errorf("missing required field mapping: id")
-	}
-	if id, ok := raw[idField]; ok {
-		user.ID = fmt.Sprintf("%v", id)
-	} else {
-		return nil, fmt.Errorf("missing required field: %s", idField)
-	}
-
 	emailField := providerConfig.UserInfoFields["email"]
 	if emailField == "" {
 		return nil, fmt.Errorf("missing required field mapping: email")

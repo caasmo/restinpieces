@@ -38,7 +38,6 @@ func main() {
 		},
 		PKCE: true,
 		UserInfoFields: config.UserInfoFields{
-			config.UserInfoFieldID:            "sub",
 			config.UserInfoFieldEmail:         "email",
 			config.UserInfoFieldName:          "name",
 			config.UserInfoFieldAvatar:        "picture",
