@@ -45,7 +45,7 @@ func UserFromInfoResponse(resp *http.Response, providerConfig *config.OAuth2Prov
 	}
 
 	// Required fields
-	idField := providerConfig.ResponseFields["id"]
+	idField := providerConfig.UserInfoFields["id"]
 	if idField == "" {
 		return nil, fmt.Errorf("missing required field mapping: id")
 	}
@@ -55,7 +55,7 @@ func UserFromInfoResponse(resp *http.Response, providerConfig *config.OAuth2Prov
 		return nil, fmt.Errorf("missing required field: %s", idField)
 	}
 
-	emailField := providerConfig.ResponseFields["email"]
+	emailField := providerConfig.UserInfoFields["email"]
 	if emailField == "" {
 		return nil, fmt.Errorf("missing required field mapping: email")
 	}
@@ -66,20 +66,20 @@ func UserFromInfoResponse(resp *http.Response, providerConfig *config.OAuth2Prov
 	}
 
 	// Optional fields
-	if nameField := providerConfig.ResponseFields["name"]; nameField != "" {
+	if nameField := providerConfig.UserInfoFields["name"]; nameField != "" {
 		if name, ok := raw[nameField]; ok {
 			user.Name = fmt.Sprintf("%v", name)
 		}
 	}
 
-	if avatarField := providerConfig.ResponseFields["avatar"]; avatarField != "" {
+	if avatarField := providerConfig.UserInfoFields["avatar"]; avatarField != "" {
 		if avatar, ok := raw[avatarField]; ok {
 			user.Avatar = fmt.Sprintf("%v", avatar)
 		}
 	}
 
 	// Email verification
-	if verifiedField := providerConfig.ResponseFields["email_verified"]; verifiedField != "" {
+	if verifiedField := providerConfig.UserInfoFields["email_verified"]; verifiedField != "" {
 		if verified, ok := raw[verifiedField]; ok {
 			if verifiedBool, ok := verified.(bool); ok && !verifiedBool {
 				return nil, errors.New("email not verified")
