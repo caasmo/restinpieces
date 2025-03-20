@@ -94,8 +94,6 @@ func route(ap *app.App, cAp *custom.App) {
 	ap.Router().Handle("GET /custom", authMiddleware.ThenFunc(cAp.Index))
 
 	ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
-    //ap.Router().Handle(r.endpoint, r.Handler())
-	ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
 	ap.Router().Handle("GET /api", authMiddleware.ThenFunc(ap.Index))
 	ap.Router().Handle("/api/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
 	ap.Router().Handle("/api/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
@@ -106,9 +104,9 @@ func route(ap *app.App, cAp *custom.App) {
 	ap.Router().Handle("/api/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
 
 	// Example route using Route builder with JWT validation
-	NewRoute().
+    r := NewRoute().
 		WithEndpoint("GET /api/route").
 		WithHandlerFunc(ap.Index).
-		WithMiddleware(ap.JwtValidate).
-		Register(ap.Router())
+		WithMiddleware(ap.JwtValidate)
+    ap.Router().Handle(r.endpoint, r.Handler())
 }
