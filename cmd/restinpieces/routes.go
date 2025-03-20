@@ -22,24 +22,7 @@ func route(ap *app.App, cAp *custom.App) {
 	ap.Router().Handle("/", fs) 
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
-    // 
-	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
-	authMiddleware := alice.New(ap.JwtValidate)
-
 	commonNewMiddleware := []func(http.Handler) http.Handler{ap.SecurityHeadersMiddleware, ap.Logger}
-
-	// Example route using Route builder with JWT validation
-    //r := NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddleware(ap.JwtValidate)
-    //r := router.NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddlewareChain(authNewMiddleware)
-    //ap.Router().Handle(r.Endpoint, r.Handler())
-    //r = router.NewRoute("GET /api/route2").WithHandlerFunc(ap.Index)
-    //ap.Router().Handle(r.Endpoint, r.Handler())
-
-    //ap.Router().Register(
-    //    NewRoute("GET /api/route2").WithHandlerFunc(ap.Index)
-    //    NewRoute("GET /api/route2").WithHandlerFunc(ap.Index)
-    //    NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddleware(ap.JwtValidate)
-    //)
 
 	// API routes with explicit /api prefix
 	ap.Router().Register(
@@ -56,14 +39,14 @@ func route(ap *app.App, cAp *custom.App) {
     //
 	ap.Router().Handle("GET /custom", authMiddleware.ThenFunc(cAp.Index))
 
-	ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
-	ap.Router().Handle("GET /api", authMiddleware.ThenFunc(ap.Index))
-	ap.Router().Handle("/api/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
-	ap.Router().Handle("/api/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
-	ap.Router().Handle("/api/benchmark/baseline", http.HandlerFunc(ap.BenchmarkBaseline))
-	ap.Router().Handle("/api/benchmark/sqlite/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
-	ap.Router().Handle("GET /api/benchmark/sqlite/pool/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
-	ap.Router().Handle("/api/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
-	ap.Router().Handle("/api/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
+	//ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
+	//ap.Router().Handle("GET /api", authMiddleware.ThenFunc(ap.Index))
+	//ap.Router().Handle("/api/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
+	//ap.Router().Handle("/api/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
+	//ap.Router().Handle("/api/benchmark/baseline", http.HandlerFunc(ap.BenchmarkBaseline))
+	//ap.Router().Handle("/api/benchmark/sqlite/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
+	//ap.Router().Handle("GET /api/benchmark/sqlite/pool/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
+	//ap.Router().Handle("/api/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
+	//ap.Router().Handle("/api/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
 
 }
