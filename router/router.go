@@ -62,3 +62,18 @@ func (r *Route) Handler() http.Handler {
 	}
 	return handler
 }
+
+// WithObservers adds handlers that run after the main handler
+func (r *Route) WithObservers(observers ...http.Handler) *Route {
+	mainHandler := r.Handler()
+	r.handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Run the main handler chain
+		mainHandler.ServeHTTP(w, r)
+		
+		// Run all observers with the original writer
+		for _, obs := range observers {
+			obs.ServeHTTP(w, r)
+		}
+	})
+	return r
+}
