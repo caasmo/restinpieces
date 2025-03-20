@@ -58,6 +58,12 @@ func (r *Router) Param(req *http.Request, key string) string {
 	return ""
 }
 
+func (r *Router) Register(routes ...*router.Route) {
+	for _, route := range routes {
+		r.Handle(route.Endpoint, route.Handler())
+	}
+}
+
 func New() router.Router {
 	return &Router{rt: jshttprouter.New()}
 }

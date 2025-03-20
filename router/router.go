@@ -9,6 +9,7 @@ type Router interface {
 	HandleFunc(string, func(http.ResponseWriter, *http.Request))
 	ServeHTTP(http.ResponseWriter, *http.Request)
 	Param(*http.Request, string) string
+	Register(routes ...*Route)
 }
 
 // Route builder for creating handler chains with middleware
