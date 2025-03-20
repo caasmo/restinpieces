@@ -49,8 +49,6 @@ func route(ap *app.App, cAp *custom.App) {
 		router.NewRoute("POST /api/auth-with-oauth2").WithHandlerFunc(ap.AuthWithOAuth2Handler),
 		router.NewRoute("POST /api/request-verification").WithHandlerFunc(ap.RequestVerificationHandler),
 		router.NewRoute("POST /api/register-with-password").WithHandlerFunc(ap.RegisterWithPasswordHandler),
-	)
-	ap.Router().Register(
 		router.NewRoute("GET /api/list-oauth2-providers").WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware),
 	)
 
