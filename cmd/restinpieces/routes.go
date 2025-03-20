@@ -36,10 +36,6 @@ func route(ap *app.App, cAp *custom.App) {
 		r.NewRoute("GET /custom").WithHandlerFunc(cAp.Index).WithMiddleware(ap.JwtValidate),
 	)
 
-    //
-    // custom route, example uses core middleware, showing how mix core and custom
-    //
-
 	//ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
 	//ap.Router().Handle("GET /api", authMiddleware.ThenFunc(ap.Index))
 	//ap.Router().Handle("/api/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
@@ -49,5 +45,4 @@ func route(ap *app.App, cAp *custom.App) {
 	//ap.Router().Handle("GET /api/benchmark/sqlite/pool/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
 	//ap.Router().Handle("/api/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
 	//ap.Router().Handle("/api/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
-
 }
