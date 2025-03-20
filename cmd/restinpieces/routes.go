@@ -81,6 +81,11 @@ func route(ap *app.App, cAp *custom.App) {
     ap.Router().Handle(r.endpoint, r.Handler())
     r = NewRoute("GET /api/route2").WithHandlerFunc(ap.Index)
     ap.Router().Handle(r.endpoint, r.Handler())
+    //ap.Router().Register(
+    //    NewRoute("GET /api/route2").WithHandlerFunc(ap.Index)
+    //    NewRoute("GET /api/route2").WithHandlerFunc(ap.Index)
+    //    NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddleware(ap.JwtValidate)
+    //)
 
 	// API routes with explicit /api prefix
 	ap.Router().Handle("POST /api/auth-refresh", authMiddleware.ThenFunc(ap.RefreshAuthHandler))
