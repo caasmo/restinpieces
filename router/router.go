@@ -55,8 +55,10 @@ func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
 // 3. mw3
 // 4. Handler
 //
-// This is different from some other middleware implementations where the last
-// middleware added runs first. Here the order matches the definition order.
+// This follows the same semantics as popular middleware chaining packages like
+// Alice (github.com/justinas/alice) where the first middleware in the chain
+// is the outermost handler that runs first. This matches the natural reading
+// order of the code and makes it easier to reason about middleware execution.
 func (r *Route) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *Route {
 	for _, mw := range middlewares {
 		r.middlewares = append([]func(http.Handler) http.Handler{mw}, r.middlewares...)
