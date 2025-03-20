@@ -40,7 +40,7 @@ func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
 	return r.WithHandler(h)
 }
 
-// WithMiddleware adds one or more middlewares to the chain (prepended in reverse order)
+// WithMiddleware adds one or more middlewares to the chain (prepended in given order)
 func (r *Route) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *Route {
 	// Prepend in reverse order to maintain proper wrapping order
 	for i := len(middlewares) - 1; i >= 0; i-- {
@@ -52,6 +52,16 @@ func (r *Route) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *
 // WithMiddlewareChain prepends a chain of middlewares (added in given order)
 func (r *Route) WithMiddlewareChain(middlewares []func(http.Handler) http.Handler) *Route {
 	return r.WithMiddleware(middlewares...)
+}
+
+// WithObservers adds handlers that run after the handler and middleware chain.
+// Observers are typically used for logging, metrics collection, and other side effects.
+// Note that observers will execute even if middleware returns early or stops processing.
+// Observers should not write to the response as the main handler may have already sent headers.
+// Use carefully as this could lead to unintended side effects when middleware fails.
+func (r *Route) WithObservers(observers ...http.Handler) *Route {
+	r.observers = append(r.observers, observers...)
+	return r
 }
 
 // Handler returns the final handler with all middlewares and observers applied
@@ -80,12 +90,3 @@ func (r *Route) Handler() http.Handler {
 	})
 }
 
-// WithObservers adds handlers that run after the handler and middleware chain.
-// Observers are typically used for logging, metrics collection, and other side effects.
-// Note that observers will execute even if middleware returns early or stops processing.
-// Observers should not write to the response as the main handler may have already sent headers.
-// Use carefully as this could lead to unintended side effects when middleware fails.
-func (r *Route) WithObservers(observers ...http.Handler) *Route {
-	r.observers = append(r.observers, observers...)
-	return r
-}
