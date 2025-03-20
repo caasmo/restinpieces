@@ -47,14 +47,14 @@ func (r *Route) WithMiddlewareChain(middlewares []func(http.Handler) http.Handle
 	return r.WithMiddleware(middlewares...)
 }
 
-// Apply registers the route with the router using the built middleware chain
-func (r *Route) Apply(ap *app.App) {
+// Handler returns the final handler with all middlewares applied
+func (r *Route) Handler() http.Handler {
 	handler := r.handler
 	// Apply middlewares in reverse registration order (outermost first)
 	for _, mw := range r.middlewares {
 		handler = mw(handler)
 	}
-	ap.Router().Handle(r.endpoint, handler)
+	return handler
 }
 
 // TODO encapsulate alice
@@ -65,7 +65,14 @@ func (r *Route) Apply(ap *app.App) {
 func route(ap *app.App, cAp *custom.App) {
 	// Serve static files from public directory
 	fs := http.FileServer(http.Dir("public"))
-	ap.Router().Handle("/", fs)
+	ap.Router().Handle("/", fs) 
+	
+	// Register routes using the new Handler() method
+	ap.Router().Handle("POST /api/auth-with-password", http.HandlerFunc(ap.AuthWithPasswordHandler))
+	ap.Router().Handle("POST /api/auth-with-oauth2", http.HandlerFunc(ap.AuthWithOAuth2Handler))
+	ap.Router().Handle("POST /api/request-verification", http.HandlerFunc(ap.RequestVerificationHandler))
+	ap.Router().Handle("POST /api/register-with-password", http.HandlerFunc(ap.RegisterWithPasswordHandler))
+	ap.Router().Handle("GET /api/list-oauth2-providers", commonMiddleware.ThenFunc(ap.ListOAuth2ProvidersHandler))
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
     // 
