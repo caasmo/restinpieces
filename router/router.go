@@ -74,7 +74,6 @@ func (r *Route) Handler() http.Handler {
 	handler := r.handler
 
 	
-	// Apply middlewares in reverse registration order (outermost first)
 	for _, mw := range r.middlewares {
 		handler = mw(handler)
 	}
