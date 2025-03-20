@@ -16,6 +16,13 @@ type Route struct {
 	middlewares []func(http.Handler) http.Handler
 }
 
+// NewRoute creates a new Route instance with initialized middlewares slice
+func NewRoute() *Route {
+	return &Route{
+		middlewares: make([]func(http.Handler) http.Handler, 0),
+	}
+}
+
 // WithEndpoint sets the HTTP method and path pattern for the route
 func (r *Route) WithEndpoint(pattern string) *Route {
 	r.endpoint = pattern
