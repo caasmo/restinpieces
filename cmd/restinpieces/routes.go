@@ -32,7 +32,7 @@ func route(ap *app.App, cAp *custom.App) {
 	// Example route using Route builder with JWT validation
     //r := NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddleware(ap.JwtValidate)
     r := router.NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddlewareChain(authNewMiddleware)
-    ap.Router().Handle(r.endpoint, r.Handler())
+    ap.Router().Handle(r.Endpoint, r.Handler())
     r = router.NewRoute("GET /api/route2").WithHandlerFunc(ap.Index)
     ap.Router().Handle(r.endpoint, r.Handler())
     //ap.Router().Register(

@@ -13,7 +13,7 @@ type Router interface {
 
 // Route builder for creating handler chains with middleware
 type Route struct {
-	endpoint    string
+	Endpoint    string // exported field
 	handler     http.Handler
 	middlewares []func(http.Handler) http.Handler
 }
@@ -22,7 +22,7 @@ type Route struct {
 // endpoint parameter is required - provides HTTP method and path pattern
 func NewRoute(endpoint string) *Route {
 	return &Route{
-		endpoint:    endpoint,
+		Endpoint:    endpoint, // update to use exported field
 		middlewares: make([]func(http.Handler) http.Handler, 0),
 	}
 }
