@@ -8,7 +8,7 @@ import (
 	rtr "github.com/caasmo/restinpieces/router"
 )
 
-func TestRoute_BasicHandler(t *testing.T) {
+func TestRouteBasicHandler(t *testing.T) {
 	route := rtr.NewRoute("GET /test").
 		WithHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -28,7 +28,7 @@ func TestRoute_BasicHandler(t *testing.T) {
 	}
 }
 
-func TestRoute_MiddlewareChaining(t *testing.T) {
+func TestRouteMiddlewareChaining(t *testing.T) {
 	var callOrder []string
 
 	mw1 := func(next http.Handler) http.Handler {
@@ -68,7 +68,7 @@ func TestRoute_MiddlewareChaining(t *testing.T) {
 	}
 }
 
-func TestRoute_Observers(t *testing.T) {
+func TestRouteObservers(t *testing.T) {
 	var calledHandlers []string
 
 	observer1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +102,7 @@ func TestRoute_Observers(t *testing.T) {
 	}
 }
 
-func TestRoute_NilHandler(t *testing.T) {
+func TestRouteNilHandler(t *testing.T) {
 	route := rtr.NewRoute("GET /test")
 	
 	defer func() {
@@ -114,7 +114,7 @@ func TestRoute_NilHandler(t *testing.T) {
 	route.Handler() // Should panic
 }
 
-func TestRoute_EmptyEndpoint(t *testing.T) {
+func TestRouteEmptyEndpoint(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("expected panic with empty endpoint")
