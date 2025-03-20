@@ -226,6 +226,64 @@ func TestRouteChainedWithMiddleware(t *testing.T) {
 	}
 }
 
+func TestRouteMixedMiddlewareChaining(t *testing.T) {
+	var callOrder []string
+
+	mw1 := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "mw1")
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	mw2 := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "mw2")
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	mw3 := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "mw3")
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	mw4 := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "mw4")
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	// Create initial middleware chain
+	middlewareChain := []func(http.Handler) http.Handler{mw1, mw2}
+
+	route := rtr.NewRoute("GET /test").
+		WithHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "handler")
+			w.WriteHeader(http.StatusOK)
+		}).
+		WithMiddlewareChain(middlewareChain). // First chain
+		WithMiddleware(mw3, mw4)             // Additional middlewares
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	rec := httptest.NewRecorder()
+	
+	route.Handler().ServeHTTP(rec, req)
+
+	expectedOrder := []string{"mw1", "mw2", "mw3", "mw4", "handler"}
+	if len(callOrder) != len(expectedOrder) {
+		t.Fatalf("expected %d calls, got %d", len(expectedOrder), len(callOrder))
+	}
+	for i, val := range expectedOrder {
+		if callOrder[i] != val {
+			t.Errorf("expected %s at position %d, got %s", val, i, callOrder[i])
+		}
+	}
+}
+
 func TestRouteMiddlewareReturnEarly(t *testing.T) {
 	var calledHandlers []string
 
