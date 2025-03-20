@@ -12,7 +12,7 @@ import (
 // Route builder for creating handler chains with middleware
 type Route struct {
 	endpoint    string
-	handler     http.HandlerFunc
+	handler     http.Handler
 	middlewares []func(http.Handler) http.Handler
 }
 
@@ -22,10 +22,15 @@ func (r *Route) WithEndpoint(pattern string) *Route {
 	return r
 }
 
-// WithHandler sets the final handler function for the route
-func (r *Route) WithHandler(h http.HandlerFunc) *Route {
+// WithHandler sets the final handler for the route
+func (r *Route) WithHandler(h http.Handler) *Route {
 	r.handler = h
 	return r
+}
+
+// WithHandlerFunc sets the final handler function for the route
+func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
+	return r.WithHandler(h)
 }
 
 // WithMiddleware adds one or more middlewares to the chain (prepended in reverse order)
