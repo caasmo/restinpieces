@@ -50,9 +50,9 @@ func route(ap *app.App, cAp *custom.App) {
 		router.NewRoute("POST /api/request-verification").WithHandlerFunc(ap.RequestVerificationHandler),
 		router.NewRoute("POST /api/register-with-password").WithHandlerFunc(ap.RegisterWithPasswordHandler),
 	)
-	//ap.Router().Handle("GET /api/list-oauth2-providers", commonMiddleware.ThenFunc(ap.ListOAuth2ProvidersHandler))
-    r = router.NewRoute("GET /api/list-oauth2-providers").WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware)
-    ap.Router().Handle(r.Endpoint, r.Handler())
+	ap.Router().Register(
+		router.NewRoute("GET /api/list-oauth2-providers").WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware),
+	)
 
     //
     // custom route, example uses core middleware, showing how mix core and custom
