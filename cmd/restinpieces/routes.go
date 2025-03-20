@@ -49,8 +49,7 @@ func (r *Route) WithMiddlewareChain(middlewares []func(http.Handler) http.Handle
 
 // Apply registers the route with the router using the built middleware chain
 func (r *Route) Apply(ap *app.App) {
-    // TODO 
-	var handler http.Handler = http.HandlerFunc(r.handler)
+	handler := r.handler
 	// Apply middlewares in reverse registration order (outermost first)
 	for _, mw := range r.middlewares {
 		handler = mw(handler)
