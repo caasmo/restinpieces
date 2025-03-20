@@ -126,3 +126,52 @@ func TestRouteEmptyEndpoint(t *testing.T) {
 	
 	rtr.NewRoute("") // Should panic
 }
+
+func TestRouteMiddlewareReturnEarly(t *testing.T) {
+	var calledHandlers []string
+
+	authMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			calledHandlers = append(calledHandlers, "authMiddleware")
+			w.WriteHeader(http.StatusUnauthorized)
+			// Do not call next.ServeHTTP() to simulate failed auth
+		})
+	}
+
+	observer1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calledHandlers = append(calledHandlers, "observer1")
+	})
+
+	observer2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calledHandlers = append(calledHandlers, "observer2")
+	})
+
+	route := rtr.NewRoute("GET /test").
+		WithHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			calledHandlers = append(calledHandlers, "handler")
+			w.WriteHeader(http.StatusOK)
+		}).
+		WithMiddleware(authMiddleware).
+		WithObservers(observer1, observer2)
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	rec := httptest.NewRecorder()
+	
+	route.Handler().ServeHTTP(rec, req)
+
+	// Verify status code
+	if rec.Code != http.StatusUnauthorized {
+		t.Errorf("expected status %d, got %d", http.StatusUnauthorized, rec.Code)
+	}
+
+	// Verify execution order - observers should still run even though middleware returned early
+	expectedHandlers := []string{"authMiddleware", "observer1", "observer2"}
+	if len(calledHandlers) != len(expectedHandlers) {
+		t.Fatalf("expected %d calls, got %d", len(expectedHandlers), len(calledHandlers))
+	}
+	for i, val := range expectedHandlers {
+		if calledHandlers[i] != val {
+			t.Errorf("expected %s at position %d, got %s", val, i, calledHandlers[i])
+		}
+	}
+}
