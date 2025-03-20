@@ -9,26 +9,6 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-const (
-	// ExternalAuthOAuth2 is the value used in the ExternalAuth field
-	// to indicate OAuth2 authentication
-	ExternalAuthOAuth2 = "oauth2"
-)
-
-// AuthUser defines a standardized OAuth2 user data structure.
-// we already havr user. remove.
-//type AuthUser struct {
-//	Expiry       types.DateTime `json:"expiry"`
-//	RawUser      map[string]any `json:"rawUser"`
-//	Id           string         `json:"id"`
-//	Name         string         `json:"name"`
-//	Username     string         `json:"username"`
-//	Email        string         `json:"email"`
-//	AvatarURL    string         `json:"avatarURL"`
-//	AccessToken  string         `json:"accessToken"`
-//	RefreshToken string         `json:"refreshToken"`
-//}
-
 // UserFromUserInfo maps provider-specific user info to our standard User struct
 func UserFromUserInfoURL(resp *http.Response, providerName string) (*db.User, error) {
 	switch providerName {
