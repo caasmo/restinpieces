@@ -105,13 +105,17 @@ func TestRouteObservers(t *testing.T) {
 func TestRouteNilHandler(t *testing.T) {
 	route := rtr.NewRoute("GET /test")
 	
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("expected panic with nil handler")
-		}
-	}()
+	req := httptest.NewRequest("GET", "/test", nil)
+	rec := httptest.NewRecorder()
 	
-	route.Handler() // Should panic
+	route.Handler().ServeHTTP(rec, req)
+	
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+	if body := rec.Body.String(); body != "" {
+		t.Errorf("expected empty body, got %s", body)
+	}
 }
 
 func TestRouteEmptyEndpoint(t *testing.T) {
