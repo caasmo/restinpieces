@@ -69,10 +69,9 @@ func (r *Route) Handler() http.Handler {
 	}
 	
 	// Wrap handler with observers if present
-	main := handler
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Run the main handler chain
-		main.ServeHTTP(w, r)
+		handler.ServeHTTP(w, r)
 		
 		// Run all observers in order they were added
 		for _, obs := range r.observers {
