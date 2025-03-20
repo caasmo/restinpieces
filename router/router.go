@@ -43,7 +43,40 @@ func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
 	return r.WithHandler(h)
 }
 
-// WithMiddleware adds one or more middlewares to the chain (in given order)
+// WithMiddleware adds one or more middlewares to the chain.
+// Middlewares execute in the order they are defined, from left to right.
+// For example:
+//
+//	.WithMiddleware(mw1, mw2, mw3)
+//
+// Will execute as:
+// 1. mw1 (first middleware runs first)
+// 2. mw2
+// 3. mw3
+// 4. Handler
+//
+// This is different from some other middleware implementations where the last
+// middleware added runs first. Here the order matches the definition order.
+//
+// Example usage:
+//
+//	authMiddleware := func(next http.Handler) http.Handler {
+//	    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//	        // Check auth
+//	        next.ServeHTTP(w, r)
+//	    })
+//	}
+//
+//	loggingMiddleware := func(next http.Handler) http.Handler {
+//	    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//	        log.Println("Request received")
+//	        next.ServeHTTP(w, r)
+//	    })
+//	}
+//
+//	route := NewRoute("GET /secure").
+//	    WithMiddleware(authMiddleware, loggingMiddleware).
+//	    WithHandlerFunc(secureHandler)
 func (r *Route) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *Route {
 	for _, mw := range middlewares {
 		r.middlewares = append([]func(http.Handler) http.Handler{mw}, r.middlewares...)
