@@ -66,7 +66,11 @@ func (r *Route) WithObservers(observers ...http.Handler) *Route {
 
 // Handler returns the final handler with all middlewares and observers applied
 func (r *Route) Handler() http.Handler {
+    if r.handler == nil {
+        panic("route handler cannot be nil")
+    }
 	handler := r.handler
+
 	
 	// Apply middlewares in reverse registration order (outermost first)
 	for _, mw := range r.middlewares {
