@@ -11,6 +11,7 @@ import (
 )
 
 // UserFromUserInfo maps provider-specific user info to our standard User struct.
+//
 // When integrating a new OAuth2 provider, first add a case statement for the new provider name.
 // Then create a raw struct that matches the provider's user info JSON response.
 // Map the fields to the standard db.User struct while ensuring required fields
@@ -19,7 +20,7 @@ func UserFromUserInfoURL(resp *http.Response, providerName string) (*db.User, er
 	switch providerName {
 	case config.OAuth2ProviderGoogle:
 		
-		// raw info endpoint response fields (from pocketbase)
+		// raw info endpoint response fields (info from pocketbase)
 		var raw struct {
 			Id            string `json:"sub"`
 			Name          string `json:"name"`
