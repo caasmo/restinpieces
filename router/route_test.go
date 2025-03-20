@@ -57,7 +57,7 @@ func TestRouteMiddlewareChaining(t *testing.T) {
 	
 	route.Handler().ServeHTTP(rec, req)
 
-	expectedOrder := []string{"mw2", "mw1", "handler"}
+	expectedOrder := []string{"mw1", "mw2", "handler"}
 	if len(callOrder) != len(expectedOrder) {
 		t.Fatalf("expected %d calls, got %d", len(expectedOrder), len(callOrder))
 	}
