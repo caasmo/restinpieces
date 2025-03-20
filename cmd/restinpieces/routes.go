@@ -39,9 +39,7 @@ func (r *Route) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *
 
 // WithMiddlewareChain prepends a chain of middlewares (added in given order)
 func (r *Route) WithMiddlewareChain(middlewares []func(http.Handler) http.Handler) *Route {
-	// Prepend to existing middlewares to maintain chain order
-	r.middlewares = append(middlewares, r.middlewares...)
-	return r
+	return r.WithMiddleware(middlewares...)
 }
 
 // Apply registers the route with the router using the built middleware chain
