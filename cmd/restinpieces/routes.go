@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/caasmo/restinpieces/app"
+	"github.com/justinas/alice"
 	"net/http"
 
 	// custom handlers and middleware
