@@ -23,6 +23,9 @@ type Route struct {
 // NewRoute creates a new Route instance with initialized middlewares slice
 // endpoint parameter is required - provides HTTP method and path pattern
 func NewRoute(endpoint string) *Route {
+	if endpoint == "" {
+		panic("route endpoint cannot be empty")
+	}
 	return &Route{
 		Endpoint:    endpoint, // update to use exported field
 		middlewares: make([]func(http.Handler) http.Handler, 0),
