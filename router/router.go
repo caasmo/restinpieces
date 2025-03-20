@@ -57,26 +57,6 @@ func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
 //
 // This is different from some other middleware implementations where the last
 // middleware added runs first. Here the order matches the definition order.
-//
-// Example usage:
-//
-//	authMiddleware := func(next http.Handler) http.Handler {
-//	    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//	        // Check auth
-//	        next.ServeHTTP(w, r)
-//	    })
-//	}
-//
-//	loggingMiddleware := func(next http.Handler) http.Handler {
-//	    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//	        log.Println("Request received")
-//	        next.ServeHTTP(w, r)
-//	    })
-//	}
-//
-//	route := NewRoute("GET /secure").
-//	    WithMiddleware(authMiddleware, loggingMiddleware).
-//	    WithHandlerFunc(secureHandler)
 func (r *Route) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *Route {
 	for _, mw := range middlewares {
 		r.middlewares = append([]func(http.Handler) http.Handler{mw}, r.middlewares...)
