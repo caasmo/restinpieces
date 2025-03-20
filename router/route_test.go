@@ -214,7 +214,6 @@ func TestRouteChainedWithMiddleware(t *testing.T) {
 	
 	route.Handler().ServeHTTP(rec, req)
 
-	// Middleware should execute in reverse order of addition (outermost first)
 	expectedOrder := []string{"mw1", "mw2", "mw3", "mw4", "handler"}
 	if len(callOrder) != len(expectedOrder) {
 		t.Fatalf("expected %d calls, got %d", len(expectedOrder), len(callOrder))
