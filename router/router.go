@@ -80,8 +80,11 @@ func (r *Route) Handler() http.Handler {
 	})
 }
 
-// WithObservers adds handlers that run after the handler and middleware chain. 
-// Note: Observers will execute even if middleware returns early or stops processing.
+// WithObservers adds handlers that run after the handler and middleware chain.
+// Observers are typically used for logging, metrics collection, and other side effects.
+// Note: 
+// - Observers will execute even if middleware returns early or stops processing
+// - Observers should NOT write to the response as the main handler may have already sent headers
 // Use carefully as this could lead to unintended side effects when middleware fails.
 func (r *Route) WithObservers(observers ...http.Handler) *Route {
 	r.observers = append(r.observers, observers...)
