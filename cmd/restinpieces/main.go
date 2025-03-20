@@ -6,6 +6,9 @@ import (
 	"os"
 	"time"
 
+    // TODO move to init
+	"github.com/caasmo/restinpieces/custom"
+
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/server"
 )
@@ -69,9 +72,13 @@ func main() {
 		os.Exit(1)
 	}
 
+    // TODO better custom/app move to init_app
+    cAp := custom.NewApp(ap)
+
+    // TODO with custom
 	defer ap.Close()
 
-	route(ap)
+	route(ap, cAp)
 
 	server.Run(":8080", ap.Router())
 }

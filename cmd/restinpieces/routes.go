@@ -4,6 +4,9 @@ import (
 	"github.com/caasmo/restinpieces/app"
 	"github.com/justinas/alice"
 	"net/http"
+
+    // custom handlers and middleware
+	"github.com/caasmo/restinpieces/custom"
 )
 
 // TODO encapsulate alice
@@ -11,7 +14,7 @@ import (
 // - middlewareeChain 
 // - Attach the middlwrare chain to some handler 
 // - PostHandlers, run always, do not modify response.
-func route(ap *app.App) {
+func route(ap *app.App, cAp *custom.App) {
 	// Serve static files from public directory
 	fs := http.FileServer(http.Dir("public"))
 	ap.Router().Handle("/", fs)
@@ -21,6 +24,7 @@ func route(ap *app.App) {
 	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
 	authMiddleware := alice.New(ap.JwtValidate)
 
+
 	// API routes with explicit /api prefix
 	ap.Router().Handle("POST /api/auth-refresh", authMiddleware.ThenFunc(ap.RefreshAuthHandler))
 	ap.Router().Handle("POST /api/auth-with-password", http.HandlerFunc(ap.AuthWithPasswordHandler))
@@ -29,6 +33,12 @@ func route(ap *app.App) {
 	ap.Router().Handle("POST /api/register-with-password", http.HandlerFunc(ap.RegisterWithPasswordHandler))
 	ap.Router().Handle("GET /api/list-oauth2-providers", commonMiddleware.ThenFunc(ap.ListOAuth2ProvidersHandler))
 
+    //
+    // custom route
+    //
+	ap.Router().Handle("GET /custom", authMiddleware.ThenFunc(cAp.Index))
+
+    //
 	ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
 	ap.Router().Handle("GET /api", authMiddleware.ThenFunc(ap.Index))
 	ap.Router().Handle("/api/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
