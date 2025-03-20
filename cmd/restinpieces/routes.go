@@ -2,12 +2,56 @@ package main
 
 import (
 	"github.com/caasmo/restinpieces/app"
-	"github.com/justinas/alice"
 	"net/http"
 
-    // custom handlers and middleware
+	// custom handlers and middleware
 	"github.com/caasmo/restinpieces/custom"
 )
+
+// Route builder for creating handler chains with middleware
+type Route struct {
+	endpoint    string
+	handler     http.HandlerFunc
+	middlewares []func(http.Handler) http.Handler
+}
+
+// WithEndpoint sets the HTTP method and path pattern for the route
+func (r *Route) WithEndpoint(pattern string) *Route {
+	r.endpoint = pattern
+	return r
+}
+
+// WithHandler sets the final handler function for the route
+func (r *Route) WithHandler(h http.HandlerFunc) *Route {
+	r.handler = h
+	return r
+}
+
+// WithMiddleware adds one or more middlewares to the chain (appended in reverse order)
+func (r *Route) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *Route {
+	// Reverse to maintain proper wrapping order
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		r.middlewares = append(r.middlewares, middlewares[i])
+	}
+	return r
+}
+
+// WithMiddlewareChain prepends a chain of middlewares (added in given order)
+func (r *Route) WithMiddlewareChain(middlewares []func(http.Handler) http.Handler) *Route {
+	// Prepend to existing middlewares to maintain chain order
+	r.middlewares = append(middlewares, r.middlewares...)
+	return r
+}
+
+// Apply registers the route with the router using the built middleware chain
+func (r *Route) Apply(ap *app.App) {
+	handler := r.handler
+	// Apply middlewares in reverse registration order (outermost first)
+	for _, mw := range r.middlewares {
+		handler = mw(handler)
+	}
+	ap.Router().Handle(r.endpoint, handler)
+}
 
 // TODO encapsulate alice
 // provide methods for
