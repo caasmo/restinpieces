@@ -283,6 +283,64 @@ func TestRouteMixedMiddlewareChaining(t *testing.T) {
 	}
 }
 
+func TestRouteFullChain(t *testing.T) {
+	var callOrder []string
+
+	// Create middlewares
+	mw1 := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "mw1")
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	mw2 := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "mw2")
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	// Create observers
+	observer1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callOrder = append(callOrder, "observer1")
+	})
+
+	observer2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callOrder = append(callOrder, "observer2")
+	})
+
+	// Create route with full chain
+	route := rtr.NewRoute("GET /test").
+		WithHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "handler")
+			w.WriteHeader(http.StatusOK)
+		}).
+		WithMiddleware(mw1, mw2).
+		WithObservers(observer1, observer2)
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	rec := httptest.NewRecorder()
+	
+	route.Handler().ServeHTTP(rec, req)
+
+	// Verify execution order
+	expectedOrder := []string{"mw1", "mw2", "handler", "observer1", "observer2"}
+	if len(callOrder) != len(expectedOrder) {
+		t.Fatalf("expected %d calls, got %d", len(expectedOrder), len(callOrder))
+	}
+	for i, val := range expectedOrder {
+		if callOrder[i] != val {
+			t.Errorf("expected %s at position %d, got %s", val, i, callOrder[i])
+		}
+	}
+
+	// Verify response status
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
+	}
+}
+
 func TestRouteMiddlewareReturnEarly(t *testing.T) {
 	var calledHandlers []string
 
