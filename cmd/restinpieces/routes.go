@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/caasmo/restinpieces/app"
-	"github.com/caasmo/restinpieces/router"
+	r "github.com/caasmo/restinpieces/router"
 	"net/http"
 
 	// custom handlers and middleware
