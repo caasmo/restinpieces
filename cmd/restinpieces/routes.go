@@ -9,16 +9,15 @@ import (
 	"github.com/caasmo/restinpieces/custom"
 )
 
-
 // TODO encapsulate alice
 // provide methods for
-// - middlewareeChain 
-// - Attach the middlwrare chain to some handler 
+// - middlewareeChain
+// - Attach the middlwrare chain to some handler
 // - PostHandlers, run always, do not modify response.
 func route(ap *app.App, cAp *custom.App) {
 	// Serve static files from public directory
 	fs := http.FileServer(http.Dir("public"))
-	ap.Router().Handle("/", fs) 
+	ap.Router().Handle("/", fs)
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	commonNewMiddleware := []func(http.Handler) http.Handler{ap.SecurityHeadersMiddleware, ap.Logger}
@@ -32,7 +31,7 @@ func route(ap *app.App, cAp *custom.App) {
 		r.NewRoute("POST /api/register-with-password").WithHandlerFunc(ap.RegisterWithPasswordHandler),
 		r.NewRoute("GET /api/list-oauth2-providers").WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware),
 
-        //custom routes example: mixing core middleware and custom handler
+		//custom routes example: mixing core middleware and custom handler
 		r.NewRoute("GET /custom").WithHandlerFunc(cAp.Index).WithMiddleware(ap.JwtValidate),
 	)
 

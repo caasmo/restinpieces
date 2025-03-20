@@ -23,7 +23,6 @@ const (
 	OAuth2ProviderGitHub = "github"
 )
 
-
 type OAuth2Provider struct {
 	Name         string
 	ClientID     EnvVar

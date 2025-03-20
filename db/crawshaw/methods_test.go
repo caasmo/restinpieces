@@ -30,9 +30,9 @@ type tableSchema struct {
 
 var tables = []tableSchema{
 	{
-		name:   "users",
-		schema: migrations.UsersSchema,
-		inserts: []string{},
+		name:      "users",
+		schema:    migrations.UsersSchema,
+		inserts:   []string{},
 		knownHash: "a8442a840a7adb04578fe2f1b3a14debd9f669a3e7cd48eda8ff365cf027398d",
 	},
 	{
@@ -106,7 +106,6 @@ func setupDB(t *testing.T) *Db {
 	}
 }
 
-
 func TestGetUserByEmail(t *testing.T) {
 	testDB := setupDB(t)
 	defer testDB.Close()
@@ -138,7 +137,7 @@ func TestGetUserByEmail(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name:     "non-existent user", 
+			name:     "non-existent user",
 			email:    "nonexistent@test.com",
 			wantUser: nil,
 			wantErr:  false,
@@ -296,7 +295,7 @@ func TestCreateUserWithOauth2(t *testing.T) {
 	t.Run("create oauth2 user", func(t *testing.T) {
 		user := baseUser
 		user.Avatar = "avatar1.jpg"
-		
+
 		createdUser, err := testDB.CreateUserWithOauth2(user)
 		if err != nil {
 			t.Fatalf("Failed to create oauth2 user: %v", err)
@@ -324,7 +323,7 @@ func TestCreateUserWithOauth2(t *testing.T) {
 	t.Run("add second oauth2 provider", func(t *testing.T) {
 		user := baseUser
 		user.Avatar = "avatar2.jpg"
-		
+
 		// Should succeed even though email exists, but avatar should stay original
 		createdUser, err := testDB.CreateUserWithOauth2(user)
 		if err != nil {
@@ -373,7 +372,7 @@ func TestCreateUserWithOauth2(t *testing.T) {
 			Email:    "oauth2@test.com",
 			Name:     "OAuth2 User",
 			Avatar:   "avatar.jpg",
-			Verified: true, 
+			Verified: true,
 			Oauth2:   true,
 		}
 		_, err := testDB.CreateUserWithOauth2(oauthUser)
@@ -383,7 +382,7 @@ func TestCreateUserWithOauth2(t *testing.T) {
 
 		// Add password auth
 		passwordUser := db.User{
-			Email:    "oauth2@test.com", 
+			Email:    "oauth2@test.com",
 			Password: "new_hashed_password",
 			Verified: false,
 			Oauth2:   false,
@@ -417,7 +416,7 @@ func TestCreateUserWithPassword(t *testing.T) {
 	t.Run("successful creation", func(t *testing.T) {
 		user := db.User{
 			Email:           "test@example.com",
-			Password:        "hashed_password", 
+			Password:        "hashed_password",
 			Name:            "Test User",
 			Verified:        false,
 			Oauth2:          false,

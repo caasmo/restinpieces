@@ -265,12 +265,12 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-    // If passwords are different CreateUserWithPassword did not write the new
-    // password on conflict because the user had already a password. 
-    if retrievedUser.Password != newUser.Password {
-        writeJSONError(w, errorEmailConflict)
-        return
-    }
+	// If passwords are different CreateUserWithPassword did not write the new
+	// password on conflict because the user had already a password.
+	if retrievedUser.Password != newUser.Password {
+		writeJSONError(w, errorEmailConflict)
+		return
+	}
 
 	// If user is not verified, add verification job to queue
 	if !retrievedUser.Verified {

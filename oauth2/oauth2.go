@@ -19,7 +19,7 @@ import (
 func UserFromUserInfoURL(resp *http.Response, providerName string) (*db.User, error) {
 	switch providerName {
 	case config.OAuth2ProviderGoogle:
-		
+
 		// raw info endpoint response fields (info from pocketbase)
 		var raw struct {
 			Id            string `json:"sub"`
@@ -31,12 +31,12 @@ func UserFromUserInfoURL(resp *http.Response, providerName string) (*db.User, er
 
 		if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
 			return nil, fmt.Errorf("failed to decode google user info: %w", err)
-	}
+		}
 
 		if !raw.EmailVerified {
 			return nil, errors.New("google email not verified")
 		}
-		
+
 		return &db.User{
 			ID:       raw.Id,
 			Email:    raw.Email,
@@ -48,5 +48,5 @@ func UserFromUserInfoURL(resp *http.Response, providerName string) (*db.User, er
 
 	default:
 		return nil, fmt.Errorf("unsupported provider: %s", providerName)
-			}
+	}
 }

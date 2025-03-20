@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-    // TODO move to init
+	// TODO move to init
 	"github.com/caasmo/restinpieces/custom"
 
 	"github.com/caasmo/restinpieces/config"
@@ -72,10 +72,10 @@ func main() {
 		os.Exit(1)
 	}
 
-    // TODO better custom/app move to init_app
-    cAp := custom.NewApp(ap)
+	// TODO better custom/app move to init_app
+	cAp := custom.NewApp(ap)
 
-    // TODO with custom
+	// TODO with custom
 	defer ap.Close()
 
 	route(ap, cAp)
