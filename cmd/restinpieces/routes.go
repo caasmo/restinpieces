@@ -75,6 +75,11 @@ func route(ap *app.App, cAp *custom.App) {
 	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
 	authMiddleware := alice.New(ap.JwtValidate)
 
+	// Example route using Route builder with JWT validation
+    r := NewRoute("GET /api/route").
+		WithHandlerFunc(ap.Index).
+		WithMiddleware(ap.JwtValidate)
+    ap.Router().Handle(r.endpoint, r.Handler())
 
 	// API routes with explicit /api prefix
 	ap.Router().Handle("POST /api/auth-refresh", authMiddleware.ThenFunc(ap.RefreshAuthHandler))
@@ -99,9 +104,4 @@ func route(ap *app.App, cAp *custom.App) {
 	ap.Router().Handle("/api/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
 	ap.Router().Handle("/api/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
 
-	// Example route using Route builder with JWT validation
-    r := NewRoute("GET /api/route").
-		WithHandlerFunc(ap.Index).
-		WithMiddleware(ap.JwtValidate)
-    ap.Router().Handle(r.endpoint, r.Handler())
 }
