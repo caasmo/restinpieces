@@ -86,7 +86,8 @@ func route(ap *app.App, cAp *custom.App) {
     //
 	ap.Router().Handle("GET /custom", authMiddleware.ThenFunc(cAp.Index))
 
-    //
+	ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
+    //ap.Router().Handle(r.endpoint, r.Handler())
 	ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
 	ap.Router().Handle("GET /api", authMiddleware.ThenFunc(ap.Index))
 	ap.Router().Handle("/api/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
