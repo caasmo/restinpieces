@@ -43,11 +43,13 @@ func route(ap *app.App, cAp *custom.App) {
     //)
 
 	// API routes with explicit /api prefix
-	ap.Router().Handle("POST /api/auth-refresh", authMiddleware.ThenFunc(ap.RefreshAuthHandler))
-	ap.Router().Handle("POST /api/auth-with-password", http.HandlerFunc(ap.AuthWithPasswordHandler))
-	ap.Router().Handle("POST /api/auth-with-oauth2", http.HandlerFunc(ap.AuthWithOAuth2Handler))
-	ap.Router().Handle("POST /api/request-verification", http.HandlerFunc(ap.RequestVerificationHandler))
-	ap.Router().Handle("POST /api/register-with-password", http.HandlerFunc(ap.RegisterWithPasswordHandler))
+	ap.Router().Register(
+		router.NewRoute("POST /api/auth-refresh").WithHandlerFunc(ap.RefreshAuthHandler).WithMiddleware(ap.JwtValidate),
+		router.NewRoute("POST /api/auth-with-password").WithHandlerFunc(ap.AuthWithPasswordHandler),
+		router.NewRoute("POST /api/auth-with-oauth2").WithHandlerFunc(ap.AuthWithOAuth2Handler),
+		router.NewRoute("POST /api/request-verification").WithHandlerFunc(ap.RequestVerificationHandler),
+		router.NewRoute("POST /api/register-with-password").WithHandlerFunc(ap.RegisterWithPasswordHandler),
+	)
 	//ap.Router().Handle("GET /api/list-oauth2-providers", commonMiddleware.ThenFunc(ap.ListOAuth2ProvidersHandler))
     r = router.NewRoute("GET /api/list-oauth2-providers").WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware)
     ap.Router().Handle(r.Endpoint, r.Handler())
