@@ -43,10 +43,10 @@ func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
 	return r.WithHandler(h)
 }
 
-// WithMiddleware adds middlewares to the chain (in given order)
-func (r *Route) WithMiddleware(middlewares []func(http.Handler) http.Handler) *Route {
+// WithMiddleware adds one or more middlewares to the chain (in given order)
+func (r *Route) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *Route {
 	for _, mw := range middlewares {
-		r.middlewares = append([]func(http.Handler) http.Handler{mw}, r.middlewares...)
+		r.middlewares = append(r.middlewares, mw)
 	}
 	return r
 }
