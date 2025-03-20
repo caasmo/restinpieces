@@ -17,6 +17,7 @@ type Route struct {
 	Endpoint    string // exported field
 	handler     http.Handler
 	middlewares []func(http.Handler) http.Handler
+	observers   []http.Handler
 }
 
 // NewRoute creates a new Route instance with initialized middlewares slice
@@ -53,27 +54,34 @@ func (r *Route) WithMiddlewareChain(middlewares []func(http.Handler) http.Handle
 	return r.WithMiddleware(middlewares...)
 }
 
-// Handler returns the final handler with all middlewares applied
+// Handler returns the final handler with all middlewares and observers applied
 func (r *Route) Handler() http.Handler {
 	handler := r.handler
+	
 	// Apply middlewares in reverse registration order (outermost first)
 	for _, mw := range r.middlewares {
 		handler = mw(handler)
 	}
+	
+	// If observers are present, wrap the handler
+	if len(r.observers) > 0 {
+		main := handler
+		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// Run the main handler chain
+			main.ServeHTTP(w, r)
+			
+			// Run all observers in order they were added
+			for _, obs := range r.observers {
+				obs.ServeHTTP(w, r)
+			}
+		})
+	}
+	
 	return handler
 }
 
 // WithObservers adds handlers that run after the main handler
 func (r *Route) WithObservers(observers ...http.Handler) *Route {
-	mainHandler := r.Handler()
-	r.handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Run the main handler chain
-		mainHandler.ServeHTTP(w, r)
-		
-		// Run all observers with the original writer
-		for _, obs := range observers {
-			obs.ServeHTTP(w, r)
-		}
-	})
+	r.observers = append(r.observers, observers...)
 	return r
 }
