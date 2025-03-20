@@ -206,8 +206,8 @@ func TestRouteChainedWithMiddleware(t *testing.T) {
 			callOrder = append(callOrder, "handler")
 			w.WriteHeader(http.StatusOK)
 		}).
-		WithMiddleware(mw1, mw2). // First chain
-		WithMiddleware(mw3, mw4)  // Second chain
+		WithMiddleware(mw1, mw2). // First middlewares
+		WithMiddleware(mw3, mw4)  // Second middlewares
 
 	req := httptest.NewRequest("GET", "/test", nil)
 	rec := httptest.NewRecorder()
