@@ -66,13 +66,6 @@ func route(ap *app.App, cAp *custom.App) {
 	// Serve static files from public directory
 	fs := http.FileServer(http.Dir("public"))
 	ap.Router().Handle("/", fs) 
-	
-	// Register routes using the new Handler() method
-	ap.Router().Handle("POST /api/auth-with-password", http.HandlerFunc(ap.AuthWithPasswordHandler))
-	ap.Router().Handle("POST /api/auth-with-oauth2", http.HandlerFunc(ap.AuthWithOAuth2Handler))
-	ap.Router().Handle("POST /api/request-verification", http.HandlerFunc(ap.RequestVerificationHandler))
-	ap.Router().Handle("POST /api/register-with-password", http.HandlerFunc(ap.RegisterWithPasswordHandler))
-	ap.Router().Handle("GET /api/list-oauth2-providers", commonMiddleware.ThenFunc(ap.ListOAuth2ProvidersHandler))
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
     // 
