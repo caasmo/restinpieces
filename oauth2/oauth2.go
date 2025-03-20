@@ -10,11 +10,10 @@ import (
 )
 
 // UserFromUserInfo maps provider-specific user info to our standard User struct.
-// When integrating a new OAuth2 provider:
-// 1. Add a case statement for the new provider name
-// 2. Create a raw struct that matches the provider's user info JSON response
-// 3. Map the fields to the standard db.User struct
-// 4. Verify required fields (like email verification) before returning
+// When integrating a new OAuth2 provider, first add a case statement for the new provider name.
+// Then create a raw struct that matches the provider's user info JSON response.
+// Map the fields to the standard db.User struct while ensuring required fields
+// like email verification are properly validated before returning.
 func UserFromUserInfoURL(resp *http.Response, providerName string) (*db.User, error) {
 	switch providerName {
 	case "google":
