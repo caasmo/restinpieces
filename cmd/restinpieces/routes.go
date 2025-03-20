@@ -104,4 +104,11 @@ func route(ap *app.App, cAp *custom.App) {
 	ap.Router().Handle("GET /api/benchmark/sqlite/pool/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
 	ap.Router().Handle("/api/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
 	ap.Router().Handle("/api/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
+
+	// Example route using Route builder with JWT validation
+	NewRoute().
+		WithEndpoint("GET /api/route").
+		WithHandlerFunc(ap.Index).
+		WithMiddleware(ap.JwtValidate).
+		Register(ap.Router())
 }
