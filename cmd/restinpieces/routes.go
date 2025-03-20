@@ -17,16 +17,12 @@ type Route struct {
 }
 
 // NewRoute creates a new Route instance with initialized middlewares slice
-func NewRoute() *Route {
+// endpoint parameter is required - provides HTTP method and path pattern
+func NewRoute(endpoint string) *Route {
 	return &Route{
+		endpoint:    endpoint,
 		middlewares: make([]func(http.Handler) http.Handler, 0),
 	}
-}
-
-// WithEndpoint sets the HTTP method and path pattern for the route
-func (r *Route) WithEndpoint(pattern string) *Route {
-	r.endpoint = pattern
-	return r
 }
 
 // WithHandler sets the final handler for the route
@@ -104,8 +100,7 @@ func route(ap *app.App, cAp *custom.App) {
 	ap.Router().Handle("/api/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
 
 	// Example route using Route builder with JWT validation
-    r := NewRoute().
-		WithEndpoint("GET /api/route").
+    r := NewRoute("GET /api/route").
 		WithHandlerFunc(ap.Index).
 		WithMiddleware(ap.JwtValidate)
     ap.Router().Handle(r.endpoint, r.Handler())
