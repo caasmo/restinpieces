@@ -127,6 +127,49 @@ func TestRouteEmptyEndpoint(t *testing.T) {
 	rtr.NewRoute("") // Should panic
 }
 
+func TestRouteMiddlewareChain(t *testing.T) {
+	var callOrder []string
+
+	mw1 := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "mw1")
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	mw2 := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "mw2")
+			next.ServeHTTP(w, r)
+		})
+	}
+
+	// Create middleware chain
+	middlewareChain := []func(http.Handler) http.Handler{mw1, mw2}
+
+	route := rtr.NewRoute("GET /test").
+		WithHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			callOrder = append(callOrder, "handler")
+			w.WriteHeader(http.StatusOK)
+		}).
+		WithMiddlewareChain(middlewareChain)
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	rec := httptest.NewRecorder()
+	
+	route.Handler().ServeHTTP(rec, req)
+
+	expectedOrder := []string{"mw1", "mw2", "handler"}
+	if len(callOrder) != len(expectedOrder) {
+		t.Fatalf("expected %d calls, got %d", len(expectedOrder), len(callOrder))
+	}
+	for i, val := range expectedOrder {
+		if callOrder[i] != val {
+			t.Errorf("expected %s at position %d, got %s", val, i, callOrder[i])
+		}
+	}
+}
+
 func TestRouteMiddlewareReturnEarly(t *testing.T) {
 	var calledHandlers []string
 
