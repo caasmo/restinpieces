@@ -34,7 +34,7 @@ func route(ap *app.App, cAp *custom.App) {
 	ap.Router().Handle("GET /api/list-oauth2-providers", commonMiddleware.ThenFunc(ap.ListOAuth2ProvidersHandler))
 
     //
-    // custom route
+    // custom route, example uses core middleware, showing how mix core and custom
     //
 	ap.Router().Handle("GET /custom", authMiddleware.ThenFunc(cAp.Index))
 

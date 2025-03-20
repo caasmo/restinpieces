@@ -1,9 +1,17 @@
 ### TODOs
 
 - POST handlers that always run. ancapsulate alice.
+    - h.WithMiddlewareChain(chain1).WithMiddleware(m1,m2).WithMiddlewareChain(chain2).WithObservers(o1,o2)
+
     - NewMiddlewareChain(a,b,c,d)
     - Bind() // Bind to handler
     - BindPostHandlers()
+    - WithObservers
+    - mainChain = handler.WithMiddleware(a,b,c) or
+    - mainChain = handler.WithMiddleware(middlewareChain)
+    - finalHandler := WithObservers(mainChain, handlerB, handlerC, handlerD)
+    - h.WithMiddleware().WitObservers
+    - 
 - refresh jwt
 - generate new jwt register 
 - jwt invalidation go tests
