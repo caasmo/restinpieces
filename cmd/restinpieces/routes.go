@@ -32,6 +32,7 @@ func (r *Route) WithHandler(h http.Handler) *Route {
 }
 
 // WithHandlerFunc sets the final handler function for the route
+// a func func (a *App) Index(w http.ResponseWriter, r *http.Request) is casted in the signature
 func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
 	return r.WithHandler(h)
 }
@@ -76,9 +77,9 @@ func route(ap *app.App, cAp *custom.App) {
 	authMiddleware := alice.New(ap.JwtValidate)
 
 	// Example route using Route builder with JWT validation
-    r := NewRoute("GET /api/route").
-		WithHandlerFunc(ap.Index).
-		WithMiddleware(ap.JwtValidate)
+    r := NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddleware(ap.JwtValidate)
+    ap.Router().Handle(r.endpoint, r.Handler())
+    r = NewRoute("GET /api/route2").WithHandlerFunc(ap.Index)
     ap.Router().Handle(r.endpoint, r.Handler())
 
 	// API routes with explicit /api prefix
