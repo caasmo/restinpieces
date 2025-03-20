@@ -63,21 +63,22 @@ func (r *Route) Handler() http.Handler {
 		handler = mw(handler)
 	}
 	
-	// If observers are present, wrap the handler
-	if len(r.observers) > 0 {
-		main := handler
-		handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Run the main handler chain
-			main.ServeHTTP(w, r)
-			
-			// Run all observers in order they were added
-			for _, obs := range r.observers {
-				obs.ServeHTTP(w, r)
-			}
-		})
+	// If no observers, return the middleware-wrapped handler directly
+	if len(r.observers) == 0 {
+		return handler
 	}
 	
-	return handler
+	// Wrap handler with observers if present
+	main := handler
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Run the main handler chain
+		main.ServeHTTP(w, r)
+		
+		// Run all observers in order they were added
+		for _, obs := range r.observers {
+			obs.ServeHTTP(w, r)
+		}
+	})
 }
 
 // WithObservers adds handlers that run after the main handler
