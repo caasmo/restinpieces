@@ -77,6 +77,7 @@ func route(ap *app.App, cAp *custom.App) {
 	authMiddleware := alice.New(ap.JwtValidate)
 
 	authNewMiddleware := []func(http.Handler) http.Handler{ap.JwtValidate}
+	commonNewMiddleware := []func(http.Handler) http.Handler{ap.SecurityHeadersMiddleware, ap.Logger}
 
 	// Example route using Route builder with JWT validation
     //r := NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddleware(ap.JwtValidate)
@@ -96,7 +97,9 @@ func route(ap *app.App, cAp *custom.App) {
 	ap.Router().Handle("POST /api/auth-with-oauth2", http.HandlerFunc(ap.AuthWithOAuth2Handler))
 	ap.Router().Handle("POST /api/request-verification", http.HandlerFunc(ap.RequestVerificationHandler))
 	ap.Router().Handle("POST /api/register-with-password", http.HandlerFunc(ap.RegisterWithPasswordHandler))
-	ap.Router().Handle("GET /api/list-oauth2-providers", commonMiddleware.ThenFunc(ap.ListOAuth2ProvidersHandler))
+	//ap.Router().Handle("GET /api/list-oauth2-providers", commonMiddleware.ThenFunc(ap.ListOAuth2ProvidersHandler))
+    r = NewRoute("GET /api/list-oauth2-providers").WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware)
+    ap.Router().Handle(r.endpoint, r.Handler())
 
     //
     // custom route, example uses core middleware, showing how mix core and custom
