@@ -76,8 +76,11 @@ func route(ap *app.App, cAp *custom.App) {
 	commonMiddleware := alice.New(ap.SecurityHeadersMiddleware, ap.Logger)
 	authMiddleware := alice.New(ap.JwtValidate)
 
+	authNewMiddleware := []func(http.Handler) http.Handler{ap.JwtValidate}
+
 	// Example route using Route builder with JWT validation
-    r := NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddleware(ap.JwtValidate)
+    //r := NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddleware(ap.JwtValidate)
+    r := NewRoute("GET /api/route").WithHandlerFunc(ap.Index).WithMiddlewareChain(authNewMiddleware)
     ap.Router().Handle(r.endpoint, r.Handler())
     r = NewRoute("GET /api/route2").WithHandlerFunc(ap.Index)
     ap.Router().Handle(r.endpoint, r.Handler())
