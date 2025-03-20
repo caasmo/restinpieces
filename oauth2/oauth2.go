@@ -16,7 +16,7 @@ import (
 // like email verification are properly validated before returning.
 func UserFromUserInfoURL(resp *http.Response, providerName string) (*db.User, error) {
 	switch providerName {
-	case "google":
+	case config.OAuth2ProviderGoogle:
 		
 		// raw info endpoint response fields (from pocketbase)
 		var raw struct {
