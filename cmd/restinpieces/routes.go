@@ -49,7 +49,7 @@ func (r *Route) Apply(ap *app.App) {
 	handler := http.HandlerFunc(r.handler)
 	// Apply middlewares in reverse registration order (outermost first)
 	for _, mw := range r.middlewares {
-		handler = http.HandlerFunc(mw(handler).ServeHTTP)
+		handler = mw(handler)
 	}
 	ap.Router().Handle(r.endpoint, handler)
 }
