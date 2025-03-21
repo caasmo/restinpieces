@@ -71,8 +71,8 @@ type Server struct {
 	// Addr is the HTTP server address to listen on (e.g. ":8080")
 	Addr string
 	
-	// GracefulTimeout is the maximum time to wait for graceful shutdown
-	GracefulTimeout time.Duration
+	// ShutdownGracefulTimeout is the maximum time to wait for graceful shutdown
+	ShutdownGracefulTimeout time.Duration
 	
 	// ReadTimeout is the maximum duration for reading the entire request
 	ReadTimeout time.Duration

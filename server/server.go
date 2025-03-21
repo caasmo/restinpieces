@@ -63,7 +63,7 @@ func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 	// Reset signals default behavior, similar to signal.Reset
 	stop()
 
-	gracefulCtx, cancelShutdown := context.WithTimeout(context.Background(), cfg.GracefulTimeout)
+	gracefulCtx, cancelShutdown := context.WithTimeout(context.Background(), cfg.ShutdownGracefulTimeout)
 	defer cancelShutdown()
 
 	// Create a wait group for shutdown tasks

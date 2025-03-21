@@ -30,7 +30,7 @@ func main() {
 		},
 		Server: config.Server{
 			Addr:              ":8080",
-			GracefulTimeout:   15 * time.Second,
+			ShutdownGracefulTimeout:   15 * time.Second,
 		},
 		OAuth2Providers: make(map[string]config.OAuth2Provider),
 	}
