@@ -135,7 +135,7 @@ func Load(dbfile string) (*Config, error) {
 
 	cfg := &Config{
 		JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
-		TokenDuration: 15 * time.Minute,
+		TokenDuration: 45 * time.Minute,
 		DBFile:        dbfile,
 		Scheduler: Scheduler{
 			Interval:              15 * time.Second,
