@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-// JobScheduler handles scheduled jobs
-type JobScheduler struct {
+// Scheduler handles scheduled jobs
+type Scheduler struct {
 	interval time.Duration
 	eg       *errgroup.Group
 	ctx      context.Context
@@ -21,12 +21,12 @@ type JobScheduler struct {
 	done     chan struct{} // Channel to signal completion
 }
 
-// NewJobScheduler creates a new job scheduler
-func NewJobScheduler(interval time.Duration) *JobScheduler {
+// NewScheduler creates a new scheduler
+func NewScheduler(interval time.Duration) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	g, ctx := errgroup.WithContext(ctx)
 	
-	return &JobScheduler{
+	return &Scheduler{
 		interval: interval,
 		eg:       g,
 		ctx:      ctx,
@@ -36,7 +36,7 @@ func NewJobScheduler(interval time.Duration) *JobScheduler {
 }
 
 // Start begins the job scheduler operation
-func (s *JobScheduler) Start() {
+func (s *Scheduler) Start() {
 	go func() {
 		ticker := time.NewTicker(s.interval)
 		defer ticker.Stop()
@@ -60,7 +60,7 @@ func (s *JobScheduler) Start() {
 
 // StopWithContext signals the scheduler to stop and waits for all jobs to complete
 // or the context to be canceled, whichever comes first
-func (s *JobScheduler) StopWithContext(ctx context.Context) error {
+func (s *Scheduler) StopWithContext(ctx context.Context) error {
 	log.Println("Stopping job scheduler")
 	s.cancel()
 	
@@ -76,7 +76,7 @@ func (s *JobScheduler) StopWithContext(ctx context.Context) error {
 }
 
 // processJobs checks for pending jobs and executes them
-func (s *JobScheduler) processJobs() {
+func (s *Scheduler) processJobs() {
 	// This would be replaced with actual database lookup logic
 	pendingJobs := fetchPendingJobs()
 	
