@@ -188,9 +188,20 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return same response format as password auth
+	// Return OAuth2 token response format with limited user fields
 	slog.Debug("Preparing successful authentication response")
-	writeAuthOkResponse(w, jwtToken, user)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"token_type": "Bearer",
+		"access_token": jwtToken,
+		"expires_in": int(a.config.TokenDuration.Seconds()),
+		"record": map[string]interface{}{
+			"id":       user.ID,
+			"email":    user.Email,
+			"name":     user.Name,
+			"verified": user.Verified,
+		},
+	})
 }
 
 // ListOAuth2ProvidersHandler returns available OAuth2 providers
