@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -12,7 +11,6 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/migrations"
-	"github.com/caasmo/restinpieces/queue"
 )
 
 // Schema Hash Verification Process:
