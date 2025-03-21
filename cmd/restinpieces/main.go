@@ -31,10 +31,6 @@ func main() {
 		Server: config.Server{
 			Addr:              ":8080",
 			GracefulTimeout:   10 * time.Second,
-			ReadTimeout:       2 * time.Second,
-			ReadHeaderTimeout: 2 * time.Second,
-			WriteTimeout:      3 * time.Second,
-			IdleTimeout:       1 * time.Minute,
 		},
 		OAuth2Providers: make(map[string]config.OAuth2Provider),
 	}
@@ -97,5 +93,5 @@ func main() {
 	// Create and start scheduler with configured interval and db 
 	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db())
 	
-	server.Run(":8080", ap.Router(), scheduler)
+	server.Run(cfg.Server, ap.Router(), scheduler)
 }

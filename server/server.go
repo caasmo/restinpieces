@@ -21,10 +21,10 @@ const (
 	IdleTimeout       = 1 * time.Minute
 )
 
-func Run(cfg config.Config, r router.Router, scheduler *scheduler.Scheduler) {
+func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 
     srv := &http.Server{
-        Addr:              addr,
+        Addr:              cfg.Addr,
         Handler:           r,
         ReadTimeout:       ReadTimeout,
         ReadHeaderTimeout: ReadHeaderTimeout,
