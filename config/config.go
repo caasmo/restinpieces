@@ -107,16 +107,29 @@ const (
 	DefaultShutdownTimeout   = 15 * time.Second
 )
 
-//
 func FillServer(cfg *Config) Server {
-	return Server{
-		Addr:                   ":8080",
-		ShutdownGracefulTimeout: DefaultShutdownTimeout,
-		ReadTimeout:            DefaultReadTimeout,
-		ReadHeaderTimeout:      DefaultReadHeaderTimeout,
-		WriteTimeout:           DefaultWriteTimeout,
-		IdleTimeout:            DefaultIdleTimeout,
+	s := cfg.Server
+
+	if s.Addr == "" {
+		s.Addr = ":8080"
 	}
+	if s.ShutdownGracefulTimeout == 0 {
+		s.ShutdownGracefulTimeout = DefaultShutdownTimeout
+	}
+	if s.ReadTimeout == 0 {
+		s.ReadTimeout = DefaultReadTimeout
+	}
+	if s.ReadHeaderTimeout == 0 {
+		s.ReadHeaderTimeout = DefaultReadHeaderTimeout
+	}
+	if s.WriteTimeout == 0 {
+		s.WriteTimeout = DefaultWriteTimeout
+	}
+	if s.IdleTimeout == 0 {
+		s.IdleTimeout = DefaultIdleTimeout
+	}
+
+	return s
 }
 
 func Load(dbfile string) (*Config, error) {
