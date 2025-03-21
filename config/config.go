@@ -99,14 +99,22 @@ type Config struct {
 }
 
 
+const (
+	DefaultReadTimeout       = 2 * time.Second
+	DefaultReadHeaderTimeout = 2 * time.Second 
+	DefaultWriteTimeout      = 3 * time.Second
+	DefaultIdleTimeout       = 1 * time.Minute
+	DefaultShutdownTimeout   = 15 * time.Second
+)
+
 func FillServer() Server {
 	return Server{
 		Addr:                   ":8080",
-		ShutdownGracefulTimeout: 15 * time.Second,
-		ReadTimeout:            2 * time.Second,
-		ReadHeaderTimeout:      2 * time.Second,
-		WriteTimeout:           3 * time.Second,
-		IdleTimeout:            1 * time.Minute,
+		ShutdownGracefulTimeout: DefaultShutdownTimeout,
+		ReadTimeout:            DefaultReadTimeout,
+		ReadHeaderTimeout:      DefaultReadHeaderTimeout,
+		WriteTimeout:           DefaultWriteTimeout,
+		IdleTimeout:            DefaultIdleTimeout,
 	}
 }
 
