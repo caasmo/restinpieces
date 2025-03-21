@@ -5,6 +5,9 @@ import (
 	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"time"
+
+	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/queue"
 )
 
 // Scheduler handles scheduled jobs
@@ -103,10 +106,10 @@ func (s *Scheduler) processJobs() {
 }
 
 func executeJob(job queue.QueueJob) error {
-	slog.Info("Executing job", "jobID", jobID)
+	slog.Info("Executing job", "jobID", job.ID, "jobType", job.JobType)
 	// Simulate job execution
 	time.Sleep(2 * time.Second)
-	slog.Info("Completed job", "jobID", jobID)
+	slog.Info("Completed job", "jobID", job.ID, "jobType", job.JobType)
 	return nil
 }
 
