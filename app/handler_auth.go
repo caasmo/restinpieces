@@ -132,13 +132,18 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return OAuth2 token response format
+	// Return OAuth2 token response format with limited user fields
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token_type": "Bearer",
 		"access_token": token,
 		"expires_in": int(a.config.TokenDuration.Seconds()),
-		"record": user,
+		"record": map[string]interface{}{
+			"id":       user.ID,
+			"email":    user.Email,
+			"name":     user.Name,
+			"verified": user.Verified,
+		},
 	})
 }
 
