@@ -242,7 +242,7 @@ function saveJwt(token) {
   if (!token) {
     throw new Error('Invalid token: token is missing');
   }
-  localStorage.setItem('auth_token', token);
+  localStorage.setItem('jwt_token', token);
 }
 
 /**

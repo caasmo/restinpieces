@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="assets/js/requestJson.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .info-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        pre {
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            overflow: auto;
+            max-height: 300px;
+        }
+        .refresh-section {
+            margin-top: 30px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1976d2;
+        }
+        .error {
+            color: #c62828;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Dashboard</h1>
+
+    <div class="info-section">
+        <h2>User Information</h2>
+        <pre id="user-info"></pre>
+    </div>
+
+    <div class="info-section">
+        <h2>Current Token</h2>
+        <pre id="current-token"></pre>
+    </div>
+
+    <div class="refresh-section">
+        <h2>Token Refresh</h2>
+        <button onclick="refreshToken()">Refresh Token</button>
+        <div id="refresh-result">
+            <h3>Previous Token</h3>
+            <pre id="previous-token"></pre>
+            <h3>New Token</h3>
+            <pre id="new-token"></pre>
+        </div>
+        <div id="refresh-error" class="error"></div>
+    </div>
+
+    <script>
+        // Display initial user info and token
+        const userInfo = JSON.parse(localStorage.getItem('user_record') || 'No user data found';
+        const currentToken = localStorage.getItem('auth_token') || 'No token found';
+        
+        document.getElementById('user-info').textContent = JSON.stringify(userInfo, null, 2);
+        document.getElementById('current-token').textContent = currentToken;
+
+        function refreshToken() {
+            const refreshError = document.getElementById('refresh-error');
+            refreshError.textContent = '';
+            
+            // Save current token as previous token
+            document.getElementById('previous-token').textContent = currentToken;
+
+            requestJsonAuth(
+                "http://localhost:8080",
+                "/api/auth-refresh",
+                "POST"
+            )
+            .then(data => {
+                if (data.access_token) {
+                    // Save new token
+                    saveJwt(data.access_token);
+                    
+                    // Display new token
+                    document.getElementById('new-token').textContent = data.access_token;
+                    document.getElementById('current-token').textContent = data.access_token;
+                } else {
+                    throw new Error('No access token in response');
+                }
+            })
+            .catch(error => {
+                console.error('Token refresh failed:', error);
+                refreshError.textContent = `Token refresh failed: ${error.message}`;
+            });
+        }
+    </script>
+</body>
+</html>
