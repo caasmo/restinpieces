@@ -197,8 +197,8 @@
             .catch(error => {
                 console.error('Registration failed:', error);
                 messageDiv.textContent = error.toString();
-                if (error.data) {
-                    messageDiv.textContent += `\nResponse Body:\n${JSON.stringify(error.data, null, 2)}`;
+                if (error.response) {
+                    messageDiv.textContent += `\nResponse:\n${JSON.stringify(error.response, null, 2)}`;
                 }
                 messageDiv.classList.add('error');
             });
