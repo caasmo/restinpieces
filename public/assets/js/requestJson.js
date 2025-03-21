@@ -105,6 +105,27 @@ function requestJson(
     });
 }
 
+function requestJsonAuth(
+    baseUrl,
+    path,
+    method = "GET",
+    queryParams = {},
+    body = null,
+    headers = {}
+) {
+    // Get JWT from localStorage
+    const token = localStorage.getItem('jwt_token');
+    
+    // Add Authorization header
+    const authHeaders = {
+        ...headers,
+        'Authorization': `Bearer ${token}`
+    };
+    
+    // Call original function with enhanced headers
+    return requestJson(baseUrl, path, method, queryParams, body, authHeaders);
+}
+
 /**
  * Builds a URL by combining baseUrl and path for browser environments.
  * 
