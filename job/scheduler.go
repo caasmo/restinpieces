@@ -14,11 +14,11 @@ import (
 
 // Scheduler handles scheduled jobs
 type Scheduler struct {
-	interval time.Duration
-	eg       *errgroup.Group
-	ctx      context.Context
-	cancel   context.CancelFunc
-	done     chan struct{} // Channel to signal completion
+	interval      time.Duration
+	eg            *errgroup.Group
+	ctx           context.Context
+	cancel        context.CancelFunc
+	shutdownDone  chan struct{} // Channel to signal completion
 }
 
 // NewScheduler creates a new scheduler
@@ -31,7 +31,7 @@ func NewScheduler(interval time.Duration) *Scheduler {
 		eg:       g,
 		ctx:      ctx,
 		cancel:   cancel,
-		done:     make(chan struct{}),
+		shutdownDone: make(chan struct{}),
 	}
 }
 
@@ -49,7 +49,7 @@ func (s *Scheduler) Start() {
 				if err := s.eg.Wait(); err != nil {
 					log.Printf("Error waiting for jobs to complete: %v", err)
 				}
-				close(s.done) // Signal that scheduler has completely shut down
+				close(s.shutdownDone) // Signal that scheduler has completely shut down
 				return
 			case <-ticker.C:
 				s.processJobs()
@@ -66,7 +66,7 @@ func (s *Scheduler) StopWithContext(ctx context.Context) error {
 	
 	// Wait for either scheduler completion or context timeout
 	select {
-	case <-s.done:
+	case <-s.shutdownDone:
 		log.Println("Job scheduler stopped gracefully")
 		return nil
 	case <-ctx.Done():
