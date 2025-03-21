@@ -5,7 +5,6 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
 )
 
 // newUserFromStmt creates a User struct from a SQLite statement
