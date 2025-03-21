@@ -78,7 +78,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 			conn := testDB.pool.Get(nil)
 			defer testDB.pool.Put(conn)
 
-			var retrievedJob queue.QueueJob
+			var retrievedJob queue.Job
 			err = sqlitex.Exec(conn,
 				`SELECT job_type, payload, status, attempts, max_attempts 
 				FROM job_queue WHERE payload = ? LIMIT 1`,

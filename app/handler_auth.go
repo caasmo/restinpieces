@@ -275,7 +275,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// If user is not verified, add verification job to queue
 	if !retrievedUser.Verified {
 		payload, _ := json.Marshal(queue.PayloadEmailVerification{Email: retrievedUser.Email})
-		job := queue.QueueJob{
+		job := queue.Job{
 			JobType: queue.JobTypeEmailVerification,
 			Payload: payload,
 		}

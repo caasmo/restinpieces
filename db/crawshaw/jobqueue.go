@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func validateQueueJob(job queue.QueueJob) error {
+func validateQueueJob(job queue.Job) error {
 	var missingFields []string
 	if job.JobType == "" {
 		missingFields = append(missingFields, "JobType")
@@ -55,7 +55,7 @@ func (d *Db) GetJobs(limit int) ([]queue.QueueJob, error) {
 				return fmt.Errorf("error parsing scheduled_for time: %w", err)
 			}
 
-			job := queue.QueueJob{
+			job := queue.Job{
 				ID:           stmt.GetInt64("id"),
 				JobType:      stmt.GetText("job_type"),
 				Payload:      json.RawMessage(stmt.GetText("payload")),

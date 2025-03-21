@@ -149,7 +149,7 @@ func (d *Db) GetJobs(limit int) ([]queue.QueueJob, error) {
 	return nil, fmt.Errorf("GetJobs not implemented for zombiezen SQLite variant")
 }
 
-func (d *Db) InsertJob(job queue.QueueJob) error {
+func (d *Db) InsertJob(job queue.Job) error {
 	return fmt.Errorf("InsertJob not implemented for zombiezen SQLite variant")
 }
 

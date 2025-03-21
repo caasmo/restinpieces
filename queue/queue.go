@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-// QueueJob represents a job in the processing queue
-type QueueJob struct {
+// Job represents a job in the processing queue
+type Job struct {
 	ID           int64           `json:"id"`
 	JobType      string          `json:"job_type"`
 	Payload      json.RawMessage `json:"payload"`
