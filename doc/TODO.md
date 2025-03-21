@@ -1,5 +1,6 @@
 ### TODOs
 
+- scheduler nil, shoudl ne consitent  WithScheduler?
 - generate new jwt register 
 - jwt invalidation go tests
 - integration sh test post invalidation jwt 

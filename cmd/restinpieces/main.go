@@ -41,5 +41,6 @@ func main() {
 	// Create and start scheduler with configured interval and db
 	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db())
 
+	//server.Run(cfg.Server, ap.Router(), nil)
 	server.Run(cfg.Server, ap.Router(), scheduler)
 }

@@ -18,9 +18,6 @@ func validateQueueJob(job queue.Job) error {
 	if len(job.Payload) == 0 {
 		missingFields = append(missingFields, "Payload")
 	}
-	if job.MaxAttempts < 1 {
-		missingFields = append(missingFields, "MaxAttempts must be ≥1")
-	}
 
 	if len(missingFields) > 0 {
 		return fmt.Errorf("%w: %s", db.ErrMissingFields, strings.Join(missingFields, ", "))
