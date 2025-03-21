@@ -30,7 +30,7 @@ func New(addr string, r router.Router) *http.Server {
 	}
 }
 
-func Run(addr string, r router.Router) {
+func Run(addr string, r router.Router, scheduler *job.Scheduler) {
 
 	srv := &http.Server{
 		Addr:              addr,
@@ -87,15 +87,15 @@ func Run(addr string, r router.Router) {
 	})
 	
 	// Shutdown scheduler in a goroutine, passing the graceful context
-	//shutdownGroup.Go(func() error {
-	//	log.Println("Shutting down scheduler...")
-	//	if err := scheduler.Stop(gracefulCtx); err != nil {
-	//		log.Printf("Scheduler shutdown error: %v\n", err)
-	//		return err
-	//	}
-	//	log.Printf("Scheduler stopped gracefully\n")
-	//	return nil
-	//})
+	shutdownGroup.Go(func() error {
+		slog.Info("Shutting down scheduler...")
+		if err := scheduler.Stop(gracefulCtx); err != nil {
+			slog.Error("Scheduler shutdown error", "err", err)
+			return err
+		}
+		slog.Info("Scheduler stopped gracefully")
+		return nil
+	})
 	
 	// Wait for all shutdown tasks to complete
 	if err := shutdownGroup.Wait(); err != nil {
