@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OAuth2 Providers</title>
-    <script src="assets/js/sendjsonrequest.js"></script> <!--  sendJsonRequest is in this file -->
+    <script src="assets/js/requestJson.js"></script> <!--  requestJson is in this file -->
     <style>
         body {
             font-family: sans-serif;
@@ -35,7 +35,7 @@
         resultDiv.textContent = "Loading...";
         resultDiv.classList.remove("error"); // Remove any previous error class
 
-        sendJsonRequest(
+        requestJson(
             "http://localhost:8080",
             "/api/list-oauth2-providers", // Correct endpoint
             "GET"

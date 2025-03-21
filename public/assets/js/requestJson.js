@@ -23,7 +23,7 @@ class ClientResponseError extends Error {
     }
 }
 
-function sendJsonRequest(
+function requestJson(
     baseUrl,
     path,
     method = "GET",
