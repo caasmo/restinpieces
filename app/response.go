@@ -49,8 +49,9 @@ func writeJSONErrorf(w http.ResponseWriter, code int, format string, args ...int
 	fmt.Fprintf(w, format, args...)
 }
 
-// writeOAuth2TokenResponse writes a standardized OAuth2 token response
-func writeOAuth2TokenResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
+// writeAuthTokenResponse writes a standardized authentication token response
+// Used for both password and OAuth2 authentication
+func writeAuthTokenResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token_type": "Bearer",

@@ -132,8 +132,8 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return standardized OAuth2 token response
-	writeOAuth2TokenResponse(w, token, int(a.config.TokenDuration.Seconds()), user)
+	// Return standardized authentication token response
+	writeAuthTokenResponse(w, token, int(a.config.TokenDuration.Seconds()), user)
 }
 
 // confirm-
@@ -325,8 +325,8 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 	slog.Debug("JWT token generated")
 
-	// Return standardized OAuth2 token response
-	writeOAuth2TokenResponse(w, token, int(a.config.TokenDuration.Seconds()), retrievedUser)
+	// Return standardized authentication token response
+	writeAuthTokenResponse(w, token, int(a.config.TokenDuration.Seconds()), retrievedUser)
 }
 
 // /request-verification endpoint
