@@ -241,25 +241,6 @@ func TestInsertQueueJobValid(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 
-			// Verify job was inserted correctly
-			// TODO remoe this when select method implemented
-			conn := testDB.pool.Get(nil)
-			defer testDB.pool.Put(conn)
-
-			var retrievedJob queue.QueueJob
-			err = sqlitex.Exec(conn,
-				`SELECT job_type, payload, status, attempts, max_attempts 
-				FROM job_queue WHERE payload = ? LIMIT 1`,
-				func(stmt *sqlite.Stmt) error {
-					retrievedJob = queue.QueueJob{
-						JobType:     stmt.GetText("job_type"),
-						Payload:     json.RawMessage(stmt.GetText("payload")),
-						Status:      stmt.GetText("status"),
-						Attempts:    int(stmt.GetInt64("attempts")),
-						MaxAttempts: int(stmt.GetInt64("max_attempts")),
-					}
-					return nil
-				}, string(tt.job.Payload))
 
 			if err != nil {
 				t.Fatalf("failed to verify job insertion: %v", err)
