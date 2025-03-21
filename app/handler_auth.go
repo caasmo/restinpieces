@@ -206,6 +206,8 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 // provider
 // if password exist CreateUserWithPassword will succeed but the password will be not updated.
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
+	slog.Debug("Starting password registration handler")
+	
 	var req struct {
 		Identity        string `json:"identity"`
 		Password        string `json:"password"`
@@ -217,6 +219,8 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	slog.Debug("Request decoded", "identity", req.Identity)
+
 	// Validate required fields
 	req.Identity = strings.TrimSpace(req.Identity)
 	req.Password = strings.TrimSpace(req.Password)
@@ -224,6 +228,8 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		writeJSONError(w, errorMissingFields)
 		return
 	}
+	
+	slog.Debug("Fields validated", "identity", req.Identity)
 
 	// Validate password match
 	if req.Password != req.PasswordConfirm {
@@ -236,8 +242,11 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		writeJSONError(w, errorPasswordComplexity)
 		return
 	}
+	
+	slog.Debug("Password validation passed", "password_length", len(req.Password))
 
 	// Hash password before storage
+	slog.Debug("Generating password hash")
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
@@ -255,11 +264,14 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Create user with password authentication
+	slog.Debug("Creating user in database", "email", newUser.Email)
 	retrievedUser, err := a.db.CreateUserWithPassword(newUser)
 	if err != nil {
 		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Registration failed: %s"}`, err.Error())
 		return
 	}
+	
+	slog.Debug("User created", "user_id", retrievedUser.ID, "verified", retrievedUser.Verified)
 
 	// If passwords are different CreateUserWithPassword did not write the new
 	// password on conflict because the user had already a password.
@@ -270,6 +282,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 	// If user is not verified, add verification job to queue
 	if !retrievedUser.Verified {
+		slog.Debug("User not verified, creating verification job", "email", retrievedUser.Email)
 		payload, _ := json.Marshal(queue.PayloadEmailVerification{Email: retrievedUser.Email})
 		job := queue.Job{
 			JobType: queue.JobTypeEmailVerification,
@@ -281,14 +294,17 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 			writeJSONError(w, errorServiceUnavailable)
 			return
 		}
+		slog.Debug("Verification job created")
 	}
 
 	// Generate JWT session token for immediate authentication
+	slog.Debug("Generating JWT session token", "user_id", retrievedUser.ID)
 	token, _, err := crypto.NewJwtSession(retrievedUser.ID, retrievedUser.Email, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
 	}
+	slog.Debug("JWT token generated")
 
 	// TODO diferent workflow depending on verified.
 	writeAuthOkResponse(w, token, retrievedUser)
