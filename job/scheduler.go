@@ -16,8 +16,8 @@ import (
 type Scheduler struct {
 	interval      time.Duration
 	eg            *errgroup.Group
-	ctx           context.Context
-	cancel        context.CancelFunc
+	ctx           context.Context // Used to stop the Start goroutine from outside via Stop()
+	cancel        context.CancelFunc // Used to cancel the ctx to stop the Start goroutine
 	shutdownDone  chan struct{} // Channel to signal completion
 }
 
