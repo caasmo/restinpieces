@@ -13,22 +13,29 @@ import (
 
 // Scheduler handles scheduled jobs
 type Scheduler struct {
+	// cfg contains the scheduler configuration including interval and max jobs per tick
 	cfg           config.Scheduler
+	
+	// db is the database connection used to fetch and update jobs
 	db            db.Db
 	
 	// eg is an errgroup.Group used to manage and track running jobs
+	// It provides synchronization and error propagation for concurrent job execution
 	eg            *errgroup.Group
 	
 	// ctx is the context used to control the scheduler's lifecycle
 	// It allows graceful shutdown when Stop() is called from outside.
+	// The context is passed to all job execution goroutines.
 	ctx           context.Context
 	
 	// cancel is the CancelFunc associated with ctx
-	// is called in the Stop method to start the process of shutdown of the start goroutine
+	// It is called in the Stop method to initiate shutdown of the scheduler
+	// and all running jobs.
 	cancel        context.CancelFunc
 	
 	// shutdownDone is a channel that will be closed when the scheduler
-	// has completely shut down and all jobs have finished
+	// has completely shut down and all jobs have finished.
+	// Used to signal completion of the shutdown process.
 	shutdownDone  chan struct{}
 }
 
