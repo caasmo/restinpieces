@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/router"
+	"github.com/caasmo/restinpieces/config"
 	"log/slog"
 	"net/http"
 	"os"
@@ -13,19 +14,23 @@ import (
 	"time"
 )
 
-func New(cfg config.Server, r router.Router) *http.Server {
-	return &http.Server{
-		Addr:              cfg.Port,
-		Handler:           r,
-		ReadTimeout:       cfg.ReadTimeout,
-		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
-		WriteTimeout:      cfg.WriteTimeout,
-		IdleTimeout:       cfg.IdleTimeout,
-	}
-}
+const (
+	ReadTimeout       = 2 * time.Second
+	ReadHeaderTimeout = 2 * time.Second
+	WriteTimeout      = 3 * time.Second
+	IdleTimeout       = 1 * time.Minute
+)
 
-func Run(cfg config.Config, r router.Router, scheduler *queue.Scheduler) {
-	srv := New(cfg.Server, r)
+func Run(addr string, r router.Router, scheduler *scheduler.Scheduler) {
+
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           r,
+		ReadTimeout:       ReadTimeout,
+		ReadHeaderTimeout: ReadHeaderTimeout,
+		WriteTimeout:      WriteTimeout,
+		IdleTimeout:       IdleTimeout,
+	}
 
 	// Start HTTP server
 	serverError := make(chan error, 1)
