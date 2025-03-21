@@ -35,6 +35,7 @@ func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 	// Start HTTP server
 	serverError := make(chan error, 1)
 	go func() {
+		slog.Info("Starting HTTP server", "addr", cfg.Addr)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			slog.Error("ListenAndServe error", "err", err)
 			serverError <- err
