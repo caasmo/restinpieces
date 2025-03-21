@@ -11,6 +11,7 @@ import (
 type Scheduler struct {
 	// interval specifies how often the scheduler should check for new jobs
 	interval      time.Duration
+	db            db.Db
 	
 	// eg is an errgroup.Group used to manage and track running jobs
 	eg            *errgroup.Group
@@ -29,16 +30,17 @@ type Scheduler struct {
 }
 
 // NewScheduler creates a new scheduler
-func NewScheduler(interval time.Duration) *Scheduler {
+func NewScheduler(interval time.Duration, db db.Db) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	g, ctx := errgroup.WithContext(ctx)
 	
 	return &Scheduler{
-		interval: interval,
-		eg:       g,
-		ctx:      ctx,
-		cancel:   cancel,
-		shutdownDone: make(chan struct{}),
+		interval:      interval,
+		eg:            g,
+		ctx:           ctx,
+		cancel:        cancel,
+		db:            db,
+		shutdownDone:  make(chan struct{}),
 	}
 }
 
@@ -83,12 +85,16 @@ func (s *Scheduler) Stop(ctx context.Context) error {
 	}
 }
 
-// processJobs checks for pending jobs and executes them
+// processJobs checks for pending and failed jobs and executes them
 func (s *Scheduler) processJobs() {
-	// This would be replaced with actual database lookup logic
-	pendingJobs := fetchPendingJobs()
-	
-	for _, job := range pendingJobs {
+	// Get up to 100 jobs at a time
+	jobs, err := s.db.GetJobs(100)
+	if err != nil {
+		slog.Error("Failed to fetch jobs", "err", err)
+		return
+	}
+
+	for _, job := range jobs {
 		jobCopy := job // Create a copy to avoid closure issues
 		s.eg.Go(func() error {
 			return executeJob(jobCopy)
@@ -96,13 +102,7 @@ func (s *Scheduler) processJobs() {
 	}
 }
 
-// Mock functions for demonstration
-func fetchPendingJobs() []string {
-	// In a real implementation, this would query your database
-	return []string{"job1", "job2"}
-}
-
-func executeJob(jobID string) error {
+func executeJob(job queue.QueueJob) error {
 	slog.Info("Executing job", "jobID", jobID)
 	// Simulate job execution
 	time.Sleep(2 * time.Second)

@@ -27,6 +27,39 @@ func validateQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
+func (d *Db) GetJobs(limit int) ([]queue.QueueJob, error) {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	var jobs []queue.QueueJob
+	err := sqlitex.Exec(conn,
+		`SELECT id, job_type, payload, status, attempts, max_attempts, created_at, updated_at, scheduled_for
+		FROM job_queue
+		WHERE status IN ('pending', 'failed')
+		ORDER BY created_at ASC, id ASC
+		LIMIT ?`,
+		func(stmt *sqlite.Stmt) error {
+			job := queue.QueueJob{
+				ID:           stmt.GetInt64("id"),
+				JobType:      stmt.GetText("job_type"),
+				Payload:      json.RawMessage(stmt.GetText("payload")),
+				Status:       stmt.GetText("status"),
+				Attempts:     int(stmt.GetInt64("attempts")),
+				MaxAttempts:  int(stmt.GetInt64("max_attempts")),
+				CreatedAt:    stmt.GetText("created_at"),
+				UpdatedAt:    stmt.GetText("updated_at"),
+				ScheduledFor: stmt.GetText("scheduled_for"),
+			}
+			jobs = append(jobs, job)
+			return nil
+		}, limit)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get jobs: %w", err)
+	}
+	return jobs, nil
+}
+
 func (d *Db) InsertJob(job queue.QueueJob) error {
 	if err := validateQueueJob(job); err != nil {
 		return err
