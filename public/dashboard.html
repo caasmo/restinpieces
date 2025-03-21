@@ -108,6 +108,9 @@
             const refreshError = document.getElementById('refresh-error');
             refreshError.textContent = '';
             
+            // Get current token before refresh
+            const currentToken = localStorage.getItem('access_token') || 'No token found';
+            
             // Save current token as previous token
             document.getElementById('previous-token').textContent = currentToken;
 
@@ -121,9 +124,11 @@
                     // Save new token
                     saveAccessToken(data.access_token);
                     
-                    // Display new token
+                    // Display new token and update UI
                     document.getElementById('new-token').textContent = data.access_token;
                     document.getElementById('current-token').textContent = data.access_token;
+                    // Update previous token for next refresh
+                    document.getElementById('previous-token').textContent = currentToken;
                 } else {
                     throw new Error('No access token in response');
                 }
