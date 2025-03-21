@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
-	"strings"
 )
 
 // newUserFromStmt creates a User struct from a SQLite statement
