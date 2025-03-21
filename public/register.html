@@ -196,10 +196,9 @@
             })
             .catch(error => {
                 console.error('Registration failed:', error);
-                if (error instanceof ClientResponseError) {
-                    messageDiv.textContent = error.toString();
-                } else {
-                    messageDiv.textContent = `Registration failed: ${error.message}`;
+                messageDiv.textContent = error.toString();
+                if (error.data) {
+                    messageDiv.textContent += `\nResponse Body:\n${JSON.stringify(error.data, null, 2)}`;
                 }
                 messageDiv.classList.add('error');
             });
