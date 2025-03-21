@@ -292,6 +292,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 		err = a.db.InsertJob(job)
 		if err != nil {
+			slog.Error("Failed to insert verification job", "error", err, "job", job)
 			writeJSONError(w, errorServiceUnavailable)
 			return
 		}
