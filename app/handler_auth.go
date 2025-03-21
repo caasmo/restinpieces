@@ -178,7 +178,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 
 	// Create queue job
 	payload, _ := json.Marshal(queue.PayloadEmailVerification{Email: req.Email})
-	job := queue.QueueJob{
+	job := queue.Job{
 		JobType: queue.JobTypeEmailVerification,
 		Payload: payload,
 	}

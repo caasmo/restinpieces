@@ -83,7 +83,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 				`SELECT job_type, payload, status, attempts, max_attempts 
 				FROM job_queue WHERE payload = ? LIMIT 1`,
 				func(stmt *sqlite.Stmt) error {
-					retrievedJob = queue.QueueJob{
+					retrievedJob = queue.Job{
 						JobType:     stmt.GetText("job_type"),
 						Payload:     json.RawMessage(stmt.GetText("payload")),
 						Status:      stmt.GetText("status"),

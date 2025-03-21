@@ -28,11 +28,11 @@ func validateQueueJob(job queue.Job) error {
 	return nil
 }
 
-func (d *Db) GetJobs(limit int) ([]queue.QueueJob, error) {
+func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
-	var jobs []queue.QueueJob
+	var jobs []*queue.Job
 	err := sqlitex.Exec(conn,
 		`SELECT id, job_type, payload, status, attempts, max_attempts, created_at, updated_at, scheduled_for
 		FROM job_queue
@@ -55,7 +55,7 @@ func (d *Db) GetJobs(limit int) ([]queue.QueueJob, error) {
 				return fmt.Errorf("error parsing scheduled_for time: %w", err)
 			}
 
-			job := queue.Job{
+			job := &queue.Job{
 				ID:           stmt.GetInt64("id"),
 				JobType:      stmt.GetText("job_type"),
 				Payload:      json.RawMessage(stmt.GetText("payload")),
@@ -76,7 +76,7 @@ func (d *Db) GetJobs(limit int) ([]queue.QueueJob, error) {
 	return jobs, nil
 }
 
-func (d *Db) InsertJob(job queue.QueueJob) error {
+func (d *Db) InsertJob(job queue.Job) error {
 	if err := validateQueueJob(job); err != nil {
 		return err
 	}
