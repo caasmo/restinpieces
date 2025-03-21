@@ -13,8 +13,7 @@ import (
 
 // Scheduler handles scheduled jobs
 type Scheduler struct {
-	// interval specifies how often the scheduler should check for new jobs
-	interval      time.Duration
+	cfg           config.Scheduler
 	db            db.Db
 	
 	// eg is an errgroup.Group used to manage and track running jobs
@@ -39,12 +38,12 @@ func NewScheduler(cfg config.Scheduler, db db.Db) *Scheduler {
 	g, ctx := errgroup.WithContext(ctx)
 	
 	return &Scheduler{
-		interval:      cfg.Interval,
-		eg:            g,
-		ctx:           ctx,
-		cancel:        cancel,
-		db:            db,
-		shutdownDone:  make(chan struct{}),
+		cfg:          cfg,
+		eg:           g,
+		ctx:          ctx,
+		cancel:       cancel,
+		db:           db,
+		shutdownDone: make(chan struct{}),
 	}
 }
 
@@ -52,8 +51,8 @@ func NewScheduler(cfg config.Scheduler, db db.Db) *Scheduler {
 // that will create gorotines to handle backend jobs
 func (s *Scheduler) Start() {
 	go func() {
-		slog.Info("Starting job scheduler", "interval", s.interval)
-		ticker := time.NewTicker(s.interval)
+		slog.Info("Starting job scheduler", "interval", s.cfg.Interval)
+		ticker := time.NewTicker(s.cfg.Interval)
 		defer ticker.Stop()
 		
 		for {
@@ -93,8 +92,8 @@ func (s *Scheduler) Stop(ctx context.Context) error {
 
 // processJobs checks for pending and failed jobs and executes them
 func (s *Scheduler) processJobs() {
-	// Get up to 100 jobs at a time
-	jobs, err := s.db.GetJobs(100)
+	// Get jobs up to configured limit per tick
+	jobs, err := s.db.GetJobs(s.cfg.MaxJobsPerTick)
 	if err != nil {
 		slog.Error("Failed to fetch jobs", "err", err)
 		return
