@@ -17,7 +17,7 @@ var jsonHeader = []string{"application/json; charset=utf-8"}
 
 // Standard error codes and messages
 const (
-	CodeTokenGeneration      = "token_generation_error"
+	CodeTokenGeneration      = "token_generation"
 	CodeClaimsNotFound       = "claims_not_found"
 	CodeInvalidRequest       = "invalid_input"
 	CodeInvalidCredentials   = "invalid_credentials"
@@ -40,7 +40,7 @@ const (
 
 // Precomputed error responses with status codes
 var (
-	errorTokenGeneration      = jsonError{http.StatusInternalServerError, CodeTokenGeneration, "Failed to generate authentication token"}
+	errorTokenGeneration      = jsonError{http.StatusInternalServerError, []byte(`{"status": 500, "code": "token_generation", ""message": "Failed to generate authentication token"`)}
 	errorClaimsNotFound       = jsonError{http.StatusInternalServerError, CodeClaimsNotFound, "Failed to generate token: Claims not found"}
 	errorInvalidRequest       = jsonError{http.StatusBadRequest, CodeInvalidRequest, "The request contains invalid data"}
 	errorInvalidCredentials   = jsonError{http.StatusUnauthorized, CodeInvalidCredentials, "Invalid credentials provided"}
