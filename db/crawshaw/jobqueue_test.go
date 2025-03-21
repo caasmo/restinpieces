@@ -16,7 +16,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		job     queue.QueueJob
+		job     queue.Job
 		wantErr bool
 	}{
 		{
@@ -115,7 +115,7 @@ func TestInsertQueueJobDuplicate(t *testing.T) {
 	defer testDB.Close()
 
 	// First insert with unique payload
-	uniqueJob := queue.QueueJob{
+	uniqueJob := queue.Job{
 		JobType:     "test_job",
 		Payload:     json.RawMessage(`{"key":"unique_value"}`),
 		Status:      queue.StatusPending,
@@ -127,7 +127,7 @@ func TestInsertQueueJobDuplicate(t *testing.T) {
 	}
 
 	// Second insert with duplicate payload
-	dupJob := queue.QueueJob{
+	dupJob := queue.Job{
 		JobType:     "test_job",                                // Same job type as initial insert
 		Payload:     json.RawMessage(`{"key":"unique_value"}`), // Same payload as initial insert
 		Status:      queue.StatusPending,
