@@ -30,7 +30,7 @@ func (m *MockDB) Close()                     {}
 func (m *MockDB) GetById(id int64) int       { return 0 }
 func (m *MockDB) Insert(value int64)         {}
 func (m *MockDB) InsertWithPool(value int64) {}
-func (m *MockDB) InsertQueueJob(job queue.QueueJob) error {
+func (m *MockDB) InsertJob(job queue.QueueJob) error {
 	return nil
 }
 func (m *MockDB) GetUserByEmail(email string) (*db.User, error) {
