@@ -4,11 +4,16 @@ import (
 	"context"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
+	"runtime"
 	"time"
 
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/config"
+)
+
+const (
+	DefaultConcurrencyMultiplier = 2
 )
 
 // Scheduler handles scheduled jobs
@@ -43,10 +48,9 @@ type Scheduler struct {
 func NewScheduler(cfg config.Scheduler, db db.Db) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	
-	// Set concurrency limit, default to 2x CPU cores if not configured
-	concurrency := cfg.Concurrency
-	if concurrency <= 0 {
-		concurrency = runtime.NumCPU() * 2
+	// Set concurrency limit, default to DefaultConcurrencyMultiplier x CPU cores if not configured
+	if cfg.Concurrency <= 0 {
+		cfg.Concurrency = runtime.NumCPU() * DefaultConcurrencyMultiplier
 	}
 	
 	g, ctx := errgroup.WithContext(ctx)
