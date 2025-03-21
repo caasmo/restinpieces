@@ -1,5 +1,8 @@
 ### TODOs
 
+- error in trhe sequnce of step f ex register can let inconsitent state, ex
+error after inserting job, we have user in db but no varification 
+- remove experd in return from function, get it from config
 - consistency js keys auth local storage.
 - scheduler nil, shoudl ne consitent  WithScheduler?
 - generate new jwt register 
