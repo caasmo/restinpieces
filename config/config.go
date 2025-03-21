@@ -99,6 +99,17 @@ type Config struct {
 }
 
 
+func FillServer() Server {
+	return Server{
+		Addr:                   ":8080",
+		ShutdownGracefulTimeout: 15 * time.Second,
+		ReadTimeout:            2 * time.Second,
+		ReadHeaderTimeout:      2 * time.Second,
+		WriteTimeout:           3 * time.Second,
+		IdleTimeout:            1 * time.Minute,
+	}
+}
+
 func Load(dbfile string) (*Config, error) {
 	cfg := &Config{
 		JwtSecret:       []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
@@ -109,10 +120,7 @@ func Load(dbfile string) (*Config, error) {
 			MaxJobsPerTick:       100,
 			ConcurrencyMultiplier: 2, // Default to 2x CPU cores
 		},
-		Server: Server{
-			Addr:                   ":8080",
-			ShutdownGracefulTimeout: 15 * time.Second,
-		},
+		Server: FillServer(),
 		OAuth2Providers: make(map[string]OAuth2Provider),
 	}
 

@@ -14,23 +14,15 @@ import (
 	"time"
 )
 
-// TODO move to config as defaults
-const (
-	ReadTimeout       = 2 * time.Second
-	ReadHeaderTimeout = 2 * time.Second
-	WriteTimeout      = 3 * time.Second
-	IdleTimeout       = 1 * time.Minute
-)
-
 func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 
     srv := &http.Server{
         Addr:              cfg.Addr,
         Handler:           r,
-        ReadTimeout:       ReadTimeout,
-        ReadHeaderTimeout: ReadHeaderTimeout,
-        WriteTimeout:      WriteTimeout,
-        IdleTimeout:       IdleTimeout,
+        ReadTimeout:       cfg.ReadTimeout,
+        ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+        WriteTimeout:      cfg.WriteTimeout,
+        IdleTimeout:       cfg.IdleTimeout,
     }
 
 	// Start HTTP server
