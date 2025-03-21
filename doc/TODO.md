@@ -1,23 +1,8 @@
 ### TODOs
 
-- POST handlers that always run. ancapsulate alice.
-    - h.WithMiddlewareChain(chain1).WithMiddleware(m1,m2).WithMiddlewareChain(chain2).WithObservers(o1,o2)
-
-    - NewMiddlewareChain(a,b,c,d)
-    - Bind() // Bind to handler
-    - BindPostHandlers()
-    - WithObservers
-    - mainChain = handler.WithMiddleware(a,b,c) or
-    - mainChain = handler.WithMiddleware(middlewareChain)
-    - finalHandler := WithObservers(mainChain, handlerB, handlerC, handlerD)
-    - h.WithMiddleware().WitObservers
-    - 
-- refresh jwt
 - generate new jwt register 
 - jwt invalidation go tests
 - integration sh test post invalidation jwt 
-- User schema, remove tokenKey
-- jwt signing key invalidation
 - test requestverification: test also insertion in queue, now only mock nil.
 - more bash test all endpoints
 - test moe all to dbsetup
@@ -146,3 +131,18 @@
 			- all creation we let dn write
 		- normally if the zero value in go is not the zero value in db. do not let go write it.*as always we are taking about INSERTS)
 
+- POST handlers that always run. ancapsulate alice.
+    - h.WithMiddlewareChain(chain1).WithMiddleware(m1,m2).WithMiddlewareChain(chain2).WithObservers(o1,o2)
+
+    - NewMiddlewareChain(a,b,c,d)
+    - Bind() // Bind to handler
+    - BindPostHandlers()
+    - WithObservers
+    - mainChain = handler.WithMiddleware(a,b,c) or
+    - mainChain = handler.WithMiddleware(middlewareChain)
+    - finalHandler := WithObservers(mainChain, handlerB, handlerC, handlerD)
+    - h.WithMiddleware().WitObservers
+    - 
+- refresh jwt
+- User schema, remove tokenKey
+- jwt signing key invalidation
