@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/caasmo/restinpieces/router"
 	"golang.org/x/sync/errgroup"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -57,10 +57,10 @@ func (s *Scheduler) Start() {
 		for {
 			select {
 			case <-s.ctx.Done():
-				log.Println("Job scheduler received shutdown signal")
+				slog.Info("Job scheduler received shutdown signal")
 				// Wait for all jobs to complete
 				if err := s.eg.Wait(); err != nil {
-					log.Printf("Error waiting for jobs to complete: %v", err)
+					slog.Error("Error waiting for jobs to complete", "err", err)
 				}
 				close(s.shutdownDone) // Signal that scheduler has completely shut down
 				return
@@ -74,7 +74,7 @@ func (s *Scheduler) Start() {
 // Stop signals the scheduler to stop and waits for all jobs to complete
 // or the context to be canceled, whichever comes first
 func (s *Scheduler) Stop(ctx context.Context) error {
-	log.Println("Stopping job scheduler")
+	slog.Info("Stopping job scheduler")
 	s.cancel()
 	
 	// Wait for either scheduler completion or context timeout
@@ -108,10 +108,10 @@ func fetchPendingJobs() []string {
 }
 
 func executeJob(jobID string) error {
-	log.Printf("Executing job: %s", jobID)
+	slog.Info("Executing job", "jobID", jobID)
 	// Simulate job execution
 	time.Sleep(2 * time.Second)
-	log.Printf("Completed job: %s", jobID)
+	slog.Info("Completed job", "jobID", jobID)
 	return nil
 }
 
