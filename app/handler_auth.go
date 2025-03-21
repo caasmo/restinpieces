@@ -125,7 +125,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT session token
-	token, _, err := crypto.NewJwtSession(user.ID, user.Email, a.config.JwtSecret, a.config.TokenDuration)
+	token, _, err := crypto.NewJwtSessionToken(user.ID, user.Email, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
