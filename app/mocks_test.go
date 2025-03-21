@@ -53,6 +53,10 @@ func (m *MockDB) GetUserById(id string) (*db.User, error) {
 	return m.GetUserByIdConfig.User, m.GetUserByIdConfig.Error
 }
 
+func (m *MockDB) GetJobs(limit int) ([]queue.QueueJob, error) {
+	return nil, nil
+}
+
 // MockRouter implements router.Router interface for testing
 type MockRouter struct{}
 
