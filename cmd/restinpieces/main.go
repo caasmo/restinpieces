@@ -24,9 +24,9 @@ func main() {
 		TokenDuration:   15 * time.Minute,
 		DBFile:          *dbfile,
 		Scheduler: config.Scheduler{
-			Interval:       15 * time.Second,
-			MaxJobsPerTick: 100,
-			Concurrency:    runtime.NumCPU() * 2, // Default to 2x CPU cores
+			Interval:             15 * time.Second,
+			MaxJobsPerTick:       100,
+			ConcurrencyMultiplier: 2, // Default to 2x CPU cores
 		},
 		OAuth2Providers: make(map[string]config.OAuth2Provider),
 	}
