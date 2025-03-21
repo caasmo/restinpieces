@@ -5,6 +5,7 @@ import (
 
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/router"
 )
 
 // MockDB implements db.Db interface for testing
