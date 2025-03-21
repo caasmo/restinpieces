@@ -38,8 +38,8 @@ func main() {
 
 	route(ap, cAp)
 
-	// Create and start scheduler with configured interval and db 
+	// Create and start scheduler with configured interval and db
 	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db())
-	
+
 	server.Run(cfg.Server, ap.Router(), scheduler)
 }

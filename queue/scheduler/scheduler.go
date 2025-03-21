@@ -7,8 +7,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
 )
 
@@ -19,41 +19,41 @@ const (
 // Scheduler handles scheduled jobs
 type Scheduler struct {
 	// cfg contains the scheduler configuration including interval and max jobs per tick
-	cfg           config.Scheduler
-	
+	cfg config.Scheduler
+
 	// db is the database connection used to fetch and update jobs
-	db            db.Db
-	
+	db db.Db
+
 	// eg is an errgroup.Group used to manage and track running jobs
 	// It provides synchronization and error propagation for concurrent job execution
-	eg            *errgroup.Group
-	
+	eg *errgroup.Group
+
 	// ctx is the context used to control the scheduler's lifecycle
 	// It allows graceful shutdown when Stop() is called from outside.
 	// The context is passed to all job execution goroutines.
-	ctx           context.Context
-	
+	ctx context.Context
+
 	// cancel is the CancelFunc associated with ctx
 	// It is called in the Stop method to initiate shutdown of the scheduler
 	// and all running jobs.
-	cancel        context.CancelFunc
-	
+	cancel context.CancelFunc
+
 	// shutdownDone is a channel that will be closed when the scheduler
 	// has completely shut down and all jobs have finished.
 	// Used to signal completion of the shutdown process.
-	shutdownDone  chan struct{}
+	shutdownDone chan struct{}
 }
 
 // NewScheduler creates a new scheduler
 func NewScheduler(cfg config.Scheduler, db db.Db) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	// Calculate concurrency limit based on multiplier and CPU cores
 	concurrency := runtime.NumCPU() * cfg.ConcurrencyMultiplier
-	
+
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(concurrency)
-	
+
 	return &Scheduler{
 		cfg:          cfg,
 		eg:           g,
@@ -71,7 +71,7 @@ func (s *Scheduler) Start() {
 		slog.Info("Starting job scheduler", "interval", s.cfg.Interval)
 		ticker := time.NewTicker(s.cfg.Interval)
 		defer ticker.Stop()
-		
+
 		for {
 			select {
 			case <-s.ctx.Done():
@@ -95,7 +95,7 @@ func (s *Scheduler) Start() {
 func (s *Scheduler) Stop(ctx context.Context) error {
 	slog.Info("Stopping job scheduler")
 	s.cancel()
-	
+
 	// Wait for either scheduler completion or context timeout
 	select {
 	case <-s.shutdownDone:
@@ -136,13 +136,13 @@ func (s *Scheduler) processJobs() {
 }
 
 func executeJob(job queue.Job) error {
-    slog.Info("Executing job",
-    "payload", job.Payload,
-    "status", job.Status,
-    "attempts", job.Attempts,
-    "maxAttempts", job.MaxAttempts,
-    "scheduledFor", job.ScheduledFor,
-)
+	slog.Info("Executing job",
+		"payload", job.Payload,
+		"status", job.Status,
+		"attempts", job.Attempts,
+		"maxAttempts", job.MaxAttempts,
+		"scheduledFor", job.ScheduledFor,
+	)
 
 	// Simulate job execution
 	time.Sleep(2 * time.Second)
@@ -150,4 +150,3 @@ func executeJob(job queue.Job) error {
 	//slog.Info("Completed job", "jobID", job.ID, "jobType", job.JobType)
 	return nil
 }
-

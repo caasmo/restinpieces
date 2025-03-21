@@ -2,27 +2,27 @@ package server
 
 import (
 	"context"
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/router"
-	"github.com/caasmo/restinpieces/config"
+	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
-	"golang.org/x/sync/errgroup"
 	"syscall"
 )
 
 func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 
-    srv := &http.Server{
-        Addr:              cfg.Addr,
-        Handler:           r,
-        ReadTimeout:       cfg.ReadTimeout,
-        ReadHeaderTimeout: cfg.ReadHeaderTimeout,
-        WriteTimeout:      cfg.WriteTimeout,
-        IdleTimeout:       cfg.IdleTimeout,
-    }
+	srv := &http.Server{
+		Addr:              cfg.Addr,
+		Handler:           r,
+		ReadTimeout:       cfg.ReadTimeout,
+		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+		WriteTimeout:      cfg.WriteTimeout,
+		IdleTimeout:       cfg.IdleTimeout,
+	}
 
 	// Start HTTP server
 	serverError := make(chan error, 1)
@@ -34,8 +34,8 @@ func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 		}
 	}()
 
-    // Start the job scheduler
-    scheduler.Start()
+	// Start the job scheduler
+	scheduler.Start()
 
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
@@ -60,7 +60,7 @@ func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 
 	// Create a wait group for shutdown tasks
 	shutdownGroup, _ := errgroup.WithContext(gracefulCtx)
-	
+
 	// Shutdown HTTP server in a goroutine
 	shutdownGroup.Go(func() error {
 		slog.Info("Shutting down HTTP server")
@@ -71,7 +71,7 @@ func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 		slog.Info("HTTP server stopped gracefully")
 		return nil
 	})
-	
+
 	// Shutdown scheduler in a goroutine, passing the graceful context
 	shutdownGroup.Go(func() error {
 		slog.Info("Shutting down scheduler...")
@@ -82,13 +82,13 @@ func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 		slog.Info("Scheduler stopped gracefully")
 		return nil
 	})
-	
+
 	// Wait for all shutdown tasks to complete
 	if err := shutdownGroup.Wait(); err != nil {
 		slog.Error("Error during shutdown", "err", err)
 		os.Exit(1)
 	}
-	
+
 	slog.Info("All systems stopped gracefully")
 	os.Exit(0)
 

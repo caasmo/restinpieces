@@ -175,7 +175,6 @@ func TestGetUserByEmail(t *testing.T) {
 	}
 }
 
-
 func TestCreateUserWithOauth2(t *testing.T) {
 	testDB := setupDB(t)
 	defer testDB.Close()
@@ -381,4 +380,3 @@ func TestCreateUserWithPassword(t *testing.T) {
 		}
 	})
 }
-

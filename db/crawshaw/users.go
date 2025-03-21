@@ -95,7 +95,6 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 	return user, nil
 }
 
-
 // writing os two consecutive writes with two different password will succeed but the password will be not written.
 // its responsability of the caller to check if interested.
 func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {

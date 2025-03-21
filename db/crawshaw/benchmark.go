@@ -5,7 +5,7 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 )
 
-// TODO deprecated 
+// TODO deprecated
 
 func (d *Db) GetById(id int64) int {
 	conn := d.pool.Get(nil)

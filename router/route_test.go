@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	
+
 	rtr "github.com/caasmo/restinpieces/router"
 )
 
@@ -14,12 +14,12 @@ func TestRouteBasicHandler(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("OK"))
 		})
-	
+
 	req := httptest.NewRequest("GET", "/test", nil)
 	rec := httptest.NewRecorder()
-	
+
 	route.Handler().ServeHTTP(rec, req)
-	
+
 	if rec.Code != http.StatusOK {
 		t.Errorf("expected status %d, got %d", http.StatusOK, rec.Code)
 	}
@@ -54,7 +54,7 @@ func TestRouteMiddlewareChaining(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/test", nil)
 	rec := httptest.NewRecorder()
-	
+
 	route.Handler().ServeHTTP(rec, req)
 
 	expectedOrder := []string{"mw1", "mw2", "handler"}
@@ -88,7 +88,7 @@ func TestRouteObservers(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/test", nil)
 	rec := httptest.NewRecorder()
-	
+
 	route.Handler().ServeHTTP(rec, req)
 
 	expectedHandlers := []string{"handler", "observer1", "observer2"}
@@ -104,7 +104,7 @@ func TestRouteObservers(t *testing.T) {
 
 func TestRouteNilHandler(t *testing.T) {
 	route := rtr.NewRoute("GET /test")
-	
+
 	req := httptest.NewRequest("GET", "/test", nil)
 	rec := httptest.NewRecorder()
 
@@ -113,7 +113,7 @@ func TestRouteNilHandler(t *testing.T) {
 			t.Error("expected panic with nil handler")
 		}
 	}()
-	
+
 	route.Handler().ServeHTTP(rec, req)
 }
 
@@ -123,7 +123,7 @@ func TestRouteEmptyEndpoint(t *testing.T) {
 			t.Error("expected panic with empty endpoint")
 		}
 	}()
-	
+
 	rtr.NewRoute("") // Should panic
 }
 
@@ -156,7 +156,7 @@ func TestRouteMiddlewareChain(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/test", nil)
 	rec := httptest.NewRecorder()
-	
+
 	route.Handler().ServeHTTP(rec, req)
 
 	expectedOrder := []string{"mw1", "mw2", "handler"}
@@ -211,7 +211,7 @@ func TestRouteChainedWithMiddleware(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/test", nil)
 	rec := httptest.NewRecorder()
-	
+
 	route.Handler().ServeHTTP(rec, req)
 
 	expectedOrder := []string{"mw1", "mw2", "mw3", "mw4", "handler"}
@@ -265,11 +265,11 @@ func TestRouteMixedMiddlewareChaining(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}).
 		WithMiddlewareChain(middlewareChain). // First chain
-		WithMiddleware(mw3, mw4)             // Additional middlewares
+		WithMiddleware(mw3, mw4)              // Additional middlewares
 
 	req := httptest.NewRequest("GET", "/test", nil)
 	rec := httptest.NewRecorder()
-	
+
 	route.Handler().ServeHTTP(rec, req)
 
 	expectedOrder := []string{"mw1", "mw2", "mw3", "mw4", "handler"}
@@ -321,7 +321,7 @@ func TestRouteFullChain(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/test", nil)
 	rec := httptest.NewRecorder()
-	
+
 	route.Handler().ServeHTTP(rec, req)
 
 	// Verify execution order
@@ -370,7 +370,7 @@ func TestRouteMiddlewareReturnEarly(t *testing.T) {
 
 	req := httptest.NewRequest("GET", "/test", nil)
 	rec := httptest.NewRecorder()
-	
+
 	route.Handler().ServeHTTP(rec, req)
 
 	// Verify status code

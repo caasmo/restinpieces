@@ -45,7 +45,7 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 				return fmt.Errorf("error parsing created_at time: %w", err)
 			}
 
-			updatedAt, err := db.TimeParse(stmt.GetText("updated_at")) 
+			updatedAt, err := db.TimeParse(stmt.GetText("updated_at"))
 			if err != nil {
 				return fmt.Errorf("error parsing updated_at time: %w", err)
 			}

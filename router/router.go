@@ -83,30 +83,28 @@ func (r *Route) WithObservers(observers ...http.Handler) *Route {
 
 // Handler returns the final handler with all middlewares and observers applied
 func (r *Route) Handler() http.Handler {
-    if r.handler == nil {
-        panic("route handler cannot be nil")
-    }
+	if r.handler == nil {
+		panic("route handler cannot be nil")
+	}
 	handler := r.handler
 
-	
 	for _, mw := range r.middlewares {
 		handler = mw(handler)
 	}
-	
+
 	// If no observers, return the middleware-wrapped handler directly
 	if len(r.observers) == 0 {
 		return handler
 	}
-	
+
 	// Wrap handler with observers if present
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// Run the main handler chain
 		handler.ServeHTTP(w, req)
-		
+
 		// Run all observers in order they were added
 		for _, obs := range r.observers {
 			obs.ServeHTTP(w, req)
 		}
 	})
 }
-

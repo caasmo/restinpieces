@@ -71,37 +71,36 @@ type Scheduler struct {
 type Server struct {
 	// Addr is the HTTP server address to listen on (e.g. ":8080")
 	Addr string
-	
+
 	// ShutdownGracefulTimeout is the maximum time to wait for graceful shutdown
 	ShutdownGracefulTimeout time.Duration
-	
+
 	// ReadTimeout is the maximum duration for reading the entire request
 	ReadTimeout time.Duration
-	
+
 	// ReadHeaderTimeout is the maximum duration for reading request headers
 	ReadHeaderTimeout time.Duration
-	
+
 	// WriteTimeout is the maximum duration before timing out writes of the response
 	WriteTimeout time.Duration
-	
+
 	// IdleTimeout is the maximum amount of time to wait for the next request
 	IdleTimeout time.Duration
 }
 
 type Config struct {
-	JwtSecret        []byte
-	TokenDuration    time.Duration
-	DBFile           string
-	Scheduler        Scheduler
-	Server           Server
+	JwtSecret     []byte
+	TokenDuration time.Duration
+	DBFile        string
+	Scheduler     Scheduler
+	Server        Server
 
 	OAuth2Providers map[string]OAuth2Provider
 }
 
-
 const (
 	DefaultReadTimeout       = 2 * time.Second
-	DefaultReadHeaderTimeout = 2 * time.Second 
+	DefaultReadHeaderTimeout = 2 * time.Second
 	DefaultWriteTimeout      = 3 * time.Second
 	DefaultIdleTimeout       = 1 * time.Minute
 	DefaultShutdownTimeout   = 15 * time.Second
@@ -134,20 +133,19 @@ func FillServer(cfg *Config) Server {
 
 func Load(dbfile string) (*Config, error) {
 
-
 	cfg := &Config{
-		JwtSecret:       []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
-		TokenDuration:   15 * time.Minute,
-		DBFile:          dbfile,
+		JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
+		TokenDuration: 15 * time.Minute,
+		DBFile:        dbfile,
 		Scheduler: Scheduler{
-			Interval:             15 * time.Second,
-			MaxJobsPerTick:       100,
+			Interval:              15 * time.Second,
+			MaxJobsPerTick:        100,
 			ConcurrencyMultiplier: 2, // Default to 2x CPU cores
 		},
 		OAuth2Providers: make(map[string]OAuth2Provider),
 	}
 
-cfg.Server = FillServer(cfg)
+	cfg.Server = FillServer(cfg)
 
 	// Configure Google OAuth2 provider
 	googleConfig := OAuth2Provider{
@@ -182,7 +180,7 @@ cfg.Server = FillServer(cfg)
 		TokenURL:     "https://github.com/login/oauth/access_token",
 		UserInfoURL:  "https://api.github.com/user",
 		Scopes:       []string{"read:user", "user:email"},
-		PKCE: true,
+		PKCE:         true,
 	}
 	if err := githubConfig.FillEnvVars(); err != nil {
 		slog.Warn("skipping GitHub OAuth2 provider", "error", err)
