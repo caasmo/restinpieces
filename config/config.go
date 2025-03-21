@@ -98,8 +98,63 @@ type Config struct {
 }
 
 
-// TDOO
-func Load() (*Config, error) {
+func Load(dbfile string) (*Config, error) {
+	cfg := &Config{
+		JwtSecret:       []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
+		TokenDuration:   15 * time.Minute,
+		DBFile:          dbfile,
+		Scheduler: Scheduler{
+			Interval:             15 * time.Second,
+			MaxJobsPerTick:       100,
+			ConcurrencyMultiplier: 2, // Default to 2x CPU cores
+		},
+		Server: Server{
+			Addr:                   ":8080",
+			ShutdownGracefulTimeout: 15 * time.Second,
+		},
+		OAuth2Providers: make(map[string]OAuth2Provider),
+	}
 
-    return nil, nil
+	// Configure Google OAuth2 provider
+	googleConfig := OAuth2Provider{
+		Name:         OAuth2ProviderGoogle,
+		ClientID:     EnvVar{Name: EnvGoogleClientID},
+		ClientSecret: EnvVar{Name: EnvGoogleClientSecret},
+		DisplayName:  "Google",
+		RedirectURL:  "http://localhost:8080/oauth2/callback/",
+		AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
+		TokenURL:     "https://oauth2.googleapis.com/token",
+		UserInfoURL:  "https://www.googleapis.com/oauth2/v3/userinfo",
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.profile",
+			"https://www.googleapis.com/auth/userinfo.email",
+		},
+		PKCE: true,
+	}
+	if err := googleConfig.FillEnvVars(); err != nil {
+		slog.Warn("skipping Google OAuth2 provider", "error", err)
+	} else {
+		cfg.OAuth2Providers[OAuth2ProviderGoogle] = googleConfig
+	}
+
+	// Configure GitHub OAuth2 provider
+	githubConfig := OAuth2Provider{
+		Name:         OAuth2ProviderGitHub,
+		ClientID:     EnvVar{Name: EnvGithubClientID},
+		ClientSecret: EnvVar{Name: EnvGithubClientSecret},
+		DisplayName:  "GitHub",
+		RedirectURL:  "http://localhost:8080/oauth2/callback/",
+		AuthURL:      "https://github.com/login/oauth/authorize",
+		TokenURL:     "https://github.com/login/oauth/access_token",
+		UserInfoURL:  "https://api.github.com/user",
+		Scopes:       []string{"read:user", "user:email"},
+		PKCE: true,
+	}
+	if err := githubConfig.FillEnvVars(); err != nil {
+		slog.Warn("skipping GitHub OAuth2 provider", "error", err)
+	} else {
+		cfg.OAuth2Providers[OAuth2ProviderGitHub] = githubConfig
+	}
+
+	return cfg, nil
 }
