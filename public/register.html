@@ -48,6 +48,42 @@
             background-color: #e8f5e9;
             color: #2e7d32;
         }
+        
+        .user-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        
+        .user-info pre {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow: auto;
+        }
+        
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .button-container button {
+            flex: 1;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .button-container button:nth-child(1) {
+            background-color: #4caf50;
+        }
+        
+        .button-container button:nth-child(2) {
+            background-color: #2196f3;
+        }
     </style>
 </head>
 <body>
@@ -122,13 +158,39 @@
                 messageDiv.textContent = 'Registration successful! Redirecting...';
                 messageDiv.classList.add('success');
                 
-                // Redirect based on verification status
+                // Show user record and navigation buttons
                 const userRecord = JSON.parse(localStorage.getItem('user_record'));
-                if (userRecord && userRecord.verified) {
-                    window.location.href = '/dashboard';
-                } else {
-                    window.location.href = '/verify-email';
+                const messageDiv = document.getElementById('message');
+                
+                // Create user info display
+                const userInfo = document.createElement('div');
+                userInfo.className = 'user-info';
+                userInfo.innerHTML = `
+                    <h3>Registration Successful!</h3>
+                    <pre>${JSON.stringify(userRecord, null, 2)}</pre>
+                `;
+                
+                // Create action buttons
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+                
+                if (!userRecord.verified) {
+                    const verifyButton = document.createElement('button');
+                    verifyButton.textContent = 'Verify Email';
+                    verifyButton.onclick = () => window.location.href = '/verify-email';
+                    buttonContainer.appendChild(verifyButton);
                 }
+                
+                const dashboardButton = document.createElement('button');
+                dashboardButton.textContent = 'Go to Dashboard';
+                dashboardButton.onclick = () => window.location.href = '/dashboard';
+                buttonContainer.appendChild(dashboardButton);
+                
+                // Clear form and show results
+                document.getElementById('registerForm').remove();
+                messageDiv.textContent = '';
+                messageDiv.appendChild(userInfo);
+                messageDiv.appendChild(buttonContainer);
             })
             .catch(error => {
                 console.error('Registration failed:', error);
