@@ -48,9 +48,23 @@ func (c *OAuth2Provider) FillEnvVars() error {
 }
 
 type Scheduler struct {
-	Interval             time.Duration
-	MaxJobsPerTick       int
-	ConcurrencyMultiplier int // Multiplier for number of CPU cores
+	// Interval controls how often the scheduler checks for new jobs.
+	// Should be set based on your job processing latency requirements - shorter
+	// intervals provide faster job processing but increase database load.
+	// Typical values range from 5 seconds to several minutes.
+	Interval time.Duration
+
+	// MaxJobsPerTick limits how many jobs are fetched from the database per schedule
+	// interval. This prevents overwhelming the system when there are many pending jobs.
+	// Set this based on your workers' processing capacity and job execution time.
+	// For example, if jobs average 500ms to process and you have 10 workers, a value
+	// of 20 would give a 2x buffer.
+	MaxJobsPerTick int
+
+	// ConcurrencyMultiplier determines how many concurrent workers are spawned per CPU core.
+	// For CPU-bound jobs, keep this low (1-2). For I/O-bound jobs, higher values (2-8)
+	// may improve throughput. Automatically scales with hardware resources.
+	ConcurrencyMultiplier int
 }
 
 type Config struct {
