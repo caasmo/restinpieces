@@ -136,10 +136,24 @@ func (s *Scheduler) processJobs() {
 }
 
 func executeJob(job queue.QueueJob) error {
-	slog.Info("Executing job", "jobID", job.ID, "jobType", job.JobType)
+	slog.Info("Executing job",
+		"jobID", job.ID,
+		"jobType", job.JobType,
+		"status", job.Status,
+		"attempts", job.Attempts,
+		"maxAttempts", job.MaxAttempts,
+		"scheduledFor", job.ScheduledFor,
+	)
+
 	// Simulate job execution
 	time.Sleep(2 * time.Second)
-	slog.Info("Completed job", "jobID", job.ID, "jobType", job.JobType)
+
+	slog.Info("Completed job",
+		"jobID", job.ID,
+		"jobType", job.JobType,
+		"status", job.Status,
+		"attempts", job.Attempts,
+	)
 	return nil
 }
 
