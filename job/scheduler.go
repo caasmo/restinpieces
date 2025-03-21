@@ -2,13 +2,8 @@ package job
 
 import (
 	"context"
-	"github.com/caasmo/restinpieces/router"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
