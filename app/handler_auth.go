@@ -336,14 +336,18 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 	slog.Debug("JWT token generated")
 
-	// TODO diferent workflow depending on verified.
-	// Return OAuth2 token response format
+	// Return OAuth2 token response format with limited user fields
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token_type": "Bearer",
 		"access_token": token,
 		"expires_in": int(a.config.TokenDuration.Seconds()),
-		"record": retrievedUser,
+		"record": map[string]interface{}{
+			"id":       retrievedUser.ID,
+			"email":    retrievedUser.Email,
+			"name":     retrievedUser.Name,
+			"verified": retrievedUser.Verified,
+		},
 	})
 }
 
