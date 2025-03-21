@@ -54,7 +54,7 @@ func NewScheduler(cfg config.Scheduler, db db.Db) *Scheduler {
 	}
 	
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(concurrency)
+	g.SetLimit(cfg.Concurrency)
 	
 	return &Scheduler{
 		cfg:          cfg,
