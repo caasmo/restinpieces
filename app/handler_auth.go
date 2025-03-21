@@ -35,25 +35,40 @@ import (
 // Endpoint: POST /auth-refresh
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Get claims from context (added by JwtValidate middleware)
+	slog.Debug("RefreshAuthHandler started")
 	userId, ok := r.Context().Value(UserIDKey).(string)
 	if !ok || userId == "" {
+		slog.Error("Failed to get user ID from context")
 		writeJSONError(w, errorClaimsNotFound)
 		return
 	}
+	slog.Debug("User ID from context", "user_id", userId)
 
 	// Get user from database to get email for signing key
+	slog.Debug("Fetching user from database", "user_id", userId)
 	user, err := a.db.GetUserById(userId)
 	if err != nil || user == nil {
+		slog.Error("Failed to fetch user", "user_id", userId, "error", err)
 		writeJSONError(w, errorInvalidCredentials)
 		return
 	}
+	slog.Debug("User fetched", "user_id", user.ID, "email", user.Email)
 
 	// Generate new token with fresh expiration using NewJwtSession
+	slog.Debug("Generating new JWT token",
+		"user_id", userId,
+		"email", user.Email,
+		"secret_length", len(a.config.JwtSecret),
+		"duration", a.config.TokenDuration)
 	newToken, expiry, err := crypto.NewJwtSession(userId, user.Email, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
+		slog.Error("Failed to generate new token", "error", err)
 		writeJSONError(w, errorTokenGeneration)
 		return
 	}
+	slog.Debug("New token generated", 
+		"expiry", expiry,
+		"token_length", len(newToken))
 
 	// Calculate seconds until expiry
 	expiresIn := int(time.Until(expiry).Seconds())
