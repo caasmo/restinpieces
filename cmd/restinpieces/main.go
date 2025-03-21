@@ -81,8 +81,8 @@ func main() {
 
 	route(ap, cAp)
 
-	// Create scheduler with 5 second check interval
-	scheduler := job.NewScheduler(5 * time.Second)
-
+	// Create and start scheduler with configured interval
+	scheduler := job.NewScheduler(cfg.SchedulerInterval)
+	
 	server.Run(":8080", ap.Router(), scheduler)
 }
