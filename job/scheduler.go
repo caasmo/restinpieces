@@ -99,9 +99,7 @@ func (s *Scheduler) processJobs() {
 		return
 	}
 
-	if len(jobs) > 0 {
-		slog.Info("Processing jobs", "count", len(jobs))
-	}
+	slog.Info("Processing jobs", "count", len(jobs))
 
 	var processed int
 	for _, job := range jobs {
