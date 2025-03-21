@@ -10,7 +10,7 @@ import (
 	"github.com/caasmo/restinpieces/custom"
 
 	"github.com/caasmo/restinpieces/config"
-	scl "github.com/caasmo/restinpieces/queue/Scheduler"
+	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/server"
 )
 
