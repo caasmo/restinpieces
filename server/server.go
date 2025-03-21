@@ -50,6 +50,9 @@ func Run(addr string, r router.Router, scheduler *job.Scheduler) {
 		}
 	}()
 
+    // Start the job scheduler
+    scheduler.Start()
+
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
 		syscall.SIGHUP,  // kill -SIGHUP XXXX
