@@ -107,6 +107,7 @@ const (
 	DefaultShutdownTimeout   = 15 * time.Second
 )
 
+//
 func FillServer() Server {
 	return Server{
 		Addr:                   ":8080",
@@ -119,6 +120,8 @@ func FillServer() Server {
 }
 
 func Load(dbfile string) (*Config, error) {
+
+
 	cfg := &Config{
 		JwtSecret:       []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
 		TokenDuration:   15 * time.Minute,
