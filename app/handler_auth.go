@@ -61,7 +61,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 		"email", user.Email,
 		"secret_length", len(a.config.JwtSecret),
 		"duration", a.config.TokenDuration)
-	newToken, expiry, err := crypto.NewJwtSessionToken(userId, user.Email, a.config.JwtSecret, a.config.TokenDuration)
+	newToken, expiry, err := crypto.NewJwtSessionToken(userId, user.Email, user.Password, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		slog.Error("Failed to generate new token", "error", err)
 		writeJSONError(w, errorTokenGeneration)
@@ -126,7 +126,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT session token
-	token, _, err := crypto.NewJwtSessionToken(user.ID, user.Email, a.config.JwtSecret, a.config.TokenDuration)
+	token, _, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
@@ -317,7 +317,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 	// Generate JWT session token for immediate authentication
 	slog.Debug("Generating JWT session token", "user_id", retrievedUser.ID)
-	token, _, err := crypto.NewJwtSessionToken(retrievedUser.ID, retrievedUser.Email, a.config.JwtSecret, a.config.TokenDuration)
+	token, _, err := crypto.NewJwtSessionToken(retrievedUser.ID, retrievedUser.Email, retrievedUser.Password, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
