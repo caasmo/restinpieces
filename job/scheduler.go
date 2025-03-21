@@ -99,11 +99,24 @@ func (s *Scheduler) processJobs() {
 		return
 	}
 
+	if len(jobs) > 0 {
+		slog.Info("Processing jobs", "count", len(jobs))
+	}
+
+	var processed int
 	for _, job := range jobs {
 		jobCopy := job // Create a copy to avoid closure issues
 		s.eg.Go(func() error {
-			return executeJob(jobCopy)
+			err := executeJob(jobCopy)
+			if err == nil {
+				processed++
+			}
+			return err
 		})
+	}
+
+	if len(jobs) > 0 {
+		slog.Info("Jobs processed", "success", processed, "total", len(jobs))
 	}
 }
 
