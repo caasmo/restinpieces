@@ -136,7 +136,7 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 // - Creating the signing key from user credentials
 // - Setting up standard claims
 // - Generating and signing the token
-func NewJwtSession(userID, email string, secret []byte, duration time.Duration) (string, time.Time, error) {
+func NewJwtSessionToken(userID, email string, secret []byte, duration time.Duration) (string, time.Time, error) {
 	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, "", secret)
 	if err != nil {
