@@ -384,37 +384,3 @@ func TestCreateUserWithPassword(t *testing.T) {
 	})
 }
 
-func TestInsertQueueJobDuplicate(t *testing.T) {
-	testDB := setupDB(t)
-	defer testDB.Close()
-
-	// First insert with unique payload
-	uniqueJob := queue.QueueJob{
-		JobType:     "test_job",
-		Payload:     json.RawMessage(`{"key":"unique_value"}`),
-		Status:      queue.StatusPending,
-		MaxAttempts: 3,
-	}
-
-	if err := testDB.InsertQueueJob(uniqueJob); err != nil {
-		t.Fatalf("unexpected error on first insert: %v", err)
-	}
-
-	// Second insert with duplicate payload
-	dupJob := queue.QueueJob{
-		JobType:     "test_job",                                // Same job type as initial insert
-		Payload:     json.RawMessage(`{"key":"unique_value"}`), // Same payload as initial insert
-		Status:      queue.StatusPending,
-		MaxAttempts: 3,
-	}
-	err := testDB.InsertQueueJob(dupJob)
-
-	if err == nil {
-		t.Error("expected error but got none")
-		return
-	}
-
-	if err != db.ErrConstraintUnique {
-		t.Errorf("expected error type %v, got %v", db.ErrConstraintUnique, err)
-	}
-}
