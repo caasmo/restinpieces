@@ -138,37 +138,77 @@ function buildUrl(baseUrl, path) {
   return url;
 }
 
+/**
+ * Serializes an object of parameters into a URL-encoded query string.
+ * 
+ * This function handles various data types:
+ * - Strings, numbers, booleans: directly encoded
+ * - Arrays: creates multiple entries with the same parameter name
+ * - Date objects: converted to ISO strings with "T" replaced by space
+ * - Objects: converted to JSON strings and encoded
+ * - null/undefined values: skipped entirely
+ * 
+ * @param {Object} params - The object containing parameters to serialize
+ * @returns {string} URL-encoded query string
+ * 
+ * @example
+ * // Basic parameters
+ * serializeQueryParams({ name: "John Doe", age: 30 })
+ * // Returns: "name=John%20Doe&age=30"
+ * 
+ * @example
+ * // Array parameters
+ * serializeQueryParams({ colors: ["red", "green", "blue"] })
+ * // Returns: "colors=red&colors=green&colors=blue"
+ * 
+ * @example
+ * // Object parameters (converted to JSON)
+ * serializeQueryParams({ filter: { minPrice: 10, maxPrice: 100 } })
+ * // Returns: "filter=%7B%22minPrice%22%3A10%2C%22maxPrice%22%3A100%7D"
+ * 
+ * @example
+ * // Date parameters
+ * serializeQueryParams({ created: new Date("2025-03-21T12:00:00Z") })
+ * // Returns: "created=2025-03-21%2012%3A00%3A00.000Z"
+ * 
+ * @example
+ * // Handling null values
+ * serializeQueryParams({ name: "Test", category: null })
+ * // Returns: "name=Test" (category is skipped)
+ * 
+ * @example
+ * // Mixed parameter types
+ * serializeQueryParams({
+ *   id: 1234,
+ *   tags: ["new", "featured"],
+ *   metadata: { version: "1.0" },
+ *   updated: new Date("2025-03-21")
+ * })
+ * // Returns a complex query string with all parameters properly encoded
+ */
 function serializeQueryParams(params) {
     const result = [];
 
     for (const key in params) {
         const encodedKey = encodeURIComponent(key);
-        const arrValue = Array.isArray(params[key]) ? params[key] : [params[key]];
+        const values = Array.isArray(params[key]) ? params[key] : [params[key]];
 
-        for (let v of arrValue) {
-            v = prepareQueryParamValue(v);
-            if (v === null) {
+        for (let value of values) {
+            // Skip null/undefined values
+            if (value === null || value === undefined) {
                 continue;
             }
-            result.push(encodedKey + "=" + v);
+            
+            // Format based on value type
+            if (value instanceof Date) {
+                value = value.toISOString().replace("T", " ");
+            } else if (typeof value === "object") {
+                value = JSON.stringify(value);
+            }
+            
+            result.push(`${encodedKey}=${encodeURIComponent(value)}`);
         }
     }
 
     return result.join("&");
-}
-
-function prepareQueryParamValue(value) {
-    if (value === null || typeof value === "undefined") {
-        return null;
-    }
-
-    if (value instanceof Date) {
-        return encodeURIComponent(value.toISOString().replace("T", " "));
-    }
-
-    if (typeof value === "object") {
-        return encodeURIComponent(JSON.stringify(value));
-    }
-
-    return encodeURIComponent(value);
 }
