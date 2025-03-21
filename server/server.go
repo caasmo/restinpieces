@@ -15,6 +15,15 @@ import (
 
 func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 
+	slog.Info("Server configuration",
+		"addr", cfg.Addr,
+		"read_timeout", cfg.ReadTimeout,
+		"read_header_timeout", cfg.ReadHeaderTimeout,
+		"write_timeout", cfg.WriteTimeout,
+		"idle_timeout", cfg.IdleTimeout,
+		"shutdown_timeout", cfg.ShutdownGracefulTimeout,
+	)
+
 	srv := &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           r,
