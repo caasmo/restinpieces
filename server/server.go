@@ -21,16 +21,8 @@ const (
 	IdleTimeout       = 1 * time.Minute
 )
 
-func Run(addr string, r router.Router, scheduler *scheduler.Scheduler) {
-
-	srv := &http.Server{
-		Addr:              addr,
-		Handler:           r,
-		ReadTimeout:       ReadTimeout,
-		ReadHeaderTimeout: ReadHeaderTimeout,
-		WriteTimeout:      WriteTimeout,
-		IdleTimeout:       IdleTimeout,
-	}
+func Run(cfg config.Config, r router.Router, scheduler *queue.Scheduler) {
+	srv := New(cfg.Server, r)
 
 	// Start HTTP server
 	serverError := make(chan error, 1)
