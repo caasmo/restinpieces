@@ -9,9 +9,8 @@ import (
 )
 
 type jsonError struct {
-	code    int
-	status  string
-	message string
+	status    int
+	body []byte
 }
 
 var jsonHeader = []string{"application/json; charset=utf-8"}
@@ -62,15 +61,11 @@ var (
 	errorJwtInvalidToken      = jsonError{http.StatusUnauthorized, CodeJwtInvalidToken, "Invalid authentication token"}
 )
 
-// writeJSONError writes a standardized JSON error response
+// writeJSONError writes a precomputed JSON error response
 func writeJSONError(w http.ResponseWriter, err jsonError) {
 	w.Header()["Content-Type"] = jsonHeader
 	w.WriteHeader(err.code)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  err.code,
-		"code":    err.status,
-		"message": err.message,
-	})
+	w.Write(err.body)
 }
 
 // writeJSONErrorf writes a formatted JSON error response with custom message
