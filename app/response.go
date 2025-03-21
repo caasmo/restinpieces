@@ -38,7 +38,12 @@ const (
 	CodeJwtInvalidToken      = "invalid_token"
 )
 
-// precomputeError generates a jsonError with the given status code, error code and message
+// precomputeError() will be executed during initialization (before main() runs),
+// and the JSON body will be precomputed and stored in the error variables. 
+// the variables will contain the fully JSON as []byte already
+// It avoids repeated JSON marshaling during request handling 
+// Any time we use writeJSONError(w, errorTokenGeneration) in your code, it
+// simply writes the pre-computed bytes to the response writer
 func precomputeError(status int, code, message string) jsonError {
 	body := fmt.Sprintf(`{"status":%d,"code":"%s","message":"%s"}`, status, code, message)
 	return jsonError{status: status, body: []byte(body)}
