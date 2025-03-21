@@ -40,6 +40,21 @@ func (d *Db) GetJobs(limit int) ([]queue.QueueJob, error) {
 		ORDER BY created_at ASC, id ASC
 		LIMIT ?`,
 		func(stmt *sqlite.Stmt) error {
+			createdAt, err := db.TimeParse(stmt.GetText("created_at"))
+			if err != nil {
+				return fmt.Errorf("error parsing created_at time: %w", err)
+			}
+
+			updatedAt, err := db.TimeParse(stmt.GetText("updated_at")) 
+			if err != nil {
+				return fmt.Errorf("error parsing updated_at time: %w", err)
+			}
+
+			scheduledFor, err := db.TimeParse(stmt.GetText("scheduled_for"))
+			if err != nil {
+				return fmt.Errorf("error parsing scheduled_for time: %w", err)
+			}
+
 			job := queue.QueueJob{
 				ID:           stmt.GetInt64("id"),
 				JobType:      stmt.GetText("job_type"),
@@ -47,9 +62,9 @@ func (d *Db) GetJobs(limit int) ([]queue.QueueJob, error) {
 				Status:       stmt.GetText("status"),
 				Attempts:     int(stmt.GetInt64("attempts")),
 				MaxAttempts:  int(stmt.GetInt64("max_attempts")),
-				CreatedAt:    stmt.GetText("created_at"),
-				UpdatedAt:    stmt.GetText("updated_at"),
-				ScheduledFor: stmt.GetText("scheduled_for"),
+				CreatedAt:    createdAt,
+				UpdatedAt:    updatedAt,
+				ScheduledFor: scheduledFor,
 			}
 			jobs = append(jobs, job)
 			return nil
