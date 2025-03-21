@@ -184,7 +184,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Insert into job queue with deduplication
-	err = a.db.InsertQueueJob(job)
+	err = a.db.InsertJob(job)
 	if err != nil {
 		if err == db.ErrConstraintUnique {
 			writeJSONError(w, errorConflict)
@@ -280,7 +280,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 			Payload: payload,
 		}
 
-		err = a.db.InsertQueueJob(job)
+		err = a.db.InsertJob(job)
 		if err != nil {
 			writeJSONError(w, errorServiceUnavailable)
 			return
