@@ -14,11 +14,23 @@ import (
 
 // Scheduler handles scheduled jobs
 type Scheduler struct {
+	// interval specifies how often the scheduler should check for new jobs
 	interval      time.Duration
+	
+	// eg is an errgroup.Group used to manage and track running jobs
 	eg            *errgroup.Group
-	ctx           context.Context // Used to stop the Start goroutine from outside via Stop()
-	cancel        context.CancelFunc // Used to cancel the ctx to stop the Start goroutine
-	shutdownDone  chan struct{} // Channel to signal completion
+	
+	// ctx is the context used to control the scheduler's lifecycle
+	// It allows graceful shutdown when Stop() is called
+	ctx           context.Context
+	
+	// cancel is the CancelFunc associated with ctx
+	// Calling cancel() will signal the scheduler to stop
+	cancel        context.CancelFunc
+	
+	// shutdownDone is a channel that will be closed when the scheduler
+	// has completely shut down and all jobs have finished
+	shutdownDone  chan struct{}
 }
 
 // NewScheduler creates a new scheduler
