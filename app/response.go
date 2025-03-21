@@ -38,27 +38,33 @@ const (
 	CodeJwtInvalidToken      = "invalid_token"
 )
 
+// precomputeError generates a jsonError with the given status code, error code and message
+func precomputeError(status int, code, message string) jsonError {
+	body := fmt.Sprintf(`{"status":%d,"code":"%s","message":"%s"}`, status, code, message)
+	return jsonError{status: status, body: []byte(body)}
+}
+
 // Precomputed error responses with status codes
 var (
-	errorTokenGeneration      = jsonError{http.StatusInternalServerError, []byte(`{"status":500,"code":"token_generation","message":"Failed to generate authentication token"}`)}
-	errorClaimsNotFound       = jsonError{http.StatusInternalServerError, []byte(`{"status":500,"code":"claims_not_found","message":"Failed to generate token: Claims not found"}`)}
-	errorInvalidRequest       = jsonError{http.StatusBadRequest, []byte(`{"status":400,"code":"invalid_input","message":"The request contains invalid data"}`)}
-	errorInvalidCredentials   = jsonError{http.StatusUnauthorized, []byte(`{"status":401,"code":"invalid_credentials","message":"Invalid credentials provided"}`)}
-	errorPasswordMismatch     = jsonError{http.StatusBadRequest, []byte(`{"status":400,"code":"password_mismatch","message":"Password and confirmation do not match"}`)}
-	errorMissingFields        = jsonError{http.StatusBadRequest, []byte(`{"status":400,"code":"missing_fields","message":"Required fields are missing"}`)}
-	errorPasswordComplexity   = jsonError{http.StatusBadRequest, []byte(`{"status":400,"code":"password_complexity","message":"Password must be at least 8 characters"}`)}
-	errorEmailConflict        = jsonError{http.StatusConflict, []byte(`{"status":409,"code":"email_conflict","message":"Email address is already registered"}`)}
-	errorNotFound             = jsonError{http.StatusNotFound, []byte(`{"status":404,"code":"not_found","message":"Requested resource not found"}`)}
-	errorConflict             = jsonError{http.StatusConflict, []byte(`{"status":409,"code":"conflict","message":"Verification already requested"}`)}
-	errorRegistrationFailed   = jsonError{http.StatusBadRequest, []byte(`{"status":400,"code":"registration_failed","message":"Registration failed due to invalid data"}`)}
-	errorTooManyRequests      = jsonError{http.StatusTooManyRequests, []byte(`{"status":429,"code":"too_many_requests","message":"Too many requests, please try again later"}`)}
-	errorServiceUnavailable   = jsonError{http.StatusServiceUnavailable, []byte(`{"status":503,"code":"service_unavailable","message":"Service is temporarily unavailable"}`)}
-	errorNoAuthHeader         = jsonError{http.StatusUnauthorized, []byte(`{"status":401,"code":"no_auth_header","message":"Authorization header is required"}`)}
-	errorInvalidTokenFormat   = jsonError{http.StatusUnauthorized, []byte(`{"status":401,"code":"invalid_token_format","message":"Invalid authorization token format"}`)}
-	errorJwtInvalidSignMethod = jsonError{http.StatusUnauthorized, []byte(`{"status":401,"code":"invalid_sign_method","message":"Invalid JWT signing method"}`)}
-	errorJwtTokenExpired      = jsonError{http.StatusUnauthorized, []byte(`{"status":401,"code":"token_expired","message":"Authentication token has expired"}`)}
-	errorAlreadyVerified      = jsonError{http.StatusConflict, []byte(`{"status":409,"code":"already_verified","message":"Account is already verified"}`)}
-	errorJwtInvalidToken      = jsonError{http.StatusUnauthorized, []byte(`{"status":401,"code":"invalid_token","message":"Invalid authentication token"}`)}
+	errorTokenGeneration      = precomputeError(http.StatusInternalServerError, CodeTokenGeneration, "Failed to generate authentication token")
+	errorClaimsNotFound       = precomputeError(http.StatusInternalServerError, CodeClaimsNotFound, "Failed to generate token: Claims not found")
+	errorInvalidRequest       = precomputeError(http.StatusBadRequest, CodeInvalidRequest, "The request contains invalid data")
+	errorInvalidCredentials   = precomputeError(http.StatusUnauthorized, CodeInvalidCredentials, "Invalid credentials provided")
+	errorPasswordMismatch     = precomputeError(http.StatusBadRequest, CodePasswordMismatch, "Password and confirmation do not match")
+	errorMissingFields        = precomputeError(http.StatusBadRequest, CodeMissingFields, "Required fields are missing")
+	errorPasswordComplexity   = precomputeError(http.StatusBadRequest, CodePasswordComplexity, "Password must be at least 8 characters")
+	errorEmailConflict        = precomputeError(http.StatusConflict, CodeEmailConflict, "Email address is already registered")
+	errorNotFound             = precomputeError(http.StatusNotFound, CodeNotFound, "Requested resource not found")
+	errorConflict             = precomputeError(http.StatusConflict, CodeConflict, "Verification already requested")
+	errorRegistrationFailed   = precomputeError(http.StatusBadRequest, CodeRegistrationFailed, "Registration failed due to invalid data")
+	errorTooManyRequests      = precomputeError(http.StatusTooManyRequests, CodeTooManyRequests, "Too many requests, please try again later")
+	errorServiceUnavailable   = precomputeError(http.StatusServiceUnavailable, CodeServiceUnavailable, "Service is temporarily unavailable")
+	errorNoAuthHeader         = precomputeError(http.StatusUnauthorized, CodeNoAuthHeader, "Authorization header is required")
+	errorInvalidTokenFormat   = precomputeError(http.StatusUnauthorized, CodeInvalidTokenFormat, "Invalid authorization token format")
+	errorJwtInvalidSignMethod = precomputeError(http.StatusUnauthorized, CodeJwtInvalidSignMethod, "Invalid JWT signing method")
+	errorJwtTokenExpired      = precomputeError(http.StatusUnauthorized, CodeJwtTokenExpired, "Authentication token has expired")
+	errorAlreadyVerified      = precomputeError(http.StatusConflict, CodeAlreadyVerified, "Account is already verified")
+	errorJwtInvalidToken      = precomputeError(http.StatusUnauthorized, CodeJwtInvalidToken, "Invalid authentication token")
 )
 
 // writeJSONError writes a precomputed JSON error response
