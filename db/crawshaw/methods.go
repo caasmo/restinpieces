@@ -67,25 +67,6 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 }
 
 // validateUserFields checks that required user fields are present
-func validateQueueJob(job queue.QueueJob) error {
-	var missingFields []string
-	if job.JobType == "" {
-		missingFields = append(missingFields, "JobType")
-	}
-	if len(job.Payload) == 0 {
-		missingFields = append(missingFields, "Payload")
-	}
-	if job.MaxAttempts < 1 {
-		missingFields = append(missingFields, "MaxAttempts must be ≥1")
-	}
-
-	if len(missingFields) > 0 {
-		return fmt.Errorf("%w: %s", db.ErrMissingFields, strings.Join(missingFields, ", "))
-	}
-	return nil
-}
-
-// GetUserById retrieves a user by their unique ID.
 // Returns:
 // - *db.User: User record if found, nil if no matching record exists
 // - returned time Fields are in UTC, RFC3339
