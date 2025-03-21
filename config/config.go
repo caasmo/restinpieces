@@ -96,3 +96,10 @@ type Config struct {
 
 	OAuth2Providers map[string]OAuth2Provider
 }
+
+
+// TDOO
+func Load() (*Config, error) {
+
+    return nil, nil
+}
