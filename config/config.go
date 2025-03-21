@@ -68,8 +68,8 @@ type Scheduler struct {
 }
 
 type Server struct {
-	// Port is the HTTP server port to listen on
-	Port string
+	// Addr is the HTTP server address to listen on (e.g. ":8080")
+	Addr string
 	
 	// GracefulTimeout is the maximum time to wait for graceful shutdown
 	GracefulTimeout time.Duration
