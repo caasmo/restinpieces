@@ -132,7 +132,14 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeAuthOkResponse(w, token, user)
+	// Return OAuth2 token response format
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"token_type": "Bearer",
+		"access_token": token,
+		"expires_in": int(a.config.TokenDuration.Seconds()),
+		"record": user,
+	})
 }
 
 // confirm-
@@ -325,7 +332,14 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	slog.Debug("JWT token generated")
 
 	// TODO diferent workflow depending on verified.
-	writeAuthOkResponse(w, token, retrievedUser)
+	// Return OAuth2 token response format
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"token_type": "Bearer",
+		"access_token": token,
+		"expires_in": int(a.config.TokenDuration.Seconds()),
+		"record": retrievedUser,
+	})
 }
 
 // /request-verification endpoint

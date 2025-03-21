@@ -113,8 +113,8 @@ function requestJsonAuth(
     body = null,
     headers = {}
 ) {
-    // Get JWT from localStorage
-    const token = localStorage.getItem('jwt_token');
+    // Get access token from localStorage
+    const token = localStorage.getItem('access_token');
     
     // Add Authorization header
     const authHeaders = {
@@ -238,11 +238,11 @@ function serializeQueryParams(params) {
  * Saves JWT token to localStorage
  * @param {string} token - The JWT token
  */
-function saveJwt(token) {
+function saveAccessToken(token) {
   if (!token) {
     throw new Error('Invalid token: token is missing');
   }
-  localStorage.setItem('jwt_token', token);
+  localStorage.setItem('access_token', token);
 }
 
 /**

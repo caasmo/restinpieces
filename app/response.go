@@ -53,15 +53,4 @@ func writeJSONErrorf(w http.ResponseWriter, code int, format string, args ...int
 }
 
 // writeAuthOkResponse writes a standardized successful authentication response
-func writeAuthOkResponse(w http.ResponseWriter, token string, user *db.User) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"token": token,
-		"record": map[string]interface{}{
-			"id":       user.ID,
-			"email":    user.Email,
-			"name":     user.Name,
-			"verified": user.Verified,
-		},
-	})
-}
+// writeAuthOkResponse is deprecated - use OAuth2 token response format instead
