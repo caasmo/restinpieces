@@ -36,31 +36,22 @@ import (
 // Endpoint: POST /auth-refresh
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Get claims from context (added by JwtValidate middleware)
-	slog.Debug("RefreshAuthHandler started")
 	userId, ok := r.Context().Value(UserIDKey).(string)
 	if !ok || userId == "" {
 		slog.Error("Failed to get user ID from context")
 		writeJSONError(w, errorClaimsNotFound)
 		return
 	}
-	slog.Debug("User ID from context", "user_id", userId)
 
 	// Get user from database to get email for signing key
-	slog.Debug("Fetching user from database", "user_id", userId)
 	user, err := a.db.GetUserById(userId)
 	if err != nil || user == nil {
 		slog.Error("Failed to fetch user", "user_id", userId, "error", err)
 		writeJSONError(w, errorInvalidCredentials)
 		return
 	}
-	slog.Debug("User fetched", "user_id", user.ID, "email", user.Email)
 
 	// Generate new token with fresh expiration using NewJwtSession
-	slog.Debug("Generating new JWT token",
-		"user_id", userId,
-		"email", user.Email,
-		"secret_length", len(a.config.JwtSecret),
-		"duration", a.config.TokenDuration)
 	newToken, expiry, err := crypto.NewJwtSessionToken(userId, user.Email, user.Password, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		slog.Error("Failed to generate new token", "error", err)
@@ -224,7 +215,6 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 // provider
 // if password exist CreateUserWithPassword will succeed but the password will be not updated.
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
-	slog.Debug("Starting password registration handler")
 	
 	var req struct {
 		Identity        string `json:"identity"`
@@ -237,8 +227,6 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	slog.Debug("Request decoded", "identity", req.Identity)
-
 	// Validate required fields
 	req.Identity = strings.TrimSpace(req.Identity)
 	req.Password = strings.TrimSpace(req.Password)
@@ -247,8 +235,6 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 	
-	slog.Debug("Fields validated", "identity", req.Identity)
-
 	// Validate password match
 	if req.Password != req.PasswordConfirm {
 		writeJSONError(w, errorPasswordMismatch)
@@ -261,10 +247,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 	
-	slog.Debug("Password validation passed", "password_length", len(req.Password))
-
 	// Hash password before storage
-	slog.Debug("Generating password hash")
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
@@ -282,15 +265,12 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Create user with password authentication
-	slog.Debug("Creating user in database", "email", newUser.Email)
 	retrievedUser, err := a.db.CreateUserWithPassword(newUser)
 	if err != nil {
 		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Registration failed: %s"}`, err.Error())
 		return
 	}
 	
-	slog.Debug("User created", "user_id", retrievedUser.ID, "verified", retrievedUser.Verified)
-
 	// If passwords are different CreateUserWithPassword did not write the new
 	// password on conflict because the user had already a password.
 	if retrievedUser.Password != newUser.Password {
@@ -300,7 +280,6 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 	// If user is not verified, add verification job to queue
 	if !retrievedUser.Verified {
-		slog.Debug("User not verified, creating verification job", "email", retrievedUser.Email)
 		payload, _ := json.Marshal(queue.PayloadEmailVerification{Email: retrievedUser.Email})
 		job := queue.Job{
 			JobType: queue.JobTypeEmailVerification,
@@ -313,17 +292,14 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 			writeJSONError(w, errorServiceUnavailable)
 			return
 		}
-		slog.Debug("Verification job created")
 	}
 
 	// Generate JWT session token for immediate authentication
-	slog.Debug("Generating JWT session token", "user_id", retrievedUser.ID)
 	token, _, err := crypto.NewJwtSessionToken(retrievedUser.ID, retrievedUser.Email, retrievedUser.Password, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
 	}
-	slog.Debug("JWT token generated")
 
 	// Return standardized authentication token response
 	writeAuthTokenResponse(w, token, int(a.config.TokenDuration.Seconds()), retrievedUser)
