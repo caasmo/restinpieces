@@ -51,6 +51,7 @@ func NewScheduler(interval time.Duration, db db.Db) *Scheduler {
 // that will create gorotines to handle backend jobs
 func (s *Scheduler) Start() {
 	go func() {
+		slog.Info("Starting job scheduler", "interval", s.interval)
 		ticker := time.NewTicker(s.interval)
 		defer ticker.Stop()
 		
@@ -65,6 +66,7 @@ func (s *Scheduler) Start() {
 				close(s.shutdownDone) // Signal that scheduler has completely shut down
 				return
 			case <-ticker.C:
+				slog.Debug("Scheduler tick - processing jobs")
 				s.processJobs()
 			}
 		}
