@@ -58,9 +58,9 @@ func (s *Scheduler) Start() {
 	}()
 }
 
-// StopWithContext signals the scheduler to stop and waits for all jobs to complete
+// Stop signals the scheduler to stop and waits for all jobs to complete
 // or the context to be canceled, whichever comes first
-func (s *Scheduler) StopWithContext(ctx context.Context) error {
+func (s *Scheduler) Stop(ctx context.Context) error {
 	log.Println("Stopping job scheduler")
 	s.cancel()
 	

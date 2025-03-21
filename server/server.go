@@ -89,7 +89,7 @@ func Run(addr string, r router.Router) {
 	// Shutdown scheduler in a goroutine, passing the graceful context
 	//shutdownGroup.Go(func() error {
 	//	log.Println("Shutting down scheduler...")
-	//	if err := scheduler.StopWithContext(gracefulCtx); err != nil {
+	//	if err := scheduler.Stop(gracefulCtx); err != nil {
 	//		log.Printf("Scheduler shutdown error: %v\n", err)
 	//		return err
 	//	}
