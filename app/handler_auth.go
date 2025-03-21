@@ -61,7 +61,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 		"email", user.Email,
 		"secret_length", len(a.config.JwtSecret),
 		"duration", a.config.TokenDuration)
-	newToken, expiry, err := crypto.NewJwtSession(userId, user.Email, a.config.JwtSecret, a.config.TokenDuration)
+	newToken, expiry, err := crypto.NewJwtSessionToken(userId, user.Email, a.config.JwtSecret, a.config.TokenDuration)
 	if err != nil {
 		slog.Error("Failed to generate new token", "error", err)
 		writeJSONError(w, errorTokenGeneration)
