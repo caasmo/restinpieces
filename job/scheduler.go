@@ -33,12 +33,12 @@ type Scheduler struct {
 }
 
 // NewScheduler creates a new scheduler
-func NewScheduler(interval time.Duration, db db.Db) *Scheduler {
+func NewScheduler(cfg Config, db db.Db) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	g, ctx := errgroup.WithContext(ctx)
 	
 	return &Scheduler{
-		interval:      interval,
+		interval:      cfg.Interval,
 		eg:            g,
 		ctx:           ctx,
 		cancel:        cancel,
