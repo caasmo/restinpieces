@@ -196,7 +196,16 @@
             })
             .catch(error => {
                 console.error('Registration failed:', error);
-                messageDiv.textContent = `Registration failed: ${error.response?.message || error.message}`;
+                let errorMessage = 'Registration failed: ';
+                if (error.response) {
+                    // Try to get detailed error from response
+                    errorMessage += error.response.message || 
+                                   error.response.data?.message || 
+                                   JSON.stringify(error.response.data || error.response);
+                } else {
+                    errorMessage += error.message;
+                }
+                messageDiv.textContent = errorMessage;
                 messageDiv.classList.add('error');
             });
         });
