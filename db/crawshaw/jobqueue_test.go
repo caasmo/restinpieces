@@ -21,7 +21,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 	}{
 		{
 			name: "valid job",
-			job: queue.QueueJob{
+			job: queue.Job{
 				JobType:     "test_job",
 				Payload:     json.RawMessage(`{"key":"unique_value"}`),
 				Status:      queue.StatusPending,
@@ -31,7 +31,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 		},
 		{
 			name: "missing job type",
-			job: queue.QueueJob{
+			job: queue.Job{
 				JobType:     "",
 				Payload:     json.RawMessage(`{"key":"value"}`),
 				MaxAttempts: 3,
@@ -40,7 +40,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 		},
 		{
 			name: "empty payload",
-			job: queue.QueueJob{
+			job: queue.Job{
 				JobType:     "test_job",
 				Payload:     json.RawMessage(``),
 				MaxAttempts: 3,
@@ -49,7 +49,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 		},
 		{
 			name: "invalid max attempts",
-			job: queue.QueueJob{
+			job: queue.Job{
 				JobType:     "test_job",
 				Payload:     json.RawMessage(`{"key":"value"}`),
 				MaxAttempts: 0,
