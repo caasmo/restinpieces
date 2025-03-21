@@ -235,9 +235,30 @@ function serializeQueryParams(params) {
 }
 
 /**
- * Handles the email registration response by saving the token and user record to localStorage
+ * Saves JWT token to localStorage
+ * @param {string} token - The JWT token
+ */
+function saveJwt(token) {
+  if (!token) {
+    throw new Error('Invalid token: token is missing');
+  }
+  localStorage.setItem('auth_token', token);
+}
+
+/**
+ * Saves user record to localStorage
+ * @param {Object} record - The user record object
+ */
+function saveUserRecord(record) {
+  if (!record) {
+    throw new Error('Invalid record: record is missing');
+  }
+  localStorage.setItem('user_record', JSON.stringify(record));
+}
+
+/**
+ * Handles the email registration response by saving the token and user record
  * @param {Object} data - The JSON data returned from the requestJson method
- * @returns {Object} The user record that was saved
  */
 function handleEmailRegistration(data) {
   // Verify we have the necessary data
@@ -245,13 +266,8 @@ function handleEmailRegistration(data) {
     throw new Error('Invalid response data: token or record missing');
   }
 
-  // Save the JWT token to localStorage
-  localStorage.setItem('auth_token', data.token);
-  
-  // Save the user record to localStorage
-  // We stringify the record object to store it properly
-  localStorage.setItem('user_record', JSON.stringify(data.record));
-  
-  // Return the user record for immediate use if needed
-  return data.record;
+  // Save JWT and user record using the specialized functions
+  saveJwt(data.token);
+  saveUserRecord(data.record);
 }
+
