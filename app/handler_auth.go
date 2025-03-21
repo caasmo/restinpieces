@@ -244,15 +244,11 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	now := time.Now()
-
 	// Prepare user data
 	newUser := db.User{
 		Email:           req.Identity,
 		Password:        string(hashedPassword),
 		Name:            "", // Optional field TODO
-		Created:         now,
-		Updated:         now,
 		Verified:        false,
 		Oauth2:          false,
 		EmailVisibility: false,
