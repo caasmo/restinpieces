@@ -80,10 +80,10 @@ func (s *Scheduler) Stop(ctx context.Context) error {
 	// Wait for either scheduler completion or context timeout
 	select {
 	case <-s.shutdownDone:
-		log.Println("Job scheduler stopped gracefully")
+		slog.Info("Job scheduler stopped gracefully")
 		return nil
 	case <-ctx.Done():
-		log.Println("Job scheduler shutdown timed out")
+		slog.Info("Job scheduler shutdown timed out")
 		return ctx.Err()
 	}
 }
