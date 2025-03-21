@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth2 Providers</title>
+    <script src="assets/js/sendjsonrequest.js"></script> <!--  sendJsonRequest is in this file -->
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            overflow: auto; /* Make scrollable if content is large */
+            white-space: pre-wrap; /* Wrap long lines */
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>OAuth2 Providers</h1>
+
+    <button onclick="getProviders()">Get Providers</button>
+
+    <h2>Result:</h2>
+    <pre id="result"></pre>
+
+    <script>
+    function getProviders() {
+        const resultDiv = document.getElementById('result');
+        resultDiv.textContent = "Loading...";
+        resultDiv.classList.remove("error"); // Remove any previous error class
+
+        sendJsonRequest(
+            "http://localhost:8080",
+            "/api/list-oauth2-providers", // Correct endpoint
+            "GET"
+        )
+        .then(data => {
+            // Stringify the JSON with indentation for readability
+            resultDiv.textContent = JSON.stringify(data, null, 2);
+        })
+        .catch(error => {
+            resultDiv.classList.add("error"); // Add error class for styling
+            let errorText = "Error: " + error.message + "\n";
+            errorText += "Status: " + error.status + "\n";
+            if (error.response) {
+                errorText += "Response:\n" + JSON.stringify(error.response, null, 2);
+            }
+            if (error.url){
+                errorText += "\nURL: " + error.url
+            }
+            resultDiv.textContent = errorText;
+            console.error(error);
+        });
+    }
+    </script>
+</body>
+</html>
