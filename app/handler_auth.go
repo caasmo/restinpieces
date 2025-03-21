@@ -132,19 +132,8 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return OAuth2 token response format with limited user fields
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"token_type": "Bearer",
-		"access_token": token,
-		"expires_in": int(a.config.TokenDuration.Seconds()),
-		"record": map[string]interface{}{
-			"id":       user.ID,
-			"email":    user.Email,
-			"name":     user.Name,
-			"verified": user.Verified,
-		},
-	})
+	// Return standardized OAuth2 token response
+	writeOAuth2TokenResponse(w, token, int(a.config.TokenDuration.Seconds()), user)
 }
 
 // confirm-
@@ -336,19 +325,8 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 	slog.Debug("JWT token generated")
 
-	// Return OAuth2 token response format with limited user fields
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"token_type": "Bearer",
-		"access_token": token,
-		"expires_in": int(a.config.TokenDuration.Seconds()),
-		"record": map[string]interface{}{
-			"id":       retrievedUser.ID,
-			"email":    retrievedUser.Email,
-			"name":     retrievedUser.Name,
-			"verified": retrievedUser.Verified,
-		},
-	})
+	// Return standardized OAuth2 token response
+	writeOAuth2TokenResponse(w, token, int(a.config.TokenDuration.Seconds()), retrievedUser)
 }
 
 // /request-verification endpoint
