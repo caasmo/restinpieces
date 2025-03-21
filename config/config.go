@@ -131,9 +131,10 @@ func Load(dbfile string) (*Config, error) {
 			MaxJobsPerTick:       100,
 			ConcurrencyMultiplier: 2, // Default to 2x CPU cores
 		},
-		Server: FillServer(),
 		OAuth2Providers: make(map[string]OAuth2Provider),
 	}
+
+cfg.Server = FillServer(cfg)
 
 	// Configure Google OAuth2 provider
 	googleConfig := OAuth2Provider{
