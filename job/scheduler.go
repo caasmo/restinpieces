@@ -21,11 +21,11 @@ type Scheduler struct {
 	eg            *errgroup.Group
 	
 	// ctx is the context used to control the scheduler's lifecycle
-	// It allows graceful shutdown when Stop() is called
+	// It allows graceful shutdown when Stop() is called from outside.
 	ctx           context.Context
 	
 	// cancel is the CancelFunc associated with ctx
-	// Calling cancel() will signal the scheduler to stop
+	// is called in the Stop method to start the process of shutdown of the start goroutine
 	cancel        context.CancelFunc
 	
 	// shutdownDone is a channel that will be closed when the scheduler
@@ -47,7 +47,8 @@ func NewScheduler(interval time.Duration) *Scheduler {
 	}
 }
 
-// Start begins the job scheduler operation
+// Start begins the job scheduler operation by creting a long runnig goroutine
+// that will create gorotines to handle backend jobs
 func (s *Scheduler) Start() {
 	go func() {
 		ticker := time.NewTicker(s.interval)
