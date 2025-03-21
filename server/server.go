@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+// TODO move to config as defaults
 const (
 	ReadTimeout       = 2 * time.Second
 	ReadHeaderTimeout = 2 * time.Second
