@@ -108,7 +108,7 @@ const (
 )
 
 //
-func FillServer() Server {
+func FillServer(cfg *Config) Server {
 	return Server{
 		Addr:                   ":8080",
 		ShutdownGracefulTimeout: DefaultShutdownTimeout,
