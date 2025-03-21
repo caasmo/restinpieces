@@ -49,12 +49,13 @@ func NewScheduler(cfg config.Scheduler, db db.Db) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	
 	// Set concurrency limit, default to DefaultConcurrencyMultiplier x CPU cores if not configured
-	if cfg.Concurrency <= 0 {
-		cfg.Concurrency = runtime.NumCPU() * DefaultConcurrencyMultiplier
+	concurrency := cfg.Concurrency
+	if concurrency <= 0 {
+		concurrency = runtime.NumCPU() * DefaultConcurrencyMultiplier
 	}
 	
 	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(cfg.Concurrency)
+	g.SetLimit(concurrency)
 	
 	return &Scheduler{
 		cfg:          cfg,
