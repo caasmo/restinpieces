@@ -197,10 +197,7 @@
             .catch(error => {
                 console.error('Registration failed:', error);
                 if (error instanceof ClientResponseError) {
-                    messageDiv.textContent = error.message;
-                    if (error.data) {
-                        messageDiv.textContent += `\nDetails: ${JSON.stringify(error.data, null, 2)}`;
-                    }
+                    messageDiv.textContent = error.toString();
                 } else {
                     messageDiv.textContent = `Registration failed: ${error.message}`;
                 }
