@@ -22,7 +22,15 @@ const (
 )
 
 func Run(cfg config.Config, r router.Router, scheduler *scheduler.Scheduler) {
-	srv := New(cfg.Server, r)
+
+    srv := &http.Server{
+        Addr:              addr,
+        Handler:           r,
+        ReadTimeout:       ReadTimeout,
+        ReadHeaderTimeout: ReadHeaderTimeout,
+        WriteTimeout:      WriteTimeout,
+        IdleTimeout:       IdleTimeout,
+    }
 
 	// Start HTTP server
 	serverError := make(chan error, 1)
