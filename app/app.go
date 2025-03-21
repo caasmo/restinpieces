@@ -88,3 +88,8 @@ func (a *App) Router() router.Router {
 func (a *App) Close() {
 	a.db.Close()
 }
+
+// Db returns the database instance
+func (a *App) Db() db.Db {
+	return a.db
+}
