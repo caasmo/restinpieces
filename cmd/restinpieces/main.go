@@ -23,7 +23,10 @@ func main() {
 		JwtSecret:       []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
 		TokenDuration:   15 * time.Minute,
 		DBFile:          *dbfile,
-        SchedulerInterval: 15 * time.Second,  // Default scheduler interval
+		Scheduler: config.Scheduler{
+			Interval:       15 * time.Second,
+			MaxJobsPerTick: 100,
+		},
 		OAuth2Providers: make(map[string]config.OAuth2Provider),
 	}
 
@@ -84,8 +87,8 @@ func main() {
 
 	// Create and start scheduler with configured interval and db 
 	scheduler := job.NewScheduler(job.Config{
-		Interval:        cfg.SchedulerInterval,
-		MaxJobsPerCycle: 100,
+		Interval:        cfg.Scheduler.Interval,
+		MaxJobsPerCycle: cfg.Scheduler.MaxJobsPerTick,
 	}, ap.Db())
 	
 	server.Run(":8080", ap.Router(), scheduler)

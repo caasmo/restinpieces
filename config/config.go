@@ -47,11 +47,16 @@ func (c *OAuth2Provider) FillEnvVars() error {
 	return nil
 }
 
+type Scheduler struct {
+	Interval        time.Duration
+	MaxJobsPerTick  int
+}
+
 type Config struct {
 	JwtSecret        []byte
 	TokenDuration    time.Duration
 	DBFile           string
-	SchedulerInterval time.Duration
+	Scheduler        Scheduler
 
 	OAuth2Providers map[string]OAuth2Provider
 }
