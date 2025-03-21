@@ -141,7 +141,7 @@ func executeJob(job queue.QueueJob) error {
 	// Simulate job execution
 	time.Sleep(2 * time.Second)
 
-	slog.Info("Completed job", "job", job)
+	slog.Info("Completed job", "jobID", job.ID, "jobType", job.JobType)
 	return nil
 }
 
