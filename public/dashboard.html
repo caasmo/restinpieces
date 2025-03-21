@@ -135,7 +135,7 @@
             })
             .catch(error => {
                 console.error('Token refresh failed:', error);
-                refreshError.textContent = error.toString();
+                refreshError.textContent = error.message;
                 if (error.response) {
                     refreshError.textContent += `\nResponse:\n${JSON.stringify(error.response, null, 2)}`;
                 }
