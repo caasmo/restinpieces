@@ -27,7 +27,10 @@
         }
         
         .refresh-section {
-            margin-top: 20px;
+            margin-top: 40px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 4px;
         }
         pre {
             background: white;
@@ -78,18 +81,19 @@
         <div class="info-section">
             <h2>Current Token</h2>
             <pre id="current-token"></pre>
-            <div class="refresh-section">
-                <h2>Token Refresh</h2>
-                <button onclick="refreshToken()">Refresh Token</button>
-                <div id="refresh-result">
-                    <h3>Previous Token</h3>
-                    <pre id="previous-token"></pre>
-                    <h3>New Token</h3>
-                    <pre id="new-token"></pre>
-                </div>
-                <div id="refresh-error" class="error"></div>
-            </div>
         </div>
+    </div>
+
+    <div class="refresh-section">
+        <h2>Token Refresh</h2>
+        <button onclick="refreshToken()">Refresh Token</button>
+        <div id="refresh-result">
+            <h3>Previous Token</h3>
+            <pre id="previous-token"></pre>
+            <h3>New Token</h3>
+            <pre id="new-token"></pre>
+        </div>
+        <div id="refresh-error" class="error"></div>
     </div>
 
     <script>
