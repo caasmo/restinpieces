@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"github.com/caasmo/restinpieces/router"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -45,7 +45,7 @@ func Run(addr string, r router.Router) {
 	serverError := make(chan error, 1)
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			log.Printf("ListenAndServe(): %v", err)
+			slog.Error("ListenAndServe error", "err", err)
 			serverError <- err
 		}
 	}()
@@ -60,9 +60,9 @@ func Run(addr string, r router.Router) {
 	// Wait for either interrupt signal or server error
 	select {
 	case <-ctx.Done():
-		log.Print("Received shutdown signal - gracefully shutting down...\n")
+		slog.Info("Received shutdown signal - gracefully shutting down")
 	case err := <-serverError:
-		log.Printf("Server error: %v - initiating shutdown...\n", err)
+		slog.Error("Server error - initiating shutdown", "err", err)
 	}
 
 	// Reset signals default behavior, similar to signal.Reset
@@ -77,12 +77,12 @@ func Run(addr string, r router.Router) {
 	
 	// Shutdown HTTP server in a goroutine
 	shutdownGroup.Go(func() error {
-		log.Println("Shutting down HTTP server...")
+		slog.Info("Shutting down HTTP server")
 		if err := srv.Shutdown(gracefulCtx); err != nil {
-			log.Printf("HTTP server shutdown error: %v\n", err)
+			slog.Error("HTTP server shutdown error", "err", err)
 			return err
 		}
-		log.Printf("HTTP server stopped gracefully\n")
+		slog.Info("HTTP server stopped gracefully")
 		return nil
 	})
 	
@@ -99,11 +99,11 @@ func Run(addr string, r router.Router) {
 	
 	// Wait for all shutdown tasks to complete
 	if err := shutdownGroup.Wait(); err != nil {
-		log.Printf("Error during shutdown: %v\n", err)
+		slog.Error("Error during shutdown", "err", err)
 		os.Exit(1)
 	}
 	
-	log.Printf("All systems stopped gracefully\n")
+	slog.Info("All systems stopped gracefully")
 	os.Exit(0)
 
 }
