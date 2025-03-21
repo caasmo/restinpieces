@@ -122,7 +122,7 @@ func (s *Scheduler) processJobs() {
 	for _, job := range jobs {
 		jobCopy := job // Create a copy to avoid closure issues
 		s.eg.Go(func() error {
-			err := executeJob(jobCopy)
+			err := executeJob(*jobCopy)
 			if err == nil {
 				processed++
 			}
@@ -135,7 +135,7 @@ func (s *Scheduler) processJobs() {
 	}
 }
 
-func executeJob(job queue.QueueJob) error {
+func executeJob(job queue.Job) error {
     slog.Info("Executing job",
     "payload", job.Payload,
     "status", job.Status,
