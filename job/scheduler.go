@@ -8,6 +8,7 @@ import (
 
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/config"
 )
 
 // Scheduler handles scheduled jobs
@@ -33,7 +34,7 @@ type Scheduler struct {
 }
 
 // NewScheduler creates a new scheduler
-func NewScheduler(cfg Config, db db.Db) *Scheduler {
+func NewScheduler(cfg Config.Scheduler, db db.Db) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	g, ctx := errgroup.WithContext(ctx)
 	
