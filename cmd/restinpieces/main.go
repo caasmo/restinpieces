@@ -4,7 +4,6 @@ import (
 	"flag"
 	"log/slog"
 	"os"
-	"time"
 
 	// TODO move to init
 	"github.com/caasmo/restinpieces/custom"
