@@ -11,7 +11,6 @@ import (
 	"os/signal"
 	"golang.org/x/sync/errgroup"
 	"syscall"
-	"time"
 )
 
 func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
