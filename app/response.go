@@ -64,17 +64,17 @@ var (
 // writeJSONError writes a precomputed JSON error response
 func writeJSONError(w http.ResponseWriter, err jsonError) {
 	w.Header()["Content-Type"] = jsonHeader
-	w.WriteHeader(err.code)
+	w.WriteHeader(err.status)
 	w.Write(err.body)
 }
 
 // writeJSONErrorf writes a formatted JSON error response with custom message
-func writeJSONErrorf(w http.ResponseWriter, code int, status string, format string, args ...interface{}) {
+func writeJSONErrorf(w http.ResponseWriter, status int, code string, format string, args ...interface{}) {
 	w.Header()["Content-Type"] = jsonHeader
-	w.WriteHeader(code)
+	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  code,
-		"code":    status,
+		"status":  status,
+		"code":    code,
 		"message": fmt.Sprintf(format, args...),
 	})
 }
