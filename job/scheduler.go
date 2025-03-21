@@ -36,23 +36,23 @@ func NewJobScheduler(interval time.Duration) *JobScheduler {
 }
 
 // Start begins the job scheduler operation
-func (js *JobScheduler) Start() {
+func (s *JobScheduler) Start() {
 	go func() {
-		ticker := time.NewTicker(js.interval)
+		ticker := time.NewTicker(s.interval)
 		defer ticker.Stop()
 		
 		for {
 			select {
-			case <-js.ctx.Done():
+			case <-s.ctx.Done():
 				log.Println("Job scheduler received shutdown signal")
 				// Wait for all jobs to complete
-				if err := js.eg.Wait(); err != nil {
+				if err := s.eg.Wait(); err != nil {
 					log.Printf("Error waiting for jobs to complete: %v", err)
 				}
-				close(js.done) // Signal that scheduler has completely shut down
+				close(s.done) // Signal that scheduler has completely shut down
 				return
 			case <-ticker.C:
-				js.processJobs()
+				s.processJobs()
 			}
 		}
 	}()
@@ -60,13 +60,13 @@ func (js *JobScheduler) Start() {
 
 // StopWithContext signals the scheduler to stop and waits for all jobs to complete
 // or the context to be canceled, whichever comes first
-func (js *JobScheduler) StopWithContext(ctx context.Context) error {
+func (s *JobScheduler) StopWithContext(ctx context.Context) error {
 	log.Println("Stopping job scheduler")
-	js.cancel()
+	s.cancel()
 	
 	// Wait for either scheduler completion or context timeout
 	select {
-	case <-js.done:
+	case <-s.done:
 		log.Println("Job scheduler stopped gracefully")
 		return nil
 	case <-ctx.Done():
@@ -76,13 +76,13 @@ func (js *JobScheduler) StopWithContext(ctx context.Context) error {
 }
 
 // processJobs checks for pending jobs and executes them
-func (js *JobScheduler) processJobs() {
+func (s *JobScheduler) processJobs() {
 	// This would be replaced with actual database lookup logic
 	pendingJobs := fetchPendingJobs()
 	
 	for _, job := range pendingJobs {
 		jobCopy := job // Create a copy to avoid closure issues
-		js.eg.Go(func() error {
+		s.eg.Go(func() error {
 			return executeJob(jobCopy)
 		})
 	}
