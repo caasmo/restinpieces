@@ -151,15 +151,17 @@
                 }
             )
             .then(data => {
-                // Save token and user record
-                handleEmailRegistration(data);
-                
-                // Show success message
-                messageDiv.textContent = 'Registration successful! Redirecting...';
-                messageDiv.classList.add('success');
-                
-                // Show user record and navigation buttons
-                const userRecord = JSON.parse(localStorage.getItem('user_record'));
+                // Save access token and user record
+                if (data.access_token && data.record) {
+                    saveAccessToken(data.access_token);
+                    localStorage.setItem('user_record', JSON.stringify(data.record));
+                    
+                    // Show success message
+                    messageDiv.textContent = 'Registration successful!';
+                    messageDiv.classList.add('success');
+                    
+                    // Show user record and navigation buttons
+                    const userRecord = data.record;
                 
                 // Create user info display
                 const userInfo = document.createElement('div');
