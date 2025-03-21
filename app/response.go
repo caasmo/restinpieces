@@ -1,11 +1,8 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
-
-	"github.com/caasmo/restinpieces/db"
 )
 
 type jsonError struct {
