@@ -13,34 +13,19 @@ import (
 	"time"
 )
 
-const (
-	ReadTimeout       = 2 * time.Second
-	ReadHeaderTimeout = 2 * time.Second
-	WriteTimeout      = 3 * time.Second
-	IdleTimeout       = 1 * time.Minute
-)
-
-func New(addr string, r router.Router) *http.Server {
+func New(cfg config.Server, r router.Router) *http.Server {
 	return &http.Server{
-		Addr:              addr,
+		Addr:              cfg.Port,
 		Handler:           r,
-		ReadTimeout:       ReadTimeout,
-		ReadHeaderTimeout: ReadHeaderTimeout,
-		WriteTimeout:      WriteTimeout,
-		IdleTimeout:       IdleTimeout,
+		ReadTimeout:       cfg.ReadTimeout,
+		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+		WriteTimeout:      cfg.WriteTimeout,
+		IdleTimeout:       cfg.IdleTimeout,
 	}
 }
 
-func Run(addr string, r router.Router, scheduler *scheduler.Scheduler) {
-
-	srv := &http.Server{
-		Addr:              addr,
-		Handler:           r,
-		ReadTimeout:       ReadTimeout,
-		ReadHeaderTimeout: ReadHeaderTimeout,
-		WriteTimeout:      WriteTimeout,
-		IdleTimeout:       IdleTimeout,
-	}
+func Run(cfg config.Config, r router.Router, scheduler *queue.Scheduler) {
+	srv := New(cfg.Server, r)
 
 	// Start HTTP server
 	serverError := make(chan error, 1)

@@ -28,6 +28,14 @@ func main() {
 			MaxJobsPerTick:       100,
 			ConcurrencyMultiplier: 2, // Default to 2x CPU cores
 		},
+		Server: config.Server{
+			Port:              ":8080",
+			GracefulTimeout:   10 * time.Second,
+			ReadTimeout:       2 * time.Second,
+			ReadHeaderTimeout: 2 * time.Second,
+			WriteTimeout:      3 * time.Second,
+			IdleTimeout:       1 * time.Minute,
+		},
 		OAuth2Providers: make(map[string]config.OAuth2Provider),
 	}
 

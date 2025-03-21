@@ -67,11 +67,32 @@ type Scheduler struct {
 	ConcurrencyMultiplier int
 }
 
+type Server struct {
+	// Port is the HTTP server port to listen on
+	Port string
+	
+	// GracefulTimeout is the maximum time to wait for graceful shutdown
+	GracefulTimeout time.Duration
+	
+	// ReadTimeout is the maximum duration for reading the entire request
+	ReadTimeout time.Duration
+	
+	// ReadHeaderTimeout is the maximum duration for reading request headers
+	ReadHeaderTimeout time.Duration
+	
+	// WriteTimeout is the maximum duration before timing out writes of the response
+	WriteTimeout time.Duration
+	
+	// IdleTimeout is the maximum amount of time to wait for the next request
+	IdleTimeout time.Duration
+}
+
 type Config struct {
 	JwtSecret        []byte
 	TokenDuration    time.Duration
 	DBFile           string
 	Scheduler        Scheduler
+	Server           Server
 
 	OAuth2Providers map[string]OAuth2Provider
 }
