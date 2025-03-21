@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"golang.org/x/sync/errgroup"
 	"syscall"
 	"time"
 )
@@ -40,17 +41,12 @@ func Run(addr string, r router.Router) {
 		IdleTimeout:       IdleTimeout,
 	}
 
-	// move most to server
+	// Start HTTP server
+	serverError := make(chan error, 1)
 	go func() {
-		// always returns error. ErrServerClosed on graceful close
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			if err == http.ErrServerClosed {
-				log.Print("ErrServerClosed, gratefull")
-				return
-			}
-
-			// unexpected error. port in use?
-			log.Fatalf("ListenAndServe(): %v", err)
+			log.Printf("ListenAndServe(): %v", err)
+			serverError <- err
 		}
 	}()
 
@@ -61,22 +57,53 @@ func Run(addr string, r router.Router) {
 		syscall.SIGQUIT, // kill -SIGQUIT XXXX
 	)
 
-	<-ctx.Done()
+	// Wait for either interrupt signal or server error
+	select {
+	case <-ctx.Done():
+		log.Print("Received shutdown signal - gracefully shutting down...\n")
+	case err := <-serverError:
+		log.Printf("Server error: %v - initiating shutdown...\n", err)
+	}
 
 	// Reset signals default behavior, similar to signal.Reset
 	stop()
-	log.Print("os.Interrupt - shutting down...\n")
 
-	gracefullCtx, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
+    // TODO constant
+	gracefulCtx, cancelShutdown := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancelShutdown()
 
-	if err := srv.Shutdown(gracefullCtx); err != nil {
-		log.Printf("shutdown error: %v\n", err)
-		defer os.Exit(1)
-		return
-	} else {
-		log.Printf("gracefully stopped\n")
+	// Create a wait group for shutdown tasks
+	shutdownGroup, _ := errgroup.WithContext(gracefulCtx)
+	
+	// Shutdown HTTP server in a goroutine
+	shutdownGroup.Go(func() error {
+		log.Println("Shutting down HTTP server...")
+		if err := srv.Shutdown(gracefulCtx); err != nil {
+			log.Printf("HTTP server shutdown error: %v\n", err)
+			return err
+		}
+		log.Printf("HTTP server stopped gracefully\n")
+		return nil
+	})
+	
+	// Shutdown scheduler in a goroutine, passing the graceful context
+	//shutdownGroup.Go(func() error {
+	//	log.Println("Shutting down scheduler...")
+	//	if err := scheduler.StopWithContext(gracefulCtx); err != nil {
+	//		log.Printf("Scheduler shutdown error: %v\n", err)
+	//		return err
+	//	}
+	//	log.Printf("Scheduler stopped gracefully\n")
+	//	return nil
+	//})
+	
+	// Wait for all shutdown tasks to complete
+	if err := shutdownGroup.Wait(); err != nil {
+		log.Printf("Error during shutdown: %v\n", err)
+		os.Exit(1)
 	}
+	
+	log.Printf("All systems stopped gracefully\n")
+	os.Exit(0)
 
-	defer os.Exit(0)
 }

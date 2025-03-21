@@ -11,6 +11,7 @@ require (
 	github.com/outcaste-io/ristretto v0.1.1-0.20220408180327-81c196f2b5ef
 	golang.org/x/crypto v0.36.0
 	golang.org/x/oauth2 v0.28.0
+	golang.org/x/sync v0.12.0
 	zombiezen.com/go/sqlite v1.4.0
 )
 
