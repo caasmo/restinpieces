@@ -21,7 +21,7 @@ const (
 	IdleTimeout       = 1 * time.Minute
 )
 
-func Run(cfg config.Config, r router.Router, scheduler *queue.Scheduler) {
+func Run(cfg config.Config, r router.Router, scheduler *scheduler.Scheduler) {
 	srv := New(cfg.Server, r)
 
 	// Start HTTP server
