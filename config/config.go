@@ -50,6 +50,7 @@ func (c *OAuth2Provider) FillEnvVars() error {
 type Scheduler struct {
 	Interval        time.Duration
 	MaxJobsPerTick  int
+	Concurrency     int // Maximum number of concurrent jobs
 }
 
 type Config struct {

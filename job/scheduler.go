@@ -42,7 +42,15 @@ type Scheduler struct {
 // NewScheduler creates a new scheduler
 func NewScheduler(cfg config.Scheduler, db db.Db) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
+	
+	// Set concurrency limit, default to 2x CPU cores if not configured
+	concurrency := cfg.Concurrency
+	if concurrency <= 0 {
+		concurrency = runtime.NumCPU() * 2
+	}
+	
 	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(concurrency)
 	
 	return &Scheduler{
 		cfg:          cfg,
