@@ -48,9 +48,10 @@ func (c *OAuth2Provider) FillEnvVars() error {
 }
 
 type Config struct {
-	JwtSecret     []byte
-	TokenDuration time.Duration
-	DBFile        string
+	JwtSecret        []byte
+	TokenDuration    time.Duration
+	DBFile           string
+	SchedulerInterval time.Duration
 
 	OAuth2Providers map[string]OAuth2Provider
 }
