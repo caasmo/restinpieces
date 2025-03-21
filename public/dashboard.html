@@ -135,7 +135,14 @@
             })
             .catch(error => {
                 console.error('Token refresh failed:', error);
-                refreshError.textContent = `Token refresh failed: ${error.message}`;
+                if (error instanceof ClientResponseError) {
+                    refreshError.textContent = error.message;
+                    if (error.data) {
+                        refreshError.textContent += `\nDetails: ${JSON.stringify(error.data, null, 2)}`;
+                    }
+                } else {
+                    refreshError.textContent = `Token refresh failed: ${error.message}`;
+                }
             });
         }
     </script>
