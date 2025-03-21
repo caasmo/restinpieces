@@ -75,8 +75,8 @@
 
     <script>
         // Display initial user info and token
-        const userInfo = JSON.parse(localStorage.getItem('user_record') || 'No user data found';
-        const currentToken = localStorage.getItem('auth_token') || 'No token found';
+        const userInfo = JSON.parse(localStorage.getItem('user_record') || '{}');
+        const currentToken = localStorage.getItem('jwt_token') || 'No token found';
         
         document.getElementById('user-info').textContent = JSON.stringify(userInfo, null, 2);
         document.getElementById('current-token').textContent = currentToken;
