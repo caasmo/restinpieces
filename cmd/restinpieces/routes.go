@@ -9,11 +9,6 @@ import (
 	"github.com/caasmo/restinpieces/custom"
 )
 
-// TODO encapsulate alice
-// provide methods for
-// - middlewareeChain
-// - Attach the middlwrare chain to some handler
-// - PostHandlers, run always, do not modify response.
 func route(ap *app.App, cAp *custom.App) {
 	// Serve static files from public directory
 	fs := http.FileServer(http.Dir("public"))
