@@ -1,4 +1,4 @@
-package job
+package scheduler
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/queue"
 )
 
 const (

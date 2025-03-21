@@ -10,7 +10,7 @@ import (
 	"github.com/caasmo/restinpieces/custom"
 
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/job"
+	scl "github.com/caasmo/restinpieces/queue/Scheduler"
 	"github.com/caasmo/restinpieces/server"
 )
 
@@ -87,7 +87,7 @@ func main() {
 	route(ap, cAp)
 
 	// Create and start scheduler with configured interval and db 
-	scheduler := job.NewScheduler(cfg.Scheduler, ap.Db())
+	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db())
 	
 	server.Run(":8080", ap.Router(), scheduler)
 }

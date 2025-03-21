@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"github.com/caasmo/restinpieces/job"
+	"github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/router"
 	"log/slog"
 	"net/http"
@@ -31,7 +31,7 @@ func New(addr string, r router.Router) *http.Server {
 	}
 }
 
-func Run(addr string, r router.Router, scheduler *job.Scheduler) {
+func Run(addr string, r router.Router, scheduler *scheduler.Scheduler) {
 
 	srv := &http.Server{
 		Addr:              addr,
