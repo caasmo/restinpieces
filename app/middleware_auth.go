@@ -90,6 +90,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		// Generate signing key using user credentials
 		slog.Debug("Generating signing key", 
 			"email", user.Email,
+			"passwordhash", user.Password,
 			"secret_length", len(a.config.JwtSecret))
 		signingKey, err := crypto.NewJwtSigningKeyWithCredentials(user.Email, user.Password, a.config.JwtSecret)
 		if err != nil {
