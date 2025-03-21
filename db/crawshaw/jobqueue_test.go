@@ -60,7 +60,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := testDB.InsertQueueJob(tt.job)
+			err := testDB.InsertJob(tt.job)
 
 			if tt.wantErr {
 				if err == nil {
@@ -122,7 +122,7 @@ func TestInsertQueueJobDuplicate(t *testing.T) {
 		MaxAttempts: 3,
 	}
 
-	if err := testDB.InsertQueueJob(uniqueJob); err != nil {
+	if err := testDB.InsertJob(uniqueJob); err != nil {
 		t.Fatalf("unexpected error on first insert: %v", err)
 	}
 
@@ -133,7 +133,7 @@ func TestInsertQueueJobDuplicate(t *testing.T) {
 		Status:      queue.StatusPending,
 		MaxAttempts: 3,
 	}
-	err := testDB.InsertQueueJob(dupJob)
+	err := testDB.InsertJob(dupJob)
 
 	if err == nil {
 		t.Error("expected error but got none")

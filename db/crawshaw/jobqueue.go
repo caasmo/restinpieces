@@ -27,7 +27,7 @@ func validateQueueJob(job queue.QueueJob) error {
 	return nil
 }
 
-func (d *Db) InsertQueueJob(job queue.QueueJob) error {
+func (d *Db) InsertJob(job queue.QueueJob) error {
 	if err := validateQueueJob(job); err != nil {
 		return err
 	}
