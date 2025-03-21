@@ -10,6 +10,7 @@ import (
 	"github.com/caasmo/restinpieces/custom"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/job"
 	"github.com/caasmo/restinpieces/server"
 )
 
