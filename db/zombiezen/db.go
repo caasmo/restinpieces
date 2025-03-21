@@ -144,9 +144,9 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 }
 
 // CreateUser inserts a new user with RFC3339 formatted UTC timestamps
-// InsertQueueJob placeholder for zombiezen SQLite implementation
-func (d *Db) InsertQueueJob(job queue.QueueJob) error {
-	return fmt.Errorf("InsertQueueJob not implemented for zombiezen SQLite variant")
+// InsertJob placeholder for zombiezen SQLite implementation
+func (d *Db) InsertJob(job queue.QueueJob) error {
+	return fmt.Errorf("InsertJob not implemented for zombiezen SQLite variant")
 }
 
 func (d *Db) GetUserById(id string) (*db.User, error) {
