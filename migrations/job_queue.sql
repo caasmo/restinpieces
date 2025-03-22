@@ -6,6 +6,7 @@
 -- your job payloads. If payload too long, consider deterministic serialization
 -- + hash
 CREATE TABLE job_queue (
+	-- the comlumn is already defined as an INTEGER PRIMARY KEY, it's actually an alias for the rowid
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_type TEXT NOT NULL DEFAULT '',  -- Type of job (email_verification, password_reset, etc.)
     --priority INTEGER DEFAULT 1, -- Higher number = higher priority
@@ -29,7 +30,8 @@ CREATE TABLE job_queue (
 );
 
 -- Create separate index statements
+--CREATE INDEX idx_job_status ON job_queue (status, scheduled_for);
+--CREATE INDEX idx_job_type ON job_queue (job_type, status);
 -- CREATE INDEX idx_locked_by ON job_queue (locked_by);
+CREATE INDEX idx_job_queue_status_id ON job_queue(status, id);
 CREATE UNIQUE INDEX idx_job_unique ON job_queue (payload, job_type);
-CREATE INDEX idx_job_status ON job_queue (status, scheduled_for);
-CREATE INDEX idx_job_type ON job_queue (job_type, status);

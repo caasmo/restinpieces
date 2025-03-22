@@ -37,7 +37,7 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 				scheduled_for, locked_by, locked_at, completed_at, last_error
 		FROM job_queue
 			WHERE status IN ('pending', 'failed')
-		ORDER BY created_at ASC, id ASC
+		ORDER BY id ASC
 		LIMIT ?`,
 		func(stmt *sqlite.Stmt) error {
 			createdAt, err := db.TimeParse(stmt.GetText("created_at"))
