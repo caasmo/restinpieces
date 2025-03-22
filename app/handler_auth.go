@@ -11,7 +11,6 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 //	export JWT_SECRET=$(openssl rand -base64 32)
