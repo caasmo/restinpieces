@@ -38,7 +38,7 @@ var tables = []tableSchema{
 		name:      "job_queue",
 		schema:    migrations.JobQueueSchema,
 		inserts:   []string{},
-		knownHash: "deee3b72421eedaa9d83091abe70b1a6b9e7b606755b268071d4a7696ca64606",
+		knownHash: "422048f8b833e0882218a579e76aa2ee3b417c525ff3399a27542ed8fa796188",
 	},
 }
 
