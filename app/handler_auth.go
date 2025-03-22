@@ -203,7 +203,14 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 //	 "id": "m648zm0q421yfc0",
 //	 "type": "verification"
 //	}
+// with a new verification secret, create method in crypto 
+// with map claim in a good place with signing key email, passwordhash
 // receives token
+// parse unverified, should have all fiedls above reject if no
+// validate all fields
+// we can not write in the db yet
+// we get user password from table. build signed key and try to verify the message if verified
+// run VerifyEmail, document no race conditions, why
 // get id, builds sig key with verification email secret
 // jwt validate signed
 // set verified
