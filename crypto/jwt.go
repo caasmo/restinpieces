@@ -125,6 +125,21 @@ func ValidateClaimEmail(claims jwt.MapClaims) error {
 	return ErrClaimNotFound
 }
 
+func ValidateClaimType(claims jwt.MapClaims, value string) error {
+	// Check if type claim exists
+	if typeVal, exists := claims[ClaimType]; exists {
+		// Verify it's a string and matches expected value
+		if typeStr, ok := typeVal.(string); ok {
+			if typeStr != value {
+				return ErrInvalidClaimFormat
+			}
+			return nil
+		}
+		return ErrInvalidClaimFormat
+	}
+	return ErrClaimNotFound
+}
+
 func ValidateClaimUserID(claims jwt.MapClaims) error {
 	// Check if user_id exists
 	if userID, exists := claims[ClaimUserID]; exists {
