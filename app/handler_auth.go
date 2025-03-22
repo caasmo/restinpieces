@@ -235,9 +235,12 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-
-	// Verify the user's email
-	err = a.db.VerifyEmail(claims["id"].(string))
+	// Parse unverified claims to check token structure
+	claims, err := crypto.ParseJwtUnverified(req.Token)
+	if err != nil {
+		writeJSONError(w, crypto.ErrInvalidVerificationToken)
+		return
+	}
 	if err != nil {
 		writeJSONError(w, errorServiceUnavailable)
 		return
