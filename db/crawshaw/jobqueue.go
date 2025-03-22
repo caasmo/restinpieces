@@ -144,7 +144,7 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 		WHERE id IN (
 			SELECT id
 			FROM job_queue
-			WHERE status = 'pending'
+			WHERE status IN ('pending', 'failed')
 			ORDER BY id ASC
 			LIMIT ?
 		)
