@@ -76,13 +76,12 @@
 
         // Send auth request to backend using requestJson
         requestJson(
-            "http://localhost:8080",
+            "http://localhost:8080", 
             "/api/auth-with-oauth2",
             "POST",
             {},
             authRequest
         )
-        .then(response => response.json())
         .then(data => {
             if (data.access_token && data.record) {
                 // Save token and user record using our functions
