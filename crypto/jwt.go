@@ -109,6 +109,21 @@ func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
 
 // ValidateClaimUserID is a standalone function to validate the user_id claim
 // that can be called separately when needed
+func ValidateClaimEmail(claims jwt.MapClaims) error {
+	// Check if email exists
+	if email, exists := claims[ClaimEmail]; exists {
+		// Verify it's a string and not empty
+		if emailStr, ok := email.(string); ok {
+			if emailStr == "" {
+				return ErrInvalidClaimFormat
+			}
+			return nil
+		}
+		return ErrInvalidClaimFormat
+	}
+	return ErrClaimNotFound
+}
+
 func ValidateClaimUserID(claims jwt.MapClaims) error {
 	// Check if user_id exists
 	if userID, exists := claims[ClaimUserID]; exists {
