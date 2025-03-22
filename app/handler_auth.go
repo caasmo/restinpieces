@@ -377,7 +377,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Return standardized authentication token response
-	writeAuthTokenResponse(w, token, int(a.config.TokenDuration.Seconds()), retrievedUser)
+	writeAuthTokenResponse(w, token, int(a.config.Jwt.AuthTokenDuration.Seconds()), retrievedUser)
 }
 
 // /request-verification endpoint
