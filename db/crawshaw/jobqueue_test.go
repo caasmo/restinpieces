@@ -48,7 +48,7 @@ func TestInsertQueueJobValid(t *testing.T) {
 			wantErr: true,
 		},
 		{
-		// TODO
+			// TODO
 			name: "invalid max attempts",
 			job: queue.Job{
 				JobType:     "test_job",

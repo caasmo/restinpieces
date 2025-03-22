@@ -5,10 +5,10 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 	"encoding/json"
 	"fmt"
-	"time"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
 	"strings"
+	"time"
 )
 
 // TODO delete
@@ -247,7 +247,7 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 			}
 			jobs = append(jobs, job)
 			return nil
-		}, limit) 
+		}, limit)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to claim jobs: %w", err)
