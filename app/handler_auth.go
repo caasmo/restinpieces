@@ -241,6 +241,44 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Validate all required claims exist and have correct values
+	if err := crypto.ValidateVerificationClaims(claims); err != nil {
+		writeJSONError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+
+	// Get user from database to get password hash for signing key
+	user, err := a.db.GetUserById(claims[crypto.ClaimUserID].(string))
+	if err != nil || user == nil {
+		writeJSONError(w, errorNotFound)
+		return
+	}
+
+	// Verify token signature using user's email and password hash as signing key
+	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
+		claims[crypto.ClaimEmail].(string),
+		user.Password,
+		a.config.JwtSecret,
+	)
+	if err != nil {
+		writeJSONError(w, errorServiceUnavailable)
+		return
+	}
+
+	// Fully verify token signature and claims
+	_, err = crypto.ParseJwt(req.Token, signingKey)
+	if err != nil {
+		writeJSONError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+
+	// Mark user as verified
+	err = a.db.VerifyEmail(user.ID)
+	if err != nil {
+		writeJSONError(w, errorServiceUnavailable)
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":200,"message":"Email verified successfully"}`))
 }
