@@ -71,6 +71,50 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
+// ValidateVerificationToken validates the verification token claims and signature
+// It checks:
+// - Required claims exist and have correct types
+// - Token is not expired
+// - Signature is valid using the signing key derived from email and password hash
+func ValidateVerificationToken(tokenString, email, passwordHash string, secret []byte) (jwt.MapClaims, error) {
+	// Parse unverified claims first to check structure
+	claims, err := ParseJwtUnverified(tokenString)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to parse token: %v", ErrInvalidVerificationToken, err)
+	}
+
+	// Validate required claims
+	requiredClaims := map[string]string{
+		ClaimEmail:        email,
+		ClaimVerification: ClaimVerificationValue,
+		ClaimUserID:       "",
+	}
+
+	for claim, expectedValue := range requiredClaims {
+		value, exists := claims[claim]
+		if !exists {
+			return nil, fmt.Errorf("%w: missing %s claim", ErrInvalidVerificationToken, claim)
+		}
+		if expectedValue != "" && value != expectedValue {
+			return nil, fmt.Errorf("%w: invalid %s claim", ErrInvalidVerificationToken, claim)
+		}
+	}
+
+	// Create signing key from credentials
+	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to create signing key: %v", ErrInvalidVerificationToken, err)
+	}
+
+	// Verify token signature and expiration
+	verifiedClaims, err := ParseJwt(tokenString, signingKey)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to verify token: %v", ErrInvalidVerificationToken, err)
+	}
+
+	return verifiedClaims, nil
+}
+
 func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
 	if iat, ok := claims[ClaimIssuedAt]; ok {
 		// there are two main reasons why the JWT library uses float64
