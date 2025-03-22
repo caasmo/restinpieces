@@ -38,6 +38,8 @@ var (
 	ErrJwtTokenExpired = errors.New("token expired")
 	// ErrJwtInvalidToken is returned when the token is invalid
 	ErrJwtInvalidToken = errors.New("invalid token")
+	// ErrInvalidVerificationToken is returned when verification token is invalid
+	ErrInvalidVerificationToken = errors.New("invalid verification token")
 	// ErrJwtInvalidSigningMethod is returned when the signing method is not HS256
 	ErrJwtInvalidSigningMethod = errors.New("unexpected signing method")
 	// ErrJwtInvalidSecretLength is returned for invalid secret lengths
