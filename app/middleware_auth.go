@@ -64,7 +64,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 			return
 		}
 		// Generate signing key using user credentials
-		signingKey, err := crypto.NewJwtSigningKeyWithCredentials(user.Email, user.Password, a.config.JwtSecret)
+		signingKey, err := crypto.NewJwtSigningKeyWithCredentials(user.Email, user.Password, a.config.Jwt.AuthSecret)
 		if err != nil {
 			writeJSONError(w, errorTokenGeneration)
 			return
