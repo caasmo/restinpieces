@@ -164,7 +164,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	user, err := a.db.GetUserByEmail(oauthUser.Email)
 	slog.Debug("User lookup result", "found", user != nil, "error", err)
 	if err != nil {
-		writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"Database error: %s"}`, err.Error()))})
+		writeJSONError(w, errorOAuth2DatabaseError)
 		return
 	}
 
