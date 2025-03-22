@@ -139,7 +139,6 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 	err := sqlitex.Exec(conn,
 		`UPDATE job_queue
 		SET status = 'processing',
-			locked_by = ?1,
 			locked_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
 			attempts = attempts + 1
 		WHERE id IN (
@@ -147,7 +146,7 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 			FROM job_queue
 			WHERE status = 'pending'
 			ORDER BY id ASC
-			LIMIT ?2
+			LIMIT ?
 		)
 		RETURNING id, job_type, payload, status, attempts, max_attempts, created_at, updated_at,
 			scheduled_for, locked_by, locked_at, completed_at, last_error`,

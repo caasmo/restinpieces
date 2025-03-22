@@ -16,7 +16,7 @@ type Job struct {
 	CreatedAt    time.Time       `json:"created_at"`
 	UpdatedAt    time.Time       `json:"updated_at"`
 	ScheduledFor time.Time       `json:"scheduled_for"`
-	LockedBy     string          `json:"locked_by,omitempty"`
+	LockedBy     string          `json:"-"` // deprecated, marked as ignored in JSON
 	LockedAt     time.Time       `json:"locked_at,omitempty"`
 	CompletedAt  time.Time       `json:"completed_at,omitempty"`
 	LastError    string          `json:"last_error,omitempty"`
