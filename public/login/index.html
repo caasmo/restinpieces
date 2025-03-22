@@ -77,13 +77,13 @@
     <div id="error" class="error"></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const providers = await requestJson(
-                    "http://localhost:8080",
-                    "/api/list-oauth2-providers",
-                    "GET"
-                );
+        document.addEventListener('DOMContentLoaded', () => {
+            requestJson(
+                "http://localhost:8080",
+                "/api/list-oauth2-providers",
+                "GET"
+            )
+            .then(providers => {
                 const list = document.getElementById('list');
                 list.innerHTML = ''; // Clear loading message
                 
@@ -102,10 +102,11 @@
                 if (providers.length === 0) {
                     list.innerHTML = '<li>No OAuth2 providers.</li>';
                 }
-            } catch (error) {
+            })
+            .catch(error => {
                 console.error('Error loading OAuth2 providers:', error);
                 document.getElementById('list').innerHTML = '<li>Error loading providers</li>';
-            }
+            });
         });
     </script>
 </body>
