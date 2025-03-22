@@ -283,7 +283,7 @@ function handleEmailRegistration(data) {
  * Retrieves the user record from localStorage
  * @returns {Object|null} The parsed user record object or null if not found
  */
-function loadUserRecord() {
+function LoadUserRecord() {
   const record = localStorage.getItem('user_record');
   return record ? JSON.parse(record) : null;
 }

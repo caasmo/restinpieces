@@ -87,7 +87,7 @@
                 // Save token and user record using our functions
                 saveAccessToken(data.access_token);
                 saveUserRecord(data.record);
-                LoadUserRecord(); // Load the record to ensure it's accessible
+                loadUserRecord(); // Load the record to ensure it's accessible
                 
                 // Show success message
                 messageDiv.textContent = 'Authentication successful!';
