@@ -86,8 +86,8 @@
             if (data.access_token && data.record) {
                 // Save token and user record using our functions
                 saveAccessToken(data.access_token);
-                const currentToken = loadAccessToken(); // Verify token was saved (returns "" if not found)
-                saveUserRecord();
+                const currentToken = loadAccessToken(); // Verify token was saved
+                saveUserRecord(data.record);
                 // Load the record to ensure it's accessible
                 loadUserRecord();
                 
