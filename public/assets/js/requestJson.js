@@ -263,7 +263,7 @@ function saveAccessToken(token) {
  * Retrieves the access token from localStorage
  * @returns {string} The access token 
  */
-unction loadAccessToken() {
+function loadAccessToken() {
   try {
     return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || "";
   } catch (error) {
