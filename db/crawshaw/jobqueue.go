@@ -141,7 +141,6 @@ func (d *Db) MarkCompleted(jobID int64) error {
 		SET status = 'completed',
 			completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
-			locked_by = '',
 			locked_at = '',
 			last_error = ''
 		WHERE id = ?`,
@@ -164,7 +163,6 @@ func (d *Db) MarkFailed(jobID int64, errMsg string) error {
 		SET status = 'failed',
 			completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
-			locked_by = '',
 			locked_at = '',
 			last_error = ?
 		WHERE id = ?`,
