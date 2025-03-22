@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js"></script>
     <script src="assets/js/requestJson.js"></script>
     <style>
         body {
@@ -78,7 +77,7 @@
     <div id="error" class="error"></div>
 
     <script>
-        $(document).ready(async function() {
+        document.addEventListener('DOMContentLoaded', async () => {
             try {
                 const response = await fetch('/api/list-oauth2-providers');
                 if (!response.ok) {
@@ -86,25 +85,27 @@
                 }
                 
                 const providers = await response.json();
-                const listItems = [];
+                const list = document.getElementById('list');
+                list.innerHTML = ''; // Clear loading message
                 
-                for (const provider of providers) {
-                    const $li = $(`<li><a>Login with ${provider.displayName}</a></li>`);
-                    
-                    $li.find("a")
-                        .attr("href", provider.authURL)
-                        .data("provider", provider)
-                        .click(function() {
-                            localStorage.setItem("provider", JSON.stringify($(this).data("provider")));
-                        });
-                    
-                    listItems.push($li);
-                }
+                providers.forEach(provider => {
+                    const li = document.createElement('li');
+                    const a = document.createElement('a');
+                    a.textContent = `Login with ${provider.displayName}`;
+                    a.href = provider.authURL;
+                    a.addEventListener('click', () => {
+                        localStorage.setItem("provider", JSON.stringify(provider));
+                    });
+                    li.appendChild(a);
+                    list.appendChild(li);
+                });
 
-                $("#list").html(listItems.length ? listItems : "<li>No OAuth2 providers.</li>");
+                if (providers.length === 0) {
+                    list.innerHTML = '<li>No OAuth2 providers.</li>';
+                }
             } catch (error) {
                 console.error('Error loading OAuth2 providers:', error);
-                $("#list").html("<li>Error loading providers</li>");
+                document.getElementById('list').innerHTML = '<li>Error loading providers</li>';
             }
         });
     </script>
