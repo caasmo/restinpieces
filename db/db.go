@@ -18,6 +18,7 @@ type Db interface {
 	InsertJob(job queue.Job) error
 	GetJobs(limit int) ([]*queue.Job, error)
 	Claim(limit int) ([]*queue.Job, error)
+	MarkCompleted(jobID int64) error
 }
 
 // TimeFormat converts a time.Time to RFC3339 string in UTC.

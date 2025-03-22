@@ -132,6 +132,29 @@ func (d *Db) InsertJob(job queue.Job) error {
 
 // Claim locks and returns up to limit jobs for processing
 // The jobs are marked as 'processing' and locked by the current worker
+func (d *Db) MarkCompleted(jobID int64) error {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	err := sqlitex.Exec(conn,
+		`UPDATE job_queue
+		SET status = 'completed',
+			completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
+			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
+			locked_by = NULL,
+			locked_at = NULL,
+			last_error = NULL
+		WHERE id = ?`,
+		nil,
+		jobID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to mark job as completed: %w", err)
+	}
+	return nil
+}
+
 func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)

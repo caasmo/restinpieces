@@ -309,6 +309,10 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 	return &createdUser, err
 }
 
+func (d *Db) MarkCompleted(jobID int64) error {
+	return fmt.Errorf("MarkCompleted not implemented for zombiezen SQLite variant")
+}
+
 func (d *Db) InsertWithPool(value int64) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {

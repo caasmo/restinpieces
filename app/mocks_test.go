@@ -61,6 +61,10 @@ func (m *MockDB) Claim(limit int) ([]*queue.Job, error) {
 	return nil, nil
 }
 
+func (m *MockDB) MarkCompleted(jobID int64) error {
+	return nil
+}
+
 // MockRouter implements router.Router interface for testing
 type MockRouter struct{}
 
