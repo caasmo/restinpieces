@@ -72,8 +72,34 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 }
 
 func ValidateVerificationClaims(claims jwt.MapClaims) error {
+	// Validate required claims exist
+	requiredClaims := map[string]string{
+		ClaimEmail:        "",
+		ClaimVerification: ClaimVerificationValue,
+		ClaimUserID:       "",
+	}
 
- 
+	for claim, expectedValue := range requiredClaims {
+		value, exists := claims[claim]
+		if !exists {
+			return fmt.Errorf("%w: missing %s claim", ErrInvalidVerificationToken, claim)
+		}
+		if expectedValue != "" && value != expectedValue {
+			return fmt.Errorf("%w: invalid %s claim", ErrInvalidVerificationToken, claim)
+		}
+	}
+
+	// Validate iat claim and token age
+	if err := ValidateClaimIssuedAt(claims); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	// Validate user_id claim
+	if err := ValidateClaimUserID(claims); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	return nil
 }
 
 func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
