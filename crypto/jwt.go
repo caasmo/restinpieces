@@ -140,6 +140,22 @@ func ValidateClaimType(claims jwt.MapClaims, value string) error {
 	return ErrClaimNotFound
 }
 
+func ValidateClaimExpiresAt(claims jwt.MapClaims) error {
+	// Check if exp claim exists
+	if exp, exists := claims[ClaimExpiresAt]; exists {
+		// Verify it's a float64 and not expired
+		if expTime, ok := exp.(float64); ok {
+			now := time.Now().Unix()
+			if int64(expTime) < now {
+				return ErrJwtTokenExpired
+			}
+			return nil
+		}
+		return ErrInvalidClaimFormat
+	}
+	return ErrClaimNotFound
+}
+
 func ValidateClaimUserID(claims jwt.MapClaims) error {
 	// Check if user_id exists
 	if userID, exists := claims[ClaimUserID]; exists {
