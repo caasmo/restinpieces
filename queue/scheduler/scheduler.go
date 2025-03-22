@@ -109,14 +109,14 @@ func (s *Scheduler) Stop(ctx context.Context) error {
 
 // processJobs checks for pending and failed jobs and executes them
 func (s *Scheduler) processJobs() {
-	// Get jobs up to configured limit per tick
-	jobs, err := s.db.GetJobs(s.cfg.MaxJobsPerTick)
+	// Claim jobs up to configured limit per tick
+	jobs, err := s.db.Claim(s.cfg.MaxJobsPerTick)
 	if err != nil {
-		slog.Error("Failed to fetch jobs", "err", err)
+		slog.Error("Failed to claim jobs", "err", err)
 		return
 	}
 
-	slog.Info("Processing jobs", "count", len(jobs))
+	slog.Info("Processing claimed jobs", "count", len(jobs))
 
 	var processed int
 	for _, job := range jobs {
@@ -131,7 +131,7 @@ func (s *Scheduler) processJobs() {
 	}
 
 	if len(jobs) > 0 {
-		slog.Info("Jobs processed", "success", processed, "total", len(jobs))
+		slog.Info("Finished processing claimed jobs", "success", processed, "total", len(jobs))
 	}
 }
 
