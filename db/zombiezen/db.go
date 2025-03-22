@@ -313,6 +313,10 @@ func (d *Db) MarkCompleted(jobID int64) error {
 	return fmt.Errorf("MarkCompleted not implemented for zombiezen SQLite variant")
 }
 
+func (d *Db) MarkFailed(jobID int64, errMsg string) error {
+	return fmt.Errorf("MarkFailed not implemented for zombiezen SQLite variant")
+}
+
 func (d *Db) InsertWithPool(value int64) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {

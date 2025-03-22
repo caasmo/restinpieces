@@ -155,6 +155,30 @@ func (d *Db) MarkCompleted(jobID int64) error {
 	return nil
 }
 
+func (d *Db) MarkFailed(jobID int64, errMsg string) error {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	err := sqlitex.Exec(conn,
+		`UPDATE job_queue
+		SET status = 'failed',
+			completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
+			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
+			locked_by = '',
+			locked_at = '',
+			last_error = ?
+		WHERE id = ?`,
+		nil,
+		errMsg,
+		jobID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to mark job as failed: %w", err)
+	}
+	return nil
+}
+
 func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)

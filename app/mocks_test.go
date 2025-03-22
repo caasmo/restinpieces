@@ -65,6 +65,10 @@ func (m *MockDB) MarkCompleted(jobID int64) error {
 	return nil
 }
 
+func (m *MockDB) MarkFailed(jobID int64, errMsg string) error {
+	return nil
+}
+
 // MockRouter implements router.Router interface for testing
 type MockRouter struct{}
 
