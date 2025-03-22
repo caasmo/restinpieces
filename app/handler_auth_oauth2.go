@@ -110,7 +110,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	oauthUser, err := oauth2provider.UserFromUserInfoURL(resp, provider.Name)
 	if err != nil {
 		slog.Debug("Failed to map provider user info", "error", err)
-		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to process user info: %s"}`, err.Error()))})
+		writeJSONError(w, errorOAuth2UserInfoProcessingFailed)
 		return
 	}
 	slog.Debug("Successfully mapped provider user info", "user", oauthUser)
