@@ -235,12 +235,6 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Parse and validate JWT token
-	claims, err := a.parseVerificationToken(req.Token)
-	if err != nil {
-		writeJSONError(w, errorInvalidToken)
-		return
-	}
 
 	// Verify the user's email
 	err = a.db.VerifyEmail(claims["id"].(string))
