@@ -272,6 +272,12 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// Check if user is already verified
+	if user.Verified {
+		writeJSONError(w, errorAlreadyVerified)
+		return
+	}
+
 	// Mark user as verified
 	err = a.db.VerifyEmail(user.ID)
 	if err != nil {
