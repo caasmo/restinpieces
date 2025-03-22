@@ -128,3 +128,85 @@ func (d *Db) InsertJob(job queue.Job) error {
 	}
 	return nil
 }
+
+// Claim locks and returns up to limit jobs for processing
+// The jobs are marked as 'processing' and locked by the current worker
+func (d *Db) Claim(limit int) ([]*queue.Job, error) {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	var jobs []*queue.Job
+	err := sqlitex.Exec(conn,
+		`UPDATE job_queue
+		SET status = 'processing',
+			locked_by = ?1,
+			locked_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
+			attempts = attempts + 1
+		WHERE id IN (
+			SELECT id
+			FROM job_queue
+			WHERE status = 'pending'
+			ORDER BY id ASC
+			LIMIT ?2
+		)
+		RETURNING id, job_type, payload, status, attempts, max_attempts, created_at, updated_at,
+			scheduled_for, locked_by, locked_at, completed_at, last_error`,
+		func(stmt *sqlite.Stmt) error {
+			createdAt, err := db.TimeParse(stmt.GetText("created_at"))
+			if err != nil {
+				return fmt.Errorf("error parsing created_at time: %w", err)
+			}
+
+			updatedAt, err := db.TimeParse(stmt.GetText("updated_at"))
+			if err != nil {
+				return fmt.Errorf("error parsing updated_at time: %w", err)
+			}
+
+			var scheduledFor time.Time
+			if scheduledForStr := stmt.GetText("scheduled_for"); scheduledForStr != "" {
+				scheduledFor, err = db.TimeParse(scheduledForStr)
+				if err != nil {
+					return fmt.Errorf("error parsing scheduled_for time: %w", err)
+				}
+			}
+
+			var lockedAt time.Time
+			if lockedAtStr := stmt.GetText("locked_at"); lockedAtStr != "" {
+				lockedAt, err = db.TimeParse(lockedAtStr)
+				if err != nil {
+					return fmt.Errorf("error parsing locked_at time: %w", err)
+				}
+			}
+
+			var completedAt time.Time
+			if completedAtStr := stmt.GetText("completed_at"); completedAtStr != "" {
+				completedAt, err = db.TimeParse(completedAtStr)
+				if err != nil {
+					return fmt.Errorf("error parsing completed_at time: %w", err)
+				}
+			}
+
+			job := &queue.Job{
+				ID:           stmt.GetInt64("id"),
+				JobType:      stmt.GetText("job_type"),
+				Payload:      json.RawMessage(stmt.GetText("payload")),
+				Status:       stmt.GetText("status"),
+				Attempts:     int(stmt.GetInt64("attempts")),
+				MaxAttempts:  int(stmt.GetInt64("max_attempts")),
+				CreatedAt:    createdAt,
+				UpdatedAt:    updatedAt,
+				ScheduledFor: scheduledFor,
+				LockedBy:     stmt.GetText("locked_by"),
+				LockedAt:     lockedAt,
+				CompletedAt:  completedAt,
+				LastError:    stmt.GetText("last_error"),
+			}
+			jobs = append(jobs, job)
+			return nil
+		}, "worker1", limit) // TODO: Replace "worker1" with actual worker ID
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to claim jobs: %w", err)
+	}
+	return jobs, nil
+}
