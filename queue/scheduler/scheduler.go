@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/smtp"
 	"runtime"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/mail"
+	"golang.org/x/sync/errgroup"
 )
 
 // TODOremove
@@ -199,7 +199,7 @@ func executeJobWithContext(ctx context.Context, job queue.Job) error {
 
 // the key is to use context aware packages for db, etc. and periodically check
 // (in for loops or multi stage executors) for  <-ctx.Done()
-func executeEmailVerification(ctx context.Context, job queue.Job) error {
+func executeEmailVerification(ctx context.Context, job queue.Job, cfg *config.Config) error {
 	slog.Info("Executing email verification job",
 		"job_type", job.JobType,
 		"payload", job.Payload,
