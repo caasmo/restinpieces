@@ -6,12 +6,14 @@ import (
 	"log/slog"
 	"runtime"
 	"time"
+	"errors"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
 )
 
+// TODOremove
 const (
 	DefaultConcurrencyMultiplier = 2
 )
@@ -23,10 +25,6 @@ type Scheduler struct {
 
 	// db is the database connection used to fetch and update jobs
 	db db.Db
-
-	// eg is an errgroup.Group used to manage and track running jobs
-	// It provides synchronization and error propagation for concurrent job execution
-	eg *errgroup.Group
 
 	// ctx is the context used to control the scheduler's lifecycle
 	// It allows graceful shutdown when Stop() is called from outside.
@@ -49,14 +47,13 @@ func NewScheduler(cfg config.Scheduler, db db.Db) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Calculate concurrency limit based on multiplier and CPU cores
-	concurrency := runtime.NumCPU() * cfg.ConcurrencyMultiplier
+	//concurrency := runtime.NumCPU() * cfg.ConcurrencyMultiplier
 
-	g, ctx := errgroup.WithContext(ctx)
-	g.SetLimit(concurrency)
+	//g, ctx := errgroup.WithContext(ctx)
+	//g.SetLimit(concurrency)
 
 	return &Scheduler{
 		cfg:          cfg,
-		eg:           g,
 		ctx:          ctx,
 		cancel:       cancel,
 		db:           db,
@@ -77,9 +74,9 @@ func (s *Scheduler) Start() {
 			case <-s.ctx.Done():
 				slog.Info("Job scheduler received shutdown signal")
 				// Wait for all jobs to complete
-				if err := s.eg.Wait(); err != nil {
-					slog.Error("Error waiting for jobs to complete", "err", err)
-				}
+				//if err := s.eg.Wait(); err != nil {
+				//	slog.Error("Error waiting for jobs to complete", "err", err)
+				//}
 				close(s.shutdownDone) // Signal that scheduler has completely shut down
 				return
 			case <-ticker.C:
@@ -107,32 +104,97 @@ func (s *Scheduler) Stop(ctx context.Context) error {
 	}
 }
 
-// processJobs checks for pending and failed jobs and executes them
 func (s *Scheduler) processJobs() {
-	// Claim jobs up to configured limit per tick
-	jobs, err := s.db.Claim(s.cfg.MaxJobsPerTick)
-	if err != nil {
-		slog.Error("Failed to claim jobs", "err", err)
-		return
-	}
+    // Claim jobs up to configured limit per tick
+    jobs, err := s.db.Claim(s.cfg.MaxJobsPerTick)
+    if err != nil {
+        slog.Error("Failed to claim jobs", "err", err)
+        return
+    }
 
-	slog.Info("Claimed jobs", "count", len(jobs))
+    slog.Info("Claimed jobs", "count", len(jobs))
+    
+    // Create a new error group for this batch of jobs
+    // Use the scheduler's context as parent to ensure jobs receive shutdown signal
+    g, ctx := errgroup.WithContext(s.ctx) // <- Shutdown context
+    g.SetLimit(runtime.NumCPU() * s.cfg.ConcurrencyMultiplier)
+    
+    var processed int
+    for _, job := range jobs {
+        jobCopy := job // Create a copy to avoid closure issues
+        g.Go(func() error {
+            // Create job-specific timeout context that inherits from the group context
+			// TODO timeout to conf
+            jobCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+            defer cancel()
+            
+            // Execute job with proper timeout while still respecting global cancellation
+            err := executeJobWithContext(jobCtx, *jobCopy)
+            
+            // Handle job completion status
+            if err == nil {
+                if updateErr := s.db.MarkCompleted(jobCopy.ID); updateErr != nil {
+                    slog.Error("Failed to mark job as completed", "jobID", jobCopy.ID, "err", updateErr)
+                }
+                processed++
+            } else if errors.Is(err, context.DeadlineExceeded) {
+				msg := "scheduler timeout reached" 
+                if updateErr := s.db.MarkFailed(jobCopy.ID, msg +err.Error()); updateErr != nil {
+                    slog.Error("Failed to mark job as timed out", "jobID", jobCopy.ID, "err", updateErr)
+                }
+            } else if errors.Is(err, context.Canceled) {
+                // This means either the batch was canceled or the scheduler is shutting down
+				msg := "schedular ordered to stop" 
+                if updateErr := s.db.MarkFailed(jobCopy.ID, msg + err.Error()); updateErr != nil {
+                    slog.Error("Failed to mark job as interrupted", "jobID", jobCopy.ID, "err", updateErr)
+                }
+                slog.Info("Job interrupted", "jobID", jobCopy.ID)
+            } else {
+                if updateErr := s.db.MarkFailed(jobCopy.ID, err.Error()); updateErr != nil {
+                    slog.Error("Failed to mark job as failed", "jobID", jobCopy.ID, "err", updateErr)
+                }
+            }
+            
+            return err
+        })
+    }
+    
+    // Wait for all jobs in this batch to complete or for the parent context to be canceled
+    if err := g.Wait(); err != nil {
+        if errors.Is(err, context.Canceled) {
+            slog.Info("Job batch interrupted due to scheduler shutdown")
+        } else {
+            slog.Error("Error executing batch jobs", "err", err)
+        }
+    }
 
-	var processed int
-	for _, job := range jobs {
-		jobCopy := job // Create a copy to avoid closure issues
-		s.eg.Go(func() error {
-			err := executeJob(*jobCopy)
-			if err == nil {
-				processed++
-			}
-			return err
-		})
-	}
+    if len(jobs) > 0 {
+        slog.Info("Finished processing claimed jobs", "success", processed, "total", len(jobs))
+    }
+}
 
-	if len(jobs) > 0 {
-		slog.Info("Finished processing claimed jobs", "success", processed, "total", len(jobs))
-	}
+// TODO
+
+func executeJobWithContext(ctx context.Context, job queue.Job) error {
+    // Check context before we even start
+    if ctx.Err() != nil {
+        return ctx.Err()
+    }
+
+    // Your job execution code here
+    // Regularly check ctx.Done() for long-running operations:
+    
+    select {
+    case <-ctx.Done():
+        return ctx.Err() // Return the specific context error (timeout or cancellation)
+    default:
+        // Proceed with execution
+    }
+    
+    // Simulate work
+    time.Sleep(2 * time.Second)
+    
+    return nil
 }
 
 func executeJob(job queue.Job) error {
