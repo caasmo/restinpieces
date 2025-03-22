@@ -72,6 +72,7 @@ var (
 	errorAlreadyVerified      = precomputeError(http.StatusConflict, CodeAlreadyVerified, "Account is already verified")
 	errorJwtInvalidToken      = precomputeError(http.StatusUnauthorized, CodeJwtInvalidToken, "Invalid authentication token")
 	errorJwtInvalidVerificationToken      = precomputeError(http.StatusUnauthorized, CodeJwtInvalidVerificationToken, "Invalid verification token")
+	errorEmailVerificationFailed          = precomputeError(http.StatusInternalServerError, "email_verification_failed", "Email verification process failed")
 )
 
 // writeJSONError writes a precomputed JSON error response
