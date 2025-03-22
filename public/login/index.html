@@ -190,7 +190,7 @@
                 if (data.access_token && data.record) {
                     // Save token and user record using our functions
                     saveAccessToken(data.access_token);
-                    saveUserRecord(data.record);
+                    saveUserRecord();
                     
                     // Clear error message
                     errorDiv.textContent = '';
