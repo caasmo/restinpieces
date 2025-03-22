@@ -59,9 +59,12 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 				return fmt.Errorf("error parsing locked_at time: %w", err)
 			}
 
-			completedAt, err := db.TimeParse(stmt.GetText("completed_at"))
-			if err != nil {
-				return fmt.Errorf("error parsing completed_at time: %w", err)
+			var completedAt time.Time
+			if completedAtStr := stmt.GetText("completed_at"); completedAtStr != "" {
+				completedAt, err = db.TimeParse(completedAtStr)
+				if err != nil {
+					return fmt.Errorf("error parsing completed_at time: %w", err)
+				}
 			}
 
 			job := &queue.Job{
