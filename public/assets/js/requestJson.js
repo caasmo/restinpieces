@@ -246,6 +246,14 @@ function saveAccessToken(token) {
 }
 
 /**
+ * Retrieves the access token from localStorage
+ * @returns {string|null} The access token or null if not found
+ */
+function loadAccessToken() {
+  return localStorage.getItem('access_token');
+}
+
+/**
  * Saves user record to localStorage
  * @param {Object} record - The user record object
  */
