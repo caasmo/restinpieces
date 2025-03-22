@@ -96,7 +96,7 @@
     <script>
         // Display initial user info and token using our functions
         const userInfo = loadUserRecord();
-        const currentToken = loadAccessToken() || 'No token found';
+        const currentToken = loadAccessToken() || 'No token found'; // Already handles empty string
         
         document.getElementById('user-info').textContent = JSON.stringify(userInfo, null, 2);
         document.getElementById('current-token').textContent = currentToken;
