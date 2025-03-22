@@ -249,7 +249,12 @@ function saveAccessToken(token) {
   if (!token) {
     throw new Error('Invalid token: token is missing');
   }
-  localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+  
+  try {
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+  } catch (error) {
+    throw new Error(`Failed to save access token: ${error.message}`);
+  }
 }
 
 /**
@@ -265,6 +270,14 @@ unction loadAccessToken() {
   }
 }
 
+function deleteAccessToken() {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+  } catch (error) {
+    throw new Error(`Failed to delete access token: ${error.message}`);
+  }
+}
+
 /**
  * Saves user record to localStorage
  * @param {Object} record - The user record object
@@ -273,7 +286,20 @@ function saveUserRecord(record) {
   if (!record) {
     throw new Error('Invalid record: record is missing');
   }
-  localStorage.setItem(STORAGE_KEYS.USER_RECORD, JSON.stringify(record));
+  
+  try {
+    localStorage.setItem(STORAGE_KEYS.USER_RECORD, JSON.stringify(record));
+  } catch (error) {
+    throw new Error(`Failed to save user record: ${error.message}`);
+  }
+}
+
+function deleteUserRecord() {
+  try {
+    localStorage.removeItem(STORAGE_KEYS.USER_RECORD);
+  } catch (error) {
+    throw new Error(`Failed to delete user record: ${error.message}`);
+  }
 }
 
 /**
