@@ -1,2 +1,3 @@
 # Ignore all SQLite database files
 *.db
+.aider*

@@ -128,7 +128,6 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 //
-// http://localhost:8090/_/#/auth/confirm-verification/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb2xsZWN0aW9uSWQiOiJfcGJfdXNlcnNfYXV0aF8iLCJlbWFpbCI6ImNhYXNtb0Bwcm90b25tYWlsLmNvbSIsImV4cCI6MTczNjYzMDE3OSwiaWQiOiJtNjQ4em0wcTQyMXlmYzAiLCJ0eXBlIjoidmVyaWZpY2F0aW9uIn0.FcaLmZDe6RfZUR9l73O1umV1j_mXr0xHXHJgtqqBNDo
 // todo already verified.
 // goroutine generates token
 // RequestVerificationHandler handles email verification requests
