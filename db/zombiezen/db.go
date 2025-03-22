@@ -317,6 +317,23 @@ func (d *Db) MarkFailed(jobID int64, errMsg string) error {
 	return fmt.Errorf("MarkFailed not implemented for zombiezen SQLite variant")
 }
 
+func (d *Db) VerifyEmail(userId string) error {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return err
+	}
+	defer d.pool.Put(conn)
+
+	return sqlitex.Execute(conn,
+		`UPDATE users 
+		SET verified = true,
+			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		WHERE id = ?`,
+		&sqlitex.ExecOptions{
+			Args: []interface{}{userId},
+		})
+}
+
 func (d *Db) InsertWithPool(value int64) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {

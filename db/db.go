@@ -20,6 +20,7 @@ type Db interface {
 	Claim(limit int) ([]*queue.Job, error)
 	MarkCompleted(jobID int64) error
 	MarkFailed(jobID int64, errMsg string) error
+	VerifyEmail(userId string) error
 }
 
 // TimeFormat converts a time.Time to RFC3339 string in UTC.
