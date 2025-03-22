@@ -20,13 +20,13 @@ class ClientResponseError extends Error {
         
         this.url = errData?.url || "";
         this.status = errData?.status || 0;
-        this.code = errData?.code || errData?.response?.code || 0;
         // this is only meaningful with a requestJson with AbortController
         this.isAbort = Boolean(errData?.isAbort);
         this.originalError = errData?.originalError;
         this.response = errData?.response || {};
         this.name = "ClientResponseError " + this.status;
         this.message = this.response?.message; // Prioritize the server's message
+        this.code = this.response?.code|| ""; // Prioritize the server's message
 
         if (!this.message) {
             if (this.isAbort) {
