@@ -72,11 +72,6 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 }
 
 func ValidateVerificationClaims(claims jwt.MapClaims) error {
-	// Parse unverified claims first to check structure
-	claims, err := ParseJwtUnverified(tokenString)
-	if err != nil {
-		return nil, fmt.Errorf("%w: failed to parse token: %v", ErrInvalidVerificationToken, err)
-	}
 
 	// Validate required claims
 	requiredClaims := map[string]string{
