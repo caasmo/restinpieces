@@ -161,7 +161,6 @@ func (d *Db) MarkFailed(jobID int64, errMsg string) error {
 	err := sqlitex.Exec(conn,
 		`UPDATE job_queue
 		SET status = 'failed',
-			completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
 			locked_at = '',
 			last_error = ?
