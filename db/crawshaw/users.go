@@ -70,6 +70,25 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 // - returned time Fields are in UTC, RFC3339
 // - error: Only returned for database errors, nil on successful query (even if no results)
 // Note: A nil user with nil error indicates no matching record was found
+func (d *Db) VerifyEmail(userId string) error {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	err := sqlitex.Exec(conn,
+		`UPDATE users 
+		SET verified = true,
+			updated = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+		WHERE id = ?`,
+		nil,
+		userId,
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to verify email: %w", err)
+	}
+	return nil
+}
+
 func (d *Db) GetUserById(id string) (*db.User, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)

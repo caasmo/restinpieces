@@ -11,6 +11,7 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 //	export JWT_SECRET=$(openssl rand -base64 32)
@@ -214,6 +215,61 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 // update the password and do not require validated email as we trust the oauth2
 // provider
 // if password exist CreateUserWithPassword will succeed but the password will be not updated.
+func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request) {
+	type request struct {
+		Token string `json:"token"`
+	}
+
+	var req request
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSONError(w, errorInvalidRequest)
+		return
+	}
+
+	// Parse and validate JWT token
+	claims, err := a.parseVerificationToken(req.Token)
+	if err != nil {
+		writeJSONError(w, errorInvalidToken)
+		return
+	}
+
+	// Verify the user's email
+	err = a.db.VerifyEmail(claims["id"].(string))
+	if err != nil {
+		writeJSONError(w, errorServiceUnavailable)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":200,"message":"Email verified successfully"}`))
+}
+
+func (a *App) parseVerificationToken(token string) (map[string]interface{}, error) {
+	// Parse and validate the JWT token
+	parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+		// Verify signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return a.config.JwtSecret, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	// Validate claims
+	if claims, ok := parsedToken.Claims.(jwt.MapClaims); ok && parsedToken.Valid {
+		// Check required claims
+		if claims["id"] == nil || claims["type"] != "verification" {
+			return nil, fmt.Errorf("invalid token claims")
+		}
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("invalid token")
+}
+
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
