@@ -243,6 +243,8 @@ function serializeQueryParams(params) {
 
 /**
  * Saves JWT token to localStorage
+ * Use "" to delete
+ *
  * @param {string} token - The JWT token
  */
 function saveAccessToken(token) {
@@ -270,16 +272,9 @@ unction loadAccessToken() {
   }
 }
 
-function deleteAccessToken() {
-  try {
-    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-  } catch (error) {
-    throw new Error(`Failed to delete access token: ${error.message}`);
-  }
-}
-
 /**
  * Saves user record to localStorage
+ * Use {} to delete
  * @param {Object} record - The user record object
  */
 function saveUserRecord(record) {
@@ -292,29 +287,6 @@ function saveUserRecord(record) {
   } catch (error) {
     throw new Error(`Failed to save user record: ${error.message}`);
   }
-}
-
-function deleteUserRecord() {
-  try {
-    localStorage.removeItem(STORAGE_KEYS.USER_RECORD);
-  } catch (error) {
-    throw new Error(`Failed to delete user record: ${error.message}`);
-  }
-}
-
-/**
- * Handles the email registration response by saving the token and user record
- * @param {Object} data - The JSON data returned from the requestJson method
- */
-function handleEmailRegistration(data) {
-  // Verify we have the necessary data
-  if (!data || !data.token || !data.record) {
-    throw new Error('Invalid response data: token or record missing');
-  }
-
-  // Save JWT and user record using the specialized functions
-  saveJwt(data.token);
-  saveUserRecord(data.record);
 }
 
 /**
@@ -334,4 +306,20 @@ function loadUserRecord() {
     return {};
   }
 }
+
+/**
+ * Handles the email registration response by saving the token and user record
+ * @param {Object} data - The JSON data returned from the requestJson method
+ */
+function handleEmailRegistration(data) {
+  // Verify we have the necessary data
+  if (!data || !data.token || !data.record) {
+    throw new Error('Invalid response data: token or record missing');
+  }
+
+  // Save JWT and user record using the specialized functions
+  saveJwt(data.token);
+  saveUserRecord(data.record);
+}
+
 
