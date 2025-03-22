@@ -23,11 +23,28 @@ const (
 
 // Scheduler handles scheduled jobs
 type Scheduler struct {
-	cfg          config.Scheduler
-	db           db.Db
-	executor     executor.JobExecutor
-	ctx          context.Context
-	cancel       context.CancelFunc
+	// cfg contains the scheduler configuration including interval and max jobs per tick
+	cfg config.Scheduler
+
+	// db is the database connection used to fetch and update jobs
+	db db.Db
+
+	// executor handles the actual execution of jobs
+	executor executor.JobExecutor
+
+	// ctx is the context used to control the scheduler's lifecycle
+	// It allows graceful shutdown when Stop() is called from outside.
+	// The context is passed to all job execution goroutines.
+	ctx context.Context
+
+	// cancel is the CancelFunc associated with ctx
+	// It is called in the Stop method to initiate shutdown of the scheduler
+	// and all running jobs.
+	cancel context.CancelFunc
+
+	// shutdownDone is a channel that will be closed when the scheduler
+	// has completely shut down and all jobs have finished.
+	// Used to signal completion of the shutdown process.
 	shutdownDone chan struct{}
 }
 
