@@ -88,7 +88,8 @@
                 saveAccessToken(data.access_token);
                 const currentToken = loadAccessToken(); // Verify token was saved
                 saveUserRecord(data.record);
-                loadUserRecord(); // Load the record to ensure it's accessible
+                // Load the record to ensure it's accessible
+                loadUserRecord();
                 
                 // Show success message
                 messageDiv.textContent = 'Authentication successful!';
