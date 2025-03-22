@@ -1,14 +1,67 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>OAuth2 redirect page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth2 Callback</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        .user-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .user-info pre {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow: auto;
+        }
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            flex: 1;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1976d2;
+        }
+    </style>
 </head>
 <body>
-    <pre id="content">Authenticating...</pre>
+    <div id="message" class="message">Authenticating...</div>
 
     <script>
-        const contentEl = document.getElementById("content");
+        const messageDiv = document.getElementById('message');
         const params = new URLSearchParams(window.location.search);
         const provider = JSON.parse(localStorage.getItem("provider"));
 
@@ -30,10 +83,44 @@
         })
         .then(response => response.json())
         .then(data => {
-            contentEl.innerText = JSON.stringify(data, null, 2);
+            if (data.access_token && data.record) {
+                // Save token and user record
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('user_record', JSON.stringify(data.record));
+                
+                // Show success message
+                messageDiv.textContent = 'Authentication successful!';
+                messageDiv.classList.add('success');
+                
+                // Create user info display
+                const userInfo = document.createElement('div');
+                userInfo.className = 'user-info';
+                userInfo.innerHTML = `
+                    <h3>Authentication Successful!</h3>
+                    <pre>${JSON.stringify(data.record, null, 2)}</pre>
+                `;
+                
+                // Create action buttons
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+                
+                const dashboardButton = document.createElement('button');
+                dashboardButton.textContent = 'Go to Dashboard';
+                dashboardButton.onclick = () => window.location.href = '/dashboard.html';
+                buttonContainer.appendChild(dashboardButton);
+                
+                // Show results
+                messageDiv.textContent = '';
+                messageDiv.appendChild(userInfo);
+                messageDiv.appendChild(buttonContainer);
+            } else {
+                throw new Error('No access token in response');
+            }
         })
         .catch(err => {
-            contentEl.innerText = "Failed to exchange code.\n" + err;
+            console.error('Authentication failed:', err);
+            messageDiv.textContent = err.response ? JSON.stringify(err.response, null, 2) : err.message;
+            messageDiv.classList.add('error');
         });
     </script>
 </body>
