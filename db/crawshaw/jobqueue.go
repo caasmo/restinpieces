@@ -32,7 +32,7 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 
 	var jobs []*queue.Job
 	err := sqlitex.Exec(conn,
-		`SELECT id, job_type, payload, status, attempts, max_attempts, created_at, updated_at, scheduled_for
+		`SELECT id, job_type, payload, status, attempts, max_attempts, created_at, updated_at, scheduled_for, locked_by, locked_at, completed_at, last_error
 		FROM job_queue
 		WHERE status IN ('pending', 'failed')
 		ORDER BY created_at ASC, id ASC
@@ -53,6 +53,16 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 				return fmt.Errorf("error parsing scheduled_for time: %w", err)
 			}
 
+			lockedAt, err := db.TimeParse(stmt.GetText("locked_at"))
+			if err != nil {
+				return fmt.Errorf("error parsing locked_at time: %w", err)
+			}
+
+			completedAt, err := db.TimeParse(stmt.GetText("completed_at"))
+			if err != nil {
+				return fmt.Errorf("error parsing completed_at time: %w", err)
+			}
+
 			job := &queue.Job{
 				ID:           stmt.GetInt64("id"),
 				JobType:      stmt.GetText("job_type"),
@@ -63,6 +73,10 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 				CreatedAt:    createdAt,
 				UpdatedAt:    updatedAt,
 				ScheduledFor: scheduledFor,
+				LockedBy:     stmt.GetText("locked_by"),
+				LockedAt:     lockedAt,
+				CompletedAt:  completedAt,
+				LastError:    stmt.GetText("last_error"),
 			}
 			jobs = append(jobs, job)
 			return nil
