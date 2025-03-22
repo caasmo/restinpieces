@@ -27,6 +27,7 @@ func validateQueueJob(job queue.Job) error {
 	return nil
 }
 
+// deprecated TODO
 func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
