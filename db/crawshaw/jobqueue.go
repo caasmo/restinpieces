@@ -50,7 +50,7 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 				return fmt.Errorf("error parsing updated_at time: %w", err)
 			}
 
-
+			// following time.Time fields can be "" in the db. Only parse if not empty
 			var scheduledFor time.Time
 			if scheduledForStr := stmt.GetText("scheduled_for"); scheduledForStr != "" {
 				scheduledFor, err = db.TimeParse(scheduledForStr)
