@@ -38,6 +38,7 @@ const (
 	CodeJwtInvalidToken      = "invalid_token"
 	CodeJwtInvalidVerificationToken= "invalid_verification_token"
 	CodeInvalidOAuth2Provider     = "invalid_oauth2_provider"
+	CodeOAuth2TokenExchangeFailed = "oauth2_token_exchange_failed"
 )
 
 // precomputeResponse() will be executed during initialization (before main() runs),
@@ -83,6 +84,7 @@ var (
 	errorJwtInvalidVerificationToken      = precomputeResponse(http.StatusUnauthorized, CodeJwtInvalidVerificationToken, "Invalid verification token")
 	errorEmailVerificationFailed          = precomputeResponse(http.StatusInternalServerError, "email_verification_failed", "Email verification process failed")
 	errorInvalidOAuth2Provider           = precomputeResponse(http.StatusBadRequest, CodeInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
+	errorOAuth2TokenExchangeFailed       = precomputeResponse(http.StatusBadRequest, CodeOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
 
 	// oks
 	okAlreadyVerified         = precomputeResponse(http.StatusAccepted, "already_verified", "Email already verified - no further action needed")
