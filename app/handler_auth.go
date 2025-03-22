@@ -128,21 +128,6 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	writeAuthTokenResponse(w, token, int(a.config.TokenDuration.Seconds()), user)
 }
 
-// confirm-
-// receives token
-// get id, builds sig key with verification email secret
-// jwt validate signed
-// set verified
-// key := (m.TokenKey() + m.Collection().VerificationToken.Secret)
-// is a jwt
-//
-//	{
-//	 "collectionId": "_pb_users_auth_",
-//	 "email": "caasmo@protonmail.com",
-//	 "exp": 1736630179,
-//	 "id": "m648zm0q421yfc0",
-//	 "type": "verification"
-//	}
 //
 // http://localhost:8090/_/#/auth/confirm-verification/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjb2xsZWN0aW9uSWQiOiJfcGJfdXNlcnNfYXV0aF8iLCJlbWFpbCI6ImNhYXNtb0Bwcm90b25tYWlsLmNvbSIsImV4cCI6MTczNjYzMDE3OSwiaWQiOiJtNjQ4em0wcTQyMXlmYzAiLCJ0eXBlIjoidmVyaWZpY2F0aW9uIn0.FcaLmZDe6RfZUR9l73O1umV1j_mXr0xHXHJgtqqBNDo
 // todo already verified.
@@ -209,12 +194,29 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	fmt.Fprint(w, `{"message":"email will be sent soon. Check your mailbox"}`)
 }
 
-// RegisterWithPasswordHandler handles password-based user registration with validation
-// Endpoint: POST /register-with-password
-// TODO we allow register with password after the user has oauth, we just
-// update the password and do not require validated email as we trust the oauth2
-// provider
-// if password exist CreateUserWithPassword will succeed but the password will be not updated.
+// confirm-
+//  user created per email, requires validation of email, we have already emaila dn user id in table
+// queue job creates token like this:
+//	{
+//	 "email": "lipo@goole.com",
+//	 "exp": 1736630179,
+//	 "id": "m648zm0q421yfc0",
+//	 "type": "verification"
+//	}
+// receives token
+// get id, builds sig key with verification email secret
+// jwt validate signed
+// set verified
+// key := (m.TokenKey() + m.Collection().VerificationToken.Secret)
+// is a jwt
+//
+//	{
+//	 "collectionId": "_pb_users_auth_",
+//	 "email": "lipo@google.com",
+//	 "exp": 1736630179,
+//	 "id": "m648zm0q421yfc0",
+//	 "type": "verification"
+//	}
 func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	type request struct {
 		Token string `json:"token"`
@@ -244,6 +246,12 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 	w.Write([]byte(`{"status":200,"message":"Email verified successfully"}`))
 }
 
+// RegisterWithPasswordHandler handles password-based user registration with validation
+// Endpoint: POST /register-with-password
+// TODO we allow register with password after the user has oauth, we just
+// update the password and do not require validated email as we trust the oauth2
+// provider
+// if password exist CreateUserWithPassword will succeed but the password will be not updated.
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
