@@ -86,6 +86,7 @@ func ValidateVerificationClaims(claims jwt.MapClaims) error {
 	return nil
 }
 
+// TODO for verification other constant !!!!111
 func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
 	if iat, ok := claims[ClaimIssuedAt]; ok {
 		// there are two main reasons why the JWT library uses float64
