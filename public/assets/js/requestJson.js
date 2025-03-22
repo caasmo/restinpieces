@@ -20,6 +20,7 @@ class ClientResponseError extends Error {
         
         this.url = errData?.url || "";
         this.status = errData?.status || 0;
+        this.code = errData?.response?.code || errData?.status || 0;
 		// this is only meaninfull with a requestJson with AbortController
         this.isAbort = Boolean(errData?.isAbort);
         this.originalError = errData?.originalError;
