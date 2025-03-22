@@ -43,10 +43,11 @@
     </style>
 </head>
 <body>
+    <script src="/assets/js/requestJson.js"></script>
     <script>
-        // Clear user session data
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_record');
+        // Clear user session data using our functions
+        saveAccessToken("");
+        saveUserRecord({});
     </script>
 
     <div class="message">
