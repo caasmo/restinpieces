@@ -59,6 +59,7 @@ func writeJSONOk(w http.ResponseWriter, status int, code, message string) {
 
 // Precomputed error responses with status codes
 var (
+	//errors
 	errorTokenGeneration      = precomputeError(http.StatusInternalServerError, CodeTokenGeneration, "Failed to generate authentication token")
 	errorClaimsNotFound       = precomputeError(http.StatusInternalServerError, CodeClaimsNotFound, "Failed to generate token: Claims not found")
 	errorInvalidRequest       = precomputeError(http.StatusBadRequest, CodeInvalidRequest, "The request contains invalid data")
@@ -76,15 +77,16 @@ var (
 	errorInvalidTokenFormat   = precomputeError(http.StatusUnauthorized, CodeInvalidTokenFormat, "Invalid authorization token format")
 	errorJwtInvalidSignMethod = precomputeError(http.StatusUnauthorized, CodeJwtInvalidSignMethod, "Invalid JWT signing method")
 	errorJwtTokenExpired      = precomputeError(http.StatusUnauthorized, CodeJwtTokenExpired, "Authentication token has expired")
-	errorAlreadyVerified      = precomputeResponse(http.StatusConflict, CodeAlreadyVerified, "Account is already verified")
-	okAlreadyVerified         = precomputeResponse(http.StatusAccepted, "already_verified", "Email already verified - no further action needed")
 	errorJwtInvalidToken      = precomputeError(http.StatusUnauthorized, CodeJwtInvalidToken, "Invalid authentication token")
 	errorJwtInvalidVerificationToken      = precomputeError(http.StatusUnauthorized, CodeJwtInvalidVerificationToken, "Invalid verification token")
 	errorEmailVerificationFailed          = precomputeError(http.StatusInternalServerError, "email_verification_failed", "Email verification process failed")
+
+	// oks
+	okAlreadyVerified         = precomputeResponse(http.StatusAccepted, "already_verified", "Email already verified - no further action needed")
 )
 
 // writeJSONError writes a precomputed JSON error response
-func writeJSONResponse(w http.ResponseWriter, resp jsonResponse) {
+func writeJSONError(w http.ResponseWriter, resp jsonResponse) {
 	w.Header()["Content-Type"] = jsonHeader
 	w.WriteHeader(resp.status)
 	w.Write(resp.body)
