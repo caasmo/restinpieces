@@ -243,23 +243,16 @@ function serializeQueryParams(params) {
 
 /**
  * Saves JWT token to localStorage
- * Use "" to delete
  *
- * @param {string} token - The JWT token or "" to clear
+ * @param {string} token - The JWT token
  */
 function saveAccessToken(token) {
-  // Allow empty string to clear token
   if (token === undefined) {
     throw new Error('Invalid token: token is required');
   }
   
   try {
-    // Remove item when empty string, set item otherwise
-    if (token === "") {
-      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
-    } else {
-      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
-    }
+    localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
   } catch (error) {
     throw new Error(`Failed to save access token: ${error.message}`);
   }
