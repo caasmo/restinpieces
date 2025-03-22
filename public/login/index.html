@@ -72,9 +72,101 @@
                 <li>Loading OAuth2 providers...</li>
             </ul>
         </div>
+
+        <div class="provider-section">
+            <h2>Login with Password</h2>
+            <form id="passwordLoginForm">
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required minlength="8">
+                </div>
+                
+                <button type="submit">Login</button>
+            </form>
+        </div>
     </div>
 
     <div id="error" class="error"></div>
+
+    <script>
+        // Handle password login form submission
+        document.getElementById('passwordLoginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = '';
+            errorDiv.classList.remove('error');
+
+            // Show loading state
+            errorDiv.textContent = 'Logging in...';
+
+            requestJson(
+                "http://localhost:8080",
+                "/api/auth-with-password",
+                "POST",
+                {},
+                {
+                    identity: email,
+                    password: password
+                }
+            )
+            .then(data => {
+                if (data.access_token && data.record) {
+                    // Save token and user record using our functions
+                    saveAccessToken(data.access_token);
+                    saveUserRecord(data.record);
+                    
+                    // Clear error message
+                    errorDiv.textContent = '';
+                    
+                    // Create user info display
+                    const userInfo = document.createElement('div');
+                    userInfo.className = 'user-info';
+                    userInfo.innerHTML = `
+                        <h3>Login Successful!</h3>
+                        <pre>${JSON.stringify(data.record, null, 2)}</pre>
+                    `;
+                    
+                    // Create action buttons
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'button-container';
+                    
+                    if (!data.record.verified) {
+                        const verifyButton = document.createElement('button');
+                        verifyButton.textContent = 'Verify Email';
+                        verifyButton.onclick = () => window.location.href = '/verify-email';
+                        buttonContainer.appendChild(verifyButton);
+                    }
+                    
+                    const dashboardButton = document.createElement('button');
+                    dashboardButton.textContent = 'Go to Dashboard';
+                    dashboardButton.onclick = () => window.location.href = 'dashboard.html';
+                    buttonContainer.appendChild(dashboardButton);
+                    
+                    // Show results
+                    errorDiv.appendChild(userInfo);
+                    errorDiv.appendChild(buttonContainer);
+                } else {
+                    throw new ClientResponseError({
+                        response: { message: 'Invalid login response' }
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Login failed:', error);
+                errorDiv.textContent = error.response ? JSON.stringify(error.response, null, 2) : error.message;
+                errorDiv.classList.add('error');
+            });
+        });
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
