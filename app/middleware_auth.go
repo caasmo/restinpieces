@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net/http"
 	"strings"
 
