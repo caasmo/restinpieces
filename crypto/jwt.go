@@ -71,12 +71,7 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-// ValidateVerificationToken validates the verification token claims and signature
-// It checks:
-// - Required claims exist and have correct types
-// - Token is not expired
-// - Signature is valid using the signing key derived from email and password hash
-func ValidateVerificationToken(tokenString, email, passwordHash string, secret []byte) (jwt.MapClaims, error) {
+func ValidateVerificationClaims(claims jwt.MapClaims) error {
 	// Parse unverified claims first to check structure
 	claims, err := ParseJwtUnverified(tokenString)
 	if err != nil {
