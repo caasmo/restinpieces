@@ -118,8 +118,17 @@
             }
         })
         .catch(err => {
-            console.error('Authentication failed:', err);
-            messageDiv.textContent = err.response ? JSON.stringify(err.response, null, 2) : err.message;
+            // Ensure we have a ClientResponseError
+            const error = err instanceof ClientResponseError ? err : new ClientResponseError({
+                originalError: err,
+                response: { message: err.message }
+            });
+
+            console.error('Authentication failed:', error);
+            messageDiv.textContent = error.response.message || 'Authentication failed';
+            if (error.response.details) {
+                messageDiv.textContent += `\nDetails: ${JSON.stringify(error.response.details, null, 2)}`;
+            }
             messageDiv.classList.add('error');
         });
     </script>
