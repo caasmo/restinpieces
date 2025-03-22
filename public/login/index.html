@@ -79,12 +79,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             try {
-                const response = await fetch('/api/list-oauth2-providers');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch providers');
-                }
-                
-                const providers = await response.json();
+                const providers = await requestJson(
+                    "http://localhost:8080",
+                    "/api/list-oauth2-providers",
+                    "GET"
+                );
                 const list = document.getElementById('list');
                 list.innerHTML = ''; // Clear loading message
                 
