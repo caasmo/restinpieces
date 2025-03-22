@@ -230,13 +230,13 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if len(providers) == 0 {
-		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"No OAuth2 providers configured"}`)})
+		writeJSONError(w, errorInvalidOAuth2Provider)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(providers); err != nil {
-		writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(`{"error":"Failed to encode providers"}`)})
+		writeJSONError(w, errorInvalidRequest)
 		return
 	}
 }
