@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <script src="/assets/js/requestJson.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .container {
+            margin-top: 40px;
+            text-align: center;
+        }
+        
+        .message {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .loading {
+            background-color: #fff3e0;
+            color: #ef6c00;
+        }
+        
+        .button-container {
+            margin-top: 20px;
+        }
+        
+        .button-container button {
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .button-container button:hover {
+            background-color: #1976d2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Email Verification</h1>
+        <div id="message" class="message loading">Verifying your email...</div>
+        
+        <div class="button-container hidden" id="actions">
+            <button onclick="window.location.href='/dashboard.html'">Go to Dashboard</button>
+            <button onclick="window.location.href='/login.html'">Go to Login</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const messageDiv = document.getElementById('message');
+            const actionsDiv = document.getElementById('actions');
+
+            if (!token) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Missing verification token';
+                return;
+            }
+
+            requestJson(
+                "http://localhost:8080",
+                "/api/verify-email",
+                "POST",
+                {},
+                { token }
+            )
+            .then(data => {
+                messageDiv.className = 'message success';
+                messageDiv.textContent = 'Email successfully verified!';
+                actionsDiv.classList.remove('hidden');
+                
+                // If we got a token back, save it
+                if (data.token) {
+                    saveAccessToken(data.token);
+                }
+                // If we got a user record back, save it
+                if (data.record) {
+                    saveUserRecord(data.record);
+                }
+            })
+            .catch(error => {
+                console.error('Verification failed:', error);
+                messageDiv.className = 'message error';
+                messageDiv.textContent = error.response?.message || 'Email verification failed';
+                actionsDiv.classList.remove('hidden');
+            });
+        });
+    </script>
+</body>
+</html>
