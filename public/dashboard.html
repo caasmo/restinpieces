@@ -106,7 +106,7 @@
             refreshError.textContent = '';
             
             // Get current token before refresh
-            const currentToken = localStorage.getItem('access_token') || 'No token found';
+            const currentToken = loadAccessToken() || 'No token found';
             
             // Save current token as previous token
             document.getElementById('previous-token').textContent = currentToken;
