@@ -46,24 +46,3 @@ func (e *DefaultExecutor) Execute(ctx context.Context, job queue.Job) error {
 	return handler.Handle(ctx, job)
 }
 
-// EmailVerificationHandler handles email verification jobs
-type EmailVerificationHandler struct {
-	mailer *mail.Mailer
-}
-
-// NewEmailVerificationHandler creates a new handler for email verification jobs
-func NewEmailVerificationHandler(mailer *mail.Mailer) *EmailVerificationHandler {
-	return &EmailVerificationHandler{
-		mailer: mailer,
-	}
-}
-
-// Handle implements JobHandler for email verification
-func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) error {
-	var payload queue.PayloadEmailVerification
-	if err := json.Unmarshal(job.Payload, &payload); err != nil {
-		return fmt.Errorf("failed to parse email verification payload: %w", err)
-	}
-
-	return h.mailer.SendVerificationEmail(ctx, payload.Email, fmt.Sprintf("%d", job.ID))
-}

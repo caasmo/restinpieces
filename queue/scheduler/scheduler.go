@@ -199,23 +199,3 @@ func executeJobWithContext(ctx context.Context, job queue.Job) error {
 
 // the key is to use context aware packages for db, etc. and periodically check
 // (in for loops or multi stage executors) for  <-ctx.Done()
-func executeEmailVerification(ctx context.Context, job queue.Job, cfg *config.Config) error {
-	slog.Info("Executing email verification job",
-		"job_type", job.JobType,
-		"payload", job.Payload,
-		"status", job.Status,
-		"attempts", job.Attempts,
-		"maxAttempts", job.MaxAttempts,
-	)
-
-	// Parse payload
-	var payload queue.PayloadEmailVerification
-	if err := json.Unmarshal(job.Payload, &payload); err != nil {
-		return fmt.Errorf("failed to parse email verification payload: %w", err)
-	}
-
-	// Create mailer from config
-	mailer := mail.New(cfg.Smtp)
-
-	return mailer.SendVerificationEmail(ctx, payload.Email, fmt.Sprintf("%d", job.ID))
-}

@@ -2,21 +2,33 @@ package mail
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/smtp"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/queue"
 	"github.com/domodwyer/mailyak/v3"
 )
 
-// Mailer handles sending emails
+// Mailer handles sending emails and implements queue.JobHandler
 type Mailer struct {
 	server   string
 	port     int
 	username string
 	password string
 	from     string
+}
+
+// Handle implements JobHandler for email verification jobs
+func (m *Mailer) Handle(ctx context.Context, job queue.Job) error {
+	var payload queue.PayloadEmailVerification
+	if err := json.Unmarshal(job.Payload, &payload); err != nil {
+		return fmt.Errorf("failed to parse email verification payload: %w", err)
+	}
+
+	return m.SendVerificationEmail(ctx, payload.Email, fmt.Sprintf("%d", job.ID))
 }
 
 // New creates a new Mailer instance from config
