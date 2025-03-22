@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/smtp"
 
+	"github.com/caasmo/restinpieces/config"
 	"github.com/domodwyer/mailyak/v3"
 )
 
