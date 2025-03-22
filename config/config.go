@@ -88,13 +88,18 @@ type Server struct {
 	IdleTimeout time.Duration
 }
 
-type Config struct {
-	JwtSecret     []byte
-	TokenDuration time.Duration
-	DBFile        string
-	Scheduler     Scheduler
-	Server        Server
+type Jwt struct {
+	AuthSecret                    []byte
+	AuthTokenDuration             time.Duration
+	VerificationEmailSecret       []byte
+	VerificationEmailTokenDuration time.Duration
+}
 
+type Config struct {
+	Jwt             Jwt
+	DBFile          string
+	Scheduler       Scheduler
+	Server          Server
 	OAuth2Providers map[string]OAuth2Provider
 }
 
@@ -134,9 +139,13 @@ func FillServer(cfg *Config) Server {
 func Load(dbfile string) (*Config, error) {
 
 	cfg := &Config{
-		JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"), // 32-byte secret
-		TokenDuration: 45 * time.Minute,
-		DBFile:        dbfile,
+		Jwt: Jwt{
+			AuthSecret:                    []byte("test_auth_secret_32_bytes_long_xxxxxx"),
+			AuthTokenDuration:             45 * time.Minute,
+			VerificationEmailSecret:       []byte("test_verification_secret_32_bytes_xxxx"),
+			VerificationEmailTokenDuration: 24 * time.Hour,
+		},
+		DBFile: dbfile,
 		Scheduler: Scheduler{
 			Interval:              15 * time.Second,
 			MaxJobsPerTick:        1,
