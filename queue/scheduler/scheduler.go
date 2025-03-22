@@ -13,7 +13,7 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
-	"github.com/domodwyer/mailyak/v3"
+	"github.com/caasmo/restinpieces/mail"
 )
 
 // TODOremove
@@ -200,15 +200,6 @@ func executeJobWithContext(ctx context.Context, job queue.Job) error {
 // the key is to use context aware packages for db, etc. and periodically check
 // (in for loops or multi stage executors) for  <-ctx.Done()
 func executeEmailVerification(ctx context.Context, job queue.Job) error {
-	// Mail server configuration (TODO: move to config)
-	const (
-		mailServer   = "smtp.example.com"
-		mailPort     = 587
-		mailUsername = "user@example.com"
-		mailPassword = "password"
-		fromEmail    = "noreply@example.com"
-	)
-
 	slog.Info("Executing email verification job",
 		"job_type", job.JobType,
 		"payload", job.Payload,
@@ -223,35 +214,14 @@ func executeEmailVerification(ctx context.Context, job queue.Job) error {
 		return fmt.Errorf("failed to parse email verification payload: %w", err)
 	}
 
-	// Create mail client
-	mail := mailyak.New(fmt.Sprintf("%s:%d", mailServer, mailPort), 
-		smtp.PlainAuth("", mailUsername, mailPassword, mailServer))
+	// TODO: Get mailer from config/dependency injection
+	mailer := mail.New(
+		"smtp.example.com", // server
+		587,                // port
+		"user@example.com", // username
+		"password",         // password
+		"noreply@example.com", // from
+	)
 
-	// Build email
-	mail.To(payload.Email)
-	mail.From(fromEmail)
-	mail.Subject("Email Verification")
-	mail.HTML().Set(fmt.Sprintf(`
-		<h1>Email Verification</h1>
-		<p>Please click the link below to verify your email address:</p>
-		<p><a href="http://example.com/verify-email?token=%s">Verify Email</a></p>
-	`, job.ID)) // Using job ID as verification token for now
-
-	// Send email with context timeout
-	done := make(chan error, 1)
-	go func() {
-		done <- mail.Send()
-	}()
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-done:
-		if err != nil {
-			return fmt.Errorf("failed to send verification email: %w", err)
-		}
-	}
-
-	slog.Info("Successfully sent verification email", "email", payload.Email)
-	return nil
+	return mailer.SendVerificationEmail(ctx, payload.Email, fmt.Sprintf("%d", job.ID))
 }
