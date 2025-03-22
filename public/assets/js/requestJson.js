@@ -1,3 +1,9 @@
+// Storage keys
+const STORAGE_KEYS = {
+    ACCESS_TOKEN: 'access_token',
+    USER_RECORD: 'user_record'
+};
+
 class ClientResponseError extends Error {
     /**
      * Creates a standardized error object for HTTP client requests
@@ -242,7 +248,7 @@ function saveAccessToken(token) {
   if (!token) {
     throw new Error('Invalid token: token is missing');
   }
-  localStorage.setItem('access_token', token);
+  localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
 }
 
 /**
@@ -250,7 +256,7 @@ function saveAccessToken(token) {
  * @returns {string|null} The access token or null if not found
  */
 function loadAccessToken() {
-  return localStorage.getItem('access_token');
+  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
 }
 
 /**
@@ -261,7 +267,7 @@ function saveUserRecord(record) {
   if (!record) {
     throw new Error('Invalid record: record is missing');
   }
-  localStorage.setItem('user_record', JSON.stringify(record));
+  localStorage.setItem(STORAGE_KEYS.USER_RECORD, JSON.stringify(record));
 }
 
 /**
@@ -284,7 +290,7 @@ function handleEmailRegistration(data) {
  * @returns {Object|null} The parsed user record object or null if not found
  */
 function loadUserRecord() {
-  const record = localStorage.getItem('user_record');
+  const record = localStorage.getItem(STORAGE_KEYS.USER_RECORD);
   return record ? JSON.parse(record) : null;
 }
 
