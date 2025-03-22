@@ -51,13 +51,14 @@ func precomputeResponse(status int, code, message string) jsonResponse {
 }
 
 // For successful responses
-func writeJSONOk(w http.ResponseWriter, status int, code, message string) {
+func writeJSONOk(w http.ResponseWriter, resp jsonResponse) {
 	w.Header()["Content-Type"] = jsonHeader
-	w.WriteHeader(status)
-	fmt.Fprintf(w, `{"status":%d,"code":"%s","message":"%s"}`, status, code, message)
+	w.WriteHeader(resp.status)
+	w.Write(resp.body)
 }
 
-// Precomputed error amd ok responses with status codes
+
+// Precomputed error and ok responses with status codes
 var (
 	//errors
 	errorTokenGeneration      = precomputeResponse(http.StatusInternalServerError, CodeTokenGeneration, "Failed to generate authentication token")
