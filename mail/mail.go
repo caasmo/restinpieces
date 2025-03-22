@@ -18,14 +18,14 @@ type Mailer struct {
 	from     string
 }
 
-// New creates a new Mailer instance
-func New(server string, port int, username, password, from string) *Mailer {
+// New creates a new Mailer instance from config
+func New(cfg config.Smtp) *Mailer {
 	return &Mailer{
-		server:   server,
-		port:     port,
-		username: username,
-		password: password,
-		from:     from,
+		server:   cfg.Server,
+		port:     cfg.Port,
+		username: cfg.Username,
+		password: cfg.Password,
+		from:     cfg.From,
 	}
 }
 

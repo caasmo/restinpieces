@@ -214,14 +214,8 @@ func executeEmailVerification(ctx context.Context, job queue.Job) error {
 		return fmt.Errorf("failed to parse email verification payload: %w", err)
 	}
 
-	// TODO: Get mailer from config/dependency injection
-	mailer := mail.New(
-		"smtp.example.com", // server
-		587,                // port
-		"user@example.com", // username
-		"password",         // password
-		"noreply@example.com", // from
-	)
+	// Create mailer from config
+	mailer := mail.New(cfg.Smtp)
 
 	return mailer.SendVerificationEmail(ctx, payload.Email, fmt.Sprintf("%d", job.ID))
 }

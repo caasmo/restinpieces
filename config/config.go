@@ -95,12 +95,21 @@ type Jwt struct {
 	VerificationEmailTokenDuration time.Duration
 }
 
+type Smtp struct {
+	Server   string
+	Port     int
+	Username string
+	Password string
+	From     string
+}
+
 type Config struct {
 	Jwt             Jwt
 	DBFile          string
 	Scheduler       Scheduler
 	Server          Server
 	OAuth2Providers map[string]OAuth2Provider
+	Smtp            Smtp
 }
 
 const (
@@ -144,6 +153,13 @@ func Load(dbfile string) (*Config, error) {
 			AuthTokenDuration:             45 * time.Minute,
 			VerificationEmailSecret:       []byte("test_verification_secret_32_bytes_xxxx"),
 			VerificationEmailTokenDuration: 24 * time.Hour,
+		},
+		Smtp: Smtp{
+			Server:   "smtp.example.com",
+			Port:     587,
+			Username: "user@example.com",
+			Password: "password",
+			From:     "noreply@example.com",
 		},
 		DBFile: dbfile,
 		Scheduler: Scheduler{
