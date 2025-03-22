@@ -24,7 +24,7 @@ const (
 func (a *App) JwtValidate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slog.Debug("JWT validation started")
-	
+
 		// Extract token from request
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -88,7 +88,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		slog.Debug("User fetched", "user_id", user.ID, "email", user.Email)
 
 		// Generate signing key using user credentials
-		slog.Debug("Generating signing key", 
+		slog.Debug("Generating signing key",
 			"email", user.Email,
 			"passwordhash", user.Password,
 			"secret", a.config.JwtSecret)

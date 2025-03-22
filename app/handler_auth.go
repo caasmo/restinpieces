@@ -58,7 +58,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, errorTokenGeneration)
 		return
 	}
-	slog.Debug("New token generated", 
+	slog.Debug("New token generated",
 		"expiry", expiry,
 		"token_length", len(newToken))
 
@@ -215,7 +215,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 // provider
 // if password exist CreateUserWithPassword will succeed but the password will be not updated.
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
-	
+
 	var req struct {
 		Identity        string `json:"identity"`
 		Password        string `json:"password"`
@@ -234,7 +234,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		writeJSONError(w, errorMissingFields)
 		return
 	}
-	
+
 	// Validate password match
 	if req.Password != req.PasswordConfirm {
 		writeJSONError(w, errorPasswordMismatch)
@@ -246,7 +246,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		writeJSONError(w, errorPasswordComplexity)
 		return
 	}
-	
+
 	// Hash password before storage
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
@@ -270,7 +270,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Registration failed: %s"}`, err.Error())
 		return
 	}
-	
+
 	// If passwords are different CreateUserWithPassword did not write the new
 	// password on conflict because the user had already a password.
 	if retrievedUser.Password != newUser.Password {

@@ -9,8 +9,8 @@ import (
 )
 
 type jsonError struct {
-	status    int
-	body []byte
+	status int
+	body   []byte
 }
 
 var jsonHeader = []string{"application/json; charset=utf-8"}
@@ -39,9 +39,9 @@ const (
 )
 
 // precomputeError() will be executed during initialization (before main() runs),
-// and the JSON body will be precomputed and stored in the error variables. 
+// and the JSON body will be precomputed and stored in the error variables.
 // the variables will contain the fully JSON as []byte already
-// It avoids repeated JSON marshaling during request handling 
+// It avoids repeated JSON marshaling during request handling
 // Any time we use writeJSONError(w, errorTokenGeneration) in the code, it
 // simply writes the pre-computed bytes to the response writer
 func precomputeError(status int, code, message string) jsonError {
@@ -95,9 +95,9 @@ func writeJSONErrorf(w http.ResponseWriter, status int, code string, format stri
 func writeAuthTokenResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"token_type": "Bearer",
+		"token_type":   "Bearer",
 		"access_token": token,
-		"expires_in": expiresIn,
+		"expires_in":   expiresIn,
 		"record": map[string]interface{}{
 			"id":       user.ID,
 			"email":    user.Email,
