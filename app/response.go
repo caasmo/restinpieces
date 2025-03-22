@@ -36,6 +36,7 @@ const (
 	CodeJwtTokenExpired      = "token_expired"
 	CodeAlreadyVerified      = "already_verified"
 	CodeJwtInvalidToken      = "invalid_token"
+	CodeJwtInvalidVerificationToken= "invalid_verification_token"
 )
 
 // precomputeError() will be executed during initialization (before main() runs),
@@ -70,6 +71,7 @@ var (
 	errorJwtTokenExpired      = precomputeError(http.StatusUnauthorized, CodeJwtTokenExpired, "Authentication token has expired")
 	errorAlreadyVerified      = precomputeError(http.StatusConflict, CodeAlreadyVerified, "Account is already verified")
 	errorJwtInvalidToken      = precomputeError(http.StatusUnauthorized, CodeJwtInvalidToken, "Invalid authentication token")
+	errorJwtInvalidVerificationToken      = precomputeError(http.StatusUnauthorized, CodeJwtInvalidVerificationToken, "Invalid verification token")
 )
 
 // writeJSONError writes a precomputed JSON error response
