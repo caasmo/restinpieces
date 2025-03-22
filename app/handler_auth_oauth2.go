@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -96,11 +95,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user info
-	slog.Debug("Creating OAuth2 client with token")
 	client := oauth2Config.Client(ctx, token)
-	slog.Debug("Fetching user info from OAuth2 provider", "url", provider.UserInfoURL)
 	resp, err := client.Get(provider.UserInfoURL)
-	slog.Debug("Received user info response", "status", resp.StatusCode)
 	if err != nil {
 		writeJSONError(w, errorOAuth2UserInfoFailed)
 		return
@@ -113,7 +109,6 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, errorOAuth2UserInfoProcessingFailed)
 		return
 	}
-	slog.Debug("Successfully mapped provider user info", "user", oauthUser)
 
 	if oauthUser.Email == "" {
 		writeJSONError(w, errorInvalidRequest)
@@ -160,9 +155,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// in the case of two conflicting auth methods, each one will write its
 	// relevant fields (password, ExternalAuth), and the looser gorotuine can
 	// also inform the user of existing user.
-	slog.Debug("Looking up user by email", "email", oauthUser.Email)
 	user, err := a.db.GetUserByEmail(oauthUser.Email)
-	slog.Debug("User lookup result", "found", user != nil, "error", err)
 	if err != nil {
 		writeJSONError(w, errorOAuth2DatabaseError)
 		return
@@ -170,11 +163,9 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Create or update user with OAuth2 info if user doesn't exist or has false Oauth2
 	if user == nil || !user.Oauth2 {
-		slog.Debug("Creating/updating user with OAuth2", "userExists", user != nil, "hasOauth2", user != nil && user.Oauth2)
 		user, err = a.db.CreateUserWithOauth2(*oauthUser)
-		slog.Debug("User created/updated", "user", user)
 		if err != nil {
-			writeJSONError(w, jsonError{http.StatusInternalServerError, []byte(fmt.Sprintf(`{"error":"Failed to create/update user: %s"}`, err.Error()))})
+			writeJSONError(w, errorOAuth2DatabaseError)
 			return
 		}
 	}
@@ -182,7 +173,6 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// Generate JWT session token
 	slog.Debug("Generating JWT for user", "userID", user.ID)
 	jwtToken, _, err := crypto.NewJwtSessionToken(user.ID, user.Email, "", a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
-	slog.Debug("JWT generation completed", "success", err == nil)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
