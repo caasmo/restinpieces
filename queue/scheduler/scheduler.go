@@ -191,7 +191,7 @@ func executeJobWithContext(ctx context.Context, job queue.Job) error {
     // Different handling based on job type
     switch job.JobType {
     case queue.JobTypeEmailVerification:
-        return executeEmailVerification(ctx, job)
+        return executeEmailVerification(ctx, job, cfg)
     default:
         return fmt.Errorf("unknown job type: %s", job.JobType)
     }
