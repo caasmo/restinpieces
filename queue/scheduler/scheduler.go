@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 	"errors"
+	"fmt"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
@@ -173,10 +174,40 @@ func (s *Scheduler) processJobs() {
     }
 }
 
-// TODO
-
 func executeJobWithContext(ctx context.Context, job queue.Job) error {
-    // Check context before we even start
+    // Initial context check
+    if ctx.Err() != nil {
+        return ctx.Err()
+    }
+
+    // Log job starting
+    slog.Info("Starting job execution", 
+        "job_id", job.ID, 
+        "job_type", job.JobType, 
+        "attempt", job.Attempts)
+    
+    // Different handling based on job type
+    switch job.JobType {
+    case queue.JobTypeEmailVerification:
+        return executeEmailVerification(ctx, job)
+    default:
+        return fmt.Errorf("unknown job type: %s", job.JobType)
+    }
+}
+
+// the key is to use context aware packages for db, etc. and periodically check
+// (in for loops or multi stage executors) for  <-ctx.Done()
+func executeEmailVerification(ctx context.Context, job queue.Job) error {
+
+	slog.Info("Executing job",
+		"job_type", job.JobType,
+		"payload", job.Payload,
+		"status", job.Status,
+		"attempts", job.Attempts,
+		"maxAttempts", job.MaxAttempts,
+	)
+
+    // Initial context check
     if ctx.Err() != nil {
         return ctx.Err()
     }
@@ -195,20 +226,4 @@ func executeJobWithContext(ctx context.Context, job queue.Job) error {
     time.Sleep(2 * time.Second)
     
     return nil
-}
-
-func executeJob(job queue.Job) error {
-	slog.Info("Executing job",
-		"job_type", job.JobType,
-		"payload", job.Payload,
-		"status", job.Status,
-		"attempts", job.Attempts,
-		"maxAttempts", job.MaxAttempts,
-	)
-
-	// Simulate job execution
-	time.Sleep(2 * time.Second)
-
-	//slog.Info("Completed job", "jobID", job.ID, "jobType", job.JobType)
-	return nil
 }
