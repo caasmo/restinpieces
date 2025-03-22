@@ -288,10 +288,19 @@ function handleEmailRegistration(data) {
 
 /**
  * Retrieves the user record from localStorage
- * @returns {Object|null} The parsed user record object or null if not found
+ * @returns {Object} The parsed user record object or null if not found
  */
 function loadUserRecord() {
-  const record = localStorage.getItem(STORAGE_KEYS.USER_RECORD);
-  return record ? JSON.parse(record) : null;
+  try {
+    const record = localStorage.getItem(STORAGE_KEYS.USER_RECORD);
+    if (!record) {
+      return {};
+    }
+    
+    return JSON.parse(record);
+  } catch (error) {
+	// by Json parse
+    return {};
+  }
 }
 
