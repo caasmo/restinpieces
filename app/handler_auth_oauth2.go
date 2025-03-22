@@ -91,7 +91,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	)
 	slog.Debug("OAuth2 token exchange completed", "provider", req.Provider, "token", token != nil)
 	if err != nil {
-		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to exchange token: %s"}`, err.Error()))})
+		writeJSONError(w, errorOAuth2TokenExchangeFailed)
 		return
 	}
 
