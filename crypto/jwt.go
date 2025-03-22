@@ -26,7 +26,7 @@ const (
 
 	// Email verification specific claims
 	ClaimEmail        = "email" // Email address being verified
-	ClaimVerification = "type"  // Verification type claim
+	ClaimType = "type"  // Verification type claim
 	ClaimVerificationValue = "verification" // Value for verification type claim
 
 	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)
@@ -72,22 +72,6 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 }
 
 func ValidateVerificationClaims(claims jwt.MapClaims) error {
-	// Validate required claims exist
-	requiredClaims := map[string]string{
-		ClaimEmail:        "",
-		ClaimVerification: ClaimVerificationValue,
-		ClaimUserID:       "",
-	}
-
-	for claim, expectedValue := range requiredClaims {
-		value, exists := claims[claim]
-		if !exists {
-			return fmt.Errorf("%w: missing %s claim", ErrInvalidVerificationToken, claim)
-		}
-		if expectedValue != "" && value != expectedValue {
-			return fmt.Errorf("%w: invalid %s claim", ErrInvalidVerificationToken, claim)
-		}
-	}
 
 	// Validate iat claim and token age
 	if err := ValidateClaimIssuedAt(claims); err != nil {
