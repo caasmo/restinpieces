@@ -24,6 +24,11 @@ const (
 	ClaimExpiresAt = "exp"     // JWT Expiration Time claim key
 	ClaimUserID    = "user_id" // JWT User ID claim key
 
+	// Email verification specific claims
+	ClaimEmail        = "email" // Email address being verified
+	ClaimVerification = "type"  // Verification type claim
+	ClaimVerificationType = "verification" // Value for verification type claim
+
 	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)
 	MaxTokenAge = 7 * 24 * 60 * 60
 )
@@ -155,6 +160,17 @@ func NewJwtSessionToken(userID, email, passwordHash string, secret []byte, durat
 // NewJWT generates a new JWT token with the provided claims
 // payload is jwt.MapClaims which is just map[string]any
 // you can just call payload := map[string]any{"user_id": userID}
+// NewEmailVerificationClaims creates a new set of claims for email verification
+func NewEmailVerificationClaims(email, userID string, duration time.Duration) jwt.MapClaims {
+	now := time.Now()
+	return jwt.MapClaims{
+		ClaimEmail:        email,
+		ClaimUserID:       userID,
+		ClaimVerification: ClaimVerificationType,
+		ClaimExpiresAt:    now.Add(duration).Unix(),
+	}
+}
+
 func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (string, time.Time, error) {
 	if len(signingKey) < MinKeyLength {
 		return "", time.Time{}, ErrJwtInvalidSecretLength
