@@ -8,7 +8,7 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-type jsonError struct {
+type jsonResponse struct {
 	status int
 	body   []byte
 }
@@ -39,15 +39,22 @@ const (
 	CodeJwtInvalidVerificationToken= "invalid_verification_token"
 )
 
-// precomputeError() will be executed during initialization (before main() runs),
-// and the JSON body will be precomputed and stored in the error variables.
+// precomputeResponse() will be executed during initialization (before main() runs),
+// and the JSON body will be precomputed and stored in the response variables.
 // the variables will contain the fully JSON as []byte already
 // It avoids repeated JSON marshaling during request handling
-// Any time we use writeJSONError(w, errorTokenGeneration) in the code, it
+// Any time we use writeJSONResponse(w, response) in the code, it
 // simply writes the pre-computed bytes to the response writer
-func precomputeError(status int, code, message string) jsonError {
+func precomputeResponse(status int, code, message string) jsonResponse {
 	body := fmt.Sprintf(`{"status":%d,"code":"%s","message":"%s"}`, status, code, message)
-	return jsonError{status: status, body: []byte(body)}
+	return jsonResponse{status: status, body: []byte(body)}
+}
+
+// For successful responses
+func writeJSONOk(w http.ResponseWriter, status int, code, message string) {
+	w.Header()["Content-Type"] = jsonHeader
+	w.WriteHeader(status)
+	fmt.Fprintf(w, `{"status":%d,"code":"%s","message":"%s"}`, status, code, message)
 }
 
 // Precomputed error responses with status codes
