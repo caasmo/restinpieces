@@ -238,7 +238,7 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 	// Parse unverified claims to check token structure
 	claims, err := crypto.ParseJwtUnverified(req.Token)
 	if err != nil {
-		writeJSONError(w, errorJwtInvalidToken)
+		writeJSONError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
