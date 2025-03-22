@@ -36,7 +36,7 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 		`SELECT id, job_type, payload, status, attempts, max_attempts, created_at, updated_at, 
 				scheduled_for, locked_by, locked_at, completed_at, last_error
 		FROM job_queue
-		WHERE status IN ('pending', 'failed')
+			WHERE status IN ('pending', 'failed')
 		ORDER BY created_at ASC, id ASC
 		LIMIT ?`,
 		func(stmt *sqlite.Stmt) error {
@@ -49,6 +49,7 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 			if err != nil {
 				return fmt.Errorf("error parsing updated_at time: %w", err)
 			}
+
 
 			var scheduledFor time.Time
 			if scheduledForStr := stmt.GetText("scheduled_for"); scheduledForStr != "" {
