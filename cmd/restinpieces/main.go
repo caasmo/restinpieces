@@ -9,7 +9,10 @@ import (
 	"github.com/caasmo/restinpieces/custom"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/executor"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
+	"github.com/caasmo/restinpieces/mail"
+	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/server"
 )
 
@@ -38,8 +41,15 @@ func main() {
 
 	route(ap, cAp)
 
-	// Create and start scheduler with configured interval and db
-	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db())
+	// Create mailer and executor
+	mailer := mail.New(cfg.Smtp)
+	handlers := map[string]executor.JobHandler{
+		queue.JobTypeEmailVerification: mailer,
+	}
+	exec := executor.NewExecutor(handlers)
+
+	// Create and start scheduler with executor
+	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), exec)
 
 	//server.Run(cfg.Server, ap.Router(), nil)
 	server.Run(cfg.Server, ap.Router(), scheduler)
