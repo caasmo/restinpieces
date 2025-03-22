@@ -1,6 +1,6 @@
 ### TODOs
 
-- update all errors to our format, update if needed  ClientResponseError
+- downtime schedule, all routes to, lock db ...
 - error in trhe sequnce of step f ex register can let inconsitent state, ex
     - error after inserting job, we have user in db but no varification 
 - remove experd in return from function, get it from config
@@ -44,6 +44,7 @@
 
 ### done
 
+- update all errors to our format, update if needed  ClientResponseError
 - Implementaion of race condition-free auth-with-oauth2
 - ~~timeouts in server~~
 - ~~move gratefull shutdown to server.go~~

@@ -42,7 +42,7 @@ const (
 // and the JSON body will be precomputed and stored in the error variables. 
 // the variables will contain the fully JSON as []byte already
 // It avoids repeated JSON marshaling during request handling 
-// Any time we use writeJSONError(w, errorTokenGeneration) in your code, it
+// Any time we use writeJSONError(w, errorTokenGeneration) in the code, it
 // simply writes the pre-computed bytes to the response writer
 func precomputeError(status int, code, message string) jsonError {
 	body := fmt.Sprintf(`{"status":%d,"code":"%s","message":"%s"}`, status, code, message)

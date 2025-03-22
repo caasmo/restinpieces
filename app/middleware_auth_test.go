@@ -61,8 +61,8 @@ func TestJwtValidate_RequestValidation(t *testing.T) {
 			middleware := a.JwtValidate(testHandler)
 			middleware.ServeHTTP(rr, req)
 
-			if rr.Code != tc.wantError.code {
-				t.Errorf("expected status %d, got %d", tc.wantError.code, rr.Code)
+			if rr.Code != tc.wantError.status {
+				t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
 			}
 			if !strings.Contains(rr.Body.String(), string(tc.wantError.body)) {
 				t.Errorf("expected error response %q, got %q", string(tc.wantError.body), rr.Body.String())
@@ -172,8 +172,8 @@ func TestJwtValidate_DatabaseTests(t *testing.T) {
 			middleware.ServeHTTP(rr, req)
 
 			if tc.wantError != nil {
-				if rr.Code != tc.wantError.code {
-					t.Errorf("expected status %d, got %d", tc.wantError.code, rr.Code)
+				if rr.Code != tc.wantError.status {
+					t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
 				}
 				if !strings.Contains(rr.Body.String(), string(tc.wantError.body)) {
 					t.Errorf("expected error response %q, got %q", string(tc.wantError.body), rr.Body.String())

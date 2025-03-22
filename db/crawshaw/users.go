@@ -153,7 +153,7 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 		},
 		user.Name,            // 1. name
 		"",                   // 2. password
-		user.Verified,        // 3. verified
+		user.Verified,        // 3. verified, shoudl be true TODO
 		true,                 // 4. oauth2
 		user.Avatar,          // 5. avatar
 		user.Email,           // 6. email
