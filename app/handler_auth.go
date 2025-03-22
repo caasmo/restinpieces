@@ -166,7 +166,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 
 	// Check if user is already verified
 	if user.Verified {
-		writeJSONError(w, errorAlreadyVerified)
+		writeJSONResponse(w, okAlreadyVerified)
 		return
 	}
 
