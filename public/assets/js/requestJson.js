@@ -254,10 +254,15 @@ function saveAccessToken(token) {
 
 /**
  * Retrieves the access token from localStorage
- * @returns {string|null} The access token or null if not found
+ * @returns {string} The access token 
  */
-function loadAccessToken() {
-  return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+unction loadAccessToken() {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN) || "";
+  } catch (error) {
+	// which can occur if storage is unavailable or quota is exceeded
+    return "";
+  }
 }
 
 /**
