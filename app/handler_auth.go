@@ -254,11 +254,11 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Verify token signature using user's email and password hash as signing key
+	// Verify token signature using verification email secret
 	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
 		claims[crypto.ClaimEmail].(string),
 		user.Password,
-		a.config.Jwt.AuthSecret,
+		a.config.Jwt.VerificationEmailSecret,
 	)
 	if err != nil {
 		writeJSONError(w, errorServiceUnavailable)
