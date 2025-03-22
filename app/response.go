@@ -40,6 +40,7 @@ const (
 	CodeInvalidOAuth2Provider     = "invalid_oauth2_provider"
 	CodeOAuth2TokenExchangeFailed = "oauth2_token_exchange_failed"
 	CodeOAuth2UserInfoFailed      = "oauth2_user_info_failed"
+	CodeOAuth2UserInfoProcessingFailed = "oauth2_user_info_processing_failed"
 )
 
 // precomputeResponse() will be executed during initialization (before main() runs),
@@ -87,6 +88,7 @@ var (
 	errorInvalidOAuth2Provider           = precomputeResponse(http.StatusBadRequest, CodeInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
 	errorOAuth2TokenExchangeFailed       = precomputeResponse(http.StatusBadRequest, CodeOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
 	errorOAuth2UserInfoFailed           = precomputeResponse(http.StatusBadRequest, CodeOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
+	errorOAuth2UserInfoProcessingFailed = precomputeResponse(http.StatusBadRequest, CodeOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
 
 	// oks
 	okAlreadyVerified         = precomputeResponse(http.StatusAccepted, "already_verified", "Email already verified - no further action needed")
