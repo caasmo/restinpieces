@@ -74,14 +74,14 @@
             redirect_uri: provider.redirectURL
         };
 
-        // Send auth request to backend
-        fetch('/api/auth-with-oauth2', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(authRequest)
-        })
+        // Send auth request to backend using requestJson
+        requestJson(
+            "http://localhost:8080",
+            "/api/auth-with-oauth2",
+            "POST",
+            {},
+            authRequest
+        )
         .then(response => response.json())
         .then(data => {
             if (data.access_token && data.record) {
