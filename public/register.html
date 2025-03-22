@@ -150,10 +150,10 @@
                 }
             )
             .then(data => {
-                // Save access token and user record
+                // Save access token and user record using our functions
                 if (data.access_token && data.record) {
                     saveAccessToken(data.access_token);
-                    localStorage.setItem('user_record', JSON.stringify(data.record));
+                    saveUserRecord(data.record);
                     
                     // Show success message
                     messageDiv.textContent = 'Registration successful!';
