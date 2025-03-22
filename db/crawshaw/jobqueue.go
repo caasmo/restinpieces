@@ -141,9 +141,9 @@ func (d *Db) MarkCompleted(jobID int64) error {
 		SET status = 'completed',
 			completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
-			locked_by = NULL,
-			locked_at = NULL,
-			last_error = NULL
+			locked_by = '',  -- LockedBy is TEXT with DEFAULT ''
+			locked_at = '',   -- LockedAt is TEXT with DEFAULT ''
+			last_error = ''   -- LastError is TEXT with DEFAULT ''
 		WHERE id = ?`,
 		nil,
 		jobID,
