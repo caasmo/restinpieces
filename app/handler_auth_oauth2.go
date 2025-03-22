@@ -102,7 +102,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	resp, err := client.Get(provider.UserInfoURL)
 	slog.Debug("Received user info response", "status", resp.StatusCode)
 	if err != nil {
-		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(fmt.Sprintf(`{"error":"Failed to get user info: %s"}`, err.Error()))})
+		writeJSONError(w, errorOAuth2UserInfoFailed)
 		return
 	}
 	defer resp.Body.Close()
