@@ -26,6 +26,7 @@ type tableSchema struct {
 	knownHash string
 }
 
+// TODO move job_queue
 var tables = []tableSchema{
 	{
 		name:      "users",
@@ -37,7 +38,7 @@ var tables = []tableSchema{
 		name:      "job_queue",
 		schema:    migrations.JobQueueSchema,
 		inserts:   []string{},
-		knownHash: "31807e9841313811ab08a2a4c5cd8df2f81c3fbc8f3c63af1bfb4045591b577a",
+		knownHash: "deee3b72421eedaa9d83091abe70b1a6b9e7b606755b268071d4a7696ca64606",
 	},
 }
 
