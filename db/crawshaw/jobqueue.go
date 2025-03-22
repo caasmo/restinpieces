@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// TODO delete
 func validateQueueJob(job queue.Job) error {
 	var missingFields []string
 	if job.JobType == "" {

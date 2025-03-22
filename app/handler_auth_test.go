@@ -85,8 +85,8 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 					t.Fatalf("failed to decode error response: %v", err)
 				}
 
-				if _, ok := resp["error"]; !ok {
-					t.Error("error response missing 'error' field")
+				if _, ok := resp["message"]; !ok {
+					t.Error("error response missing 'message' field")
 				}
 			}
 		})
