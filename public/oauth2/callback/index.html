@@ -119,10 +119,7 @@
         })
         .catch(error => {
             console.error('Authentication failed:', error);
-            messageDiv.textContent = error.response.message || 'Authentication failed';
-            if (error.response.details) {
-                messageDiv.textContent += `\nDetails: ${JSON.stringify(error.response.details, null, 2)}`;
-            }
+            messageDiv.textContent = JSON.stringify(error.response, null, 2);
             messageDiv.classList.add('error');
         });
     </script>
