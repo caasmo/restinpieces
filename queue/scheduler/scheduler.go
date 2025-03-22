@@ -116,7 +116,7 @@ func (s *Scheduler) processJobs() {
 		return
 	}
 
-	slog.Info("Processing claimed jobs", "count", len(jobs))
+	slog.Info("Claimed jobs", "count", len(jobs))
 
 	var processed int
 	for _, job := range jobs {
@@ -137,11 +137,11 @@ func (s *Scheduler) processJobs() {
 
 func executeJob(job queue.Job) error {
 	slog.Info("Executing job",
+		"job_type", job.JobType,
 		"payload", job.Payload,
 		"status", job.Status,
 		"attempts", job.Attempts,
 		"maxAttempts", job.MaxAttempts,
-		"scheduledFor", job.ScheduledFor,
 	)
 
 	// Simulate job execution

@@ -203,7 +203,7 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 			}
 			jobs = append(jobs, job)
 			return nil
-		}, "worker1", limit) // TODO: Replace "worker1" with actual worker ID
+		}, limit) 
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to claim jobs: %w", err)
