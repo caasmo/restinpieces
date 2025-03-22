@@ -49,14 +49,20 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 				return fmt.Errorf("error parsing updated_at time: %w", err)
 			}
 
-			scheduledFor, err := db.TimeParse(stmt.GetText("scheduled_for"))
-			if err != nil {
-				return fmt.Errorf("error parsing scheduled_for time: %w", err)
+			var scheduledFor time.Time
+			if scheduledForStr := stmt.GetText("scheduled_for"); scheduledForStr != "" {
+				scheduledFor, err = db.TimeParse(scheduledForStr)
+				if err != nil {
+					return fmt.Errorf("error parsing scheduled_for time: %w", err)
+				}
 			}
 
-			lockedAt, err := db.TimeParse(stmt.GetText("locked_at"))
-			if err != nil {
-				return fmt.Errorf("error parsing locked_at time: %w", err)
+			var lockedAt time.Time
+			if lockedAtStr := stmt.GetText("locked_at"); lockedAtStr != "" {
+				lockedAt, err = db.TimeParse(lockedAtStr)
+				if err != nil {
+					return fmt.Errorf("error parsing locked_at time: %w", err)
+				}
 			}
 
 			var completedAt time.Time
