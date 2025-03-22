@@ -60,7 +60,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// Get provider config
 	provider, ok := a.config.OAuth2Providers[req.Provider]
 	if !ok {
-		writeJSONError(w, jsonError{http.StatusBadRequest, []byte(`{"error":"Invalid OAuth2 provider"}`)})
+		writeJSONError(w, errorInvalidOAuth2Provider)
 		return
 	}
 
