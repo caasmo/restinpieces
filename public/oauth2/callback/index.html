@@ -117,13 +117,7 @@
                 throw new Error('No access token in response');
             }
         })
-        .catch(err => {
-            // Ensure we have a ClientResponseError
-            const error = err instanceof ClientResponseError ? err : new ClientResponseError({
-                originalError: err,
-                response: { message: err.message }
-            });
-
+        .catch(error => {
             console.error('Authentication failed:', error);
             messageDiv.textContent = error.response.message || 'Authentication failed';
             if (error.response.details) {
