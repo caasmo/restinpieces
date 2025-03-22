@@ -273,7 +273,7 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 // suitable for use with github.com/golang-jwt/jwt/v5's SignedString method,
 // and an error if the server secret is unset or inputs are invalid.
 //
-// Note: JWT_SECRET should be a strong, random value (e.g., 32+ bytes).
+// Note: AuthSecret should be a strong, random value (e.g., 32+ bytes).
 func NewJwtSigningKeyWithCredentials(email, passwordHash string, secret []byte) ([]byte, error) {
 	// Validate inputs
 	if email == "" {

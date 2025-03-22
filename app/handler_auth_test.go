@@ -66,8 +66,10 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			rr := httptest.NewRecorder()
 			a, _ := New(
 				WithConfig(&config.Config{
-					JwtSecret:     []byte("test_secret_32_bytes_long_xxxxxx"),
-					TokenDuration: 15 * time.Minute,
+					Jwt: config.Jwt{
+						AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
+						AuthTokenDuration: 15 * time.Minute,
+					},
 				}),
 				WithRouter(&MockRouter{}),
 			)

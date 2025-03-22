@@ -117,7 +117,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT session token
-	token, _, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.JwtSecret, a.config.TokenDuration)
+	token, _, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
 		writeJSONError(w, errorTokenGeneration)
 		return
@@ -258,7 +258,7 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
 		claims[crypto.ClaimEmail].(string),
 		user.Password,
-		a.config.JwtSecret,
+		a.config.Jwt.AuthSecret,
 	)
 	if err != nil {
 		writeJSONError(w, errorServiceUnavailable)
