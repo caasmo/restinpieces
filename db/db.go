@@ -17,6 +17,7 @@ type Db interface {
 	CreateUserWithOauth2(user User) (*User, error)
 	InsertJob(job queue.Job) error
 	GetJobs(limit int) ([]*queue.Job, error)
+	Claim(limit int) ([]*queue.Job, error)
 }
 
 // TimeFormat converts a time.Time to RFC3339 string in UTC.
