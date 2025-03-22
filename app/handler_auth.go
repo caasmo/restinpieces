@@ -285,8 +285,7 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":200,"message":"Email verified successfully"}`))
+	writeJSONOk(w, okEmailVerified)
 }
 
 // RegisterWithPasswordHandler handles password-based user registration with validation

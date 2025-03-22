@@ -94,6 +94,7 @@ var (
 
 	// oks
 	okAlreadyVerified         = precomputeResponse(http.StatusAccepted, "already_verified", "Email already verified - no further action needed")
+	okEmailVerified           = precomputeResponse(http.StatusOK, "email_verified", "Email verified successfully")
 )
 
 // writeJSONError writes a precomputed JSON error response
