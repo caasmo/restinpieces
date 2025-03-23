@@ -44,16 +44,23 @@ func main() {
 
 	route(ap, cAp)
 
-	// Create mailer and executor
-	mailer, err := mail.New(cfg.Smtp)
-	if err != nil {
-		slog.Error("failed to create mailer", "error", err)
-		os.Exit(1)
+	// Create mailer and executor only if SMTP is configured
+	var exec *executor.Executor
+	if cfg.Smtp.Host != "" {
+		mailer, err := mail.New(cfg.Smtp)
+		if err != nil {
+			slog.Error("failed to create mailer", "error", err)
+			os.Exit(1)
+		}
+		handlers := map[string]executor.JobHandler{
+			queue.JobTypeEmailVerification: mailer,
+		}
+		exec = executor.NewExecutor(handlers)
+		slog.Info("Email verification enabled with SMTP configuration")
+	} else {
+		exec = executor.NewExecutor(nil)
+		slog.Warn("SMTP not configured - email verification disabled")
 	}
-	handlers := map[string]executor.JobHandler{
-		queue.JobTypeEmailVerification: mailer,
-	}
-	exec := executor.NewExecutor(handlers)
 
 	// Create and start scheduler with executor
 	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), exec)
