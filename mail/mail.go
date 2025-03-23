@@ -127,12 +127,8 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 			ServerName:         m.host,
 			InsecureSkipVerify: false, // Always verify certs in production
 		})
-	} else if m.useStartTLS {
-		// Use STARTTLS
-		mail = mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth)
-		mail.UseStartTLS(true)
 	} else {
-		// Plain SMTP connection
+		// Use plain connection (will automatically upgrade to STARTTLS if server supports it)
 		mail = mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth)
 	}
 
