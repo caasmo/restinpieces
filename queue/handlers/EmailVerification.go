@@ -78,6 +78,7 @@ func (h *EmailVerificationHandler) createVerificationToken(email, passwordHash s
 	}
 
 	// Create JWT claims
+	// TODO to jwt to not export 3 party
 	claims := jwt.MapClaims{
 		crypto.ClaimEmail: email,
 		crypto.ClaimType:  crypto.ClaimVerificationValue,

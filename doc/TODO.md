@@ -1,6 +1,7 @@
 ### TODOs
 
-- domain localhost variable shoul be dinamic 
+- endpoints api configurable in conf
+-seurl hadcoded https. should be configurable if srver http under proxy TLS like cloudflare
 - downtime schedule, all routes to, lock db ...
 - error in trhe sequnce of step f ex register can let inconsitent state, ex
     - error after inserting job, we have user in db but no varification 
@@ -45,6 +46,7 @@
 
 ### done
 
+- domain localhost variable shoul be dinamic 
 - update all errors to our format, update if needed  ClientResponseError
 - Implementaion of race condition-free auth-with-oauth2
 - ~~timeouts in server~~
