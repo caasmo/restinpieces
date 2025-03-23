@@ -8,14 +8,6 @@ import (
 	"github.com/caasmo/restinpieces/queue"
 )
 
-import (
-	"context"
-	"fmt"
-	"log/slog"
-
-	"github.com/caasmo/restinpieces/queue"
-)
-
 // JobExecutor defines the interface for executing jobs
 type JobExecutor interface {
 	Execute(ctx context.Context, job queue.Job) error
