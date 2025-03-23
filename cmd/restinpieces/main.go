@@ -40,7 +40,11 @@ func main() {
 	route(ap, cAp)
 
 	// Create mailer and executor
-	mailer := mail.New(cfg.Smtp)
+	mailer, err := mail.New(cfg.Smtp)
+	if err != nil {
+		slog.Error("failed to create mailer", "error", err)
+		os.Exit(1)
+	}
 	handlers := map[string]executor.JobHandler{
 		queue.JobTypeEmailVerification: mailer,
 	}

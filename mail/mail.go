@@ -77,6 +77,9 @@ type Mailer struct {
 	// Used with port 587
 	// If true, upgrades plain connection to TLS after initial handshake
 	useStartTLS bool
+
+	// mail is the reusable mailyak instance
+	mail *mailyak.MailYak
 }
 
 // Handle implements JobHandler for email verification jobs
@@ -90,8 +93,8 @@ func (m *Mailer) Handle(ctx context.Context, job queue.Job) error {
 }
 
 // New creates a new Mailer instance from config
-func New(cfg config.Smtp) *Mailer {
-	return &Mailer{
+func New(cfg config.Smtp) (*Mailer, error) {
+	m := &Mailer{
 		host:        cfg.Host,
 		port:        cfg.Port,
 		username:    cfg.Username,
@@ -101,11 +104,8 @@ func New(cfg config.Smtp) *Mailer {
 		useTLS:      cfg.UseTLS,
 		useStartTLS: cfg.UseStartTLS,
 	}
-}
 
-// SendVerificationEmail sends an email verification message
-func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string) error {
-	// Create mail client
+	// Initialize the mail client
 	var auth smtp.Auth
 	switch m.authMethod {
 	case "login":
@@ -118,29 +118,32 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 		auth = smtp.PlainAuth("", m.username, m.password, m.host)
 	}
 
-	var mail *mailyak.MailYak
 	var err error
-
 	if m.useTLS {
 		// Use explicit TLS (SMTPS)
-		mail, err = mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
+		m.mail, err = mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
 			ServerName:         m.host,
 			InsecureSkipVerify: false, // Always verify certs in production
 		})
 	} else {
 		// Use plain connection (will automatically upgrade to STARTTLS if server supports it)
-		mail = mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth)
+		m.mail = mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth)
 	}
 
 	if err != nil {
-		return fmt.Errorf("failed to create mail client: %w", err)
+		return nil, fmt.Errorf("failed to create mail client: %w", err)
 	}
 
+	return m, nil
+}
+
+// SendVerificationEmail sends an email verification message
+func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string) error {
 	// Build email
-	mail.To(email)
-	mail.From(m.from)
-	mail.Subject("Email Verification")
-	mail.HTML().Set(fmt.Sprintf(`
+	m.mail.To(email)
+	m.mail.From(m.from)
+	m.mail.Subject("Email Verification")
+	m.mail.HTML().Set(fmt.Sprintf(`
 		<h1>Email Verification</h1>
 		<p>Please click the link below to verify your email address:</p>
 		<p><a href="http://example.com/verify-email?token=%s">Verify Email</a></p>
@@ -149,7 +152,7 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 	// Send email with context timeout
 	done := make(chan error, 1)
 	go func() {
-		done <- mail.Send()
+		done <- m.mail.Send()
 	}()
 
 	select {
