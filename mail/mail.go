@@ -118,10 +118,24 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 		auth = smtp.PlainAuth("", m.username, m.password, m.host)
 	}
 
-	mail, err := mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
-		ServerName:         m.host,
-		InsecureSkipVerify: !m.useTLS, // Only verify cert if using TLS
-	})
+	var mail *mailyak.MailYak
+	var err error
+
+	if m.useTLS {
+		// Use explicit TLS (SMTPS)
+		mail, err = mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
+			ServerName:         m.host,
+			InsecureSkipVerify: false, // Always verify certs in production
+		})
+	} else if m.useStartTLS {
+		// Use STARTTLS
+		mail = mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth)
+		mail.UseStartTLS(true)
+	} else {
+		// Plain SMTP connection
+		mail = mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth)
+	}
+
 	if err != nil {
 		return fmt.Errorf("failed to create mail client: %w", err)
 	}
