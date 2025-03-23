@@ -14,29 +14,6 @@ import (
 )
 
 
-// loginAuth implements the LOGIN authentication mechanism
-type loginAuth struct {
-	username string
-	password string
-}
-
-func (a *loginAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
-	return "LOGIN", []byte{}, nil
-}
-
-func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
-	if more {
-		switch string(fromServer) {
-		case "Username:":
-			return []byte(a.username), nil
-		case "Password:":
-			return []byte(a.password), nil
-		default:
-			return nil, fmt.Errorf("unexpected server challenge: %s", fromServer)
-		}
-	}
-	return nil, nil
-}
 
 // Mailer handles sending emails and implements queue.JobHandler
 type Mailer struct {
@@ -69,9 +46,8 @@ type Mailer struct {
 	localName string
 
 	// authMethod specifies the SMTP authentication mechanism
-	// Supported values: "plain", "login", "cram-md5", "none"
+	// Supported values: "plain", "cram-md5", "none"
 	// - "plain": Standard SMTP AUTH PLAIN (RFC 4616)
-	// - "login": Legacy LOGIN mechanism
 	// - "cram-md5": CRAM-MD5 challenge-response (RFC 2195)
 	// - "none": No authentication
 	authMethod string
@@ -117,8 +93,6 @@ func New(cfg config.Smtp) (*Mailer, error) {
 func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
 	var auth smtp.Auth
 	switch m.authMethod {
-	case "login":
-		auth = &loginAuth{username: m.username, password: m.password}
 	case "cram-md5":
 		auth = smtp.CRAMMD5Auth(m.username, m.password)
 	case "none":
