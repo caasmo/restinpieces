@@ -165,7 +165,7 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 	mail.Subject("Email Verification")
 	mail.HTML().Set(fmt.Sprintf(`
 		<p>Hello,</p>
-		<p>Thank you for joining us at Acme.</p>
+		<p>Thank you for joining us at %s.</p>
 		<p>Click on the button below to verify your email address.</p>
 		<p style="margin: 20px 0;">
 			<a href="http://example.com/verify-email?token=%s" 
@@ -173,8 +173,8 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 				Verify
 			</a>
 		</p>
-		<p>Thanks,<br>Acme team</p>
-	`, token))
+		<p>Thanks,<br>%s team</p>
+	`, m.fromName, token, m.fromName))
 
 	//return fmt.Errorf("IN MAIL DEBUG: %w", nil)
 	// Send email with context timeout
