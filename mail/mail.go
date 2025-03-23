@@ -40,13 +40,42 @@ func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 
 // Mailer handles sending emails and implements queue.JobHandler
 type Mailer struct {
-	host        string
-	port        int
-	username    string
-	password    string
-	from        string
-	authMethod  string
-	useTLS      bool
+	// host is the SMTP server hostname or IP address
+	// Example: "smtp.example.com" or "192.168.1.100"
+	host string
+
+	// port is the SMTP server port number
+	// Common ports: 25 (unencrypted), 465 (SSL/TLS), 587 (STARTTLS)
+	port int
+
+	// username is the authentication username for the SMTP server
+	// Typically an email address or system username
+	username string
+
+	// password is the authentication password for the SMTP server
+	// Should be stored securely and not logged
+	password string
+
+	// from is the email address that will appear in the "From" header
+	// Example: "noreply@example.com"
+	from string
+
+	// authMethod specifies the SMTP authentication mechanism
+	// Supported values: "plain", "login", "cram-md5", "none"
+	// - "plain": Standard SMTP AUTH PLAIN (RFC 4616)
+	// - "login": Legacy LOGIN mechanism
+	// - "cram-md5": CRAM-MD5 challenge-response (RFC 2195)
+	// - "none": No authentication
+	authMethod string
+
+	// useTLS enables explicit TLS encryption for the SMTP connection
+	// Used with port 465 (SMTPS)
+	// If true, establishes TLS connection immediately
+	useTLS bool
+
+	// useStartTLS enables STARTTLS encryption for the SMTP connection
+	// Used with port 587
+	// If true, upgrades plain connection to TLS after initial handshake
 	useStartTLS bool
 }
 
