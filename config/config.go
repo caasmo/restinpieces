@@ -78,26 +78,30 @@ type Server struct {
 	IdleTimeout time.Duration
 }
 
-// BaseURL returns the full base URL including scheme but without port
+// BaseURL returns the full base URL including scheme and port
 // Uses https in production (when not localhost)
 func (s *Server) BaseURL() string {
 	// Split host:port
-	host, _, err := net.SplitHostPort(s.Addr)
+	host, port, err := net.SplitHostPort(s.Addr)
 	if err != nil {
 		// If no port, assume whole Addr is host
 		host = s.Addr
+		port = "8080" // Default port
 	}
 	
 	// Default to localhost if no host specified
 	if host == "" {
-		return "http://localhost"
+		host = "localhost"
 	}
 	
-	// Use https for non-localhost domains
+	// Determine scheme
+	scheme := "https"
 	if host == "localhost" {
-		return "http://localhost"
+		scheme = "http"
 	}
-	return "https://" + host
+	
+	// Include port in URL
+	return fmt.Sprintf("%s://%s:%s", scheme, host, port)
 }
 
 type Jwt struct {
