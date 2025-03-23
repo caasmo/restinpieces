@@ -2,6 +2,7 @@ package config
 
 import (
 	"log/slog"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -57,7 +58,7 @@ type Scheduler struct {
 }
 
 type Server struct {
-	// Addr is the HTTP server address to listen on (e.g. ":8080")
+	// Addr is the HTTP server address to listen on (e.g. ":8080" or "app.example.com:8080")
 	Addr string
 
 	// ShutdownGracefulTimeout is the maximum time to wait for graceful shutdown
@@ -74,6 +75,33 @@ type Server struct {
 
 	// IdleTimeout is the maximum amount of time to wait for the next request
 	IdleTimeout time.Duration
+}
+
+// Domain returns the domain portion of the server address
+// If Addr contains just a port (e.g. ":8080"), returns "localhost"
+func (s *Server) Domain() string {
+	// Split host:port
+	host, _, err := net.SplitHostPort(s.Addr)
+	if err != nil {
+		// If no port, assume whole Addr is host
+		host = s.Addr
+	}
+	
+	// Default to localhost if no host specified
+	if host == "" {
+		return "localhost"
+	}
+	return host
+}
+
+// BaseURL returns the full base URL including scheme
+// Uses https in production (when not localhost)
+func (s *Server) BaseURL() string {
+	domain := s.Domain()
+	if domain == "localhost" {
+		return "http://" + domain
+	}
+	return "https://" + domain
 }
 
 type Jwt struct {
@@ -228,7 +256,7 @@ func Load(dbfile string) (*Config, error) {
 		ClientID:     os.Getenv(EnvGoogleClientID),
 		ClientSecret: os.Getenv(EnvGoogleClientSecret),
 		DisplayName:  "Google",
-		RedirectURL:  "http://localhost:8080/oauth2/callback/",
+		RedirectURL:  fmt.Sprintf("%s/oauth2/callback/", cfg.Server.BaseURL()),
 		AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
 		TokenURL:     "https://oauth2.googleapis.com/token",
 		UserInfoURL:  "https://www.googleapis.com/oauth2/v3/userinfo",
