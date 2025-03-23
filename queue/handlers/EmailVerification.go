@@ -47,6 +47,12 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 		return fmt.Errorf("user not found for email: %s", payload.Email)
 	}
 
+	// Check if user is already verified
+	if user.Verified {
+		slog.Info("User already verified, skipping email", "email", user.Email)
+		return nil
+	}
+
 	// Create verification token with user ID
 	token, err := h.createVerificationToken(user.ID, user.Email, user.Password)
 	if err != nil {
