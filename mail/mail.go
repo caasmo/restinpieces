@@ -164,9 +164,16 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 	mail.From(m.fromAddress)
 	mail.Subject("Email Verification")
 	mail.HTML().Set(fmt.Sprintf(`
-		<h1>Email Verification</h1>
-		<p>Please click the link below to verify your email address:</p>
-		<p><a href="http://example.com/verify-email?token=%s">Verify Email</a></p>
+		<p>Hello,</p>
+		<p>Thank you for joining us at Acme.</p>
+		<p>Click on the button below to verify your email address.</p>
+		<p style="margin: 20px 0;">
+			<a href="http://example.com/verify-email?token=%s" 
+				style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+				Verify
+			</a>
+		</p>
+		<p>Thanks,<br>Acme team</p>
 	`, token))
 
 	//return fmt.Errorf("IN MAIL DEBUG: %w", nil)
