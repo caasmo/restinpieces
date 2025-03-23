@@ -177,10 +177,7 @@ func Load(dbfile string) (*Config, error) {
 			"port", gmailSmtp.Port,
 			"username", gmailSmtp.Username)
 	} else {
-		slog.Warn("Missing environment variables - skipping SMTP configuration",
-			"required_vars", []string{EnvSmtpUsername, EnvSmtpPassword},
-			"username_set", gmailSmtp.Username != "",
-			"password_set", gmailSmtp.Password != "")
+		slog.Warn("Gmail SMTP configuration: Missing environment. Skipping SMTP configuration")
 	}
 
 	// Configure Google OAuth2 provider
