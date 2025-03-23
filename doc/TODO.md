@@ -1,6 +1,10 @@
 ### TODOs
 
-- nginx server fingerprint
+- decide about configuration
+- superuser? just ssh?
+- move html to test/html
+- implment password reset, email change
+- nginl changex server fingerprint
 - safe api heders, html headers middleware 
 - endpoints api configurable in conf
 -seurl hadcoded https. should be configurable if srver http under proxy TLS like cloudflare
