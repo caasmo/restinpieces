@@ -66,8 +66,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// Create OAuth2 config
 	slog.Debug("Creating OAuth2 config", "provider", req.Provider, "scopes", provider.Scopes)
 	oauth2Config := oauth2.Config{
-		ClientID:     provider.ClientID.Value,
-		ClientSecret: provider.ClientSecret.Value,
+		ClientID:     provider.ClientID,
+		ClientSecret: provider.ClientSecret,
 		RedirectURL:  req.RedirectURI,
 		Scopes:       provider.Scopes,
 		Endpoint: oauth2.Endpoint{
@@ -193,8 +193,8 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 
 		state := crypto.Oauth2State()
 		oauth2Config := oauth2.Config{
-			ClientID:     provider.ClientID.Value,
-			ClientSecret: provider.ClientSecret.Value,
+			ClientID:     provider.ClientID,
+			ClientSecret: provider.ClientSecret,
 			RedirectURL:  provider.RedirectURL,
 			Scopes:       provider.Scopes,
 			Endpoint: oauth2.Endpoint{
