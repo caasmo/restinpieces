@@ -10,6 +10,7 @@ import (
 	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/server"
 )
@@ -54,7 +55,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		emailVerificationHandler := handlers.NewEmailVerificationHandler(ap.Db(), cfg, mailer)
+		emailVerificationHandler := queue/handlers.NewEmailVerificationHandler(ap.Db(), cfg, mailer)
 		handlers[queue.JobTypeEmailVerification] = emailVerificationHandler
 	}
 
