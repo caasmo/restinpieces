@@ -172,6 +172,16 @@ func Load(dbfile string) (*Config, error) {
 	// If Gmail credentials are detected, add to SMTP config
 	if strings.HasSuffix(gmailSmtp.Username, "@gmail.com") && gmailSmtp.Password != "" {
 		cfg.Smtp = gmailSmtp
+		slog.Info("Gmail SMTP configuration loaded", 
+			"host", gmailSmtp.Host,
+			"port", gmailSmtp.Port,
+			"username", gmailSmtp.Username,
+			"useTLS", gmailSmtp.UseTLS,
+			"useStartTLS", gmailSmtp.UseStartTLS)
+	} else {
+		slog.Warn("Gmail SMTP credentials not found or incomplete", 
+			"username", gmailSmtp.Username,
+			"password_set", gmailSmtp.Password != "")
 	}
 
 	// Configure Google OAuth2 provider
