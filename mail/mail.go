@@ -72,7 +72,9 @@ func (m *Mailer) Handle(ctx context.Context, job queue.Job) error {
 		return fmt.Errorf("failed to parse email verification payload: %w", err)
 	}
 
-	return m.SendVerificationEmail(ctx, payload.Email, fmt.Sprintf("%d", job.ID))
+	// Generate a random callback URL for testing
+	callbackURL := "http://localhost:8080/verify-email" // TODO: Make this configurable
+	return m.SendVerificationEmail(ctx, payload.Email, fmt.Sprintf("%d", job.ID), callbackURL)
 }
 
 // New creates a new Mailer instance from config
@@ -126,8 +128,9 @@ func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
 	return mail, nil
 }
 
-// SendVerificationEmail sends an email verification message
-func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string) error {
+// SendVerificationEmail sends an email verification message to the specified email address
+// with the verification token and callback URL
+func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token, callbackURL string) error {
 	// Create new mail client for this email
 	mail, err := m.createMailClient()
 	if err != nil {
@@ -144,13 +147,13 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 		<p>Thank you for joining us at %s.</p>
 		<p>Click on the button below to verify your email address.</p>
 		<p style="margin: 20px 0;">
-			<a href="http://example.com/verify-email?token=%s" 
+			<a href="%s?token=%s" 
 				style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
 				Verify
 			</a>
 		</p>
 		<p>Thanks,<br>%s team</p>
-	`, m.fromName, token, m.fromName))
+	`, m.fromName, callbackURL, token, m.fromName))
 
 	//return fmt.Errorf("IN MAIL DEBUG: %w", nil)
 	// Send email with context timeout
