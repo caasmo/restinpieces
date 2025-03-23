@@ -131,15 +131,15 @@ func (s *Scheduler) processJobs() {
             // Handle job completion status
             switch {
             case err == nil:
+                slog.Info("⏰scheduler: job completed successfully",
+                    "jobID", jobCopy.ID,
+                    "jobType", jobCopy.JobType)
                 if updateErr := s.db.MarkCompleted(jobCopy.ID); updateErr != nil {
                     slog.Error("⏰scheduler: failed to mark job as completed", 
                         "jobID", jobCopy.ID, 
                         "error", updateErr)
                 }
                 processed++
-                slog.Info("⏰scheduler: job completed successfully",
-                    "jobID", jobCopy.ID,
-                    "jobType", jobCopy.JobType)
 
             case errors.Is(err, context.DeadlineExceeded):
                 msg := "job execution timed out"
