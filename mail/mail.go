@@ -3,7 +3,6 @@ package mail
 import (
 	"context"
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -15,33 +14,6 @@ import (
 	"github.com/domodwyer/mailyak/v3"
 )
 
-// LoginAuth implements the LOGIN authentication mechanism
-type LoginAuth struct {
-	username string
-	password string
-}
-
-func LoginAuth(username, password string) smtp.Auth {
-	return &LoginAuth{username, password}
-}
-
-func (a *LoginAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
-	return "LOGIN", []byte{}, nil
-}
-
-func (a *LoginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
-	if more {
-		switch strings.ToLower(string(fromServer)) {
-		case "username:":
-			return []byte(a.username), nil
-		case "password:":
-			return []byte(a.password), nil
-		default:
-			return nil, fmt.Errorf("unexpected server challenge: %s", fromServer)
-		}
-	}
-	return nil, nil
-}
 
 // Mailer handles sending emails and implements queue.JobHandler
 type Mailer struct {
@@ -85,7 +57,7 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 	var auth smtp.Auth
 	switch m.authMethod {
 	case "login":
-		auth = LoginAuth(m.username, m.password)
+		auth = &loginAuth{username: m.username, password: m.password}
 	case "cram-md5":
 		auth = smtp.CRAMMD5Auth(m.username, m.password)
 	case "none":
