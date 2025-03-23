@@ -193,8 +193,11 @@ func Load(dbfile string) (*Config, error) {
 		// 3. Follow the verification steps
 		FromAddress: os.Getenv("SMTP_FROM_ADDRESS"),
 		
-		// LocalName is the HELO/EHLO identifier
-		// Leave empty to use default "localhost"
+		// LocalName is the HELO/EHLO identifier sent to the SMTP server
+		// In production, set this to your application's domain name
+		// Example: "app.example.com"
+		// This helps with email deliverability and prevents being flagged as spam
+		// If empty, defaults to "localhost" which should only be used in development
 		LocalName: "",
 		
 		// AuthMethod must be "plain" for Gmail
