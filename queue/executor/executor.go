@@ -38,9 +38,9 @@ func (e *DefaultExecutor) Execute(ctx context.Context, job queue.Job) error {
 	}
 
 	slog.Info("executor: executing job",
-		"job_id", job.ID,
 		"job_type", job.JobType,
 		"attempt", job.Attempts,
+		"payload", string(job.Payload),
 	)
 
 	return handler.Handle(ctx, job)
