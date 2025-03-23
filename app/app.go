@@ -6,8 +6,6 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/router"
-	"log/slog"
-	"os"
 )
 
 // App is the application wide context.
