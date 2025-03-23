@@ -189,24 +189,22 @@ func Load(dbfile string) (*Config, error) {
 	}
 
 	// Configure Google OAuth2 provider
-	googleClientID := os.Getenv(EnvGoogleClientID)
-	googleClientSecret := os.Getenv(EnvGoogleClientSecret)
-	if googleClientID != "" && googleClientSecret != "" {
-		googleConfig := OAuth2Provider{
-			Name:         OAuth2ProviderGoogle,
-			ClientID:     googleClientID,
-			ClientSecret: googleClientSecret,
-			DisplayName:  "Google",
-			RedirectURL:  "http://localhost:8080/oauth2/callback/",
-			AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
-			TokenURL:     "https://oauth2.googleapis.com/token",
-			UserInfoURL:  "https://www.googleapis.com/oauth2/v3/userinfo",
-			Scopes: []string{
-				"https://www.googleapis.com/auth/userinfo.profile",
-				"https://www.googleapis.com/auth/userinfo.email",
-			},
-			PKCE: true,
-		}
+	googleConfig := OAuth2Provider{
+		Name:         OAuth2ProviderGoogle,
+		ClientID:     os.Getenv(EnvGoogleClientID),
+		ClientSecret: os.Getenv(EnvGoogleClientSecret),
+		DisplayName:  "Google",
+		RedirectURL:  "http://localhost:8080/oauth2/callback/",
+		AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
+		TokenURL:     "https://oauth2.googleapis.com/token",
+		UserInfoURL:  "https://www.googleapis.com/oauth2/v3/userinfo",
+		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.profile",
+			"https://www.googleapis.com/auth/userinfo.email",
+		},
+		PKCE: true,
+	}
+	if googleConfig.ClientID != "" && googleConfig.ClientSecret != "" {
 		cfg.OAuth2Providers[OAuth2ProviderGoogle] = googleConfig
 	} else {
 		slog.Warn("skipping Google OAuth2 provider - missing client ID or secret")
