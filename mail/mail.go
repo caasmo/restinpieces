@@ -60,6 +60,10 @@ type Mailer struct {
 	// Example: "noreply@example.com"
 	from string
 
+	// localName is the HELO/EHLO domain to use in SMTP communication
+	// If empty, defaults to "localhost"
+	localName string
+
 	// authMethod specifies the SMTP authentication mechanism
 	// Supported values: "plain", "login", "cram-md5", "none"
 	// - "plain": Standard SMTP AUTH PLAIN (RFC 4616)
