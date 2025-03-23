@@ -2,23 +2,57 @@ package mail
 
 import (
 	"context"
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/smtp"
+	"strings"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/domodwyer/mailyak/v3"
 )
 
-// Mailer handles sending emails and implements queue.JobHandler
-type Mailer struct {
-	host     string
-	port     int
+// LoginAuth implements the LOGIN authentication mechanism
+type LoginAuth struct {
 	username string
 	password string
-	from     string
+}
+
+func LoginAuth(username, password string) smtp.Auth {
+	return &LoginAuth{username, password}
+}
+
+func (a *LoginAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
+	return "LOGIN", []byte{}, nil
+}
+
+func (a *LoginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
+	if more {
+		switch strings.ToLower(string(fromServer)) {
+		case "username:":
+			return []byte(a.username), nil
+		case "password:":
+			return []byte(a.password), nil
+		default:
+			return nil, fmt.Errorf("unexpected server challenge: %s", fromServer)
+		}
+	}
+	return nil, nil
+}
+
+// Mailer handles sending emails and implements queue.JobHandler
+type Mailer struct {
+	host        string
+	port        int
+	username    string
+	password    string
+	from        string
+	authMethod  string
+	useTLS      bool
+	useStartTLS bool
 }
 
 // Handle implements JobHandler for email verification jobs
@@ -34,19 +68,36 @@ func (m *Mailer) Handle(ctx context.Context, job queue.Job) error {
 // New creates a new Mailer instance from config
 func New(cfg config.Smtp) *Mailer {
 	return &Mailer{
-		host:     cfg.Host,
-		port:     cfg.Port,
-		username: cfg.Username,
-		password: cfg.Password,
-		from:     cfg.From,
+		host:        cfg.Host,
+		port:        cfg.Port,
+		username:    cfg.Username,
+		password:    cfg.Password,
+		from:        cfg.From,
+		authMethod:  cfg.AuthMethod,
+		useTLS:      cfg.UseTLS,
+		useStartTLS: cfg.UseStartTLS,
 	}
 }
 
 // SendVerificationEmail sends an email verification message
 func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string) error {
 	// Create mail client
-	mail := mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), 
-		smtp.PlainAuth("", m.username, m.password, m.host))
+	var auth smtp.Auth
+	switch m.authMethod {
+	case "login":
+		auth = LoginAuth(m.username, m.password)
+	case "cram-md5":
+		auth = smtp.CRAMMD5Auth(m.username, m.password)
+	case "none":
+		auth = nil
+	default: // "plain" or empty
+		auth = smtp.PlainAuth("", m.username, m.password, m.host)
+	}
+
+	mail := mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
+		ServerName: m.host,
+		InsecureSkipVerify: !m.useTLS, // Only verify cert if using TLS
+	})
 
 	// Build email
 	mail.To(email)

@@ -96,11 +96,14 @@ type Jwt struct {
 }
 
 type Smtp struct {
-	Host     string
-	Port     int
-	Username string
-	Password string
-	From     string
+	Host        string
+	Port        int
+	Username    string
+	Password    string
+	From        string
+	AuthMethod  string // "plain", "login", "cram-md5", or "none"
+	UseTLS      bool   // Use explicit TLS
+	UseStartTLS bool   // Use STARTTLS
 }
 
 type Config struct {
@@ -155,11 +158,14 @@ func Load(dbfile string) (*Config, error) {
 			VerificationEmailTokenDuration: 24 * time.Hour,
 		},
 		Smtp: Smtp{
-			Host:     "smtp.example.com",
-			Port:     587,
-			Username: "user@example.com",
-			Password: "password",
-			From:     "noreply@example.com",
+			Host:        "smtp.example.com",
+			Port:        587,
+			Username:    "user@example.com",
+			Password:    "password",
+			From:        "noreply@example.com",
+			AuthMethod:  "plain", // Default to plain auth
+			UseTLS:      false,
+			UseStartTLS: true,    // Common default for port 587
 		},
 		DBFile: dbfile,
 		Scheduler: Scheduler{
