@@ -197,6 +197,7 @@ func Load(dbfile string) (*Config, error) {
 		// In production, set this to your application's domain name
 		// Example: "app.example.com"
 		// This helps with email deliverability and prevents being flagged as spam
+		// Note: Only supported by some SMTP providers like Gmail
 		// If empty, defaults to "localhost" which should only be used in development
 		LocalName: "",
 		
