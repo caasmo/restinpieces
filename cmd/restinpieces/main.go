@@ -15,6 +15,11 @@ import (
 )
 
 func main() {
+	// Initialize logging
+	logHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	})
+	slog.SetDefault(slog.New(logHandler))
 
 	dbfile := flag.String("dbfile", "bench.db", "SQLite database file path")
 	flag.Parse()

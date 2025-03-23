@@ -55,12 +55,6 @@ func WithConfig(cfg *config.Config) Option {
 }
 
 func New(opts ...Option) (*App, error) {
-	// Activate debug logging
-	logHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})
-	slog.SetDefault(slog.New(logHandler))
-
 	a := &App{}
 	for _, opt := range opts {
 		opt(a)
