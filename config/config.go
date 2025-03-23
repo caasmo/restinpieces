@@ -101,6 +101,7 @@ type Smtp struct {
 	Username    string
 	Password    string
 	From        string
+	LocalName   string // HELO/EHLO domain (empty defaults to "localhost")
 	AuthMethod  string // "plain", "login", "cram-md5", or "none"
 	UseTLS      bool   // Use explicit TLS
 	UseStartTLS bool   // Use STARTTLS
@@ -163,6 +164,7 @@ func Load(dbfile string) (*Config, error) {
 			Username:    "user@example.com",
 			Password:    "password",
 			From:        "noreply@example.com",
+			LocalName:   "", // Empty will use mailyak's default ("localhost")
 			AuthMethod:  "plain", // Default to plain auth
 			UseTLS:      false,
 			UseStartTLS: true,    // Common default for port 587

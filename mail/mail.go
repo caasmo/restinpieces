@@ -97,6 +97,7 @@ func New(cfg config.Smtp) (*Mailer, error) {
 		username:    cfg.Username,
 		password:    cfg.Password,
 		from:        cfg.From,
+		localName:   cfg.LocalName,
 		authMethod:  cfg.AuthMethod,
 		useTLS:      cfg.UseTLS,
 		useStartTLS: cfg.UseStartTLS,
@@ -119,14 +120,25 @@ func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
 
 	if m.useTLS {
 		// Use explicit TLS (SMTPS)
-		return mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
+		mail, err := mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
 			ServerName:         m.host,
 			InsecureSkipVerify: false, // Always verify certs in production
 		})
+		if err != nil {
+			return nil, err
+		}
+		if m.localName != "" {
+			mail.LocalName(m.localName)
+		}
+		return mail, nil
 	}
 	
 	// Use plain connection (will automatically upgrade to STARTTLS if server supports it)
-	return mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth), nil
+	mail := mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth)
+	if m.localName != "" {
+		mail.LocalName(m.localName)
+	}
+	return mail, nil
 }
 
 // SendVerificationEmail sends an email verification message
