@@ -80,13 +80,11 @@ type Server struct {
 
 // BaseURL returns the full base URL including scheme and port
 // Uses https in production (when not localhost)
-func (s *Server) BaseURL() string {
+func (s *Server) BaseURL() (string, error) {
 	// Split host:port
 	host, port, err := net.SplitHostPort(s.Addr)
 	if err != nil {
-		// If no port, assume whole Addr is host
-		host = s.Addr
-		port = "8080" // Default port
+		return "", fmt.Errorf("invalid server address: %w", err)
 	}
 	
 	// Default to localhost if no host specified
@@ -101,7 +99,7 @@ func (s *Server) BaseURL() string {
 	}
 	
 	// Include port in URL
-	return fmt.Sprintf("%s://%s:%s", scheme, host, port)
+	return fmt.Sprintf("%s://%s:%s", scheme, host, port), nil
 }
 
 type Jwt struct {
@@ -256,7 +254,11 @@ func Load(dbfile string) (*Config, error) {
 		ClientID:     os.Getenv(EnvGoogleClientID),
 		ClientSecret: os.Getenv(EnvGoogleClientSecret),
 		DisplayName:  "Google",
-		RedirectURL:  fmt.Sprintf("%s/oauth2/callback/", cfg.Server.BaseURL()),
+		baseURL, err := cfg.Server.BaseURL()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get base URL: %w", err)
+		}
+		RedirectURL:  fmt.Sprintf("%s/oauth2/callback/", baseURL),
 		AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
 		TokenURL:     "https://oauth2.googleapis.com/token",
 		UserInfoURL:  "https://www.googleapis.com/oauth2/v3/userinfo",
