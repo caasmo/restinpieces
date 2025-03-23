@@ -138,7 +138,7 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 	mail.To(email)
 	mail.FromName(m.fromName)
 	mail.From(m.fromAddress)
-	mail.Subject("Email Verification")
+	mail.Subject(fmt.Sprintf("Verify your %s email", m.fromName))
 	mail.HTML().Set(fmt.Sprintf(`
 		<p>Hello,</p>
 		<p>Thank you for joining us at %s.</p>
