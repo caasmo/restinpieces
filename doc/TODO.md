@@ -1,5 +1,6 @@
 ### TODOs
 
+- domain localhost variable shoul be dinamic 
 - downtime schedule, all routes to, lock db ...
 - error in trhe sequnce of step f ex register can let inconsitent state, ex
     - error after inserting job, we have user in db but no varification 
