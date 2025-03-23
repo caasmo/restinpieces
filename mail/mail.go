@@ -56,9 +56,13 @@ type Mailer struct {
 	// Should be stored securely and not logged
 	password string
 
-	// from is the email address that will appear in the "From" header
+	// fromName is the sender name that will appear in the "From" header
+	// Example: "My App"
+	fromName string
+
+	// fromAddress is the email address that will appear in the "From" header
 	// Example: "noreply@example.com"
-	from string
+	fromAddress string
 
 	// localName is the HELO/EHLO domain to use in SMTP communication
 	// If empty, defaults to "localhost"
@@ -100,7 +104,8 @@ func New(cfg config.Smtp) (*Mailer, error) {
 		port:        cfg.Port,
 		username:    cfg.Username,
 		password:    cfg.Password,
-		from:        cfg.From,
+		fromName:    cfg.FromName,
+		fromAddress: cfg.FromAddress,
 		localName:   cfg.LocalName,
 		authMethod:  cfg.AuthMethod,
 		useTLS:      cfg.UseTLS,
@@ -155,7 +160,8 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 
 	// Build email
 	mail.To(email)
-	mail.From(m.from)
+	mail.FromName(m.fromName)
+	mail.From(m.fromAddress)
 	mail.Subject("Email Verification")
 	mail.HTML().Set(fmt.Sprintf(`
 		<h1>Email Verification</h1>

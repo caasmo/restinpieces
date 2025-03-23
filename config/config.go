@@ -88,7 +88,8 @@ type Smtp struct {
 	Port        int
 	Username    string
 	Password    string
-	From        string
+	FromName    string // Sender name (e.g. "My App")
+	FromAddress string // Sender email address (e.g. "noreply@example.com")
 	LocalName   string // HELO/EHLO domain (empty defaults to "localhost")
 	AuthMethod  string // "plain", "login", "cram-md5", or "none"
 	UseTLS      bool   // Use explicit TLS
@@ -162,7 +163,8 @@ func Load(dbfile string) (*Config, error) {
 		Port:        587,
 		Username:    os.Getenv(EnvSmtpUsername),
 		Password:    os.Getenv(EnvSmtpPassword),
-		From:        os.Getenv(EnvSmtpUsername), // From matches username for Gmail
+		FromName:    "My App", // Customizable sender name
+		FromAddress: os.Getenv(EnvSmtpUsername), // From matches username for Gmail
 		LocalName:   "", // Empty will use mailyak's default ("localhost")
 		AuthMethod:  "plain", // Google requires PLAIN auth
 		UseTLS:      false,
