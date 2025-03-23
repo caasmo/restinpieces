@@ -129,6 +129,7 @@ func (s *Scheduler) processJobs() {
             err := s.executeJobWithContext(jobCtx, *jobCopy)
             
             // Handle job completion status
+			// TODO better slog
             if err == nil {
                 if updateErr := s.db.MarkCompleted(jobCopy.ID); updateErr != nil {
                     slog.Error("⏰scheduler: failed to mark job as completed", "jobID", jobCopy.ID, "err", updateErr)
