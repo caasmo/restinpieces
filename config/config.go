@@ -16,10 +16,6 @@ const (
 	EnvSmtpPassword       = "SMTP_PASSWORD"
 )
 
-type EnvVar struct {
-	Name  string
-	Value string
-}
 
 const (
 	OAuth2ProviderGoogle = "google"
@@ -39,16 +35,6 @@ type OAuth2Provider struct {
 	PKCE         bool
 }
 
-func (c *OAuth2Provider) FillEnvVars() error {
-	c.ClientID.Value = os.Getenv(c.ClientID.Name)
-	c.ClientSecret.Value = os.Getenv(c.ClientSecret.Name)
-
-	if c.ClientID.Value == "" || c.ClientSecret.Value == "" {
-		return fmt.Errorf("missing environment variables for %s: %s and %s must be set",
-			c.Name, c.ClientID.Name, c.ClientSecret.Name)
-	}
-	return nil
-}
 
 type Scheduler struct {
 	// Interval controls how often the scheduler checks for new jobs.
@@ -213,8 +199,8 @@ func Load(dbfile string) (*Config, error) {
 	// Configure GitHub OAuth2 provider
 	githubConfig := OAuth2Provider{
 		Name:         OAuth2ProviderGitHub,
-		ClientID:     EnvVar{Name: EnvGithubClientID},
-		ClientSecret: EnvVar{Name: EnvGithubClientSecret},
+		ClientID:     os.Getenv(EnvGithubClientID),
+		ClientSecret: os.Getenv(EnvGithubClientSecret),
 		DisplayName:  "GitHub",
 		RedirectURL:  "http://localhost:8080/oauth2/callback/",
 		AuthURL:      "https://github.com/login/oauth/authorize",
@@ -223,10 +209,10 @@ func Load(dbfile string) (*Config, error) {
 		Scopes:       []string{"read:user", "user:email"},
 		PKCE:         true,
 	}
-	if err := githubConfig.FillEnvVars(); err != nil {
-		slog.Warn("skipping GitHub OAuth2 provider", "error", err)
-	} else {
+	if githubConfig.ClientID != "" && githubConfig.ClientSecret != "" {
 		cfg.OAuth2Providers[OAuth2ProviderGitHub] = githubConfig
+	} else {
+		slog.Warn("skipping GitHub OAuth2 provider - missing client ID or secret")
 	}
 
 	return cfg, nil
