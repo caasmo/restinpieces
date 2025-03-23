@@ -203,10 +203,7 @@ func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) er
     }
 
     // Log job starting
-    slog.Info("⏰scheduler: starting job execution", 
-        "job_id", job.ID, 
-        "job_type", job.JobType, 
-        "attempt", job.Attempts)
+    slog.Info("⏰scheduler: calling executor", "job_id", job.ID, "job_type", job.JobType, "attempt", job.Attempts)
     
     // Use the executor to handle the job
     return s.executor.Execute(ctx, job)
