@@ -182,7 +182,22 @@ func Load(dbfile string) (*Config, error) {
 
 	cfg.Server = FillServer(cfg)
 
-	gmailSmtp := 
+	gmailSmtp := Smtp{
+		Host:        "smtp.gmail.com",
+		Port:        587,
+		Username:    os.Getenv(EnvSmtpUsername),
+		Password:    os.Getenv(EnvSmtpPassword),
+		From:        os.Getenv(EnvSmtpUsername), // From matches username for Gmail
+		LocalName:   "", // Empty will use mailyak's default ("localhost")
+		AuthMethod:  "plain", // Google requires PLAIN auth
+		UseTLS:      false,
+		UseStartTLS: true,    // Required for Gmail
+	}
+
+	// If Gmail credentials are detected, override default SMTP config
+	if strings.HasSuffix(gmailSmtp.Username, "@gmail.com") && gmailSmtp.Password != "" {
+		cfg.Smtp = gmailSmtp
+	}
 
 	// Configure Google OAuth2 provider
 	googleConfig := OAuth2Provider{
