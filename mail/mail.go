@@ -77,9 +77,6 @@ type Mailer struct {
 	// Used with port 587
 	// If true, upgrades plain connection to TLS after initial handshake
 	useStartTLS bool
-
-	// mail is the reusable mailyak instance
-	mail *mailyak.MailYak
 }
 
 // Handle implements JobHandler for email verification jobs
@@ -94,7 +91,7 @@ func (m *Mailer) Handle(ctx context.Context, job queue.Job) error {
 
 // New creates a new Mailer instance from config
 func New(cfg config.Smtp) (*Mailer, error) {
-	m := &Mailer{
+	return &Mailer{
 		host:        cfg.Host,
 		port:        cfg.Port,
 		username:    cfg.Username,
@@ -103,9 +100,11 @@ func New(cfg config.Smtp) (*Mailer, error) {
 		authMethod:  cfg.AuthMethod,
 		useTLS:      cfg.UseTLS,
 		useStartTLS: cfg.UseStartTLS,
-	}
+	}, nil
+}
 
-	// Initialize the mail client
+// createMailClient creates a new mailyak instance
+func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
 	var auth smtp.Auth
 	switch m.authMethod {
 	case "login":
@@ -118,32 +117,31 @@ func New(cfg config.Smtp) (*Mailer, error) {
 		auth = smtp.PlainAuth("", m.username, m.password, m.host)
 	}
 
-	var err error
 	if m.useTLS {
 		// Use explicit TLS (SMTPS)
-		m.mail, err = mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
+		return mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
 			ServerName:         m.host,
 			InsecureSkipVerify: false, // Always verify certs in production
 		})
-	} else {
-		// Use plain connection (will automatically upgrade to STARTTLS if server supports it)
-		m.mail = mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth)
 	}
-
-	if err != nil {
-		return nil, fmt.Errorf("failed to create mail client: %w", err)
-	}
-
-	return m, nil
+	
+	// Use plain connection (will automatically upgrade to STARTTLS if server supports it)
+	return mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth), nil
 }
 
 // SendVerificationEmail sends an email verification message
 func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string) error {
+	// Create new mail client for this email
+	mail, err := m.createMailClient()
+	if err != nil {
+		return fmt.Errorf("failed to create mail client: %w", err)
+	}
+
 	// Build email
-	m.mail.To(email)
-	m.mail.From(m.from)
-	m.mail.Subject("Email Verification")
-	m.mail.HTML().Set(fmt.Sprintf(`
+	mail.To(email)
+	mail.From(m.from)
+	mail.Subject("Email Verification")
+	mail.HTML().Set(fmt.Sprintf(`
 		<h1>Email Verification</h1>
 		<p>Please click the link below to verify your email address:</p>
 		<p><a href="http://example.com/verify-email?token=%s">Verify Email</a></p>
@@ -152,7 +150,7 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 	// Send email with context timeout
 	done := make(chan error, 1)
 	go func() {
-		done <- m.mail.Send()
+		done <- mail.Send()
 	}()
 
 	select {
