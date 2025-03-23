@@ -46,7 +46,7 @@ func main() {
 	route(ap, cAp)
 
 	// Create mailer and executor only if SMTP is configured
-	handlers := make(map[string]executor.JobHandler)
+	hdls := make(map[string]executor.JobHandler)
 
 	if (cfg.Smtp != config.Smtp{}) { 
 		mailer, err := mail.New(cfg.Smtp)
@@ -55,11 +55,11 @@ func main() {
 			os.Exit(1)
 		}
 
-		emailVerificationHandler := queue/handlers.NewEmailVerificationHandler(ap.Db(), cfg, mailer)
-		handlers[queue.JobTypeEmailVerification] = emailVerificationHandler
+		emailVerificationHandler := handlers.NewEmailVerificationHandler(ap.Db(), cfg, mailer)
+		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
 	}
 
-	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), executor.NewExecutor(handlers))
+	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), executor.NewExecutor(hdls))
 
 	//server.Run(cfg.Server, ap.Router(), nil)
 	server.Run(cfg.Server, ap.Router(), scheduler)
