@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/smtp"
-	"strings"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/queue"
@@ -66,10 +65,13 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 		auth = smtp.PlainAuth("", m.username, m.password, m.host)
 	}
 
-	mail := mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
-		ServerName: m.host,
+	mail, err := mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
+		ServerName:         m.host,
 		InsecureSkipVerify: !m.useTLS, // Only verify cert if using TLS
 	})
+	if err != nil {
+		return fmt.Errorf("failed to create mail client: %w", err)
+	}
 
 	// Build email
 	mail.To(email)
