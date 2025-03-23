@@ -169,7 +169,7 @@ func Load(dbfile string) (*Config, error) {
 		UseStartTLS: true,    // Required for Gmail
 	}
 
-	// If Gmail credentials are detected, override default SMTP config
+	// If Gmail credentials are detected, add to SMTP config
 	if strings.HasSuffix(gmailSmtp.Username, "@gmail.com") && gmailSmtp.Password != "" {
 		cfg.Smtp = gmailSmtp
 	}
