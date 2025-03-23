@@ -163,7 +163,7 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string)
 		<p><a href="http://example.com/verify-email?token=%s">Verify Email</a></p>
 	`, token))
 
-	return fmt.Errorf("IN MAIL DEBUG: %w", nil)
+	//return fmt.Errorf("IN MAIL DEBUG: %w", nil)
 	// Send email with context timeout
 	done := make(chan error, 1)
 	go func() {
