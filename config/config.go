@@ -182,6 +182,8 @@ func Load(dbfile string) (*Config, error) {
 
 	cfg.Server = FillServer(cfg)
 
+	gmailSmtp := 
+
 	// Configure Google OAuth2 provider
 	googleConfig := OAuth2Provider{
 		Name:         OAuth2ProviderGoogle,
