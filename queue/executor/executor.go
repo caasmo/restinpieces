@@ -41,7 +41,11 @@ func (e *DefaultExecutor) Execute(ctx context.Context, job queue.Job) error {
 
 	handler, exists := e.registry[job.JobType]
 	if !exists {
-		return fmt.Errorf("no handler registered for job type: %s", job.JobType)
+		err := fmt.Errorf("no handler registered for job type: %s", job.JobType)
+		slog.Error("executor: job type not found", 
+			"job_type", job.JobType,
+			"error", err)
+		return err
 	}
 
 	return handler.Handle(ctx, job)
