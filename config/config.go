@@ -12,6 +12,8 @@ const (
 	EnvGoogleClientSecret = "OAUTH2_GOOGLE_CLIENT_SECRET"
 	EnvGithubClientID     = "OAUTH2_GITHUB_CLIENT_ID"
 	EnvGithubClientSecret = "OAUTH2_GITHUB_CLIENT_SECRET"
+	EnvSmtpUsername       = "SMTP_USERNAME"
+	EnvSmtpPassword       = "SMTP_PASSWORD"
 )
 
 type EnvVar struct {
@@ -161,8 +163,8 @@ func Load(dbfile string) (*Config, error) {
 		Smtp: Smtp{
 			Host:        "smtp.example.com",
 			Port:        587,
-			Username:    "user@example.com",
-			Password:    "password",
+			Username:    os.Getenv(EnvSmtpUsername),
+			Password:    os.Getenv(EnvSmtpPassword),
 			From:        "noreply@example.com",
 			LocalName:   "", // Empty will use mailyak's default ("localhost")
 			AuthMethod:  "plain", // Default to plain auth
