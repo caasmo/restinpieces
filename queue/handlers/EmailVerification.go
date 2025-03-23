@@ -47,8 +47,8 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 		return fmt.Errorf("user not found for email: %s", payload.Email)
 	}
 
-	// Create verification token
-	token, err := h.createVerificationToken(user.Email, user.Password)
+	// Create verification token with user ID
+	token, err := h.createVerificationToken(user.ID, user.Email, user.Password)
 	if err != nil {
 		return fmt.Errorf("failed to create verification token: %w", err)
 	}
@@ -65,8 +65,8 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	return nil
 }
 
-// createVerificationToken generates a JWT verification token using the email, password hash and verification secret
-func (h *EmailVerificationHandler) createVerificationToken(email, passwordHash string) (string, error) {
+// createVerificationToken generates a JWT verification token using the user ID, email, password hash and verification secret
+func (h *EmailVerificationHandler) createVerificationToken(userID, email, passwordHash string) (string, error) {
 	// Create signing key from credentials and verification secret
 	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
 		email,
@@ -77,11 +77,11 @@ func (h *EmailVerificationHandler) createVerificationToken(email, passwordHash s
 		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
-	// Create JWT claims
-	// TODO to jwt.go to not export 3 party
+	// Create JWT claims with user ID
 	claims := jwt.MapClaims{
-		crypto.ClaimEmail: email,
-		crypto.ClaimType:  crypto.ClaimVerificationValue,
+		crypto.ClaimUserID: userID,
+		crypto.ClaimEmail:  email,
+		crypto.ClaimType:   crypto.ClaimVerificationValue,
 	}
 
 	// Generate JWT token with verification duration
