@@ -175,9 +175,7 @@ func Load(dbfile string) (*Config, error) {
 		slog.Info("Gmail SMTP configuration loaded", 
 			"host", gmailSmtp.Host,
 			"port", gmailSmtp.Port,
-			"username", gmailSmtp.Username,
-			"useTLS", gmailSmtp.UseTLS,
-			"useStartTLS", gmailSmtp.UseStartTLS)
+			"username", gmailSmtp.Username)
 	} else {
 		slog.Warn("Gmail SMTP credentials not found or incomplete", 
 			"username", gmailSmtp.Username,
