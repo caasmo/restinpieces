@@ -249,15 +249,16 @@ func Load(dbfile string) (*Config, error) {
 	}
 
 	// Configure Google OAuth2 provider
+	baseURL, err := cfg.Server.BaseURL()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get base URL: %w", err)
+	}
+
 	googleConfig := OAuth2Provider{
 		Name:         OAuth2ProviderGoogle,
 		ClientID:     os.Getenv(EnvGoogleClientID),
 		ClientSecret: os.Getenv(EnvGoogleClientSecret),
 		DisplayName:  "Google",
-		baseURL, err := cfg.Server.BaseURL()
-		if err != nil {
-			return nil, fmt.Errorf("failed to get base URL: %w", err)
-		}
 		RedirectURL:  fmt.Sprintf("%s/oauth2/callback/", baseURL),
 		AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
 		TokenURL:     "https://oauth2.googleapis.com/token",
