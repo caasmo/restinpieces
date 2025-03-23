@@ -160,17 +160,6 @@ func Load(dbfile string) (*Config, error) {
 			VerificationEmailSecret:       []byte("test_verification_secret_32_bytes_xxxx"),
 			VerificationEmailTokenDuration: 24 * time.Hour,
 		},
-		Smtp: Smtp{
-			Host:        "smtp.example.com",
-			Port:        587,
-			Username:    os.Getenv(EnvSmtpUsername),
-			Password:    os.Getenv(EnvSmtpPassword),
-			From:        "noreply@example.com",
-			LocalName:   "", // Empty will use mailyak's default ("localhost")
-			AuthMethod:  "plain", // Default to plain auth
-			UseTLS:      false,
-			UseStartTLS: true,    // Common default for port 587
-		},
 		DBFile: dbfile,
 		Scheduler: Scheduler{
 			Interval:              15 * time.Second,
