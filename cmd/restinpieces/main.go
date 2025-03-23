@@ -45,7 +45,7 @@ func main() {
 	route(ap, cAp)
 
 	// Create mailer and executor only if SMTP is configured
-	var handlers map[string]executor.JobHandler
+	handlers := make(map[string]executor.JobHandler)
 
 	if (cfg.Smtp != config.Smtp{}) { // Check if struct is not empty
 		mailer, err := mail.New(cfg.Smtp)
@@ -54,8 +54,8 @@ func main() {
 			os.Exit(1)
 		}
 
-		handlers[queue.JobTypeEmailVerification] := mailer 
-	} 
+		handlers[queue.JobTypeEmailVerification] = mailer
+	}
 
 	exec := executor.NewExecutor(handlers)
 
