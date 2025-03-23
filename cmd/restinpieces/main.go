@@ -54,7 +54,8 @@ func main() {
 			os.Exit(1)
 		}
 
-		handlers[queue.JobTypeEmailVerification] = mailer
+		emailVerificationHandler := handlers.NewEmailVerificationHandler(ap.Db(), cfg, mailer)
+		handlers[queue.JobTypeEmailVerification] = emailVerificationHandler
 	}
 
 	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), executor.NewExecutor(handlers))
