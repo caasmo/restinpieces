@@ -47,9 +47,11 @@ type Mailer struct {
 
 	// authMethod specifies the SMTP authentication mechanism
 	// Supported values: "plain", "cram-md5", "none"
-	// - "plain": Standard SMTP AUTH PLAIN (RFC 4616)
-	// - "cram-md5": CRAM-MD5 challenge-response (RFC 2195)
-	// - "none": No authentication
+	// - "plain": Standard SMTP AUTH PLAIN (RFC 4616) - Recommended for most use cases
+	// - "cram-md5": CRAM-MD5 challenge-response (RFC 2195) - Less secure than PLAIN
+	// - "none": No authentication - Only for testing with local SMTP servers
+	// Note: The LOGIN authentication method has been removed as it is considered deprecated
+	// and insecure. Modern SMTP servers should use PLAIN authentication over TLS.
 	authMethod string
 
 	// useTLS enables explicit TLS encryption for the SMTP connection
