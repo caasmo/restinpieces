@@ -48,7 +48,10 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	}
 
 	// Create verification token
-	token := h.createVerificationToken(user.Email, user.Password)
+	token, err := h.createVerificationToken(user.Email, user.Password)
+	if err != nil {
+		return fmt.Errorf("failed to create verification token: %w", err)
+	}
 	
 	// Construct callback URL
 	callbackURL := fmt.Sprintf("%s/verify-email?token=%s", h.config.Server.Addr, token)
@@ -62,14 +65,33 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	return nil
 }
 
-// createVerificationToken generates a verification token using the email, password hash and verification secret
-func (h *EmailVerificationHandler) createVerificationToken(email, passwordHash string) string {
-	// Combine email, password hash and verification secret
-	data := fmt.Sprintf("%s:%s:%s", email, passwordHash, h.config.Jwt.VerificationEmailSecret)
+// createVerificationToken generates a JWT verification token using the email, password hash and verification secret
+func (h *EmailVerificationHandler) createVerificationToken(email, passwordHash string) (string, error) {
+	// Create signing key from credentials and verification secret
+	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
+		email,
+		passwordHash,
+		h.config.Jwt.VerificationEmailSecret,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to create signing key: %w", err)
+	}
 
-	// Hash the combined data
-	hash := sha256.Sum256([]byte(data))
-	
-	// Return hex encoded hash
-	return hex.EncodeToString(hash[:])
+	// Create JWT claims
+	claims := jwt.MapClaims{
+		crypto.ClaimEmail: email,
+		crypto.ClaimType:  crypto.ClaimVerificationValue,
+	}
+
+	// Generate JWT token with verification duration
+	token, _, err := crypto.NewJwt(
+		claims,
+		signingKey,
+		h.config.Jwt.VerificationEmailTokenDuration,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to create JWT: %w", err)
+	}
+
+	return token, nil
 }
