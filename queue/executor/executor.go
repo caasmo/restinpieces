@@ -32,16 +32,17 @@ func NewExecutor(handlers map[string]JobHandler) *DefaultExecutor {
 
 // Execute implements the JobExecutor interface
 func (e *DefaultExecutor) Execute(ctx context.Context, job queue.Job) error {
-	handler, exists := e.registry[job.JobType]
-	if !exists {
-		return fmt.Errorf("no handler registered for job type: %s", job.JobType)
-	}
 
-	slog.Info("executor: executing job",
+	slog.Info("executor: received job",
 		"job_type", job.JobType,
 		"attempt", job.Attempts,
 		"payload", string(job.Payload),
 	)
+
+	handler, exists := e.registry[job.JobType]
+	if !exists {
+		return fmt.Errorf("no handler registered for job type: %s", job.JobType)
+	}
 
 	return handler.Handle(ctx, job)
 }

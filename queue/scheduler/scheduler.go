@@ -78,7 +78,6 @@ func (s *Scheduler) Start() {
 				close(s.shutdownDone) // Signal that scheduler has completely shut down
 				return
 			case <-ticker.C:
-				slog.Debug("⏰scheduler: tick - processing jobs")
 				s.processJobs()
 			}
 		}
@@ -110,7 +109,7 @@ func (s *Scheduler) processJobs() {
         return
     }
 
-    slog.Info("⏰scheduler: claimed jobs", "count", len(jobs))
+    slog.Info("⏰scheduler: tick claimed jobs", "count", len(jobs))
     
     // Create a new error group for this batch of jobs
     // Use the scheduler's context as parent to ensure jobs receive shutdown signal
@@ -158,6 +157,7 @@ func (s *Scheduler) processJobs() {
     }
     
     // Wait for all jobs in this batch to complete or for the parent context to be canceled
+	// returns the first error that was encountered, or nil if none occurred.
     if err := g.Wait(); err != nil {
         if errors.Is(err, context.Canceled) {
             slog.Info("⏰scheduler: job batch interrupted due to shutdown")
