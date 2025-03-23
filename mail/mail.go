@@ -74,7 +74,8 @@ func (m *Mailer) Handle(ctx context.Context, job queue.Job) error {
 
 	// Generate a random callback URL for testing
 	callbackURL := "http://localhost:8080/verify-email" // TODO: Make this configurable
-	return m.SendVerificationEmail(ctx, payload.Email, fmt.Sprintf("%d", job.ID), callbackURL)
+	callbackURL := fmt.Sprintf("%s?token=%d", callbackURL, job.ID)
+	return m.SendVerificationEmail(ctx, payload.Email, callbackURL)
 }
 
 // New creates a new Mailer instance from config
@@ -129,8 +130,8 @@ func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
 }
 
 // SendVerificationEmail sends an email verification message to the specified email address
-// with the verification token and callback URL
-func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token, callbackURL string) error {
+// with the verification callback URL that includes the token
+func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL string) error {
 	// Create new mail client for this email
 	mail, err := m.createMailClient()
 	if err != nil {
@@ -147,13 +148,13 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token, callba
 		<p>Thank you for joining us at %s.</p>
 		<p>Click on the button below to verify your email address.</p>
 		<p style="margin: 20px 0;">
-			<a href="%s?token=%s" 
+			<a href="%s" 
 				style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
 				Verify
 			</a>
 		</p>
 		<p>Thanks,<br>%s team</p>
-	`, m.fromName, callbackURL, token, m.fromName))
+	`, m.fromName, callbackURL, m.fromName))
 
 	//return fmt.Errorf("IN MAIL DEBUG: %w", nil)
 	// Send email with context timeout
