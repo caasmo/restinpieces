@@ -57,10 +57,7 @@ func main() {
 		handlers[queue.JobTypeEmailVerification] = mailer
 	}
 
-	exec := executor.NewExecutor(handlers)
-
-	// Create and start scheduler with executor
-	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), exec)
+	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), executor.NewExecutor(handlers))
 
 	//server.Run(cfg.Server, ap.Router(), nil)
 	server.Run(cfg.Server, ap.Router(), scheduler)
