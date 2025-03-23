@@ -28,8 +28,8 @@ const (
 
 type OAuth2Provider struct {
 	Name         string
-	ClientID     EnvVar
-	ClientSecret EnvVar
+	ClientID     string
+	ClientSecret string
 	DisplayName  string
 	RedirectURL  string
 	AuthURL      string
