@@ -11,7 +11,6 @@ import (
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 // EmailVerificationHandler handles email verification jobs
