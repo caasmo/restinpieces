@@ -129,27 +129,51 @@ func (s *Scheduler) processJobs() {
             err := s.executeJobWithContext(jobCtx, *jobCopy)
             
             // Handle job completion status
-			// TODO better slog
-            if err == nil {
+            switch {
+            case err == nil:
                 if updateErr := s.db.MarkCompleted(jobCopy.ID); updateErr != nil {
-                    slog.Error("⏰scheduler: failed to mark job as completed", "jobID", jobCopy.ID, "err", updateErr)
+                    slog.Error("⏰scheduler: failed to mark job as completed", 
+                        "jobID", jobCopy.ID, 
+                        "error", updateErr)
                 }
                 processed++
-            } else if errors.Is(err, context.DeadlineExceeded) {
-				msg := "scheduler timeout reached" 
-                if updateErr := s.db.MarkFailed(jobCopy.ID, msg +err.Error()); updateErr != nil {
-                    slog.Error("⏰scheduler: failed to mark job as timed out", "jobID", jobCopy.ID, "err", updateErr)
+                slog.Info("⏰scheduler: job completed successfully",
+                    "jobID", jobCopy.ID,
+                    "jobType", jobCopy.JobType)
+
+            case errors.Is(err, context.DeadlineExceeded):
+                msg := "job execution timed out"
+                slog.Warn("⏰scheduler: job timeout",
+                    "jobID", jobCopy.ID,
+                    "jobType", jobCopy.JobType,
+                    "error", err)
+                if updateErr := s.db.MarkFailed(jobCopy.ID, msg); updateErr != nil {
+                    slog.Error("⏰scheduler: failed to mark job as timed out", 
+                        "jobID", jobCopy.ID, 
+                        "error", updateErr)
                 }
-            } else if errors.Is(err, context.Canceled) {
-                // This means either the batch was canceled or the scheduler is shutting down
-				msg := "schedular ordered to stop" 
-                if updateErr := s.db.MarkFailed(jobCopy.ID, msg + err.Error()); updateErr != nil {
-                    slog.Error("⏰scheduler: failed to mark job as interrupted", "jobID", jobCopy.ID, "err", updateErr)
+
+            case errors.Is(err, context.Canceled):
+                msg := "job execution canceled"
+                slog.Info("⏰scheduler: job canceled",
+                    "jobID", jobCopy.ID,
+                    "jobType", jobCopy.JobType,
+                    "error", err)
+                if updateErr := s.db.MarkFailed(jobCopy.ID, msg); updateErr != nil {
+                    slog.Error("⏰scheduler: failed to mark job as interrupted", 
+                        "jobID", jobCopy.ID, 
+                        "error", updateErr)
                 }
-                slog.Info("⏰scheduler: job interrupted", "jobID", jobCopy.ID)
-            } else {
+
+            default:
+                slog.Error("⏰scheduler: job execution failed",
+                    "jobID", jobCopy.ID,
+                    "jobType", jobCopy.JobType,
+                    "error", err)
                 if updateErr := s.db.MarkFailed(jobCopy.ID, err.Error()); updateErr != nil {
-                    slog.Error("⏰scheduler: failed to mark job as failed", "jobID", jobCopy.ID, "err", updateErr)
+                    slog.Error("⏰scheduler: failed to mark job as failed", 
+                        "jobID", jobCopy.ID, 
+                        "error", updateErr)
                 }
             }
             
