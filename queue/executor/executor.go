@@ -34,9 +34,9 @@ func NewExecutor(handlers map[string]JobHandler) *DefaultExecutor {
 func (e *DefaultExecutor) Execute(ctx context.Context, job queue.Job) error {
 
 	slog.Info("executor: received job",
+		"job_id", job.ID,
 		"job_type", job.JobType,
 		"attempt", job.Attempts,
-		"payload", string(job.Payload),
 	)
 
 	handler, exists := e.registry[job.JobType]
