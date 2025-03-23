@@ -54,11 +54,7 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	}
 	
 	// Construct callback URL using server's base URL and correct API route
-	baseURL, err := h.config.Server.BaseURL()
-	if err != nil {
-		return fmt.Errorf("failed to get base URL: %w", err)
-	}
-	callbackURL := fmt.Sprintf("%s/api/confirm-verification?token=%s", baseURL, token)
+	callbackURL := fmt.Sprintf("%s/api/confirm-verification?token=%s", h.config.Server.BaseURL(), token)
 
 	// Send verification email
 	if err := h.mailer.SendVerificationEmail(ctx, user.Email, callbackURL); err != nil {
