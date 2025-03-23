@@ -7,7 +7,7 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/custom"
-	"github.com/caasmo/restinpieces/executor"
+	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"

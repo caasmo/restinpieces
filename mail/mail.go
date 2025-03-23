@@ -9,6 +9,7 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/domodwyer/mailyak/v3"
 )
 
