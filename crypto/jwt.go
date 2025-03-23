@@ -235,6 +235,26 @@ func NewJwtSessionToken(userID, email, passwordHash string, secret []byte, durat
 	return NewJwt(claims, signingKey, duration)
 }
 
+// NewJwtEmailVerificationToken creates a JWT specifically for email verification
+// It includes additional claims needed for verification
+func NewJwtEmailVerificationToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, time.Time, error) {
+	// Create signing key from email and secret
+	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
+	if err != nil {
+		return "", time.Time{}, fmt.Errorf("failed to create signing key: %w", err)
+	}
+
+	// Set up verification-specific claims
+	claims := jwt.MapClaims{
+		ClaimUserID: userID,
+		ClaimEmail:  email,
+		ClaimType:   ClaimVerificationValue,
+	}
+
+	// Generate and return token
+	return NewJwt(claims, signingKey, duration)
+}
+
 func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (string, time.Time, error) {
 	if len(signingKey) < MinKeyLength {
 		return "", time.Time{}, ErrJwtInvalidSecretLength

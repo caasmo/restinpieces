@@ -54,7 +54,13 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	}
 
 	// Create verification token with user ID
-	token, err := h.createVerificationToken(user.ID, user.Email, user.Password)
+	token, _, err := crypto.NewJwtEmailVerificationToken(
+		user.ID,
+		user.Email,
+		user.Password,
+		h.config.Jwt.VerificationEmailSecret,
+		h.config.Jwt.VerificationEmailTokenDuration,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create verification token: %w", err)
 	}
@@ -71,34 +77,3 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	return nil
 }
 
-// createVerificationToken generates a JWT verification token using the user ID, email, password hash and verification secret
-func (h *EmailVerificationHandler) createVerificationToken(userID, email, passwordHash string) (string, error) {
-	// Create signing key from credentials and verification secret
-	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
-		email,
-		passwordHash,
-		h.config.Jwt.VerificationEmailSecret,
-	)
-	if err != nil {
-		return "", fmt.Errorf("failed to create signing key: %w", err)
-	}
-
-	// Create JWT claims with user ID
-	claims := jwt.MapClaims{
-		crypto.ClaimUserID: userID,
-		crypto.ClaimEmail:  email,
-		crypto.ClaimType:   crypto.ClaimVerificationValue,
-	}
-
-	// Generate JWT token with verification duration
-	token, _, err := crypto.NewJwt(
-		claims,
-		signingKey,
-		h.config.Jwt.VerificationEmailTokenDuration,
-	)
-	if err != nil {
-		return "", fmt.Errorf("failed to create JWT: %w", err)
-	}
-
-	return token, nil
-}
