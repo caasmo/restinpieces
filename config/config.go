@@ -177,8 +177,9 @@ func Load(dbfile string) (*Config, error) {
 			"port", gmailSmtp.Port,
 			"username", gmailSmtp.Username)
 	} else {
-		slog.Warn("Gmail SMTP credentials not found or incomplete", 
-			"username", gmailSmtp.Username,
+		slog.Warn("Missing environment variables - skipping SMTP configuration",
+			"required_vars", []string{EnvSmtpUsername, EnvSmtpPassword},
+			"username_set", gmailSmtp.Username != "",
 			"password_set", gmailSmtp.Password != "")
 	}
 
