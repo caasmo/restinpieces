@@ -34,7 +34,7 @@ func (m *Mailer) Handle(ctx context.Context, job queue.Job) error {
 // New creates a new Mailer instance from config
 func New(cfg config.Smtp) *Mailer {
 	return &Mailer{
-		host:     cfg.Server,
+		host:     cfg.Host,
 		port:     cfg.Port,
 		username: cfg.Username,
 		password: cfg.Password,
