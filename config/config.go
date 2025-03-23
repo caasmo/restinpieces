@@ -158,17 +158,53 @@ func Load(dbfile string) (*Config, error) {
 
 	cfg.Server = FillServer(cfg)
 
+	// Gmail SMTP configuration with detailed documentation
 	gmailSmtp := Smtp{
-		Host:        "smtp.gmail.com",
-		Port:        587,
-		Username:    os.Getenv(EnvSmtpUsername),
-		Password:    os.Getenv(EnvSmtpPassword),
-		FromName:    "My App", // Customizable sender name
-		FromAddress: os.Getenv(EnvSmtpUsername), // From matches username for Gmail
-		LocalName:   "", // Empty will use mailyak's default ("localhost")
-		AuthMethod:  "plain", // Google requires PLAIN auth
-		UseTLS:      false,
-		UseStartTLS: true,    // Required for Gmail
+		// Host is always smtp.gmail.com for Gmail
+		Host: "smtp.gmail.com",
+		
+		// Port 587 is required for STARTTLS
+		Port: 587,
+		
+		// Username must be the full Gmail address used for authentication
+		// Example: "myaccount@gmail.com"
+		// This must match the account where you've configured app passwords
+		Username: os.Getenv(EnvSmtpUsername),
+		
+		// Password can be either:
+		// 1. Your Gmail account password (not recommended)
+		// 2. An app-specific password (recommended)
+		// To create an app password:
+		// 1. Enable 2FA on your Google account
+		// 2. Go to Google Account > Security > App passwords
+		// 3. Generate a password for "Mail" application
+		Password: os.Getenv(EnvSmtpPassword),
+		
+		// FromName is the display name shown in email clients
+		// Example: "My App" will show as "My App <noreply@example.com>"
+		FromName: "My App",
+		
+		// FromAddress can be either:
+		// 1. The same as Username (your Gmail address)
+		// 2. A verified alias or Google Workspace email
+		// To configure a different FromAddress:
+		// 1. Go to Gmail Settings → Accounts and Import
+		// 2. Under "Send mail as", click "Add another email address"
+		// 3. Follow the verification steps
+		FromAddress: os.Getenv("SMTP_FROM_ADDRESS"),
+		
+		// LocalName is the HELO/EHLO identifier
+		// Leave empty to use default "localhost"
+		LocalName: "",
+		
+		// AuthMethod must be "plain" for Gmail
+		AuthMethod: "plain",
+		
+		// UseTLS should be false for port 587
+		UseTLS: false,
+		
+		// UseStartTLS must be true for Gmail on port 587
+		UseStartTLS: true,
 	}
 
 	// If Gmail credentials are detected, add to SMTP config
