@@ -162,7 +162,7 @@ func (s *Scheduler) processJobs() {
         if errors.Is(err, context.Canceled) {
             slog.Info("⏰scheduler: job batch interrupted due to shutdown")
         } else {
-            slog.Error("⏰scheduler: error executing batch jobs", "err", err)
+            slog.Error("⏰scheduler: received one or more tick errors. First:", "err", err)
         }
     }
 
