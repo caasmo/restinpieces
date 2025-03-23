@@ -78,9 +78,9 @@ type Server struct {
 	IdleTimeout time.Duration
 }
 
-// Domain returns the domain portion of the server address
-// If Addr contains just a port (e.g. ":8080"), returns "localhost"
-func (s *Server) Domain() string {
+// BaseURL returns the full base URL including scheme but without port
+// Uses https in production (when not localhost)
+func (s *Server) BaseURL() string {
 	// Split host:port
 	host, _, err := net.SplitHostPort(s.Addr)
 	if err != nil {
@@ -90,19 +90,14 @@ func (s *Server) Domain() string {
 	
 	// Default to localhost if no host specified
 	if host == "" {
-		return "localhost"
+		return "http://localhost"
 	}
-	return host
-}
-
-// BaseURL returns the full base URL including scheme
-// Uses https in production (when not localhost)
-func (s *Server) BaseURL() string {
-	domain := s.Domain()
-	if domain == "localhost" {
-		return "http://" + domain
+	
+	// Use https for non-localhost domains
+	if host == "localhost" {
+		return "http://localhost"
 	}
-	return "https://" + domain
+	return "https://" + host
 }
 
 type Jwt struct {
