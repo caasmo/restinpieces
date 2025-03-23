@@ -14,7 +14,7 @@ import (
 
 // Mailer handles sending emails and implements queue.JobHandler
 type Mailer struct {
-	server   string
+	host     string
 	port     int
 	username string
 	password string
@@ -34,7 +34,7 @@ func (m *Mailer) Handle(ctx context.Context, job queue.Job) error {
 // New creates a new Mailer instance from config
 func New(cfg config.Smtp) *Mailer {
 	return &Mailer{
-		server:   cfg.Server,
+		host:     cfg.Server,
 		port:     cfg.Port,
 		username: cfg.Username,
 		password: cfg.Password,
@@ -45,8 +45,8 @@ func New(cfg config.Smtp) *Mailer {
 // SendVerificationEmail sends an email verification message
 func (m *Mailer) SendVerificationEmail(ctx context.Context, email, token string) error {
 	// Create mail client
-	mail := mailyak.New(fmt.Sprintf("%s:%d", m.server, m.port), 
-		smtp.PlainAuth("", m.username, m.password, m.server))
+	mail := mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), 
+		smtp.PlainAuth("", m.username, m.password, m.host))
 
 	// Build email
 	mail.To(email)

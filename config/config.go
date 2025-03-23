@@ -96,7 +96,7 @@ type Jwt struct {
 }
 
 type Smtp struct {
-	Server   string
+	Host     string
 	Port     int
 	Username string
 	Password string
@@ -155,7 +155,7 @@ func Load(dbfile string) (*Config, error) {
 			VerificationEmailTokenDuration: 24 * time.Hour,
 		},
 		Smtp: Smtp{
-			Server:   "smtp.example.com",
+			Host:     "smtp.example.com",
 			Port:     587,
 			Username: "user@example.com",
 			Password: "password",
