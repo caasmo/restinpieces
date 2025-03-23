@@ -47,7 +47,7 @@ func main() {
 	// Create mailer and executor only if SMTP is configured
 	handlers := make(map[string]executor.JobHandler)
 
-	if (cfg.Smtp != config.Smtp{}) { // Check if struct is not empty
+	if (cfg.Smtp != config.Smtp{}) { 
 		mailer, err := mail.New(cfg.Smtp)
 		if err != nil {
 			slog.Error("failed to create mailer", "error", err)
