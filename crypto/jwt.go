@@ -235,6 +235,7 @@ func NewJwtSessionToken(userID, email, passwordHash string, secret []byte, durat
 	return NewJwt(claims, signingKey, duration)
 }
 
+// TODO make it use agenric NewJwtCredentialsToken with claim signature
 // NewJwtEmailVerificationToken creates a JWT specifically for email verification
 // It includes additional claims needed for verification
 func NewJwtEmailVerificationToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, time.Time, error) {

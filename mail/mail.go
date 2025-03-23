@@ -156,7 +156,7 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 		<p>Thanks,<br>%s team</p>
 	`, m.fromName, callbackURL, m.fromName))
 
-	//return fmt.Errorf("IN MAIL DEBUG: %w", nil)
+	return fmt.Errorf("IN MAIL DEBUG: %s", callbackURL)
 	// Send email with context timeout
 	done := make(chan error, 1)
 	go func() {
