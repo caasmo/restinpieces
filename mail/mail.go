@@ -74,7 +74,7 @@ func (m *Mailer) Handle(ctx context.Context, job queue.Job) error {
 
 	// Generate a random callback URL for testing
 	callbackURL := "http://localhost:8080/verify-email" // TODO: Make this configurable
-	callbackURL := fmt.Sprintf("%s?token=%d", callbackURL, job.ID)
+	callbackURL = fmt.Sprintf("%s?token=%d", callbackURL, job.ID)
 	return m.SendVerificationEmail(ctx, payload.Email, callbackURL)
 }
 
