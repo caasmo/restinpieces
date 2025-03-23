@@ -11,8 +11,8 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/executor"
 	"github.com/caasmo/restinpieces/queue"
-	"github.com/caasmo/restinpieces/mail"
 	"golang.org/x/sync/errgroup"
 )
 
