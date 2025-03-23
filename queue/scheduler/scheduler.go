@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -129,7 +128,7 @@ func (s *Scheduler) processJobs() {
             defer cancel()
             
             // Execute job with proper timeout while still respecting global cancellation
-            err := executeJobWithContext(jobCtx, *jobCopy)
+            err := s.executeJobWithContext(jobCtx, *jobCopy)
             
             // Handle job completion status
             if err == nil {
@@ -173,7 +172,7 @@ func (s *Scheduler) processJobs() {
     }
 }
 
-func executeJobWithContext(ctx context.Context, job queue.Job) error {
+func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) error {
     // Initial context check
     if ctx.Err() != nil {
         return ctx.Err()
@@ -185,13 +184,8 @@ func executeJobWithContext(ctx context.Context, job queue.Job) error {
         "job_type", job.JobType, 
         "attempt", job.Attempts)
     
-    // Different handling based on job type
-    switch job.JobType {
-    case queue.JobTypeEmailVerification:
-        return executeEmailVerification(ctx, job, cfg)
-    default:
-        return fmt.Errorf("unknown job type: %s", job.JobType)
-    }
+    // Use the executor to handle the job
+    return s.executor.Execute(ctx, job)
 }
 
 // the key is to use context aware packages for db, etc. and periodically check
