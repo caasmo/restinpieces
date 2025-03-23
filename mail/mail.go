@@ -14,6 +14,30 @@ import (
 )
 
 
+// loginAuth implements the LOGIN authentication mechanism
+type loginAuth struct {
+	username string
+	password string
+}
+
+func (a *loginAuth) Start(server *smtp.ServerInfo) (string, []byte, error) {
+	return "LOGIN", []byte{}, nil
+}
+
+func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
+	if more {
+		switch string(fromServer) {
+		case "Username:":
+			return []byte(a.username), nil
+		case "Password:":
+			return []byte(a.password), nil
+		default:
+			return nil, fmt.Errorf("unexpected server challenge: %s", fromServer)
+		}
+	}
+	return nil, nil
+}
+
 // Mailer handles sending emails and implements queue.JobHandler
 type Mailer struct {
 	host        string
