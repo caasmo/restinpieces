@@ -191,8 +191,8 @@ func Load(dbfile string) (*Config, error) {
 	// Configure Google OAuth2 provider
 	googleConfig := OAuth2Provider{
 		Name:         OAuth2ProviderGoogle,
-		ClientID:     EnvVar{Name: EnvGoogleClientID},
-		ClientSecret: EnvVar{Name: EnvGoogleClientSecret},
+		ClientID:     EnvVar{Name: EnvGoogleClientID, Value: os.Getenv(EnvGoogleClientID)},
+		ClientSecret: EnvVar{Name: EnvGoogleClientSecret, Value: os.Getenv(EnvGoogleClientSecret)},
 		DisplayName:  "Google",
 		RedirectURL:  "http://localhost:8080/oauth2/callback/",
 		AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
@@ -204,10 +204,10 @@ func Load(dbfile string) (*Config, error) {
 		},
 		PKCE: true,
 	}
-	if err := googleConfig.FillEnvVars(); err != nil {
-		slog.Warn("skipping Google OAuth2 provider", "error", err)
-	} else {
+	if googleConfig.ClientID.Value != "" && googleConfig.ClientSecret.Value != "" {
 		cfg.OAuth2Providers[OAuth2ProviderGoogle] = googleConfig
+	} else {
+		slog.Warn("skipping Google OAuth2 provider - missing client ID or secret")
 	}
 
 	// Configure GitHub OAuth2 provider
