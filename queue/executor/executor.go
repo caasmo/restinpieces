@@ -37,7 +37,7 @@ func (e *DefaultExecutor) Execute(ctx context.Context, job queue.Job) error {
 		return fmt.Errorf("no handler registered for job type: %s", job.JobType)
 	}
 
-	slog.Info("Executing job",
+	slog.Info("executor: executing job",
 		"job_id", job.ID,
 		"job_type", job.JobType,
 		"attempt", job.Attempts,
