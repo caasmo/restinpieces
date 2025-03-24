@@ -167,16 +167,9 @@ func writeJSONOk(w http.ResponseWriter, resp jsonResponse) {
 	w.Write(resp.body)
 }
 
-// writeJsonWithData writes a structured JSON response with optional data
-func writeJsonWithData(w http.ResponseWriter, status int, code, message string, data interface{}) {
-	resp := JsonResponseWithData{
-		Status:  status,
-		Code:    code,
-		Message: message,
-		Data:    data,
-	}
-
-	w.WriteHeader(status)
+// writeJsonWithData writes a structured JSON response with the provided data
+func writeJsonWithData(w http.ResponseWriter, resp JsonResponseWithData) {
+	w.WriteHeader(resp.Status)
 	setHeaders(w, apiJsonDefaultHeaders)
 	json.NewEncoder(w).Encode(resp)
 }
