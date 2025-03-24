@@ -204,3 +204,6 @@ function buildUrl(baseUrl, path) {
         return result.join("&");
     }
 }
+
+export default Restinpieces;
+
