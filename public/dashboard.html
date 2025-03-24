@@ -4,17 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <script type="module">
-        import Restinpieces from '/assets/js/restinpieces.js';
-        import { LocalStorage } from '/assets/js/local-storage.js';
-        
-        // Initialize instances
-        const client = new Restinpieces("http://localhost:8080");
-        
-        // Make available globally for the button click handler
-        window.client = client;
-        window.LocalStorage = LocalStorage;
-    </script>
     <style>
         body {
             font-family: sans-serif;
@@ -106,7 +95,13 @@
         <div id="refresh-error" class="error"></div>
     </div>
 
-    <script>
+    <script type="module">
+        import Restinpieces from '/assets/js/restinpieces.js';
+        import { LocalStorage } from '/assets/js/local-storage.js';
+        
+        // Initialize instances
+        const client = new Restinpieces("http://localhost:8080");
+        
         // Display initial user info and token
         const userInfo = LocalStorage.loadUserRecord();
         const currentToken = LocalStorage.loadAccessToken() || 'No token found';
@@ -132,7 +127,7 @@
                     
                     // Display new token and update UI
                     document.getElementById('new-token').textContent = data.access_token;
-                    document.getElementById('current-token').textContent = data.access_token;
+                    document.getElementById('current-token').textContent = data.access_token.
                     // Update previous token for next refresh
                     document.getElementById('previous-token').textContent = currentToken;
                 } else {
@@ -144,6 +139,11 @@
                 refreshError.textContent = error.response ? JSON.stringify(error.response, null, 2) : error.message;
             });
         }
+
+        // Make available globally for the button click handler
+        window.client = client;
+        window.LocalStorage = LocalStorage;
+        window.refreshToken = refreshToken;
     </script>
 </body>
 </html>
