@@ -60,50 +60,60 @@
 <body>
     <div id="message" class="message">Authenticating...</div>
 
-    <script src="/assets/js/requestJson.js"></script>
-    <script>
-        const messageDiv = document.getElementById('message');
-        const params = new URLSearchParams(window.location.search);
-        const provider = JSON.parse(localStorage.getItem("provider"));
+    <script type="module">
+        import Restinpieces from '/assets/js/restinpieces.js';
+        import { LocalStorage } from '/assets/js/local-storage.js';
 
-        // Prepare auth request
-        const authRequest = {
-            provider: provider.name,
-            code: params.get("code"),
-            code_verifier: provider.codeVerifier,
-            redirect_uri: provider.redirectURL
-        };
+        document.addEventListener('DOMContentLoaded', () => {
+            const messageDiv = document.getElementById('message');
+            const params = new URLSearchParams(window.location.search);
+            const provider = JSON.parse(localStorage.getItem("provider"));
+            const rp = new Restinpieces("http://localhost:8080");
 
-        // Send auth request to backend using requestJson
-        requestJson(
-            "http://localhost:8080", 
-            "/api/auth-with-oauth2",
-            "POST",
-            {},
-            authRequest
-        )
-        .then(data => {
-            if (data.access_token && data.record) {
-                // Save token and user record using our functions
-                saveAccessToken(data.access_token);
-                const currentToken = loadAccessToken(); // Verify token was saved
-                saveUserRecord(data.record);
-                // Load the record to ensure it's accessible
-                loadUserRecord();
-                
-                // Show success message
+            if (!provider) {
+                showError('No provider information found');
+                return;
+            }
+
+            const authRequest = {
+                provider: provider.name,
+                code: params.get("code"),
+                code_verifier: provider.codeVerifier,
+                redirect_uri: provider.redirectURL
+            };
+
+            rp.requestJson(
+                "/api/auth-with-oauth2",
+                "POST",
+                {},
+                authRequest
+            )
+            .then(data => {
+                if (data.access_token && data.record) {
+                    LocalStorage.saveAccessToken(data.access_token);
+                    LocalStorage.saveUserRecord(data.record);
+                    
+                    showSuccess(data.record);
+                } else {
+                    throw new Error('No access token in response');
+                }
+            })
+            .catch(error => {
+                console.error('Authentication failed:', error);
+                showError(error.response || { message: error.message });
+            });
+
+            function showSuccess(record) {
                 messageDiv.textContent = 'Authentication successful!';
                 messageDiv.classList.add('success');
                 
-                // Create user info display
                 const userInfo = document.createElement('div');
                 userInfo.className = 'user-info';
                 userInfo.innerHTML = `
                     <h3>Authentication Successful!</h3>
-                    <pre>${JSON.stringify(data.record, null, 2)}</pre>
+                    <pre>${JSON.stringify(record, null, 2)}</pre>
                 `;
                 
-                // Create action buttons
                 const buttonContainer = document.createElement('div');
                 buttonContainer.className = 'button-container';
                 
@@ -111,19 +121,17 @@
                 dashboardButton.textContent = 'Go to Dashboard';
                 dashboardButton.onclick = () => window.location.href = '/dashboard.html';
                 buttonContainer.appendChild(dashboardButton);
-                
-                // Show results
+
                 messageDiv.textContent = '';
                 messageDiv.appendChild(userInfo);
                 messageDiv.appendChild(buttonContainer);
-            } else {
-                throw new Error('No access token in response');
             }
-        })
-        .catch(error => {
-            console.error('Authentication failed:', error);
-            messageDiv.textContent = JSON.stringify(error.response, null, 2);
-            messageDiv.classList.add('error');
+
+            function showError(error) {
+                console.error('OAuth2 error:', error);
+                messageDiv.textContent = error.message || 'Authentication failed';
+                messageDiv.classList.add('error');
+            }
         });
     </script>
 </body>
