@@ -90,8 +90,9 @@ func setHeaders(w http.ResponseWriter, headers map[string]string) {
     }
 }
 
-// Standard error codes 
+// Standard response codes 
 const (
+	CodeOkAuthentication              = "ok_authentication" // Standard success code for auth
 	CodeTokenGeneration                = "token_generation"
 	CodeClaimsNotFound                 = "claims_not_found"
 	CodeInvalidRequest                 = "invalid_input"
@@ -226,7 +227,7 @@ func writeAuthResponse(w http.ResponseWriter, token string, expiresIn int, user 
 	authData := NewAuthData(token, expiresIn, user)
 	response := NewJsonResponseWithData(
 		http.StatusOK,
-		"authentication_success",
+		CodeOkAuthentication,
 		"Authentication successful",
 		authData,
 	)
