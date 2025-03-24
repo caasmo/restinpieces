@@ -92,9 +92,14 @@ func setHeaders(w http.ResponseWriter, headers map[string]string) {
 
 // Standard response codes 
 const (
+    // oks
 	CodeOkAuthentication              = "ok_authentication" // Standard success code for auth
 	CodeOkAlreadyVerified             = "ok_already_verified"
 	CodeOkEmailVerified               = "ok_email_verified"
+
+
+
+    //errors
 	CodeTokenGeneration                = "token_generation"
 	CodeClaimsNotFound                 = "claims_not_found"
 	CodeInvalidRequest                 = "invalid_input"
