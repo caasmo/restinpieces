@@ -8,8 +8,11 @@
         import Restinpieces from '/assets/js/restinpieces.js';
         import { LocalStorage } from '/assets/js/local-storage.js';
         
+        // Initialize instances
+        const client = new Restinpieces("http://localhost:8080");
+        
         // Make available globally for the button click handler
-        window.Restinpieces = Restinpieces;
+        window.client = client;
         window.LocalStorage = LocalStorage;
     </script>
     <style>
