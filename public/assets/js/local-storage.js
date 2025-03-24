@@ -1,3 +1,5 @@
+import { ClientResponseError } from './client-response-error.js';
+
 export class LocalStorage {
     /**
      * Saves JWT token to localStorage
@@ -6,13 +8,18 @@ export class LocalStorage {
      */
     static saveAccessToken(token) {
       if (token === undefined) {
-        throw new Error('Invalid token: token is required');
+        throw new ClientResponseError({
+            response: { message: 'Invalid token: token is required' }
+        });
       }
       
       try {
         localStorage.setItem('access_token', token);
       } catch (error) {
-        throw new Error(`Failed to save access token: ${error.message}`);
+        throw new ClientResponseError({
+            originalError: error,
+            response: { message: `Failed to save access token: ${error.message}` }
+        });
       }
     }
 
@@ -24,8 +31,10 @@ export class LocalStorage {
       try {
         return localStorage.getItem('access_token') || "";
       } catch (error) {
-        // which can occur if storage is unavailable or quota is exceeded
-        return "";
+        throw new ClientResponseError({
+            originalError: error,
+            response: { message: 'Failed to load access token' }
+        });
       }
     }
 
@@ -36,13 +45,18 @@ export class LocalStorage {
      */
     static saveUserRecord(record) {
       if (!record) {
-        throw new Error('Invalid record: record is missing');
+        throw new ClientResponseError({
+            response: { message: 'Invalid record: record is missing' }
+        });
       }
       
       try {
         localStorage.setItem('user_record', JSON.stringify(record));
       } catch (error) {
-        throw new Error(`Failed to save user record: ${error.message}`);
+        throw new ClientResponseError({
+            originalError: error,
+            response: { message: `Failed to save user record: ${error.message}` }
+        });
       }
     }
 
@@ -59,8 +73,10 @@ export class LocalStorage {
         
         return JSON.parse(record);
       } catch (error) {
-        // by Json parse
-        return {};
+        throw new ClientResponseError({
+            originalError: error,
+            response: { message: 'Failed to load user record' }
+        });
       }
     }
 
@@ -71,7 +87,9 @@ export class LocalStorage {
     static handleEmailRegistration(data) {
       // Verify we have the necessary data
       if (!data || !data.token || !data.record) {
-        throw new Error('Invalid response data: token or record missing');
+        throw new ClientResponseError({
+            response: { message: 'Invalid response data: token or record missing' }
+        });
       }
 
       // Save JWT and user record using the specialized functions
