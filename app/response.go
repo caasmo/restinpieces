@@ -15,10 +15,9 @@ type jsonResponse struct {
 
 var apiJsonDefaultHeaders = map[string]string{
 
-
 	"Content-Type":              "application/json; charset=utf-8",
 
-    // Ensure the browser respects that declared content type strictly.
+    // Ensure the browser respects the declared content type strictly.
     // mitigate MIME-type sniffing attacks
     // browsers sometimes "sniff" or guess the content type of a resource based on its
     // actual content, rather than strictly adhering to the Content-Type header.
@@ -36,7 +35,7 @@ var apiJsonDefaultHeaders = map[string]string{
 
 
     // Controls cross-origin resource sharing (CORS)
-    // be restrictive, most restrictive is nt to have
+    // be restrictive, most restrictive is not to have it, same domain as api endpoints
     // TODO configurable
 	//"Access-Control-Allow-Origin": "*",
 
@@ -73,7 +72,6 @@ func setHeaders(w http.ResponseWriter, headers map[string]string) {
 	    w.Header()[key] = []string{value}
     }
 }
-
 
 // Standard error codes and messages
 const (
