@@ -1,11 +1,11 @@
 import { ClientResponseError } from './client-response-error.js';
-import { RestinpiecesStorage } from './local-store.js';
+import { RestinpiecesLocalStore } from './local-store.js';
 
 class Restinpieces {
     constructor(baseURL = "/", lang = "en-US") {
         this.baseURL = baseURL;
         this.lang = lang;
-        this.store = new RestinpiecesStorage();
+        this.store = new RestinpiecesLocalStore();
         //this.recordServices = {}; // Cache for record services
         //this.enableAutoCancellation = true;
         //this.cancelControllers = {};
@@ -63,6 +63,7 @@ class Restinpieces {
             if (response.status === 204) {
             return {}; // Return empty object for no-content
             }
+            // response.json() is javscript object or array, etc scalar
             return response.json().catch(() => {
             // Handle json in case of not json.
                 throw new ClientResponseError({

@@ -1,45 +1,45 @@
-class RestinpiecesStorage {
-    // Core storage methods
-    Set(key, value) {
-        try {
-            localStorage.setItem(key, JSON.stringify(value));
-            return true;
-        } catch (error) {
-            console.error('Storage set failed:', error);
-            return false;
-        }
-    }
+export class RestinpiecesLocalStore {
+    // Private key registry (only accessible within the class)
+    static #keys = {
+        auth: '_rip_auth',
+        provider: '_rip_provider',
+    };
 
-    Get(key) {
+    // Private generic methods
+    static #get(key) {
         try {
-            const value = localStorage.getItem(key);
+            const value = localStorage.getItem(this.#keys[key]);
             return value ? JSON.parse(value) : null;
         } catch (error) {
-            console.error('Storage get failed:', error);
-            return null;
+            console.error(`Failed to retrieve ${key}:`, error);
+            throw new Error(`Failed to retrieve ${key}: ` + error.message);
         }
     }
 
-    Remove(key) {
+    static #set(key, value) {
         try {
-            localStorage.removeItem(key);
-            return true;
+            localStorage.setItem(this.#keys[key], JSON.stringify(value));
         } catch (error) {
-            console.error('Storage remove failed:', error);
-            return false;
+            console.error(`Failed to store ${key}:`, error);
+            throw new Error(`Failed to store ${key}: ` + error.message);
         }
     }
 
-    // Auth-specific methods
-    SaveAuth(auth) {
-        return this.Set('auth', auth);
+    // Public methods for 'auth'
+    static retrieveAuth() {
+        return this.#get('auth');
     }
 
-    LoadAuth() {
-        return this.Get('auth') || {};
+    static storeAuth(value) {
+        this.#set('auth', value);
     }
 
-    ClearAuth() {
-        return this.Remove('auth');
+    // Public methods for 'provider'
+    static retrieveProvider() {
+        return this.#get('provider');
+    }
+
+    static storeProvider(value) {
+        this.#set('provider', value);
     }
 }
