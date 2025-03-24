@@ -165,7 +165,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 
 	// Check if user is already verified
 	if user.Verified {
-		writeJSONOk(w, okAlreadyVerified)
+		writeJsonOk(w, okAlreadyVerified)
 		return
 	}
 
@@ -273,7 +273,7 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 
 	// Check if user is already verified
 	if user.Verified {
-		writeJSONOk(w, okAlreadyVerified)
+		writeJsonOk(w, okAlreadyVerified)
 		return
 	}
 
@@ -284,7 +284,7 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	writeJSONOk(w, okEmailVerified)
+	writeJsonOk(w, okEmailVerified)
 }
 
 // RegisterWithPasswordHandler handles password-based user registration with validation
