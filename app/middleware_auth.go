@@ -80,7 +80,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 				writeJSONError(w, errorJwtInvalidSignMethod)
 				return
 			}
-			writeJSONErrorf(w, http.StatusUnauthorized, `{"error":"Invalid token: %s"}`, err.Error())
+			writeJSONError(w, errorJwtInvalidToken)
 			return
 		}
 
