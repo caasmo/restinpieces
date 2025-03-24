@@ -1,5 +1,8 @@
 ### TODOs
 
+- move  app package to core, 
+- security headers and litle things that write simple thing to heaaders are functions not middleware
+- create reposnse package with errors, headers.go,  amaybe request
 - decide about configuration
 - superuser? just ssh?
 - move html to test/html
