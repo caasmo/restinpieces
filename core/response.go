@@ -223,6 +223,12 @@ func NewAuthData(token string, expiresIn int, user *db.User) *AuthData {
 
 // writeAuthResponse writes a standardized authentication response
 func writeAuthResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
-    setHeaders(w, apiJsonDefaultHeaders)
-	json.NewEncoder(w).Encode(NewAuthData(token, expiresIn, user))
+	authData := NewAuthData(token, expiresIn, user)
+	response := NewJsonResponseWithData(
+		http.StatusOK,
+		"authentication_success",
+		"Authentication successful",
+		authData,
+	)
+	writeJsonWithData(w, *response)
 }
