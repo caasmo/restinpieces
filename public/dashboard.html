@@ -102,6 +102,9 @@
         // Initialize instances
         const rp = new Restinpieces("http://localhost:8080");
         
+        // Make available globally for handlers
+        window.rp = rp;
+        
         // Display initial user info and token
         const userInfo = LocalStorage.loadUserRecord();
         const currentToken = LocalStorage.loadAccessToken() || 'No token found';
@@ -141,7 +144,6 @@
         }
 
         // Make available globally for the button click handler
-        window.client = client;
         window.LocalStorage = LocalStorage;
         window.refreshToken = refreshToken;
     </script>
