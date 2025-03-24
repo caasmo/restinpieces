@@ -66,15 +66,8 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	expiresIn := int(time.Until(expiry).Seconds())
 
     // TODO move to response standard Ok response.
-	// Return new token in response following OAuth2 token exchange format
-    setHeaders(w, apiJsonDefaultHeaders)
-	// Standard OAuth2 token response format
-	// TODO do we need the expires_in, remove from NewJwt
-	fmt.Fprintf(w, `{
-		"token_type": "Bearer",
-		"expires_in": %d,
-		"access_token": "%s"
-	}`, expiresIn, newToken)
+	// Return standardized authentication response
+	writeAuthResponse(w, newToken, expiresIn, user)
 
 }
 
