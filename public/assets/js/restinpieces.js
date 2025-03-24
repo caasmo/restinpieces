@@ -13,12 +13,12 @@ class Restinpieces {
 		// Expose the static store with a cleaner interface
         this.store = {
             auth: {
-                save: (data) => RestinpiecesLocalStore.saveAuth(data),
-                load: () => RestinpiecesLocalStore.loadAuth(),
+                save: (data) => this.lstore.saveAuth(data),
+                load: () => this.lstore.loadAuth(),
             },
             provider: {
-                save: (data) => RestinpiecesLocalStore.saveProvider(data),
-                load: () => RestinpiecesLocalStore.loadProvider(),
+                save: (data) => this.lstore.storeProvider(data),
+                load: () => this.lstore.retrieveProvider(),
             }
         };
     }
