@@ -41,7 +41,7 @@ type oauth2Request struct {
 func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	var req oauth2Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -52,14 +52,14 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		"redirectURI", req.RedirectURI)
 	// Validate required fields
 	if req.Provider == "" || req.Code == "" || req.CodeVerifier == "" || req.RedirectURI == "" {
-		writeJSONError(w, errorMissingFields)
+		writeJsonError(w, errorMissingFields)
 		return
 	}
 
 	// Get provider config
 	provider, ok := a.config.OAuth2Providers[req.Provider]
 	if !ok {
-		writeJSONError(w, errorInvalidOAuth2Provider)
+		writeJsonError(w, errorInvalidOAuth2Provider)
 		return
 	}
 
@@ -90,7 +90,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	)
 	slog.Debug("OAuth2 token exchange completed", "provider", req.Provider, "token", token != nil)
 	if err != nil {
-		writeJSONError(w, errorOAuth2TokenExchangeFailed)
+		writeJsonError(w, errorOAuth2TokenExchangeFailed)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	client := oauth2Config.Client(ctx, token)
 	resp, err := client.Get(provider.UserInfoURL)
 	if err != nil {
-		writeJSONError(w, errorOAuth2UserInfoFailed)
+		writeJsonError(w, errorOAuth2UserInfoFailed)
 		return
 	}
 	defer resp.Body.Close()
@@ -106,16 +106,16 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	oauthUser, err := oauth2provider.UserFromUserInfoURL(resp, provider.Name)
 	if err != nil {
 		slog.Debug("Failed to map provider user info", "error", err)
-		writeJSONError(w, errorOAuth2UserInfoProcessingFailed)
+		writeJsonError(w, errorOAuth2UserInfoProcessingFailed)
 		return
 	}
 
 	if oauthUser.Email == "" {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 	if err := ValidateEmail(oauthUser.Email); err != nil {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -157,7 +157,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// also inform the user of existing user.
 	user, err := a.db.GetUserByEmail(oauthUser.Email)
 	if err != nil {
-		writeJSONError(w, errorOAuth2DatabaseError)
+		writeJsonError(w, errorOAuth2DatabaseError)
 		return
 	}
 
@@ -165,7 +165,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	if user == nil || !user.Oauth2 {
 		user, err = a.db.CreateUserWithOauth2(*oauthUser)
 		if err != nil {
-			writeJSONError(w, errorOAuth2DatabaseError)
+			writeJsonError(w, errorOAuth2DatabaseError)
 			return
 		}
 	}
@@ -174,7 +174,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	slog.Debug("Generating JWT for user", "userID", user.ID)
 	jwtToken, _, err := crypto.NewJwtSessionToken(user.ID, user.Email, "", a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
-		writeJSONError(w, errorTokenGeneration)
+		writeJsonError(w, errorTokenGeneration)
 		return
 	}
 
@@ -230,7 +230,7 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if len(providers) == 0 {
-		writeJSONError(w, errorInvalidOAuth2Provider)
+		writeJsonError(w, errorInvalidOAuth2Provider)
 		return
 	}
 
@@ -238,7 +238,7 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
     setHeaders(w, apiJsonDefaultHeaders)
 
 	if err := json.NewEncoder(w).Encode(providers); err != nil {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 }
