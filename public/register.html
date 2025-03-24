@@ -120,35 +120,37 @@
         document.addEventListener('DOMContentLoaded', () => {
             const rp = new Restinpieces("http://localhost:8080");
             
-            document.getElementById('registerForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = '';
-            messageDiv.classList.remove('error', 'success');
+            function handleRegisterSubmit(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = '';
+                messageDiv.classList.remove('error', 'success');
 
-            // Basic client-side validation
-            if (password !== confirmPassword) {
-                messageDiv.textContent = 'Passwords do not match';
-                messageDiv.classList.add('error');
-                return;
-            }
+                // Basic client-side validation
+                if (password !== confirmPassword) {
+                    messageDiv.textContent = 'Passwords do not match';
+                    messageDiv.classList.add('error');
+                    return;
+                }
 
-            if (password.length < 8) {
-                messageDiv.textContent = 'Password must be at least 8 characters';
-                messageDiv.classList.add('error');
-                return;
-            }
+                if (password.length < 8) {
+                    messageDiv.textContent = 'Password must be at least 8 characters';
+                    messageDiv.classList.add('error');
+                    return;
+                }
 
-            // Show loading state
-            messageDiv.textContent = 'Registering...';
-            messageDiv.classList.remove('error');
+                // Show loading state
+                messageDiv.textContent = 'Registering...';
+                messageDiv.classList.remove('error');
 
-            const rp = new Restinpieces("http://localhost:8080");
+                const rp = new Restinpieces("http://localhost:8080");
+
+            document.getElementById('registerForm').addEventListener('submit', handleRegisterSubmit);
             
             rp.requestJson(
                 "/api/register-with-password",
