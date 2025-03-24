@@ -4,6 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OAuth2 Providers</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            overflow: auto; /* Make scrollable if content is large */
+            white-space: pre-wrap; /* Wrap long lines */
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>OAuth2 Providers</h1>
+
+    <button onclick="getProviders()">Get Providers</button>
+
+    <h2>Result:</h2>
+    <pre id="result"></pre>
+
     <script type="module">
         import Restinpieces from './assets/js/restinpieces.js';
         
@@ -36,29 +60,5 @@
         // Make function available on button click
         window.getProviders = getProviders;
     </script>
-    <style>
-        body {
-            font-family: sans-serif;
-        }
-        pre {
-            background-color: #f0f0f0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            overflow: auto; /* Make scrollable if content is large */
-            white-space: pre-wrap; /* Wrap long lines */
-        }
-        .error {
-            color: red;
-        }
-    </style>
-</head>
-<body>
-    <h1>OAuth2 Providers</h1>
-
-    <button onclick="getProviders()">Get Providers</button>
-
-    <h2>Result:</h2>
-    <pre id="result"></pre>
-
 </body>
 </html>
