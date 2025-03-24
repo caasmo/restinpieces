@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
-    <script src="/assets/js/requestJson.js"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -17,25 +16,19 @@
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
         }
-        
         .provider-section {
-            margin-bottom: 0;
             padding: 20px;
             background: #f5f5f5;
             border-radius: 4px;
-            height: fit-content;
         }
-        
         .provider-section ul {
             list-style: none;
             padding: 0;
             margin: 0;
         }
-        
         .provider-section li {
             margin: 10px 0;
         }
-        
         .provider-section a {
             display: block;
             padding: 10px 20px;
@@ -45,26 +38,21 @@
             border-radius: 4px;
             text-align: center;
         }
-        
         .provider-section a:hover {
             background-color: #1976d2;
         }
-
         .form-group {
             margin-bottom: 15px;
         }
-        
         label {
             display: block;
             margin-bottom: 5px;
         }
-        
         input {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
         }
-        
         button {
             width: 100%;
             padding: 10px 20px;
@@ -74,34 +62,28 @@
             border-radius: 4px;
             cursor: pointer;
         }
-        
         button:hover {
             background-color: #1976d2;
         }
-        
         .message {
             margin-top: 20px;
             padding: 10px;
             border-radius: 4px;
         }
-        
         .error {
             background-color: #ffebee;
             color: #c62828;
         }
-        
         .success {
             background-color: #e8f5e9;
             color: #2e7d32;
         }
-        
         .user-info {
             margin: 20px 0;
             padding: 15px;
             background: #f5f5f5;
             border-radius: 4px;
         }
-        
         .user-info pre {
             background: white;
             padding: 10px;
@@ -109,24 +91,13 @@
             max-height: 300px;
             overflow: auto;
         }
-        
         .button-container {
             margin-top: 20px;
             display: flex;
             gap: 10px;
         }
-        
         .button-container button {
             flex: 1;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 16px;
-            background-color: #2196f3;
-            color: white;
-        }
-        
-        .button-container button:hover {
-            background-color: #1976d2;
         }
     </style>
 </head>
@@ -161,106 +132,101 @@
 
     <div id="error" class="error"></div>
 
-    <script>
-        // Handle password login form submission
-        document.getElementById('passwordLoginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = '';
-            errorDiv.classList.remove('error');
+    <script type="module">
+        import Restinpieces from '/assets/js/restinpieces.js';
+        import { LocalStorage } from '/assets/js/local-storage.js';
 
-            // Show loading state
-            errorDiv.textContent = 'Logging in...';
-
-            requestJson(
-                "http://localhost:8080",
-                "/api/auth-with-password",
-                "POST",
-                {},
-                {
-                    identity: email,
-                    password: password
-                }
-            )
-            .then(data => {
-                if (data.access_token && data.record) {
-                    // Save token and user record using our functions
-                    saveAccessToken(data.access_token);
-                    saveUserRecord(data.record);
-                    
-                    // Clear error message
-                    errorDiv.textContent = '';
-                    
-                    // Create user info display
-                    const userInfo = document.createElement('div');
-                    userInfo.className = 'user-info';
-                    userInfo.innerHTML = `
-                        <h3>Login Successful!</h3>
-                        <pre>${JSON.stringify(data.record, null, 2)}</pre>
-                    `;
-                    
-                    // Create action buttons
-                    const buttonContainer = document.createElement('div');
-                    buttonContainer.className = 'button-container';
-                    
-                    const dashboardButton = document.createElement('button');
-                    dashboardButton.textContent = 'Go to Dashboard';
-                    dashboardButton.onclick = () => window.location.href = '/dashboard.html';
-                    buttonContainer.appendChild(dashboardButton);
-                    
-                    // Show results
-                    errorDiv.appendChild(userInfo);
-                    errorDiv.appendChild(buttonContainer);
-                } else {
-                    throw new ClientResponseError({
-                        response: { message: 'Invalid login response' }
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Login failed:', error);
-                errorDiv.textContent = error.response ? JSON.stringify(error.response, null, 2) : error.message;
-                errorDiv.classList.add('error');
-            });
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            requestJson(
-                "http://localhost:8080",
-                "/api/list-oauth2-providers",
-                "GET"
-            )
-            .then(providers => {
-                const list = document.getElementById('list');
-                list.innerHTML = ''; // Clear loading message
+        class LoginForm {
+            constructor() {
+                this.rp = new Restinpieces("http://localhost:8080");
+                this.form = document.getElementById('passwordLoginForm');
+                this.errorDiv = document.getElementById('error');
+                this.providerList = document.getElementById('list');
                 
-                providers.forEach(provider => {
-                    const li = document.createElement('li');
-                    const a = document.createElement('a');
-                    a.textContent = `Login with ${provider.displayName}`;
-                    a.href = provider.authURL;
-                    a.addEventListener('click', () => {
-                        localStorage.setItem("provider", JSON.stringify(provider));
-                    });
-                    li.appendChild(a);
-                    list.appendChild(li);
-                });
+                this.form.addEventListener('submit', this.handleSubmit.bind(this));
+                this.loadProviders();
+            }
 
-                if (providers.length === 0) {
-                    list.innerHTML = '<li>No OAuth2 providers.</li>';
+            async loadProviders() {
+                try {
+                    const providers = await this.rp.requestJson("/api/list-oauth2-providers");
+                    this.providerList.innerHTML = '';
+                    
+                    providers.forEach(provider => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.textContent = `Login with ${provider.displayName}`;
+                        a.href = provider.authURL;
+                        li.appendChild(a);
+                        this.providerList.appendChild(li);
+                    });
+
+                    if (providers.length === 0) {
+                        this.providerList.innerHTML = '<li>No OAuth2 providers.</li>';
+                    }
+                } catch (error) {
+                    console.error('Error loading providers:', error);
+                    this.providerList.innerHTML = '<li>Error loading providers</li>';
                 }
-            })
-            .catch(error => {
-                console.error('Error loading OAuth2 providers:', error);
-                document.getElementById('list').innerHTML = '<li>Error loading providers</li>';
-            });
-        });
+            }
+
+            showMessage(text, isError = false) {
+                this.errorDiv.textContent = text;
+                this.errorDiv.className = isError ? 'message error' : 'message success';
+            }
+
+            createSuccessUI(userRecord) {
+                const userInfo = document.createElement('div');
+                userInfo.className = 'user-info';
+                userInfo.innerHTML = `
+                    <h3>Login Successful!</h3>
+                    <pre>${JSON.stringify(userRecord, null, 2)}</pre>
+                `;
+
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+                
+                const dashboardButton = document.createElement('button');
+                dashboardButton.textContent = 'Go to Dashboard';
+                dashboardButton.onclick = () => window.location.href = '/dashboard.html';
+                buttonContainer.appendChild(dashboardButton);
+
+                this.errorDiv.textContent = '';
+                this.errorDiv.appendChild(userInfo);
+                this.errorDiv.appendChild(buttonContainer);
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                this.showMessage('Logging in...');
+
+                try {
+                    const data = await this.rp.requestJson(
+                        "/api/auth-with-password",
+                        "POST",
+                        {},
+                        { identity: email, password }
+                    );
+
+                    if (data.access_token && data.record) {
+                        LocalStorage.saveAccessToken(data.access_token);
+                        LocalStorage.saveUserRecord(data.record);
+                        this.createSuccessUI(data.record);
+                    } else {
+                        throw new Error('Invalid login response');
+                    }
+                } catch (error) {
+                    console.error('Login failed:', error);
+                    this.showMessage(error.response?.message || error.message, true);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => new LoginForm());
     </script>
 </body>
 </html>
