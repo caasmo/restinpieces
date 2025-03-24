@@ -18,7 +18,7 @@ type JsonResponseData struct {
 	Status  int         `json:"status"`
 	Code    string      `json:"code"`
 	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"}
+	Data    interface{} `json:"data,omitempty"`
 }
 
 var apiJsonDefaultHeaders = map[string]string{
