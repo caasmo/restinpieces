@@ -26,11 +26,11 @@ export class RestinpiecesLocalStore {
     }
 
     // Public methods for 'auth'
-    static retrieveAuth() {
+    static loadAuth() {
         return this.#get('auth');
     }
 
-    static storeAuth(value) {
+    static saveAuth(value) {
         this.#set('auth', value);
     }
 
