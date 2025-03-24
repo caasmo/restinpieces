@@ -178,9 +178,9 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return standardized authentication token response
+	// Return standardized authentication response
 	slog.Debug("Preparing successful authentication response")
-	writeAuthTokenResponse(w, jwtToken, int(a.config.Jwt.AuthTokenDuration.Seconds()), user)
+	writeAuthResponse(w, jwtToken, int(a.config.Jwt.AuthTokenDuration.Seconds()), user)
 }
 
 // ListOAuth2ProvidersHandler returns available OAuth2 providers
