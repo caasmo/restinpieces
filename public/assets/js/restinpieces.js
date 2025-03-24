@@ -1,10 +1,11 @@
 import { ClientResponseError } from './client-response-error.js';
+import { RestinpiecesStorage } from './local-store.js';
 
 class Restinpieces {
     constructor(baseURL = "/", lang = "en-US") {
         this.baseURL = baseURL;
         this.lang = lang;
-        //this.authStore = authStore;
+        this.store = new RestinpiecesStorage();
         //this.recordServices = {}; // Cache for record services
         //this.enableAutoCancellation = true;
         //this.cancelControllers = {};
