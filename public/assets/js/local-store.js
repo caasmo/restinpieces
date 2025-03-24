@@ -1,12 +1,8 @@
 class RestinpiecesStorage {
-    constructor() {
-        this.prefix = 'rp_';
-    }
-
     // Core storage methods
     Set(key, value) {
         try {
-            localStorage.setItem(`${this.prefix}${key}`, JSON.stringify(value));
+            localStorage.setItem(key, JSON.stringify(value));
             return true;
         } catch (error) {
             console.error('Storage set failed:', error);
@@ -16,7 +12,7 @@ class RestinpiecesStorage {
 
     Get(key) {
         try {
-            const value = localStorage.getItem(`${this.prefix}${key}`);
+            const value = localStorage.getItem(key);
             return value ? JSON.parse(value) : null;
         } catch (error) {
             console.error('Storage get failed:', error);
@@ -26,7 +22,7 @@ class RestinpiecesStorage {
 
     Remove(key) {
         try {
-            localStorage.removeItem(`${this.prefix}${key}`);
+            localStorage.removeItem(key);
             return true;
         } catch (error) {
             console.error('Storage remove failed:', error);
