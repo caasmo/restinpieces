@@ -207,31 +207,31 @@
                 this.errorDiv.appendChild(buttonContainer);
             }
 
-            handleLogin() {
+            async handleLogin() {
                 const email = document.getElementById('email').value;
                 const password = document.getElementById('password').value;
                 
                 this.showMessage('Logging in...');
 
-                this.rp.requestJson(
-                    "/api/auth-with-password",
-                    "POST",
-                    {},
-                    { identity: email, password }
-                )
-                .then(data => {
-                    if (data.access_token && data.record) {
-                        localStorage.setItem('access_token', data.access_token);
-                        localStorage.setItem('user_record', JSON.stringify(data.record));
-                        this.createSuccessUI(data.record);
+                try {
+                    const response = await this.rp.requestJson(
+                        "/api/auth-with-password",
+                        "POST",
+                        {},
+                        { identity: email, password }
+                    );
+                .then(response => {
+                    if (response.data?.access_token && response.data?.record) {
+                        this.rp.store.auth.save(response.data);
+                        this.createSuccessUI(response.data.record);
                     } else {
                         throw new Error('Invalid login response');
                     }
                 })
-                .catch(error => {
+                } catch (error) {
                     console.error('Login failed:', error);
                     this.showMessage(error.response?.message || error.message, true);
-                });
+                }
             }
         }
 
