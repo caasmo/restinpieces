@@ -21,21 +21,11 @@
 - test requestverification: test also insertion in queue, now only mock nil.
 - more bash test all endpoints
 - test moe all to dbsetup
-- /impl backend job to verification email
-    - reads from job_queue 
-    - generates token
-    - put in user tokenkey????? no is jwt
-    - sends email with mailyak
-    - status processinnf in job, each job has steps laststep issaved in jobqueue steps are label with humman code explanation
-    - /confirm-verification endpoint 
-        - returns 204, or error 400
-        - get generated token from db, compares to token from request
 - code review jwt tests
 - zombiezen, impl pool with timeout, split in files. 
 - zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
 - httprouter params to servemux $ 
 - tls
-- signal, add baseContext
 - add logging
 - hardening: add headers CORS, etc
 - add toml conf and config struct, add struct to app, router, cache
@@ -53,6 +43,16 @@
 
 ### done
 
+- signal, add baseContext
+- /impl backend job to verification email
+    - reads from job_queue 
+    - generates token
+    - put in user tokenkey????? no is jwt
+    - sends email with mailyak
+    - status processinnf in job, each job has steps laststep issaved in jobqueue steps are label with humman code explanation
+    - /confirm-verification endpoint 
+        - returns 204, or error 400
+        - get generated token from db, compares to token from request
 - domain localhost variable shoul be dinamic 
 - update all errors to our format, update if needed  ClientResponseError
 - Implementaion of race condition-free auth-with-oauth2
