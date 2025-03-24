@@ -66,12 +66,8 @@
                 { token }
             )
             .then(data => {
-                if (data.access_token) {
-                    LocalStorage.saveAccessToken(data.access_token);
-                }
-                if (data.record) {
-                    LocalStorage.saveUserRecord(data.record);
-                }
+                LocalStorage.saveAccessToken(data.access_token);
+                LocalStorage.saveUserRecord(data.record);
                 showSuccess('Email successfully verified!');
             })
             .catch(error => {

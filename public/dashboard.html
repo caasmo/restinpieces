@@ -104,8 +104,8 @@
             const rp = new Restinpieces("http://localhost:8080");
             
             // Display initial user info and token
-            const userInfo = LocalStorage.loadUserRecord();
-            const currentToken = LocalStorage.loadAccessToken() || 'No token found';
+            const userInfo = LocalStorage.loadUserRecord() || {};
+            const currentToken = LocalStorage.loadAccessToken();
             
             document.getElementById('user-info').textContent = JSON.stringify(userInfo, null, 2);
             document.getElementById('current-token').textContent = currentToken;

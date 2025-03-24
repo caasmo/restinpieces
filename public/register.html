@@ -193,7 +193,12 @@
                     )
                     .then(data => {
                         if (data.access_token && data.record) {
-                            LocalStorage.handleEmailRegistration(data);
+                            if (data.access_token) {
+                                LocalStorage.saveAccessToken(data.access_token);
+                            }
+                            if (data.record) {
+                                LocalStorage.saveUserRecord(data.record);
+                            }
                             this.showMessage('Registration successful!');
                             this.createSuccessUI(data.record);
                         }
