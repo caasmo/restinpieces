@@ -4,111 +4,93 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verification</title>
-    <script src="/assets/js/requestJson.js"></script>
     <style>
         body {
             font-family: sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-        }
-        
-        .container {
-            margin-top: 40px;
             text-align: center;
         }
-        
         .message {
-            margin-top: 20px;
+            margin: 20px 0;
             padding: 20px;
             border-radius: 4px;
         }
-        
-        .success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-        
-        .error {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-        
-        .loading {
-            background-color: #fff3e0;
-            color: #ef6c00;
-        }
-        
-        .button-container {
-            margin-top: 20px;
-        }
-        
-        .button-container button {
+        .success { background-color: #e8f5e9; color: #2e7d32; }
+        .error { background-color: #ffebee; color: #c62828; }
+        .loading { background-color: #fff3e0; color: #ef6c00; }
+        .button {
             padding: 10px 20px;
+            margin: 0 10px;
             border-radius: 4px;
-            font-size: 16px;
             background-color: #2196f3;
             color: white;
             border: none;
             cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
         }
-        
-        .button-container button:hover {
-            background-color: #1976d2;
-        }
+        .button:hover { background-color: #1976d2; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Email Verification</h1>
-        <div id="message" class="message loading">Verifying your email...</div>
-        
-        <div class="button-container hidden" id="actions">
-            <button onclick="window.location.href='/dashboard.html'">Go to Dashboard</button>
-            <button onclick="window.location.href='/login.html'">Go to Login</button>
-        </div>
+    <h1>Email Verification</h1>
+    <div id="message" class="message loading">Verifying your email...</div>
+    <div id="actions" class="hidden">
+        <a href="/dashboard.html" class="button">Dashboard</a>
+        <a href="/login.html" class="button">Login</a>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
+    <script type="module">
+        import Restinpieces from '/assets/js/restinpieces.js';
+        import { LocalStorage } from '/assets/js/local-storage.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
             const messageDiv = document.getElementById('message');
             const actionsDiv = document.getElementById('actions');
 
             if (!token) {
-                messageDiv.className = 'message error';
-                messageDiv.textContent = 'Missing verification token';
+                showError('Missing verification token');
                 return;
             }
 
-            requestJson(
-                "http://localhost:8080",
-                "/api/confirm-verification",
-                "POST",
-                {},
-                { token }
-            )
-            .then(data => {
-                messageDiv.className = 'message success';
-                messageDiv.textContent = 'Email successfully verified!';
-                actionsDiv.classList.remove('hidden');
-                
-                // If we got a token back, save it
-                if (data.token) {
-                    saveAccessToken(data.token);
+            try {
+                const rp = new Restinpieces("http://localhost:8080");
+                const data = await rp.requestJson(
+                    "/api/confirm-verification",
+                    "POST",
+                    {},
+                    { token }
+                );
+
+                if (data.access_token) {
+                    LocalStorage.saveAccessToken(data.access_token);
                 }
-                // If we got a user record back, save it
                 if (data.record) {
-                    saveUserRecord(data.record);
+                    LocalStorage.saveUserRecord(data.record);
                 }
-            })
-            .catch(error => {
+
+                showSuccess('Email successfully verified!');
+            } catch (error) {
                 console.error('Verification failed:', error);
-                messageDiv.className = 'message error';
-                messageDiv.textContent = error.response?.message || 'Email verification failed';
+                showError(error.response?.message || 'Email verification failed');
+            }
+
+            function showSuccess(message) {
+                messageDiv.className = 'message success';
+                messageDiv.textContent = message;
                 actionsDiv.classList.remove('hidden');
-            });
+            }
+
+            function showError(message) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = message;
+                actionsDiv.classList.remove('hidden');
+            }
         });
     </script>
 </body>
