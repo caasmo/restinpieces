@@ -104,11 +104,6 @@ export class LocalStorage {
         this.saveAccessToken(token);
         this.saveUserRecord(data.record);
 
-        // Also save the full auth data if needed
-        localStorage.setItem('auth_data', JSON.stringify({
-          expires_in: data.expires_in,
-          token_type: data.token_type
-        }));
       } catch (error) {
         console.error('Failed to handle registration:', error);
         console.debug('Registration response data:', data);
