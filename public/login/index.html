@@ -164,6 +164,12 @@
                         const a = document.createElement('a');
                         a.textContent = `Login with ${provider.displayName}`;
                         a.href = provider.authURL;
+                        a.addEventListener('click', () => {
+                            LocalStorage.saveUserRecord({ 
+                                provider: provider.name,
+                                providerInfo: provider 
+                            });
+                        });
                         li.appendChild(a);
                         this.providerList.appendChild(li);
                     });
