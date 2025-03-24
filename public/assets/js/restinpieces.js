@@ -1,3 +1,4 @@
+import { ClientResponseError } from './client-response-error.js';
 
 class Restinpieces {
     constructor(baseURL = "/", lang = "en-US") {
