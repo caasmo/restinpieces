@@ -180,12 +180,20 @@ func writeJsonError(w http.ResponseWriter, resp jsonResponse) {
 	w.Write(resp.body)
 }
 
+// AuthRecord represents the user record in authentication responses
+type AuthRecord struct {
+	ID       string `json:"id"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
+	Verified bool   `json:"verified"`
+}
+
 // AuthData represents the authentication response structure
 type AuthData struct {
-	TokenType   string                 `json:"token_type"`
-	AccessToken string                 `json:"access_token"`
-	ExpiresIn   int                    `json:"expires_in"`
-	Record      map[string]interface{} `json:"record"`
+	TokenType   string     `json:"token_type"`
+	AccessToken string     `json:"access_token"`
+	ExpiresIn   int        `json:"expires_in"`
+	Record      AuthRecord `json:"record"`
 }
 
 // NewAuthData creates a new AuthData instance
@@ -194,11 +202,11 @@ func NewAuthData(token string, expiresIn int, user *db.User) *AuthData {
 		TokenType:   "Bearer",
 		AccessToken: token,
 		ExpiresIn:   expiresIn,
-		Record: map[string]interface{}{
-			"id":       user.ID,
-			"email":    user.Email,
-			"name":     user.Name,
-			"verified": user.Verified,
+		Record: AuthRecord{
+			ID:       user.ID,
+			Email:    user.Email,
+			Name:     user.Name,
+			Verified: user.Verified,
 		},
 	}
 }
