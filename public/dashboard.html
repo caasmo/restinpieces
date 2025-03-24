@@ -5,19 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
     <script type="module">
-        import Restinpieces, {
-            saveAccessToken,
-            loadAccessToken,
-            saveUserRecord,
-            loadUserRecord
-        } from '/assets/js/restinpieces.js';
+        import Restinpieces from '/assets/js/restinpieces.js';
+        import { LocalStorage } from '/assets/js/local-storage.js';
         
-        // Make functions available globally for the button click handler
-        window.Restinpieces = Restinpieces;
-        window.saveAccessToken = saveAccessToken;
-        window.loadAccessToken = loadAccessToken;
-        window.saveUserRecord = saveUserRecord;
-        window.loadUserRecord = loadUserRecord;
+        // Initialize instances
+        const client = new Restinpieces("http://localhost:8080");
+        const localStorage = new LocalStorage();
+        
+        // Make available globally for the button click handler
+        window.client = client;
+        window.localStorage = localStorage;
     </script>
     <style>
         body {
@@ -111,9 +108,9 @@
     </div>
 
     <script>
-        // Display initial user info and token using our functions
-        const userInfo = loadUserRecord();
-        const currentToken = loadAccessToken() || 'No token found'; // Already handles empty string
+        // Display initial user info and token
+        const userInfo = localStorage.loadUserRecord();
+        const currentToken = localStorage.loadAccessToken() || 'No token found';
         
         document.getElementById('user-info').textContent = JSON.stringify(userInfo, null, 2);
         document.getElementById('current-token').textContent = currentToken;
@@ -123,17 +120,16 @@
             refreshError.textContent = '';
             
             // Get current token before refresh
-            const currentToken = loadAccessToken() || 'No token found';
+            const currentToken = localStorage.loadAccessToken() || 'No token found';
             
             // Save current token as previous token
             document.getElementById('previous-token').textContent = currentToken;
 
-            const client = new Restinpieces("http://localhost:8080");
             client.requestJsonAuth("/api/auth-refresh", "POST")
             .then(data => {
                 if (data.access_token) {
                     // Save new token
-                    saveAccessToken(data.access_token);
+                    localStorage.saveAccessToken(data.access_token);
                     
                     // Display new token and update UI
                     document.getElementById('new-token').textContent = data.access_token;
