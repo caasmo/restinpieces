@@ -15,7 +15,7 @@ func route(ap *app.App, cAp *custom.App) {
 	ap.Router().Handle("/", fs)
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
-	commonNewMiddleware := []func(http.Handler) http.Handler{ap.SecurityHeadersMiddleware, ap.Logger}
+	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger}
 
 	// API routes with explicit /api prefix
 	ap.Router().Register(

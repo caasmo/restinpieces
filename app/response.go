@@ -45,13 +45,14 @@ var apiJsonDefaultHeaders = map[string]string{
 	//"Strict-Transport-Security": "max-age=31536000",
 }
 
+// TODO
 var htmlHeaders = map[string]string{
 
     // CSP governs browser behavior for resources loaded as part of rendering a document
     // Prevents cross-site scripting (XSS) attacks by controlling which resources can be loaded.
     // means: “By default, only load resources from this server’s origin, nothing external.”
     // Unnecessary for pure API servers since they don't serve HTML/JavaScript
-    "Content-Security-Policy":  "default-src 'self'"
+    "Content-Security-Policy":  "default-src 'self'",
 
     // mitigate reflected XSS attacks: malicious scripts are injected into a
     // page via user input (e.g., query parameters, form data) and then
@@ -69,7 +70,7 @@ var htmlHeaders = map[string]string{
 // ApplyHeaders sets all headers from a map to the response writer
 func setHeaders(w http.ResponseWriter, headers map[string]string) {
     for key, value := range headers {
-	    w.Header()[key] = value
+	    w.Header()[key] = []string{value}
     }
 }
 
@@ -150,21 +151,21 @@ var (
 
 // For successful responses
 func writeJSONOk(w http.ResponseWriter, resp jsonResponse) {
-    setHeaders(apiJsonDefaultHeaders)
+    setHeaders(w, apiJsonDefaultHeaders)
 	w.WriteHeader(resp.status)
 	w.Write(resp.body)
 }
 
 // writeJSONError writes a precomputed JSON error response
 func writeJSONError(w http.ResponseWriter, resp jsonResponse) {
-    setHeaders(apiJsonDefaultHeaders)
+    setHeaders(w, apiJsonDefaultHeaders)
 	w.WriteHeader(resp.status)
 	w.Write(resp.body)
 }
 
 // writeJSONErrorf writes a formatted JSON error response with custom message
 func writeJSONErrorf(w http.ResponseWriter, status int, code string, format string, args ...interface{}) {
-    setHeaders(apiJsonDefaultHeaders)
+    setHeaders(w, apiJsonDefaultHeaders)
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  status,
@@ -177,7 +178,7 @@ func writeJSONErrorf(w http.ResponseWriter, status int, code string, format stri
 // Used for both password and OAuth2 authentication
 // TODO move, too specific 
 func writeAuthTokenResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
-    setHeaders(apiJsonDefaultHeaders)
+    setHeaders(w, apiJsonDefaultHeaders)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token_type":   "Bearer",
 		"access_token": token,

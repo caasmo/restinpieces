@@ -234,7 +234,9 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+    // TODO standard ok json response
+    setHeaders(w, apiJsonDefaultHeaders)
+
 	if err := json.NewEncoder(w).Encode(providers); err != nil {
 		writeJSONError(w, errorInvalidRequest)
 		return
