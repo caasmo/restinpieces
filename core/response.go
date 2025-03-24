@@ -221,8 +221,8 @@ func NewAuthData(token string, expiresIn int, user *db.User) *AuthData {
 	}
 }
 
-// writeAuthTokenResponse writes a standardized authentication token response
-func writeAuthTokenResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
+// writeAuthResponse writes a standardized authentication response
+func writeAuthResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
     setHeaders(w, apiJsonDefaultHeaders)
 	json.NewEncoder(w).Encode(NewAuthData(token, expiresIn, user))
 }
