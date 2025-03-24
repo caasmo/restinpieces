@@ -4,10 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register with Email</title>
-    <script type="module">
-        import Restinpieces from '/assets/js/restinpieces.js';
-        import { LocalStorage } from '/assets/js/local-storage.js';
-    </script>
+    <script src="assets/js/requestJson.js"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -113,14 +110,8 @@
 
     <div id="message" class="message"></div>
 
-    <script type="module">
-        import Restinpieces from '/assets/js/restinpieces.js';
-        import { LocalStorage } from '/assets/js/local-storage.js';
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            const rp = new Restinpieces("http://localhost:8080");
-            
-            function handleRegisterSubmit(e) {
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
                 e.preventDefault();
                 
                 const email = document.getElementById('email').value;
@@ -148,9 +139,8 @@
                 messageDiv.textContent = 'Registering...';
                 messageDiv.classList.remove('error');
 
-            document.getElementById('registerForm').addEventListener('submit', handleRegisterSubmit);
-            
-            rp.requestJson(
+            requestJson(
+                "http://localhost:8080",
                 "/api/register-with-password",
                 "POST",
                 {},
@@ -163,8 +153,8 @@
             .then(data => {
                 // Save access token and user record using our functions
                 if (data.access_token && data.record) {
-                    LocalStorage.saveAccessToken(data.access_token);
-                    LocalStorage.saveUserRecord(data.record);
+                    saveAccessToken(data.access_token);
+                    saveUserRecord(data.record);
                     
                     // Show success message
                     messageDiv.textContent = 'Registration successful!';
@@ -202,7 +192,7 @@
                 messageDiv.textContent = '';
                 messageDiv.appendChild(userInfo);
                 messageDiv.appendChild(buttonContainer);
-            }
+}
             })
             .catch(error => {
                 console.error('Registration failed:', error);
