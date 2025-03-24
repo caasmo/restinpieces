@@ -103,9 +103,10 @@
             // Initialize instances
             const rp = new Restinpieces("http://localhost:8080");
             
-            // Display initial user info and token
-            const userInfo = LocalStorage.loadUserRecord() || {};
-            const currentToken = LocalStorage.loadAccessToken();
+            // Display initial user info and token from store
+            const authData = rp.store.auth.load() || {};
+            const userInfo = authData.record || {};
+            const currentToken = authData.access_token || '';
             
             document.getElementById('user-info').textContent = JSON.stringify(userInfo, null, 2);
             document.getElementById('current-token').textContent = currentToken;
@@ -114,8 +115,9 @@
                 const refreshError = document.getElementById('refresh-error');
                 refreshError.textContent = '';
                 
-                // Get current token before refresh
-                const currentToken = LocalStorage.loadAccessToken() || 'No token found';
+                // Get current auth data before refresh
+                const currentAuth = rp.store.auth.load() || {};
+                const currentToken = currentAuth.access_token || 'No token found';
                 
                 // Save current token as previous token
                 document.getElementById('previous-token').textContent = currentToken;
@@ -123,8 +125,13 @@
                 rp.requestJsonAuth("/api/auth-refresh", "POST")
                 .then(data => {
                     if (data.access_token) {
-                        // Save new token
-                        LocalStorage.saveAccessToken(data.access_token);
+                        // Save new auth data (preserving existing record)
+                        const newAuth = {
+                            ...currentAuth,
+                            access_token: data.access_token,
+                            expires_in: data.expires_in
+                        };
+                        rp.store.auth.save(newAuth);
                         
                         // Display new token and update UI
                         document.getElementById('new-token').textContent = data.access_token;
