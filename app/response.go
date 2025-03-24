@@ -13,9 +13,6 @@ type jsonResponse struct {
 	body   []byte
 }
 
-var jsonHeader = []string{"application/json; charset=utf-8"}
-
-
 var apiJsonDefaultHeaders = map[string]string{
 
 
@@ -69,6 +66,13 @@ var htmlHeaders = map[string]string{
 
 }
 
+// ApplyHeaders sets all headers from a map to the response writer
+func setHeaders(w http.ResponseWriter, headers map[string]string) {
+    for key, value := range headers {
+	    w.Header()[key] = value
+    }
+}
+
 
 // Standard error codes and messages
 const (
@@ -110,13 +114,6 @@ func precomputeResponse(status int, code, message string) jsonResponse {
 	return jsonResponse{status: status, body: []byte(body)}
 }
 
-// For successful responses
-func writeJSONOk(w http.ResponseWriter, resp jsonResponse) {
-	w.Header()["Content-Type"] = jsonHeader
-	w.WriteHeader(resp.status)
-	w.Write(resp.body)
-}
-
 // Precomputed error and ok responses with status codes
 var (
 	//errors
@@ -151,16 +148,23 @@ var (
 	okEmailVerified   = precomputeResponse(http.StatusOK, "email_verified", "Email verified successfully")
 )
 
+// For successful responses
+func writeJSONOk(w http.ResponseWriter, resp jsonResponse) {
+    setHeaders(apiJsonDefaultHeaders)
+	w.WriteHeader(resp.status)
+	w.Write(resp.body)
+}
+
 // writeJSONError writes a precomputed JSON error response
 func writeJSONError(w http.ResponseWriter, resp jsonResponse) {
-	w.Header()["Content-Type"] = jsonHeader
+    setHeaders(apiJsonDefaultHeaders)
 	w.WriteHeader(resp.status)
 	w.Write(resp.body)
 }
 
 // writeJSONErrorf writes a formatted JSON error response with custom message
 func writeJSONErrorf(w http.ResponseWriter, status int, code string, format string, args ...interface{}) {
-	w.Header()["Content-Type"] = jsonHeader
+    setHeaders(apiJsonDefaultHeaders)
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"status":  status,
@@ -173,7 +177,7 @@ func writeJSONErrorf(w http.ResponseWriter, status int, code string, format stri
 // Used for both password and OAuth2 authentication
 // TODO move, too specific 
 func writeAuthTokenResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
-	w.Header().Set("Content-Type", "application/json")
+    setHeaders(apiJsonDefaultHeaders)
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token_type":   "Bearer",
 		"access_token": token,
