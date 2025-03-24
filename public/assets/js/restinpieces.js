@@ -110,11 +110,11 @@ class Restinpieces {
      * @param {string} [path] - Optional path to append
      * @return {string} The combined URL
      */
-function buildUrl(baseUrl, path) {
-  // Handle empty baseUrl - use current directory
+    buildUrl(baseUrl, path) {
+        // Handle empty baseUrl - use current directory
         if (baseUrl === "") {
             const pathParts = window.location.pathname.split('/');
-    pathParts.pop(); // Remove the last part (file or empty string)
+            pathParts.pop(); // Remove the last part (file or empty string)
             baseUrl = pathParts.join('/') + '/';
         }
         
