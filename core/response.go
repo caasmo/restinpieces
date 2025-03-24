@@ -100,32 +100,32 @@ const (
 
 
     //errors
-	CodeTokenGeneration                = "token_generation"
-	CodeClaimsNotFound                 = "claims_not_found"
-	CodeInvalidRequest                 = "invalid_input"
-	CodeInvalidCredentials             = "invalid_credentials"
-	CodePasswordMismatch               = "password_mismatch"
-	CodeMissingFields                  = "missing_fields"
-	CodePasswordComplexity             = "password_complexity"
-	CodeEmailConflict                  = "email_conflict"
-	CodeNotFound                       = "not_found"
-	CodeConflict                       = "conflict"
-	CodeRegistrationFailed             = "registration_failed"
-	CodeTooManyRequests                = "too_many_requests"
-	CodeServiceUnavailable             = "service_unavailable"
-	CodeNoAuthHeader                   = "no_auth_header"
-	CodeInvalidTokenFormat             = "invalid_token_format"
-	CodeJwtInvalidSignMethod           = "invalid_sign_method"
-	CodeJwtTokenExpired                = "token_expired"
-	CodeAlreadyVerified                = "already_verified"
-	CodeJwtInvalidToken                = "invalid_token"
-	CodeJwtInvalidVerificationToken    = "invalid_verification_token"
-	CodeInvalidOAuth2Provider          = "invalid_oauth2_provider"
-	CodeOAuth2TokenExchangeFailed      = "oauth2_token_exchange_failed"
-	CodeOAuth2UserInfoFailed           = "oauth2_user_info_failed"
-	CodeOAuth2UserInfoProcessingFailed = "oauth2_user_info_processing_failed"
-	CodeOAuth2DatabaseError            = "oauth2_database_error"
-	CodeAuthDatabaseError              = "auth_database_error"
+	CodeErrorTokenGeneration                = "token_generation"
+	CodeErrorClaimsNotFound                 = "claims_not_found"
+	CodeErrorInvalidRequest                 = "invalid_input"
+	CodeErrorInvalidCredentials             = "invalid_credentials"
+	CodeErrorPasswordMismatch               = "password_mismatch"
+	CodeErrorMissingFields                  = "missing_fields"
+	CodeErrorPasswordComplexity             = "password_complexity"
+	CodeErrorEmailConflict                  = "email_conflict"
+	CodeErrorNotFound                       = "not_found"
+	CodeErrorConflict                       = "conflict"
+	CodeErrorRegistrationFailed             = "registration_failed"
+	CodeErrorTooManyRequests                = "too_many_requests"
+	CodeErrorServiceUnavailable             = "service_unavailable"
+	CodeErrorNoAuthHeader                   = "no_auth_header"
+	CodeErrorInvalidTokenFormat             = "invalid_token_format"
+	CodeErrorJwtInvalidSignMethod           = "invalid_sign_method"
+	CodeErrorJwtTokenExpired                = "token_expired"
+	CodeErrorAlreadyVerified                = "already_verified"
+	CodeErrorJwtInvalidToken                = "invalid_token"
+	CodeErrorJwtInvalidVerificationToken    = "invalid_verification_token"
+	CodeErrorInvalidOAuth2Provider          = "invalid_oauth2_provider"
+	CodeErrorOAuth2TokenExchangeFailed      = "oauth2_token_exchange_failed"
+	CodeErrorOAuth2UserInfoFailed           = "oauth2_user_info_failed"
+	CodeErrorOAuth2UserInfoProcessingFailed = "oauth2_user_info_processing_failed"
+	CodeErrorOAuth2DatabaseError            = "oauth2_database_error"
+	CodeErrorAuthDatabaseError              = "auth_database_error"
 )
 
 // ResponseBasicFormat is used  for short ok and error responses
@@ -145,32 +145,32 @@ func precomputeResponse(status int, code, message string) jsonResponse {
 // Precomputed error and ok responses with status codes
 var (
 	//errors
-	errorTokenGeneration                = precomputeResponse(http.StatusInternalServerError, CodeTokenGeneration, "Failed to generate authentication token")
-	errorClaimsNotFound                 = precomputeResponse(http.StatusInternalServerError, CodeClaimsNotFound, "Failed to generate token: Claims not found")
-	errorInvalidRequest                 = precomputeResponse(http.StatusBadRequest, CodeInvalidRequest, "The request contains invalid data")
-	errorInvalidCredentials             = precomputeResponse(http.StatusUnauthorized, CodeInvalidCredentials, "Invalid credentials provided")
-	errorPasswordMismatch               = precomputeResponse(http.StatusBadRequest, CodePasswordMismatch, "Password and confirmation do not match")
-	errorMissingFields                  = precomputeResponse(http.StatusBadRequest, CodeMissingFields, "Required fields are missing")
-	errorPasswordComplexity             = precomputeResponse(http.StatusBadRequest, CodePasswordComplexity, "Password must be at least 8 characters")
-	errorEmailConflict                  = precomputeResponse(http.StatusConflict, CodeEmailConflict, "Email address is already registered")
-	errorNotFound                       = precomputeResponse(http.StatusNotFound, CodeNotFound, "Requested resource not found")
-	errorConflict                       = precomputeResponse(http.StatusConflict, CodeConflict, "Verification already requested")
-	errorRegistrationFailed             = precomputeResponse(http.StatusBadRequest, CodeRegistrationFailed, "Registration failed due to invalid data")
-	errorTooManyRequests                = precomputeResponse(http.StatusTooManyRequests, CodeTooManyRequests, "Too many requests, please try again later")
-	errorServiceUnavailable             = precomputeResponse(http.StatusServiceUnavailable, CodeServiceUnavailable, "Service is temporarily unavailable")
-	errorNoAuthHeader                   = precomputeResponse(http.StatusUnauthorized, CodeNoAuthHeader, "Authorization header is required")
-	errorInvalidTokenFormat             = precomputeResponse(http.StatusUnauthorized, CodeInvalidTokenFormat, "Invalid authorization token format")
-	errorJwtInvalidSignMethod           = precomputeResponse(http.StatusUnauthorized, CodeJwtInvalidSignMethod, "Invalid JWT signing method")
-	errorJwtTokenExpired                = precomputeResponse(http.StatusUnauthorized, CodeJwtTokenExpired, "Authentication token has expired")
-	errorJwtInvalidToken                = precomputeResponse(http.StatusUnauthorized, CodeJwtInvalidToken, "Invalid authentication token")
-	errorJwtInvalidVerificationToken    = precomputeResponse(http.StatusUnauthorized, CodeJwtInvalidVerificationToken, "Invalid verification token")
+	errorTokenGeneration                = precomputeResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
+	errorClaimsNotFound                 = precomputeResponse(http.StatusInternalServerError, CodeErrorClaimsNotFound, "Failed to generate token: Claims not found")
+	errorInvalidRequest                 = precomputeResponse(http.StatusBadRequest, CodeErrorInvalidRequest, "The request contains invalid data")
+	errorInvalidCredentials             = precomputeResponse(http.StatusUnauthorized, CodeErrorInvalidCredentials, "Invalid credentials provided")
+	errorPasswordMismatch               = precomputeResponse(http.StatusBadRequest, CodeErrorPasswordMismatch, "Password and confirmation do not match")
+	errorMissingFields                  = precomputeResponse(http.StatusBadRequest, CodeErrorMissingFields, "Required fields are missing")
+	errorPasswordComplexity             = precomputeResponse(http.StatusBadRequest, CodeErrorPasswordComplexity, "Password must be at least 8 characters")
+	errorEmailConflict                  = precomputeResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
+	errorNotFound                       = precomputeResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
+	errorConflict                       = precomputeResponse(http.StatusConflict, CodeErrorConflict, "Verification already requested")
+	errorRegistrationFailed             = precomputeResponse(http.StatusBadRequest, CodeErrorRegistrationFailed, "Registration failed due to invalid data")
+	errorTooManyRequests                = precomputeResponse(http.StatusTooManyRequests, CodeErrorTooManyRequests, "Too many requests, please try again later")
+	errorServiceUnavailable             = precomputeResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
+	errorNoAuthHeader                   = precomputeResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")
+	errorInvalidTokenFormat             = precomputeResponse(http.StatusUnauthorized, CodeErrorInvalidTokenFormat, "Invalid authorization token format")
+	errorJwtInvalidSignMethod           = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtInvalidSignMethod, "Invalid JWT signing method")
+	errorJwtTokenExpired                = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
+	errorJwtInvalidToken                = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtInvalidToken, "Invalid authentication token")
+	errorJwtInvalidVerificationToken    = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtInvalidVerificationToken, "Invalid verification token")
 	errorEmailVerificationFailed        = precomputeResponse(http.StatusInternalServerError, "email_verification_failed", "Email verification process failed")
-	errorInvalidOAuth2Provider          = precomputeResponse(http.StatusBadRequest, CodeInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
-	errorOAuth2TokenExchangeFailed      = precomputeResponse(http.StatusBadRequest, CodeOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
-	errorOAuth2UserInfoFailed           = precomputeResponse(http.StatusBadRequest, CodeOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
-	errorOAuth2UserInfoProcessingFailed = precomputeResponse(http.StatusBadRequest, CodeOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
-	errorOAuth2DatabaseError            = precomputeResponse(http.StatusInternalServerError, CodeOAuth2DatabaseError, "Database error during OAuth2 authentication")
-	errorAuthDatabaseError              = precomputeResponse(http.StatusInternalServerError, CodeAuthDatabaseError, "Database error during authentication")
+	errorInvalidOAuth2Provider          = precomputeResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
+	errorOAuth2TokenExchangeFailed      = precomputeResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
+	errorOAuth2UserInfoFailed           = precomputeResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
+	errorOAuth2UserInfoProcessingFailed = precomputeResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
+	errorOAuth2DatabaseError            = precomputeResponse(http.StatusInternalServerError, CodeErrorOAuth2DatabaseError, "Database error during OAuth2 authentication")
+	errorAuthDatabaseError              = precomputeResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
 
 	// oks
 	okAlreadyVerified = precomputeResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
