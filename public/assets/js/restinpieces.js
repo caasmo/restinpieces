@@ -110,7 +110,8 @@ class Restinpieces {
      * @returns {Promise<any>} - Resolves with parsed response JSON
      */
     requestJsonAuth(path, method = "GET", queryParams = {}, body = null, headers = {}) {
-        const token = localStorage.getItem('access_token');
+        const authData = this.store.auth.load() || {};
+        const token = authData.access_token || '';
         const authHeaders = {
             ...headers,
             'Authorization': `Bearer ${token}`
