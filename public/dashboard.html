@@ -83,7 +83,7 @@
 
     <div class="refresh-section">
         <div class="button-container">
-            <button onclick="refreshToken()">Refresh Token</button>
+            <button id="refresh-token-btn">Refresh Token</button>
             <a href="/logout.html" style="padding: 10px 20px; background-color: #f44336; color: white; text-decoration: none; border-radius: 4px;">Logout</a>
         </div>
         <div id="refresh-result">
@@ -141,8 +141,8 @@
                 });
             }
 
-            // Make refreshToken available globally for the button click handler
-            window.refreshToken = refreshToken;
+            // Attach click handler directly to button
+            document.querySelector('button').addEventListener('click', refreshToken);
         });
     </script>
 </body>
