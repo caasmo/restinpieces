@@ -93,6 +93,8 @@ func setHeaders(w http.ResponseWriter, headers map[string]string) {
 // Standard response codes 
 const (
 	CodeOkAuthentication              = "ok_authentication" // Standard success code for auth
+	CodeOkAlreadyVerified             = "ok_already_verified"
+	CodeOkEmailVerified               = "ok_email_verified"
 	CodeTokenGeneration                = "token_generation"
 	CodeClaimsNotFound                 = "claims_not_found"
 	CodeInvalidRequest                 = "invalid_input"
@@ -166,8 +168,8 @@ var (
 	errorAuthDatabaseError              = precomputeResponse(http.StatusInternalServerError, CodeAuthDatabaseError, "Database error during authentication")
 
 	// oks
-	okAlreadyVerified = precomputeResponse(http.StatusAccepted, "already_verified", "Email already verified - no further action needed")
-	okEmailVerified   = precomputeResponse(http.StatusOK, "email_verified", "Email verified successfully")
+	okAlreadyVerified = precomputeResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
+	okEmailVerified   = precomputeResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
 )
 
 // For successful short responses
