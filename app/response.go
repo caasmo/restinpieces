@@ -173,8 +173,8 @@ func writeJsonWithData(w http.ResponseWriter, resp JsonResponseWithData) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-// writeJSONError writes a precomputed JSON error response
-func writeJSONError(w http.ResponseWriter, resp jsonResponse) {
+// writeJsonError writes a precomputed JSON error response
+func writeJsonError(w http.ResponseWriter, resp jsonResponse) {
 	w.WriteHeader(resp.status)
     setHeaders(w, apiJsonDefaultHeaders)
 	w.Write(resp.body)

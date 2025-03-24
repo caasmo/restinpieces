@@ -39,7 +39,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	userId, ok := r.Context().Value(UserIDKey).(string)
 	if !ok || userId == "" {
 		slog.Error("Failed to get user ID from context")
-		writeJSONError(w, errorClaimsNotFound)
+		writeJsonError(w, errorClaimsNotFound)
 		return
 	}
 
@@ -47,7 +47,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := a.db.GetUserById(userId)
 	if err != nil || user == nil {
 		slog.Error("Failed to fetch user", "user_id", userId, "error", err)
-		writeJSONError(w, errorInvalidCredentials)
+		writeJsonError(w, errorInvalidCredentials)
 		return
 	}
 
@@ -55,7 +55,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	newToken, expiry, err := crypto.NewJwtSessionToken(userId, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
 		slog.Error("Failed to generate new token", "error", err)
-		writeJSONError(w, errorTokenGeneration)
+		writeJsonError(w, errorTokenGeneration)
 		return
 	}
 	slog.Debug("New token generated",
@@ -88,12 +88,12 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	if req.Identity == "" || req.Password == "" {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -106,7 +106,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	// Get user from database
 	user, err := a.db.GetUserByEmail(req.Identity)
 	if err != nil || user == nil {
-		writeJSONError(w, errorInvalidCredentials)
+		writeJsonError(w, errorInvalidCredentials)
 		return
 	}
 
@@ -119,7 +119,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	// Generate JWT session token
 	token, _, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
-		writeJSONError(w, errorTokenGeneration)
+		writeJsonError(w, errorTokenGeneration)
 		return
 	}
 
@@ -155,7 +155,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	// Check if email exists in system
 	user, err := a.db.GetUserByEmail(req.Email)
 	if err != nil {
-		writeJSONError(w, errorNotFound)
+		writeJsonError(w, errorNotFound)
 		return
 	}
 	if user == nil {
@@ -180,10 +180,10 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	err = a.db.InsertJob(job)
 	if err != nil {
 		if err == db.ErrConstraintUnique {
-			writeJSONError(w, errorConflict)
+			writeJsonError(w, errorConflict)
 			return
 		}
-		writeJSONError(w, errorServiceUnavailable)
+		writeJsonError(w, errorServiceUnavailable)
 		return
 	}
 
@@ -236,7 +236,7 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 	// Parse unverified claims to discrd fast
 	claims, err := crypto.ParseJwtUnverified(req.Token)
 	if err != nil {
-		writeJSONError(w, errorJwtInvalidVerificationToken)
+		writeJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
