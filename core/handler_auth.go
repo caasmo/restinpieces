@@ -123,8 +123,8 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return standardized authentication token response
-	writeAuthTokenResponse(w, token, int(a.config.Jwt.AuthTokenDuration.Seconds()), user)
+	// Return standardized authentication response
+	writeAuthResponse(w, token, int(a.config.Jwt.AuthTokenDuration.Seconds()), user)
 }
 
 //
@@ -380,8 +380,8 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Return standardized authentication token response
-	writeAuthTokenResponse(w, token, int(a.config.Jwt.AuthTokenDuration.Seconds()), retrievedUser)
+	// Return standardized authentication response
+	writeAuthResponse(w, token, int(a.config.Jwt.AuthTokenDuration.Seconds()), retrievedUser)
 }
 
 // /request-verification endpoint
