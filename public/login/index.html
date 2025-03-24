@@ -165,10 +165,7 @@
                         a.textContent = `Login with ${provider.displayName}`;
                         a.href = provider.authURL;
                         a.addEventListener('click', () => {
-                            localStorage.setItem('provider', JSON.stringify({
-                                name: provider.name,
-                                info: provider
-                            }));
+                            localStorage.setItem("provider", JSON.stringify(provider));
                         });
                         li.appendChild(a);
                         this.providerList.appendChild(li);
