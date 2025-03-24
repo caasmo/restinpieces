@@ -165,23 +165,23 @@
                 this.messageDiv.appendChild(buttonContainer);
             }
 
-            async handleSubmit(e) {
+            handleSubmit(e) {
                 e.preventDefault();
                 
-                try {
-                    const email = document.getElementById('email').value;
-                    const password = document.getElementById('password').value;
-                    const confirmPassword = document.getElementById('confirmPassword').value;
-                    
-                    this.messageDiv.textContent = '';
-                    this.messageDiv.classList.remove('error', 'success');
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                
+                this.messageDiv.textContent = '';
+                this.messageDiv.classList.remove('error', 'success');
 
+                try {
                     const { email: validatedEmail, password: validatedPassword } = 
                         this.validateForm(email, password, confirmPassword);
 
                     this.showMessage('Registering...');
 
-                    const data = await this.rp.requestJson(
+                    this.rp.requestJson(
                         "/api/register-with-password",
                         "POST",
                         {},
@@ -190,16 +190,21 @@
                             password: validatedPassword,
                             password_confirm: confirmPassword
                         }
-                    );
-
-                    if (data.access_token && data.record) {
-                        LocalStorage.handleEmailRegistration(data);
-                        this.showMessage('Registration successful!');
-                        this.createSuccessUI(data.record);
-                    }
+                    )
+                    .then(data => {
+                        if (data.access_token && data.record) {
+                            LocalStorage.handleEmailRegistration(data);
+                            this.showMessage('Registration successful!');
+                            this.createSuccessUI(data.record);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Registration failed:', error);
+                        this.showMessage(error.response ? JSON.stringify(error.response, null, 2) : error.message, true);
+                    });
                 } catch (error) {
-                    console.error('Registration failed:', error);
-                    this.showMessage(error.response ? JSON.stringify(error.response, null, 2) : error.message, true);
+                    console.error('Validation failed:', error);
+                    this.showMessage(error.message, true);
                 }
             }
         }
