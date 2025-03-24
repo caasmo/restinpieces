@@ -25,59 +25,59 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 		// Extract token from request
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			writeJSONError(w, errorNoAuthHeader)
+			writeJsonError(w, errorNoAuthHeader)
 			return
 		}
 
 		// Check for Bearer prefix
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader {
-			writeJSONError(w, errorInvalidTokenFormat)
+			writeJsonError(w, errorInvalidTokenFormat)
 			return
 		}
 
 		// Parse unverified token to get claims
 		claims, err := crypto.ParseJwtUnverified(tokenString)
 		if err != nil {
-			writeJSONError(w, errorJwtInvalidToken)
+			writeJsonError(w, errorJwtInvalidToken)
 			return
 		}
 		// Validate issued at claim
 		if err := crypto.ValidateClaimIssuedAt(claims); err != nil {
 			if errors.Is(err, crypto.ErrTokenTooOld) {
-				writeJSONError(w, errorJwtTokenExpired)
+				writeJsonError(w, errorJwtTokenExpired)
 				return
 			}
-			writeJSONError(w, errorJwtInvalidToken)
+			writeJsonError(w, errorJwtInvalidToken)
 			return
 		}
 		// Validate user ID claim
 		if err := crypto.ValidateClaimUserID(claims); err != nil {
-			writeJSONError(w, errorJwtInvalidToken)
+			writeJsonError(w, errorJwtInvalidToken)
 			return
 		}
 		// Get user from database
 		userID := claims[crypto.ClaimUserID].(string)
 		user, err := a.db.GetUserById(userID)
 		if err != nil || user == nil {
-			writeJSONError(w, errorJwtInvalidToken)
+			writeJsonError(w, errorJwtInvalidToken)
 			return
 		}
 		// Generate signing key using user credentials
 		signingKey, err := crypto.NewJwtSigningKeyWithCredentials(user.Email, user.Password, a.config.Jwt.AuthSecret)
 		if err != nil {
-			writeJSONError(w, errorTokenGeneration)
+			writeJsonError(w, errorTokenGeneration)
 			return
 		}
 		// Verify token with generated signing key
 		_, err = crypto.ParseJwt(tokenString, signingKey)
 		if err != nil {
 			if errors.Is(err, crypto.ErrJwtTokenExpired) {
-				writeJSONError(w, errorJwtTokenExpired)
+				writeJsonError(w, errorJwtTokenExpired)
 				return
 			}
 			if errors.Is(err, crypto.ErrJwtInvalidSigningMethod) {
-				writeJSONError(w, errorJwtInvalidSignMethod)
+				writeJsonError(w, errorJwtInvalidSignMethod)
 				return
 			}
 			writeJSONError(w, errorJwtInvalidToken)
