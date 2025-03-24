@@ -1,3 +1,8 @@
+// Storage keys
+const STORAGE_KEYS = {
+    ACCESS_TOKEN: 'access_token',
+    USER_RECORD: 'user_record'
+};
 
 class ClientResponseError extends Error {
     /**
