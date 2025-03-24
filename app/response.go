@@ -102,16 +102,17 @@ const (
 	CodeOAuth2DatabaseError            = "oauth2_database_error"
 )
 
+// ResponseBasicFormat is used  for short ok and error responses
+const shortFormat = `{"status":%d,"code":"%s","message":"%s"}`
+
 // precomputeResponse() will be executed during initialization (before main() runs),
 // and the JSON body will be precomputed and stored in the response variables.
 // the variables will contain the fully JSON as []byte already
 // It avoids repeated JSON marshaling during request handling
 // Any time we use writeJSONResponse(w, response) in the code, it
 // simply writes the pre-computed bytes to the response writer
-const jsonResponseFormat = `{"status":%d,"code":"%s","message":"%s"}`
-
 func precomputeResponse(status int, code, message string) jsonResponse {
-	body := fmt.Sprintf(jsonResponseFormat, status, code, message)
+	body := fmt.Sprintf(short, status, code, message)
 	return jsonResponse{status: status, body: []byte(body)}
 }
 

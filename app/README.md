@@ -24,7 +24,7 @@
 = trying to be mostly equssl toi error
 
     {
-      "status": 400,
+      "status": 200,
       "code": "invalid_input", // Machine-readable 
       "message": "The request contains invalid data.", // Human-readable explanation
       "data?": [ // always array
