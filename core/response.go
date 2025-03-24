@@ -180,20 +180,31 @@ func writeJsonError(w http.ResponseWriter, resp jsonResponse) {
 	w.Write(resp.body)
 }
 
-// writeAuthTokenResponse writes a standardized authentication token response
-// Used for both password and OAuth2 authentication
-// TODO move, too specific 
-func writeAuthTokenResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
-    setHeaders(w, apiJsonDefaultHeaders)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"token_type":   "Bearer",
-		"access_token": token,
-		"expires_in":   expiresIn,
-		"record": map[string]interface{}{
+// AuthData represents the authentication response structure
+type AuthData struct {
+	TokenType   string                 `json:"token_type"`
+	AccessToken string                 `json:"access_token"`
+	ExpiresIn   int                    `json:"expires_in"`
+	Record      map[string]interface{} `json:"record"`
+}
+
+// NewAuthData creates a new AuthData instance
+func NewAuthData(token string, expiresIn int, user *db.User) *AuthData {
+	return &AuthData{
+		TokenType:   "Bearer",
+		AccessToken: token,
+		ExpiresIn:   expiresIn,
+		Record: map[string]interface{}{
 			"id":       user.ID,
 			"email":    user.Email,
 			"name":     user.Name,
 			"verified": user.Verified,
 		},
-	})
+	}
+}
+
+// writeAuthTokenResponse writes a standardized authentication token response
+func writeAuthTokenResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
+    setHeaders(w, apiJsonDefaultHeaders)
+	json.NewEncoder(w).Encode(NewAuthData(token, expiresIn, user))
 }
