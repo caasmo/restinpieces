@@ -7,6 +7,8 @@
     <script type="module">
         import Restinpieces from '/assets/js/restinpieces.js';
         import { LocalStorage } from '/assets/js/local-storage.js';
+            });
+        });
     </script>
     <style>
         body {
@@ -113,8 +115,14 @@
 
     <div id="message" class="message"></div>
 
-    <script>
-        document.getElementById('registerForm').addEventListener('submit', function(e) {
+    <script type="module">
+        import Restinpieces from '/assets/js/restinpieces.js';
+        import { LocalStorage } from '/assets/js/local-storage.js';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const rp = new Restinpieces("http://localhost:8080");
+            
+            document.getElementById('registerForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const email = document.getElementById('email').value;
