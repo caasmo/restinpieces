@@ -165,10 +165,10 @@
                         a.textContent = `Login with ${provider.displayName}`;
                         a.href = provider.authURL;
                         a.addEventListener('click', () => {
-                            LocalStorage.saveUserRecord({ 
-                                provider: provider.name,
-                                providerInfo: provider 
-                            });
+                            localStorage.setItem('provider', JSON.stringify({
+                                name: provider.name,
+                                info: provider
+                            }));
                         });
                         li.appendChild(a);
                         this.providerList.appendChild(li);
@@ -224,8 +224,8 @@
                 )
                 .then(data => {
                     if (data.access_token && data.record) {
-                        LocalStorage.saveAccessToken(data.access_token);
-                        LocalStorage.saveUserRecord(data.record);
+                        localStorage.setItem('access_token', data.access_token);
+                        localStorage.setItem('user_record', JSON.stringify(data.record));
                         this.createSuccessUI(data.record);
                     } else {
                         throw new Error('Invalid login response');
