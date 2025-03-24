@@ -85,15 +85,40 @@ export class LocalStorage {
      * @param {Object} data - The JSON data returned from the requestJson method
      */
     static handleEmailRegistration(data) {
-      // Verify we have the necessary data
-      if (!data || !data.token || !data.record) {
+      try {
+        if (!data) {
+          throw new Error('No response data received');
+        }
+
+        // Check for both possible token field names
+        const token = data.access_token || data.token;
+        if (!token) {
+          throw new Error('Response missing access token');
+        }
+
+        if (!data.record) {
+          throw new Error('Response missing user record');
+        }
+
+        // Save the token and user record
+        this.saveAccessToken(token);
+        this.saveUserRecord(data.record);
+
+        // Also save the full auth data if needed
+        localStorage.setItem('auth_data', JSON.stringify({
+          expires_in: data.expires_in,
+          token_type: data.token_type
+        }));
+      } catch (error) {
+        console.error('Failed to handle registration:', error);
+        console.debug('Registration response data:', data);
         throw new ClientResponseError({
-            response: { message: 'Invalid response data: token or record missing' }
+          response: {
+            message: error.message,
+            code: 'registration_failed'
+          },
+          originalError: error
         });
       }
-
-      // Save JWT and user record using the specialized functions
-      this.saveAccessToken(data.token);
-      this.saveUserRecord(data.record);
     }
 }
