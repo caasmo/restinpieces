@@ -100,6 +100,7 @@ const (
 	CodeOAuth2UserInfoFailed           = "oauth2_user_info_failed"
 	CodeOAuth2UserInfoProcessingFailed = "oauth2_user_info_processing_failed"
 	CodeOAuth2DatabaseError            = "oauth2_database_error"
+	CodeAuthDatabaseError              = "auth_database_error"
 )
 
 // ResponseBasicFormat is used  for short ok and error responses
@@ -144,6 +145,7 @@ var (
 	errorOAuth2UserInfoFailed           = precomputeResponse(http.StatusBadRequest, CodeOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
 	errorOAuth2UserInfoProcessingFailed = precomputeResponse(http.StatusBadRequest, CodeOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
 	errorOAuth2DatabaseError            = precomputeResponse(http.StatusInternalServerError, CodeOAuth2DatabaseError, "Database error during OAuth2 authentication")
+	errorAuthDatabaseError              = precomputeResponse(http.StatusInternalServerError, CodeAuthDatabaseError, "Database error during authentication")
 
 	// oks
 	okAlreadyVerified = precomputeResponse(http.StatusAccepted, "already_verified", "Email already verified - no further action needed")
