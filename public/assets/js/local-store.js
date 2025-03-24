@@ -42,17 +42,12 @@ class RestinpiecesStorage {
         }
         return this.Set('auth', { 
             access_token: auth.access_token,
-            user_record: auth.user_record,
-            timestamp: Date.now()
+            user_record: auth.user_record
         });
     }
 
     LoadAuth() {
-        const auth = this.Get('auth');
-        return auth || {
-            access_token: null,
-            user_record: null
-        };
+        return this.Get('auth') || {};
     }
 
     ClearAuth() {
