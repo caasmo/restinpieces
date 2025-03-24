@@ -175,7 +175,7 @@ func Load(dbfile string) (*Config, error) {
 		DBFile: dbfile,
 		Scheduler: Scheduler{
 			Interval:              15 * time.Second,
-			MaxJobsPerTick:        1,
+			MaxJobsPerTick:        10,
 			ConcurrencyMultiplier: 2, // Default to 2x CPU cores
 		},
 		OAuth2Providers: make(map[string]OAuth2Provider),
