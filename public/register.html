@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register with Email</title>
-    <script src="assets/js/requestJson.js"></script>
+    <script type="module">
+        import Restinpieces from '/assets/js/restinpieces.js';
+        import { LocalStorage } from '/assets/js/local-storage.js';
     <style>
         body {
             font-family: sans-serif;
@@ -139,8 +141,9 @@
             messageDiv.textContent = 'Registering...';
             messageDiv.classList.remove('error');
 
-            requestJson(
-                "http://localhost:8080",
+            const rp = new Restinpieces("http://localhost:8080");
+            
+            rp.requestJson(
                 "/api/register-with-password",
                 "POST",
                 {},
@@ -153,8 +156,8 @@
             .then(data => {
                 // Save access token and user record using our functions
                 if (data.access_token && data.record) {
-                    saveAccessToken(data.access_token);
-                    saveUserRecord(data.record);
+                    LocalStorage.saveAccessToken(data.access_token);
+                    LocalStorage.saveUserRecord(data.record);
                     
                     // Show success message
                     messageDiv.textContent = 'Registration successful!';
