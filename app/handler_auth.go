@@ -148,7 +148,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err := ValidateEmail(req.Email); err != nil {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -229,7 +229,7 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 
 	var req request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -242,14 +242,14 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 
 	// Validate all required claims exist and have correct values
 	if err := crypto.ValidateVerificationClaims(claims); err != nil {
-		writeJSONError(w, errorJwtInvalidVerificationToken)
+		writeJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
 	// Get user from database to get password hash for signing key
 	user, err := a.db.GetUserById(claims[crypto.ClaimUserID].(string))
 	if err != nil || user == nil {
-		writeJSONError(w, errorNotFound)
+		writeJsonError(w, errorNotFound)
 		return
 	}
 
@@ -260,14 +260,14 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 		a.config.Jwt.VerificationEmailSecret,
 	)
 	if err != nil {
-		writeJSONError(w, errorEmailVerificationFailed)
+		writeJsonError(w, errorEmailVerificationFailed)
 		return
 	}
 
 	// Fully verify token signature and claims
 	_, err = crypto.ParseJwt(req.Token, signingKey)
 	if err != nil {
-		writeJSONError(w, errorJwtInvalidVerificationToken)
+		writeJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
@@ -280,7 +280,7 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 	// Mark user as verified
 	err = a.db.VerifyEmail(user.ID)
 	if err != nil {
-		writeJSONError(w, errorServiceUnavailable)
+		writeJsonError(w, errorServiceUnavailable)
 		return
 	}
 
@@ -302,7 +302,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -310,26 +310,26 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	req.Identity = strings.TrimSpace(req.Identity)
 	req.Password = strings.TrimSpace(req.Password)
 	if req.Identity == "" || req.Password == "" || req.PasswordConfirm == "" {
-		writeJSONError(w, errorMissingFields)
+		writeJsonError(w, errorMissingFields)
 		return
 	}
 
 	// Validate password match
 	if req.Password != req.PasswordConfirm {
-		writeJSONError(w, errorPasswordMismatch)
+		writeJsonError(w, errorPasswordMismatch)
 		return
 	}
 
 	// Validate password complexity TODO
 	if len(req.Password) < 8 {
-		writeJSONError(w, errorPasswordComplexity)
+		writeJsonError(w, errorPasswordComplexity)
 		return
 	}
 
 	// Hash password before storage
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
-		writeJSONError(w, errorTokenGeneration)
+		writeJsonError(w, errorTokenGeneration)
 		return
 	}
 
@@ -346,14 +346,14 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// Create user with password authentication
 	retrievedUser, err := a.db.CreateUserWithPassword(newUser)
 	if err != nil {
-		writeJSONError(w, errorAuthDatabaseError)
+		writeJsonError(w, errorAuthDatabaseError)
 		return
 	}
 
 	// If passwords are different CreateUserWithPassword did not write the new
 	// password on conflict because the user had already a password.
 	if retrievedUser.Password != newUser.Password {
-		writeJSONError(w, errorEmailConflict)
+		writeJsonError(w, errorEmailConflict)
 		return
 	}
 
@@ -368,7 +368,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		err = a.db.InsertJob(job)
 		if err != nil {
 			slog.Error("Failed to insert verification job", "error", err, "job", job)
-			writeJSONError(w, errorServiceUnavailable)
+			writeJsonError(w, errorServiceUnavailable)
 			return
 		}
 	}
