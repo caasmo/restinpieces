@@ -5,10 +5,22 @@ class Restinpieces {
     constructor(baseURL = "/", lang = "en-US") {
         this.baseURL = baseURL;
         this.lang = lang;
-        this.store = new RestinpiecesLocalStore();
+        this.store = RestinpiecesLocalStore;
         //this.recordServices = {}; // Cache for record services
         //this.enableAutoCancellation = true;
         //this.cancelControllers = {};
+
+		// Expose the static store with a cleaner interface
+        this.store = {
+            auth: {
+                save: (data) => RestinpiecesLocalStore.saveAuth(data),
+                load: () => RestinpiecesLocalStore.loadAuth(),
+            },
+            provider: {
+                save: (data) => RestinpiecesLocalStore.saveProvider(data),
+                load: () => RestinpiecesLocalStore.loadProvider(),
+            }
+        };
     }
 
     /**
