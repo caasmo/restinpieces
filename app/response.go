@@ -71,7 +71,6 @@ var htmlHeaders = map[string]string{
     // this header is mostly a legacy tool
     // Optional for API servers, but no harm
 	//"X-XSS-Protection":           "1; mode=block",
-
 }
 
 // ApplyHeaders sets all headers from a map to the response writer
@@ -81,7 +80,7 @@ func setHeaders(w http.ResponseWriter, headers map[string]string) {
     }
 }
 
-// Standard error codes and messages
+// Standard error codes 
 const (
 	CodeTokenGeneration                = "token_generation"
 	CodeClaimsNotFound                 = "claims_not_found"

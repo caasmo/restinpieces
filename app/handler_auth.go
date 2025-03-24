@@ -155,7 +155,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	// Check if email exists in system
 	user, err := a.db.GetUserByEmail(req.Email)
 	if err != nil {
-		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Database error: %s"}`, err.Error())
+		writeJSONError(w, errorNotFound)
 		return
 	}
 	if user == nil {
@@ -346,7 +346,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// Create user with password authentication
 	retrievedUser, err := a.db.CreateUserWithPassword(newUser)
 	if err != nil {
-		writeJSONErrorf(w, http.StatusInternalServerError, `{"error":"Registration failed: %s"}`, err.Error())
+		writeJSONError(w, errorAuthDatabaseError)
 		return
 	}
 
