@@ -48,7 +48,7 @@ var apiJsonDefaultHeaders = map[string]string{
 	//"Access-Control-Allow-Origin": "*",
 
 
-    // HSTS TODO configurable  based on server
+    // HSTS TODO configurable  based on server are we under TLS terminating proxy
 	//"Strict-Transport-Security": "max-age=31536000",
 }
 
