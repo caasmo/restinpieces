@@ -215,19 +215,18 @@
 
                 try {
                     const response = await this.rp.requestJson(
-                        "/api/auth-with-password",
+                        "/api/auth-with-password", 
                         "POST",
                         {},
                         { identity: email, password }
                     );
-                .then(response => {
+                    
                     if (response.data?.access_token && response.data?.record) {
                         this.rp.store.auth.save(response.data);
                         this.createSuccessUI(response.data.record);
                     } else {
                         throw new Error('Invalid login response');
                     }
-                })
                 } catch (error) {
                     console.error('Login failed:', error);
                     this.showMessage(error.response?.message || error.message, true);
