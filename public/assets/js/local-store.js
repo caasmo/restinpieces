@@ -36,14 +36,7 @@ class RestinpiecesStorage {
 
     // Auth-specific methods
     SaveAuth(auth) {
-        if (!auth || !auth.access_token || !auth.user_record) {
-            console.error('Invalid auth object - must contain access_token and user_record');
-            return false;
-        }
-        return this.Set('auth', { 
-            access_token: auth.access_token,
-            user_record: auth.user_record
-        });
+        return this.Set('auth', auth);
     }
 
     LoadAuth() {
