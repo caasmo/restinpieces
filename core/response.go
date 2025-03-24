@@ -21,6 +21,16 @@ type JsonResponseWithData struct {
 	Data    interface{} `json:"data,omitempty"`
 }
 
+// NewJsonResponseWithData creates a new JsonResponseWithData instance
+func NewJsonResponseWithData(status int, code, message string, data interface{}) *JsonResponseWithData {
+	return &JsonResponseWithData{
+		Status:  status,
+		Code:    code,
+		Message: message,
+		Data:    data,
+	}
+}
+
 var apiJsonDefaultHeaders = map[string]string{
 
 	"Content-Type":              "application/json; charset=utf-8",
