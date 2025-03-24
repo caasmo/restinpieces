@@ -13,6 +13,14 @@ type jsonResponse struct {
 	body   []byte
 }
 
+// JsonResponse is used for structured JSON responses with optional data
+type JsonResponse struct {
+	Status  int         `json:"status"`
+	Code    string      `json:"code"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
 var apiJsonDefaultHeaders = map[string]string{
 
 	"Content-Type":              "application/json; charset=utf-8",
@@ -157,6 +165,20 @@ func writeJSONOk(w http.ResponseWriter, resp jsonResponse) {
 	w.WriteHeader(resp.status)
     setHeaders(w, apiJsonDefaultHeaders)
 	w.Write(resp.body)
+}
+
+// writeJSONOkData writes a structured JSON response with optional data
+func writeJSONOkData(w http.ResponseWriter, status int, code, message string, data interface{}) {
+	resp := JsonResponse{
+		Status:  status,
+		Code:    code,
+		Message: message,
+		Data:    data,
+	}
+
+	w.WriteHeader(status)
+	setHeaders(w, apiJsonDefaultHeaders)
+	json.NewEncoder(w).Encode(resp)
 }
 
 // writeJSONError writes a precomputed JSON error response
