@@ -149,21 +149,22 @@ var (
 	okEmailVerified   = precomputeResponse(http.StatusOK, "email_verified", "Email verified successfully")
 )
 
-// For successful responses
+// For successful short responses
 func writeJSONOk(w http.ResponseWriter, resp jsonResponse) {
-    setHeaders(w, apiJsonDefaultHeaders)
 	w.WriteHeader(resp.status)
+    setHeaders(w, apiJsonDefaultHeaders)
 	w.Write(resp.body)
 }
 
 // writeJSONError writes a precomputed JSON error response
 func writeJSONError(w http.ResponseWriter, resp jsonResponse) {
-    setHeaders(w, apiJsonDefaultHeaders)
 	w.WriteHeader(resp.status)
+    setHeaders(w, apiJsonDefaultHeaders)
 	w.Write(resp.body)
 }
 
 // writeJSONErrorf writes a formatted JSON error response with custom message
+// TODO remote args from signature
 func writeJSONErrorf(w http.ResponseWriter, status int, code string, format string, args ...interface{}) {
     setHeaders(w, apiJsonDefaultHeaders)
 	w.WriteHeader(status)
