@@ -1,13 +1,13 @@
-class ClientResponseError extends Error {
-    /**
-     * Creates a standardized error object for HTTP client requests
-     * @param {Object} errData - Error data object
-     * @param {string} [errData.url] - The URL that caused the error
-     * @param {number} [errData.status] - HTTP status code
-     * @param {boolean} [errData.isAbort] - Whether the request was aborted
-     * @param {Error} [errData.originalError] - Original error object
-     * @param {Object} [errData.response] - Response data from the server
-     */
+/**
+ * Creates a standardized error object for HTTP client requests
+ * @param {Object} errData - Error data object
+ * @param {string} [errData.url] - The URL that caused the error
+ * @param {number} [errData.status] - HTTP status code
+ * @param {boolean} [errData.isAbort] - Whether the request was aborted
+ * @param {Error} [errData.originalError] - Original error object
+ * @param {Object} [errData.response] - Response data from the server
+ */
+export class ClientResponseError extends Error {
     constructor(errData) {
         // Pass the message to parent Error constructor if available
         super(errData?.response?.message || "ClientResponseError");
