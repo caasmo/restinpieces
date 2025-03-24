@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register with Email</title>
-    <script src="assets/js/requestJson.js"></script>
+    <script type="module">
+        import Restinpieces from '/assets/js/restinpieces.js';
+        import { LocalStorage } from '/assets/js/local-storage.js';
+    </script>
     <style>
         body {
             font-family: sans-serif;
@@ -110,98 +113,102 @@
 
     <div id="message" class="message"></div>
 
-    <script>
-        function handleRegisterSubmit(e) {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = '';
-            messageDiv.classList.remove('error', 'success');
+    <script type="module">
+        import Restinpieces from '/assets/js/restinpieces.js';
+        import { LocalStorage } from '/assets/js/local-storage.js';
 
-            // Basic client-side validation
-            if (password !== confirmPassword) {
-                messageDiv.textContent = 'Passwords do not match';
-                messageDiv.classList.add('error');
-                return;
+        class RegisterForm {
+            constructor() {
+                this.rp = new Restinpieces("http://localhost:8080");
+                this.form = document.getElementById('registerForm');
+                this.messageDiv = document.getElementById('message');
+                this.form.addEventListener('submit', this.handleSubmit.bind(this));
             }
 
-            if (password.length < 8) {
-                messageDiv.textContent = 'Password must be at least 8 characters';
-                messageDiv.classList.add('error');
-                return;
-            }
-
-            // Show loading state
-            messageDiv.textContent = 'Registering...';
-            messageDiv.classList.remove('error');
-
-            requestJson(
-                "http://localhost:8080",
-                "/api/register-with-password",
-                "POST",
-                {},
-                {
-                    identity: email,
-                    password: password,
-                    password_confirm: confirmPassword
+            validateForm(email, password, confirmPassword) {
+                if (password !== confirmPassword) {
+                    throw new Error('Passwords do not match');
                 }
-            )
-            .then(data => {
-                // Save access token and user record using our functions
-                if (data.access_token && data.record) {
-                    saveAccessToken(data.access_token);
-                    saveUserRecord(data.record);
-                    
-                    // Show success message
-                    messageDiv.textContent = 'Registration successful!';
-                    messageDiv.classList.add('success');
-                    
-                    // Show user record and navigation buttons
-                    const userRecord = data.record;
+                if (password.length < 8) {
+                    throw new Error('Password must be at least 8 characters');
+                }
+                return { email, password, confirmPassword };
+            }
+
+            showMessage(text, isError = false) {
+                this.messageDiv.textContent = text;
+                this.messageDiv.className = isError ? 'message error' : 'message success';
+            }
+
+            createSuccessUI(userRecord) {
+                const userInfo = document.createElement('div');
+                userInfo.className = 'user-info';
+                userInfo.innerHTML = `
+                    <h3>Registration Successful!</h3>
+                    <pre>${JSON.stringify(userRecord, null, 2)}</pre>
+                `;
+
+                const buttonContainer = document.createElement('div');
+                buttonContainer.className = 'button-container';
+
+                if (!userRecord.verified) {
+                    const verifyButton = document.createElement('button');
+                    verifyButton.textContent = 'Verify Email';
+                    verifyButton.onclick = () => window.location.href = '/verify-email';
+                    buttonContainer.appendChild(verifyButton);
+                }
+
+                const dashboardButton = document.createElement('button');
+                dashboardButton.textContent = 'Go to Dashboard';
+                dashboardButton.onclick = () => window.location.href = 'dashboard.html';
+                buttonContainer.appendChild(dashboardButton);
+
+                this.form.remove();
+                this.messageDiv.textContent = '';
+                this.messageDiv.appendChild(userInfo);
+                this.messageDiv.appendChild(buttonContainer);
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
                 
-                    // Create user info display
-                    const userInfo = document.createElement('div');
-                    userInfo.className = 'user-info';
-                    userInfo.innerHTML = `
-                        <h3>Registration Successful!</h3>
-                        <pre>${JSON.stringify(userRecord, null, 2)}</pre>
-                    `;
+                try {
+                    const email = document.getElementById('email').value;
+                    const password = document.getElementById('password').value;
+                    const confirmPassword = document.getElementById('confirmPassword').value;
                     
-                    // Create action buttons
-                    const buttonContainer = document.createElement('div');
-                    buttonContainer.className = 'button-container';
-                    
-                    if (!userRecord.verified) {
-                        const verifyButton = document.createElement('button');
-                        verifyButton.textContent = 'Verify Email';
-                        verifyButton.onclick = () => window.location.href = '/verify-email';
-                        buttonContainer.appendChild(verifyButton);
+                    this.messageDiv.textContent = '';
+                    this.messageDiv.classList.remove('error', 'success');
+
+                    const { email: validatedEmail, password: validatedPassword } = 
+                        this.validateForm(email, password, confirmPassword);
+
+                    this.showMessage('Registering...');
+
+                    const data = await this.rp.requestJson(
+                        "/api/register-with-password",
+                        "POST",
+                        {},
+                        {
+                            identity: validatedEmail,
+                            password: validatedPassword,
+                            password_confirm: confirmPassword
+                        }
+                    );
+
+                    if (data.access_token && data.record) {
+                        LocalStorage.handleEmailRegistration(data);
+                        this.showMessage('Registration successful!');
+                        this.createSuccessUI(data.record);
                     }
-                    
-                    const dashboardButton = document.createElement('button');
-                    dashboardButton.textContent = 'Go to Dashboard';
-                    dashboardButton.onclick = () => window.location.href = 'dashboard.html';
-                    buttonContainer.appendChild(dashboardButton);
-                    
-                    // Clear form and show results
-                    document.getElementById('registerForm').remove();
-                    messageDiv.textContent = '';
-                    messageDiv.appendChild(userInfo);
-                    messageDiv.appendChild(buttonContainer);
+                } catch (error) {
+                    console.error('Registration failed:', error);
+                    this.showMessage(error.response ? JSON.stringify(error.response, null, 2) : error.message, true);
                 }
-            })
-            .catch(error => {
-                console.error('Registration failed:', error);
-                messageDiv.textContent = error.response ? JSON.stringify(error.response, null, 2) : error.message;
-                messageDiv.classList.add('error');
-            });
+            }
         }
 
-        document.getElementById('registerForm').addEventListener('submit', handleRegisterSubmit);
+        document.addEventListener('DOMContentLoaded', () => new RegisterForm());
     </script>
 </body>
 </html>
