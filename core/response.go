@@ -100,32 +100,32 @@ const (
 
 
     //errors
-	CodeErrorTokenGeneration                = "token_generation"
-	CodeErrorClaimsNotFound                 = "claims_not_found"
-	CodeErrorInvalidRequest                 = "invalid_input"
-	CodeErrorInvalidCredentials             = "invalid_credentials"
-	CodeErrorPasswordMismatch               = "password_mismatch"
-	CodeErrorMissingFields                  = "missing_fields"
-	CodeErrorPasswordComplexity             = "password_complexity"
-	CodeErrorEmailConflict                  = "email_conflict"
-	CodeErrorNotFound                       = "not_found"
-	CodeErrorConflict                       = "conflict"
-	CodeErrorRegistrationFailed             = "registration_failed"
-	CodeErrorTooManyRequests                = "too_many_requests"
-	CodeErrorServiceUnavailable             = "service_unavailable"
-	CodeErrorNoAuthHeader                   = "no_auth_header"
-	CodeErrorInvalidTokenFormat             = "invalid_token_format"
-	CodeErrorJwtInvalidSignMethod           = "invalid_sign_method"
-	CodeErrorJwtTokenExpired                = "token_expired"
-	CodeErrorAlreadyVerified                = "already_verified"
-	CodeErrorJwtInvalidToken                = "invalid_token"
-	CodeErrorJwtInvalidVerificationToken    = "invalid_verification_token"
-	CodeErrorInvalidOAuth2Provider          = "invalid_oauth2_provider"
-	CodeErrorOAuth2TokenExchangeFailed      = "oauth2_token_exchange_failed"
-	CodeErrorOAuth2UserInfoFailed           = "oauth2_user_info_failed"
-	CodeErrorOAuth2UserInfoProcessingFailed = "oauth2_user_info_processing_failed"
-	CodeErrorOAuth2DatabaseError            = "oauth2_database_error"
-	CodeErrorAuthDatabaseError              = "auth_database_error"
+	CodeErrorTokenGeneration                = "err_token_generation"
+	CodeErrorClaimsNotFound                 = "err_claims_not_found"
+	CodeErrorInvalidRequest                 = "err_invalid_input"
+	CodeErrorInvalidCredentials             = "err_invalid_credentials"
+	CodeErrorPasswordMismatch               = "err_password_mismatch"
+	CodeErrorMissingFields                  = "err_missing_fields"
+	CodeErrorPasswordComplexity             = "err_password_complexity"
+	CodeErrorEmailConflict                  = "err_email_conflict"
+	CodeErrorNotFound                       = "err_not_found"
+	CodeErrorConflict                       = "err_conflict"
+	CodeErrorRegistrationFailed             = "err_registration_failed"
+	CodeErrorTooManyRequests                = "err_too_many_requests"
+	CodeErrorServiceUnavailable             = "err_service_unavailable"
+	CodeErrorNoAuthHeader                   = "err_no_auth_header"
+	CodeErrorInvalidTokenFormat             = "err_invalid_token_format"
+	CodeErrorJwtInvalidSignMethod           = "err_invalid_sign_method"
+	CodeErrorJwtTokenExpired                = "err_token_expired"
+	CodeErrorAlreadyVerified                = "err_already_verified"
+	CodeErrorJwtInvalidToken                = "err_invalid_token"
+	CodeErrorJwtInvalidVerificationToken    = "err_invalid_verification_token"
+	CodeErrorInvalidOAuth2Provider          = "err_invalid_oauth2_provider"
+	CodeErrorOAuth2TokenExchangeFailed      = "err_oauth2_token_exchange_failed"
+	CodeErrorOAuth2UserInfoFailed           = "err_oauth2_user_info_failed"
+	CodeErrorOAuth2UserInfoProcessingFailed = "err_oauth2_user_info_processing_failed"
+	CodeErrorOAuth2DatabaseError            = "err_oauth2_database_error"
+	CodeErrorAuthDatabaseError              = "err_auth_database_error"
 )
 
 // ResponseBasicFormat is used  for short ok and error responses
@@ -164,7 +164,7 @@ var (
 	errorJwtTokenExpired                = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
 	errorJwtInvalidToken                = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtInvalidToken, "Invalid authentication token")
 	errorJwtInvalidVerificationToken    = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtInvalidVerificationToken, "Invalid verification token")
-	errorEmailVerificationFailed        = precomputeResponse(http.StatusInternalServerError, "email_verification_failed", "Email verification process failed")
+	errorEmailVerificationFailed        = precomputeResponse(http.StatusInternalServerError, "err_email_verification_failed", "Email verification process failed")
 	errorInvalidOAuth2Provider          = precomputeResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
 	errorOAuth2TokenExchangeFailed      = precomputeResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
 	errorOAuth2UserInfoFailed           = precomputeResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
