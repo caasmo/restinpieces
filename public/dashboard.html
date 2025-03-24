@@ -123,19 +123,19 @@
                 document.getElementById('previous-token').textContent = currentToken;
 
                 rp.requestJsonAuth("/api/auth-refresh", "POST")
-                .then(data => {
-                    if (data.access_token) {
+                .then(response => {
+                    if (response.data?.access_token) {
                         // Save new auth data (preserving existing record)
                         const newAuth = {
                             ...currentAuth,
-                            access_token: data.access_token,
-                            expires_in: data.expires_in
+                            access_token: response.data.access_token,
+                            expires_in: response.data.expires_in
                         };
                         rp.store.auth.save(newAuth);
                         
                         // Display new token and update UI
-                        document.getElementById('new-token').textContent = data.access_token;
-                        document.getElementById('current-token').textContent = data.access_token;
+                        document.getElementById('new-token').textContent = response.data.access_token;
+                        document.getElementById('current-token').textContent = response.data.access_token;
                         // Update previous token for next refresh
                         document.getElementById('previous-token').textContent = currentToken;
                     } else {
