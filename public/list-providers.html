@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OAuth2 Providers</title>
-    <script src="assets/js/requestJson.js"></script> <!--  requestJson is in this file -->
+    <script src="assets/js/restinpieces.js"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -35,11 +35,8 @@
         resultDiv.textContent = "Loading...";
         resultDiv.classList.remove("error"); // Remove any previous error class
 
-        requestJson(
-            "http://localhost:8080",
-            "/api/list-oauth2-providers", // Correct endpoint
-            "GET"
-        )
+        const client = new Restinpieces("http://localhost:8080");
+        client.requestJson("/api/list-oauth2-providers")
         .then(data => {
             // Stringify the JSON with indentation for readability
             resultDiv.textContent = JSON.stringify(data, null, 2);
