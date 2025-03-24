@@ -7,6 +7,7 @@
 - nginl changex server fingerprint
 - safe api heders, html headers middleware 
 - endpoints api configurable in conf
+- metrics
 -seurl hadcoded https. should be configurable if srver http under proxy TLS like cloudflare
 - downtime schedule, all routes to, lock db ...
 - error in trhe sequnce of step f ex register can let inconsitent state, ex
