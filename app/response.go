@@ -108,8 +108,10 @@ const (
 // It avoids repeated JSON marshaling during request handling
 // Any time we use writeJSONResponse(w, response) in the code, it
 // simply writes the pre-computed bytes to the response writer
+const jsonResponseFormat = `{"status":%d,"code":"%s","message":"%s"}`
+
 func precomputeResponse(status int, code, message string) jsonResponse {
-	body := fmt.Sprintf(`{"status":%d,"code":"%s","message":"%s"}`, status, code, message)
+	body := fmt.Sprintf(jsonResponseFormat, status, code, message)
 	return jsonResponse{status: status, body: []byte(body)}
 }
 
