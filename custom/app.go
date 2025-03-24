@@ -1,6 +1,6 @@
 package custom
 
-import "github.com/caasmo/restinpieces/app"
+import "github.com/caasmo/restinpieces/core"
 
 type App struct {
 	*app.App // Embedding app.App

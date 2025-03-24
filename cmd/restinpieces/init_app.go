@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/caasmo/restinpieces/app"
+	"github.com/caasmo/restinpieces/core"
 	// TOD0 problem cgo compile check?
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/config"
