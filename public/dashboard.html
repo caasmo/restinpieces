@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <script src="/assets/js/requestJson.js"></script>
+    <script src="/assets/js/restinpieces.js"></script>
     <style>
         body {
             font-family: sans-serif;
@@ -114,11 +114,8 @@
             // Save current token as previous token
             document.getElementById('previous-token').textContent = currentToken;
 
-            requestJsonAuth(
-                "http://localhost:8080",
-                "/api/auth-refresh",
-                "POST"
-            )
+            const client = new Restinpieces("http://localhost:8080");
+            client.requestJsonAuth("/api/auth-refresh", "POST")
             .then(data => {
                 if (data.access_token) {
                     // Save new token
