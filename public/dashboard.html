@@ -4,7 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <script src="/assets/js/restinpieces.js"></script>
+    <script type="module">
+        import Restinpieces, {
+            saveAccessToken,
+            loadAccessToken,
+            saveUserRecord,
+            loadUserRecord
+        } from '/assets/js/restinpieces.js';
+        
+        // Make functions available globally for the button click handler
+        window.Restinpieces = Restinpieces;
+        window.saveAccessToken = saveAccessToken;
+        window.loadAccessToken = loadAccessToken;
+        window.saveUserRecord = saveUserRecord;
+        window.loadUserRecord = loadUserRecord;
+    </script>
     <style>
         body {
             font-family: sans-serif;

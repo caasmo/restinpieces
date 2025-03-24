@@ -4,7 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OAuth2 Providers</title>
-    <script src="assets/js/restinpieces.js"></script>
+    <script type="module">
+        import Restinpieces from './assets/js/restinpieces.js';
+        
+        // Make Restinpieces available globally for the button click handler
+        window.Restinpieces = Restinpieces;
+    </script>
     <style>
         body {
             font-family: sans-serif;
