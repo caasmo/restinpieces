@@ -13,8 +13,8 @@ type jsonResponse struct {
 	body   []byte
 }
 
-// JsonResponseData is used for structured JSON responses with optional data
-type JsonResponseData struct {
+// JsonResponseWithData is used for structured JSON responses with optional data
+type JsonResponseWithData struct {
 	Status  int         `json:"status"`
 	Code    string      `json:"code"`
 	Message string      `json:"message"`
@@ -169,7 +169,7 @@ func writeJSONOk(w http.ResponseWriter, resp jsonResponse) {
 
 // writeJSONOkData writes a structured JSON response with optional data
 func writeJSONOkData(w http.ResponseWriter, status int, code, message string, data interface{}) {
-	resp := JsonResponseData{
+	resp := JsonResponseWithData{
 		Status:  status,
 		Code:    code,
 		Message: message,
