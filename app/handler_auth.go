@@ -99,7 +99,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Validate email format
 	if err := ValidateEmail(req.Identity); err != nil {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -112,7 +112,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Verify password hash
 	if !crypto.CheckPassword(req.Password, user.Password) {
-		writeJSONError(w, errorInvalidCredentials)
+		writeJsonError(w, errorInvalidCredentials)
 		return
 	}
 
@@ -138,13 +138,13 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	req.Email = strings.TrimSpace(req.Email)
 	if req.Email == "" {
-		writeJSONError(w, errorInvalidRequest)
+		writeJsonError(w, errorInvalidRequest)
 		return
 	}
 	if err := ValidateEmail(req.Email); err != nil {
@@ -159,7 +159,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if user == nil {
-		writeJSONError(w, errorNotFound)
+		writeJsonError(w, errorNotFound)
 		return
 	}
 
