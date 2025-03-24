@@ -63,7 +63,7 @@ var htmlHeaders = map[string]string{
     // Modern browsers (post-2019 Chrome, Edge, etc.) ignore this header, favoring Content Security Policy (CSP)
     // this header is mostly a legacy tool
     // Optional for API servers, but no harm
-	"X-XSS-Protection":           "1; mode=block",
+	//"X-XSS-Protection":           "1; mode=block",
 
 }
 
