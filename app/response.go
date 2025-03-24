@@ -112,7 +112,7 @@ const shortFormat = `{"status":%d,"code":"%s","message":"%s"}`
 // Any time we use writeJSONResponse(w, response) in the code, it
 // simply writes the pre-computed bytes to the response writer
 func precomputeResponse(status int, code, message string) jsonResponse {
-	body := fmt.Sprintf(short, status, code, message)
+	body := fmt.Sprintf(shortFormat, status, code, message)
 	return jsonResponse{status: status, body: []byte(body)}
 }
 
@@ -162,18 +162,6 @@ func writeJSONError(w http.ResponseWriter, resp jsonResponse) {
 	w.WriteHeader(resp.status)
     setHeaders(w, apiJsonDefaultHeaders)
 	w.Write(resp.body)
-}
-
-// writeJSONErrorf writes a formatted JSON error response with custom message
-// TODO remote args from signature
-func writeJSONErrorf(w http.ResponseWriter, status int, code string, format string, args ...interface{}) {
-    setHeaders(w, apiJsonDefaultHeaders)
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  status,
-		"code":    code,
-		"message": fmt.Sprintf(format, args...),
-	})
 }
 
 // writeAuthTokenResponse writes a standardized authentication token response
