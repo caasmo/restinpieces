@@ -47,7 +47,7 @@
         import Restinpieces from '/assets/js/restinpieces.js';
         import { LocalStorage } from '/assets/js/local-storage.js';
 
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
             const messageDiv = document.getElementById('message');
@@ -58,27 +58,26 @@
                 return;
             }
 
-            try {
-                const rp = new Restinpieces("http://localhost:8080");
-                const data = await rp.requestJson(
-                    "/api/confirm-verification",
-                    "POST",
-                    {},
-                    { token }
-                );
-
+            const rp = new Restinpieces("http://localhost:8080");
+            rp.requestJson(
+                "/api/confirm-verification",
+                "POST",
+                {},
+                { token }
+            )
+            .then(data => {
                 if (data.access_token) {
                     LocalStorage.saveAccessToken(data.access_token);
                 }
                 if (data.record) {
                     LocalStorage.saveUserRecord(data.record);
                 }
-
                 showSuccess('Email successfully verified!');
-            } catch (error) {
+            })
+            .catch(error => {
                 console.error('Verification failed:', error);
                 showError(error.response?.message || 'Email verification failed');
-            }
+            });
 
             function showSuccess(message) {
                 messageDiv.className = 'message success';
