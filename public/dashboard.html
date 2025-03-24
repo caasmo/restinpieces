@@ -99,53 +99,51 @@
         import Restinpieces from '/assets/js/restinpieces.js';
         import { LocalStorage } from '/assets/js/local-storage.js';
         
-        // Initialize instances
-        const rp = new Restinpieces("http://localhost:8080");
-        
-        // Make available globally for handlers
-        //window.rp = rp;
-        
-        // Display initial user info and token
-        const userInfo = LocalStorage.loadUserRecord();
-        const currentToken = LocalStorage.loadAccessToken() || 'No token found';
-        
-        document.getElementById('user-info').textContent = JSON.stringify(userInfo, null, 2);
-        document.getElementById('current-token').textContent = currentToken;
-
-        function refreshToken() {
-            const refreshError = document.getElementById('refresh-error');
-            refreshError.textContent = '';
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize instances
+            const rp = new Restinpieces("http://localhost:8080");
             
-            // Get current token before refresh
+            // Display initial user info and token
+            const userInfo = LocalStorage.loadUserRecord();
             const currentToken = LocalStorage.loadAccessToken() || 'No token found';
             
-            // Save current token as previous token
-            document.getElementById('previous-token').textContent = currentToken;
+            document.getElementById('user-info').textContent = JSON.stringify(userInfo, null, 2);
+            document.getElementById('current-token').textContent = currentToken;
 
-            rp.requestJsonAuth("/api/auth-refresh", "POST")
-            .then(data => {
-                if (data.access_token) {
-                    // Save new token
-                    LocalStorage.saveAccessToken(data.access_token);
-                    
-                    // Display new token and update UI
-                    document.getElementById('new-token').textContent = data.access_token;
-                    document.getElementById('current-token').textContent = data.access_token.
-                    // Update previous token for next refresh
-                    document.getElementById('previous-token').textContent = currentToken;
-                } else {
-                    throw new Error('No access token in response');
-                }
-            })
-            .catch(error => {
-                console.error('Token refresh failed:', error);
-                refreshError.textContent = error.response ? JSON.stringify(error.response, null, 2) : error.message;
-            });
-        }
+            function refreshToken() {
+                const refreshError = document.getElementById('refresh-error');
+                refreshError.textContent = '';
+                
+                // Get current token before refresh
+                const currentToken = LocalStorage.loadAccessToken() || 'No token found';
+                
+                // Save current token as previous token
+                document.getElementById('previous-token').textContent = currentToken;
 
-        // Make available globally for the button click handler
-        window.LocalStorage = LocalStorage;
-        window.refreshToken = refreshToken;
+                rp.requestJsonAuth("/api/auth-refresh", "POST")
+                .then(data => {
+                    if (data.access_token) {
+                        // Save new token
+                        LocalStorage.saveAccessToken(data.access_token);
+                        
+                        // Display new token and update UI
+                        document.getElementById('new-token').textContent = data.access_token;
+                        document.getElementById('current-token').textContent = data.access_token;
+                        // Update previous token for next refresh
+                        document.getElementById('previous-token').textContent = currentToken;
+                    } else {
+                        throw new Error('No access token in response');
+                    }
+                })
+                .catch(error => {
+                    console.error('Token refresh failed:', error);
+                    refreshError.textContent = error.response ? JSON.stringify(error.response, null, 2) : error.message;
+                });
+            }
+
+            // Make refreshToken available globally for the button click handler
+            window.refreshToken = refreshToken;
+        });
     </script>
 </body>
 </html>
