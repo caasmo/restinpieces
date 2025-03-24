@@ -29,7 +29,7 @@ class Restinpieces {
 
         const requestHeaders = {
             "Content-Type": "application/json",
-            ...headers
+        ...headers // Allow overriding
         };
 
         return fetch(url, {
@@ -38,12 +38,15 @@ class Restinpieces {
             body: body ? JSON.stringify(body) : null,
         })
         .then(response => {
+        // Check for non-2xx status *before* parsing JSON
             if (!response.ok) {
+            // Try to parse JSON error, but be resilient to non-JSON errors
                 return response.text().then(text => {
                     let parsedError = {};
                     try {
                         parsedError = JSON.parse(text);
                     } catch (_) {
+                    // If parsing fails, use the raw text as the message
                         parsedError = { message: text || "Unknown error" };
                     }
                     throw new ClientResponseError({
@@ -54,10 +57,12 @@ class Restinpieces {
                 });
             }
 
+        // Handle 204 No Content (and similar) gracefully.
             if (response.status === 204) {
-                return {};
+            return {}; // Return empty object for no-content
             }
             return response.json().catch(() => {
+            // Handle json in case of not json.
                 throw new ClientResponseError({
                     url: response.url,
                     status: response.status,
@@ -66,8 +71,9 @@ class Restinpieces {
             });
         })
         .catch(error => {
+        // Ensure *all* errors are wrapped in ClientResponseError
             if (error instanceof ClientResponseError) {
-                throw error;
+            throw error; // Already a ClientResponseError, re-throw
             }
             throw new ClientResponseError({
                 url: error.url,
