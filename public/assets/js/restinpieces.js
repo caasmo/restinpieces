@@ -5,7 +5,7 @@ class Restinpieces {
     constructor(baseURL = "/", lang = "en-US") {
         this.baseURL = baseURL;
         this.lang = lang;
-        this.store = RestinpiecesLocalStore;
+        this.lstore = RestinpiecesLocalStore;
         //this.recordServices = {}; // Cache for record services
         //this.enableAutoCancellation = true;
         //this.cancelControllers = {};
