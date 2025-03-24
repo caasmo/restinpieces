@@ -147,9 +147,9 @@
                 this.loadProviders();
             }
 
-            async loadProviders() {
-                try {
-                    const providers = await this.rp.requestJson("/api/list-oauth2-providers");
+            loadProviders() {
+                this.rp.requestJson("/api/list-oauth2-providers")
+                .then(providers => {
                     this.providerList.innerHTML = '';
                     
                     providers.forEach(provider => {
@@ -164,10 +164,11 @@
                     if (providers.length === 0) {
                         this.providerList.innerHTML = '<li>No OAuth2 providers.</li>';
                     }
-                } catch (error) {
+                })
+                .catch(error => {
                     console.error('Error loading providers:', error);
                     this.providerList.innerHTML = '<li>Error loading providers</li>';
-                }
+                });
             }
 
             showMessage(text, isError = false) {
