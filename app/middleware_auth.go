@@ -80,7 +80,7 @@ func (a *App) JwtValidate(next http.Handler) http.Handler {
 				writeJsonError(w, errorJwtInvalidSignMethod)
 				return
 			}
-			writeJSONError(w, errorJwtInvalidToken)
+			writeJsonError(w, errorJwtInvalidToken)
 			return
 		}
 
