@@ -376,7 +376,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// Generate JWT session token for immediate authentication
 	token, _, err := crypto.NewJwtSessionToken(retrievedUser.ID, retrievedUser.Email, retrievedUser.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
-		writeJSONError(w, errorTokenGeneration)
+		writeJsonError(w, errorTokenGeneration)
 		return
 	}
 
