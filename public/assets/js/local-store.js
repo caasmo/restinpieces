@@ -35,16 +35,24 @@ class RestinpiecesStorage {
     }
 
     // Auth-specific methods
-    SaveAuth(token, userData) {
+    SaveAuth(auth) {
+        if (!auth || !auth.access_token || !auth.user_record) {
+            console.error('Invalid auth object - must contain access_token and user_record');
+            return false;
+        }
         return this.Set('auth', { 
-            token, 
-            user: userData,
-            timestamp: Date.now() 
+            access_token: auth.access_token,
+            user_record: auth.user_record,
+            timestamp: Date.now()
         });
     }
 
     LoadAuth() {
-        return this.Get('auth') || {};
+        const auth = this.Get('auth');
+        return auth || {
+            access_token: null,
+            user_record: null
+        };
     }
 
     ClearAuth() {
