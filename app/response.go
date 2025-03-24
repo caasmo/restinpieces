@@ -160,7 +160,7 @@ var (
 )
 
 // For successful short responses
-func writeJSONOk(w http.ResponseWriter, resp jsonResponse) {
+func writeJsonOk(w http.ResponseWriter, resp jsonResponse) {
 	w.WriteHeader(resp.status)
     setHeaders(w, apiJsonDefaultHeaders)
 	w.Write(resp.body)
