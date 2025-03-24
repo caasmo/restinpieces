@@ -7,8 +7,34 @@
     <script type="module">
         import Restinpieces from './assets/js/restinpieces.js';
         
-        // Make Restinpieces available globally for the button click handler
-        window.Restinpieces = Restinpieces;
+        function getProviders() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = "Loading...";
+            resultDiv.classList.remove("error"); // Remove any previous error class
+
+            const client = new Restinpieces("http://localhost:8080");
+            client.requestJson("/api/list-oauth2-providers")
+            .then(data => {
+                // Stringify the JSON with indentation for readability
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                resultDiv.classList.add("error"); // Add error class for styling
+                let errorText = "Error: " + error.message + "\n";
+                errorText += "Status: " + error.status + "\n";
+                if (error.response) {
+                    errorText += "Response:\n" + JSON.stringify(error.response, null, 2);
+                }
+                if (error.url){
+                    errorText += "\nURL: " + error.url
+                }
+                resultDiv.textContent = errorText;
+                console.error(error);
+            });
+        }
+
+        // Make function available on button click
+        window.getProviders = getProviders;
     </script>
     <style>
         body {
@@ -34,32 +60,5 @@
     <h2>Result:</h2>
     <pre id="result"></pre>
 
-    <script>
-    function getProviders() {
-        const resultDiv = document.getElementById('result');
-        resultDiv.textContent = "Loading...";
-        resultDiv.classList.remove("error"); // Remove any previous error class
-
-        const client = new Restinpieces("http://localhost:8080");
-        client.requestJson("/api/list-oauth2-providers")
-        .then(data => {
-            // Stringify the JSON with indentation for readability
-            resultDiv.textContent = JSON.stringify(data, null, 2);
-        })
-        .catch(error => {
-            resultDiv.classList.add("error"); // Add error class for styling
-            let errorText = "Error: " + error.message + "\n";
-            errorText += "Status: " + error.status + "\n";
-            if (error.response) {
-                errorText += "Response:\n" + JSON.stringify(error.response, null, 2);
-            }
-            if (error.url){
-                errorText += "\nURL: " + error.url
-            }
-            resultDiv.textContent = errorText;
-            console.error(error);
-        });
-    }
-    </script>
 </body>
 </html>
