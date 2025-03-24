@@ -7,9 +7,9 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/custom"
-	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/server"
@@ -48,7 +48,7 @@ func main() {
 	// Create mailer and executor only if SMTP is configured
 	hdls := make(map[string]executor.JobHandler)
 
-	if (cfg.Smtp != config.Smtp{}) { 
+	if (cfg.Smtp != config.Smtp{}) {
 		mailer, err := mail.New(cfg.Smtp)
 		if err != nil {
 			slog.Error("failed to create mailer", "error", err)

@@ -13,8 +13,6 @@ import (
 	"github.com/domodwyer/mailyak/v3"
 )
 
-
-
 // Mailer handles sending emails and implements queue.JobHandler
 type Mailer struct {
 	// host is the SMTP server hostname or IP address
@@ -120,7 +118,7 @@ func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
 		}
 		return mail, nil
 	}
-	
+
 	// Use plain connection (will automatically upgrade to STARTTLS if server supports it)
 	mail := mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth)
 	if m.localName != "" {

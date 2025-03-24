@@ -25,8 +25,8 @@ const (
 	ClaimUserID    = "user_id" // JWT User ID claim key
 
 	// Email verification specific claims
-	ClaimEmail        = "email" // Email address being verified
-	ClaimType = "type"  // Verification type claim
+	ClaimEmail             = "email"        // Email address being verified
+	ClaimType              = "type"         // Verification type claim
 	ClaimVerificationValue = "verification" // Value for verification type claim
 
 	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)

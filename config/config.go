@@ -18,7 +18,6 @@ const (
 	EnvSmtpPassword       = "SMTP_PASSWORD"
 )
 
-
 const (
 	OAuth2ProviderGoogle = "google"
 	OAuth2ProviderGitHub = "github"
@@ -36,7 +35,6 @@ type OAuth2Provider struct {
 	Scopes       []string
 	PKCE         bool
 }
-
 
 type Scheduler struct {
 	// Interval controls how often the scheduler checks for new jobs.
@@ -87,26 +85,26 @@ func (s *Server) BaseURL() string {
 	if err != nil {
 		return s.Addr
 	}
-	
+
 	// Default to localhost if no host specified
 	if host == "" {
 		host = "localhost"
 	}
-	
+
 	// Determine scheme
 	scheme := "https"
 	if host == "localhost" {
 		scheme = "http"
 	}
-	
+
 	// Include port in URL
 	return fmt.Sprintf("%s://%s:%s", scheme, host, port)
 }
 
 type Jwt struct {
-	AuthSecret                    []byte
-	AuthTokenDuration             time.Duration
-	VerificationEmailSecret       []byte
+	AuthSecret                     []byte
+	AuthTokenDuration              time.Duration
+	VerificationEmailSecret        []byte
 	VerificationEmailTokenDuration time.Duration
 }
 
@@ -169,9 +167,9 @@ func Load(dbfile string) (*Config, error) {
 
 	cfg := &Config{
 		Jwt: Jwt{
-			AuthSecret:                    []byte("test_auth_secret_32_bytes_long_xxxxxx"),
-			AuthTokenDuration:             45 * time.Minute,
-			VerificationEmailSecret:       []byte("test_verification_secret_32_bytes_xxxx"),
+			AuthSecret:                     []byte("test_auth_secret_32_bytes_long_xxxxxx"),
+			AuthTokenDuration:              45 * time.Minute,
+			VerificationEmailSecret:        []byte("test_verification_secret_32_bytes_xxxx"),
 			VerificationEmailTokenDuration: 24 * time.Hour,
 		},
 		DBFile: dbfile,
@@ -189,15 +187,15 @@ func Load(dbfile string) (*Config, error) {
 	gmailSmtp := Smtp{
 		// Host is always smtp.gmail.com for Gmail
 		Host: "smtp.gmail.com",
-		
+
 		// Port 587 is required for STARTTLS
 		Port: 587,
-		
+
 		// Username must be the full Gmail address used for authentication
 		// Example: "myaccount@gmail.com"
 		// This must match the account where you've configured app passwords
 		Username: os.Getenv(EnvSmtpUsername),
-		
+
 		// Password can be either:
 		// 1. Your Gmail account password (not recommended)
 		// 2. An app-specific password (recommended)
@@ -206,11 +204,11 @@ func Load(dbfile string) (*Config, error) {
 		// 2. Go to Google Account > Security > App passwords
 		// 3. Generate a password for "Mail" application
 		Password: os.Getenv(EnvSmtpPassword),
-		
+
 		// FromName is the display name shown in email clients
 		// Example: "My App" will show as "My App <noreply@example.com>"
 		FromName: "My App",
-		
+
 		// FromAddress can be either:
 		// 1. The same as Username (your Gmail address)
 		// 2. A verified alias or Google Workspace email
@@ -219,7 +217,7 @@ func Load(dbfile string) (*Config, error) {
 		// 2. Under "Send mail as", click "Add another email address"
 		// 3. Follow the verification steps
 		FromAddress: os.Getenv("SMTP_FROM_ADDRESS"),
-		
+
 		// LocalName is the HELO/EHLO identifier sent to the SMTP server
 		// In production, set this to your application's domain name
 		// Example: "app.example.com"
@@ -227,13 +225,13 @@ func Load(dbfile string) (*Config, error) {
 		// Note: Only supported by some SMTP providers like Gmail
 		// If empty, defaults to "localhost" which should only be used in development
 		LocalName: "",
-		
+
 		// AuthMethod must be "plain" for Gmail
 		AuthMethod: "plain",
-		
+
 		// UseTLS should be false for port 587
 		UseTLS: false,
-		
+
 		// UseStartTLS must be true for Gmail on port 587
 		UseStartTLS: true,
 	}
@@ -241,7 +239,7 @@ func Load(dbfile string) (*Config, error) {
 	// If Gmail credentials are detected, add to SMTP config
 	if strings.HasSuffix(gmailSmtp.Username, "@gmail.com") && gmailSmtp.Password != "" {
 		cfg.Smtp = gmailSmtp
-		slog.Info("Gmail SMTP configuration loaded", 
+		slog.Info("Gmail SMTP configuration loaded",
 			"host", gmailSmtp.Host,
 			"port", gmailSmtp.Port,
 			"username", gmailSmtp.Username)

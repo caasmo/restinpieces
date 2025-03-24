@@ -127,7 +127,6 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	writeAuthTokenResponse(w, token, int(a.config.Jwt.AuthTokenDuration.Seconds()), user)
 }
 
-//
 // todo already verified.
 // goroutine generates token
 // RequestVerificationHandler handles email verification requests
@@ -193,15 +192,19 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 }
 
 // confirm-
-//  user created per email, requires validation of email, we have already emaila dn user id in table
+//
+//	user created per email, requires validation of email, we have already emaila dn user id in table
+//
 // queue job creates token like this:
+//
 //	{
 //	 "email": "lipo@goole.com",
 //	 "exp": 1736630179,
 //	 "id": "m648zm0q421yfc0",
 //	 "type": "verification"
 //	}
-// with a new verification secret, create method in crypto 
+//
+// with a new verification secret, create method in crypto
 // with map claim in a good place with signing key email, passwordhash
 // receives token
 // parse unverified, should have all fiedls above reject if no

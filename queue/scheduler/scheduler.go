@@ -9,8 +9,8 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/queue/executor"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -102,111 +102,111 @@ func (s *Scheduler) Stop(ctx context.Context) error {
 }
 
 func (s *Scheduler) processJobs() {
-    // Claim jobs up to configured limit per tick
-    jobs, err := s.db.Claim(s.cfg.MaxJobsPerTick)
-    if err != nil {
-        slog.Error("⏰scheduler: failed to claim jobs", "err", err)
-        return
-    }
+	// Claim jobs up to configured limit per tick
+	jobs, err := s.db.Claim(s.cfg.MaxJobsPerTick)
+	if err != nil {
+		slog.Error("⏰scheduler: failed to claim jobs", "err", err)
+		return
+	}
 
-    slog.Info("⏰scheduler: tick claimed jobs", "count", len(jobs))
-    
-    // Create a new error group for this batch of jobs
-    // Use the scheduler's context as parent to ensure jobs receive shutdown signal
-    g, ctx := errgroup.WithContext(s.ctx) // <- Shutdown context
-    g.SetLimit(runtime.NumCPU() * s.cfg.ConcurrencyMultiplier)
-    
-    var processed int
-    for _, job := range jobs {
-        jobCopy := job // Create a copy to avoid closure issues
-        g.Go(func() error {
-            // Create job-specific timeout context that inherits from the group context
+	slog.Info("⏰scheduler: tick claimed jobs", "count", len(jobs))
+
+	// Create a new error group for this batch of jobs
+	// Use the scheduler's context as parent to ensure jobs receive shutdown signal
+	g, ctx := errgroup.WithContext(s.ctx) // <- Shutdown context
+	g.SetLimit(runtime.NumCPU() * s.cfg.ConcurrencyMultiplier)
+
+	var processed int
+	for _, job := range jobs {
+		jobCopy := job // Create a copy to avoid closure issues
+		g.Go(func() error {
+			// Create job-specific timeout context that inherits from the group context
 			// TODO timeout to conf
-            jobCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
-            defer cancel()
-            
-            // Execute job with proper timeout while still respecting global cancellation
-            err := s.executeJobWithContext(jobCtx, *jobCopy)
-            
-            // Handle job completion status
-            switch {
-            case err == nil:
-                slog.Info("⏰scheduler: job completed successfully",
-                    "jobID", jobCopy.ID,
-                    "jobType", jobCopy.JobType)
-                if updateErr := s.db.MarkCompleted(jobCopy.ID); updateErr != nil {
-                    slog.Error("⏰scheduler: failed to mark job as completed", 
-                        "jobID", jobCopy.ID, 
-                        "error", updateErr)
-                }
-                processed++
+			jobCtx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+			defer cancel()
 
-            case errors.Is(err, context.DeadlineExceeded):
-                msg := "job execution timed out"
-                slog.Warn("⏰scheduler: job timeout",
-                    "jobID", jobCopy.ID,
-                    "jobType", jobCopy.JobType,
-                    "error", err)
-                if updateErr := s.db.MarkFailed(jobCopy.ID, msg); updateErr != nil {
-                    slog.Error("⏰scheduler: failed to mark job as timed out", 
-                        "jobID", jobCopy.ID, 
-                        "error", updateErr)
-                }
+			// Execute job with proper timeout while still respecting global cancellation
+			err := s.executeJobWithContext(jobCtx, *jobCopy)
 
-            case errors.Is(err, context.Canceled):
-                msg := "job execution canceled"
-                slog.Info("⏰scheduler: job canceled",
-                    "jobID", jobCopy.ID,
-                    "jobType", jobCopy.JobType,
-                    "error", err)
-                if updateErr := s.db.MarkFailed(jobCopy.ID, msg); updateErr != nil {
-                    slog.Error("⏰scheduler: failed to mark job as interrupted", 
-                        "jobID", jobCopy.ID, 
-                        "error", updateErr)
-                }
+			// Handle job completion status
+			switch {
+			case err == nil:
+				slog.Info("⏰scheduler: job completed successfully",
+					"jobID", jobCopy.ID,
+					"jobType", jobCopy.JobType)
+				if updateErr := s.db.MarkCompleted(jobCopy.ID); updateErr != nil {
+					slog.Error("⏰scheduler: failed to mark job as completed",
+						"jobID", jobCopy.ID,
+						"error", updateErr)
+				}
+				processed++
 
-            default:
-                slog.Error("⏰scheduler: job execution failed",
-                    "jobID", jobCopy.ID,
-                    "jobType", jobCopy.JobType,
-                    "error", err)
-                if updateErr := s.db.MarkFailed(jobCopy.ID, err.Error()); updateErr != nil {
-                    slog.Error("⏰scheduler: failed to mark job as failed", 
-                        "jobID", jobCopy.ID, 
-                        "error", updateErr)
-                }
-            }
-            
-            return err
-        })
-    }
-    
-    // Wait for all jobs in this batch to complete or for the parent context to be canceled
+			case errors.Is(err, context.DeadlineExceeded):
+				msg := "job execution timed out"
+				slog.Warn("⏰scheduler: job timeout",
+					"jobID", jobCopy.ID,
+					"jobType", jobCopy.JobType,
+					"error", err)
+				if updateErr := s.db.MarkFailed(jobCopy.ID, msg); updateErr != nil {
+					slog.Error("⏰scheduler: failed to mark job as timed out",
+						"jobID", jobCopy.ID,
+						"error", updateErr)
+				}
+
+			case errors.Is(err, context.Canceled):
+				msg := "job execution canceled"
+				slog.Info("⏰scheduler: job canceled",
+					"jobID", jobCopy.ID,
+					"jobType", jobCopy.JobType,
+					"error", err)
+				if updateErr := s.db.MarkFailed(jobCopy.ID, msg); updateErr != nil {
+					slog.Error("⏰scheduler: failed to mark job as interrupted",
+						"jobID", jobCopy.ID,
+						"error", updateErr)
+				}
+
+			default:
+				slog.Error("⏰scheduler: job execution failed",
+					"jobID", jobCopy.ID,
+					"jobType", jobCopy.JobType,
+					"error", err)
+				if updateErr := s.db.MarkFailed(jobCopy.ID, err.Error()); updateErr != nil {
+					slog.Error("⏰scheduler: failed to mark job as failed",
+						"jobID", jobCopy.ID,
+						"error", updateErr)
+				}
+			}
+
+			return err
+		})
+	}
+
+	// Wait for all jobs in this batch to complete or for the parent context to be canceled
 	// returns the first error that was encountered, or nil if none occurred.
-    if err := g.Wait(); err != nil {
-        if errors.Is(err, context.Canceled) {
-            slog.Info("⏰scheduler: job batch interrupted due to shutdown")
-        } else {
-            slog.Error("⏰scheduler: received one or more tick errors. First:", "err", err)
-        }
-    }
+	if err := g.Wait(); err != nil {
+		if errors.Is(err, context.Canceled) {
+			slog.Info("⏰scheduler: job batch interrupted due to shutdown")
+		} else {
+			slog.Error("⏰scheduler: received one or more tick errors. First:", "err", err)
+		}
+	}
 
-    if len(jobs) > 0 {
-        slog.Info("⏰scheduler: finished processing claimed jobs", "success", processed, "total", len(jobs))
-    }
+	if len(jobs) > 0 {
+		slog.Info("⏰scheduler: finished processing claimed jobs", "success", processed, "total", len(jobs))
+	}
 }
 
 func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) error {
-    // Initial context check
-    if ctx.Err() != nil {
-        return ctx.Err()
-    }
+	// Initial context check
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 
-    // Log job starting
-    slog.Info("⏰scheduler: calling executor", "job_id", job.ID, "job_type", job.JobType, "attempt", job.Attempts)
-    
-    // Use the executor to handle the job
-    return s.executor.Execute(ctx, job)
+	// Log job starting
+	slog.Info("⏰scheduler: calling executor", "job_id", job.ID, "job_type", job.JobType, "attempt", job.Attempts)
+
+	// Use the executor to handle the job
+	return s.executor.Execute(ctx, job)
 }
 
 // the key is to use context aware packages for db, etc. and periodically check

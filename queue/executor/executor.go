@@ -48,4 +48,3 @@ func (e *DefaultExecutor) Execute(ctx context.Context, job queue.Job) error {
 
 	return handler.Handle(ctx, job)
 }
-

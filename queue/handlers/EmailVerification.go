@@ -63,7 +63,7 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	if err != nil {
 		return fmt.Errorf("failed to create verification token: %w", err)
 	}
-	
+
 	// Construct callback URL using server's base URL and HTML verification page
 	callbackURL := fmt.Sprintf("%s/verify-email.html?token=%s", h.config.Server.BaseURL(), token)
 
@@ -75,4 +75,3 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	slog.Info("Successfully sent verification email", "email", user.Email)
 	return nil
 }
-
