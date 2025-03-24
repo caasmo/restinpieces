@@ -110,21 +110,25 @@ class Restinpieces {
      * @param {string} [path] - Optional path to append
      * @return {string} The combined URL
      */
-    buildUrl(baseUrl, path) {
+function buildUrl(baseUrl, path) {
+  // Handle empty baseUrl - use current directory
         if (baseUrl === "") {
             const pathParts = window.location.pathname.split('/');
-            pathParts.pop();
+    pathParts.pop(); // Remove the last part (file or empty string)
             baseUrl = pathParts.join('/') + '/';
         }
         
+  // Create full URL, handling relative URLs
         let url;
         if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
+    // For relative URLs, use the URL constructor with current location as base
             const base = baseUrl.startsWith("/") ? window.location.origin : window.location.href;
             url = new URL(baseUrl, base).href;
         } else {
             url = baseUrl;
         }
         
+  // Add path if provided
         if (path) {
             url = url + (url.endsWith("/") ? "" : "/") + (path.startsWith("/") ? path.substring(1) : path);
         }
