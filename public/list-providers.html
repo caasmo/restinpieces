@@ -36,8 +36,8 @@
             resultDiv.textContent = "Loading...";
             resultDiv.classList.remove("error"); // Remove any previous error class
 
-            const client = new Restinpieces("http://localhost:8080");
-            client.requestJson("/api/list-oauth2-providers")
+            const rp = new Restinpieces("http://localhost:8080");
+            rp.requestJson("/api/list-oauth2-providers")
             .then(data => {
                 // Stringify the JSON with indentation for readability
                 resultDiv.textContent = JSON.stringify(data, null, 2);

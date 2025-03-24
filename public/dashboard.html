@@ -119,7 +119,7 @@
             // Save current token as previous token
             document.getElementById('previous-token').textContent = currentToken;
 
-            client.requestJsonAuth("/api/auth-refresh", "POST")
+            rp.requestJsonAuth("/api/auth-refresh", "POST")
             .then(data => {
                 if (data.access_token) {
                     // Save new token
