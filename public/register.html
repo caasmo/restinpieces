@@ -148,8 +148,6 @@
                 messageDiv.textContent = 'Registering...';
                 messageDiv.classList.remove('error');
 
-                const rp = new Restinpieces("http://localhost:8080");
-
             document.getElementById('registerForm').addEventListener('submit', handleRegisterSubmit);
             
             rp.requestJson(
