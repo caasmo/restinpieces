@@ -158,7 +158,7 @@ func NewEndpointsData(config *EndpointsConfig) *endpointsData {
 			"register_with_password": config.RegisterWithPassword,
 			"list_oauth2_providers": config.ListOAuth2Providers,
 			"confirm_verification":  config.ConfirmVerification,
-		}
+		},
 	}
 }
 
