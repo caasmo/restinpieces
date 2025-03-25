@@ -39,8 +39,7 @@
     <h1>Request Email Verification</h1>
     <div id="message" class="message loading">Loading user information...</div>
     <div id="form" class="hidden">
-        <p>Click the button below to request a new verification email:</p>
-        <button id="verifyButton" class="button">Send Verification Email</button>
+        <button id="verifyButton" class="button">Resend Verification Email</button>
     </div>
     <div id="actions" class="hidden">
         <a href="/dashboard.html" class="button">Dashboard</a>
@@ -66,7 +65,6 @@
             }
 
             // Show form
-            messageDiv.textContent = 'Ready to request verification email';
             formDiv.classList.remove('hidden');
 
             // Handle verification request
