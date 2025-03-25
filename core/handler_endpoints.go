@@ -6,7 +6,6 @@ import (
 )
 
 func (a *App) AllEndpointsHandler(w http.ResponseWriter, r *http.Request) {
-	slog.Info("user authenticated, showing all endpoints")
 	writeJsonWithData(w, JsonWithData{
 		JsonBasic: JsonBasic{
 			Status:  http.StatusOK,
@@ -18,7 +17,6 @@ func (a *App) AllEndpointsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) PublicEndpointsHandler(w http.ResponseWriter, r *http.Request) {
-	slog.Info("showing public endpoints only")
 	writeJsonWithData(w, JsonWithData{
 		JsonBasic: JsonBasic{
 			Status:  http.StatusOK,
