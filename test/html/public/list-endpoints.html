@@ -11,25 +11,13 @@
             margin: 0 auto;
             padding: 20px;
         }
-        pre {
-            background: white;
-            padding: 15px;
-            border-radius: 4px;
-            overflow: auto;
-            max-height: 300px;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
         button {
             padding: 10px 20px;
-            margin: 0 5px;
             background-color: #2196f3;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            height: 40px;
-            min-width: 120px;
         }
         button:hover {
             opacity: 0.9;
@@ -40,21 +28,35 @@
             padding: 10px;
             border-radius: 4px;
             margin-top: 20px;
-            display: none;
         }
-        .error:not(:empty) {
-            display: block;
+        .endpoint-list {
+            list-style: none;
+            padding: 0;
         }
+        .endpoint-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .method {
+            display: inline-block;
+            width: 60px;
+            font-weight: bold;
+        }
+        .get { color: #61affe; }
+        .post { color: #49cc90; }
+        .put { color: #fca130; }
+        .delete { color: #f93e3e; }
+        .patch { color: #50e3c2; }
     </style>
 </head>
 <body>
     <h1>API Endpoints</h1>
-
     <button id="get-endpoints-btn">Get Endpoints</button>
-
     <div id="result-container" style="display: none;">
         <h2>Available Endpoints</h2>
-        <div id="result"></div>
+        <ul id="result" class="endpoint-list"></ul>
     </div>
     <div id="error" class="error"></div>
 
@@ -62,13 +64,6 @@
         import Restinpieces from './assets/js/restinpieces.js';
         
         const rp = new Restinpieces("http://localhost:8080");
-
-        function formatEndpoint(endpoint) {
-            const methodMatch = endpoint.match(/^(GET|POST|PUT|DELETE|PATCH)\s+/);
-            const method = methodMatch ? methodMatch[1] : '';
-            const path = endpoint.replace(/^GET|POST|PUT|DELETE|PATCH /, '').trim();
-            return { method, path };
-        }
 
         function getEndpoints() {
             const resultContainer = document.getElementById('result-container');
@@ -84,58 +79,26 @@
                 errorDiv.textContent = '';
                 
                 if (data.data) {
-                    let html = '<ul style="list-style: none; padding: 0; margin: 0;">';
-                    if (Array.isArray(data.data)) {
-                        data.data.forEach(endpoint => {
-                            const { method, path } = formatEndpoint(endpoint);
-                            html += `
-                                <li style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                                    <span style="display: inline-block; width: 60px; font-weight: bold; color: ${getMethodColor(method)}">${method}</span>
-                                    <span>${path}</span>
-                                </li>`;
-                        });
-                    } else {
-                        for (const [key, value] of Object.entries(data.data)) {
-                            const { method, path } = formatEndpoint(value);
-                            html += `
-                                <li style="margin-bottom: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px;">
-                                    <span style="font-weight: bold; margin-right: 10px;">${key}:</span>
-                                    <span style="display: inline-block; width: 60px; font-weight: bold; color: ${getMethodColor(method)}">${method}</span>
-                                    <span>${path}</span>
-                                </li>`;
-                        }
+                    let html = '';
+                    for (const [key, value] of Object.entries(data.data)) {
+                        const method = value.split(' ')[0].toLowerCase();
+                        const path = value.replace(/^GET|POST|PUT|DELETE|PATCH /, '').trim();
+                        html += `
+                            <li class="endpoint-item">
+                                <span class="method ${method}">${method.toUpperCase()}</span>
+                                <span>${path}</span>
+                            </li>`;
                     }
-                    html += '</ul>';
                     resultDiv.innerHTML = html;
                     resultContainer.style.display = 'block';
                 }
-            });
-
-            function getMethodColor(method) {
-                switch(method) {
-                    case 'GET': return '#61affe';
-                    case 'POST': return '#49cc90';
-                    case 'PUT': return '#fca130';
-                    case 'DELETE': return '#f93e3e';
-                    case 'PATCH': return '#50e3c2';
-                    default: return '#333';
-                }
-            }
             })
             .catch(error => {
-                let errorText = "Error: " + error.message;
-                if (error.status) {
-                    errorText += ` (Status: ${error.status})`;
-                }
-                if (error.response?.message) {
-                    errorText += ` - ${error.response.message}`;
-                }
-                errorDiv.textContent = errorText;
+                errorDiv.textContent = `Error: ${error.message}`;
                 console.error(error);
             });
         }
 
-        // Attach event listener to button
         document.getElementById('get-endpoints-btn').addEventListener('click', getEndpoints);
     </script>
 </body>
