@@ -7,57 +7,108 @@
     <style>
         body {
             font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .info-section {
+            margin-bottom: 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            height: fit-content;
+        }
+        
+        .refresh-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 4px;
         }
         pre {
-            background-color: #f0f0f0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            overflow: auto; /* Make scrollable if content is large */
-            white-space: pre-wrap; /* Wrap long lines */
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
+            overflow: auto;
+            max-height: 300px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            height: 40px;
+            min-width: 120px;
+        }
+        button:hover {
+            opacity: 0.9;
         }
         .error {
-            color: red;
+            color: #c62828;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+        .error:not(:empty) {
+            display: block;
         }
     </style>
 </head>
 <body>
     <h1>OAuth2 Providers</h1>
 
-    <button id="get-providers-btn">Get Providers</button>
+    <div class="info-section">
+        <button id="get-providers-btn">Get Providers</button>
+        <div id="error" class="error"></div>
+    </div>
 
-    <h2>Result:</h2>
-    <pre id="result"></pre>
+    <div class="info-section">
+        <h2>Providers List</h2>
+        <pre id="result"></pre>
+    </div>
 
     <script type="module">
         import Restinpieces from './assets/js/restinpieces.js';
         
         function getProviders() {
             const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            
             resultDiv.textContent = "Loading...";
-            resultDiv.classList.remove("error"); // Remove any previous error class
+            errorDiv.textContent = '';
 
             const rp = new Restinpieces("http://localhost:8080");
             rp.requestJson("/api/list-oauth2-providers")
             .then(data => {
-                // Stringify the JSON with indentation for readability
                 resultDiv.textContent = JSON.stringify(data, null, 2);
             })
             .catch(error => {
-                resultDiv.classList.add("error"); // Add error class for styling
                 let errorText = "Error: " + error.message + "\n";
                 errorText += "Status: " + error.status + "\n";
                 if (error.response) {
                     errorText += "Response:\n" + JSON.stringify(error.response, null, 2);
                 }
                 if (error.url){
-                    errorText += "\nURL: " + error.url
+                    errorText += "\nURL: " + error.url;
                 }
-                resultDiv.textContent = errorText;
+                errorDiv.textContent = errorText;
+                resultDiv.textContent = '';
                 console.error(error);
             });
         }
 
-        // Attach event listener to button
         document.getElementById('get-providers-btn').addEventListener('click', getProviders);
     </script>
 </body>
