@@ -148,15 +148,15 @@ var (
 	//okDataListEndpointsWithAuth jsonResponse
 )
 
-func precomputeEnspointWithoutAuth(config *EndpointsConfig) jsonResponse {
+func precomputeEnspointWithoutAuth(cfg *config.Config) jsonResponse {
 	endpoints := map[string]string{
-		"auth_refresh":          config.AuthRefresh,
-		"auth_with_password":    config.AuthWithPassword,
-		"auth_with_oauth2":      config.AuthWithOAuth2,
-		"request_verification":  config.RequestVerification,
-		"register_with_password": config.RegisterWithPassword,
-		"list_oauth2_providers": config.ListOAuth2Providers,
-		"confirm_verification":  config.ConfirmVerification,
+		"auth_refresh":          cfg.Endpoints.AuthRefresh,
+		"auth_with_password":    cfg.Endpoints.AuthWithPassword,
+		"auth_with_oauth2":      cfg.Endpoints.AuthWithOAuth2,
+		"request_verification":  cfg.Endpoints.RequestVerification,
+		"register_with_password": cfg.Endpoints.RegisterWithPassword,
+		"list_oauth2_providers": cfg.Endpoints.ListOAuth2Providers,
+		"confirm_verification":  cfg.Endpoints.ConfirmVerification,
 	}
 	return precomputeWithDataResponse(
 		http.StatusOK,
