@@ -57,7 +57,14 @@
 </head>
 <body>
     <h1>API Endpoints</h1>
+
+    <div id="stored-container" style="margin-bottom: 20px;">
+        <h2>Stored Endpoints:</h2>
+        <ul id="stored-endpoints" class="endpoint-list"></ul>
+    </div>
+
     <button id="get-endpoints-btn">Get Endpoints</button>
+    <button id="clear-endpoints-btn" style="background-color: #f44336; margin-left: 10px;">Clear Storage</button>
     <div id="result-container" style="display: none;">
         <ul id="result" class="endpoint-list"></ul>
     </div>
@@ -67,6 +74,34 @@
         import Restinpieces from './assets/js/restinpieces.js';
         
         const rp = new Restinpieces("http://localhost:8080");
+
+        function showStoredEndpoints() {
+            const stored = rp.store.endpoints.load();
+            const container = document.getElementById('stored-container');
+            const list = document.getElementById('stored-endpoints');
+            
+            list.innerHTML = '';
+            container.style.display = stored ? 'block' : 'none';
+            
+            if (stored) {
+                let html = '';
+                for (const [key, value] of Object.entries(stored)) {
+                    const method = value.split(' ')[0].toLowerCase();
+                    const path = value.replace(/^GET|POST|PUT|DELETE|PATCH /, '').trim();
+                    html += `
+                        <li class="endpoint-item">
+                            <span class="method ${method}">${method.toUpperCase()}</span>
+                            <span>${path}</span>
+                        </li>`;
+                }
+                list.innerHTML = html;
+            }
+        }
+
+        function clearEndpoints() {
+            rp.store.endpoints.save(null);
+            showStoredEndpoints();
+        }
 
         function getEndpoints() {
             const resultContainer = document.getElementById('result-container');
@@ -82,6 +117,8 @@
                 errorDiv.textContent = '';
                 
                 if (data.data) {
+                    rp.store.endpoints.save(data.data);
+                    showStoredEndpoints();
                     let html = '';
                     for (const [key, value] of Object.entries(data.data)) {
                         const method = value.split(' ')[0].toLowerCase();
@@ -102,7 +139,12 @@
             });
         }
 
+        // Initial load
+        showStoredEndpoints();
+        
+        // Event listeners
         document.getElementById('get-endpoints-btn').addEventListener('click', getEndpoints);
+        document.getElementById('clear-endpoints-btn').addEventListener('click', clearEndpoints);
     </script>
 </body>
 </html>
