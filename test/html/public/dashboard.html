@@ -142,6 +142,12 @@
                         document.getElementById('current-token').textContent = response.data.access_token;
                         // Update previous token for next refresh
                         document.getElementById('previous-token').textContent = currentToken;
+                        // Update user info with any new data from refresh
+                        const updatedUserInfo = {
+                            ...userInfo,
+                            ...(response.data.record || {})
+                        };
+                        document.getElementById('user-info').textContent = JSON.stringify(updatedUserInfo, null, 2);
                     } else {
                         throw new Error('No access token in response');
                     }
