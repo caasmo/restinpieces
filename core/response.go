@@ -148,6 +148,23 @@ var (
 	okDataListEndpointsWithAuth = precomputeWithDataResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
 )
 
+func NewEndpointsData(config *EndpointsConfig) *endpointsData {
+	return &endpointsData{
+		Endpoints: map[string]string{
+			"auth_refresh":          config.AuthRefresh,
+			"auth_with_password":    config.AuthWithPassword,
+			"auth_with_oauth2":      config.AuthWithOAuth2,
+			"request_verification":  config.RequestVerification,
+			"register_with_password": config.RegisterWithPassword,
+			"list_oauth2_providers": config.ListOAuth2Providers,
+			"confirm_verification":  config.ConfirmVerification,
+			"list_endpoints":        "GET /api/list-endpoints",
+		},
+		Version: "1.0",
+		Status:  "active",
+	}
+}
+
 // For successful precomputed responses
 func writeJsonOk(w http.ResponseWriter, resp jsonResponse) {
 	w.WriteHeader(resp.status)
@@ -183,6 +200,13 @@ type AuthData struct {
 	AccessToken string     `json:"access_token"`
 	ExpiresIn   int        `json:"expires_in"`
 	Record      AuthRecord `json:"record"`
+}
+
+// endpointsData represents the API endpoints information
+type endpointsData struct {
+	Endpoints map[string]string `json:"endpoints"`
+	Version   string            `json:"version"`
+	Status    string            `json:"status"`
 }
 
 // NewAuthData creates a new AuthData instance
