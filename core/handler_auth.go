@@ -122,7 +122,8 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 //
 // todo already verified.
-// TODO do we need this endpoint? scheduler 
+// TODO do we need this endpoint? register endpoint already makes a job to send email
+// Yes: for the: if you do not have received email, click here, can be a simple botton
 // goroutine generates token
 // RequestVerificationHandler handles email verification requests
 // Endpoint: POST /request-verification
