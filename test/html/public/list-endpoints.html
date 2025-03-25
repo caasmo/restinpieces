@@ -38,10 +38,13 @@
             padding: 0;
         }
         .endpoint-item {
-            margin-bottom: 10px;
-            padding: 10px;
+            margin-bottom: 8px;
+            padding: 8px 12px;
             background: #f8f9fa;
             border-radius: 4px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
         .method {
             display: inline-block;
@@ -58,18 +61,17 @@
 <body>
     <h1>API Endpoints</h1>
 
-    <div id="auth-status" style="margin-bottom: 20px; padding: 10px; border-radius: 4px;">
-        <h2>Authentication Status:</h2>
-        <p id="auth-text">Checking...</p>
-        <div id="auth-actions" style="margin-top: 10px;"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div id="auth-status" style="display: flex; align-items: center; gap: 10px;">
+            <span id="auth-text">Checking auth status...</span>
+            <div id="auth-actions" style="display: flex; gap: 10px;"></div>
+        </div>
+        <button id="get-endpoints-btn">Refresh Endpoints</button>
     </div>
 
-    <div id="stored-container" style="margin-bottom: 20px; display: none;">
-        <h2>Stored Endpoints:</h2>
+    <div id="stored-container">
         <ul id="stored-endpoints" class="endpoint-list"></ul>
     </div>
-
-    <button id="get-endpoints-btn" style="display: none;">Get Endpoints</button>
     <div id="result-container" style="display: none;">
         <ul id="result" class="endpoint-list"></ul>
     </div>
@@ -142,27 +144,16 @@
         function checkAuthStatus() {
             const authText = document.getElementById('auth-text');
             const authActions = document.getElementById('auth-actions');
-            const getBtn = document.getElementById('get-endpoints-btn');
-            const authStatus = document.getElementById('auth-status');
 
             if (rp.store.auth.isValid()) {
-                authText.textContent = "✅ You are authenticated";
-                authStatus.style.backgroundColor = '#e8f5e9';
-                getBtn.style.display = 'inline-block';
+                authText.textContent = "✅ Authenticated";
+                authActions.innerHTML = '';
                 showStoredEndpoints();
             } else {
-                authText.textContent = "❌ You are not authenticated";
-                authStatus.style.backgroundColor = '#ffebee';
-                
+                authText.textContent = "❌ Not authenticated";
                 authActions.innerHTML = `
-                    <button onclick="window.location.href='/login.html'" 
-                            style="background-color: #2196f3; margin-right: 10px;">
-                        Login
-                    </button>
-                    <button onclick="window.location.href='/register.html'" 
-                            style="background-color: #4caf50;">
-                        Register
-                    </button>`;
+                    <button onclick="window.location.href='/login.html'">Login</button>
+                    <button onclick="window.location.href='/register.html'">Register</button>`;
             }
         }
 
