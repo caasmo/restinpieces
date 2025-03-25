@@ -5,5 +5,15 @@ import (
 )
 
 func (a *App) ListEndpointsHandler(w http.ResponseWriter, r *http.Request) {
-	writeJsonError(w, errorNotFound)
+	// Check if user is authenticated via context
+	_, isAuthed := r.Context().Value(UserIDKey).(string)
+
+	// If authenticated, return full endpoints list
+	if isAuthed {
+		writeJsonWithData(w, okDataListEndpointsWithoutAuth)
+		return
+	}
+
+	// If not authenticated, return limited endpoints list
+	writeJsonWithData(w, okDataListEndpointsWithAuth)
 }
