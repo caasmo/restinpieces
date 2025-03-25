@@ -59,11 +59,17 @@
     </style>
 </head>
 <body>
-    <h1>API Endpoints</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h1>API Endpoints</h1>
+        <div style="display: flex; gap: 15px;">
+            <a href="/login.html" style="text-decoration: none; color: #2196f3;">Login</a>
+            <a href="/dashboard.html" style="text-decoration: none; color: #2196f3;">Dashboard</a>
+            <a href="/logout.html" style="text-decoration: none; color: #f44336;">Logout</a>
+        </div>
+    </div>
 
     <div id="auth-status" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
         <span id="auth-text">Checking auth status...</span>
-        <div id="auth-actions" style="display: flex; gap: 10px;"></div>
     </div>
 
     <button id="get-endpoints-btn" style="margin-bottom: 20px;">Refresh Endpoints</button>
