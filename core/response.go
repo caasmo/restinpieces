@@ -121,7 +121,7 @@ var (
 	okVerificationRequested = precomputeResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
 )
 
-// For successful short responses
+// For successful precomputed responses
 func writeJsonOk(w http.ResponseWriter, resp jsonResponse) {
 	w.WriteHeader(resp.status)
     setHeaders(w, apiJsonDefaultHeaders)
