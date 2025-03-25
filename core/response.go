@@ -46,8 +46,6 @@ const (
 	CodeOkOAuth2ProvidersList         = "ok_oauth2_providers_list" // Success code for OAuth2 providers list
 	CodeOkVerificationRequested       = "ok_verification_requested" // Success code for email verification request
 
-
-
     //errors
 	CodeErrorTokenGeneration                = "err_token_generation"
 	CodeErrorClaimsNotFound                 = "err_claims_not_found"
