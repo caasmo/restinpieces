@@ -182,9 +182,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	fmt.Fprint(w, `{"message":"email will be sent soon. Check your mailbox"}`)
+	writeJsonOk(w, okVerificationRequested)
 }
 
 // confirm-

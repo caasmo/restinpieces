@@ -176,6 +176,7 @@ var (
 	// oks
 	okAlreadyVerified = precomputeResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
 	okEmailVerified   = precomputeResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
+	okVerificationRequested = precomputeResponse(http.StatusAccepted, "ok_verification_requested", "Verification email will be sent soon. Check your mailbox")
 )
 
 // For successful short responses
