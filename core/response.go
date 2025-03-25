@@ -4,7 +4,13 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/caasmo/restinpieces/db"
+)
+
+const (
+    // oks for non precomputed, dynamic responses
+    // no precomputed
+	CodeOkAuthentication              = "ok_authentication" // Standard success code for auth
+	CodeOkOAuth2ProvidersList         = "ok_oauth2_providers_list" // Success code for OAuth2 providers list
 )
 
 type jsonResponse struct {
@@ -26,17 +32,16 @@ type JsonWithData struct {
 }
 
 // NewJsonWithData creates a new JsonWithData instance
-func NewJsonWithData(status int, code, message string, data interface{}) *JsonWithData {
-	return &JsonWithData{
-		JsonBasic: JsonBasic{
-			Status:  status,
-			Code:    code,
-			Message: message,
-		},
-		Data: data,
-	}
-}
-
+//func NewJsonWithData(status int, code, message string, data interface{}) *JsonWithData {
+//	return &JsonWithData{
+//		JsonBasic: JsonBasic{
+//			Status:  status,
+//			Code:    code,
+//			Message: message,
+//		},
+//		Data: data,
+//	}
+//}
 
 // writeJsonWithData writes a structured JSON response with the provided data
 func writeJsonWithData(w http.ResponseWriter, resp JsonWithData) {
