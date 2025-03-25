@@ -6,6 +6,9 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
+
+//auth response. Separated here because is the response not of one, but many handlers
+
 // AuthRecord represents the user record in authentication responses
 type AuthRecord struct {
 	ID       string `json:"id"`
