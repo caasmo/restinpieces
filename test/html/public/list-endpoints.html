@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Endpoints</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            overflow: auto;
+            white-space: pre-wrap;
+        }
+        .error {
+            color: red;
+        }
+        .auth-section {
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Endpoints</h1>
+
+    <div class="auth-section">
+        <h3>Authentication</h3>
+        <input type="text" id="access-token" placeholder="Enter access token">
+        <button id="save-token">Save Token</button>
+    </div>
+
+    <button id="get-endpoints-btn">Get Endpoints</button>
+
+    <h2>Result:</h2>
+    <pre id="result"></pre>
+
+    <script type="module">
+        import Restinpieces from './assets/js/restinpieces.js';
+        
+        const rp = new Restinpieces("http://localhost:8080");
+
+        // Save token button handler
+        document.getElementById('save-token').addEventListener('click', () => {
+            const token = document.getElementById('access-token').value;
+            if (token) {
+                rp.store.auth.save({ access_token: token });
+                alert('Token saved!');
+            } else {
+                alert('Please enter a token');
+            }
+        });
+
+        function getEndpoints() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = "Loading...";
+            resultDiv.classList.remove("error");
+
+            rp.requestJsonAuth("/api/auth-refresh")
+            .then(data => {
+                // Stringify the JSON with indentation for readability
+                resultDiv.textContent = JSON.stringify(data, null, 2);
+            })
+            .catch(error => {
+                resultDiv.classList.add("error");
+                let errorText = "Error: " + error.message + "\n";
+                errorText += "Status: " + error.status + "\n";
+                if (error.response) {
+                    errorText += "Response:\n" + JSON.stringify(error.response, null, 2);
+                }
+                if (error.url){
+                    errorText += "\nURL: " + error.url;
+                }
+                resultDiv.textContent = errorText;
+                console.error(error);
+            });
+        }
+
+        // Attach event listener to button
+        document.getElementById('get-endpoints-btn').addEventListener('click', getEndpoints);
+    </script>
+</body>
+</html>
