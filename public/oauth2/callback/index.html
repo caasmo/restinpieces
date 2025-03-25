@@ -87,13 +87,12 @@
                 {},
                 authRequest
             )
-            .then(data => {
-                if (data.access_token && data.record) {
-                    rp.store.auth.save(data);
-                    
-                    showSuccess(data.record);
+            .then(response => {
+                if (response.data?.access_token && response.data?.record) {
+                    rp.store.auth.save(response.data);
+                    showSuccess(response.data.record);
                 } else {
-                    throw new Error('No access token in response');
+                    throw new Error('No access token in response data');
                 }
             })
             .catch(error => {
