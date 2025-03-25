@@ -126,13 +126,17 @@ type EndpointsWithAuth struct {
 	RequestVerification  string `json:"request_verification"`
 }
 
-type Endpoints struct {
-	EndpointsWithAuth
-	AuthWithPassword string `json:"auth_with_password"` 
+type EndpointsWithoutAuth struct {
+	AuthWithPassword     string `json:"auth_with_password"`
 	AuthWithOAuth2       string `json:"auth_with_oauth2"`
 	RegisterWithPassword string `json:"register_with_password"`
 	ListOAuth2Providers  string `json:"list_oauth2_providers"`
 	ConfirmVerification  string `json:"confirm_verification"`
+}
+
+type Endpoints struct {
+	EndpointsWithAuth
+	EndpointsWithoutAuth
 }
 
 // DefaultEndpoints returns the standard endpoint paths
