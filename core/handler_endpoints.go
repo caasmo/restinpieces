@@ -2,7 +2,6 @@ package core
 
 import (
 	"net/http"
-	"log/slog"
 )
 
 func (a *App) AllEndpointsHandler(w http.ResponseWriter, r *http.Request) {
