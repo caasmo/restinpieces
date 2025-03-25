@@ -65,10 +65,10 @@
                 { token }
             )
             .then(response => {
-                if (!response.data) {
-                    throw new Error('Invalid verification response: missing data');
+                if (!response.message) {
+                    throw new Error('Invalid verification response: missing message');
                 }
-                showSuccess('Email successfully verified!');
+                showSuccess(response.message);
             })
             .catch(error => {
                 console.error('Verification failed:', error);
