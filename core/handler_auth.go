@@ -48,7 +48,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil || user == nil {
 		slog.Error("Failed to fetch user", "user_id", userId, "error", err)
 		writeJsonError(w, errorInvalidCredentials)
-		return
+		n
 	}
 
 	// Generate new token with fresh expiration using NewJwtSession
@@ -122,6 +122,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 //
 // todo already verified.
+// TODO do we need this endpoint? scheduler 
 // goroutine generates token
 // RequestVerificationHandler handles email verification requests
 // Endpoint: POST /request-verification
@@ -376,17 +377,3 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// Return standardized authentication response
 	writeAuthResponse(w, token, int(a.config.Jwt.AuthTokenDuration.Seconds()), retrievedUser)
 }
-
-// /request-verification endpoint
-
-// r1
-//
-// HTTP Status Codes:
-//
-//  • 202 Accepted (Primary success response - indicates request accepted for processing)
-//  • 400 Bad Request (Invalid/missing email format)
-//  • 404 Not Found (Email not found in system - if you want to reveal existence)
-//  • 429 Too Many Requests (Rate limiting)
-//  • 500 Internal Server Error (Unexpected backend failures)
-//  • 503 Service Unavailable (If email queue is overloaded)
-//
