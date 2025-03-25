@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	r "github.com/caasmo/restinpieces/router"
 	"net/http"
