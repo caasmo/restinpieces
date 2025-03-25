@@ -36,11 +36,11 @@ export class RestinpiecesLocalStore {
     }
 
     // Public methods for 'provider'
-    static retrieveProvider() {
+    static loadProvider() {
         return this.#get('provider');
     }
 
-    static storeProvider(value) {
+    static saveProvider(value) {
         this.#set('provider', value);
     }
 

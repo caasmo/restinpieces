@@ -17,8 +17,8 @@ class Restinpieces {
                 load: () => this.lstore.loadAuth(),
             },
             provider: {
-                save: (data) => this.lstore.storeProvider(data),
-                load: () => this.lstore.retrieveProvider(),
+                save: (data) => this.lstore.saveProvider(data),
+                load: () => this.lstore.loadProvider(),
             },
             endpoints: {
                 save: (data) => this.lstore.saveEndpoints(data),
