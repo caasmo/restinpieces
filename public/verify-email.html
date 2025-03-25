@@ -45,7 +45,6 @@
 
     <script type="module">
         import Restinpieces from '/assets/js/restinpieces.js';
-        import { LocalStorage } from '/assets/js/local-storage.js';
 
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -65,10 +64,14 @@
                 {},
                 { token }
             )
-            .then(data => {
-                LocalStorage.saveAccessToken(data.access_token);
-                LocalStorage.saveUserRecord(data.record);
-                showSuccess('Email successfully verified!');
+            .then(response => {
+                if (response.data?.access_token && response.data?.record) {
+                    const rp = new Restinpieces("http://localhost:8080");
+                    rp.store.auth.save(response.data);
+                    showSuccess('Email successfully verified!');
+                } else {
+                    throw new Error('Invalid verification response');
+                }
             })
             .catch(error => {
                 console.error('Verification failed:', error);
