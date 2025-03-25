@@ -1,5 +1,7 @@
 ### TODOs
 
+- js sdk, fasade for endpoints refreshAuth, look up local storage, if not made call to discovery endpoints.
+    - with map, call the requestJson or requestJsonAuth
 - auth in a fucntion instead of middleware? easy to reason for handlers 
     - auth is too important to let other part two handle invalidation and put something in the request.
     - handler declare it is authenticated endpoint by requirin Authenticate() func
@@ -7,10 +9,12 @@
     - handlers are authenticated or not
     - jwtvalidate middleware, block if invalid
     - AuthenticatedUser() function with nil user and error, (user , error)
+- simple dist bundle for js, maybe FS, make, generate
 - fix harcoded api endpoints 
     - html pages associeted with verify confirm
     - js files, we could do a /list-enpoints
 - implment password reset, email change
+- safe html headers middleware 
 - register with password after oauth2
 - decide about configuration
 - superuser? just ssh?
