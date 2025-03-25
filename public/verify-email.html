@@ -59,14 +59,13 @@
 
             const rp = new Restinpieces("http://localhost:8080");
             rp.requestJson(
-                "/api/confirm-verification",
+                "/api/confirm-verification", 
                 "POST",
                 {},
                 { token }
             )
             .then(response => {
                 if (response.data?.access_token && response.data?.record) {
-                    const rp = new Restinpieces("http://localhost:8080");
                     rp.store.auth.save(response.data);
                     showSuccess('Email successfully verified!');
                 } else {
