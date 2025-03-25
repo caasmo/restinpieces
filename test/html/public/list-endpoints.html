@@ -113,9 +113,13 @@
             .then(data => {
                 errorDiv.textContent = '';
                 
-                if (data.data) {
-                    rp.store.endpoints.save(data.data);
-                    showEndpoints(data.data);
+                // Handle both direct endpoints object and wrapped response formats
+                const endpoints = data.data || data;
+                if (endpoints) {
+                    rp.store.endpoints.save(endpoints);
+                    showEndpoints(endpoints);
+                } else {
+                    errorDiv.textContent = 'No endpoints data received';
                 }
             })
             .catch(error => {
