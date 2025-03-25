@@ -147,7 +147,7 @@ func DefaultEndpoints() Endpoints {
 		EndpointsWithAuth: EndpointsWithAuth{
 			AuthRefresh:         "POST /api/auth-refresh",
 			RequestVerification: "POST /api/request-verification",
-			AllEndpoints:        "GET /api/list-endpoints",
+			AllEndpoints:        "GET /api/all-endpoints",
 		},
 		EndpointsWithoutAuth: EndpointsWithoutAuth{
 			AuthWithPassword:      "POST /api/auth-with-password",
