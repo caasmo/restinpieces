@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"net/http"
+	"github.com/caasmo/restinpieces/config"
 
 	"github.com/caasmo/restinpieces/db"
 )
