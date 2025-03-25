@@ -149,20 +149,12 @@ var (
 )
 
 func precomputeEnspointWithoutAuth(cfg *config.Config) jsonResponse {
-	endpoints := map[string]string{
-		"auth_refresh":          cfg.Endpoints.AuthRefresh,
-		"auth_with_password":    cfg.Endpoints.AuthWithPassword,
-		"auth_with_oauth2":      cfg.Endpoints.AuthWithOAuth2,
-		"request_verification":  cfg.Endpoints.RequestVerification,
-		"register_with_password": cfg.Endpoints.RegisterWithPassword,
-		"list_oauth2_providers": cfg.Endpoints.ListOAuth2Providers,
-		"confirm_verification":  cfg.Endpoints.ConfirmVerification,
-	}
+
 	return precomputeWithDataResponse(
 		http.StatusOK,
-		"ok_endpoints_list", 
+		"ok_endpoints_list",  // TODO
 		"List of available endpoints",
-		endpoints,
+		cfg.Endpoints,
 	)
 }
 
