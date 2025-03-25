@@ -1,7 +1,8 @@
-package app
+package core
 
 import (
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -47,7 +48,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil || user == nil {
 		slog.Error("Failed to fetch user", "user_id", userId, "error", err)
 		writeJsonError(w, errorInvalidCredentials)
-		return
+		n
 	}
 
 	// Generate new token with fresh expiration using NewJwtSession
