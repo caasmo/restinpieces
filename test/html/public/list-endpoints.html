@@ -131,8 +131,15 @@
             // Show stored endpoints while loading
             showStoredEndpoints();
 
-            rp.requestJsonAuth("/api/list-endpoints")
-            .then(response => {
+            const endpoint = rp.store.auth.isValid() 
+                ? "/api/all-endpoints" 
+                : "/api/public-endpoints";
+            
+            const request = rp.store.auth.isValid()
+                ? rp.requestJsonAuth(endpoint)
+                : rp.requestJson(endpoint);
+
+            request.then(response => {
                 errorDiv.textContent = '';
                 
                 // The endpoints are either in response.data or the response itself
