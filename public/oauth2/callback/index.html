@@ -67,8 +67,8 @@
         document.addEventListener('DOMContentLoaded', () => {
             const messageDiv = document.getElementById('message');
             const params = new URLSearchParams(window.location.search);
-            const provider = JSON.parse(localStorage.getItem("provider"));
             const rp = new Restinpieces("http://localhost:8080");
+            const provider = rp.store.provider.load();
 
             if (!provider) {
                 showError('No provider information found');
@@ -90,8 +90,7 @@
             )
             .then(data => {
                 if (data.access_token && data.record) {
-                    LocalStorage.saveAccessToken(data.access_token);
-                    LocalStorage.saveUserRecord(data.record);
+                    rp.store.auth.save(data);
                     
                     showSuccess(data.record);
                 } else {
