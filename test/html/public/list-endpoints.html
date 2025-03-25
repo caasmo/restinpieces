@@ -116,14 +116,7 @@
                 if (data.data) {
                     rp.store.endpoints.save(data.data);
                     showEndpoints(data.data);
-                        const method = value.split(' ')[0].toLowerCase();
-                        const path = value.replace(/^GET|POST|PUT|DELETE|PATCH /, '').trim();
-                        html += `
-                            <li class="endpoint-item">
-                                <span class="method ${method}">${method.toUpperCase()}</span>
-                                <span>${path}</span>
-                            </li>`;
-                    }
+                }
             })
             .catch(error => {
                 errorDiv.textContent = `Error: ${error.message}`;
