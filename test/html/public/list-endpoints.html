@@ -64,7 +64,6 @@
     </div>
 
     <button id="get-endpoints-btn">Get Endpoints</button>
-    <button id="clear-endpoints-btn" style="background-color: #f44336; margin-left: 10px;">Clear Storage</button>
     <div id="result-container" style="display: none;">
         <ul id="result" class="endpoint-list"></ul>
     </div>
@@ -96,11 +95,6 @@
                 }
                 list.innerHTML = html;
             }
-        }
-
-        function clearEndpoints() {
-            rp.store.endpoints.save(null);
-            showStoredEndpoints();
         }
 
         function getEndpoints() {
@@ -142,9 +136,8 @@
         // Initial load
         showStoredEndpoints();
         
-        // Event listeners
+        // Event listener
         document.getElementById('get-endpoints-btn').addEventListener('click', getEndpoints);
-        document.getElementById('clear-endpoints-btn').addEventListener('click', clearEndpoints);
     </script>
 </body>
 </html>
