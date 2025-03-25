@@ -11,7 +11,7 @@ import (
 
 func route(cfg *config.Config, ap *app.App, cAp *custom.App) {
 	// Serve static files from configured public directory
-	fs := http.FileServer(http.Dir(ap.Config.PublicDir))
+	fs := http.FileServer(http.Dir(cfg.PublicDir))
 	ap.Router().Handle("/", fs)
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
