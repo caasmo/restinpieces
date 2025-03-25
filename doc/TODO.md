@@ -1,6 +1,8 @@
 ### TODOs
 
 - fix harcoded api endpoints 
+    - html pages associeted with verify confirm
+    - js files, we could do a /list-enpoints
 - implment password reset, email change
 - register with password after oauth2
 - decide about configuration
