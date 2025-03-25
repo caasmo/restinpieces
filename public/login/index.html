@@ -175,7 +175,7 @@
                         this.providerList.appendChild(li);
                     });
 
-                    if (providers.length === 0) {
+                    if (response.data.providers.length === 0) {
                         this.providerList.innerHTML = '<li>No OAuth2 providers.</li>';
                     }
                 })
