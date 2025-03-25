@@ -121,9 +121,13 @@ type Smtp struct {
 	UseStartTLS bool   // Use STARTTLS
 }
 
-type EndpointsConfig struct {
-	AuthRefresh          string `json:"auth_refresh"`
-	AuthWithPassword     string `json:"auth_with_password"`
+type EndpointsWithAuth struct {
+	AuthRefresh    string `json:"auth_refresh"`
+	AuthWithPassword string `json:"auth_with_password"` 
+}
+
+type Endpoints struct {
+	EndpointsWithAuth
 	AuthWithOAuth2       string `json:"auth_with_oauth2"`
 	RequestVerification  string `json:"request_verification"`
 	RegisterWithPassword string `json:"register_with_password"`
@@ -132,7 +136,7 @@ type EndpointsConfig struct {
 }
 
 // DefaultEndpoints returns the standard endpoint paths
-func DefaultEndpoints() EndpointsConfig {
+func DefaultEndpoints() Endpoints {
 	return EndpointsConfig{
 		AuthRefresh:          "POST /api/auth-refresh",
 		AuthWithPassword:     "POST /api/auth-with-password",
@@ -152,7 +156,7 @@ type Config struct {
 	OAuth2Providers map[string]OAuth2Provider
 	Smtp            Smtp
 	PublicDir       string // Directory to serve static files from
-	Endpoints       EndpointsConfig
+	Endpoints       Endpoints
 }
 
 const (
