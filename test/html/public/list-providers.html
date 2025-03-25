@@ -75,7 +75,7 @@
     </div>
 
     <div class="info-section">
-        <h2>Providers List</h2>
+        <h2 id="providers-header" style="display: none;">Providers List</h2>
         <pre id="result"></pre>
     </div>
 
@@ -93,6 +93,7 @@
             rp.requestJson("/api/list-oauth2-providers")
             .then(data => {
                 resultDiv.textContent = JSON.stringify(data, null, 2);
+                document.getElementById('providers-header').style.display = 'block';
             })
             .catch(error => {
                 let errorText = "Error: " + error.message + "\n";
