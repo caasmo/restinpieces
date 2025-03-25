@@ -1,13 +1,11 @@
 ### TODOs
 
-- application/json just one
-- move  app package to core, 
-- security headers and litle things that write simple thing to heaaders are functions not middleware
-- create reposnse package with errors, headers.go,  amaybe request
+- fix harcoded api endpoints 
+- implment password reset, email change
+- register with password after oauth2
 - decide about configuration
 - superuser? just ssh?
 - move html to test/html
-- implment password reset, email change
 - nginl changex server fingerprint
 - safe api heders, html headers middleware 
 - endpoints api configurable in conf
@@ -47,6 +45,10 @@
 
 ### done
 
+- application/json just one
+- move  app package to core, 
+- security headers and litle things that write simple thing to heaaders are functions not middleware
+- create reposnse package with errors, headers.go,  amaybe request
 - signal, add baseContext
 - /impl backend job to verification email
     - reads from job_queue 
