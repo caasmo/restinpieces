@@ -68,14 +68,6 @@
                 if (!response.data) {
                     throw new Error('Invalid verification response: missing data');
                 }
-                if (!response.data.access_token) {
-                    throw new Error('Invalid verification response: missing access_token');
-                }
-                if (!response.data.record) {
-                    throw new Error('Invalid verification response: missing user record');
-                }
-                
-                rp.store.auth.save(response.data);
                 showSuccess('Email successfully verified!');
             })
             .catch(error => {
