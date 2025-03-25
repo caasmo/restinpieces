@@ -84,12 +84,8 @@
         
         const rp = new Restinpieces("http://localhost:8080");
 
-        function showStoredEndpoints() {
-            const endpoints = rp.store.endpoints.load();
-            const container = document.getElementById('stored-endpoints-container');
-            const list = document.getElementById('stored-endpoints-list');
-            
-            list.innerHTML = '';
+        function renderEndpoints(endpoints, listElement, containerElement) {
+            listElement.innerHTML = '';
             
             if (endpoints) {
                 let html = '';
@@ -102,35 +98,28 @@
                             <span>${path}</span>
                         </li>`;
                 }
-                list.innerHTML = html;
-                container.style.display = 'block';
+                listElement.innerHTML = html;
+                containerElement.style.display = 'block';
             } else {
-                container.style.display = 'none';
+                containerElement.style.display = 'none';
             }
         }
 
+        function showStoredEndpoints() {
+            const endpoints = rp.store.endpoints.load();
+            renderEndpoints(
+                endpoints,
+                document.getElementById('stored-endpoints-list'),
+                document.getElementById('stored-endpoints-container')
+            );
+        }
+
         function showNewEndpoints(endpoints) {
-            const container = document.getElementById('new-endpoints-container');
-            const list = document.getElementById('new-endpoints-list');
-            
-            list.innerHTML = '';
-            
-            if (endpoints) {
-                let html = '';
-                for (const [key, value] of Object.entries(endpoints)) {
-                    const method = value.split(' ')[0].toLowerCase();
-                    const path = value.replace(/^GET|POST|PUT|DELETE|PATCH /, '').trim();
-                    html += `
-                        <li class="endpoint-item">
-                            <span class="method ${method}">${method.toUpperCase()}</span>
-                            <span>${path}</span>
-                        </li>`;
-                }
-                list.innerHTML = html;
-                container.style.display = 'block';
-            } else {
-                container.style.display = 'none';
-            }
+            renderEndpoints(
+                endpoints,
+                document.getElementById('new-endpoints-list'),
+                document.getElementById('new-endpoints-container')
+            );
         }
 
         function getEndpoints() {
