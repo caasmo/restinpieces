@@ -7,8 +7,7 @@ import (
 )
 
 // This file defines the standardized response formats for authentication-related API endpoints.
-// It ensures consistent response structures that match the OpenAPI specification and make
-// client integration easier.
+// It ensures consistent response structures.
 //
 // Two main response types standardized here:
 // 1. Authentication responses - used for successful login, token refresh, registration
@@ -48,8 +47,6 @@ import (
 //     ]
 //   }
 // }
-
-//auth response. Separated here because is the response of not one, but many handlers
 
 const (
     // oks for non precomputed, dynamic responses
