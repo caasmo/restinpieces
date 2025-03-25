@@ -170,7 +170,7 @@
                         a.textContent = `Login with ${provider.displayName}`;
                         a.href = provider.authURL;
                         a.addEventListener('click', () => {
-                            this.rp.store.provider.save(provider);
+                            this.rp.lstore.storeProvider(provider);
                         });
                         li.appendChild(a);
                         this.providerList.appendChild(li);
