@@ -199,7 +199,7 @@ func Load(dbfile string) (*Config, error) {
 			VerificationEmailTokenDuration: 24 * time.Hour,
 		},
 		DBFile: dbfile,
-		PublicDir: "public", // Default public directory
+		PublicDir: "test/html/public", // Default public directory
 		Scheduler: Scheduler{
 			Interval:              15 * time.Second,
 			MaxJobsPerTick:        10,
