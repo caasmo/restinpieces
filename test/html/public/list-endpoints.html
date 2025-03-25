@@ -131,7 +131,7 @@
             if (rp.store.auth.isValid()) {
                 authText.textContent = "✅ Authenticated";
                 authActions.innerHTML = '';
-                showStoredEndpoints();
+                showEndpoints(rp.store.endpoints.load());
             } else {
                 authText.textContent = "❌ Not authenticated";
                 authActions.innerHTML = `
