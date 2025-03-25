@@ -6,8 +6,13 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
+//auth response. Separated here because is the response of not one, but many handlers
 
-//auth response. Separated here because is the response not of one, but many handlers
+const (
+    // oks for non precomputed, dynamic responses
+	CodeOkAuthentication              = "ok_authentication" // Standard success code for auth
+	CodeOkOAuth2ProvidersList         = "ok_oauth2_providers_list" // Success code for OAuth2 providers list
+)
 
 // AuthRecord represents the user record in authentication responses
 type AuthRecord struct {
