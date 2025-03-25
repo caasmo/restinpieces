@@ -9,7 +9,7 @@ import (
 	"github.com/caasmo/restinpieces/custom"
 )
 
-func route(ap *app.App, cAp *custom.App) {
+func route(cfg *config.Config, ap *app.App, cAp *custom.App) {
 	// Serve static files from configured public directory
 	fs := http.FileServer(http.Dir(ap.Config.PublicDir))
 	ap.Router().Handle("/", fs)

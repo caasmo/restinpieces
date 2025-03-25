@@ -43,7 +43,7 @@ func main() {
 	// TODO with custom
 	defer ap.Close()
 
-	route(ap, cAp)
+	route(cfg, ap, cAp)
 
 	// Create mailer and executor only if SMTP is configured
 	hdls := make(map[string]executor.JobHandler)
