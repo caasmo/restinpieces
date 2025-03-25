@@ -9,9 +9,8 @@ import (
 // This file defines the standardized response formats for authentication-related API endpoints.
 // It ensures consistent response structures.
 //
-// Two main response types standardized here:
+// Two main response type standardized here:
 // 1. Authentication responses - used for successful login, token refresh, registration
-// 2. OAuth2 providers list - used for the OAuth2 provider discovery endpoint
 //
 // Example Authentication Response (successful login or token refresh):
 // {
