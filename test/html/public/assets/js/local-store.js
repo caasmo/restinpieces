@@ -41,7 +41,7 @@ export class RestinpiecesLocalStore {
             if (!auth?.access_token) return false;
             
             const payload = JSON.parse(atob(auth.access_token.split('.')[1]));
-            return payload.exp > Date.now() / 1000;
+            return payload.exp > Date.now() / 1000; // milliseconds since 1970
         } catch {
             return false;
         }
