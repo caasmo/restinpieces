@@ -2,6 +2,7 @@ package core
 
 import (
 	"net/http"
+	"log/slog"
 )
 
 func (a *App) ListEndpointsHandler(w http.ResponseWriter, r *http.Request) {
@@ -9,6 +10,7 @@ func (a *App) ListEndpointsHandler(w http.ResponseWriter, r *http.Request) {
 	_, isAuthed := r.Context().Value(UserIDKey).(string)
 
 	if isAuthed {
+		slog.Info("user authenticated, showing all endpoints")
 		writeJsonWithData(w, JsonWithData{
 			JsonBasic: JsonBasic{
 				Status:  http.StatusOK,
@@ -18,6 +20,7 @@ func (a *App) ListEndpointsHandler(w http.ResponseWriter, r *http.Request) {
 			Data: a.config.Endpoints,
 		})
 	} else {
+		slog.Info("unauthenticated user, showing public endpoints only")
 		writeJsonWithData(w, JsonWithData{
 			JsonBasic: JsonBasic{
 				Status:  http.StatusOK,
