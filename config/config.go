@@ -122,8 +122,8 @@ type Smtp struct {
 }
 
 type EndpointsWithAuth struct {
-	AuthRefresh    string `json:"auth_refresh"`
-	RequestVerification  string `json:"request_verification"`
+	AuthRefresh         string `json:"auth_refresh"`
+	RequestVerification string `json:"request_verification"`
 }
 
 type EndpointsWithoutAuth struct {
@@ -168,11 +168,15 @@ type Config struct {
 }
 
 const (
-	DefaultReadTimeout       = 2 * time.Second
-	DefaultReadHeaderTimeout = 2 * time.Second
-	DefaultWriteTimeout      = 3 * time.Second
-	DefaultIdleTimeout       = 1 * time.Minute
-	DefaultShutdownTimeout   = 15 * time.Second
+	DefaultReadTimeout         = 2 * time.Second
+	DefaultReadHeaderTimeout   = 2 * time.Second
+	DefaultWriteTimeout        = 3 * time.Second
+	DefaultIdleTimeout         = 1 * time.Minute
+	DefaultShutdownTimeout     = 15 * time.Second
+	CodeOkEndpointsWithAuth    = "ok_endpoints_with_auth"
+	CodeOkEndpointsWithoutAuth = "ok_endpoints_without_auth"
+	MsgEndpointsWithAuth       = "List of all available endpoints"
+	MsgEndpointsWithoutAuth    = "List of endpoints available without authentication"
 )
 
 func FillServer(cfg *Config) Server {

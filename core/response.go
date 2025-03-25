@@ -5,6 +5,11 @@ import (
 	"net/http"
 )
 
+const (
+	CodeOkEndpoints            = "ok_endpoints"
+	CodeOkEndpointsWithoutAuth = "ok_endpoints_without_auth"
+)
+
 type jsonResponse struct {
 	status int
 	body   []byte
