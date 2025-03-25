@@ -6,6 +6,50 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
+// This file defines the standardized response formats for authentication-related API endpoints.
+// It ensures consistent response structures that match the OpenAPI specification and make
+// client integration easier.
+//
+// Two main response types standardized here:
+// 1. Authentication responses - used for successful login, token refresh, registration
+// 2. OAuth2 providers list - used for the OAuth2 provider discovery endpoint
+//
+// Example Authentication Response (successful login or token refresh):
+// {
+//   "status": 200,
+//   "code": "ok_authentication",
+//   "message": "Authentication successful",
+//   "data": {
+//     "token_type": "Bearer",
+//     "access_token": "eyJhbGciOiJIUzI...",
+//     "expires_in": 3600,
+//     "record": {
+//       "id": "user123",
+//       "email": "user@example.com",
+//       "name": "John Doe", 
+//       "verified": true
+//     }
+//   }
+// }
+//
+// Example OAuth2 Providers List Response:
+// {
+//   "status": 200,
+//   "code": "ok_oauth2_providers_list",
+//   "message": "OAuth2 providers list",
+//   "data": {
+//     "providers": [
+//       {
+//         "name": "google",
+//         "displayName": "Google",
+//         "state": "random-state-string",
+//         "authURL": "https://..."
+//       }
+//     ]
+//   }
+// }
+>>
+
 //auth response. Separated here because is the response of not one, but many handlers
 
 const (
