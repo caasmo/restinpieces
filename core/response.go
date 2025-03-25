@@ -159,9 +159,7 @@ func NewEndpointsData(config *EndpointsConfig) *endpointsData {
 			"list_oauth2_providers": config.ListOAuth2Providers,
 			"confirm_verification":  config.ConfirmVerification,
 			"list_endpoints":        "GET /api/list-endpoints",
-		},
-		Version: "1.0",
-		Status:  "active",
+		}
 	}
 }
 
@@ -205,8 +203,6 @@ type AuthData struct {
 // endpointsData represents the API endpoints information
 type endpointsData struct {
 	Endpoints map[string]string `json:"endpoints"`
-	Version   string            `json:"version"`
-	Status    string            `json:"status"`
 }
 
 // NewAuthData creates a new AuthData instance
