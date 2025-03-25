@@ -5,7 +5,7 @@ import (
 	"log/slog"
 )
 
-func (a *App) ListAllEndpointsHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) AllEndpointsHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Info("user authenticated, showing all endpoints")
 	writeJsonWithData(w, JsonWithData{
 		JsonBasic: JsonBasic{
@@ -17,7 +17,7 @@ func (a *App) ListAllEndpointsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (a *App) ListPublicEndpointsHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) PublicEndpointsHandler(w http.ResponseWriter, r *http.Request) {
 	slog.Info("showing public endpoints only")
 	writeJsonWithData(w, JsonWithData{
 		JsonBasic: JsonBasic{
