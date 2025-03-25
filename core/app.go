@@ -1,4 +1,4 @@
-package app
+package core
 
 import (
 	"fmt"
@@ -52,7 +52,7 @@ func WithConfig(cfg *config.Config) Option {
 	}
 }
 
-func New(opts ...Option) (*App, error) {
+func NewApp(opts ...Option) (*App, error) {
 	a := &App{}
 	for _, opt := range opts {
 		opt(a)

@@ -11,43 +11,43 @@ import (
 	"github.com/caasmo/restinpieces/router/servemux"
 )
 
-func WithDBCrawshaw(dbPath string) app.Option {
+func WithDBCrawshaw(dbPath string) core.Option {
 	db, _ := crawshaw.New(dbPath)
 	// TODO erro log fatal
 
-	return app.WithDB(db)
+	return core.WithDB(db)
 }
 
-func WithDBZombiezen() app.Option {
+func WithDBZombiezen() core.Option {
 
 	db, _ := zombiezen.New("bench.db")
 	// TODO erro log fatal
 
-	return app.WithDB(db)
+	return core.WithDB(db)
 }
 
-func WithRouterServeMux() app.Option {
+func WithRouterServeMux() core.Option {
 	r := servemux.New()
-	return app.WithRouter(r)
+	return core.WithRouter(r)
 }
 
-func WithRouterHttprouter() app.Option {
+func WithRouterHttprouter() core.Option {
 	r := httprouter.New()
-	return app.WithRouter(r)
+	return core.WithRouter(r)
 }
 
-func WithCacheRistretto() app.Option {
+func WithCacheRistretto() core.Option {
 	cache, _ := ristretto.New()
 	// TODO fatal
-	return app.WithCache(cache)
+	return core.WithCache(cache)
 
 }
 
-func initApp(cfg *config.Config) (*app.App, error) {
-	return app.New(
+func initApp(cfg *config.Config) (*core.App, error) {
+	return core.NewApp(
 		WithDBCrawshaw(cfg.DBFile),
 		WithRouterServeMux(),
 		WithCacheRistretto(),
-		app.WithConfig(cfg),
+		core.WithConfig(cfg),
 	)
 }
