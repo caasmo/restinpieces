@@ -13,21 +13,28 @@ type jsonResponse struct {
 	body   []byte
 }
 
+// JsonBasic contains the basic response fields
+type JsonBasic struct {
+	Status  int    `json:"status"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
+
 // JsonWithData is used for structured JSON responses with optional data
 type JsonWithData struct {
-	Status  int         `json:"status"`
-	Code    string      `json:"code"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+	JsonBasic
+	Data interface{} `json:"data,omitempty"`
 }
 
 // NewJsonWithData creates a new JsonWithData instance
 func NewJsonWithData(status int, code, message string, data interface{}) *JsonWithData {
 	return &JsonWithData{
-		Status:  status,
-		Code:    code,
-		Message: message,
-		Data:    data,
+		JsonBasic: JsonBasic{
+			Status:  status,
+			Code:    code,
+			Message: message,
+		},
+		Data: data,
 	}
 }
 
