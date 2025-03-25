@@ -20,6 +20,7 @@ func route(cfg *config.Config, ap *app.App, cAp *custom.App) {
 
 	// API routes with explicit /api prefix
 	ap.Router().Register(
+		r.NewRoute("GET /api/list-endpoints").WithHandlerFunc(ap.ListEndpointsHandler).WithMiddlewareChain(commonNewMiddleware),
 		r.NewRoute(cfg.Endpoints.AuthRefresh).WithHandlerFunc(ap.RefreshAuthHandler).WithMiddleware(ap.JwtValidate),
 		r.NewRoute(cfg.Endpoints.AuthWithPassword).WithHandlerFunc(ap.AuthWithPasswordHandler),
 		r.NewRoute(cfg.Endpoints.AuthWithOAuth2).WithHandlerFunc(ap.AuthWithOAuth2Handler),
