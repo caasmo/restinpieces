@@ -144,22 +144,26 @@ var (
 )
 
 var (
-	//okDataListEndpointsWithoutAuth = precomputeWithDataResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
-	//okDataListEndpointsWithAuth = precomputeWithDataResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
+	okDataListEndpointsWithoutAuth jsonResponse
+	//okDataListEndpointsWithAuth jsonResponse
 )
 
-func NewEndpointsData(config *EndpointsConfig) *endpointsData {
-	return &endpointsData{
-		Endpoints: map[string]string{
-			"auth_refresh":          config.AuthRefresh,
-			"auth_with_password":    config.AuthWithPassword,
-			"auth_with_oauth2":      config.AuthWithOAuth2,
-			"request_verification":  config.RequestVerification,
-			"register_with_password": config.RegisterWithPassword,
-			"list_oauth2_providers": config.ListOAuth2Providers,
-			"confirm_verification":  config.ConfirmVerification,
-		},
+func precomputeEnspointWithoutAuth(config *EndpointsConfig) jsonResponse {
+	endpoints := map[string]string{
+		"auth_refresh":          config.AuthRefresh,
+		"auth_with_password":    config.AuthWithPassword,
+		"auth_with_oauth2":      config.AuthWithOAuth2,
+		"request_verification":  config.RequestVerification,
+		"register_with_password": config.RegisterWithPassword,
+		"list_oauth2_providers": config.ListOAuth2Providers,
+		"confirm_verification":  config.ConfirmVerification,
 	}
+	return precomputeWithDataResponse(
+		http.StatusOK,
+		"ok_endpoints_list", 
+		"List of available endpoints",
+		endpoints,
+	)
 }
 
 // For successful precomputed responses
