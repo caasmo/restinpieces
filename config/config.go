@@ -123,13 +123,13 @@ type Smtp struct {
 
 type EndpointsWithAuth struct {
 	AuthRefresh    string `json:"auth_refresh"`
-	AuthWithPassword string `json:"auth_with_password"` 
+	RequestVerification  string `json:"request_verification"`
 }
 
 type Endpoints struct {
 	EndpointsWithAuth
+	AuthWithPassword string `json:"auth_with_password"` 
 	AuthWithOAuth2       string `json:"auth_with_oauth2"`
-	RequestVerification  string `json:"request_verification"`
 	RegisterWithPassword string `json:"register_with_password"`
 	ListOAuth2Providers  string `json:"list_oauth2_providers"`
 	ConfirmVerification  string `json:"confirm_verification"`
