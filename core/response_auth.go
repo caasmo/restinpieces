@@ -48,7 +48,6 @@ import (
 //     ]
 //   }
 // }
->>
 
 //auth response. Separated here because is the response of not one, but many handlers
 
