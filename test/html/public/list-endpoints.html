@@ -110,17 +110,20 @@
             showEndpoints(rp.store.endpoints.load());
 
             rp.requestJsonAuth("/api/list-endpoints")
-            .then(data => {
+            .then(response => {
                 errorDiv.textContent = '';
                 
-                // Handle both direct endpoints object and wrapped response formats
-                const endpoints = data.data || data;
-                if (endpoints) {
-                    rp.store.endpoints.save(endpoints);
-                    showEndpoints(endpoints);
-                } else {
+                // The endpoints are either in response.data or the response itself
+                const endpoints = response.data || response;
+                
+                if (!endpoints) {
                     errorDiv.textContent = 'No endpoints data received';
+                    return;
                 }
+
+                // Save and render the endpoints
+                rp.store.endpoints.save(endpoints);
+                showEndpoints(endpoints);
             })
             .catch(error => {
                 errorDiv.textContent = `Error: ${error.message}`;
