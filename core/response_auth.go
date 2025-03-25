@@ -49,7 +49,7 @@ import (
 // }
 
 const (
-    // oks for non precomputed, dynamic responses
+    // oks for non precomputed, dynamic auth responses
 	CodeOkAuthentication              = "ok_authentication" // Standard success code for auth
 	CodeOkOAuth2ProvidersList         = "ok_oauth2_providers_list" // Success code for OAuth2 providers list
 )
