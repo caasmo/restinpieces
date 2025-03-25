@@ -133,7 +133,7 @@
 
             const endpoint = rp.store.auth.isValid() 
                 ? "/api/all-endpoints" 
-                : "/api/public-endpoints";
+                : "/api/public-endpoints"; // Hardcoded discovery endpoint
             
             const request = rp.store.auth.isValid()
                 ? rp.requestJsonAuth(endpoint)

@@ -133,7 +133,6 @@ type EndpointsWithoutAuth struct {
 	RegisterWithPassword  string `json:"register_with_password"`
 	ListOAuth2Providers   string `json:"list_oauth2_providers"`
 	ConfirmVerification   string `json:"confirm_verification"`
-	PublicEndpoints       string `json:"public_endpoints"`
 }
 
 type Endpoints struct {
@@ -155,7 +154,6 @@ func DefaultEndpoints() Endpoints {
 			RegisterWithPassword:  "POST /api/register-with-password",
 			ListOAuth2Providers:   "GET /api/list-oauth2-providers",
 			ConfirmVerification:   "POST /api/confirm-verification",
-			PublicEndpoints:       "GET /api/public-endpoints",
 		},
 	}
 }
