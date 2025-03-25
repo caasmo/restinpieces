@@ -16,8 +16,8 @@ import (
 // This timeout prevents hanging if the OAuth2 provider is unresponsive.
 const oauth2TokenExchangeTimeout = 10 * time.Second
 
-// TODO move to response
-type responseProviderInfo struct {
+// OAuth2ProviderInfo contains the provider details needed for client-side OAuth2 flow
+type OAuth2ProviderInfo struct {
 	Name                string `json:"name"`
 	DisplayName         string `json:"displayName"`
 	State               string `json:"state"`
@@ -26,6 +26,11 @@ type responseProviderInfo struct {
 	CodeVerifier        string `json:"codeVerifier,omitempty"`
 	CodeChallenge       string `json:"codeChallenge,omitempty"`
 	CodeChallengeMethod string `json:"codeChallengeMethod,omitempty"`
+}
+
+// OAuth2ProviderListData wraps the list of providers for standardized response
+type OAuth2ProviderListData struct {
+	Providers []OAuth2ProviderInfo `json:"providers"`
 }
 
 // TODO move to request
@@ -234,11 +239,11 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-    // TODO standard ok json response
-    setHeaders(w, apiJsonDefaultHeaders)
-
-	if err := json.NewEncoder(w).Encode(providers); err != nil {
-		writeJsonError(w, errorInvalidRequest)
-		return
-	}
+	response := NewJsonResponseWithData(
+		http.StatusOK,
+		"ok_oauth2_providers_list",
+		"OAuth2 providers list retrieved successfully",
+		OAuth2ProviderListData{Providers: providers},
+	)
+	writeJsonWithData(w, *response)
 }
