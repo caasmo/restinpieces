@@ -241,8 +241,8 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 
 	response := NewJsonResponseWithData(
 		http.StatusOK,
-		"ok_oauth2_providers_list",
-		"OAuth2 providers list retrieved successfully",
+		CodeOkOAuth2ProvidersList,
+		"OAuth2 providers list retrieved successfully", 
 		OAuth2ProviderListData{Providers: providers},
 	)
 	writeJsonWithData(w, *response)

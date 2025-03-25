@@ -96,6 +96,7 @@ const (
 	CodeOkAuthentication              = "ok_authentication" // Standard success code for auth
 	CodeOkAlreadyVerified             = "ok_already_verified"
 	CodeOkEmailVerified               = "ok_email_verified"
+	CodeOkOAuth2ProvidersList         = "ok_oauth2_providers_list" // Success code for OAuth2 providers list
 
 
 
