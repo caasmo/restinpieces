@@ -65,7 +65,7 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	}
 
 	// Construct callback URL using server's base URL and HTML verification page
-	callbackURL := fmt.Sprintf("%s/verify-email.html?token=%s", h.config.Server.BaseURL(), token)
+	callbackURL := fmt.Sprintf("%s/confirm-email.html?token=%s", h.config.Server.BaseURL(), token)
 
 	// Send verification email
 	if err := h.mailer.SendVerificationEmail(ctx, user.Email, callbackURL); err != nil {
