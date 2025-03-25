@@ -189,6 +189,22 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListOAuth2ProvidersHandler returns available OAuth2 providers
+// Example OAuth2 Providers List Response:
+// {
+//   "status": 200,
+//   "code": "ok_oauth2_providers_list",
+//   "message": "OAuth2 providers list",
+//   "data": {
+//     "providers": [
+//       {
+//         "name": "google",
+//         "displayName": "Google",
+//         "state": "random-state-string",
+//         "authURL": "https://..."
+//       }
+//     ]
+//   }
+// }
 // Endpoint: GET /list-oauth2-providers
 func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 	var providers []OAuth2ProviderInfo

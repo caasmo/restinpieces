@@ -31,22 +31,6 @@ import (
 //   }
 // }
 //
-// Example OAuth2 Providers List Response:
-// {
-//   "status": 200,
-//   "code": "ok_oauth2_providers_list",
-//   "message": "OAuth2 providers list",
-//   "data": {
-//     "providers": [
-//       {
-//         "name": "google",
-//         "displayName": "Google",
-//         "state": "random-state-string",
-//         "authURL": "https://..."
-//       }
-//     ]
-//   }
-// }
 
 const (
 	// oks for non precomputed, dynamic auth responses
