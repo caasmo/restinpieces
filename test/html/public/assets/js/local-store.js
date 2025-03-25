@@ -35,6 +35,18 @@ export class RestinpiecesLocalStore {
         this.#set('auth', value);
     }
 
+    static isTokenValid() {
+        try {
+            const auth = this.loadAuth();
+            if (!auth?.access_token) return false;
+            
+            const payload = JSON.parse(atob(auth.access_token.split('.')[1]));
+            return payload.exp > Date.now() / 1000;
+        } catch {
+            return false;
+        }
+    }
+
     // Public methods for 'provider'
     static loadProvider() {
         return this.#get('provider');

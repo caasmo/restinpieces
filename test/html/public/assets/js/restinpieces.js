@@ -15,6 +15,7 @@ class Restinpieces {
             auth: {
                 save: (data) => this.lstore.saveAuth(data),
                 load: () => this.lstore.loadAuth(),
+                isValid: () => this.lstore.isTokenValid(),
             },
             provider: {
                 save: (data) => this.lstore.saveProvider(data),
