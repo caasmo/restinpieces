@@ -10,8 +10,8 @@ import (
 )
 
 func route(ap *app.App, cAp *custom.App) {
-	// Serve static files from public directory
-	fs := http.FileServer(http.Dir("public"))
+	// Serve static files from configured public directory
+	fs := http.FileServer(http.Dir(ap.Config.PublicDir))
 	ap.Router().Handle("/", fs)
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 

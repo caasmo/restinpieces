@@ -128,6 +128,7 @@ type Config struct {
 	Server          Server
 	OAuth2Providers map[string]OAuth2Provider
 	Smtp            Smtp
+	PublicDir       string // Directory to serve static files from
 }
 
 const (
@@ -173,6 +174,7 @@ func Load(dbfile string) (*Config, error) {
 			VerificationEmailTokenDuration: 24 * time.Hour,
 		},
 		DBFile: dbfile,
+		PublicDir: "public", // Default public directory
 		Scheduler: Scheduler{
 			Interval:              15 * time.Second,
 			MaxJobsPerTick:        10,
