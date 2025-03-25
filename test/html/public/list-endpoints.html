@@ -68,8 +68,14 @@
 
     <button id="get-endpoints-btn" style="margin-bottom: 20px;">Refresh Endpoints</button>
 
-    <div id="endpoints-container">
-        <ul id="endpoints-list" class="endpoint-list"></ul>
+    <div id="stored-endpoints-container">
+        <h3>Stored Endpoints</h3>
+        <ul id="stored-endpoints-list" class="endpoint-list"></ul>
+    </div>
+
+    <div id="new-endpoints-container" style="margin-top: 20px; display: none;">
+        <h3>New Endpoints</h3>
+        <ul id="new-endpoints-list" class="endpoint-list"></ul>
     </div>
     <div id="error" class="error"></div>
 
@@ -78,9 +84,34 @@
         
         const rp = new Restinpieces("http://localhost:8080");
 
-        function showEndpoints(endpoints) {
-            const container = document.getElementById('endpoints-container');
-            const list = document.getElementById('endpoints-list');
+        function showStoredEndpoints() {
+            const endpoints = rp.store.endpoints.load();
+            const container = document.getElementById('stored-endpoints-container');
+            const list = document.getElementById('stored-endpoints-list');
+            
+            list.innerHTML = '';
+            
+            if (endpoints) {
+                let html = '';
+                for (const [key, value] of Object.entries(endpoints)) {
+                    const method = value.split(' ')[0].toLowerCase();
+                    const path = value.replace(/^GET|POST|PUT|DELETE|PATCH /, '').trim();
+                    html += `
+                        <li class="endpoint-item">
+                            <span class="method ${method}">${method.toUpperCase()}</span>
+                            <span>${path}</span>
+                        </li>`;
+                }
+                list.innerHTML = html;
+                container.style.display = 'block';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function showNewEndpoints(endpoints) {
+            const container = document.getElementById('new-endpoints-container');
+            const list = document.getElementById('new-endpoints-list');
             
             list.innerHTML = '';
             
@@ -107,7 +138,7 @@
             errorDiv.textContent = 'Loading...';
 
             // Show stored endpoints while loading
-            showEndpoints(rp.store.endpoints.load());
+            showStoredEndpoints();
 
             rp.requestJsonAuth("/api/list-endpoints")
             .then(response => {
@@ -121,9 +152,10 @@
                     return;
                 }
 
-                // Save and render the endpoints
+                // Save the new endpoints and show both
                 rp.store.endpoints.save(endpoints);
-                showEndpoints(endpoints);
+                showStoredEndpoints(); // This will show the newly saved endpoints
+                showNewEndpoints(endpoints); // Show the fresh response
             })
             .catch(error => {
                 errorDiv.textContent = `Error: ${error.message}`;
@@ -149,7 +181,7 @@
 
         // Initial load
         checkAuthStatus();
-        showEndpoints(rp.store.endpoints.load());
+        showStoredEndpoints();
         
         // Event listener
         document.getElementById('get-endpoints-btn').addEventListener('click', getEndpoints);
