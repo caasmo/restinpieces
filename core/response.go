@@ -149,16 +149,6 @@ var (
 	//okDataListEndpointsWithAuth jsonResponse
 )
 
-func precomputeEnspointWithoutAuth(cfg *config.Config) jsonResponse {
-
-	return precomputeWithDataResponse(
-		http.StatusOK,
-		"ok_endpoints_list",  // TODO
-		"List of available endpoints",
-		cfg.Endpoints,
-	)
-}
-
 // For successful precomputed responses
 func writeJsonOk(w http.ResponseWriter, resp jsonResponse) {
 	w.WriteHeader(resp.status)
