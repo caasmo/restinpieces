@@ -141,14 +141,18 @@ type Endpoints struct {
 
 // DefaultEndpoints returns the standard endpoint paths
 func DefaultEndpoints() Endpoints {
-	return EndpointsConfig{
-		AuthRefresh:          "POST /api/auth-refresh",
-		AuthWithPassword:     "POST /api/auth-with-password",
-		AuthWithOAuth2:       "POST /api/auth-with-oauth2",
-		RequestVerification:  "POST /api/request-verification",
-		RegisterWithPassword: "POST /api/register-with-password",
-		ListOAuth2Providers:  "GET /api/list-oauth2-providers",
-		ConfirmVerification:  "POST /api/confirm-verification",
+	return Endpoints{
+		EndpointsWithAuth: EndpointsWithAuth{
+			AuthRefresh:         "POST /api/auth-refresh",
+			RequestVerification: "POST /api/request-verification",
+		},
+		EndpointsWithoutAuth: EndpointsWithoutAuth{
+			AuthWithPassword:     "POST /api/auth-with-password",
+			AuthWithOAuth2:       "POST /api/auth-with-oauth2",
+			RegisterWithPassword: "POST /api/register-with-password",
+			ListOAuth2Providers:  "GET /api/list-oauth2-providers",
+			ConfirmVerification:  "POST /api/confirm-verification",
+		},
 	}
 }
 
