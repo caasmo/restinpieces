@@ -97,6 +97,7 @@ const (
 	CodeOkAlreadyVerified             = "ok_already_verified"
 	CodeOkEmailVerified               = "ok_email_verified"
 	CodeOkOAuth2ProvidersList         = "ok_oauth2_providers_list" // Success code for OAuth2 providers list
+	CodeOkVerificationRequested       = "ok_verification_requested" // Success code for email verification request
 
 
 
@@ -176,7 +177,7 @@ var (
 	// oks
 	okAlreadyVerified = precomputeResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
 	okEmailVerified   = precomputeResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
-	okVerificationRequested = precomputeResponse(http.StatusAccepted, "ok_verification_requested", "Verification email will be sent soon. Check your mailbox")
+	okVerificationRequested = precomputeResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
 )
 
 // For successful short responses
