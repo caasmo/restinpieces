@@ -143,6 +143,11 @@ var (
 	okVerificationRequested = precomputeBasicResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
 )
 
+var (
+	okDataListEndpointsWithoutAuth = precomputeWithDataResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
+	okDataListEndpointsWithAuth = precomputeWithDataResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
+)
+
 // For successful precomputed responses
 func writeJsonOk(w http.ResponseWriter, resp jsonResponse) {
 	w.WriteHeader(resp.status)
