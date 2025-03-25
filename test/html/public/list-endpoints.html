@@ -169,17 +169,12 @@
 
         function checkAuthStatus() {
             const authText = document.getElementById('auth-text');
-            const authActions = document.getElementById('auth-actions');
-
+            
             if (rp.store.auth.isValid()) {
                 authText.textContent = "✅ Authenticated";
-                authActions.innerHTML = '';
                 showStoredEndpoints();
             } else {
                 authText.textContent = "❌ Not authenticated";
-                authActions.innerHTML = `
-                    <button onclick="window.location.href='/login.html'">Login</button>
-                    <button onclick="window.location.href='/register.html'">Register</button>`;
             }
         }
 
