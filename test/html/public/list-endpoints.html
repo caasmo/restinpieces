@@ -18,22 +18,10 @@
         .error {
             color: red;
         }
-        .auth-section {
-            margin-bottom: 20px;
-            padding: 10px;
-            background: #f8f8f8;
-            border: 1px solid #ddd;
-        }
     </style>
 </head>
 <body>
     <h1>API Endpoints</h1>
-
-    <div class="auth-section">
-        <h3>Authentication</h3>
-        <input type="text" id="access-token" placeholder="Enter access token">
-        <button id="save-token">Save Token</button>
-    </div>
 
     <button id="get-endpoints-btn">Get Endpoints</button>
 
@@ -44,17 +32,6 @@
         import Restinpieces from './assets/js/restinpieces.js';
         
         const rp = new Restinpieces("http://localhost:8080");
-
-        // Save token button handler
-        document.getElementById('save-token').addEventListener('click', () => {
-            const token = document.getElementById('access-token').value;
-            if (token) {
-                rp.store.auth.save({ access_token: token });
-                alert('Token saved!');
-            } else {
-                alert('Please enter a token');
-            }
-        });
 
         function getEndpoints() {
             const resultDiv = document.getElementById('result');
