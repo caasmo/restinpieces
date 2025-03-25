@@ -121,6 +121,29 @@ type Smtp struct {
 	UseStartTLS bool   // Use STARTTLS
 }
 
+type EndpointsConfig struct {
+	AuthRefresh              string `json:"auth_refresh"`
+	AuthWithPassword         string `json:"auth_with_password"`
+	AuthWithOAuth2           string `json:"auth_with_oauth2"`
+	RequestVerification      string `json:"request_verification"`
+	RegisterWithPassword     string `json:"register_with_password"`
+	ListOAuth2Providers      string `json:"list_oauth2_providers"`
+	ConfirmVerification      string `json:"confirm_verification"`
+}
+
+// DefaultEndpoints returns the standard endpoint paths
+func DefaultEndpoints() EndpointsConfig {
+	return EndpointsConfig{
+		AuthRefresh:          "/api/auth-refresh",
+		AuthWithPassword:     "/api/auth-with-password",
+		AuthWithOAuth2:       "/api/auth-with-oauth2",
+		RequestVerification:  "/api/request-verification",
+		RegisterWithPassword: "/api/register-with-password",
+		ListOAuth2Providers:  "/api/list-oauth2-providers",
+		ConfirmVerification:  "/api/confirm-verification",
+	}
+}
+
 type Config struct {
 	Jwt             Jwt
 	DBFile          string
@@ -129,6 +152,7 @@ type Config struct {
 	OAuth2Providers map[string]OAuth2Provider
 	Smtp            Smtp
 	PublicDir       string // Directory to serve static files from
+	Endpoints       EndpointsConfig
 }
 
 const (
@@ -167,6 +191,7 @@ func FillServer(cfg *Config) Server {
 func Load(dbfile string) (*Config, error) {
 
 	cfg := &Config{
+		Endpoints: DefaultEndpoints(),
 		Jwt: Jwt{
 			AuthSecret:                     []byte("test_auth_secret_32_bytes_long_xxxxxx"),
 			AuthTokenDuration:              45 * time.Minute,

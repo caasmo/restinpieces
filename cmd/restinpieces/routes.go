@@ -20,13 +20,13 @@ func route(cfg *config.Config, ap *app.App, cAp *custom.App) {
 
 	// API routes with explicit /api prefix
 	ap.Router().Register(
-		r.NewRoute("POST /api/auth-refresh").WithHandlerFunc(ap.RefreshAuthHandler).WithMiddleware(ap.JwtValidate),
-		r.NewRoute("POST /api/auth-with-password").WithHandlerFunc(ap.AuthWithPasswordHandler),
-		r.NewRoute("POST /api/auth-with-oauth2").WithHandlerFunc(ap.AuthWithOAuth2Handler),
-		r.NewRoute("POST /api/request-verification").WithHandlerFunc(ap.RequestVerificationHandler),
-		r.NewRoute("POST /api/register-with-password").WithHandlerFunc(ap.RegisterWithPasswordHandler),
-		r.NewRoute("GET /api/list-oauth2-providers").WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware),
-		r.NewRoute("POST /api/confirm-verification").WithHandlerFunc(ap.ConfirmVerificationHandler),
+		r.NewRoute("POST " + cfg.Endpoints.AuthRefresh).WithHandlerFunc(ap.RefreshAuthHandler).WithMiddleware(ap.JwtValidate),
+		r.NewRoute("POST " + cfg.Endpoints.AuthWithPassword).WithHandlerFunc(ap.AuthWithPasswordHandler),
+		r.NewRoute("POST " + cfg.Endpoints.AuthWithOAuth2).WithHandlerFunc(ap.AuthWithOAuth2Handler),
+		r.NewRoute("POST " + cfg.Endpoints.RequestVerification).WithHandlerFunc(ap.RequestVerificationHandler),
+		r.NewRoute("POST " + cfg.Endpoints.RegisterWithPassword).WithHandlerFunc(ap.RegisterWithPasswordHandler),
+		r.NewRoute("GET " + cfg.Endpoints.ListOAuth2Providers).WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware),
+		r.NewRoute("POST " + cfg.Endpoints.ConfirmVerification).WithHandlerFunc(ap.ConfirmVerificationHandler),
 
 		//custom routes example: mixing core middleware and custom handler
 		r.NewRoute("GET /custom").WithHandlerFunc(cAp.Index).WithMiddleware(ap.JwtValidate),
