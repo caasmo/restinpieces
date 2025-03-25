@@ -100,4 +100,3 @@ func (r *Route) Handler() http.Handler {
 		}
 	})
 }
-

@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 )
-// Standard response codes 
+
+// Standard response codes
 const (
-    // oks
+	// oks
 
-	CodeOkAlreadyVerified             = "ok_already_verified"
-	CodeOkEmailVerified               = "ok_email_verified"
-	CodeOkVerificationRequested       = "ok_verification_requested" // Success code for email verification request
+	CodeOkAlreadyVerified       = "ok_already_verified"
+	CodeOkEmailVerified         = "ok_email_verified"
+	CodeOkVerificationRequested = "ok_verification_requested" // Success code for email verification request
 
-    //errors
+	//errors
 	CodeErrorTokenGeneration                = "err_token_generation"
 	CodeErrorClaimsNotFound                 = "err_claims_not_found"
 	CodeErrorInvalidRequest                 = "err_invalid_input"
@@ -104,22 +105,21 @@ var (
 	errorAuthDatabaseError              = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
 
 	// oks
-	okAlreadyVerified = precomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
-	okEmailVerified   = precomputeBasicResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
+	okAlreadyVerified       = precomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
+	okEmailVerified         = precomputeBasicResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
 	okVerificationRequested = precomputeBasicResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
 )
 
 // For successful precomputed responses
 func writeJsonOk(w http.ResponseWriter, resp jsonResponse) {
 	w.WriteHeader(resp.status)
-    setHeaders(w, apiJsonDefaultHeaders)
+	setHeaders(w, apiJsonDefaultHeaders)
 	w.Write(resp.body)
 }
 
 // writeJsonError writes a precomputed JSON error response
 func writeJsonError(w http.ResponseWriter, resp jsonResponse) {
 	w.WriteHeader(resp.status)
-    setHeaders(w, apiJsonDefaultHeaders)
+	setHeaders(w, apiJsonDefaultHeaders)
 	w.Write(resp.body)
 }
-

@@ -64,7 +64,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Calculate seconds until expiry
 	expiresIn := int(time.Until(expiry).Seconds())
 
-    // TODO move to response standard Ok response.
+	// TODO move to response standard Ok response.
 	// Return standardized authentication response
 	writeAuthResponse(w, newToken, expiresIn, user)
 
@@ -119,7 +119,6 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	writeAuthResponse(w, token, int(a.config.Jwt.AuthTokenDuration.Seconds()), user)
 }
 
-//
 // todo already verified.
 // TODO do we need this endpoint? register endpoint already makes a job to send email
 // Yes: for the: if you do not have received email, click here, can be a simple botton
@@ -185,15 +184,19 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 }
 
 // confirm-
-//  user created per email, requires validation of email, we have already emaila dn user id in table
+//
+//	user created per email, requires validation of email, we have already emaila dn user id in table
+//
 // queue job creates token like this:
+//
 //	{
 //	 "email": "lipo@goole.com",
 //	 "exp": 1736630179,
 //	 "id": "m648zm0q421yfc0",
 //	 "type": "verification"
 //	}
-// with a new verification secret, create method in crypto 
+//
+// with a new verification secret, create method in crypto
 // with map claim in a good place with signing key email, passwordhash
 // receives token
 // parse unverified, should have all fiedls above reject if no

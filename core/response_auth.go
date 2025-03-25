@@ -25,7 +25,7 @@ import (
 //     "record": {
 //       "id": "user123",
 //       "email": "user@example.com",
-//       "name": "John Doe", 
+//       "name": "John Doe",
 //       "verified": true
 //     }
 //   }
@@ -49,9 +49,9 @@ import (
 // }
 
 const (
-    // oks for non precomputed, dynamic auth responses
-	CodeOkAuthentication              = "ok_authentication" // Standard success code for auth
-	CodeOkOAuth2ProvidersList         = "ok_oauth2_providers_list" // Success code for OAuth2 providers list
+	// oks for non precomputed, dynamic auth responses
+	CodeOkAuthentication      = "ok_authentication"        // Standard success code for auth
+	CodeOkOAuth2ProvidersList = "ok_oauth2_providers_list" // Success code for OAuth2 providers list
 )
 
 // AuthRecord represents the user record in authentication responses

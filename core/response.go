@@ -3,9 +3,7 @@ package core
 import (
 	"encoding/json"
 	"net/http"
-
 )
-
 
 type jsonResponse struct {
 	status int
@@ -31,5 +29,3 @@ func writeJsonWithData(w http.ResponseWriter, resp JsonWithData) {
 	setHeaders(w, apiJsonDefaultHeaders)
 	json.NewEncoder(w).Encode(resp)
 }
-
-

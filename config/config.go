@@ -122,20 +122,20 @@ type Smtp struct {
 }
 
 type EndpointsConfig struct {
-	AuthRefresh              string `json:"auth_refresh"`
-	AuthWithPassword         string `json:"auth_with_password"`
-	AuthWithOAuth2           string `json:"auth_with_oauth2"`
-	RequestVerification      string `json:"request_verification"`
-	RegisterWithPassword     string `json:"register_with_password"`
-	ListOAuth2Providers      string `json:"list_oauth2_providers"`
-	ConfirmVerification      string `json:"confirm_verification"`
+	AuthRefresh          string `json:"auth_refresh"`
+	AuthWithPassword     string `json:"auth_with_password"`
+	AuthWithOAuth2       string `json:"auth_with_oauth2"`
+	RequestVerification  string `json:"request_verification"`
+	RegisterWithPassword string `json:"register_with_password"`
+	ListOAuth2Providers  string `json:"list_oauth2_providers"`
+	ConfirmVerification  string `json:"confirm_verification"`
 }
 
 // DefaultEndpoints returns the standard endpoint paths
 func DefaultEndpoints() EndpointsConfig {
 	return EndpointsConfig{
 		AuthRefresh:          "POST /api/auth-refresh",
-		AuthWithPassword:     "POST /api/auth-with-password", 
+		AuthWithPassword:     "POST /api/auth-with-password",
 		AuthWithOAuth2:       "POST /api/auth-with-oauth2",
 		RequestVerification:  "POST /api/request-verification",
 		RegisterWithPassword: "POST /api/register-with-password",
@@ -198,7 +198,7 @@ func Load(dbfile string) (*Config, error) {
 			VerificationEmailSecret:        []byte("test_verification_secret_32_bytes_xxxx"),
 			VerificationEmailTokenDuration: 24 * time.Hour,
 		},
-		DBFile: dbfile,
+		DBFile:    dbfile,
 		PublicDir: "test/html/public", // Default public directory
 		Scheduler: Scheduler{
 			Interval:              15 * time.Second,
