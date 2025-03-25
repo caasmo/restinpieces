@@ -111,7 +111,6 @@
 
     <script type="module">
         import Restinpieces from '/assets/js/restinpieces.js';
-        import { LocalStorage } from '/assets/js/local-storage.js';
 
         class RegisterForm {
             constructor() {
@@ -191,16 +190,13 @@
                             password_confirm: confirmPassword
                         }
                     )
-                    .then(data => {
-                        if (data.access_token && data.record) {
-                            if (data.access_token) {
-                                LocalStorage.saveAccessToken(data.access_token);
-                            }
-                            if (data.record) {
-                                LocalStorage.saveUserRecord(data.record);
-                            }
+                    .then(response => {
+                        if (response.data?.access_token && response.data?.record) {
+                            this.rp.store.auth.save(response.data);
                             this.showMessage('Registration successful!');
-                            this.createSuccessUI(data.record);
+                            this.createSuccessUI(response.data.record);
+                        } else {
+                            throw new Error('Invalid registration response');
                         }
                     })
                     .catch(error => {
