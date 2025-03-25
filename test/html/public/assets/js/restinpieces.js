@@ -19,6 +19,10 @@ class Restinpieces {
             provider: {
                 save: (data) => this.lstore.storeProvider(data),
                 load: () => this.lstore.retrieveProvider(),
+            },
+            endpoints: {
+                save: (data) => this.lstore.saveEndpoints(data),
+                load: () => this.lstore.loadEndpoints(),
             }
         };
     }

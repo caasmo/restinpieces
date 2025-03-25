@@ -3,6 +3,7 @@ export class RestinpiecesLocalStore {
     static #keys = {
         auth: '_rip_auth',
         provider: '_rip_provider',
+        endpoints: '_rip_endpoints'
     };
 
     // Private generic methods
@@ -41,5 +42,14 @@ export class RestinpiecesLocalStore {
 
     static storeProvider(value) {
         this.#set('provider', value);
+    }
+
+    // Public methods for 'endpoints'
+    static loadEndpoints() {
+        return this.#get('endpoints');
+    }
+
+    static saveEndpoints(value) {
+        this.#set('endpoints', value);
     }
 }
