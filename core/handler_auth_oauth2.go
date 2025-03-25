@@ -191,7 +191,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 // ListOAuth2ProvidersHandler returns available OAuth2 providers
 // Endpoint: GET /list-oauth2-providers
 func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
-	var providers []responseProviderInfo
+	var providers []OAuth2ProviderInfo
 
 	// Loop through configured providers
 	for name, provider := range a.config.OAuth2Providers {
@@ -209,7 +209,7 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 		}
 
 		// Create base provider info
-		info := responseProviderInfo{
+		info := OAuth2ProviderInfo{
 			Name:        name,
 			DisplayName: provider.DisplayName,
 			State:       state,
