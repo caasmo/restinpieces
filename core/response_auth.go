@@ -43,11 +43,13 @@ func NewAuthData(token string, expiresIn int, user *db.User) *AuthData {
 // writeAuthResponse writes a standardized authentication response
 func writeAuthResponse(w http.ResponseWriter, token string, expiresIn int, user *db.User) {
 	authData := NewAuthData(token, expiresIn, user)
-	response := NewJsonWithData(
-		http.StatusOK,
-		CodeOkAuthentication,
-		"Authentication successful",
-		authData,
-	)
-	writeJsonWithData(w, *response)
+	response := JsonWithData{
+		JsonBasic: JsonBasic{
+			Status:  http.StatusOK,
+			Code:    CodeOkAuthentication,
+			Message: "Authentication successful",
+		},
+		Data: authData,
+	}
+	writeJsonWithData(w, response)
 }
