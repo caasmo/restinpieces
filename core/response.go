@@ -31,18 +31,6 @@ type JsonWithData struct {
 	Data interface{} `json:"data,omitempty"`
 }
 
-// NewJsonWithData creates a new JsonWithData instance
-//func NewJsonWithData(status int, code, message string, data interface{}) *JsonWithData {
-//	return &JsonWithData{
-//		JsonBasic: JsonBasic{
-//			Status:  status,
-//			Code:    code,
-//			Message: message,
-//		},
-//		Data: data,
-//	}
-//}
-
 // writeJsonWithData writes a structured JSON response with the provided data
 func writeJsonWithData(w http.ResponseWriter, resp JsonWithData) {
 	w.WriteHeader(resp.Status)
