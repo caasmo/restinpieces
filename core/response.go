@@ -144,8 +144,8 @@ var (
 )
 
 var (
-	okDataListEndpointsWithoutAuth = precomputeWithDataResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
-	okDataListEndpointsWithAuth = precomputeWithDataResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
+	//okDataListEndpointsWithoutAuth = precomputeWithDataResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
+	//okDataListEndpointsWithAuth = precomputeWithDataResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
 )
 
 func NewEndpointsData(config *EndpointsConfig) *endpointsData {
