@@ -79,53 +79,56 @@ const (
 )
 
 // ResponseBasicFormat is used  for short ok and error responses
-const shortFormat = `{"status":%d,"code":"%s","message":"%s"}`
-
-// precomputeResponse() will be executed during initialization (before main() runs),
+// precomputeBasicResponse() will be executed during initialization (before main() runs),
 // and the JSON body will be precomputed and stored in the response variables.
 // the variables will contain the fully JSON as []byte already
 // It avoids repeated JSON marshaling during request handling
 // Any time we use writeJSONResponse(w, response) in the code, it
 // simply writes the pre-computed bytes to the response writer
-func precomputeResponse(status int, code, message string) jsonResponse {
-	body := fmt.Sprintf(shortFormat, status, code, message)// TODO type
-	return jsonResponse{status: status, body: []byte(body)}
+func precomputeBasicResponse(status int, code, message string) jsonResponse {
+	basic := JsonBasic{
+		Status:  status,
+		Code:    code,
+		Message: message,
+	}
+	body, _ := json.Marshal(basic)
+	return jsonResponse{status: status, body: body}
 }
 
 // Precomputed error and ok responses with status codes
 var (
 	//errors
-	errorTokenGeneration                = precomputeResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
-	errorClaimsNotFound                 = precomputeResponse(http.StatusInternalServerError, CodeErrorClaimsNotFound, "Failed to generate token: Claims not found")
-	errorInvalidRequest                 = precomputeResponse(http.StatusBadRequest, CodeErrorInvalidRequest, "The request contains invalid data")
-	errorInvalidCredentials             = precomputeResponse(http.StatusUnauthorized, CodeErrorInvalidCredentials, "Invalid credentials provided")
-	errorPasswordMismatch               = precomputeResponse(http.StatusBadRequest, CodeErrorPasswordMismatch, "Password and confirmation do not match")
-	errorMissingFields                  = precomputeResponse(http.StatusBadRequest, CodeErrorMissingFields, "Required fields are missing")
-	errorPasswordComplexity             = precomputeResponse(http.StatusBadRequest, CodeErrorPasswordComplexity, "Password must be at least 8 characters")
-	errorEmailConflict                  = precomputeResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
-	errorNotFound                       = precomputeResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
-	errorConflict                       = precomputeResponse(http.StatusConflict, CodeErrorConflict, "Verification already requested")
-	errorRegistrationFailed             = precomputeResponse(http.StatusBadRequest, CodeErrorRegistrationFailed, "Registration failed due to invalid data")
-	errorTooManyRequests                = precomputeResponse(http.StatusTooManyRequests, CodeErrorTooManyRequests, "Too many requests, please try again later")
-	errorServiceUnavailable             = precomputeResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
-	errorNoAuthHeader                   = precomputeResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")
-	errorInvalidTokenFormat             = precomputeResponse(http.StatusUnauthorized, CodeErrorInvalidTokenFormat, "Invalid authorization token format")
-	errorJwtInvalidSignMethod           = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtInvalidSignMethod, "Invalid JWT signing method")
-	errorJwtTokenExpired                = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
-	errorJwtInvalidToken                = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtInvalidToken, "Invalid authentication token")
-	errorJwtInvalidVerificationToken    = precomputeResponse(http.StatusUnauthorized, CodeErrorJwtInvalidVerificationToken, "Invalid verification token")
-	errorEmailVerificationFailed        = precomputeResponse(http.StatusInternalServerError, "err_email_verification_failed", "Email verification process failed")
-	errorInvalidOAuth2Provider          = precomputeResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
-	errorOAuth2TokenExchangeFailed      = precomputeResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
-	errorOAuth2UserInfoFailed           = precomputeResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
-	errorOAuth2UserInfoProcessingFailed = precomputeResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
-	errorOAuth2DatabaseError            = precomputeResponse(http.StatusInternalServerError, CodeErrorOAuth2DatabaseError, "Database error during OAuth2 authentication")
-	errorAuthDatabaseError              = precomputeResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
+	errorTokenGeneration                = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
+	errorClaimsNotFound                 = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorClaimsNotFound, "Failed to generate token: Claims not found")
+	errorInvalidRequest                 = precomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidRequest, "The request contains invalid data")
+	errorInvalidCredentials             = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidCredentials, "Invalid credentials provided")
+	errorPasswordMismatch               = precomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordMismatch, "Password and confirmation do not match")
+	errorMissingFields                  = precomputeBasicResponse(http.StatusBadRequest, CodeErrorMissingFields, "Required fields are missing")
+	errorPasswordComplexity             = precomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordComplexity, "Password must be at least 8 characters")
+	errorEmailConflict                  = precomputeBasicResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
+	errorNotFound                       = precomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
+	errorConflict                       = precomputeBasicResponse(http.StatusConflict, CodeErrorConflict, "Verification already requested")
+	errorRegistrationFailed             = precomputeBasicResponse(http.StatusBadRequest, CodeErrorRegistrationFailed, "Registration failed due to invalid data")
+	errorTooManyRequests                = precomputeBasicResponse(http.StatusTooManyRequests, CodeErrorTooManyRequests, "Too many requests, please try again later")
+	errorServiceUnavailable             = precomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
+	errorNoAuthHeader                   = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")
+	errorInvalidTokenFormat             = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidTokenFormat, "Invalid authorization token format")
+	errorJwtInvalidSignMethod           = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidSignMethod, "Invalid JWT signing method")
+	errorJwtTokenExpired                = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
+	errorJwtInvalidToken                = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidToken, "Invalid authentication token")
+	errorJwtInvalidVerificationToken    = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidVerificationToken, "Invalid verification token")
+	errorEmailVerificationFailed        = precomputeBasicResponse(http.StatusInternalServerError, "err_email_verification_failed", "Email verification process failed")
+	errorInvalidOAuth2Provider          = precomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
+	errorOAuth2TokenExchangeFailed      = precomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
+	errorOAuth2UserInfoFailed           = precomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
+	errorOAuth2UserInfoProcessingFailed = precomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
+	errorOAuth2DatabaseError            = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorOAuth2DatabaseError, "Database error during OAuth2 authentication")
+	errorAuthDatabaseError              = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
 
 	// oks
-	okAlreadyVerified = precomputeResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
-	okEmailVerified   = precomputeResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
-	okVerificationRequested = precomputeResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
+	okAlreadyVerified = precomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
+	okEmailVerified   = precomputeBasicResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
+	okVerificationRequested = precomputeBasicResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
 )
 
 // For successful precomputed responses
