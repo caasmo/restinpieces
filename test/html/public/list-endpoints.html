@@ -68,14 +68,16 @@
 
     <button id="get-endpoints-btn" style="margin-bottom: 20px;">Refresh Endpoints</button>
 
-    <div id="stored-endpoints-container">
-        <h3>Stored Endpoints</h3>
-        <ul id="stored-endpoints-list" class="endpoint-list"></ul>
-    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div id="stored-endpoints-container">
+            <h3>Stored Endpoints</h3>
+            <ul id="stored-endpoints-list" class="endpoint-list"></ul>
+        </div>
 
-    <div id="new-endpoints-container" style="margin-top: 20px; display: none;">
-        <h3>New Endpoints</h3>
-        <ul id="new-endpoints-list" class="endpoint-list"></ul>
+        <div id="new-endpoints-container" style="display: none;">
+            <h3>Requested Endpoints</h3>
+            <ul id="new-endpoints-list" class="endpoint-list"></ul>
+        </div>
     </div>
     <div id="error" class="error"></div>
 
