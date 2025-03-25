@@ -7,16 +7,43 @@
     <style>
         body {
             font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
         }
         pre {
-            background-color: #f0f0f0;
-            padding: 10px;
-            border: 1px solid #ccc;
+            background: white;
+            padding: 15px;
+            border-radius: 4px;
             overflow: auto;
+            max-height: 300px;
             white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 0 5px;
+            background-color: #2196f3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            height: 40px;
+            min-width: 120px;
+        }
+        button:hover {
+            opacity: 0.9;
         }
         .error {
-            color: red;
+            color: #c62828;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+        .error:not(:empty) {
+            display: block;
         }
     </style>
 </head>
@@ -27,6 +54,7 @@
 
     <h2>Result:</h2>
     <pre id="result"></pre>
+    <div id="error" class="error"></div>
 
     <script type="module">
         import Restinpieces from './assets/js/restinpieces.js';
@@ -35,10 +63,11 @@
 
         function getEndpoints() {
             const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
             resultDiv.textContent = "Loading...";
-            resultDiv.classList.remove("error");
+            errorDiv.textContent = '';
 
-            rp.requestJsonAuth("/api/auth-refresh")
+            rp.requestJsonAuth("/api/list-endpoints")
             .then(data => {
                 // Stringify the JSON with indentation for readability
                 resultDiv.textContent = JSON.stringify(data, null, 2);
