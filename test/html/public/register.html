@@ -182,16 +182,11 @@
 
                     this.showMessage('Registering...');
 
-                    this.rp.requestJson(
-                        "/api/register-with-password",
-                        "POST",
-                        {},
-                        {
-                            identity: validatedEmail,
-                            password: validatedPassword,
-                            password_confirm: confirmPassword
-                        }
-                    )
+                    this.rp.RegisterWithPassword({
+                        identity: validatedEmail,
+                        password: validatedPassword,
+                        password_confirm: confirmPassword
+                    })
                     .then(response => {
                         if (response.data?.access_token && response.data?.record) {
                             this.rp.store.auth.save(response.data);
