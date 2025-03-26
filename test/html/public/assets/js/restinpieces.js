@@ -148,20 +148,21 @@ class Restinpieces {
      * @param {AbortSignal|null} [signal=null] - Optional AbortSignal for cancellation
      * @returns {Promise<any>} - Resolves with parsed response JSON
      */
-    async requestJsonAuth(path, method = "GET", queryParams = {}, body = null, headers = {}, signal = null) {
+    requestJsonAuth(path, method = "GET", queryParams = {}, body = null, headers = {}, signal = null) {
         // Ensure token is valid before making the request (optional optimization)
         // if (!this.store.auth.isValid()) { ... handle invalid token early ... }
 
-        const makeRequest = async (isRetry = false) => {
+        const makeRequest = (isRetry = false) => {
             const authData = this.store.auth.load() || {};
             const token = authData.access_token || '';
 
             if (!token && !isRetry) { // Don't attempt auth if no token initially
-                throw new ClientResponseError({
+                // Return a rejected promise directly
+                return Promise.reject(new ClientResponseError({
                     url: this.buildUrl(this.baseURL, path),
                     status: 401,
                     response: { message: "No authentication token available." }
-                });
+                }));
             }
 
             const authHeaders = {
@@ -169,21 +170,25 @@ class Restinpieces {
                 'Authorization': `Bearer ${token}`
             };
 
-            try {
-                // Pass the signal to the underlying request
-                return await this.requestJson(path, method, queryParams, body, authHeaders, signal);
-            } catch (error) {
-                // Check if it's a 401 error, not an abort, not already refreshing, and not a retry
-                if (error instanceof ClientResponseError && error.status === 401 && !error.isAbort && !this.isRefreshingToken && !isRetry) {
-                    const refreshed = await this._refreshToken();
-                    if (refreshed) {
-                        // Retry the request ONCE with the new token
-                        return await makeRequest(true); // Pass isRetry = true
+            // Pass the signal to the underlying request
+            return this.requestJson(path, method, queryParams, body, authHeaders, signal)
+                .catch(error => {
+                    // Check if it's a 401 error, not an abort, not already refreshing, and not a retry
+                    if (error instanceof ClientResponseError && error.status === 401 && !error.isAbort && !this.isRefreshingToken && !isRetry) {
+                        // Attempt refresh, then retry or re-throw
+                        return this._refreshToken().then(refreshed => {
+                            if (refreshed) {
+                                // Retry the request ONCE with the new token
+                                return makeRequest(true); // Pass isRetry = true
+                            } else {
+                                // Refresh failed, re-throw the original 401 error
+                                throw error;
+                            }
+                        });
                     }
-                }
-                // Re-throw the original error if refresh failed, wasn't possible, or it's another error
-                throw error;
-            }
+                    // Re-throw the original error if it's not a 401 we can handle, or if refresh failed
+                    throw error;
+                });
         };
 
         return makeRequest();
@@ -191,16 +196,16 @@ class Restinpieces {
 
     /**
      * Attempts to refresh the authentication token using the refresh token.
-     * @returns {Promise<boolean>} - True if refresh was successful, false otherwise.
+     * @returns {Promise<boolean>} - Resolves with true if refresh was successful, false otherwise.
      * @private
      */
-    async _refreshToken() {
+    _refreshToken() {
         const authData = this.store.auth.load();
         const refreshToken = authData?.refresh_token;
 
         if (!this.refreshPath || !refreshToken) {
             console.warn("Token refresh skipped: No refresh path configured or refresh token missing.");
-            return false; // Cannot refresh
+            return Promise.resolve(false); // Cannot refresh
         }
 
         // Prevent concurrent refresh attempts
@@ -208,35 +213,35 @@ class Restinpieces {
             console.warn("Token refresh already in progress.");
             // Potentially wait for the ongoing refresh instead of failing immediately
             // This requires a more complex mechanism (e.g., storing the refresh promise)
-            return false;
+            return Promise.resolve(false);
         }
 
         this.isRefreshingToken = true;
+        console.info("Attempting token refresh...");
 
-        try {
-            console.info("Attempting token refresh...");
-            // Use requestJson directly to avoid auth loop.
-            // The refresh endpoint might expect the token in the body.
-            const newAuthData = await this.requestJson(
-                this.refreshPath,
-                "POST",
-                {}, // No query params usually
-                { refresh_token: refreshToken }, // Send refresh token in body
-                {} // No special headers usually needed
-                // No signal passed here, refresh should ideally complete
-            );
-
+        // Use requestJson directly to avoid auth loop.
+        return this.requestJson(
+            this.refreshPath,
+            "POST",
+            {}, // No query params usually
+            { refresh_token: refreshToken }, // Send refresh token in body
+            {} // No special headers usually needed
+            // No signal passed here, refresh should ideally complete
+        )
+        .then(newAuthData => {
             // Assuming the refresh endpoint returns new auth data (access_token, potentially new refresh_token)
             if (newAuthData && newAuthData.access_token) {
                 // Merge new data with old, preserving other fields if necessary
                 const updatedAuthData = { ...authData, ...newAuthData };
                 this.store.auth.save(updatedAuthData);
                 console.info("Token refresh successful.");
-                return true;
+                return true; // Resolve promise with true
             } else {
+                // Use Promise.reject for consistency if needed, but throwing works in .then
                 throw new Error("Invalid response from refresh token endpoint.");
             }
-        } catch (error) {
+        })
+        .catch(error => {
             console.error("Token refresh failed:", error);
             // Call the error handler if provided
             if (this.onRefreshError) {
@@ -248,10 +253,11 @@ class Restinpieces {
             }
             // Optionally clear auth data on persistent refresh failure
             // this.store.auth.save(null);
-            return false;
-        } finally {
-            this.isRefreshingToken = false; // Release the lock
-        }
+            return false; // Resolve promise with false after catching error
+        })
+        .finally(() => {
+            this.isRefreshingToken = false; // Release the lock regardless of success/failure
+        });
     }
 
     /**
@@ -360,20 +366,21 @@ class Restinpieces {
      * @param {string} [path="/api/all-endpoints"] - The path to the endpoint discovery URL.
      * @returns {Promise<any>} - Resolves with the fetched endpoint data.
      */
-    async fetchEndpoints(path = "/api/all-endpoints") {
-        try {
-            const endpointsData = await this.requestJson(path, "GET");
-            if (endpointsData) {
-                this.store.endpoints.save(endpointsData);
-                console.info("Endpoints fetched and saved successfully.");
-            }
-            return endpointsData;
-        } catch (error) {
-            console.error("Failed to fetch endpoints:", error);
-            // Depending on requirements, might want to clear existing endpoints
-            // this.store.endpoints.save(null);
-            throw error; // Re-throw the error for the caller to handle
-        }
+    fetchEndpoints(path = "/api/all-endpoints") {
+        return this.requestJson(path, "GET")
+            .then(endpointsData => {
+                if (endpointsData) {
+                    this.store.endpoints.save(endpointsData);
+                    console.info("Endpoints fetched and saved successfully.");
+                }
+                return endpointsData; // Resolve with the data
+            })
+            .catch(error => {
+                console.error("Failed to fetch endpoints:", error);
+                // Depending on requirements, might want to clear existing endpoints
+                // this.store.endpoints.save(null);
+                throw error; // Re-throw the error for the caller to handle
+            });
     }
 }
 
