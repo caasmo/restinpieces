@@ -26,6 +26,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// No need to fetch the user again.
 
 	// Generate new token with fresh expiration using NewJwtSession
+	// TODO remove expiry is the AuthTokenDuration
 	newToken, expiry, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
 		slog.Error("Failed to generate new token", "error", err)
@@ -39,7 +40,6 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Calculate seconds until expiry
 	expiresIn := int(time.Until(expiry).Seconds())
 
-	// TODO move to response standard Ok response.
 	// Return standardized authentication response
 	writeAuthResponse(w, newToken, expiresIn, user)
 
