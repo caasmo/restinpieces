@@ -130,24 +130,24 @@
 
                 rp.RefreshAuth()
                 .then(response => {
-                    if (response?.access_token) {
+                    if (response?.data?.access_token) {
                         // Save new auth data (preserving existing record)
                         const newAuth = {
                             ...currentAuth,
-                            access_token: response.access_token,
-                            expires_in: response.expires_in
+                            access_token: response.data.access_token,
+                            expires_in: response.data.expires_in
                         };
                         rp.store.auth.save(newAuth);
                         
                         // Display new token and update UI
-                        document.getElementById('new-token').textContent = response.access_token;
-                        document.getElementById('current-token').textContent = response.access_token;
+                        document.getElementById('new-token').textContent = response.data.access_token;
+                        document.getElementById('current-token').textContent = response.data.access_token;
                         // Update previous token for next refresh
                         document.getElementById('previous-token').textContent = currentToken;
                         // Update user info with any new data from refresh
                         const updatedUserInfo = {
                             ...userInfo,
-                            ...(response.record || {})
+                            ...(response.data.record || {})
                         };
                         document.getElementById('user-info').textContent = JSON.stringify(updatedUserInfo, null, 2);
                     } else {
