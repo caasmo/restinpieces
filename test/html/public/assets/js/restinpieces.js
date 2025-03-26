@@ -30,6 +30,7 @@ class Restinpieces {
         this.storage = mergedConfig.storage || new RestinpiecesLocalStore();
         // Initialize endpoints from config
         this.endpoints = mergedConfig.endpoints;
+		this.endpointsPromise = null; // Tracks ongoing fetch endpoint requests per instance TODO
 
         //this.recordServices = {}; // Cache for record services
         //this.enableAutoCancellation = true; // Consider adding to config
@@ -280,11 +281,64 @@ class Restinpieces {
         return result.join("&");
     }
 
+	fetchEndpoints() {
+		const cachedEndpoints = this.store.endpoints.load() 
+		if (cachedEndpoints) {
+			return Promise.resolve(cachedEndpoints);
+		}
+
+		if (!this.endpointsPromise) {
+			// TODO
+			const endpointPath = this.endpoints.all_endpoints.split(' ')[1]; // Get path part after method
+
+			this.endpointsPromise = this.requestJson(endpointPath, "GET")
+				.then(response => {
+					if (!response?.data) {
+						throw new ClientResponseError({
+							response: { message: "Empty endpoints response" }
+						});
+					}
+
+					this.store.endpoints.save(response.data);
+					this.endpointsPromise = null; // Reset after completion
+					return response.data;
+				})
+				.catch(error => {
+					this.endpointsPromise = null; // Reset on error
+					console.error("Failed to fetch endpoints:", error);
+					//this.store.endpoints.save(null); // Clear existing endpoints on failure
+					throw error;
+				});
+		}
+
+		return this.endpointsPromise;
+	}
+
+	request(endpointKey, method = "GET", queryParams = {}, body = null, headers = {}, signal = null) {
+		return this.fetchEndpoints()
+			.then(endpoints => {
+				const path = endpoints[endpointKey];
+				if (!path) {
+					throw new Error(`Endpoint "${endpointKey}" not found`);
+				}
+				return requestJson(path, method, queryParams, body, headers, signal);
+			})
+			.catch(error => {
+				console.error(`Error in request to "${endpointKey}":`, error);
+				throw error;
+			});
+	}
+
+	RefreshAuth(body = null, headers = {}, signal = null) {
+		return this.request('refreshAuth', 'POST', {}, body, headers, signal);
+	}
+
     /**
      * Lists all API endpoints configuration from the server and saves it.
      * @returns {Promise<Object>} - Resolves with the endpoint data from server response.
      */
     ListEndpoints() {
+// deprecated TODO
         const endpointPath = this.endpoints.all_endpoints.split(' ')[1]; // Get path part after method
         return this.requestJson(endpointPath, "GET")
             .then(response => {
