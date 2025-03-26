@@ -57,7 +57,9 @@
                 return;
             }
 
-            const rp = new Restinpieces("http://localhost:8080");
+            const rp = new Restinpieces({
+                baseURL: "http://localhost:8080"
+            });
             rp.requestJson(
                 "/api/confirm-verification", 
                 "POST",

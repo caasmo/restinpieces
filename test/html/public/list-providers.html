@@ -93,7 +93,9 @@
             resultDiv.textContent = "Loading...";
             errorDiv.textContent = '';
 
-            const rp = new Restinpieces("http://localhost:8080");
+            const rp = new Restinpieces({
+                baseURL: "http://localhost:8080"
+            });
             rp.requestJson("/api/list-oauth2-providers")
             .then(data => {
                 resultDiv.textContent = JSON.stringify(data, null, 2);
