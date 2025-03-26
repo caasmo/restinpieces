@@ -21,7 +21,7 @@ class Restinpieces {
         // Instantiate default storage if none provided
         this.storage = mergedConfig.storage || new RestinpiecesLocalStore();
         // Initialize endpoints from config
-        this.endpoints = mergedConfig.endpoints;
+        this.endpointsPath = mergedConfig.enpointsPath;
 		this.endpointsPromise = null; // Tracks ongoing fetch endpoint requests per instance TODO
 
         //this.recordServices = {}; // Cache for record services
