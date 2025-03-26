@@ -20,10 +20,11 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 
 	// API routes with explicit /api prefix
 	ap.Router().Register(
+		//TODO
 		r.NewRoute("GET /api/public-endpoints").WithHandlerFunc(ap.PublicEndpointsHandler).WithMiddlewareChain(commonNewMiddleware),
-		r.NewRoute(cfg.Endpoints.AllEndpoints).WithHandlerFunc(ap.AllEndpointsHandler).WithMiddleware(ap.JwtValidate),
+		r.NewRoute(cfg.Endpoints.AllEndpoints).WithHandlerFunc(ap.AllEndpointsHandler),
 
-		r.NewRoute(cfg.Endpoints.AuthRefresh).WithHandlerFunc(ap.RefreshAuthHandler).WithMiddleware(ap.JwtValidate),
+		r.NewRoute(cfg.Endpoints.AuthRefresh).WithHandlerFunc(ap.RefreshAuthHandler),
 		r.NewRoute(cfg.Endpoints.AuthWithPassword).WithHandlerFunc(ap.AuthWithPasswordHandler),
 		r.NewRoute(cfg.Endpoints.AuthWithOAuth2).WithHandlerFunc(ap.AuthWithOAuth2Handler),
 		r.NewRoute(cfg.Endpoints.RequestVerification).WithHandlerFunc(ap.RequestVerificationHandler),
@@ -32,12 +33,10 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		r.NewRoute(cfg.Endpoints.ConfirmVerification).WithHandlerFunc(ap.ConfirmVerificationHandler),
 
 		//custom routes example: mixing core middleware and custom handler
-		r.NewRoute("GET /custom").WithHandlerFunc(cAp.Index).WithMiddleware(ap.JwtValidate),
+		r.NewRoute("GET /custom").WithHandlerFunc(cAp.Index),
 	)
 
 	//ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
-	//ap.Router().Handle("GET /api", authMiddleware.ThenFunc(ap.Index))
-	//ap.Router().Handle("/api/example/sqlite/read/randompk", http.HandlerFunc(ap.ExampleSqliteReadRandom))
 	//ap.Router().Handle("/api/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
 	//ap.Router().Handle("/api/benchmark/baseline", http.HandlerFunc(ap.BenchmarkBaseline))
 	//ap.Router().Handle("/api/benchmark/sqlite/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatio))

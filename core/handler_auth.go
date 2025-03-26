@@ -12,25 +12,6 @@ import (
 	"github.com/caasmo/restinpieces/queue"
 )
 
-//	export JWT_SECRET=$(openssl rand -base64 32)
-//
-//	First get a valid JWT token (replace JWT_SECRET with your actual secret)
-//	This is a test token generation command using jwt-cli (install via 'go install github.com/matiaskorhonen/jwt-cli@latest')
-//	JWT_TOKEN=$(jwt encode --secret "${JWT_SECRET}" --claim user_id=testuser123 --exp +5m)
-//	Note: Use NewJwtSessionToken() instead of NewJwtSession
-//
-//	# Test valid token refresh
-//	curl -v -X POST http://localhost:8080/auth-refresh \
-//	  -H "Authorization: Bearer $JWT_TOKEN"
-//
-//	# Test invalid token
-//	curl -v -X POST http://localhost:8080/auth-refresh \
-//	  -H "Authorization: Bearer invalid.token.here"
-//
-//	# Test missing header
-//	curl -v -X POST http://localhost:8080/auth-refresh
-//
-
 // RefreshAuthHandler handles explicit JWT token refresh requests
 // Endpoint: POST /auth-refresh
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
