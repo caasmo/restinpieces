@@ -332,67 +332,6 @@ class Restinpieces {
 	RefreshAuth(body = null, headers = {}, signal = null) {
 		return this.request('refreshAuth', 'POST', {}, body, headers, signal);
 	}
-
-    /**
-     * Lists all API endpoints configuration from the server and saves it.
-     * @returns {Promise<Object>} - Resolves with the endpoint data from server response.
-     */
-    ListEndpoints() {
-// deprecated TODO
-        const endpointPath = this.endpoints.all_endpoints.split(' ')[1]; // Get path part after method
-        return this.requestJson(endpointPath, "GET")
-            .then(response => {
-                if (!response?.data) {
-                    throw new ClientResponseError({
-                        response: { message: "Empty endpoints response" }
-                    });
-                }
-
-                this.store.endpoints.save(response.data);
-                return response.data;
-            })
-            .catch(error => {
-                console.error("Failed to fetch endpoints:", error);
-                //this.store.endpoints.save(null); // Clear existing endpoints on failure
-                throw error;
-            });
-    }
-
-    /**
-     * Refreshes the authentication token using the refresh token.
-     * @returns {Promise<Object>} - Resolves with new auth data containing access_token and refresh_token
-     */
-    AuthRefresh() {
-		// TODO deprecated
-        const currentAuth = this.store.auth.load();
-		// get the endpoints from the local storage
-		// if not call ListEndpoints and save localstorage
-		// if not call ListEndpoints
-		// get the endpoints from the local storage
-        if (!currentAuth?.refresh_token) {
-            return Promise.reject(new ClientResponseError({
-                response: { message: "No refresh token available" }
-            }));
-        }
-
-        return this.requestJson(this.endpoints.auth_refresh, "POST", {}, {
-            refresh_token: currentAuth.refresh_token
-        })
-        .then(newAuth => {
-            if (!newAuth?.access_token) {
-                throw new ClientResponseError({
-                    response: { message: "Invalid refresh response" }
-                });
-            }
-            this.store.auth.save(newAuth);
-            return newAuth;
-        })
-        .catch(error => {
-            // Clear auth on refresh failure
-            this.store.auth.save(null);
-            throw error;
-        });
-    }
 }
 
 export default Restinpieces;
