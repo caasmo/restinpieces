@@ -44,7 +44,9 @@
 <body>
     <script type="module">
         import Restinpieces from './assets/js/restinpieces.js';
-        const rp = new Restinpieces();
+        const rp = new Restinpieces({
+            baseURL: window.location.origin
+        });
         rp.store.auth.save(null);
     </script>
 
