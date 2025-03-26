@@ -8,8 +8,8 @@ class Restinpieces {
         baseURL: "/",
         lang: "en-US",
         storage: null, // Will be instantiated if null
-        refreshPath: null, // Path for token refresh endpoint
-        onRefreshError: null, // Optional callback for refresh failure
+        // refreshPath: null, // Removed: Path for token refresh endpoint
+        // onRefreshError: null, // Removed: Optional callback for refresh failure
     };
 
     constructor(config = {}) {
@@ -20,11 +20,11 @@ class Restinpieces {
         this.lang = mergedConfig.lang;
         // Instantiate default storage if none provided
         this.storage = mergedConfig.storage || new RestinpiecesLocalStore();
-        this.refreshPath = mergedConfig.refreshPath;
-        this.onRefreshError = mergedConfig.onRefreshError;
+        // this.refreshPath = mergedConfig.refreshPath; // Removed
+        // this.onRefreshError = mergedConfig.onRefreshError; // Removed
 
-        // Flag to prevent infinite refresh loops
-        this.isRefreshingToken = false;
+        // Flag to prevent infinite refresh loops - Removed
+        // this.isRefreshingToken = false;
 
         //this.recordServices = {}; // Cache for record services
         //this.enableAutoCancellation = true; // Consider adding to config
@@ -152,112 +152,26 @@ class Restinpieces {
         // Ensure token is valid before making the request (optional optimization)
         // if (!this.store.auth.isValid()) { ... handle invalid token early ... }
 
-        const makeRequest = (isRetry = false) => {
-            const authData = this.store.auth.load() || {};
-            const token = authData.access_token || '';
+        const authData = this.store.auth.load() || {};
+        const token = authData.access_token || '';
 
-            if (!token && !isRetry) { // Don't attempt auth if no token initially
-                // Return a rejected promise directly
-                return Promise.reject(new ClientResponseError({
-                    url: this.buildUrl(this.baseURL, path),
-                    status: 401,
-                    response: { message: "No authentication token available." }
-                }));
-            }
+        if (!token) { // Don't attempt auth if no token
+            // Return a rejected promise directly
+            return Promise.reject(new ClientResponseError({
+                url: this.buildUrl(this.baseURL, path),
+                status: 401,
+                response: { message: "No authentication token available." }
+            }));
+        }
 
-            const authHeaders = {
-                ...headers,
-                'Authorization': `Bearer ${token}`
-            };
-
-            // Pass the signal to the underlying request
-            return this.requestJson(path, method, queryParams, body, authHeaders, signal)
-                .catch(error => {
-                    // Check if it's a 401 error, not an abort, not already refreshing, and not a retry
-                    if (error instanceof ClientResponseError && error.status === 401 && !error.isAbort && !this.isRefreshingToken && !isRetry) {
-                        // Attempt refresh, then retry or re-throw
-                        return this._refreshToken().then(refreshed => {
-                            if (refreshed) {
-                                // Retry the request ONCE with the new token
-                                return makeRequest(true); // Pass isRetry = true
-                            } else {
-                                // Refresh failed, re-throw the original 401 error
-                                throw error;
-                            }
-                        });
-                    }
-                    // Re-throw the original error if it's not a 401 we can handle, or if refresh failed
-                    throw error;
-                });
+        const authHeaders = {
+            ...headers,
+            'Authorization': `Bearer ${token}`
         };
 
-        return makeRequest();
-    }
-
-    /**
-     * Attempts to refresh the authentication token using the refresh token.
-     * @returns {Promise<boolean>} - Resolves with true if refresh was successful, false otherwise.
-     * @private
-     */
-    _refreshToken() {
-        const authData = this.store.auth.load();
-        const refreshToken = authData?.refresh_token;
-
-        if (!this.refreshPath || !refreshToken) {
-            console.warn("Token refresh skipped: No refresh path configured or refresh token missing.");
-            return Promise.resolve(false); // Cannot refresh
-        }
-
-        // Prevent concurrent refresh attempts
-        if (this.isRefreshingToken) {
-            console.warn("Token refresh already in progress.");
-            // Potentially wait for the ongoing refresh instead of failing immediately
-            // This requires a more complex mechanism (e.g., storing the refresh promise)
-            return Promise.resolve(false);
-        }
-
-        this.isRefreshingToken = true;
-        console.info("Attempting token refresh...");
-
-        // Use requestJson directly to avoid auth loop.
-        return this.requestJson(
-            this.refreshPath,
-            "POST",
-            {}, // No query params usually
-            { refresh_token: refreshToken }, // Send refresh token in body
-            {} // No special headers usually needed
-            // No signal passed here, refresh should ideally complete
-        )
-        .then(newAuthData => {
-            // Assuming the refresh endpoint returns new auth data (access_token, potentially new refresh_token)
-            if (newAuthData && newAuthData.access_token) {
-                // Merge new data with old, preserving other fields if necessary
-                const updatedAuthData = { ...authData, ...newAuthData };
-                this.store.auth.save(updatedAuthData);
-                console.info("Token refresh successful.");
-                return true; // Resolve promise with true
-            } else {
-                // Use Promise.reject for consistency if needed, but throwing works in .then
-                throw new Error("Invalid response from refresh token endpoint.");
-            }
-        })
-        .catch(error => {
-            console.error("Token refresh failed:", error);
-            // Call the error handler if provided
-            if (this.onRefreshError) {
-                try {
-                    this.onRefreshError(error);
-                } catch (handlerError) {
-                    console.error("Error in onRefreshError handler:", handlerError);
-                }
-            }
-            // Optionally clear auth data on persistent refresh failure
-            // this.store.auth.save(null);
-            return false; // Resolve promise with false after catching error
-        })
-        .finally(() => {
-            this.isRefreshingToken = false; // Release the lock regardless of success/failure
-        });
+        // Pass the signal to the underlying request
+        // No automatic retry logic anymore. If it fails (e.g., 401), the error propagates.
+        return this.requestJson(path, method, queryParams, body, authHeaders, signal);
     }
 
     /**
