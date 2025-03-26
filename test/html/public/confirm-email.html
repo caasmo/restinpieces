@@ -62,13 +62,10 @@
             });
             rp.ConfirmVerification({ token })
             .then(response => {
-                if (response.data.message) {
-                    showSuccess(response.data.message);
-                } else if (response.message) {
-                    showSuccess(response.message);
-                } else {
+                if (!response.message) {
                     throw new Error('Invalid verification response: missing message');
                 }
+                showSuccess(response.message);
             })
             .catch(error => {
                 console.error('Verification failed:', error);
