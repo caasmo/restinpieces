@@ -8,15 +8,9 @@ class Restinpieces {
         baseURL: "/",
         lang: "en-US",
         storage: null, // Will be instantiated if null
+		// TODO 
         endpoints: {
             all_endpoints: "GET /api/all-endpoints",
-            auth_refresh: "",
-            auth_with_oauth2: "",
-            auth_with_password: "",
-            confirm_verification: "",
-            list_oauth2_providers: "",
-            register_with_password: "",
-            request_verification: ""
         }
     };
 
@@ -288,10 +282,10 @@ class Restinpieces {
 		}
 
 		if (!this.endpointsPromise) {
-			// TODO
-			const endpointPath = this.endpoints.all_endpoints.split(' ')[1]; // Get path part after method
+			// TODO little method
+			const [method, endpointPath] = this.endpoints.all_endpoints.split(' ');
 
-			this.endpointsPromise = this.requestJson(endpointPath, "GET")
+			this.endpointsPromise = this.requestJson(endpointPath, method)
 				.then(response => {
 					console.log('called enpoint for endpoints');
 					if (!response?.data) {
