@@ -309,6 +309,10 @@ class Restinpieces {
      */
     AuthRefresh() {
         const currentAuth = this.store.auth.load();
+		// get the enpoints from the local storage
+		// if not call allenpoints and save localstorage
+		// if not call allenpoints
+		// get the enpoints from the local storage
         if (!currentAuth?.refresh_token) {
             return Promise.reject(new ClientResponseError({
                 response: { message: "No refresh token available" }
