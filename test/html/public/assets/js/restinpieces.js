@@ -330,7 +330,11 @@ class Restinpieces {
 	}
 
 	RefreshAuth(body = null, headers = {}, signal = null) {
-		return this.request('refreshAuth', 'POST', {}, body, headers, signal);
+		return this.request('auth_refresh', 'POST', {}, body, headers, signal);
+	}
+
+	ListOauth2Providers() {
+		return this.request('list_oauth2_providers', 'POST');
 	}
 }
 
