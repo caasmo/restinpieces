@@ -298,7 +298,7 @@ class Restinpieces {
             })
             .catch(error => {
                 console.error("Failed to fetch endpoints:", error);
-                this.store.endpoints.save(null); // Clear existing endpoints on failure
+                //this.store.endpoints.save(null); // Clear existing endpoints on failure
                 throw error;
             });
     }
