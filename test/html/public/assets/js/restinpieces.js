@@ -334,7 +334,8 @@ class Restinpieces {
 	}
 
 	ListOauth2Providers() {
-		return this.request('list_oauth2_providers', 'GET');
+		const [method, path] = this.endpoints.list_oauth2_providers.split(' ');
+		return this.requestJson(path, method);
 	}
 }
 
