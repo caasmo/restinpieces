@@ -302,6 +302,37 @@ class Restinpieces {
                 throw error;
             });
     }
+
+    /**
+     * Refreshes the authentication token using the refresh token.
+     * @returns {Promise<Object>} - Resolves with new auth data containing access_token and refresh_token
+     */
+    AuthRefresh() {
+        const currentAuth = this.store.auth.load();
+        if (!currentAuth?.refresh_token) {
+            return Promise.reject(new ClientResponseError({
+                response: { message: "No refresh token available" }
+            }));
+        }
+
+        return this.requestJson(this.endpoints.auth_refresh, "POST", {}, {
+            refresh_token: currentAuth.refresh_token
+        })
+        .then(newAuth => {
+            if (!newAuth?.access_token) {
+                throw new ClientResponseError({
+                    response: { message: "Invalid refresh response" }
+                });
+            }
+            this.store.auth.save(newAuth);
+            return newAuth;
+        })
+        .catch(error => {
+            // Clear auth on refresh failure
+            this.store.auth.save(null);
+            throw error;
+        });
+    }
 }
 
 export default Restinpieces;
