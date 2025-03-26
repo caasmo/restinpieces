@@ -140,8 +140,17 @@
             rp.store.endpoints.save(null);
 
             rp.fetchEndpoints()
-                .then(endpoints => {
+                .then(response => {
                     errorDiv.textContent = '';
+                    
+                    // Extract endpoints from response data
+                    const endpoints = response.data || response;
+                    
+                    if (!endpoints) {
+                        errorDiv.textContent = 'No endpoints data received';
+                        return;
+                    }
+
                     // Show the fresh endpoints on the right
                     showFetchedEndpoints(endpoints);
                 })
@@ -156,7 +165,7 @@
             
             if (rp.store.auth.isValid()) {
                 authText.textContent = "✅ Authenticated";
-                showStoredEndpoints();
+                showSavedEndpoints();
             } else {
                 authText.textContent = "❌ Not authenticated";
             }
