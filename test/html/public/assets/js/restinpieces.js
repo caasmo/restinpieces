@@ -293,6 +293,7 @@ class Restinpieces {
 
 			this.endpointsPromise = this.requestJson(endpointPath, "GET")
 				.then(response => {
+					console.log('called enpoint for endpoints');
 					if (!response?.data) {
 						throw new ClientResponseError({
 							response: { message: "Empty endpoints response" }
@@ -314,10 +315,12 @@ class Restinpieces {
 		return this.endpointsPromise;
 	}
 
-	request(endpointKey, method = "GET", queryParams = {}, body = null, headers = {}, signal = null) {
+	request(endpointKey, queryParams = {}, body = null, headers = {}, signal = null) {
 		return this.fetchEndpoints()
 			.then(endpoints => {
-				const path = endpoints[endpointKey];
+				const methodAndPath = endpoints[endpointKey]; // still POST /api....
+				const [method, path] = methodAndPath.split(' ');
+
 				if (!path) {
 					throw new Error(`Endpoint "${endpointKey}" not found`);
 				}
@@ -329,13 +332,14 @@ class Restinpieces {
 			});
 	}
 
+	// TODO
 	RefreshAuth(body = null, headers = {}, signal = null) {
 		return this.request('auth_refresh', 'POST', {}, body, headers, signal);
 	}
 
 	ListOauth2Providers() {
-		const [method, path] = this.endpoints.list_oauth2_providers.split(' ');
-		return this.requestJson(path, method);
+
+		return this.request('list_oauth2_providers')
 	}
 }
 
