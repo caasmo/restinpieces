@@ -90,7 +90,9 @@
     <script type="module">
         import Restinpieces from './assets/js/restinpieces.js';
         
-        const rp = new Restinpieces("http://localhost:8080");
+        const rp = new Restinpieces({
+            baseURL: "http://localhost:8080"
+        });
 
         function renderEndpoints(endpoints, listElement, containerElement) {
             listElement.innerHTML = '';
