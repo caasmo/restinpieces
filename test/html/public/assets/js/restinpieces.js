@@ -1,29 +1,51 @@
 import { ClientResponseError } from './client-response-error.js';
+// Import the class, not the static methods directly
 import { RestinpiecesLocalStore } from './local-store.js';
 
 class Restinpieces {
-    constructor(baseURL = "/", lang = "en-US") {
-        this.baseURL = baseURL;
-        this.lang = lang;
-        this.lstore = RestinpiecesLocalStore;
+    // Default configuration
+    static defaultConfig = {
+        baseURL: "/",
+        lang: "en-US",
+        storage: null, // Will be instantiated if null
+        refreshPath: null, // Path for token refresh endpoint
+        onRefreshError: null, // Optional callback for refresh failure
+    };
+
+    constructor(config = {}) {
+        // Merge user config with defaults
+        const mergedConfig = { ...Restinpieces.defaultConfig, ...config };
+
+        this.baseURL = mergedConfig.baseURL;
+        this.lang = mergedConfig.lang;
+        // Instantiate default storage if none provided
+        this.storage = mergedConfig.storage || new RestinpiecesLocalStore();
+        this.refreshPath = mergedConfig.refreshPath;
+        this.onRefreshError = mergedConfig.onRefreshError;
+
+        // Flag to prevent infinite refresh loops
+        this.isRefreshingToken = false;
+
         //this.recordServices = {}; // Cache for record services
-        //this.enableAutoCancellation = true;
+        //this.enableAutoCancellation = true; // Consider adding to config
         //this.cancelControllers = {};
 
-		// Expose the static store with a cleaner interface
+        // Expose the injected storage instance with a cleaner interface
+        // Note: This assumes the storage provider has these methods.
+        // A more robust solution might involve checking method existence.
         this.store = {
             auth: {
-                save: (data) => this.lstore.saveAuth(data),
-                load: () => this.lstore.loadAuth(),
-                isValid: () => this.lstore.isTokenValid(),
+                save: (data) => this.storage.saveAuth(data),
+                load: () => this.storage.loadAuth(),
+                isValid: () => this.storage.isTokenValid(),
             },
             provider: {
-                save: (data) => this.lstore.saveProvider(data),
-                load: () => this.lstore.loadProvider(),
+                save: (data) => this.storage.saveProvider(data),
+                load: () => this.storage.loadProvider(),
             },
             endpoints: {
-                save: (data) => this.lstore.saveEndpoints(data),
-                load: () => this.lstore.loadEndpoints(),
+                save: (data) => this.storage.saveEndpoints(data),
+                load: () => this.storage.loadEndpoints(),
             }
         };
     }
@@ -36,9 +58,10 @@ class Restinpieces {
      * @param {Object} [queryParams={}] - Query parameters to include
      * @param {Object|null} [body=null] - Request body (will be JSON.stringified)
      * @param {Object} [headers={}] - Additional request headers
+     * @param {AbortSignal|null} [signal=null] - Optional AbortSignal for cancellation
      * @returns {Promise<any>} - Resolves with parsed response JSON
      */
-    requestJson(path, method = "GET", queryParams = {}, body = null, headers = {}) {
+    requestJson(path, method = "GET", queryParams = {}, body = null, headers = {}, signal = null) {
         let url = this.buildUrl(this.baseURL, path);
 
         const serializedQueryParams = this.serializeQueryParams(queryParams);
@@ -55,9 +78,10 @@ class Restinpieces {
             method,
             headers: requestHeaders,
             body: body ? JSON.stringify(body) : null,
+            signal, // Pass the signal to fetch
         })
         .then(response => {
-        // Check for non-2xx status *before* parsing JSON
+            // Check for non-2xx status *before* parsing JSON
             if (!response.ok) {
             // Try to parse JSON error, but be resilient to non-JSON errors
                 return response.text().then(text => {
@@ -93,13 +117,22 @@ class Restinpieces {
         .catch(error => {
         // Ensure *all* errors are wrapped in ClientResponseError
             if (error instanceof ClientResponseError) {
-            throw error; // Already a ClientResponseError, re-throw
+                throw error; // Already a ClientResponseError, re-throw
             }
+            // Check if it's an AbortError
+            if (error.name === 'AbortError') {
+                throw new ClientResponseError({
+                    url: url, // Use the constructed URL
+                    isAbort: true,
+                    originalError: error,
+                    response: { message: "Request aborted" }
+                });
+            }
+            // Wrap other errors (e.g., network errors)
             throw new ClientResponseError({
-                url: error.url,
-                status: error.status,
+                url: url, // Use the constructed URL
                 originalError: error,
-                response: { message: error.message }
+                response: { message: error.message || "Network or unknown error" }
             });
         });
     }
@@ -112,16 +145,113 @@ class Restinpieces {
      * @param {Object} [queryParams={}] - Query parameters to include
      * @param {Object|null} [body=null] - Request body (will be JSON.stringified)
      * @param {Object} [headers={}] - Additional request headers
+     * @param {AbortSignal|null} [signal=null] - Optional AbortSignal for cancellation
      * @returns {Promise<any>} - Resolves with parsed response JSON
      */
-    requestJsonAuth(path, method = "GET", queryParams = {}, body = null, headers = {}) {
-        const authData = this.store.auth.load() || {};
-        const token = authData.access_token || '';
-        const authHeaders = {
-            ...headers,
-            'Authorization': `Bearer ${token}`
+    async requestJsonAuth(path, method = "GET", queryParams = {}, body = null, headers = {}, signal = null) {
+        // Ensure token is valid before making the request (optional optimization)
+        // if (!this.store.auth.isValid()) { ... handle invalid token early ... }
+
+        const makeRequest = async (isRetry = false) => {
+            const authData = this.store.auth.load() || {};
+            const token = authData.access_token || '';
+
+            if (!token && !isRetry) { // Don't attempt auth if no token initially
+                throw new ClientResponseError({
+                    url: this.buildUrl(this.baseURL, path),
+                    status: 401,
+                    response: { message: "No authentication token available." }
+                });
+            }
+
+            const authHeaders = {
+                ...headers,
+                'Authorization': `Bearer ${token}`
+            };
+
+            try {
+                // Pass the signal to the underlying request
+                return await this.requestJson(path, method, queryParams, body, authHeaders, signal);
+            } catch (error) {
+                // Check if it's a 401 error, not an abort, not already refreshing, and not a retry
+                if (error instanceof ClientResponseError && error.status === 401 && !error.isAbort && !this.isRefreshingToken && !isRetry) {
+                    const refreshed = await this._refreshToken();
+                    if (refreshed) {
+                        // Retry the request ONCE with the new token
+                        return await makeRequest(true); // Pass isRetry = true
+                    }
+                }
+                // Re-throw the original error if refresh failed, wasn't possible, or it's another error
+                throw error;
+            }
         };
-        return this.requestJson(path, method, queryParams, body, authHeaders);
+
+        return makeRequest();
+    }
+
+    /**
+     * Attempts to refresh the authentication token using the refresh token.
+     * @returns {Promise<boolean>} - True if refresh was successful, false otherwise.
+     * @private
+     */
+    async _refreshToken() {
+        const authData = this.store.auth.load();
+        const refreshToken = authData?.refresh_token;
+
+        if (!this.refreshPath || !refreshToken) {
+            console.warn("Token refresh skipped: No refresh path configured or refresh token missing.");
+            return false; // Cannot refresh
+        }
+
+        // Prevent concurrent refresh attempts
+        if (this.isRefreshingToken) {
+            console.warn("Token refresh already in progress.");
+            // Potentially wait for the ongoing refresh instead of failing immediately
+            // This requires a more complex mechanism (e.g., storing the refresh promise)
+            return false;
+        }
+
+        this.isRefreshingToken = true;
+
+        try {
+            console.info("Attempting token refresh...");
+            // Use requestJson directly to avoid auth loop.
+            // The refresh endpoint might expect the token in the body.
+            const newAuthData = await this.requestJson(
+                this.refreshPath,
+                "POST",
+                {}, // No query params usually
+                { refresh_token: refreshToken }, // Send refresh token in body
+                {} // No special headers usually needed
+                // No signal passed here, refresh should ideally complete
+            );
+
+            // Assuming the refresh endpoint returns new auth data (access_token, potentially new refresh_token)
+            if (newAuthData && newAuthData.access_token) {
+                // Merge new data with old, preserving other fields if necessary
+                const updatedAuthData = { ...authData, ...newAuthData };
+                this.store.auth.save(updatedAuthData);
+                console.info("Token refresh successful.");
+                return true;
+            } else {
+                throw new Error("Invalid response from refresh token endpoint.");
+            }
+        } catch (error) {
+            console.error("Token refresh failed:", error);
+            // Call the error handler if provided
+            if (this.onRefreshError) {
+                try {
+                    this.onRefreshError(error);
+                } catch (handlerError) {
+                    console.error("Error in onRefreshError handler:", handlerError);
+                }
+            }
+            // Optionally clear auth data on persistent refresh failure
+            // this.store.auth.save(null);
+            return false;
+        } finally {
+            this.isRefreshingToken = false; // Release the lock
+        }
     }
 
     /**
@@ -223,6 +353,27 @@ class Restinpieces {
             }
         }
         return result.join("&");
+    }
+
+    /**
+     * Fetches endpoint configuration from the server and saves it.
+     * @param {string} [path="/api/all-endpoints"] - The path to the endpoint discovery URL.
+     * @returns {Promise<any>} - Resolves with the fetched endpoint data.
+     */
+    async fetchEndpoints(path = "/api/all-endpoints") {
+        try {
+            const endpointsData = await this.requestJson(path, "GET");
+            if (endpointsData) {
+                this.store.endpoints.save(endpointsData);
+                console.info("Endpoints fetched and saved successfully.");
+            }
+            return endpointsData;
+        } catch (error) {
+            console.error("Failed to fetch endpoints:", error);
+            // Depending on requirements, might want to clear existing endpoints
+            // this.store.endpoints.save(null);
+            throw error; // Re-throw the error for the caller to handle
+        }
     }
 }
 

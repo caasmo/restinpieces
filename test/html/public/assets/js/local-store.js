@@ -1,15 +1,15 @@
 export class RestinpiecesLocalStore {
-    // Private key registry (only accessible within the class)
+    // Key registry (remains static as it's class-level config)
     static #keys = {
         auth: '_rip_auth',
         provider: '_rip_provider',
         endpoints: '_rip_endpoints'
     };
 
-    // Private generic methods
-    static #get(key) {
+    // Private generic methods (now instance methods)
+    #get(key) {
         try {
-            const value = localStorage.getItem(this.#keys[key]);
+            const value = localStorage.getItem(RestinpiecesLocalStore.#keys[key]);
             return value ? JSON.parse(value) : null;
         } catch (error) {
             console.error(`Failed to retrieve ${key}:`, error);
@@ -17,29 +17,29 @@ export class RestinpiecesLocalStore {
         }
     }
 
-    static #set(key, value) {
+    #set(key, value) {
         try {
-            localStorage.setItem(this.#keys[key], JSON.stringify(value));
+            localStorage.setItem(RestinpiecesLocalStore.#keys[key], JSON.stringify(value));
         } catch (error) {
             console.error(`Failed to store ${key}:`, error);
             throw new Error(`Failed to store ${key}: ` + error.message);
         }
     }
 
-    // Public methods for 'auth'
-    static loadAuth() {
+    // Public methods for 'auth' (now instance methods)
+    loadAuth() {
         return this.#get('auth');
     }
 
-    static saveAuth(value) {
+    saveAuth(value) {
         this.#set('auth', value);
     }
 
-    static isTokenValid() {
+    isTokenValid() {
         try {
+            // Use instance method `this.loadAuth()`
             const auth = this.loadAuth();
             if (!auth?.access_token) return false;
-            
             const payload = JSON.parse(atob(auth.access_token.split('.')[1]));
             return payload.exp > Date.now() / 1000; // milliseconds since 1970
         } catch {
@@ -47,21 +47,21 @@ export class RestinpiecesLocalStore {
         }
     }
 
-    // Public methods for 'provider'
-    static loadProvider() {
+    // Public methods for 'provider' (now instance methods)
+    loadProvider() {
         return this.#get('provider');
     }
 
-    static saveProvider(value) {
+    saveProvider(value) {
         this.#set('provider', value);
     }
 
-    // Public methods for 'endpoints'
-    static loadEndpoints() {
+    // Public methods for 'endpoints' (now instance methods)
+    loadEndpoints() {
         return this.#get('endpoints');
     }
 
-    static saveEndpoints(value) {
+    saveEndpoints(value) {
         this.#set('endpoints', value);
     }
 }
