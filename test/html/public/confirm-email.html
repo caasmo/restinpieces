@@ -60,17 +60,15 @@
             const rp = new Restinpieces({
                 baseURL: "http://localhost:8080"
             });
-            rp.requestJson(
-                "/api/confirm-verification", 
-                "POST",
-                {},
-                { token }
-            )
+            rp.ConfirmVerification({ token })
             .then(response => {
-                if (!response.message) {
+                if (response.data.message) {
+                    showSuccess(response.data.message);
+                } else if (response.message) {
+                    showSuccess(response.message);
+                } else {
                     throw new Error('Invalid verification response: missing message');
                 }
-                showSuccess(response.message);
             })
             .catch(error => {
                 console.error('Verification failed:', error);
