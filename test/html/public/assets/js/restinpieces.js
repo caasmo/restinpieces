@@ -271,24 +271,31 @@ class Restinpieces {
     }
 
     /**
-     * Fetches endpoint configuration from the server and saves it.
-     * @param {string} [path="/api/all-endpoints"] - The path to the endpoint discovery URL.
-     * @returns {Promise<any>} - Resolves with the fetched endpoint data.
+     * Fetches all API endpoints configuration from the server and saves it.
+     * @returns {Promise<{endpoints: Object, endpointsWithoutAuth: Object}>} - Resolves with normalized endpoint data.
      */
-    fetchEndpoints(path = "/api/all-endpoints") {
-        return this.requestJson(path, "GET")
-            .then(endpointsData => {
-                if (endpointsData) {
-                    this.store.endpoints.save(endpointsData);
-                    console.info("Endpoints fetched and saved successfully.");
+    AllEndpoints() {
+        return this.requestJson("/api/all-endpoints", "GET")
+            .then(response => {
+                if (!response) {
+                    throw new ClientResponseError({
+                        response: { message: "Empty endpoints response" }
+                    });
                 }
-                return endpointsData; // Resolve with the data
+
+                // Normalize response structure
+                const normalized = {
+                    endpoints: response.endpoints || {},
+                    endpointsWithoutAuth: response.endpointsWithoutAuth || {}
+                };
+
+                this.store.endpoints.save(normalized);
+                return normalized;
             })
             .catch(error => {
                 console.error("Failed to fetch endpoints:", error);
-                // Depending on requirements, might want to clear existing endpoints
-                // this.store.endpoints.save(null);
-                throw error; // Re-throw the error for the caller to handle
+                this.store.endpoints.save(null); // Clear existing endpoints on failure
+                throw error;
             });
     }
 }
