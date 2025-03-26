@@ -81,6 +81,6 @@ func (a *App) Authenticate(r *http.Request) (*db.User, error, jsonResponse) {
 		return nil, errAuth, errorJwtInvalidToken
 	}
 
-	// If all checks pass, return the authenticated user
+	// If all checks pass, return the authenticated user with empty response
 	return user, nil, jsonResponse{}
 }
