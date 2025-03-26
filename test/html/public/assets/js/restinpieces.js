@@ -280,8 +280,8 @@ class Restinpieces {
 		}
 
 		if (!this.endpointsPromise) {
-			// TODO little method
-			const [method, endpointPath] = this.endpoints.all_endpoints.split(' ');
+			// Hardcoded path to fetch available endpoints
+			const [method, endpointPath] = "GET /api/list-endpoints".split(' ');
 
 			this.endpointsPromise = this.requestJson(endpointPath, method)
 				.then(response => {
