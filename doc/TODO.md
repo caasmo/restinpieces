@@ -1,22 +1,18 @@
 ### TODOs
 
 - rethink payload job unique, per customer or payloads should have customer info
-- simple dist bundle for js, maybe FS, make, generate
-- fix harcoded api endpoints 
-    - html pages associeted with verify confirm
-    - js files, we could do a /list-enpoints
+- document middleware politic, if you have to write in the context, you shoudl not be a middleware.
+	- the first middleare post serverHttp code is the last observer.
 - implment password reset, email change
 - safe html headers middleware 
 - register with password after oauth2
 - decide about configuration
 - superuser? just ssh?
-- move html to test/html
-- nginl changex server fingerprint
 - safe api heders, html headers middleware 
 - endpoints api configurable in conf
 - metrics
--seurl hadcoded https. should be configurable if srver http under proxy TLS like cloudflare
-- downtime schedule, all routes to, lock db ...
+- sheurl hadcoded https. should be configurable if srver http under proxy TLS like cloudflare
+- downtime page schedule, all routes to, lock db ...
 - error in trhe sequnce of step f ex register can let inconsitent state, ex
     - error after inserting job, we have user in db but no varification 
 - remove experd in return from function, get it from config
@@ -50,6 +46,11 @@
 
 ### done
 
+- move html to test/html
+- simple dist bundle for js, maybe FS, make, generate
+- fix harcoded api endpoints 
+    - html pages associeted with verify confirm
+    - js files, we could do a /list-enpoints
 - auth in a fucntion instead of middleware? easy to reason for handlers 
     - auth is too important to let other part two handle invalidation and put something in the request.
     - handler declare it is authenticated endpoint by requirin Authenticate() func
