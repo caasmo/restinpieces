@@ -1,6 +1,10 @@
 ### TODOs
 
 - sdk move request to class, rename imported classes, bundle eliminates collisions. 
+- revamp shell tests.
+- block ip,  
+- rate limit 
+- rate limit per ip
 - rethink payload job unique, per customer or payloads should have customer info
 - document middleware politic, if you have to write in the context, you shoudl not be a middleware.
 	- the first middleare post serverHttp code is the last observer.
@@ -18,7 +22,6 @@
     - error after inserting job, we have user in db but no varification 
 - remove experd in return from function, get it from config
 - consistency js keys auth local storage.
-- scheduler nil, shoudl ne consitent  WithScheduler?
 - generate new jwt register 
 - jwt invalidation go tests
 - integration sh test post invalidation jwt 
