@@ -138,7 +138,6 @@
 
             // Clear saved endpoints before fetching new ones
             rp.store.endpoints.save(null);
-            showSavedEndpoints();
 
             rp.fetchEndpoints()
                 .then(endpoints => {
