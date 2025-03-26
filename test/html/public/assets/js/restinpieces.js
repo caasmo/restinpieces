@@ -171,6 +171,27 @@ class Restinpieces {
         return this.requestJson(path, method, queryParams, body, authHeaders, signal);
     }
 
+    requestAuth(endpointKey, queryParams = {}, body = null, headers = {}, signal = null) {
+        const authData = this.store.auth.load() || {};
+        const token = authData.access_token || '';
+
+        if (!token) { // Don't attempt auth if no token
+            // Return a rejected promise directly
+            return Promise.reject(new ClientResponseError({
+                url: this.buildUrl(this.baseURL, endpointKey),
+                status: 401,
+                response: { message: "No authentication token available." }
+            }));
+        }
+
+        const authHeaders = {
+            ...headers,
+            'Authorization': `Bearer ${token}`
+        };
+
+        return this.request(endpointKey, queryParams, body, authHeaders, signal);
+    }
+
     /**
      * Builds a URL by combining baseUrl and path for browser environments.
      * 
