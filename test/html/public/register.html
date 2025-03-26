@@ -114,7 +114,9 @@
 
         class RegisterForm {
             constructor() {
-                this.rp = new Restinpieces("http://localhost:8080");
+                this.rp = new Restinpieces({
+                    baseURL: "http://localhost:8080"
+                });
                 this.form = document.getElementById('registerForm');
                 this.messageDiv = document.getElementById('message');
                 this.form.addEventListener('submit', this.handleSubmit.bind(this));

@@ -137,7 +137,9 @@
 
         class LoginHandler {
             constructor() {
-                this.rp = new Restinpieces("http://localhost:8080");
+                this.rp = new Restinpieces({
+                    baseURL: "http://localhost:8080"
+                });
                 this.form = document.getElementById('passwordLoginForm');
                 this.errorDiv = document.getElementById('error');
                 this.providerList = document.getElementById('list');
