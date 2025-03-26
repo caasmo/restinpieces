@@ -9,9 +9,7 @@ class Restinpieces {
         lang: "en-US",
         storage: null, // Will be instantiated if null
 		// TODO 
-        endpoints: {
-            all_endpoints: "GET /api/all-endpoints",
-        }
+        endpointsPath: "GET /api/all-endpoints",
     };
 
     constructor(config = {}) {
