@@ -39,7 +39,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	if authErr != nil {
 		// Map the authentication error directly to the JSON response
 		// Note: Authenticate returns precomputed jsonResponse errors
-		writeJsonError(w, authErr.(jsonResponse)) // Type assertion needed
+		writeJsonError(w, authErr) // Type assertion needed
 		return
 	}
 
