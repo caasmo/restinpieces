@@ -136,7 +136,8 @@
             const errorDiv = document.getElementById('error');
             errorDiv.textContent = 'Loading...';
 
-            // Always show saved endpoints
+            // Clear saved endpoints before fetching new ones
+            rp.store.endpoints.save(null);
             showSavedEndpoints();
 
             rp.fetchEndpoints()
