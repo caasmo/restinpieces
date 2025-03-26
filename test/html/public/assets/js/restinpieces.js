@@ -344,7 +344,7 @@ class Restinpieces {
 
 	// TODO
 	RefreshAuth(body = null, headers = {}, signal = null) {
-		return this.request('auth_refresh', 'POST', {}, body, headers, signal);
+		return this.requestAuth('refresh_auth', {}, body, headers, signal);
 	}
 
 	ListOauth2Providers() {
