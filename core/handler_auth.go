@@ -34,24 +34,20 @@ import (
 // RefreshAuthHandler handles explicit JWT token refresh requests
 // Endpoint: POST /auth-refresh
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
-	// Get claims from context (added by JwtValidate middleware)
-	userId, ok := r.Context().Value(UserIDKey).(string)
-	if !ok || userId == "" {
-		slog.Error("Failed to get user ID from context")
-		writeJsonError(w, errorClaimsNotFound)
+	// Authenticate the user using the token from the request
+	user, authErr := a.Authenticate(r)
+	if authErr != nil {
+		// Map the authentication error directly to the JSON response
+		// Note: Authenticate returns precomputed jsonResponse errors
+		writeJsonError(w, authErr.(jsonResponse)) // Type assertion needed
 		return
 	}
 
-	// Get user from database to get email for signing key
-	user, err := a.db.GetUserById(userId)
-	if err != nil || user == nil {
-		slog.Error("Failed to fetch user", "user_id", userId, "error", err)
-		writeJsonError(w, errorInvalidCredentials)
-		return
-	}
+	// If authentication is successful, 'user' is the authenticated user object.
+	// No need to fetch the user again.
 
 	// Generate new token with fresh expiration using NewJwtSession
-	newToken, expiry, err := crypto.NewJwtSessionToken(userId, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
+	newToken, expiry, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
 		slog.Error("Failed to generate new token", "error", err)
 		writeJsonError(w, errorTokenGeneration)
