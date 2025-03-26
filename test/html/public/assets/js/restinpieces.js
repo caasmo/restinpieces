@@ -7,7 +7,9 @@ class Restinpieces {
     static defaultConfig = {
         baseURL: "/",
         lang: "en-US",
-        storage: null // Will be instantiated if null
+        storage: null, // Will be instantiated if null
+		// TODO 
+        endpointsPath: "GET /api/all-endpoints",
     };
 
     constructor(config = {}) {
@@ -278,8 +280,8 @@ class Restinpieces {
 		}
 
 		if (!this.endpointsPromise) {
-			// Hardcoded path to fetch available endpoints
-			const [method, endpointPath] = "GET /api/list-endpoints".split(' ');
+			// TODO little method
+			const [method, endpointPath] = this.endpoints.all_endpoints.split(' ');
 
 			this.endpointsPromise = this.requestJson(endpointPath, method)
 				.then(response => {
