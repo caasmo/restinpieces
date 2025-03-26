@@ -281,20 +281,20 @@ class Restinpieces {
     }
 
     /**
-     * Fetches all API endpoints configuration from the server and saves it.
+     * Lists all API endpoints configuration from the server and saves it.
      * @returns {Promise<Object>} - Resolves with the endpoint data from server response.
      */
-    AllEndpoints() {
+    ListEndpoints() {
         return this.requestJson("/api/all-endpoints", "GET")
-            .then(data => {
-                if (!data) {
+            .then(response => {
+                if (!response?.data) {
                     throw new ClientResponseError({
                         response: { message: "Empty endpoints response" }
                     });
                 }
 
-                this.store.endpoints.save(data);
-                return data;
+                this.store.endpoints.save(response.data);
+                return response.data;
             })
             .catch(error => {
                 console.error("Failed to fetch endpoints:", error);
@@ -309,10 +309,10 @@ class Restinpieces {
      */
     AuthRefresh() {
         const currentAuth = this.store.auth.load();
-		// get the enpoints from the local storage
-		// if not call allenpoints and save localstorage
-		// if not call allenpoints
-		// get the enpoints from the local storage
+		// get the endpoints from the local storage
+		// if not call ListEndpoints and save localstorage
+		// if not call ListEndpoints
+		// get the endpoints from the local storage
         if (!currentAuth?.refresh_token) {
             return Promise.reject(new ClientResponseError({
                 response: { message: "No refresh token available" }
