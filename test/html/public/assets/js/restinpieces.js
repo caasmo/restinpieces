@@ -355,6 +355,10 @@ class Restinpieces {
 	RegisterWithPassword(body = null, headers = {}, signal = null) {
 		return this.request('register_with_password', {}, body, headers, signal);
 	}
+
+	RequestVerification(body = null, headers = {}, signal = null) {
+		return this.request('request_verification', {}, body, headers, signal);
+	}
 }
 
 export default Restinpieces;
