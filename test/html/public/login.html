@@ -156,16 +156,16 @@
             }
 
             loadProviders() {
-                this.rp.requestJson("/api/list-oauth2-providers")
+                this.rp.ListOauth2Providers()
                 .then(response => {
                     this.providerList.innerHTML = '';
                     
-                    if (!response.data || !response.data.providers) {
+                    if (!response || !response.providers) {
                         this.providerList.innerHTML = '<li>No OAuth2 providers.</li>';
                         return;
                     }
 
-                    response.data.providers.forEach(provider => {
+                    response.providers.forEach(provider => {
                         const li = document.createElement('li');
                         const a = document.createElement('a');
                         a.textContent = `Login with ${provider.displayName}`;
@@ -220,16 +220,14 @@
                 this.showMessage('Logging in...');
 
                 try {
-                    const response = await this.rp.requestJson(
-                        "/api/auth-with-password", 
-                        "POST",
-                        {},
-                        { identity: email, password }
-                    );
+                    const response = await this.rp.authWithPassword({
+                        identity: email,
+                        password
+                    });
                     
-                    if (response.data?.access_token && response.data?.record) {
-                        this.rp.store.auth.save(response.data);
-                        this.createSuccessUI(response.data.record);
+                    if (response?.access_token && response?.record) {
+                        this.rp.store.auth.save(response);
+                        this.createSuccessUI(response.record);
                     } else {
                         throw new Error('Invalid login response');
                     }
