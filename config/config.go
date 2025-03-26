@@ -122,9 +122,9 @@ type Smtp struct {
 }
 
 type Endpoints struct {
-	AuthRefresh         string `json:"auth_refresh"`
+	RefreshAuth         string `json:"refresh_auth"`
 	RequestVerification string `json:"request_verification"`
-	AllEndpoints        string `json:"all_endpoints"`
+	ListEndpoints        string `json:"list_endpoints"`
 	AuthWithPassword      string `json:"auth_with_password"`
 	AuthWithOAuth2        string `json:"auth_with_oauth2"`
 	RegisterWithPassword  string `json:"register_with_password"`
@@ -136,9 +136,9 @@ type Endpoints struct {
 func DefaultEndpoints() Endpoints {
 	return Endpoints{
 		Endpoints: Endpoints{
-			AuthRefresh:         "POST /api/auth-refresh",
+			RefreshAuth:         "POST /api/refresh-auth",
 			RequestVerification: "POST /api/request-verification",
-			AllEndpoints:        "GET /api/all-endpoints",
+			ListEndpoints:        "GET /api/list-endpoints",
 			AuthWithPassword:      "POST /api/auth-with-password",
 			AuthWithOAuth2:        "POST /api/auth-with-oauth2",
 			RegisterWithPassword:  "POST /api/register-with-password",
