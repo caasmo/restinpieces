@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-func (a *App) AllEndpointsHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) ListEndpointsHandler(w http.ResponseWriter, r *http.Request) {
 	writeJsonWithData(w, JsonWithData{
 		JsonBasic: JsonBasic{
 			Status:  http.StatusOK,
@@ -15,13 +15,3 @@ func (a *App) AllEndpointsHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (a *App) PublicEndpointsHandler(w http.ResponseWriter, r *http.Request) {
-	writeJsonWithData(w, JsonWithData{
-		JsonBasic: JsonBasic{
-			Status:  http.StatusOK,
-			Code:    CodeOkEndpointsWithoutAuth,
-			Message: "List of endpoints available without authentication",
-		},
-		Data: a.config.Endpoints.EndpointsWithoutAuth,
-	})
-}
