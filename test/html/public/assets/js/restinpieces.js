@@ -284,7 +284,6 @@ class Restinpieces {
 
 			this.endpointsPromise = this.requestJson(endpointPath, method)
 				.then(response => {
-					console.log('called enpoint for endpoints');
 					if (!response?.data) {
 						throw new ClientResponseError({
 							response: { message: "Empty endpoints response" }
