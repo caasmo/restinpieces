@@ -8,7 +8,7 @@ class Restinpieces {
         baseURL: "/",
         lang: "en-US",
         storage: null, // Will be instantiated if null
-        endpointsPath: "GET /api/list-endpoints", // Note the hyphen instead of underscore
+        endpointsPath: "GET /api/list-endpoints", 
     };
 
     constructor(config = {}) {
@@ -20,7 +20,7 @@ class Restinpieces {
         // Instantiate default storage if none provided
         this.storage = mergedConfig.storage || new RestinpiecesLocalStore();
         // Initialize endpoints from config
-        this.endpointsPath = mergedConfig.enpointsPath;
+        this.endpointsPath = mergedConfig.endpointsPath;
 		this.endpointsPromise = null; // Tracks ongoing fetch endpoint requests per instance TODO
 
         //this.recordServices = {}; // Cache for record services
