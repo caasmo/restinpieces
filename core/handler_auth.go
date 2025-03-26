@@ -35,11 +35,9 @@ import (
 // Endpoint: POST /auth-refresh
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Authenticate the user using the token from the request
-	user, authErr := a.Authenticate(r)
-	if authErr != nil {
-		// Map the authentication error directly to the JSON response
-		// Note: Authenticate returns precomputed jsonResponse errors
-		writeJsonError(w, authErr) // Type assertion needed
+	user, _, authResp := a.Authenticate(r)
+	if authResp.body != nil {
+		writeJsonError(w, authResp)
 		return
 	}
 
