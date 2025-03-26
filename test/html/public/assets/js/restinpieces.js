@@ -9,7 +9,7 @@ class Restinpieces {
         lang: "en-US",
         storage: null, // Will be instantiated if null
         endpoints: {
-            all_endpoints: "",
+            all_endpoints: "GET /api/all-endpoints",
             auth_refresh: "",
             auth_with_oauth2: "",
             auth_with_password: "",
