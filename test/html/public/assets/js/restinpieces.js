@@ -284,17 +284,16 @@ class Restinpieces {
 
 			this.endpointsPromise = this.requestJson(endpointPath, method)
 				.then(response => {
-					// The endpoints are in the response object directly
-					if (!response) {
+					console.log('called enpoint for endpoints');
+					if (!response?.data) {
 						throw new ClientResponseError({
 							response: { message: "Empty endpoints response" }
 						});
 					}
 
-					// Save and return the endpoints
-					this.store.endpoints.save(response);
+					this.store.endpoints.save(response.data);
 					this.endpointsPromise = null; // Reset after completion
-					return response;
+					return response.data;
 				})
 				.catch(error => {
 					this.endpointsPromise = null; // Reset on error
