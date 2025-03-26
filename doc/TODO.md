@@ -2,6 +2,7 @@
 
 - js sdk, fasade for endpoints refreshAuth, look up local storage, if not made call to discovery endpoints.
     - with map, call the requestJson or requestJsonAuth
+- rethink payload job unique, per customer or payloads should have customer info
 - auth in a fucntion instead of middleware? easy to reason for handlers 
     - auth is too important to let other part two handle invalidation and put something in the request.
     - handler declare it is authenticated endpoint by requirin Authenticate() func

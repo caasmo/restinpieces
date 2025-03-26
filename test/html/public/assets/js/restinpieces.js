@@ -20,11 +20,6 @@ class Restinpieces {
         this.lang = mergedConfig.lang;
         // Instantiate default storage if none provided
         this.storage = mergedConfig.storage || new RestinpiecesLocalStore();
-        // this.refreshPath = mergedConfig.refreshPath; // Removed
-        // this.onRefreshError = mergedConfig.onRefreshError; // Removed
-
-        // Flag to prevent infinite refresh loops - Removed
-        // this.isRefreshingToken = false;
 
         //this.recordServices = {}; // Cache for record services
         //this.enableAutoCancellation = true; // Consider adding to config
