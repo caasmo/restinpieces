@@ -367,6 +367,10 @@ class Restinpieces {
 	authWithPassword(body = null, headers = {}, signal = null) {
 		return this.request('auth_with_password', {}, body, headers, signal);
 	}
+
+	AuthWithOauth2(body = null, headers = {}, signal = null) {
+		return this.request('auth_with_oauth2', {}, body, headers, signal);
+	}
 }
 
 export default Restinpieces;
