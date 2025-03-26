@@ -359,6 +359,10 @@ class Restinpieces {
 	RequestVerification(body = null, headers = {}, signal = null) {
 		return this.request('request_verification', {}, body, headers, signal);
 	}
+
+	ConfirmVerification(body = null, headers = {}, signal = null) {
+		return this.request('confirm_verification', {}, body, headers, signal);
+	}
 }
 
 export default Restinpieces;
