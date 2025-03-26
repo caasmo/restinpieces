@@ -321,7 +321,7 @@ class Restinpieces {
 				if (!path) {
 					throw new Error(`Endpoint "${endpointKey}" not found`);
 				}
-				return requestJson(path, method, queryParams, body, headers, signal);
+				return this.requestJson(path, method, queryParams, body, headers, signal);
 			})
 			.catch(error => {
 				console.error(`Error in request to "${endpointKey}":`, error);
