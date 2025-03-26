@@ -363,6 +363,7 @@ class Restinpieces {
      * @returns {Promise<Object>} - Resolves with new auth data containing access_token and refresh_token
      */
     AuthRefresh() {
+		// TODO deprecated
         const currentAuth = this.store.auth.load();
 		// get the endpoints from the local storage
 		// if not call ListEndpoints and save localstorage
