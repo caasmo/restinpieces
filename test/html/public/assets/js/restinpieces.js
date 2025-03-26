@@ -135,43 +135,6 @@ class Restinpieces {
     }
 
     /**
-     * Makes an authenticated HTTP request by adding Authorization header
-     * 
-     * @param {string} path - The URL path to request
-     * @param {string} [method="GET"] - The HTTP method to use
-     * @param {Object} [queryParams={}] - Query parameters to include
-     * @param {Object|null} [body=null] - Request body (will be JSON.stringified)
-     * @param {Object} [headers={}] - Additional request headers
-     * @param {AbortSignal|null} [signal=null] - Optional AbortSignal for cancellation
-     * @returns {Promise<any>} - Resolves with parsed response JSON
-     */
-    requestJsonAuth(path, method = "GET", queryParams = {}, body = null, headers = {}, signal = null) {
-        // Ensure token is valid before making the request (optional optimization)
-        // if (!this.store.auth.isValid()) { ... handle invalid token early ... }
-
-        const authData = this.store.auth.load() || {};
-        const token = authData.access_token || '';
-
-        if (!token) { // Don't attempt auth if no token
-            // Return a rejected promise directly
-            return Promise.reject(new ClientResponseError({
-                url: this.buildUrl(this.baseURL, path),
-                status: 401,
-                response: { message: "No authentication token available." }
-            }));
-        }
-
-        const authHeaders = {
-            ...headers,
-            'Authorization': `Bearer ${token}`
-        };
-
-        // Pass the signal to the underlying request
-        // No automatic retry logic anymore. If it fails (e.g., 401), the error propagates.
-        return this.requestJson(path, method, queryParams, body, authHeaders, signal);
-    }
-
-    /**
      * Builds a URL by combining baseUrl and path for browser environments.
      * 
      * @param {string} baseUrl - The base URL (absolute or relative)
