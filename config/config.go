@@ -207,7 +207,7 @@ func Load(dbfile string) (*Config, error) {
 		DBFile:    dbfile,
 		PublicDir: "test/html/public", // Default public directory
 		Scheduler: Scheduler{
-			Interval:              15 * time.Second,
+			Interval:              60 * time.Second,
 			MaxJobsPerTick:        10,
 			ConcurrencyMultiplier: 2, // Default to 2x CPU cores
 		},

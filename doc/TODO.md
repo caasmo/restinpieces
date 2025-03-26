@@ -1,6 +1,7 @@
 ### TODOs
 
 - sdk move request to class, rename imported classes, bundle eliminates collisions. 
+	- how to extend the sdk with enpoints   
 - revamp shell tests.
 - block ip,  
 - rate limit 
