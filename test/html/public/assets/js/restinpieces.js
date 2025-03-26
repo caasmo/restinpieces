@@ -353,11 +353,6 @@ class Restinpieces {
 	}
 
 	Register(body = null, headers = {}, signal = null) {
-		if (!body || !body.identity || !body.password || !body.password_confirm) {
-			return Promise.reject(new ClientResponseError({
-				response: { message: "Email, password and password confirmation are required" }
-			}));
-		}
 		return this.request('register_with_password', {}, body, headers, signal);
 	}
 }
