@@ -272,25 +272,19 @@ class Restinpieces {
 
     /**
      * Fetches all API endpoints configuration from the server and saves it.
-     * @returns {Promise<{endpoints: Object, endpointsWithoutAuth: Object}>} - Resolves with normalized endpoint data.
+     * @returns {Promise<Object>} - Resolves with the endpoint data from server response.
      */
     AllEndpoints() {
         return this.requestJson("/api/all-endpoints", "GET")
-            .then(response => {
-                if (!response) {
+            .then(data => {
+                if (!data) {
                     throw new ClientResponseError({
                         response: { message: "Empty endpoints response" }
                     });
                 }
 
-                // Normalize response structure
-                const normalized = {
-                    endpoints: response.endpoints || {},
-                    endpointsWithoutAuth: response.endpointsWithoutAuth || {}
-                };
-
-                this.store.endpoints.save(normalized);
-                return normalized;
+                this.store.endpoints.save(data);
+                return data;
             })
             .catch(error => {
                 console.error("Failed to fetch endpoints:", error);
