@@ -1,15 +1,6 @@
 ### TODOs
 
-- js sdk, fasade for endpoints refreshAuth, look up local storage, if not made call to discovery endpoints.
-    - with map, call the requestJson or requestJsonAuth
 - rethink payload job unique, per customer or payloads should have customer info
-- auth in a fucntion instead of middleware? easy to reason for handlers 
-    - auth is too important to let other part two handle invalidation and put something in the request.
-    - handler declare it is authenticated endpoint by requirin Authenticate() func
-    - Authenticate(req)(user,error) is app funcion can get db, cache etc.
-    - handlers are authenticated or not
-    - jwtvalidate middleware, block if invalid
-    - AuthenticatedUser() function with nil user and error, (user , error)
 - simple dist bundle for js, maybe FS, make, generate
 - fix harcoded api endpoints 
     - html pages associeted with verify confirm
@@ -59,6 +50,15 @@
 
 ### done
 
+- auth in a fucntion instead of middleware? easy to reason for handlers 
+    - auth is too important to let other part two handle invalidation and put something in the request.
+    - handler declare it is authenticated endpoint by requirin Authenticate() func
+    - Authenticate(req)(user,error) is app funcion can get db, cache etc.
+    - handlers are authenticated or not
+    - jwtvalidate middleware, block if invalid
+    - AuthenticatedUser() function with nil user and error, (user , error)
+- js sdk, fasade for endpoints refreshAuth, look up local storage, if not made call to discovery endpoints.
+    - with map, call the requestJson or requestJsonAuth
 - application/json just one
 - move  app package to core, 
 - security headers and litle things that write simple thing to heaaders are functions not middleware
