@@ -9,14 +9,14 @@ class Restinpieces {
         lang: "en-US",
         storage: null, // Will be instantiated if null
         endpoints: {
-            all_endpoints: "GET /api/all-endpoints",
-            auth_refresh: "POST /api/auth-refresh",
-            auth_with_oauth2: "POST /api/auth-with-oauth2",
-            auth_with_password: "POST /api/auth-with-password",
-            confirm_verification: "POST /api/confirm-verification",
-            list_oauth2_providers: "GET /api/list-oauth2-providers",
-            register_with_password: "POST /api/register-with-password",
-            request_verification: "POST /api/request-verification"
+            all_endpoints: "",
+            auth_refresh: "",
+            auth_with_oauth2: "",
+            auth_with_password: "",
+            confirm_verification: "",
+            list_oauth2_providers: "",
+            register_with_password: "",
+            request_verification: ""
         }
     };
 
