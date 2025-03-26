@@ -8,8 +8,16 @@ class Restinpieces {
         baseURL: "/",
         lang: "en-US",
         storage: null, // Will be instantiated if null
-        // refreshPath: null, // Removed: Path for token refresh endpoint
-        // onRefreshError: null, // Removed: Optional callback for refresh failure
+        endpoints: {
+            all_endpoints: "GET /api/all-endpoints",
+            auth_refresh: "POST /api/auth-refresh",
+            auth_with_oauth2: "POST /api/auth-with-oauth2",
+            auth_with_password: "POST /api/auth-with-password",
+            confirm_verification: "POST /api/confirm-verification",
+            list_oauth2_providers: "GET /api/list-oauth2-providers",
+            register_with_password: "POST /api/register-with-password",
+            request_verification: "POST /api/request-verification"
+        }
     };
 
     constructor(config = {}) {
@@ -20,6 +28,8 @@ class Restinpieces {
         this.lang = mergedConfig.lang;
         // Instantiate default storage if none provided
         this.storage = mergedConfig.storage || new RestinpiecesLocalStore();
+        // Initialize endpoints from config
+        this.endpoints = mergedConfig.endpoints;
 
         //this.recordServices = {}; // Cache for record services
         //this.enableAutoCancellation = true; // Consider adding to config
