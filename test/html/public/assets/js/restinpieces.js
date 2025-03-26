@@ -331,11 +331,6 @@ class Restinpieces {
 	ListOauth2Providers() {
 		return this.request('list_oauth2_providers')
 	}
-
-	// redundant TODO. harcoded, not request or remove
-	ListEndpoints() {
-		return this.request('list_endpoints')
-	}
 }
 
 export default Restinpieces;
