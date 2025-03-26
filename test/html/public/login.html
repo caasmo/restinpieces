@@ -160,12 +160,12 @@
                 .then(response => {
                     this.providerList.innerHTML = '';
                     
-                    if (!response || !response.providers) {
+                    if (!response?.data?.providers) {
                         this.providerList.innerHTML = '<li>No OAuth2 providers.</li>';
                         return;
                     }
 
-                    response.providers.forEach(provider => {
+                    response.data.providers.forEach(provider => {
                         const li = document.createElement('li');
                         const a = document.createElement('a');
                         a.textContent = `Login with ${provider.displayName}`;
