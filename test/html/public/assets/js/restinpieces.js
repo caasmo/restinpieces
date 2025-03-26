@@ -8,7 +8,7 @@ class Restinpieces {
         baseURL: "/",
         lang: "en-US",
         storage: null, // Will be instantiated if null
-        endpointsPath: "GET /api/list_endpoints",
+        endpointsPath: "GET /api/list-endpoints", // Note the hyphen instead of underscore
     };
 
     constructor(config = {}) {
@@ -273,7 +273,7 @@ class Restinpieces {
     }
 
 	fetchEndpoints() {
-		const cachedEndpoints = this.store.endpoints.load() 
+		const cachedEndpoints = this.store.endpoints.load();
 		if (cachedEndpoints) {
 			return Promise.resolve(cachedEndpoints);
 		}
@@ -284,21 +284,21 @@ class Restinpieces {
 
 			this.endpointsPromise = this.requestJson(endpointPath, method)
 				.then(response => {
-					console.log('called enpoint for endpoints');
-					if (!response?.data) {
+					// The endpoints are in the response object directly
+					if (!response) {
 						throw new ClientResponseError({
 							response: { message: "Empty endpoints response" }
 						});
 					}
 
-					this.store.endpoints.save(response.data);
+					// Save and return the endpoints
+					this.store.endpoints.save(response);
 					this.endpointsPromise = null; // Reset after completion
-					return response.data;
+					return response;
 				})
 				.catch(error => {
 					this.endpointsPromise = null; // Reset on error
 					console.error("Failed to fetch endpoints:", error);
-					//this.store.endpoints.save(null); // Clear existing endpoints on failure
 					throw error;
 				});
 		}
