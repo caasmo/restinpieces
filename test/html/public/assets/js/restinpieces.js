@@ -8,7 +8,7 @@ class Restinpieces {
         baseURL: "/",
         lang: "en-US",
         storage: null, // Will be instantiated if null
-        endpointsPath: "GET /api/all-endpoints",
+        endpointsPath: "GET /api/list_endpoints",
     };
 
     constructor(config = {}) {
@@ -329,7 +329,6 @@ class Restinpieces {
 	}
 
 	ListOauth2Providers() {
-
 		return this.request('list_oauth2_providers')
 	}
 }
