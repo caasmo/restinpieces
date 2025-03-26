@@ -349,7 +349,16 @@ class Restinpieces {
 	}
 
 	ListOauth2Providers() {
-		return this.request('list_oauth2_providers')
+		return this.request('list_oauth2_providers');
+	}
+
+	Register(body = null, headers = {}, signal = null) {
+		if (!body || !body.email || !body.password) {
+			return Promise.reject(new ClientResponseError({
+				response: { message: "Email and password are required" }
+			}));
+		}
+		return this.request('register_with_password', {}, body, headers, signal);
 	}
 }
 
