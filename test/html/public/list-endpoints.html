@@ -136,15 +136,13 @@
             const errorDiv = document.getElementById('error');
             errorDiv.textContent = 'Loading...';
 
-            // Clear saved endpoints before fetching new ones
+            // Show loading state
             rp.store.endpoints.save(null);
+            showSavedEndpoints();
 
             rp.fetchEndpoints()
-                .then(response => {
+                .then(endpoints => {
                     errorDiv.textContent = '';
-                    
-                    // Extract endpoints from response data
-                    const endpoints = response.data || response;
                     
                     if (!endpoints) {
                         errorDiv.textContent = 'No endpoints data received';
@@ -153,6 +151,10 @@
 
                     // Show the fresh endpoints on the right
                     showFetchedEndpoints(endpoints);
+                    
+                    // Also update saved endpoints
+                    rp.store.endpoints.save(endpoints);
+                    showSavedEndpoints();
                 })
                 .catch(error => {
                     errorDiv.textContent = `Error: ${error.message}`;
