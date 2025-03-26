@@ -83,9 +83,9 @@
 
             rp.AuthWithOauth2(authRequest)
             .then(response => {
-                if (response?.access_token && response?.record) {
-                    rp.store.auth.save(response);
-                    showSuccess(response.record);
+                if (response?.data?.access_token && response?.data?.record) {
+                    rp.store.auth.save(response.data);
+                    showSuccess(response.data.record);
                 } else {
                     throw new Error('No access token in response data');
                 }
