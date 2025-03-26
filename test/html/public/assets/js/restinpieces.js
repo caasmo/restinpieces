@@ -186,17 +186,17 @@ class Restinpieces {
             baseUrl = pathParts.join('/') + '/';
         }
         
-  // Create full URL, handling relative URLs
+  		// Create full URL, handling relative URLs
         let url;
         if (!baseUrl.startsWith("http://") && !baseUrl.startsWith("https://")) {
-    // For relative URLs, use the URL constructor with current location as base
+    		// For relative URLs, use the URL constructor with current location as base
             const base = baseUrl.startsWith("/") ? window.location.origin : window.location.href;
             url = new URL(baseUrl, base).href;
         } else {
             url = baseUrl;
         }
         
-  // Add path if provided
+  		// Add path if provided
         if (path) {
             url = url + (url.endsWith("/") ? "" : "/") + (path.startsWith("/") ? path.substring(1) : path);
         }
