@@ -75,14 +75,14 @@
     <button id="get-endpoints-btn" style="margin-bottom: 20px;">Refresh Endpoints</button>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div id="current-endpoints-container">
-            <h3>Current Endpoints</h3>
-            <ul id="current-endpoints-list" class="endpoint-list"></ul>
+        <div id="saved-endpoints-container">
+            <h3>Saved Endpoints</h3>
+            <ul id="saved-endpoints-list" class="endpoint-list"></ul>
         </div>
 
-        <div id="previous-endpoints-container" style="display: none;">
-            <h3>Previous Endpoints</h3>
-            <ul id="previous-endpoints-list" class="endpoint-list"></ul>
+        <div id="fetched-endpoints-container" style="display: none;">
+            <h3>Fetched Endpoints</h3>
+            <ul id="fetched-endpoints-list" class="endpoint-list"></ul>
         </div>
     </div>
     <div id="error" class="error"></div>
@@ -115,20 +115,20 @@
             }
         }
 
-        function showCurrentEndpoints() {
+        function showSavedEndpoints() {
             const endpoints = rp.store.endpoints.load();
             renderEndpoints(
                 endpoints,
-                document.getElementById('current-endpoints-list'),
-                document.getElementById('current-endpoints-container')
+                document.getElementById('saved-endpoints-list'),
+                document.getElementById('saved-endpoints-container')
             );
         }
 
-        function showPreviousEndpoints(endpoints) {
+        function showFetchedEndpoints(endpoints) {
             renderEndpoints(
                 endpoints,
-                document.getElementById('previous-endpoints-list'),
-                document.getElementById('previous-endpoints-container')
+                document.getElementById('fetched-endpoints-list'),
+                document.getElementById('fetched-endpoints-container')
             );
         }
 
@@ -136,19 +136,14 @@
             const errorDiv = document.getElementById('error');
             errorDiv.textContent = 'Loading...';
 
-            // Show current endpoints while loading
-            showCurrentEndpoints();
+            // Always show saved endpoints
+            showSavedEndpoints();
 
             rp.fetchEndpoints()
                 .then(endpoints => {
                     errorDiv.textContent = '';
-                    
-                    // Move current to previous
-                    const currentEndpoints = rp.store.endpoints.load();
-                    showPreviousEndpoints(currentEndpoints);
-                    
-                    // Show the fresh response in current
-                    showCurrentEndpoints();
+                    // Show the fresh endpoints on the right
+                    showFetchedEndpoints(endpoints);
                 })
                 .catch(error => {
                     errorDiv.textContent = `Error: ${error.message}`;
@@ -169,7 +164,7 @@
 
         // Initial load
         checkAuthStatus();
-        showCurrentEndpoints();
+        showSavedEndpoints();
         
         // Event listener
         document.getElementById('get-endpoints-btn').addEventListener('click', getEndpoints);
