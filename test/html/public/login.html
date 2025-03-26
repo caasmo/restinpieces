@@ -225,11 +225,11 @@
                         password
                     });
                     
-                    if (response?.access_token && response?.record) {
-                        this.rp.store.auth.save(response);
-                        this.createSuccessUI(response.record);
+                    if (response?.data?.access_token) {
+                        this.rp.store.auth.save(response.data);
+                        this.createSuccessUI(response.data.record);
                     } else {
-                        throw new Error('Invalid login response');
+                        throw new Error('Invalid login response: missing access token');
                     }
                 } catch (error) {
                     console.error('Login failed:', error);
