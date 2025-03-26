@@ -334,7 +334,7 @@ class Restinpieces {
 	}
 
 	ListOauth2Providers() {
-		return this.request('list_oauth2_providers', 'POST');
+		return this.request('list_oauth2_providers', 'GET');
 	}
 }
 
