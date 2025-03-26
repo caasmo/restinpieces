@@ -75,14 +75,14 @@
     <button id="get-endpoints-btn" style="margin-bottom: 20px;">Refresh Endpoints</button>
 
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div id="stored-endpoints-container">
-            <h3>Stored Endpoints</h3>
-            <ul id="stored-endpoints-list" class="endpoint-list"></ul>
+        <div id="current-endpoints-container">
+            <h3>Current Endpoints</h3>
+            <ul id="current-endpoints-list" class="endpoint-list"></ul>
         </div>
 
-        <div id="new-endpoints-container" style="display: none;">
-            <h3>Requested Endpoints</h3>
-            <ul id="new-endpoints-list" class="endpoint-list"></ul>
+        <div id="previous-endpoints-container" style="display: none;">
+            <h3>Previous Endpoints</h3>
+            <ul id="previous-endpoints-list" class="endpoint-list"></ul>
         </div>
     </div>
     <div id="error" class="error"></div>
@@ -115,20 +115,20 @@
             }
         }
 
-        function showStoredEndpoints() {
+        function showCurrentEndpoints() {
             const endpoints = rp.store.endpoints.load();
             renderEndpoints(
                 endpoints,
-                document.getElementById('stored-endpoints-list'),
-                document.getElementById('stored-endpoints-container')
+                document.getElementById('current-endpoints-list'),
+                document.getElementById('current-endpoints-container')
             );
         }
 
-        function showNewEndpoints(endpoints) {
+        function showPreviousEndpoints(endpoints) {
             renderEndpoints(
                 endpoints,
-                document.getElementById('new-endpoints-list'),
-                document.getElementById('new-endpoints-container')
+                document.getElementById('previous-endpoints-list'),
+                document.getElementById('previous-endpoints-container')
             );
         }
 
@@ -136,37 +136,24 @@
             const errorDiv = document.getElementById('error');
             errorDiv.textContent = 'Loading...';
 
-            // Show stored endpoints while loading
-            showStoredEndpoints();
+            // Show current endpoints while loading
+            showCurrentEndpoints();
 
-            const endpoint = rp.store.auth.isValid() 
-                ? "/api/all-endpoints" 
-                : "/api/public-endpoints"; // Hardcoded discovery endpoint
-            
-            const request = rp.store.auth.isValid()
-                ? rp.requestJsonAuth(endpoint)
-                : rp.requestJson(endpoint);
-
-            request.then(response => {
-                errorDiv.textContent = '';
-                
-                // The endpoints are either in response.data or the response itself
-                const endpoints = response.data || response;
-                
-                if (!endpoints) {
-                    errorDiv.textContent = 'No endpoints data received';
-                    return;
-                }
-
-                // Save the new endpoints and show both
-                rp.store.endpoints.save(endpoints);
-                showStoredEndpoints(); // This will show the newly saved endpoints
-                showNewEndpoints(endpoints); // Show the fresh response
-            })
-            .catch(error => {
-                errorDiv.textContent = `Error: ${error.message}`;
-                console.error(error);
-            });
+            rp.fetchEndpoints()
+                .then(endpoints => {
+                    errorDiv.textContent = '';
+                    
+                    // Move current to previous
+                    const currentEndpoints = rp.store.endpoints.load();
+                    showPreviousEndpoints(currentEndpoints);
+                    
+                    // Show the fresh response in current
+                    showCurrentEndpoints();
+                })
+                .catch(error => {
+                    errorDiv.textContent = `Error: ${error.message}`;
+                    console.error(error);
+                });
         }
 
         function checkAuthStatus() {
@@ -182,7 +169,7 @@
 
         // Initial load
         checkAuthStatus();
-        showStoredEndpoints();
+        showCurrentEndpoints();
         
         // Event listener
         document.getElementById('get-endpoints-btn').addEventListener('click', getEndpoints);
