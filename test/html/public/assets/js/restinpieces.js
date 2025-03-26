@@ -352,7 +352,7 @@ class Restinpieces {
 		return this.request('list_oauth2_providers');
 	}
 
-	Register(body = null, headers = {}, signal = null) {
+	RegisterWithPassword(body = null, headers = {}, signal = null) {
 		return this.request('register_with_password', {}, body, headers, signal);
 	}
 }
