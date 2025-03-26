@@ -121,13 +121,10 @@ type Smtp struct {
 	UseStartTLS bool   // Use STARTTLS
 }
 
-type EndpointsWithAuth struct {
+type Endpoints struct {
 	AuthRefresh         string `json:"auth_refresh"`
 	RequestVerification string `json:"request_verification"`
 	AllEndpoints        string `json:"all_endpoints"`
-}
-
-type EndpointsWithoutAuth struct {
 	AuthWithPassword      string `json:"auth_with_password"`
 	AuthWithOAuth2        string `json:"auth_with_oauth2"`
 	RegisterWithPassword  string `json:"register_with_password"`
@@ -135,20 +132,13 @@ type EndpointsWithoutAuth struct {
 	ConfirmVerification   string `json:"confirm_verification"`
 }
 
-type Endpoints struct {
-	EndpointsWithAuth
-	EndpointsWithoutAuth
-}
-
 // DefaultEndpoints returns the standard endpoint paths
 func DefaultEndpoints() Endpoints {
 	return Endpoints{
-		EndpointsWithAuth: EndpointsWithAuth{
+		Endpoints: Endpoints{
 			AuthRefresh:         "POST /api/auth-refresh",
 			RequestVerification: "POST /api/request-verification",
 			AllEndpoints:        "GET /api/all-endpoints",
-		},
-		EndpointsWithoutAuth: EndpointsWithoutAuth{
 			AuthWithPassword:      "POST /api/auth-with-password",
 			AuthWithOAuth2:        "POST /api/auth-with-oauth2",
 			RegisterWithPassword:  "POST /api/register-with-password",
