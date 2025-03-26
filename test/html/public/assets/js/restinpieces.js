@@ -8,7 +8,6 @@ class Restinpieces {
         baseURL: "/",
         lang: "en-US",
         storage: null, // Will be instantiated if null
-		// TODO 
         endpointsPath: "GET /api/all-endpoints",
     };
 
