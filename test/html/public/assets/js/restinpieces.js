@@ -285,7 +285,8 @@ class Restinpieces {
      * @returns {Promise<Object>} - Resolves with the endpoint data from server response.
      */
     ListEndpoints() {
-        return this.requestJson("/api/all-endpoints", "GET")
+        const endpointPath = this.endpoints.all_endpoints.split(' ')[1]; // Get path part after method
+        return this.requestJson(endpointPath, "GET")
             .then(response => {
                 if (!response?.data) {
                     throw new ClientResponseError({
