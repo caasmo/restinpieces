@@ -1,5 +1,6 @@
 ### TODOs
 
+- sdk move request to class, rename imported classes, bundle eliminates collisions. 
 - rethink payload job unique, per customer or payloads should have customer info
 - document middleware politic, if you have to write in the context, you shoudl not be a middleware.
 	- the first middleare post serverHttp code is the last observer.
