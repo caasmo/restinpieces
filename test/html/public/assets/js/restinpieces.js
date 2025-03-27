@@ -27,9 +27,6 @@ class Restinpieces {
         //this.enableAutoCancellation = true;
         //this.cancelControllers = {};
 
-        // Expose the injected storage instance with a cleaner interface
-        // Note: This assumes the storage provider has these methods.
-        // A more robust solution might involve checking method existence.
         this.store = {
             auth: {
                 save: (data) => this.storage.saveAuth(data),
