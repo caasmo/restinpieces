@@ -141,19 +141,19 @@ class Restinpieces {
 		return this.requestAuth('refresh_auth'); // Assuming 'refresh_auth' uses the access token
 	}
 
-	ListOauth2Providers() {
+	listOauth2Providers() {
 		return this.request('list_oauth2_providers');
 	}
 
-	RegisterWithPassword(body = null, headers = {}, signal = null) {
+	registerWithPassword(body = null, headers = {}, signal = null) {
 		return this.request('register_with_password', {}, body, headers, signal);
 	}
 
-	RequestVerification(body = null, headers = {}, signal = null) {
+	requestVerification(body = null, headers = {}, signal = null) {
 		return this.request('request_verification', {}, body, headers, signal);
 	}
 
-	ConfirmVerification(body = null, headers = {}, signal = null) {
+	confirmVerification(body = null, headers = {}, signal = null) {
 		return this.request('confirm_verification', {}, body, headers, signal);
 	}
 
@@ -161,7 +161,7 @@ class Restinpieces {
 		return this.request('auth_with_password', {}, body, headers, signal);
 	}
 
-	AuthWithOauth2(body = null, headers = {}, signal = null) {
+	authWithOauth2(body = null, headers = {}, signal = null) {
 		return this.request('auth_with_oauth2', {}, body, headers, signal);
 	}
 }
