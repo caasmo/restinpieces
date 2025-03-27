@@ -177,7 +177,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Generate JWT session token
 	slog.Debug("Generating JWT for user", "userID", user.ID)
-	jwtToken, _, err := crypto.NewJwtSessionToken(user.ID, user.Email, "", a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
+	jwtToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, "", a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
 		writeJsonError(w, errorTokenGeneration)
 		return
@@ -185,7 +185,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Return standardized authentication response
 	slog.Debug("Preparing successful authentication response")
-	writeAuthResponse(w, jwtToken, int(a.config.Jwt.AuthTokenDuration.Seconds()), user)
+	writeAuthResponse(w, jwtToken, user)
 }
 
 // ListOAuth2ProvidersHandler returns available OAuth2 providers
