@@ -9,7 +9,7 @@ export class LocalStore {
     // Private generic methods (now instance methods)
     #get(key) {
         try {
-            const value = localStorage.getItem(RestinpiecesLocalStore.#keys[key]);
+            const value = localStorage.getItem(LocalStore.#keys[key]);
             return value ? JSON.parse(value) : null;
         } catch (error) {
             console.error(`Failed to retrieve ${key}:`, error);
@@ -19,7 +19,7 @@ export class LocalStore {
 
     #set(key, value) {
         try {
-            localStorage.setItem(RestinpiecesLocalStore.#keys[key], JSON.stringify(value));
+            localStorage.setItem(LocalStore.#keys[key], JSON.stringify(value));
         } catch (error) {
             console.error(`Failed to store ${key}:`, error);
             throw new Error(`Failed to store ${key}: ` + error.message);
