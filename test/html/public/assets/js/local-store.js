@@ -1,4 +1,4 @@
-export class RestinpiecesLocalStore {
+export class LocalStore {
     // Key registry (remains static as it's class-level config)
     static #keys = {
         auth: '_rip_auth',

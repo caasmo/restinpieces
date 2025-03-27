@@ -1,6 +1,6 @@
 import { ClientResponseError } from './client-response-error.js';
 // Import the class, not the static methods directly
-import { RestinpiecesLocalStore } from './local-store.js';
+import { LocalStore } from './local-store.js';
 
 class Restinpieces {
     // Default configuration
@@ -18,7 +18,7 @@ class Restinpieces {
         this.baseURL = mergedConfig.baseURL;
         this.lang = mergedConfig.lang;
         // Instantiate default storage if none provided
-        this.storage = mergedConfig.storage || new RestinpiecesLocalStore();
+        this.storage = mergedConfig.storage || new LocalStore();
         // Initialize endpoints from config
         this.endpointsPath = mergedConfig.endpointsPath;
 		this.endpointsPromise = null; // Tracks ongoing fetch endpoint requests per instance TODO
