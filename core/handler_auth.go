@@ -38,7 +38,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	expiresAt := time.Now().Add(a.config.Jwt.AuthTokenDuration)
 
 	// Return standardized authentication response
-	writeAuthResponse(w, newToken, expiresAt, user)
+	writeAuthResponse(w, newToken, expiresAt.Unix(), user)
 
 }
 
@@ -91,7 +91,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	expiresAt := time.Now().Add(a.config.Jwt.AuthTokenDuration)
 
 	// Return standardized authentication response
-	writeAuthResponse(w, token, expiresAt, user)
+	writeAuthResponse(w, token, expiresAt.Unix(), user)
 }
 
 // todo already verified.
@@ -354,5 +354,5 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	expiresAt := time.Now().Add(a.config.Jwt.AuthTokenDuration)
 
 	// Return standardized authentication response
-	writeAuthResponse(w, token, expiresAt, retrievedUser)
+	writeAuthResponse(w, token, expiresAt.Unix(), retrievedUser)
 }
