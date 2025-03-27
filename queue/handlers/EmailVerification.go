@@ -53,7 +53,7 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	}
 
 	// Create verification token with user ID
-	token, _, err := crypto.NewJwtEmailVerificationToken(
+	token, err := crypto.NewJwtEmailVerificationToken(
 		user.ID,
 		user.Email,
 		user.Password,
