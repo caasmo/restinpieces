@@ -26,22 +26,19 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// No need to fetch the user again.
 
 	// Generate new token with fresh expiration using NewJwtSession
-	// TODO remove expiry is the AuthTokenDuration
-	newToken, expiry, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
+	newToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
 		slog.Error("Failed to generate new token", "error", err)
 		writeJsonError(w, errorTokenGeneration)
 		return
 	}
-	slog.Debug("New token generated",
-		"expiry", expiry,
-		"token_length", len(newToken))
+	slog.Debug("New token generated", "token_length", len(newToken))
 
-	// Calculate seconds until expiry
-	expiresIn := int(time.Until(expiry).Seconds())
+	// Calculate expiration time
+	expiresAt := time.Now().Add(a.config.Jwt.AuthTokenDuration)
 
 	// Return standardized authentication response
-	writeAuthResponse(w, newToken, expiresIn, user)
+	writeAuthResponse(w, newToken, expiresAt, user)
 
 }
 
@@ -84,14 +81,17 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT session token
-	token, _, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
+	token, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
 		writeJsonError(w, errorTokenGeneration)
 		return
 	}
 
+	// Calculate expiration time
+	expiresAt := time.Now().Add(a.config.Jwt.AuthTokenDuration)
+
 	// Return standardized authentication response
-	writeAuthResponse(w, token, int(a.config.Jwt.AuthTokenDuration.Seconds()), user)
+	writeAuthResponse(w, token, expiresAt, user)
 }
 
 // todo already verified.
@@ -344,12 +344,15 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Generate JWT session token for immediate authentication
-	token, _, err := crypto.NewJwtSessionToken(retrievedUser.ID, retrievedUser.Email, retrievedUser.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
+	token, err := crypto.NewJwtSessionToken(retrievedUser.ID, retrievedUser.Email, retrievedUser.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
 		writeJsonError(w, errorTokenGeneration)
 		return
 	}
 
+	// Calculate expiration time
+	expiresAt := time.Now().Add(a.config.Jwt.AuthTokenDuration)
+
 	// Return standardized authentication response
-	writeAuthResponse(w, token, int(a.config.Jwt.AuthTokenDuration.Seconds()), retrievedUser)
+	writeAuthResponse(w, token, expiresAt, retrievedUser)
 }
