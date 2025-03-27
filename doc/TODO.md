@@ -1,13 +1,29 @@
 ### TODOs
 
-- remove experd in return from function, get it from config
-- sdk move request to class, rename imported classes, bundle eliminates collisions. 
-	- how to extend the sdk with enpoints   
+- verify addresses paths shoudl be random or pseudo random?
 - revamp shell tests.
+- store?
+- CORS gzip middlewares 
 -updatebenchmark
 - FS 
-- block ip,  
+- block ip, protecting server: mild DDos
+    - CMS https://github.com/shenwei356/countminsketch
+        - 2000 x 10 make default 160 k at startup of the middleware
+        - rebuild afterx min
+        - rebuild after window 10 min?
+        - maybe make 2 
+        - put ip in cache with TTL 
+        - first check blocked ip.
+        - https://www.geeksforgeeks.org/count-min-sketch-in-java-with-examples/
+        - non concurrent!
+    - top k skets https://github.com/keilerkonzept/topk?tab=readme-ov-file#top-k-sketch
+        - has sliding window, that is better.  
+    - jsut cache TTL
+       - create key per minute: increment and get mod(time)+ip, if > threhhold block 
+       - does not have increment.
+       - https://github.com/dgryski/go-tinylfu ?
 - block ua: cache db,  
+- block jwt: cache db,  
 - block non wnanted mimetypes
 - in process litestream 
 - rate limit 
@@ -55,6 +71,9 @@
 
 ### done
 
+- remove experd in return from function, get it from config
+- sdk move request to class, rename imported classes, bundle eliminates collisions. 
+	- how to extend the sdk with enpoints   
 - consistency js keys auth local storage.
 - move html to test/html
 - simple dist bundle for js, maybe FS, make, generate

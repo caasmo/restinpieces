@@ -81,7 +81,7 @@
                 redirect_uri: provider.redirectURL
             };
 
-            rp.AuthWithOauth2(authRequest)
+            rp.authWithOauth2(authRequest)
             .then(response => {
                 if (response?.data?.access_token && response?.data?.record) {
                     rp.store.auth.save(response.data);
