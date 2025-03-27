@@ -97,7 +97,7 @@
                 baseURL: "http://localhost:8080"
             });
             
-            rp.ListOauth2Providers()
+            rp.listOauth2Providers()
             .then(data => {
                 resultDiv.textContent = JSON.stringify(data, null, 2);
                 document.getElementById('result-section').style.display = 'block';

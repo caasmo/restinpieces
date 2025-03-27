@@ -60,7 +60,7 @@
             const rp = new Restinpieces({
                 baseURL: "http://localhost:8080"
             });
-            rp.ConfirmVerification({ token })
+            rp.confirmVerification({ token })
             .then(response => {
                 if (!response.message) {
                     throw new Error('Invalid verification response: missing message');

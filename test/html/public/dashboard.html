@@ -128,7 +128,7 @@
                 // Save current token as previous token
                 document.getElementById('previous-token').textContent = currentToken;
 
-                rp.RefreshAuth()
+                rp.refreshAuth()
                 .then(response => {
                     if (response?.data?.access_token) {
                         // Save new auth data (preserving existing record)

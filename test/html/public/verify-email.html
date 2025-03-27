@@ -78,7 +78,7 @@
                 messageDiv.className = 'message loading';
                 messageDiv.textContent = 'Sending verification email...';
                 
-                rp.RequestVerification({ email: authData.record.email })
+                rp.requestVerification({ email: authData.record.email })
                 .then(response => {
                     if (!response?.message) {
                         throw new Error('Invalid verification response: missing message');

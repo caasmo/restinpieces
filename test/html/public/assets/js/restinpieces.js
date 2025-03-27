@@ -127,15 +127,8 @@ class Restinpieces {
 
     // --- Authentication Methods ---
 
-	// TODO: Implement refresh logic if needed (e.g., using refresh token)
 	refreshAuth() {
-		// This likely needs a specific endpoint and potentially different logic
-		// depending on the refresh token strategy.
-		// Example placeholder:
-		// const authData = this.store.auth.load() || {};
-		// const refreshToken = authData.refresh_token;
-		// return this.request('refresh_token_endpoint', {}, { refresh_token: refreshToken });
-		return this.requestAuth('refresh_auth'); // Assuming 'refresh_auth' uses the access token
+		return this.requestAuth('refresh_auth'); 
 	}
 
 	listOauth2Providers() {
