@@ -109,10 +109,11 @@ class Restinpieces {
         const authData = this.store.auth.load() || {};
         const token = authData.access_token || '';
 
-        if (!token) { // Don't attempt auth if no token
-            // Return a rejected promise directly
+        if (!token) {
+            // Return a rejected promise directly. We don't know the final URL yet,
+            // so we construct a placeholder or leave it empty.
             return Promise.reject(new ClientResponseError({
-                url: this.buildUrl(this.baseURL, endpointKey),
+                // url: this.httpClient.buildUrl(this.baseURL, `unknown_path_for_${endpointKey}`), // Less ideal
                 status: 401,
                 response: { message: "No authentication token available." }
             }));
