@@ -34,11 +34,8 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	slog.Debug("New token generated", "token_length", len(newToken))
 
-	// Calculate expiration time
-	expiresAt := time.Now().Add(a.config.Jwt.AuthTokenDuration)
-
 	// Return standardized authentication response
-	writeAuthResponse(w, newToken, expiresAt.Unix(), user)
+	writeAuthResponse(w, newToken, user)
 
 }
 
@@ -87,11 +84,8 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Calculate expiration time
-	expiresAt := time.Now().Add(a.config.Jwt.AuthTokenDuration)
-
 	// Return standardized authentication response
-	writeAuthResponse(w, token, expiresAt.Unix(), user)
+	writeAuthResponse(w, token, user)
 }
 
 // todo already verified.
@@ -350,9 +344,6 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Calculate expiration time
-	expiresAt := time.Now().Add(a.config.Jwt.AuthTokenDuration)
-
 	// Return standardized authentication response
-	writeAuthResponse(w, token, expiresAt.Unix(), retrievedUser)
+	writeAuthResponse(w, token, retrievedUser)
 }

@@ -20,7 +20,6 @@ import (
 //   "data": {
 //     "token_type": "Bearer",
 //     "access_token": "eyJhbGciOiJIUzI...",
-//     "expires_in": 3600,
 //     "record": {
 //       "id": "user123",
 //       "email": "user@example.com",
@@ -49,16 +48,14 @@ type AuthRecord struct {
 type AuthData struct {
 	TokenType   string     `json:"token_type"`
 	AccessToken string     `json:"access_token"`
-	ExpiresAt   int64      `json:"expires_at"` // Unix timestamp
 	Record      AuthRecord `json:"record"`
 }
 
 // NewAuthData creates a new AuthData instance
-func NewAuthData(token string, expiresAt int64, user *db.User) *AuthData { // Changed expiresAt type to int64
+func NewAuthData(token string, user *db.User) *AuthData {
 	return &AuthData{
 		TokenType:   "Bearer",
 		AccessToken: token,
-		ExpiresAt:   expiresAt, // Store Unix timestamp
 		Record: AuthRecord{
 			ID:       user.ID,
 			Email:    user.Email,
@@ -69,8 +66,8 @@ func NewAuthData(token string, expiresAt int64, user *db.User) *AuthData { // Ch
 }
 
 // writeAuthResponse writes a standardized authentication response
-func writeAuthResponse(w http.ResponseWriter, token string, expiresAt int64, user *db.User) { // Changed expiresAt type to int64
-	authData := NewAuthData(token, expiresAt, user) // Pass Unix timestamp
+func writeAuthResponse(w http.ResponseWriter, token string, user *db.User) {
+	authData := NewAuthData(token, user)
 	response := JsonWithData{
 		JsonBasic: JsonBasic{
 			Status:  http.StatusOK,
