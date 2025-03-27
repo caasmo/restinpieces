@@ -96,7 +96,8 @@
             const rp = new Restinpieces({
                 baseURL: "http://localhost:8080"
             });
-            rp.requestJson("/api/list-oauth2-providers")
+            
+            rp.listOauth2Providers()
             .then(data => {
                 resultDiv.textContent = JSON.stringify(data, null, 2);
                 document.getElementById('result-section').style.display = 'block';
