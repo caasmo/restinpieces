@@ -131,7 +131,7 @@ class Restinpieces {
     // --- Authentication Methods ---
 
 	// TODO: Implement refresh logic if needed (e.g., using refresh token)
-	RefreshAuth() {
+	refreshAuth() {
 		// This likely needs a specific endpoint and potentially different logic
 		// depending on the refresh token strategy.
 		// Example placeholder:
