@@ -219,11 +219,11 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 // - Creating the signing key from user credentials
 // - Setting up standard claims
 // - Generating and signing the token
-func NewJwtSessionToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, time.Time, error) {
+func NewJwtSessionToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, error) {
 	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
-		return "", time.Time{}, fmt.Errorf("failed to create signing key: %w", err)
+		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
 	// Set up claims
@@ -238,11 +238,11 @@ func NewJwtSessionToken(userID, email, passwordHash string, secret []byte, durat
 // TODO make it use agenric NewJwtCredentialsToken with claim signature
 // NewJwtEmailVerificationToken creates a JWT specifically for email verification
 // It includes additional claims needed for verification
-func NewJwtEmailVerificationToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, time.Time, error) {
+func NewJwtEmailVerificationToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, error) {
 	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
-		return "", time.Time{}, fmt.Errorf("failed to create signing key: %w", err)
+		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
 	// Set up verification-specific claims
@@ -256,9 +256,9 @@ func NewJwtEmailVerificationToken(userID, email, passwordHash string, secret []b
 	return NewJwt(claims, signingKey, duration)
 }
 
-func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (string, time.Time, error) {
+func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (string, error) {
 	if len(signingKey) < MinKeyLength {
-		return "", time.Time{}, ErrJwtInvalidSecretLength
+		return "", ErrJwtInvalidSecretLength
 	}
 
 	// Set standard claims
@@ -271,10 +271,10 @@ func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (s
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	tokenString, err := token.SignedString(signingKey)
 	if err != nil {
-		return "", time.Time{}, fmt.Errorf("failed to sign token: %w", err)
+		return "", fmt.Errorf("failed to sign token: %w", err)
 	}
 
-	return tokenString, expirationTime, nil
+	return tokenString, nil
 }
 
 // NewJwtSigningKeyWithCredentials creates a JWT signing key using HMAC-SHA256.
