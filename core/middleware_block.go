@@ -18,6 +18,7 @@ type ConcurrentSketch struct {
 	tickSize      uint64        // Number of requests before processing the sketch
 	blockThreshold uint32       // Threshold above which IPs are flagged for blocking
 	totalReqs     atomic.Uint64 // Counter for total requests processed since last tick
+	tickCount     atomic.Uint64 // Counter for total ticks processed
 }
 
 // NewConcurrentSketch creates a new thread-safe sketch wrapper.
@@ -70,7 +71,8 @@ func (cs *ConcurrentSketch) Tick() {
 func (cs *ConcurrentSketch) processTick() {
 	// Perform sketch operations using the thread-safe wrapper
 	cs.Tick() // Advance the sliding window
-	slog.Debug("TICK:", "currentTotal", cs.totalReqs.Load())
+	tickNum := cs.tickCount.Add(1)
+	slog.Debug("TICK:", "number", tickNum, "currentTotal", cs.totalReqs.Load())
 
 	// Get sorted IPs from the sketch
 	sortedIPs := cs.SortedSlice()
