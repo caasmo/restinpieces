@@ -43,13 +43,6 @@ func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentS
 	return cs
 }
 
-// Add wraps the sketch's Add method with a mutex.
-func (cs *ConcurrentSketch) Add(item string, increment uint32) bool {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
-	return cs.sketch.Add(item, increment)
-}
-
 
 // Incr wraps the sketch's Incr method with a mutex.
 // Assuming sketch has an Incr method as described in the prompt.
