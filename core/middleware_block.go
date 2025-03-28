@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
-	"sync/atomic"
 
 	"github.com/keilerkonzept/topk/sliding"
 )
