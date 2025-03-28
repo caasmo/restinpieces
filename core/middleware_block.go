@@ -20,31 +20,26 @@ type ConcurrentSketch struct {
 	mu            sync.Mutex
 	sketch        *sliding.Sketch
 	tickSize      uint64        // Number of requests before processing the sketch
-	blockThreshold uint32       // Threshold above which IPs are flagged for blocking
 	totalReqs     atomic.Uint64 // Counter for total requests processed since last tick
 	tickCount     atomic.Uint64 // Counter for total ticks processed
 }
 
 // NewConcurrentSketch creates a new thread-safe sketch wrapper.
 // tickSize: How many requests trigger a sketch tick and top-k check.
-// blockThreshold: The count above which an IP is flagged for blocking.
-func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64, blockThreshold uint32) *ConcurrentSketch {
+func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentSketch {
 	if instance == nil {
-		// Handle nil sketch instance appropriately, maybe return error or panic
 		panic("sketch instance cannot be nil for ConcurrentSketch")
 	}
 	if tickSize == 0 {
 		tickSize = 1000 // Default tick size if not specified
 	}
 	cs := &ConcurrentSketch{
-		sketch:        instance,
-		tickSize:      tickSize,
-		blockThreshold: blockThreshold,
+		sketch:   instance,
+		tickSize: tickSize,
 	}
 	slog.Debug("Initialized ConcurrentSketch",
 		"tickSize", tickSize,
-		"blockThreshold", blockThreshold)
-	// cs.totalReqs is initialized to 0 by default via atomic.Uint64
+		"windowSize", instance.WindowSize)
 	return cs
 }
 
@@ -100,16 +95,17 @@ func (cs *ConcurrentSketch) processTick() {
 	// Get sorted IPs from the sketch
 	sortedIPs := cs.SortedSlice()
 
-	// Check IPs against the threshold
+	// Check IPs against the dynamic threshold
+	threshold := uint32(cs.Threshold())
 	for _, item := range sortedIPs {
-		if item.Count > cs.blockThreshold {
-			// Log that this IP should be blocked
-			slog.Warn("XXXXXXXXXXXXXxIP exceeded threshold, should be blocked", "ip", item.Item, "count", item.Count, "threshold", cs.blockThreshold)
+		if item.Count > threshold {
+			slog.Warn("IP exceeded threshold, should be blocked", 
+				"ip", item.Item, 
+				"count", item.Count, 
+				"threshold", threshold)
 			// TODO: Add IP to the actual blocklist here
-			// cs.blockIP(item.Item) // Assuming blocklist is managed within ConcurrentSketch or elsewhere
 		} else {
-			// Since the list is sorted, we can potentially break early
-			// if counts are guaranteed to be non-increasing.
+			// Since the list is sorted, we can break early
 			break
 		}
 	}
@@ -167,10 +163,8 @@ func NewBlockMiddlewareFunc(cs *ConcurrentSketch) func(http.Handler) http.Handle
 		//sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
 		slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
 		
-		// Create a new ConcurrentSketch with default tick size and block threshold
-		//cs = NewConcurrentSketch(sketch, 1000, 100) // Default values for tickSize and blockThreshold
-		//cs = NewConcurrentSketch(sketch, 5, 5) // Default values for tickSize and blockThreshold
-		cs = NewConcurrentSketch(sketch, 100, 5) // Default values for tickSize and blockThreshold
+		// Create a new ConcurrentSketch with default tick size
+		cs = NewConcurrentSketch(sketch, 100) // Default tickSize
 	}
 
 	// Return the middleware function
