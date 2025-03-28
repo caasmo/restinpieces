@@ -11,7 +11,7 @@ import (
 
 // ConcurrentSketch provides thread-safe access to a sketch instance and manages ticking.
 const (
-	thresholdPercent = 90 // 10% of window capacity
+	thresholdPercent = 80 // 10% of window capacity
 )
 
 type ConcurrentSketch struct {
@@ -145,7 +145,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 				"path", r.URL.Path)
 
 			tickReqs := cs.TickReqCount.Add(1)
-			slog.Debug(" current Tick request", "num", tickReqs)
+			slog.Debug("Current Tick request", "num", tickReqs)
 
 			// Increment IP count in the sketch
 			_ = cs.Incr(ip)
