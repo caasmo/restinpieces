@@ -187,10 +187,8 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 				}
 			}
 
-			slog.Debug("proceeding to next handler", "ip", ip)
 			// Proceed to the next handler in the chain
 			next.ServeHTTP(w, r)
-			slog.Debug("request processed", "ip", ip)
 		}
 		return http.HandlerFunc(fn)
 	}
