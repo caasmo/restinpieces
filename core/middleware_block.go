@@ -101,11 +101,13 @@ func (cs *ConcurrentSketch) SortedSlice() []struct {
 func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handler) http.Handler {
 	if concurrentSketch == nil {
 		// Initialize the underlying sketch
-		sketch := sliding.New(3, 60, sliding.WithWidth(1024), sliding.WithDepth(3))
+		//sketch := sliding.New(3, 60, sliding.WithWidth(1024), sliding.WithDepth(3))
+		sketch := sliding.New(3, 2, sliding.WithWidth(1024), sliding.WithDepth(3))
 		slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
 		
 		// Create a new ConcurrentSketch with default tick size and block threshold
-		concurrentSketch = NewConcurrentSketch(sketch, 1000, 100) // Default values for tickSize and blockThreshold
+		//concurrentSketch = NewConcurrentSketch(sketch, 1000, 100) // Default values for tickSize and blockThreshold
+		concurrentSketch = NewConcurrentSketch(sketch, 5, 5) // Default values for tickSize and blockThreshold
 	}
 
 	// Return the middleware function
@@ -114,7 +116,7 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 			ip := getClientIP(r)
 			
 			// Debug log incoming request
-			slog.Debug("processing request", 
+			slog.Debug("-------------------------------------------------------------------", 
 				"ip", ip, 
 				"method", r.Method, 
 				"path", r.URL.Path)
@@ -137,7 +139,7 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 
 			// Add IP to the concurrent sketch
 			if added := concurrentSketch.Add(ip, 1); added {
-				slog.Debug("added IP to sketch", "ip", ip, "count", 1)
+				slog.Debug("added IP to sketch", "ip", ip)
 			}
 
 			// Check if it's time to tick and check top-k
@@ -148,7 +150,7 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 
 					// Perform sketch operations using the thread-safe wrapper
 					concurrentSketch.Tick() // Advance the sliding window
-					slog.Debug("performed sketch tick", "currentTotal", currentTotal)
+                    slog.Debug("TICK:", "currentTotal", currentTotal)
 
 					// Get sorted IPs from the sketch
 					sortedIPs := concurrentSketch.SortedSlice()

@@ -17,8 +17,7 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	// Initialize blocking middleware
-	blockMiddleware := core.NewBlockMiddlewareFunc(nil)
-	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger, blockMiddleware}
+	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger}
 
 	// API routes with explicit /api prefix
 	ap.Router().Register(
