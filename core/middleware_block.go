@@ -190,8 +190,3 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 		return http.HandlerFunc(fn)
 	}
 }
-
-// TODO: Decide where to implement and manage the actual blocklist (e.g., within ConcurrentSketch or a separate service)
-// Example potential methods for ConcurrentSketch if blocklist is managed there:
-// func (cs *ConcurrentSketch) blockIP(ip string) { ... }
-// func (cs *ConcurrentSketch) isBlocked(ip string) bool { ... }
