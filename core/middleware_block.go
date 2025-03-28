@@ -90,6 +90,15 @@ func (cs *ConcurrentSketch) processTick() {
 	}
 }
 
+// Count returns the count for an item in the sketch.
+func (cs *ConcurrentSketch) Count(item string) uint32 {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	count := cs.sketch.Count(item)
+	slog.Debug("Count request", "item", item, "count", count)
+	return count
+}
+
 // SortedSlice gets the sorted items and their counts from the sketch.
 func (cs *ConcurrentSketch) SortedSlice() []struct {
 	Item  string
