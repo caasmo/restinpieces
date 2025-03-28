@@ -75,12 +75,11 @@ func (cs *ConcurrentSketch) processTick() {
 	// Get sorted IPs from the sketch
 	sortedIPs := cs.SortedSlice()
 
-    slog.Debug("Sorted IPs dump", "ips", sortedIPs)
 	// Check IPs against the threshold
 	for _, item := range sortedIPs {
 		if item.Count > cs.blockThreshold {
 			// Log that this IP should be blocked
-			slog.Warn("IP exceeded threshold, should be blocked", "ip", item.Item, "count", item.Count, "threshold", cs.blockThreshold)
+			slog.Warn("XXXXXXXXXXXXXxIP exceeded threshold, should be blocked", "ip", item.Item, "count", item.Count, "threshold", cs.blockThreshold)
 			// TODO: Add IP to the actual blocklist here
 			// cs.blockIP(item.Item) // Assuming blocklist is managed within ConcurrentSketch or elsewhere
 		} else {
@@ -109,6 +108,7 @@ func (cs *ConcurrentSketch) SortedSlice() []struct {
 	
 	// Get the sorted slice from the sketch
 	itemCounts := cs.sketch.SortedSlice()
+    slog.Debug("Sorted IPs dump", "ips", itemCounts)
 	
 	// Convert to anonymous struct slice
 	results := make([]struct {
@@ -138,12 +138,14 @@ func NewBlockMiddlewareFunc(cs *ConcurrentSketch) func(http.Handler) http.Handle
 	if cs == nil {
 		// Initialize the underlying sketch
 		//sketch := sliding.New(3, 60, sliding.WithWidth(1024), sliding.WithDepth(3))
-		sketch := sliding.New(3, 2, sliding.WithWidth(1024), sliding.WithDepth(3))
+		sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
+		//sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
 		slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
 		
 		// Create a new ConcurrentSketch with default tick size and block threshold
 		//cs = NewConcurrentSketch(sketch, 1000, 100) // Default values for tickSize and blockThreshold
-		cs = NewConcurrentSketch(sketch, 5, 5) // Default values for tickSize and blockThreshold
+		//cs = NewConcurrentSketch(sketch, 5, 5) // Default values for tickSize and blockThreshold
+		cs = NewConcurrentSketch(sketch, 100, 5) // Default values for tickSize and blockThreshold
 	}
 
 	// Return the middleware function
