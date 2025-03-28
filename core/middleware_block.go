@@ -65,9 +65,9 @@ func (cs *ConcurrentSketch) TopK() []struct {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
-	// Get the sorted slice from the sketch
-	itemCounts := cs.sketch.SortedSlice()
-	slog.Debug("Sorted IPs dump", "ips", itemCounts)
+	// Get the top items from the sketch
+	itemCounts := cs.sketch.TopK()
+	slog.Debug("Top IPs dump", "ips", itemCounts)
 
 	// Convert to anonymous struct slice
 	results := make([]struct {
@@ -163,8 +163,8 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 					"sizeBytes", cs.SizeBytes(),
 					"threshold", threshold)
 
-				// Get sorted IPs from the sketch
-				sortedIPs := cs.SortedSlice()
+				// Get top IPs from the sketch
+				sortedIPs := cs.TopK()
 
 				// Check IPs against the dynamic threshold
 				for _, item := range sortedIPs {
