@@ -196,21 +196,6 @@ func NewBlockMiddlewareFunc(cs *ConcurrentSketch) func(http.Handler) http.Handle
 	}
 }
 
-// getClientIP extracts the client IP address from the request, handling proxies via X-Forwarded-For header
-func getClientIP(r *http.Request) string {
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		// Handle error potentially, or use RemoteAddr directly if no port
-		ip = r.RemoteAddr
-	}
-	// Consider X-Forwarded-For header if behind a proxy
-	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-		// Use the first IP in the list
-		parts := strings.Split(forwarded, ",")
-		ip = strings.TrimSpace(parts[0])
-	}
-	return ip
-}
 
 // TODO: Decide where to implement and manage the actual blocklist (e.g., within ConcurrentSketch or a separate service)
 // Example potential methods for ConcurrentSketch if blocklist is managed there:
