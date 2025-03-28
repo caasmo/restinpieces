@@ -12,6 +12,10 @@ import (
 )
 
 // ConcurrentSketch provides thread-safe access to a sketch instance and manages ticking.
+const (
+	thresholdPercent = 10 // 10% of window capacity
+)
+
 type ConcurrentSketch struct {
 	mu            sync.Mutex
 	sketch        *sliding.Sketch
@@ -75,10 +79,10 @@ func (cs *ConcurrentSketch) SizeBytes() uint64 {
 	return uint64(cs.sketch.SizeBytes())
 }
 
-// Threshold returns 10% of the window capacity (WindowSize * tickSize)
+// Threshold returns thresholdPercent of the window capacity (WindowSize * tickSize)
 func (cs *ConcurrentSketch) Threshold() int {
 	windowCapacity := cs.sketch.WindowSize * cs.tickSize
-	return int((windowCapacity * 10) / 100) // 10% of capacity
+	return int((windowCapacity * thresholdPercent) / 100)
 }
 
 // processTick checks for IPs exceeding the threshold and logs them
