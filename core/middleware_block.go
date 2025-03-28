@@ -113,11 +113,12 @@ func (cs *ConcurrentSketch) Threshold() int {
 
 // processTick handles the sketch tick and IP blocking logic
 func (cs *ConcurrentSketch) processTick(a *App, ip string) {
+	tickReqs := cs.TickReqCount.Add(1)
+	
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 	
-	tickReqs := cs.TickReqCount.Add(1)
-	_ = cs.Incr(ip)
+	cs.sketch.Incr(ip)
 	// Perform sketch operations
 	if tickReqs >= cs.tickSize {
 		cs.Tick() // Advance the sliding window
@@ -169,6 +170,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 			// TODO not here
 			if a.IsBlocked(ip) {
 				writeJsonError(w, errorIpBlocked)
+				slog.Info("IP blocked from accessing endpoint", "ip", ip)
 				return
 			}
 
