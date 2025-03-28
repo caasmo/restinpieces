@@ -35,4 +35,3 @@ func (a *App) GetClientIP(r *http.Request) string {
 	}
 	return ip
 }
-

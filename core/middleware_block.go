@@ -15,11 +15,11 @@ const (
 )
 
 type ConcurrentSketch struct {
-	mu            sync.Mutex
-	sketch        *sliding.Sketch
-	tickSize      uint64        // number of request per tick 
-	TickReqCount  atomic.Uint64 // Counter for requests processed since last tick
-	tickCount     atomic.Uint64 // Counter for total ticks processed
+	mu           sync.Mutex
+	sketch       *sliding.Sketch
+	tickSize     uint64        // number of request per tick
+	TickReqCount atomic.Uint64 // Counter for requests processed since last tick
+	tickCount    atomic.Uint64 // Counter for total ticks processed
 }
 
 // NewConcurrentSketch creates a new thread-safe sketch wrapper.
@@ -41,13 +41,51 @@ func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentS
 	return cs
 }
 
-
 // Incr wraps the sketch's Incr method with a mutex.
 // Assuming sketch has an Incr method as described in the prompt.
 func (cs *ConcurrentSketch) Incr(item string) bool {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 	return cs.sketch.Incr(item)
+}
+
+// Count returns the count for an item in the sketch.
+func (cs *ConcurrentSketch) Count(item string) uint32 {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	count := cs.sketch.Count(item)
+	return count
+}
+
+// SortedSlice gets the sorted items and their counts from the sketch.
+func (cs *ConcurrentSketch) SortedSlice() []struct {
+	Item  string
+	Count uint32
+} {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	// Get the sorted slice from the sketch
+	itemCounts := cs.sketch.SortedSlice()
+	slog.Debug("Sorted IPs dump", "ips", itemCounts)
+
+	// Convert to anonymous struct slice
+	results := make([]struct {
+		Item  string
+		Count uint32
+	}, len(itemCounts))
+
+	for i, ic := range itemCounts {
+		results[i] = struct {
+			Item  string
+			Count uint32
+		}{
+			Item:  ic.Item,
+			Count: ic.Count,
+		}
+	}
+
+	return results
 }
 
 // Tick wraps the sketch's Tick method with a mutex and increments the tick counter.
@@ -66,6 +104,7 @@ func (cs *ConcurrentSketch) SizeBytes() uint64 {
 }
 
 // Threshold returns thresholdPercent of the window capacity (WindowSize * tickSize)
+// TODO we need time reference reference for low request/hour, maybe add time duration to struct
 func (cs *ConcurrentSketch) Threshold() int {
 	windowCapacity := uint64(cs.sketch.WindowSize) * cs.tickSize
 	return int((windowCapacity * thresholdPercent) / 100)
@@ -77,8 +116,8 @@ func (cs *ConcurrentSketch) processTick() {
 	cs.Tick() // Advance the sliding window
 	tickNum := cs.tickCount.Load()
 	threshold := cs.Threshold()
-	slog.Debug("TICK:", 
-		"number", tickNum, 
+	slog.Debug("TICK:",
+		"number", tickNum,
 		"currentTotal", cs.TickReqCount.Load(),
 		"sizeBytes", cs.SizeBytes(),
 		"threshold", threshold)
@@ -89,9 +128,9 @@ func (cs *ConcurrentSketch) processTick() {
 	// Check IPs against the dynamic threshold
 	for _, item := range sortedIPs {
 		if item.Count > uint32(threshold) {
-			slog.Warn("IP exceeded threshold, should be blocked", 
-				"ip", item.Item, 
-				"count", item.Count, 
+			slog.Warn("IP exceeded threshold, should be blocked",
+				"ip", item.Item,
+				"count", item.Count,
 				"threshold", threshold)
 			// TODO: Add IP to the actual blocklist here
 		} else {
@@ -101,47 +140,7 @@ func (cs *ConcurrentSketch) processTick() {
 	}
 }
 
-// Count returns the count for an item in the sketch.
-func (cs *ConcurrentSketch) Count(item string) uint32 {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
-	count := cs.sketch.Count(item)
-	return count
-}
-
-// SortedSlice gets the sorted items and their counts from the sketch.
-func (cs *ConcurrentSketch) SortedSlice() []struct {
-	Item  string
-	Count uint32
-} {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
-	
-	// Get the sorted slice from the sketch
-	itemCounts := cs.sketch.SortedSlice()
-    slog.Debug("Sorted IPs dump", "ips", itemCounts)
-	
-	// Convert to anonymous struct slice
-	results := make([]struct {
-		Item  string
-		Count uint32
-	}, len(itemCounts))
-	
-	for i, ic := range itemCounts {
-		results[i] = struct {
-			Item  string
-			Count uint32
-		}{
-			Item:  ic.Item,
-			Count: ic.Count,
-		}
-	}
-	
-	return results
-}
-
 // --- IP Blocking Middleware Function ---
-
 
 // BlockMiddleware creates a middleware function that uses a ConcurrentSketch
 // to identify and potentially block IPs based on request frequency.
@@ -149,7 +148,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 	// Initialize the underlying sketch
 	sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
 	slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
-	
+
 	// Create a new ConcurrentSketch with default tick size
 	cs := NewConcurrentSketch(sketch, 100) // Default tickSize
 
@@ -157,11 +156,11 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ip := a.GetClientIP(r)
-			
+
 			// Debug log incoming request
-			slog.Debug("-------------------------------------------------------------------", 
-				"ip", ip, 
-				"method", r.Method, 
+			slog.Debug("-------------------------------------------------------------------",
+				"ip", ip,
+				"method", r.Method,
 				"path", r.URL.Path)
 
 			currentTotal := cs.TickReqCount.Add(1)
@@ -177,7 +176,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 				// Reset counter atomically - only one goroutine should perform the tick logic.
 				// Using CompareAndSwap to ensure only the goroutine that reaches the threshold performs the tick.
 				if cs.TickReqCount.CompareAndSwap(currentTotal, 0) {
-                    // TODO
+					// TODO
 
 				}
 			}
@@ -188,7 +187,6 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 		return http.HandlerFunc(fn)
 	}
 }
-
 
 // TODO: Decide where to implement and manage the actual blocklist (e.g., within ConcurrentSketch or a separate service)
 // Example potential methods for ConcurrentSketch if blocklist is managed there:
