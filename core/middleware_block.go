@@ -102,7 +102,7 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 	if concurrentSketch == nil {
 		// Initialize the underlying sketch
 		sketch := sliding.New(3, 60, sliding.WithWidth(1024), sliding.WithDepth(3))
-		log.Println("the sketch takes up", sketch.SizeBytes(), "bytes in memory")
+		slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
 		
 		// Create a new ConcurrentSketch with default tick size and block threshold
 		concurrentSketch = NewConcurrentSketch(sketch, 1000, 100) // Default values for tickSize and blockThreshold
