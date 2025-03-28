@@ -92,24 +92,24 @@ func NewBlockMiddlewareFunc(blockThreshold uint32, concurrentSketch *ConcurrentS
 
 		// The handler function that processes each request
 		fn := func(w http.ResponseWriter, r *http.Request) {
-	// Extract client IP
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		// Handle error potentially, or use RemoteAddr directly if no port
-		ip = r.RemoteAddr
-		// Consider X-Forwarded-For header if behind a proxy
-		if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-			// Use the first IP in the list
-			parts := strings.Split(forwarded, ",")
-			ip = strings.TrimSpace(parts[0])
-		}
-	}
+			// Extract client IP
+			ip, _, err := net.SplitHostPort(r.RemoteAddr)
+			if err != nil {
+				// Handle error potentially, or use RemoteAddr directly if no port
+				ip = r.RemoteAddr
+				// Consider X-Forwarded-For header if behind a proxy
+				if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+					// Use the first IP in the list
+					parts := strings.Split(forwarded, ",")
+					ip = strings.TrimSpace(parts[0])
+				}
+			}
 
-	// TODO: Check if IP is already in the blocklist before processing
-	// if bm.isBlocked(ip) {
-	// 	http.Error(w, "Forbidden", http.StatusForbidden)
-	// 	return
-	// }
+			// TODO: Check if IP is already in the blocklist before processing
+			// if bm.isBlocked(ip) {
+			// 	http.Error(w, "Forbidden", http.StatusForbidden)
+			// 	return
+			// }
 
 			// TODO: Check if IP is already in the blocklist before processing
 			// if concurrentSketch.isBlocked(ip) { // Assuming blocklist is managed within ConcurrentSketch or elsewhere
@@ -165,4 +165,3 @@ func NewBlockMiddlewareFunc(blockThreshold uint32, concurrentSketch *ConcurrentS
 // Example potential methods for ConcurrentSketch if blocklist is managed there:
 // func (cs *ConcurrentSketch) blockIP(ip string) { ... }
 // func (cs *ConcurrentSketch) isBlocked(ip string) bool { ... }
-
