@@ -50,12 +50,8 @@ func (a *App) BlockIP(ip string) error {
     currentBucket := getTimeBucket(now)
     nextBucket := currentBucket + 1
 
-    // Calculate remaining time in current bucket
-    nowUnix := now.Unix()
-    timeUntilNextBucket := (nextBucket*bucketDurationSec) - nowUnix
-    ttlCurrent := time.Until(now.Add(time.Duration(timeUntilNextBucket) * time.Second))
-
-    // Block in current bucket with remaining time
+    // Block in current bucket with full blocking duration
+    ttlCurrent := blockingDuration
     currentKey := formatBlockKey(ip, currentBucket)
     successCurrent := a.cache.SetWithTTL(currentKey, true, defaultBlockCost, ttlCurrent)
     slog.Info("IP blocked in current bucket",
