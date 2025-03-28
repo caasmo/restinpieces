@@ -22,18 +22,26 @@ func getTimeBucket() int64 {
 // TimeBucket is the current time bucket number for blocked IP grouping
 var TimeBucket = getTimeBucket()
 
-// BlockIP adds an IP to the blocklist in current and next time bucket
+// BlockIP adds an IP to the blocklist in current and next time bucket with adjusted TTL
 func (a *App) BlockIP(ip string) error {
-	currentBucket := getTimeBucket()
+	now := time.Now().Unix()
+	currentBucket := now / bucketDurationSec
 	nextBucket := currentBucket + 1
 
-	// Block in current bucket
-	currentKey := fmt.Sprintf("%s|%d", ip, currentBucket)
-	a.cache.SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration)
+	// Calculate remaining time in current bucket
+	timeUntilNextBucket := (nextBucket*bucketDurationSec) - now
+	ttlCurrent := time.Duration(timeUntilNextBucket) * time.Second
 
-	// Block in next bucket
-	nextKey := fmt.Sprintf("%s|%d", ip, nextBucket)
-	a.cache.SetWithTTL(nextKey, true, defaultBlockCost, blockingDuration)
+	// Block in current bucket with remaining time
+	currentKey := fmt.Sprintf("%s|%d", ip, currentBucket)
+	a.cache.SetWithTTL(currentKey, true, defaultBlockCost, ttlCurrent)
+
+	// Block in next bucket with full duration minus what's already passed
+	ttlNext := blockingDuration - ttlCurrent
+	if ttlNext > 0 {
+		nextKey := fmt.Sprintf("%s|%d", ip, nextBucket)
+		a.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext)
+	}
 
 	return nil
 }
