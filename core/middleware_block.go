@@ -8,8 +8,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	// Placeholder for the actual sketch library import
-	sketch "github.com/your/sketch/library" // Placeholder for the actual sketch library import
+	"github.com/keilerkonzept/topk/sliding"
 )
 
 // ConcurrentSketch provides thread-safe access to a sketch instance and manages ticking.
@@ -45,13 +44,6 @@ func (cs *ConcurrentSketch) Add(item string, increment uint32) bool {
 	return cs.sketch.Add(item, increment)
 }
 
-// Count wraps the sketch's Count method with a mutex.
-// Assuming sketch has a Count method as described in the prompt.
-func (cs *ConcurrentSketch) Count(item string) uint32 {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
-	return cs.sketch.Count(item)
-}
 
 // Incr wraps the sketch's Incr method with a mutex.
 // Assuming sketch has an Incr method as described in the prompt.
@@ -68,12 +60,11 @@ func (cs *ConcurrentSketch) Tick() {
 	cs.sketch.Tick()
 }
 
-// SortedSlice wraps the sketch's SortedSlice method with a mutex.
-// Assuming sketch has a SortedSlice method returning []sketch.ItemCount
-func (cs *ConcurrentSketch) SortedSlice() []sketch.ItemCount {
+// Top wraps the sketch's Top method with a mutex.
+func (cs *ConcurrentSketch) Top() []sliding.ItemCount {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
-	return cs.sketch.SortedSlice()
+	return cs.sketch.Top()
 }
 
 // --- IP Blocking Middleware Function ---
@@ -119,7 +110,7 @@ func NewBlockMiddlewareFunc(blockThreshold uint32, concurrentSketch *ConcurrentS
 					concurrentSketch.Tick() // Advance the sliding window
 
 					// Get top K IPs from the sketch
-					topK := concurrentSketch.SortedSlice()
+					topK := concurrentSketch.Top()
 
 					// Check top K IPs against the threshold
 					for _, item := range topK {
