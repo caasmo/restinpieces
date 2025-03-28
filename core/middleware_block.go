@@ -75,6 +75,7 @@ func (cs *ConcurrentSketch) processTick() {
 	// Get sorted IPs from the sketch
 	sortedIPs := cs.SortedSlice()
 
+    slog.Debug("Sorted IPs dump", "ips", sortedIPs)
 	// Check IPs against the threshold
 	for _, item := range sortedIPs {
 		if item.Count > cs.blockThreshold {
