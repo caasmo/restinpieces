@@ -173,8 +173,10 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 			if currentTotal >= concurrentSketch.tickSize {
 				// Reset counter atomically - only one goroutine should perform the tick logic.
 				// Using CompareAndSwap to ensure only the goroutine that reaches the threshold performs the tick.
+				concurrentSketch.processTick()
 				if concurrentSketch.totalReqs.CompareAndSwap(currentTotal, 0) {
-					concurrentSketch.processTick()
+                    // TODO
+
 				}
 			}
 
