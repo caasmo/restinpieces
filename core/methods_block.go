@@ -7,7 +7,8 @@ import (
 )
 
 const (
-	blockingDuration = 1 * time.Hour // Default blocking duration
+	//blockingDuration = 1 * time.Hour // Default blocking duration
+	blockingDuration = 3 * time.Minute // Default blocking duration
 	defaultBlockCost = 1             // Default cost for blocked IP entries
 )
 
