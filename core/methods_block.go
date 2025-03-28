@@ -20,6 +20,11 @@ func getTimeBucket() int64 {
     return time.Now().Unix() / bucketDurationSec
 }
 
+// formatBlockKey creates a consistent cache key for blocked IPs
+func formatBlockKey(ip string, bucket int64) string {
+    return fmt.Sprintf("%s|%d", ip, bucket)
+}
+
 // TimeBucket is the current time bucket number for blocked IP grouping
 var TimeBucket = getTimeBucket()
 
@@ -28,12 +33,12 @@ func (a *App) IsBlocked(ip string) bool {
     currentBucket := getTimeBucket()
     
     // Check current bucket
-    if _, found := a.cache.Get(FormatBlockKey(ip, currentBucket)); found {
+    if _, found := a.cache.Get(formatBlockKey(ip, currentBucket)); found {
         return true
     }
     
     // Check next bucket
-    if _, found := a.cache.Get(FormatBlockKey(ip, currentBucket+1)); found {
+    if _, found := a.cache.Get(formatBlockKey(ip, currentBucket+1)); found {
         return true
     }
     
@@ -51,7 +56,7 @@ func (a *App) BlockIP(ip string) error {
     ttlCurrent := time.Duration(timeUntilNextBucket) * time.Second
 
     // Block in current bucket with remaining time
-    currentKey := FormatBlockKey(ip, currentBucket)
+    currentKey := formatBlockKey(ip, currentBucket)
     successCurrent := a.cache.SetWithTTL(currentKey, true, defaultBlockCost, ttlCurrent)
     slog.Info("IP blocked in current bucket",
         "ip", ip,
@@ -62,7 +67,7 @@ func (a *App) BlockIP(ip string) error {
     // Block in next bucket with full duration minus what's already passed
     ttlNext := blockingDuration - ttlCurrent
     if ttlNext > 0 {
-        nextKey := FormatBlockKey(ip, nextBucket)
+        nextKey := formatBlockKey(ip, nextBucket)
         successNext := a.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext)
         slog.Info("IP blocked in next bucket",
             "ip", ip,
