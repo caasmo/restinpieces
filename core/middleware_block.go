@@ -112,6 +112,12 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ip := getClientIP(r)
+			
+			// Debug log incoming request
+			slog.Debug("processing request", 
+				"ip", ip, 
+				"method", r.Method, 
+				"path", r.URL.Path)
 
 			// TODO: Check if IP is already in the blocklist before processing
 			// if bm.isBlocked(ip) {
@@ -127,9 +133,12 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 
 			// Increment total request count atomically within the sketch wrapper
 			currentTotal := concurrentSketch.totalReqs.Add(1)
+			slog.Debug("incremented request count", "total", currentTotal)
 
 			// Add IP to the concurrent sketch
-			concurrentSketch.Add(ip, 1)
+			if added := concurrentSketch.Add(ip, 1); added {
+				slog.Debug("added IP to sketch", "ip", ip, "count", 1)
+			}
 
 			// Check if it's time to tick and check top-k
 			if currentTotal >= concurrentSketch.tickSize {
@@ -139,6 +148,7 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 
 					// Perform sketch operations using the thread-safe wrapper
 					concurrentSketch.Tick() // Advance the sliding window
+					slog.Debug("performed sketch tick", "currentTotal", currentTotal)
 
 					// Get sorted IPs from the sketch
 					sortedIPs := concurrentSketch.SortedSlice()
@@ -160,8 +170,10 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 				}
 			}
 
+			slog.Debug("proceeding to next handler", "ip", ip)
 			// Proceed to the next handler in the chain
 			next.ServeHTTP(w, r)
+			slog.Debug("request processed", "ip", ip)
 		}
 		return http.HandlerFunc(fn)
 	}
