@@ -113,39 +113,42 @@ func (cs *ConcurrentSketch) Threshold() int {
 
 // processTick handles the sketch tick and IP blocking logic
 func (cs *ConcurrentSketch) processTick(a *App) {
+	tickReqs := cs.TickReqCount.Add(1)
+	_ = cs.Incr(ip)
 	// Perform sketch operations
-	cs.Tick() // Advance the sliding window
-	tickReqs := cs.TickReqCount.Load()
-	threshold := cs.Threshold()
+	if tickReqs >= cs.tickSize {
+		cs.Tick() // Advance the sliding window
+		tickReqs := cs.TickReqCount.Load()
+		threshold := cs.Threshold()
 
-	// Get top IPs from the sketch
-	sortedIPs := cs.TopK()
+		// Get top IPs from the sketch
+		sortedIPs := cs.TopK()
 
-	// Check IPs against the dynamic threshold
-	for _, item := range sortedIPs {
-		if item.Count > uint32(threshold) {
-			if err := a.BlockIP(item.Item); err != nil {
-				slog.Error("failed to block IP", "ip", item.Item, "error", err)
+		// Check IPs against the dynamic threshold
+		for _, item := range sortedIPs {
+			if item.Count > uint32(threshold) {
+				if err := a.BlockIP(item.Item); err != nil {
+					slog.Error("failed to block IP", "ip", item.Item, "error", err)
+				}
+			} else {
+				// Since the list is sorted, we can break early
+				break
 			}
-		} else {
-			// Since the list is sorted, we can break early
-			break
+		}
+
+		// Reset counter atomically
+		if cs.TickReqCount.CompareAndSwap(tickReqs, 0) {
+			// TODO
 		}
 	}
-
-	// Reset counter atomically
-	if cs.TickReqCount.CompareAndSwap(tickReqs, 0) {
-		// TODO
-	}
 }
-
 
 // --- IP Blocking Middleware Function ---
 
 // BlockMiddleware creates a middleware function that uses a ConcurrentSketch
 // to identify and potentially block IPs based on request frequency.
 func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
-    // TODO
+	// TODO
 	// Initialize the underlying sketch
 	sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
 	slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
@@ -160,31 +163,13 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 
 			// Check if IP is already blocked
 
-            // TODO not here
+			// TODO not here
 			if a.IsBlocked(ip) {
 				writeJsonError(w, errorIpBlocked)
 				return
 			}
 
-			// Debug log incoming request
-			slog.Debug("----",
-				"ip", ip,
-				"method", r.Method,
-				"path", r.URL.Path)
-
-			tickReqs := cs.TickReqCount.Add(1)
-			slog.Debug("Current Tick request", 
-				"tickNum", cs.tickCount.Load(),
-				"requestNum", tickReqs)
-
-			// Increment IP count in the sketch
-			_ = cs.Incr(ip)
-			slog.Debug("incremented IP in sketch", "ip", ip, "count", cs.Count(ip))
-
 			// Check if it's time to tick and check top-k
-			if tickReqs >= cs.tickSize {
-				cs.processTick(a)
-			}
 
 			// Proceed to the next handler in the chain
 			next.ServeHTTP(w, r)
