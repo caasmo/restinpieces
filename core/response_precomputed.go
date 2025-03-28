@@ -40,6 +40,7 @@ const (
 	CodeErrorOAuth2UserInfoProcessingFailed = "err_oauth2_user_info_processing_failed"
 	CodeErrorOAuth2DatabaseError            = "err_oauth2_database_error"
 	CodeErrorAuthDatabaseError              = "err_auth_database_error"
+	CodeErrorIpBlocked                      = "err_ip_blocked"
 )
 
 // ResponseBasicFormat is used  for short ok and error responses
@@ -78,6 +79,7 @@ func precomputeWithDataResponse(status int, code, message string, data interface
 var (
 	//errors
 	errorTokenGeneration                = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
+	errorIpBlocked                      = precomputeBasicResponse(http.StatusForbidden, "err_ip_blocked", "IP address has been blocked due to excessive requests")
 	errorClaimsNotFound                 = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorClaimsNotFound, "Failed to generate token: Claims not found")
 	errorInvalidRequest                 = precomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidRequest, "The request contains invalid data")
 	errorInvalidCredentials             = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidCredentials, "Invalid credentials provided")

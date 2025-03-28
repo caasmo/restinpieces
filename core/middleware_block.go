@@ -133,8 +133,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 
             // TODO not here
 			if a.IsBlocked(ip) {
-                // TODO
-				http.Error(w, "IP blocked", http.StatusForbidden)
+				writeJsonError(w, errorIpBlocked)
 				return
 			}
 
