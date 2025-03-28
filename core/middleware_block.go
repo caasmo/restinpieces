@@ -2,9 +2,7 @@ package core
 
 import (
 	"log/slog"
-	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"sync/atomic"
 
