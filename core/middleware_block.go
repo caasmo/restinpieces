@@ -139,7 +139,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 			}
 
 			// Debug log incoming request
-			slog.Debug("-------------------------------------------------------------------",
+			slog.Debug("----",
 				"ip", ip,
 				"method", r.Method,
 				"path", r.URL.Path)
