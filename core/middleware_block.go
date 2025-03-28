@@ -87,11 +87,8 @@ func NewBlockMiddlewareFunc(blockThreshold uint32, concurrentSketch *ConcurrentS
 		panic("concurrentSketch cannot be nil for middleware")
 	}
 
-	// The actual middleware function returned
-	return func(next http.Handler) http.Handler {
-
-		// The handler function that processes each request
-		fn := func(w http.ResponseWriter, r *http.Request) {
+	// Directly return the handler function
+	return func(w http.ResponseWriter, r *http.Request) {
 			// Extract client IP
 			ip, _, err := net.SplitHostPort(r.RemoteAddr)
 			if err != nil {
@@ -152,12 +149,8 @@ func NewBlockMiddlewareFunc(blockThreshold uint32, concurrentSketch *ConcurrentS
 				}
 			}
 
-			// Proceed to the next handler in the chain
-			next.ServeHTTP(w, r)
-		}
-
-		// Return the handler function wrapped in http.HandlerFunc
-		return http.HandlerFunc(fn)
+		// Proceed to the next handler in the chain
+		next.ServeHTTP(w, r)
 	}
 }
 
