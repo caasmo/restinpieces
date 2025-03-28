@@ -74,6 +74,11 @@ type Server struct {
 
 	// IdleTimeout is the maximum amount of time to wait for the next request
 	IdleTimeout time.Duration
+
+	// ClientIpProxyHeader specifies which HTTP header to trust for client IP addresses
+	// when behind a proxy (e.g. "X-Forwarded-For", "X-Real-IP"). Empty means use
+	// the direct connection IP (r.RemoteAddr).
+	ClientIpProxyHeader string
 }
 
 // BaseURL returns the full base URL including scheme and port

@@ -18,18 +18,23 @@ func ValidateEmail(email string) error {
 	return nil
 }
 
-// getClientIP extracts the client IP address from the request, handling proxies via X-Forwarded-For header
+// getClientIP extracts the client IP address from the request, handling proxies via configured header
 func getClientIP(r *http.Request) string {
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		// Handle error potentially, or use RemoteAddr directly if no port
 		ip = r.RemoteAddr
 	}
-	// Consider X-Forwarded-For header if behind a proxy
-	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-		// Use the first IP in the list
-		parts := strings.Split(forwarded, ",")
-		ip = strings.TrimSpace(parts[0])
+
+	// Get the app config from request context
+	if cfg, ok := r.Context().Value(configKey).(*config.Config); ok && cfg != nil {
+		if cfg.Server.ClientIpProxyHeader != "" {
+			if forwarded := r.Header.Get(cfg.Server.ClientIpProxyHeader); forwarded != "" {
+				// Use the first IP in the list if header contains multiple
+				parts := strings.Split(forwarded, ",")
+				ip = strings.TrimSpace(parts[0])
+			}
+		}
 	}
 	return ip
 }
