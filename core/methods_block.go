@@ -13,10 +13,6 @@ const (
     bucketDurationSec = 3600 // 1 hour buckets
 )
 
-const (
-    bucketDurationSec = 3600 // 1 hour buckets
-)
-
 // getTimeBucket returns the current bucket number (periods since Unix epoch)
 func getTimeBucket() int64 {
     return time.Now().Unix() / bucketDurationSec
