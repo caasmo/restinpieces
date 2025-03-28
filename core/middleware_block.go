@@ -20,7 +20,7 @@ type ConcurrentSketch struct {
 	mu            sync.Mutex
 	sketch        *sliding.Sketch
 	tickSize      uint64        // number of request per tick 
-	totalReqs     atomic.Uint64 // Counter for total requests processed since last tick
+	TickReqs      atomic.Uint64 // Counter for requests processed since last tick
 	tickCount     atomic.Uint64 // Counter for total ticks processed
 }
 
@@ -81,7 +81,7 @@ func (cs *ConcurrentSketch) processTick() {
 	threshold := cs.Threshold()
 	slog.Debug("TICK:", 
 		"number", tickNum, 
-		"currentTotal", cs.totalReqs.Load(),
+		"currentTotal", cs.TickReqs.Load(),
 		"sizeBytes", cs.SizeBytes(),
 		"threshold", threshold)
 
