@@ -25,8 +25,6 @@ func formatBlockKey(ip string, bucket int64) string {
     return fmt.Sprintf("%s|%d", ip, bucket)
 }
 
-// TimeBucket is the current time bucket number for blocked IP grouping
-var TimeBucket = getTimeBucket()
 
 // IsBlocked checks if an IP is currently blocked in any relevant time bucket
 func (a *App) IsBlocked(ip string) bool {
