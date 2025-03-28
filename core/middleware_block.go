@@ -13,15 +13,17 @@ import (
 
 // ConcurrentSketch provides thread-safe access to a sketch instance and manages ticking.
 type ConcurrentSketch struct {
-	mu        sync.Mutex
-	sketch    *sketch.Sketch
-	tickSize  uint64        // Number of requests before processing the sketch
-	totalReqs atomic.Uint64 // Counter for total requests processed since last tick
+	mu            sync.Mutex
+	sketch        *sketch.Sketch
+	tickSize      uint64        // Number of requests before processing the sketch
+	blockThreshold uint32       // Threshold above which IPs are flagged for blocking
+	totalReqs     atomic.Uint64 // Counter for total requests processed since last tick
 }
 
 // NewConcurrentSketch creates a new thread-safe sketch wrapper.
 // tickSize: How many requests trigger a sketch tick and top-k check.
-func NewConcurrentSketch(instance *sketch.Sketch, tickSize uint64) *ConcurrentSketch {
+// blockThreshold: The count above which an IP is flagged for blocking.
+func NewConcurrentSketch(instance *sketch.Sketch, tickSize uint64, blockThreshold uint32) *ConcurrentSketch {
 	if instance == nil {
 		// Handle nil sketch instance appropriately, maybe return error or panic
 		panic("sketch instance cannot be nil for ConcurrentSketch")
@@ -30,8 +32,9 @@ func NewConcurrentSketch(instance *sketch.Sketch, tickSize uint64) *ConcurrentSk
 		tickSize = 1000 // Default tick size if not specified
 	}
 	cs := &ConcurrentSketch{
-		sketch:   instance,
-		tickSize: tickSize,
+		sketch:        instance,
+		tickSize:      tickSize,
+		blockThreshold: blockThreshold,
 	}
 	// cs.totalReqs is initialized to 0 by default via atomic.Uint64
 	return cs
@@ -71,9 +74,8 @@ func (cs *ConcurrentSketch) Top() []sliding.ItemCount {
 
 // NewBlockMiddlewareFunc creates a middleware function that uses a ConcurrentSketch
 // to identify and potentially block IPs based on request frequency.
-// blockThreshold: The count above which an IP is flagged for blocking.
 // concurrentSketch: A pre-initialized ConcurrentSketch instance.
-func NewBlockMiddlewareFunc(blockThreshold uint32, concurrentSketch *ConcurrentSketch) func(http.Handler) http.Handler {
+func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handler) http.Handler {
 	if concurrentSketch == nil {
 		panic("concurrentSketch cannot be nil for middleware")
 	}
@@ -114,9 +116,9 @@ func NewBlockMiddlewareFunc(blockThreshold uint32, concurrentSketch *ConcurrentS
 
 					// Check top K IPs against the threshold
 					for _, item := range topK {
-						if item.Count > blockThreshold {
+						if item.Count > concurrentSketch.blockThreshold {
 							// Log that this IP should be blocked
-							slog.Warn("IP exceeded threshold, should be blocked", "ip", item.Item, "count", item.Count, "threshold", blockThreshold)
+							slog.Warn("IP exceeded threshold, should be blocked", "ip", item.Item, "count", item.Count, "threshold", concurrentSketch.blockThreshold)
 							// TODO: Add IP to the actual blocklist here
 							// concurrentSketch.blockIP(item.Item) // Assuming blocklist is managed within ConcurrentSketch or elsewhere
 						} else {
