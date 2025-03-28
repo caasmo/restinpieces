@@ -1,213 +1,236 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Register with Email</title>
     <style>
-        body {
-            font-family: sans-serif;
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        button {
-            width: 100%;
-            padding: 10px 20px;
-            background-color: #2196f3;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #1976d2;
-        }
-        .message {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 4px;
-        }
-        .error {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-        .success {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-        
-        .user-info {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 4px;
-        }
-        
-        .user-info pre {
-            background: white;
-            padding: 10px;
-            border-radius: 4px;
-            max-height: 300px;
-            overflow: auto;
-        }
-        
-        .button-container {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        
-        .button-container button {
-            flex: 1;
-            padding: 10px 20px;
-            border-radius: 4px;
-            font-size: 16px;
-            background-color: #2196f3;
-            color: white;
-        }
-        
-        .button-container button:hover {
-            background-color: #1976d2;
-        }
+      body {
+        font-family: sans-serif;
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+      }
+      button {
+        width: 100%;
+        padding: 10px 20px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #1976d2;
+      }
+      .message {
+        margin-top: 20px;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .error {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+      .success {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+
+      .user-info {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 4px;
+      }
+
+      .user-info pre {
+        background: white;
+        padding: 10px;
+        border-radius: 4px;
+        max-height: 300px;
+        overflow: auto;
+      }
+
+      .button-container {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+      }
+
+      .button-container button {
+        flex: 1;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        background-color: #2196f3;
+        color: white;
+      }
+
+      .button-container button:hover {
+        background-color: #1976d2;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Register</h1>
     <p>Already have an account? <a href="login.html">Login here</a></p>
-    
+
     <form id="registerForm">
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-        </div>
-        
-        <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required minlength="8">
-        </div>
-        
-        <div class="form-group">
-            <label for="confirmPassword">Confirm Password:</label>
-            <input type="password" id="confirmPassword" name="confirmPassword" required minlength="8">
-        </div>
-        
-        <button type="submit">Register</button>
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required />
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+          minlength="8"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password:</label>
+        <input
+          type="password"
+          id="confirmPassword"
+          name="confirmPassword"
+          required
+          minlength="8"
+        />
+      </div>
+
+      <button type="submit">Register</button>
     </form>
 
     <div id="message" class="message"></div>
 
     <script type="module">
-        import Restinpieces from '/assets/js/restinpieces.js';
+      import Restinpieces from "/assets/js/restinpieces.js";
 
-        class RegisterForm {
-            constructor() {
-                this.rp = new Restinpieces({
-                    baseURL: "http://localhost:8080"
-                });
-                this.form = document.getElementById('registerForm');
-                this.messageDiv = document.getElementById('message');
-                this.form.addEventListener('submit', this.handleSubmit.bind(this));
-            }
+      class RegisterForm {
+        constructor() {
+          this.rp = new Restinpieces({
+            baseURL: "http://localhost:8080",
+          });
+          this.form = document.getElementById("registerForm");
+          this.messageDiv = document.getElementById("message");
+          this.form.addEventListener("submit", this.handleSubmit.bind(this));
+        }
 
-            validateForm(email, password, confirmPassword) {
-                if (password !== confirmPassword) {
-                    throw new Error('Passwords do not match');
-                }
-                if (password.length < 8) {
-                    throw new Error('Password must be at least 8 characters');
-                }
-                return { email, password, confirmPassword };
-            }
+        validateForm(email, password, confirmPassword) {
+          if (password !== confirmPassword) {
+            throw new Error("Passwords do not match");
+          }
+          if (password.length < 8) {
+            throw new Error("Password must be at least 8 characters");
+          }
+          return { email, password, confirmPassword };
+        }
 
-            showMessage(text, isError = false) {
-                this.messageDiv.textContent = text;
-                this.messageDiv.className = isError ? 'message error' : 'message success';
-            }
+        showMessage(text, isError = false) {
+          this.messageDiv.textContent = text;
+          this.messageDiv.className = isError
+            ? "message error"
+            : "message success";
+        }
 
-            createSuccessUI(userRecord) {
-                const userInfo = document.createElement('div');
-                userInfo.className = 'user-info';
-                userInfo.innerHTML = `
+        createSuccessUI(userRecord) {
+          const userInfo = document.createElement("div");
+          userInfo.className = "user-info";
+          userInfo.innerHTML = `
                     <h3>Registration Successful!</h3>
                     <pre>${JSON.stringify(userRecord, null, 2)}</pre>
                 `;
 
-                const buttonContainer = document.createElement('div');
-                buttonContainer.className = 'button-container';
+          const buttonContainer = document.createElement("div");
+          buttonContainer.className = "button-container";
 
-                if (!userRecord.verified) {
-                    const verifyButton = document.createElement('button');
-                    verifyButton.textContent = 'Verify Email';
-                    verifyButton.onclick = () => window.location.href = '/verify-email';
-                    buttonContainer.appendChild(verifyButton);
-                }
+          if (!userRecord.verified) {
+            const verifyButton = document.createElement("button");
+            verifyButton.textContent = "Verify Email";
+            verifyButton.onclick = () =>
+              (window.location.href = "/verify-email");
+            buttonContainer.appendChild(verifyButton);
+          }
 
-                const dashboardButton = document.createElement('button');
-                dashboardButton.textContent = 'Go to Dashboard';
-                dashboardButton.onclick = () => window.location.href = 'dashboard.html';
-                buttonContainer.appendChild(dashboardButton);
+          const dashboardButton = document.createElement("button");
+          dashboardButton.textContent = "Go to Dashboard";
+          dashboardButton.onclick = () =>
+            (window.location.href = "dashboard.html");
+          buttonContainer.appendChild(dashboardButton);
 
-                this.form.remove();
-                this.messageDiv.textContent = '';
-                this.messageDiv.appendChild(userInfo);
-                this.messageDiv.appendChild(buttonContainer);
-            }
-
-            handleSubmit(e) {
-                e.preventDefault();
-                
-                const email = document.getElementById('email').value;
-                const password = document.getElementById('password').value;
-                const confirmPassword = document.getElementById('confirmPassword').value;
-                
-                this.messageDiv.textContent = '';
-                this.messageDiv.classList.remove('error', 'success');
-
-                try {
-                    const { email: validatedEmail, password: validatedPassword } = 
-                        this.validateForm(email, password, confirmPassword);
-
-                    this.showMessage('Registering...');
-
-                    this.rp.registerWithPassword({
-                        identity: validatedEmail,
-                        password: validatedPassword,
-                        password_confirm: confirmPassword
-                    })
-                    .then(response => {
-                        if (response.data?.access_token && response.data?.record) {
-                            this.rp.store.auth.save(response.data);
-                            this.showMessage('Registration successful!');
-                            this.createSuccessUI(response.data.record);
-                        } else {
-                            throw new Error('Invalid registration response');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Registration failed:', error);
-                        this.showMessage(error.response ? JSON.stringify(error.response, null, 2) : error.message, true);
-                    });
-                } catch (error) {
-                    console.error('Validation failed:', error);
-                    this.showMessage(error.message, true);
-                }
-            }
+          this.form.remove();
+          this.messageDiv.textContent = "";
+          this.messageDiv.appendChild(userInfo);
+          this.messageDiv.appendChild(buttonContainer);
         }
 
-        document.addEventListener('DOMContentLoaded', () => new RegisterForm());
+        handleSubmit(e) {
+          e.preventDefault();
+
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+          const confirmPassword =
+            document.getElementById("confirmPassword").value;
+
+          this.messageDiv.textContent = "";
+          this.messageDiv.classList.remove("error", "success");
+
+          try {
+            const { email: validatedEmail, password: validatedPassword } =
+              this.validateForm(email, password, confirmPassword);
+
+            this.showMessage("Registering...");
+
+            this.rp
+              .registerWithPassword({
+                identity: validatedEmail,
+                password: validatedPassword,
+                password_confirm: confirmPassword,
+              })
+              .then((response) => {
+                if (response.data?.access_token && response.data?.record) {
+                  this.rp.store.auth.save(response.data);
+                  this.showMessage("Registration successful!");
+                  this.createSuccessUI(response.data.record);
+                } else {
+                  throw new Error("Invalid registration response");
+                }
+              })
+              .catch((error) => {
+                console.error("Registration failed:", error);
+                this.showMessage(
+                  error.response
+                    ? JSON.stringify(error.response, null, 2)
+                    : error.message,
+                  true,
+                );
+              });
+          } catch (error) {
+            console.error("Validation failed:", error);
+            this.showMessage(error.message, true);
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => new RegisterForm());
     </script>
-</body>
+  </body>
 </html>

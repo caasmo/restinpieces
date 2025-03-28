@@ -1,184 +1,216 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>API Endpoints</title>
     <style>
-        body {
-            font-family: sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #2196f3;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            opacity: 0.9;
-        }
-        .error {
-            color: #c62828;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 20px;
-            display: none;
-        }
-        .error:not(:empty) {
-            display: block;
-            background-color: #ffebee;
-        }
-        .endpoint-list {
-            list-style: none;
-            padding: 0;
-        }
-        .endpoint-item {
-            margin-bottom: 8px;
-            padding: 8px 12px;
-            background: #f8f9fa;
-            border-radius: 4px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .method {
-            display: inline-block;
-            width: 60px;
-            font-weight: bold;
-        }
-        .get { color: #61affe; }
-        .post { color: #49cc90; }
-        .put { color: #fca130; }
-        .delete { color: #f93e3e; }
-        .patch { color: #50e3c2; }
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        opacity: 0.9;
+      }
+      .error {
+        color: #c62828;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 20px;
+        display: none;
+      }
+      .error:not(:empty) {
+        display: block;
+        background-color: #ffebee;
+      }
+      .endpoint-list {
+        list-style: none;
+        padding: 0;
+      }
+      .endpoint-item {
+        margin-bottom: 8px;
+        padding: 8px 12px;
+        background: #f8f9fa;
+        border-radius: 4px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .method {
+        display: inline-block;
+        width: 60px;
+        font-weight: bold;
+      }
+      .get {
+        color: #61affe;
+      }
+      .post {
+        color: #49cc90;
+      }
+      .put {
+        color: #fca130;
+      }
+      .delete {
+        color: #f93e3e;
+      }
+      .patch {
+        color: #50e3c2;
+      }
     </style>
-</head>
-<body>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h1>API Endpoints</h1>
-        <div style="display: flex; gap: 15px;">
-            <a href="/login.html" style="text-decoration: none; color: #2196f3;">Login</a>
-            <a href="/dashboard.html" style="text-decoration: none; color: #2196f3;">Dashboard</a>
-            <a href="/logout.html" style="text-decoration: none; color: #f44336;">Logout</a>
-        </div>
+  </head>
+  <body>
+    <div
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      "
+    >
+      <h1>API Endpoints</h1>
+      <div style="display: flex; gap: 15px">
+        <a href="/login.html" style="text-decoration: none; color: #2196f3"
+          >Login</a
+        >
+        <a href="/dashboard.html" style="text-decoration: none; color: #2196f3"
+          >Dashboard</a
+        >
+        <a href="/logout.html" style="text-decoration: none; color: #f44336"
+          >Logout</a
+        >
+      </div>
     </div>
 
-    <div id="auth-status" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-        <span id="auth-text">Checking auth status...</span>
+    <div
+      id="auth-status"
+      style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px"
+    >
+      <span id="auth-text">Checking auth status...</span>
     </div>
 
-    <button id="get-endpoints-btn" style="margin-bottom: 20px;">Refresh Endpoints</button>
+    <button id="get-endpoints-btn" style="margin-bottom: 20px">
+      Refresh Endpoints
+    </button>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div id="saved-endpoints-container">
-            <h3>Saved Endpoints</h3>
-            <ul id="saved-endpoints-list" class="endpoint-list"></ul>
-        </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+      <div id="saved-endpoints-container">
+        <h3>Saved Endpoints</h3>
+        <ul id="saved-endpoints-list" class="endpoint-list"></ul>
+      </div>
 
-        <div id="fetched-endpoints-container" style="display: none;">
-            <h3>Fetched Endpoints</h3>
-            <ul id="fetched-endpoints-list" class="endpoint-list"></ul>
-        </div>
+      <div id="fetched-endpoints-container" style="display: none">
+        <h3>Fetched Endpoints</h3>
+        <ul id="fetched-endpoints-list" class="endpoint-list"></ul>
+      </div>
     </div>
     <div id="error" class="error"></div>
 
     <script type="module">
-        import Restinpieces from './assets/js/restinpieces.js';
-        
-        const rp = new Restinpieces({
-            baseURL: "http://localhost:8080"
-        });
+      import Restinpieces from "./assets/js/restinpieces.js";
 
-        function renderEndpoints(endpoints, listElement, containerElement) {
-            listElement.innerHTML = '';
-            
-            if (endpoints) {
-                let html = '';
-                for (const [key, value] of Object.entries(endpoints)) {
-                    const method = value.split(' ')[0].toLowerCase();
-                    const path = value.replace(/^GET|POST|PUT|DELETE|PATCH /, '').trim();
-                    html += `
+      const rp = new Restinpieces({
+        baseURL: "http://localhost:8080",
+      });
+
+      function renderEndpoints(endpoints, listElement, containerElement) {
+        listElement.innerHTML = "";
+
+        if (endpoints) {
+          let html = "";
+          for (const [key, value] of Object.entries(endpoints)) {
+            const method = value.split(" ")[0].toLowerCase();
+            const path = value
+              .replace(/^GET|POST|PUT|DELETE|PATCH /, "")
+              .trim();
+            html += `
                         <li class="endpoint-item">
                             <span class="method ${method}">${method.toUpperCase()}</span>
                             <span>${path}</span>
                         </li>`;
-                }
-                listElement.innerHTML = html;
-                containerElement.style.display = 'block';
-            } else {
-                containerElement.style.display = 'none';
-            }
+          }
+          listElement.innerHTML = html;
+          containerElement.style.display = "block";
+        } else {
+          containerElement.style.display = "none";
         }
+      }
 
-        function showSavedEndpoints() {
-            const endpoints = rp.store.endpoints.load();
-            renderEndpoints(
-                endpoints,
-                document.getElementById('saved-endpoints-list'),
-                document.getElementById('saved-endpoints-container')
-            );
-        }
+      function showSavedEndpoints() {
+        const endpoints = rp.store.endpoints.load();
+        renderEndpoints(
+          endpoints,
+          document.getElementById("saved-endpoints-list"),
+          document.getElementById("saved-endpoints-container"),
+        );
+      }
 
-        function showFetchedEndpoints(endpoints) {
-            renderEndpoints(
-                endpoints,
-                document.getElementById('fetched-endpoints-list'),
-                document.getElementById('fetched-endpoints-container')
-            );
-        }
+      function showFetchedEndpoints(endpoints) {
+        renderEndpoints(
+          endpoints,
+          document.getElementById("fetched-endpoints-list"),
+          document.getElementById("fetched-endpoints-container"),
+        );
+      }
 
-        function getEndpoints() {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = 'Loading...';
+      function getEndpoints() {
+        const errorDiv = document.getElementById("error");
+        errorDiv.textContent = "Loading...";
 
-            // Show loading state
-            rp.store.endpoints.save(null);
-            showSavedEndpoints();
-
-            rp.fetchEndpoints()
-                .then(endpoints => {
-                    errorDiv.textContent = '';
-                    
-                    if (!endpoints) {
-                        errorDiv.textContent = 'No endpoints data received';
-                        return;
-                    }
-
-                    // Show the fresh endpoints on the right
-                    showFetchedEndpoints(endpoints);
-                    
-                    // Also update saved endpoints
-                    rp.store.endpoints.save(endpoints);
-                    showSavedEndpoints();
-                })
-                .catch(error => {
-                    errorDiv.textContent = `Error: ${error.message}`;
-                    console.error(error);
-                });
-        }
-
-        function checkAuthStatus() {
-            const authText = document.getElementById('auth-text');
-            
-            if (rp.store.auth.isValid()) {
-                authText.textContent = "✅ Authenticated";
-                showSavedEndpoints();
-            } else {
-                authText.textContent = "❌ Not authenticated";
-            }
-        }
-
-        // Initial load
-        checkAuthStatus();
+        // Show loading state
+        rp.store.endpoints.save(null);
         showSavedEndpoints();
-        
-        // Event listener
-        document.getElementById('get-endpoints-btn').addEventListener('click', getEndpoints);
+
+        rp.fetchEndpoints()
+          .then((endpoints) => {
+            errorDiv.textContent = "";
+
+            if (!endpoints) {
+              errorDiv.textContent = "No endpoints data received";
+              return;
+            }
+
+            // Show the fresh endpoints on the right
+            showFetchedEndpoints(endpoints);
+
+            // Also update saved endpoints
+            rp.store.endpoints.save(endpoints);
+            showSavedEndpoints();
+          })
+          .catch((error) => {
+            errorDiv.textContent = `Error: ${error.message}`;
+            console.error(error);
+          });
+      }
+
+      function checkAuthStatus() {
+        const authText = document.getElementById("auth-text");
+
+        if (rp.store.auth.isValid()) {
+          authText.textContent = "✅ Authenticated";
+          showSavedEndpoints();
+        } else {
+          authText.textContent = "❌ Not authenticated";
+        }
+      }
+
+      // Initial load
+      checkAuthStatus();
+      showSavedEndpoints();
+
+      // Event listener
+      document
+        .getElementById("get-endpoints-btn")
+        .addEventListener("click", getEndpoints);
     </script>
-</body>
+  </body>
 </html>
