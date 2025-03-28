@@ -133,15 +133,15 @@ func (cs *ConcurrentSketch) SortedSlice() []struct {
 // NewBlockMiddlewareFunc creates a middleware function that uses a ConcurrentSketch
 // to identify and potentially block IPs based on request frequency.
 // concurrentSketch: A pre-initialized ConcurrentSketch instance.
-func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handler) http.Handler {
-	if concurrentSketch == nil {
+func NewBlockMiddlewareFunc(cs *ConcurrentSketch) func(http.Handler) http.Handler {
+	if cs == nil {
 		// Initialize the underlying sketch
 		//sketch := sliding.New(3, 60, sliding.WithWidth(1024), sliding.WithDepth(3))
 		sketch := sliding.New(3, 2, sliding.WithWidth(1024), sliding.WithDepth(3))
 		slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
 		
 		// Create a new ConcurrentSketch with default tick size and block threshold
-		//concurrentSketch = NewConcurrentSketch(sketch, 1000, 100) // Default values for tickSize and blockThreshold
+		//cs = NewConcurrentSketch(sketch, 1000, 100) // Default values for tickSize and blockThreshold
 		cs = NewConcurrentSketch(sketch, 5, 5) // Default values for tickSize and blockThreshold
 	}
 
@@ -169,19 +169,19 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 			// }
 
 			// Increment total request count atomically within the sketch wrapper
-			currentTotal := concurrentSketch.totalReqs.Add(1)
+			currentTotal := cs.totalReqs.Add(1)
 			slog.Debug("incremented request count", "total", currentTotal)
 
 			// Increment IP count in the sketch
-			_ = concurrentSketch.Incr(ip)
-			slog.Debug("incremented IP in sketch", "ip", ip, "count", concurrentSketch.Count(ip))
+			_ = cs.Incr(ip)
+			slog.Debug("incremented IP in sketch", "ip", ip, "count", cs.Count(ip))
 
 			// Check if it's time to tick and check top-k
-			if currentTotal >= concurrentSketch.tickSize {
+			if currentTotal >= cs.tickSize {
 				// Reset counter atomically - only one goroutine should perform the tick logic.
 				// Using CompareAndSwap to ensure only the goroutine that reaches the threshold performs the tick.
-				concurrentSketch.processTick()
-				if concurrentSketch.totalReqs.CompareAndSwap(currentTotal, 0) {
+				cs.processTick()
+				if cs.totalReqs.CompareAndSwap(currentTotal, 0) {
                     // TODO
 
 				}
