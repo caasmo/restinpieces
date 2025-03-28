@@ -156,18 +156,6 @@ func NewBlockMiddlewareFunc(cs *ConcurrentSketch) func(http.Handler) http.Handle
 				"method", r.Method, 
 				"path", r.URL.Path)
 
-			// TODO: Check if IP is already in the blocklist before processing
-			// if bm.isBlocked(ip) {
-			// 	http.Error(w, "Forbidden", http.StatusForbidden)
-			// 	return
-			// }
-
-			// TODO: Check if IP is already in the blocklist before processing
-			// if concurrentSketch.isBlocked(ip) { // Assuming blocklist is managed within ConcurrentSketch or elsewhere
-			// 	http.Error(w, "Forbidden", http.StatusForbidden)
-			// 	return
-			// }
-
 			// Increment total request count atomically within the sketch wrapper
 			currentTotal := cs.totalReqs.Add(1)
 			slog.Debug("incremented request count", "total", currentTotal)
