@@ -90,10 +90,12 @@ func (cs *ConcurrentSketch) processTick() {
 	// Perform sketch operations using the thread-safe wrapper
 	cs.Tick() // Advance the sliding window
 	tickNum := cs.tickCount.Load()
+	threshold := cs.Threshold()
 	slog.Debug("TICK:", 
 		"number", tickNum, 
 		"currentTotal", cs.totalReqs.Load(),
-		"sizeBytes", cs.SizeBytes())
+		"sizeBytes", cs.SizeBytes(),
+		"threshold", threshold)
 
 	// Get sorted IPs from the sketch
 	sortedIPs := cs.SortedSlice()
