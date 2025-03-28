@@ -156,7 +156,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 	// Return the middleware function
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			ip := core.GetClientIP(r, a.Config.Server.ClientIpProxyHeader)
+			ip := a.GetClientIP(r)
 			
 			// Debug log incoming request
 			slog.Debug("-------------------------------------------------------------------", 

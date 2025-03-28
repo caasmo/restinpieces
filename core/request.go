@@ -19,15 +19,15 @@ func ValidateEmail(email string) error {
 }
 
 // GetClientIP extracts the client IP address from the request, handling proxies via configured header
-func GetClientIP(r *http.Request, proxyHeader string) string {
+func (a *App) GetClientIP(r *http.Request) string {
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		// Handle error potentially, or use RemoteAddr directly if no port
 		ip = r.RemoteAddr
 	}
 
-	if proxyHeader != "" {
-		if forwarded := r.Header.Get(proxyHeader); forwarded != "" {
+	if a.Config != nil && a.Config.Server.ClientIpProxyHeader != "" {
+		if forwarded := r.Header.Get(a.Config.Server.ClientIpProxyHeader); forwarded != "" {
 			// Use the first IP in the list if header contains multiple
 			parts := strings.Split(forwarded, ",")
 			ip = strings.TrimSpace(parts[0])
