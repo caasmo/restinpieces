@@ -169,7 +169,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			// Check if it's time to tick and check top-k
+			cs.processTick(a)
 
 			// Proceed to the next handler in the chain
 			next.ServeHTTP(w, r)
