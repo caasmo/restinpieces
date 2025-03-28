@@ -34,13 +34,23 @@ func (a *App) BlockIP(ip string) error {
 
 	// Block in current bucket with remaining time
 	currentKey := fmt.Sprintf("%s|%d", ip, currentBucket)
-	a.cache.SetWithTTL(currentKey, true, defaultBlockCost, ttlCurrent)
+	successCurrent := a.cache.SetWithTTL(currentKey, true, defaultBlockCost, ttlCurrent)
+	slog.Info("IP blocked in current bucket",
+		"ip", ip,
+		"bucket", currentBucket,
+		"ttl", ttlCurrent,
+		"success", successCurrent)
 
 	// Block in next bucket with full duration minus what's already passed
 	ttlNext := blockingDuration - ttlCurrent
 	if ttlNext > 0 {
 		nextKey := fmt.Sprintf("%s|%d", ip, nextBucket)
-		a.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext)
+		successNext := a.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext)
+		slog.Info("IP blocked in next bucket",
+			"ip", ip,
+			"bucket", nextBucket,
+			"ttl", ttlNext,
+			"success", successNext)
 	}
 
 	return nil
