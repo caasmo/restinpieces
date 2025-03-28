@@ -1,7 +1,5 @@
 package cache
 
-package cache
-
 import "time"
 
 // Cache defines a generic interface compatible with Ristretto and other caches
