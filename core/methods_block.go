@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -27,9 +28,6 @@ func (a *App) BlockIP(ip string) error {
 	key := fmt.Sprintf("%s|%d", ip, TimeBucket)
 	
 	// Store in cache with TTL and default cost
-	success := a.cache.SetWithTTL(key, true, defaultBlockCost, blockingDuration)
-	if !success {
-		return ErrCacheOperationFailed
-	}
+	a.cache.SetWithTTL(key, true, defaultBlockCost, blockingDuration)
 	return nil
 }
