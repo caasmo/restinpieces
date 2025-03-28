@@ -113,6 +113,9 @@ func (cs *ConcurrentSketch) Threshold() int {
 
 // processTick handles the sketch tick and IP blocking logic
 func (cs *ConcurrentSketch) processTick(a *App, ip string) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	
 	tickReqs := cs.TickReqCount.Add(1)
 	_ = cs.Incr(ip)
 	// Perform sketch operations
