@@ -65,17 +65,17 @@ func (cs *ConcurrentSketch) TopK() []struct {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
-	// Get the top items from the sketch
-	itemCounts := cs.sketch.TopK()
-	slog.Debug("Top IPs dump", "ips", itemCounts)
+	// Get the sorted slice from the sketch
+	items := cs.sketch.SortedSlice()
+	slog.Debug("Yop IPs dump", "ips", items)
 
 	// Convert to anonymous struct slice
 	results := make([]struct {
 		Item  string
 		Count uint32
-	}, len(itemCounts))
+	}, len(items))
 
-	for i, ic := range itemCounts {
+	for i, ic := range items {
 		results[i] = struct {
 			Item  string
 			Count uint32
