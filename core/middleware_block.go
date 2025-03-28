@@ -77,8 +77,6 @@ func (cs *ConcurrentSketch) SizeBytes() uint64 {
 
 // Threshold returns 10% of the window capacity (WindowSize * tickSize)
 func (cs *ConcurrentSketch) Threshold() int {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
 	windowCapacity := cs.sketch.WindowSize * cs.tickSize
 	return int((windowCapacity * 10) / 100) // 10% of capacity
 }
