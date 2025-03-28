@@ -11,7 +11,7 @@ import (
 
 // ConcurrentSketch provides thread-safe access to a sketch instance and manages ticking.
 const (
-	thresholdPercent = 10 // 10% of window capacity
+	thresholdPercent = 90 // 10% of window capacity
 )
 
 type ConcurrentSketch struct {
