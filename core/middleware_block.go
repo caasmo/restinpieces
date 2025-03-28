@@ -96,7 +96,6 @@ func (cs *ConcurrentSketch) processTick() {
 	sortedIPs := cs.SortedSlice()
 
 	// Check IPs against the dynamic threshold
-	threshold := cs.Threshold()
 	for _, item := range sortedIPs {
 		if item.Count > uint32(threshold) {
 			slog.Warn("IP exceeded threshold, should be blocked", 
