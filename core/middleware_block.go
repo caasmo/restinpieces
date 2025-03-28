@@ -144,15 +144,15 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 				"method", r.Method,
 				"path", r.URL.Path)
 
-			currentTotal := cs.TickReqCount.Add(1)
-			slog.Debug("incremented request count", "total", currentTotal)
+			tickReqs := cs.TickReqCount.Add(1)
+			slog.Debug("incremented request count", "total", tickReqs)
 
 			// Increment IP count in the sketch
 			_ = cs.Incr(ip)
 			slog.Debug("incremented IP in sketch", "ip", ip, "count", cs.Count(ip))
 
 			// Check if it's time to tick and check top-k
-			if currentTotal >= cs.tickSize {
+			if tickReqs >= cs.tickSize {
 				// Perform sketch operations
 				cs.Tick() // Advance the sliding window
 				tickNum := cs.tickCount.Load()
@@ -183,7 +183,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 				}
 
 				// Reset counter atomically
-				if cs.TickReqCount.CompareAndSwap(currentTotal, 0) {
+				if cs.TickReqCount.CompareAndSwap(tickReqs, 0) {
 					// TODO
 				}
 			}
