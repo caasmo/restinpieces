@@ -39,7 +39,7 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		r.NewRoute("GET /blocktest").WithHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte("Block test endpoint reached"))
-		}),
+		}).WithMiddlewareChain(commonNewMiddleware),
 	)
 
 	//ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
