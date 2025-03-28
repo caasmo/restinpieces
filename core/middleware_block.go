@@ -15,11 +15,11 @@ const (
 )
 
 type ConcurrentSketch struct {
-	mu           sync.Mutex
-	sketch       *sliding.Sketch
-	tickSize     uint64        // number of request per tick
-	TickReqCount atomic.Uint64 // Counter for requests processed since last tick
-	tickCount    atomic.Uint64 // Counter for total ticks processed
+	mu        sync.Mutex
+	sketch    *sliding.Sketch
+	tickSize  uint64 // number of request per tick
+	tickReq   uint64 // Counter for requests processed since last tick
+	tickCount uint64 // Counter for total ticks processed
 }
 
 // NewConcurrentSketch creates a new thread-safe sketch wrapper.
@@ -39,17 +39,16 @@ func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentS
 
 // processTick handles the sketch tick and IP blocking logic
 func (cs *ConcurrentSketch) processTick(a *App, ip string) {
-	tickReqs := cs.TickReqCount.Add(1)
-	
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 	
 	cs.sketch.Incr(ip)
+	cs.tickReq++
 	
-	if tickReqs >= cs.tickSize {
+	if cs.tickReq >= cs.tickSize {
 		cs.sketch.Tick()
-		cs.tickCount.Add(1)
-		cs.TickReqCount.Store(0)
+		cs.tickCount++
+		cs.tickReq = 0
 		
 		// Calculate threshold for this window
 		windowCapacity := uint64(cs.sketch.WindowSize) * cs.tickSize
