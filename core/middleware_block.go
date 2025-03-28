@@ -116,6 +116,7 @@ func (cs *ConcurrentSketch) Threshold() int {
 // BlockMiddleware creates a middleware function that uses a ConcurrentSketch
 // to identify and potentially block IPs based on request frequency.
 func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
+    // TODO
 	// Initialize the underlying sketch
 	sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
 	slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
