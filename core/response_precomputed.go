@@ -79,7 +79,7 @@ func precomputeWithDataResponse(status int, code, message string, data interface
 var (
 	//errors
 	errorTokenGeneration                = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
-	errorIpBlocked                      = precomputeBasicResponse(http.StatusTooManyRequests, CodeErrorIpBlocked, "IP address has been blocked due to excessive requests")
+	errorIpBlocked                      = precomputeBasicResponse(http.StatusTooManyRequests, CodeErrorIpBlocked, "IP address has been blocked due to excessive requests. Please try again later")
 	errorClaimsNotFound                 = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorClaimsNotFound, "Failed to generate token: Claims not found")
 	errorInvalidRequest                 = precomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidRequest, "The request contains invalid data")
 	errorInvalidCredentials             = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidCredentials, "Invalid credentials provided")
