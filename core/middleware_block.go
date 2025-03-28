@@ -174,7 +174,7 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 
 			// Add IP to the concurrent sketch
 			_ := concurrentSketch.Add(ip, 1)
-			slog.Debug("added IP to sketch", "ip", ip, "count", concurrentSketch.Count(ip)))
+			slog.Debug("added IP to sketch", "ip", ip, "count", concurrentSketch.Count(ip))
 
 			// Check if it's time to tick and check top-k
 			if currentTotal >= concurrentSketch.tickSize {
