@@ -132,7 +132,10 @@ func (cs *ConcurrentSketch) processTick() {
 				"ip", item.Item,
 				"count", item.Count,
 				"threshold", threshold)
-			// TODO: Add IP to the actual blocklist here
+			// Block the IP using the app's blocking system
+			if err := a.BlockIP(item.Item); err != nil {
+				slog.Error("failed to block IP", "ip", item.Item, "error", err)
+			}
 		} else {
 			// Since the list is sorted, we can break early
 			break
@@ -156,6 +159,12 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ip := a.GetClientIP(r)
+
+			// Check if IP is already blocked
+			if a.IsBlocked(ip) {
+				http.Error(w, "IP blocked", http.StatusForbidden)
+				return
+			}
 
 			// Debug log incoming request
 			slog.Debug("-------------------------------------------------------------------",
