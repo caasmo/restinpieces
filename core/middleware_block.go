@@ -142,23 +142,6 @@ func (cs *ConcurrentSketch) SortedSlice() []struct {
 
 // --- IP Blocking Middleware Function ---
 
-// getClientIP extracts the client IP address from the request, handling proxies via configured header
-func (a *App) getClientIP(r *http.Request) string {
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		// Handle error potentially, or use RemoteAddr directly if no port
-		ip = r.RemoteAddr
-	}
-
-	if a.Config != nil && a.Config.Server.ClientIpProxyHeader != "" {
-		if forwarded := r.Header.Get(a.Config.Server.ClientIpProxyHeader); forwarded != "" {
-			// Use the first IP in the list if header contains multiple
-			parts := strings.Split(forwarded, ",")
-			ip = strings.TrimSpace(parts[0])
-		}
-	}
-	return ip
-}
 
 // BlockMiddleware creates a middleware function that uses a ConcurrentSketch
 // to identify and potentially block IPs based on request frequency.
@@ -173,7 +156,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 	// Return the middleware function
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			ip := a.getClientIP(r)
+			ip := core.GetClientIP(r, a.Config.Server.ClientIpProxyHeader)
 			
 			// Debug log incoming request
 			slog.Debug("-------------------------------------------------------------------", 
