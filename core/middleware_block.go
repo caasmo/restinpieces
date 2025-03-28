@@ -130,7 +130,10 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 			ip := a.GetClientIP(r)
 
 			// Check if IP is already blocked
+
+            // TODO not here
 			if a.IsBlocked(ip) {
+                // TODO
 				http.Error(w, "IP blocked", http.StatusForbidden)
 				return
 			}
