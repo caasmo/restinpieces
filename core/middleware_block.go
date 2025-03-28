@@ -112,7 +112,7 @@ func (cs *ConcurrentSketch) Threshold() int {
 }
 
 // processTick handles the sketch tick and IP blocking logic
-func (cs *ConcurrentSketch) processTick(a *App) {
+func (cs *ConcurrentSketch) processTick(a *App, ip string) {
 	tickReqs := cs.TickReqCount.Add(1)
 	_ = cs.Incr(ip)
 	// Perform sketch operations
@@ -169,7 +169,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			cs.processTick(a)
+			cs.processTick(a, ip)
 
 			// Proceed to the next handler in the chain
 			next.ServeHTTP(w, r)
