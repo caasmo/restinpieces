@@ -58,7 +58,7 @@ func (cs *ConcurrentSketch) Count(item string) uint32 {
 }
 
 // SortedSlice gets the sorted items and their counts from the sketch.
-func (cs *ConcurrentSketch) SortedSlice() []struct {
+func (cs *ConcurrentSketch) TopK() []struct {
 	Item  string
 	Count uint32
 } {
@@ -145,7 +145,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 				"path", r.URL.Path)
 
 			tickReqs := cs.TickReqCount.Add(1)
-			slog.Debug("incremented request count", "total", tickReqs)
+			slog.Debug(" current Tick request", "num", tickReqs)
 
 			// Increment IP count in the sketch
 			_ = cs.Incr(ip)
