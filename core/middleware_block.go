@@ -60,18 +60,19 @@ func (cs *ConcurrentSketch) Incr(item string) bool {
 	return cs.sketch.Incr(item)
 }
 
-// Tick wraps the sketch's Tick method with a mutex.
+// Tick wraps the sketch's Tick method with a mutex and increments the tick counter.
 func (cs *ConcurrentSketch) Tick() {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 	cs.sketch.Tick()
+	cs.tickCount.Add(1)
 }
 
 // processTick checks for IPs exceeding the threshold and logs them
 func (cs *ConcurrentSketch) processTick() {
 	// Perform sketch operations using the thread-safe wrapper
 	cs.Tick() // Advance the sliding window
-	tickNum := cs.tickCount.Add(1)
+	tickNum := cs.tickCount.Load()
 	slog.Debug("TICK:", "number", tickNum, "currentTotal", cs.totalReqs.Load())
 
 	// Get sorted IPs from the sketch
