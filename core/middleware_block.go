@@ -63,16 +63,16 @@ func (cs *ConcurrentSketch) Tick() {
 	cs.sketch.Tick()
 }
 
-// Top wraps the sketch's Top method with a mutex and returns a slice of anonymous structs.
-func (cs *ConcurrentSketch) Top() []struct {
+// SortedSlice gets the sorted items and their counts from the sketch.
+func (cs *ConcurrentSketch) SortedSlice() []struct {
 	Item  string
 	Count uint32
 } {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 	
-	// Get the original ItemCount slice
-	itemCounts := cs.sketch.Top()
+	// Get the sorted slice from the sketch
+	itemCounts := cs.sketch.SortedSlice()
 	
 	// Convert to anonymous struct slice
 	results := make([]struct {
@@ -139,11 +139,11 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 					// Perform sketch operations using the thread-safe wrapper
 					concurrentSketch.Tick() // Advance the sliding window
 
-					// Get top K IPs from the sketch
-					topK := concurrentSketch.Top()
+					// Get sorted IPs from the sketch
+					sortedIPs := concurrentSketch.SortedSlice()
 
-					// Check top K IPs against the threshold
-					for _, item := range topK {
+					// Check IPs against the threshold
+					for _, item := range sortedIPs {
 						if item.Count > concurrentSketch.blockThreshold {
 							// Log that this IP should be blocked
 							slog.Warn("IP exceeded threshold, should be blocked", "ip", item.Item, "count", item.Count, "threshold", concurrentSketch.blockThreshold)
