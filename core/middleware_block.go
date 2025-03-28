@@ -19,7 +19,7 @@ const (
 type ConcurrentSketch struct {
 	mu            sync.Mutex
 	sketch        *sliding.Sketch
-	tickSize      uint64        // Number of requests before processing the sketch
+	tickSize      uint64        // number of request per tick 
 	totalReqs     atomic.Uint64 // Counter for total requests processed since last tick
 	tickCount     atomic.Uint64 // Counter for total ticks processed
 }
