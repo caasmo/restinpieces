@@ -68,12 +68,22 @@ func (cs *ConcurrentSketch) Tick() {
 	cs.tickCount.Add(1)
 }
 
+// SizeBytes returns the memory usage of the underlying sketch in bytes
+func (cs *ConcurrentSketch) SizeBytes() uint64 {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	return cs.sketch.SizeBytes()
+}
+
 // processTick checks for IPs exceeding the threshold and logs them
 func (cs *ConcurrentSketch) processTick() {
 	// Perform sketch operations using the thread-safe wrapper
 	cs.Tick() // Advance the sliding window
 	tickNum := cs.tickCount.Load()
-	slog.Debug("TICK:", "number", tickNum, "currentTotal", cs.totalReqs.Load())
+	slog.Debug("TICK:", 
+		"number", tickNum, 
+		"currentTotal", cs.totalReqs.Load(),
+		"sizeBytes", cs.SizeBytes())
 
 	// Get sorted IPs from the sketch
 	sortedIPs := cs.SortedSlice()
