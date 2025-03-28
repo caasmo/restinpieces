@@ -72,7 +72,7 @@ func (cs *ConcurrentSketch) Tick() {
 func (cs *ConcurrentSketch) SizeBytes() uint64 {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
-	return cs.sketch.SizeBytes()
+	return uint64(cs.sketch.SizeBytes())
 }
 
 // processTick checks for IPs exceeding the threshold and logs them
