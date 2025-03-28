@@ -111,6 +111,34 @@ func (cs *ConcurrentSketch) Threshold() int {
 	return int((windowCapacity * thresholdPercent) / 100)
 }
 
+// processTick handles the sketch tick and IP blocking logic
+func (cs *ConcurrentSketch) processTick(a *App) {
+	// Perform sketch operations
+	cs.Tick() // Advance the sliding window
+	tickReqs := cs.TickReqCount.Load()
+	threshold := cs.Threshold()
+
+	// Get top IPs from the sketch
+	sortedIPs := cs.TopK()
+
+	// Check IPs against the dynamic threshold
+	for _, item := range sortedIPs {
+		if item.Count > uint32(threshold) {
+			if err := a.BlockIP(item.Item); err != nil {
+				slog.Error("failed to block IP", "ip", item.Item, "error", err)
+			}
+		} else {
+			// Since the list is sorted, we can break early
+			break
+		}
+	}
+
+	// Reset counter atomically
+	if cs.TickReqCount.CompareAndSwap(tickReqs, 0) {
+		// TODO
+	}
+}
+
 
 // --- IP Blocking Middleware Function ---
 
@@ -155,39 +183,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 
 			// Check if it's time to tick and check top-k
 			if tickReqs >= cs.tickSize {
-				// Perform sketch operations
-				cs.Tick() // Advance the sliding window
-				tickNum := cs.tickCount.Load()
-				threshold := cs.Threshold()
-				slog.Debug("TICK:",
-					"number", tickNum,
-					"currentTotal", cs.TickReqCount.Load(),
-					"sizeBytes", cs.SizeBytes(),
-					"threshold", threshold)
-
-				// Get top IPs from the sketch
-				sortedIPs := cs.TopK()
-
-				// Check IPs against the dynamic threshold
-				for _, item := range sortedIPs {
-					if item.Count > uint32(threshold) {
-						slog.Warn("IP exceeded threshold, should be blocked",
-							"ip", item.Item,
-							"count", item.Count,
-							"threshold", threshold)
-						if err := a.BlockIP(item.Item); err != nil {
-							slog.Error("failed to block IP", "ip", item.Item, "error", err)
-						}
-					} else {
-						// Since the list is sorted, we can break early
-						break
-					}
-				}
-
-				// Reset counter atomically
-				if cs.TickReqCount.CompareAndSwap(tickReqs, 0) {
-					// TODO
-				}
+				cs.processTick(a)
 			}
 
 			// Proceed to the next handler in the chain
