@@ -35,9 +35,11 @@ func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentS
 		sketch:   instance,
 		tickSize: tickSize,
 	}
+	threshold := (uint64(instance.WindowSize) * tickSize * thresholdPercent) / 100
 	slog.Debug("Initialized ConcurrentSketch",
 		"tickSize", tickSize,
-		"windowSize", instance.WindowSize)
+		"windowSize", instance.WindowSize,
+		"threshold", threshold)
 	return cs
 }
 
