@@ -45,11 +45,11 @@ func (a *App) IsBlocked(ip string) bool {
 
 // BlockIP adds an IP to the blocklist in current and next time bucket with adjusted TTL
 func (a *App) BlockIP(ip string) error {
-    now := time.Now().Unix()
-    currentBucket := now / bucketDurationSec
+    currentBucket := getTimeBucket()
     nextBucket := currentBucket + 1
 
     // Calculate remaining time in current bucket
+    now := time.Now().Unix()
     timeUntilNextBucket := (nextBucket*bucketDurationSec) - now
     ttlCurrent := time.Duration(timeUntilNextBucket) * time.Second
 
