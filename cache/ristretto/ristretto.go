@@ -8,15 +8,15 @@ import (
 )
 
 type Cache[K comparable, V any] struct {
-	c *ristr.Cache
+	cache *ristr.Cache
 }
 
-func (c *Cache[K, V]) Del(key K) {
-	c.c.Del(key)
+func (rc *Cache[K, V]) Del(key K) {
+	rc.cache.Del(key)
 }
 
-func (c *Cache[K, V]) Get(key K) (V, bool) {
-	value, found := c.c.Get(key)
+func (rc *Cache[K, V]) Get(key K) (V, bool) {
+	value, found := rc.cache.Get(key)
 	if !found {
 		var zero V
 		return zero, false
@@ -24,23 +24,22 @@ func (c *Cache[K, V]) Get(key K) (V, bool) {
 	return value.(V), true
 }
 
-func (c *Cache[K, V]) GetTTL(key K) (time.Duration, bool) {
+func (rc *Cache[K, V]) GetTTL(key K) (time.Duration, bool) {
 	// Ristretto doesn't expose TTL directly, so we return 0/false
 	// Alternatively could implement custom TTL tracking
 	return 0, false
 }
 
-func (c *Cache[K, V]) MaxCost() int64 {
-	return c.c.MaxCost()
+func (rc *Cache[K, V]) MaxCost() int64 {
+	return rc.cache.MaxCost()
 }
 
-func (c *Cache[K, V]) Set(key K, value V, cost int64) bool {
-	return c.c.Set(key, value, cost)
+func (rc *Cache[K, V]) Set(key K, value V, cost int64) bool {
+	return rc.cache.Set(key, value, cost)
 }
 
-func (c *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) bool {
-	// Ristretto doesn't support per-item TTL, so we ignore it
-	return c.c.Set(key, value, cost)
+func (rc *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) bool {
+	return rc.cache.SetWithTTL(key, value, cost, ttl)
 }
 
 func New[K comparable, V any]() (cache.Cache[K, V], error) {
@@ -53,5 +52,5 @@ func New[K comparable, V any]() (cache.Cache[K, V], error) {
 		return nil, err
 	}
 
-	return &Cache[K, V]{c: c}, nil
+	return &Cache[K, V]{cache: c}, nil
 }
