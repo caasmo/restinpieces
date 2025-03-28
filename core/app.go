@@ -17,7 +17,7 @@ import (
 type App struct {
 	db     db.Db
 	router router.Router
-	cache  cache.Cache
+	cache  cache.Cache[string, interface{}] // Using string keys and interface{} values
 	config *config.Config
 }
 
@@ -25,7 +25,7 @@ type App struct {
 type Option func(*App)
 
 // WithCache sets the cache implementation
-func WithCache(c cache.Cache) Option {
+func WithCache(c cache.Cache[string, interface{}]) Option {
 	return func(a *App) {
 		a.cache = c
 	}
