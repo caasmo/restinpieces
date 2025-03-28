@@ -171,7 +171,7 @@ func NewBlockMiddlewareFunc(cs *ConcurrentSketch) func(http.Handler) http.Handle
 				"path", r.URL.Path)
 
 			// Increment total request count atomically within the sketch wrapper
-			currentTotal := cs.totalReqs.Add(1)
+			currentTotal := cs.TickReqs.Add(1)
 			slog.Debug("incremented request count", "total", currentTotal)
 
 			// Increment IP count in the sketch
@@ -183,7 +183,7 @@ func NewBlockMiddlewareFunc(cs *ConcurrentSketch) func(http.Handler) http.Handle
 				// Reset counter atomically - only one goroutine should perform the tick logic.
 				// Using CompareAndSwap to ensure only the goroutine that reaches the threshold performs the tick.
 				cs.processTick()
-				if cs.totalReqs.CompareAndSwap(currentTotal, 0) {
+				if cs.TickReqs.CompareAndSwap(currentTotal, 0) {
                     // TODO
 
 				}
