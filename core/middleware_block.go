@@ -95,7 +95,6 @@ func (cs *ConcurrentSketch) Count(item string) uint32 {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 	count := cs.sketch.Count(item)
-	slog.Debug("Count request", "item", item, "count", count)
 	return count
 }
 
