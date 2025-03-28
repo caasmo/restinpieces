@@ -16,7 +16,9 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 	ap.Router().Handle("/", fs)
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
-	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger}
+	// Initialize blocking middleware
+	blockMiddleware := core.NewBlockMiddlewareFunc(nil)
+	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger, blockMiddleware}
 
 	// API routes with explicit /api prefix
 	ap.Router().Register(
@@ -33,6 +35,11 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 
 		//custom routes example: mixing core middleware and custom handler
 		r.NewRoute("GET /custom").WithHandlerFunc(cAp.Index),
+		// Test route for IP blocking functionality
+		r.NewRoute("GET /blocktest").WithHandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("Block test endpoint reached"))
+		}),
 	)
 
 	//ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
