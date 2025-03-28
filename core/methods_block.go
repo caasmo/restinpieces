@@ -13,20 +13,22 @@ const (
     bucketDurationSec = 3600 // 1 hour buckets
 )
 
-// getTimeBucket returns a time bucket string based on current Unix timestamp modulo
-func getTimeBucket() string {
-    now := time.Now().Unix()
-    bucketNum := now / bucketDurationSec
-    return fmt.Sprintf("bucket_%d", bucketNum)
+const (
+    bucketDurationSec = 3600 // 1 hour buckets
+)
+
+// getTimeBucket returns the current bucket number (periods since Unix epoch)
+func getTimeBucket() int64 {
+    return time.Now().Unix() / bucketDurationSec
 }
 
-// TimeBucket is the current time bucket for blocked IP grouping
+// TimeBucket is the current time bucket number for blocked IP grouping
 var TimeBucket = getTimeBucket()
 
 // BlockIP adds an IP to the blocklist with TTL using the app's cache
 func (a *App) BlockIP(ip string) error {
-	// Create cache key combining IP and time bucket
-	key := ip + "|" + TimeBucket
+	// Create cache key combining IP and time bucket number
+	key := fmt.Sprintf("%s|%d", ip, TimeBucket)
 	
 	// Store in cache with TTL and default cost
 	success := a.cache.SetWithTTL(key, true, defaultBlockCost, blockingDuration)
