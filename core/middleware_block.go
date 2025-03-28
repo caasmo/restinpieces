@@ -50,6 +50,27 @@ func (cs *ConcurrentSketch) processTick(a *App, ip string) {
 		cs.sketch.Tick()
 		cs.tickCount.Add(1)
 		cs.TickReqCount.Store(0)
+		
+		// Calculate threshold for this window
+		windowCapacity := uint64(cs.sketch.WindowSize) * cs.tickSize
+		threshold := int((windowCapacity * thresholdPercent) / 100)
+		
+		// Get top items from sketch
+		items := cs.sketch.SortedSlice()
+		
+		// Check items against threshold
+		for _, item := range items {
+			if item.Count > uint32(threshold) {
+				if err := a.BlockIP(item.Item); err != nil {
+					slog.Error("failed to block IP", 
+						"ip", item.Item, 
+						"error", err)
+				}
+			} else {
+				// Since list is sorted, we can break early
+				break
+			}
+		}
 	}
 }
 
