@@ -9,9 +9,19 @@ const (
 	defaultBlockCost = 1             // Default cost for blocked IP entries
 )
 
-// TimeBucket will be used to group blocked IPs by time windows
-// This will be defined when we implement the time bucketing logic
-var TimeBucket string
+const (
+    bucketDurationSec = 3600 // 1 hour buckets
+)
+
+// getTimeBucket returns a time bucket string based on current Unix timestamp modulo
+func getTimeBucket() string {
+    now := time.Now().Unix()
+    bucketNum := now / bucketDurationSec
+    return fmt.Sprintf("bucket_%d", bucketNum)
+}
+
+// TimeBucket is the current time bucket for blocked IP grouping
+var TimeBucket = getTimeBucket()
 
 // BlockIP adds an IP to the blocklist with TTL using the app's cache
 func (a *App) BlockIP(ip string) error {
