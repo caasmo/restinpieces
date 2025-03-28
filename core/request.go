@@ -26,8 +26,8 @@ func (a *App) GetClientIP(r *http.Request) string {
 		ip = r.RemoteAddr
 	}
 
-	if a.Config != nil && a.Config.Server.ClientIpProxyHeader != "" {
-		if forwarded := r.Header.Get(a.Config.Server.ClientIpProxyHeader); forwarded != "" {
+	if a.config.Server.ClientIpProxyHeader != "" {
+		if forwarded := r.Header.Get(a.config.Server.ClientIpProxyHeader); forwarded != "" {
 			// Use the first IP in the list if header contains multiple
 			parts := strings.Split(forwarded, ",")
 			ip = strings.TrimSpace(parts[0])
