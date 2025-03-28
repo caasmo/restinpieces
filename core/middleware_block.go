@@ -75,6 +75,14 @@ func (cs *ConcurrentSketch) SizeBytes() uint64 {
 	return uint64(cs.sketch.SizeBytes())
 }
 
+// Threshold returns 10% of the window capacity (WindowSize * tickSize)
+func (cs *ConcurrentSketch) Threshold() int {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	windowCapacity := cs.sketch.WindowSize * cs.tickSize
+	return int((windowCapacity * 10) / 100) // 10% of capacity
+}
+
 // processTick checks for IPs exceeding the threshold and logs them
 func (cs *ConcurrentSketch) processTick() {
 	// Perform sketch operations using the thread-safe wrapper
