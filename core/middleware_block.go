@@ -38,9 +38,7 @@ func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64, blockThresho
 	}
 	slog.Debug("Initialized ConcurrentSketch",
 		"tickSize", tickSize,
-		"blockThreshold", blockThreshold,
-		"sketchWidth", instance.Width(),
-		"sketchDepth", instance.Depth())
+		"blockThreshold", blockThreshold)
 	// cs.totalReqs is initialized to 0 by default via atomic.Uint64
 	return cs
 }
