@@ -66,6 +66,30 @@ func (cs *ConcurrentSketch) Tick() {
 	cs.sketch.Tick()
 }
 
+// processTick checks for IPs exceeding the threshold and logs them
+func (cs *ConcurrentSketch) processTick() {
+	// Perform sketch operations using the thread-safe wrapper
+	cs.Tick() // Advance the sliding window
+	slog.Debug("TICK:", "currentTotal", cs.totalReqs.Load())
+
+	// Get sorted IPs from the sketch
+	sortedIPs := cs.SortedSlice()
+
+	// Check IPs against the threshold
+	for _, item := range sortedIPs {
+		if item.Count > cs.blockThreshold {
+			// Log that this IP should be blocked
+			slog.Warn("IP exceeded threshold, should be blocked", "ip", item.Item, "count", item.Count, "threshold", cs.blockThreshold)
+			// TODO: Add IP to the actual blocklist here
+			// cs.blockIP(item.Item) // Assuming blocklist is managed within ConcurrentSketch or elsewhere
+		} else {
+			// Since the list is sorted, we can potentially break early
+			// if counts are guaranteed to be non-increasing.
+			break
+		}
+	}
+}
+
 // SortedSlice gets the sorted items and their counts from the sketch.
 func (cs *ConcurrentSketch) SortedSlice() []struct {
 	Item  string
@@ -150,28 +174,7 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 				// Reset counter atomically - only one goroutine should perform the tick logic.
 				// Using CompareAndSwap to ensure only the goroutine that reaches the threshold performs the tick.
 				if concurrentSketch.totalReqs.CompareAndSwap(currentTotal, 0) {
-
-					// Perform sketch operations using the thread-safe wrapper
-					concurrentSketch.Tick() // Advance the sliding window
-                    slog.Debug("TICK:", "currentTotal", currentTotal)
-
-					// Get sorted IPs from the sketch
-					sortedIPs := concurrentSketch.SortedSlice()
-
-					// Check IPs against the threshold
-					for _, item := range sortedIPs {
-						if item.Count > concurrentSketch.blockThreshold {
-							// Log that this IP should be blocked
-							slog.Warn("IP exceeded threshold, should be blocked", "ip", item.Item, "count", item.Count, "threshold", concurrentSketch.blockThreshold)
-							// TODO: Add IP to the actual blocklist here
-							// concurrentSketch.blockIP(item.Item) // Assuming blocklist is managed within ConcurrentSketch or elsewhere
-						} else {
-							// Since the list is sorted, we can potentially break early
-							// if counts are guaranteed to be non-increasing.
-							break
-						}
-					}
-					// No unlock needed here as wrapper methods handle locking
+					concurrentSketch.processTick()
 				}
 			}
 
