@@ -148,6 +148,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 			currentTick := cs.tickCount.Load()
 			slog.Debug("Current Tick request", 
 				"requestNum", tickReqs,
+				"remaining", cs.tickSize-tickReqs,
 				"tickNum", currentTick)
 
 			// Increment IP count in the sketch
