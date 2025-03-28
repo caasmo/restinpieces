@@ -77,7 +77,12 @@ func (cs *ConcurrentSketch) Top() []sliding.ItemCount {
 // concurrentSketch: A pre-initialized ConcurrentSketch instance.
 func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handler) http.Handler {
 	if concurrentSketch == nil {
-		panic("concurrentSketch cannot be nil for middleware")
+		// Initialize the underlying sketch
+		sketch := sliding.New(3, 60, sliding.WithWidth(1024), sliding.WithDepth(3))
+		log.Println("the sketch takes up", sketch.SizeBytes(), "bytes in memory")
+		
+		// Create a new ConcurrentSketch with default tick size and block threshold
+		concurrentSketch = NewConcurrentSketch(sketch, 1000, 100) // Default values for tickSize and blockThreshold
 	}
 
 	// Directly return the handler function
