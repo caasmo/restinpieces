@@ -20,7 +20,7 @@ type ConcurrentSketch struct {
 	mu            sync.Mutex
 	sketch        *sliding.Sketch
 	tickSize      uint64        // number of request per tick 
-	TickReqs      atomic.Uint64 // Counter for requests processed since last tick
+	TickReqCount  atomic.Uint64 // Counter for requests processed since last tick
 	tickCount     atomic.Uint64 // Counter for total ticks processed
 }
 
@@ -81,7 +81,7 @@ func (cs *ConcurrentSketch) processTick() {
 	threshold := cs.Threshold()
 	slog.Debug("TICK:", 
 		"number", tickNum, 
-		"currentTotal", cs.TickReqs.Load(),
+		"currentTotal", cs.TickReqCount.Load(),
 		"sizeBytes", cs.SizeBytes(),
 		"threshold", threshold)
 
@@ -171,7 +171,7 @@ func NewBlockMiddlewareFunc(cs *ConcurrentSketch) func(http.Handler) http.Handle
 				"path", r.URL.Path)
 
 			// Increment total request count atomically within the sketch wrapper
-			currentTotal := cs.TickReqs.Add(1)
+			currentTotal := cs.TickReqCount.Add(1)
 			slog.Debug("incremented request count", "total", currentTotal)
 
 			// Increment IP count in the sketch
@@ -183,7 +183,7 @@ func NewBlockMiddlewareFunc(cs *ConcurrentSketch) func(http.Handler) http.Handle
 				// Reset counter atomically - only one goroutine should perform the tick logic.
 				// Using CompareAndSwap to ensure only the goroutine that reaches the threshold performs the tick.
 				cs.processTick()
-				if cs.TickReqs.CompareAndSwap(currentTotal, 0) {
+				if cs.TickReqCount.CompareAndSwap(currentTotal, 0) {
                     // TODO
 
 				}
