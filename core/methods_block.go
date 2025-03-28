@@ -15,9 +15,9 @@ const (
     bucketDurationSec = 3600 // 1 hour buckets
 )
 
-// getTimeBucket returns the current bucket number (periods since Unix epoch)
-func getTimeBucket() int64 {
-    return time.Now().Unix() / bucketDurationSec
+// getTimeBucket returns the bucket number for a given time (periods since Unix epoch)
+func getTimeBucket(t time.Time) int64 {
+    return t.Unix() / bucketDurationSec
 }
 
 // formatBlockKey creates a consistent cache key for blocked IPs
@@ -28,7 +28,7 @@ func formatBlockKey(ip string, bucket int64) string {
 
 // IsBlocked checks if an IP is currently blocked in any relevant time bucket
 func (a *App) IsBlocked(ip string) bool {
-    currentBucket := getTimeBucket()
+    currentBucket := getTimeBucket(time.Now())
     
     // Check current bucket
     if _, found := a.cache.Get(formatBlockKey(ip, currentBucket)); found {
@@ -45,7 +45,7 @@ func (a *App) IsBlocked(ip string) bool {
 
 // BlockIP adds an IP to the blocklist in current and next time bucket with adjusted TTL
 func (a *App) BlockIP(ip string) error {
-    currentBucket := getTimeBucket()
+    currentBucket := getTimeBucket(time.Now())
     nextBucket := currentBucket + 1
 
     // Calculate remaining time in current bucket
