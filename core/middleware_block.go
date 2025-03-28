@@ -110,38 +110,6 @@ func (cs *ConcurrentSketch) Threshold() int {
 	return int((windowCapacity * thresholdPercent) / 100)
 }
 
-// processTick checks for IPs exceeding the threshold and logs them
-func (cs *ConcurrentSketch) processTick() {
-	// Perform sketch operations using the thread-safe wrapper
-	cs.Tick() // Advance the sliding window
-	tickNum := cs.tickCount.Load()
-	threshold := cs.Threshold()
-	slog.Debug("TICK:",
-		"number", tickNum,
-		"currentTotal", cs.TickReqCount.Load(),
-		"sizeBytes", cs.SizeBytes(),
-		"threshold", threshold)
-
-	// Get sorted IPs from the sketch
-	sortedIPs := cs.SortedSlice()
-
-	// Check IPs against the dynamic threshold
-	for _, item := range sortedIPs {
-		if item.Count > uint32(threshold) {
-			slog.Warn("IP exceeded threshold, should be blocked",
-				"ip", item.Item,
-				"count", item.Count,
-				"threshold", threshold)
-			// Block the IP using the app's blocking system
-			if err := a.BlockIP(item.Item); err != nil {
-				slog.Error("failed to block IP", "ip", item.Item, "error", err)
-			}
-		} else {
-			// Since the list is sorted, we can break early
-			break
-		}
-	}
-}
 
 // --- IP Blocking Middleware Function ---
 
@@ -181,12 +149,38 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 
 			// Check if it's time to tick and check top-k
 			if currentTotal >= cs.tickSize {
-				cs.processTick()
-				// Reset counter atomically - only one goroutine should perform the tick logic.
-				// Using CompareAndSwap to ensure only the goroutine that reaches the threshold performs the tick.
+				// Perform sketch operations
+				cs.Tick() // Advance the sliding window
+				tickNum := cs.tickCount.Load()
+				threshold := cs.Threshold()
+				slog.Debug("TICK:",
+					"number", tickNum,
+					"currentTotal", cs.TickReqCount.Load(),
+					"sizeBytes", cs.SizeBytes(),
+					"threshold", threshold)
+
+				// Get sorted IPs from the sketch
+				sortedIPs := cs.SortedSlice()
+
+				// Check IPs against the dynamic threshold
+				for _, item := range sortedIPs {
+					if item.Count > uint32(threshold) {
+						slog.Warn("IP exceeded threshold, should be blocked",
+							"ip", item.Item,
+							"count", item.Count,
+							"threshold", threshold)
+						if err := a.BlockIP(item.Item); err != nil {
+							slog.Error("failed to block IP", "ip", item.Item, "error", err)
+						}
+					} else {
+						// Since the list is sorted, we can break early
+						break
+					}
+				}
+
+				// Reset counter atomically
 				if cs.TickReqCount.CompareAndSwap(currentTotal, 0) {
 					// TODO
-
 				}
 			}
 
