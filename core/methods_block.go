@@ -51,13 +51,12 @@ func (a *App) BlockIP(ip string) error {
     nextBucket := currentBucket + 1
 
     // Block in current bucket with full blocking duration
-    ttlCurrent := blockingDuration
     currentKey := formatBlockKey(ip, currentBucket)
-    successCurrent := a.cache.SetWithTTL(currentKey, true, defaultBlockCost, ttlCurrent)
+    successCurrent := a.cache.SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration)
     slog.Info("IP blocked in current bucket",
         "ip", ip,
         "bucket", currentBucket,
-        "ttl", ttlCurrent,
+        "ttl", blockingDuration,
         "success", successCurrent)
 
     // Calculate time until next bucket starts
