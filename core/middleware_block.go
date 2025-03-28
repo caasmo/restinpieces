@@ -110,7 +110,7 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 
 	// Return the middleware function
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fn := func(w http.ResponseWriter, r *http.Request) {
 			ip := getClientIP(r)
 
 			// TODO: Check if IP is already in the blocklist before processing
@@ -162,7 +162,8 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 
 			// Proceed to the next handler in the chain
 			next.ServeHTTP(w, r)
-		})
+		}
+		return http.HandlerFunc(fn)
 	}
 }
 
