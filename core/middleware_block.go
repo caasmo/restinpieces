@@ -63,11 +63,34 @@ func (cs *ConcurrentSketch) Tick() {
 	cs.sketch.Tick()
 }
 
-// Top wraps the sketch's Top method with a mutex.
-func (cs *ConcurrentSketch) Top() []sliding.ItemCount {
+// Top wraps the sketch's Top method with a mutex and returns a slice of anonymous structs.
+func (cs *ConcurrentSketch) Top() []struct {
+	Item  string
+	Count uint32
+} {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
-	return cs.sketch.Top()
+	
+	// Get the original ItemCount slice
+	itemCounts := cs.sketch.Top()
+	
+	// Convert to anonymous struct slice
+	results := make([]struct {
+		Item  string
+		Count uint32
+	}, len(itemCounts))
+	
+	for i, ic := range itemCounts {
+		results[i] = struct {
+			Item  string
+			Count uint32
+		}{
+			Item:  ic.Item,
+			Count: ic.Count,
+		}
+	}
+	
+	return results
 }
 
 // --- IP Blocking Middleware Function ---
