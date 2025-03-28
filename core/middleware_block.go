@@ -142,20 +142,15 @@ func (cs *ConcurrentSketch) SortedSlice() []struct {
 
 // --- IP Blocking Middleware Function ---
 
-// NewBlockMiddlewareFunc creates a middleware function that uses a ConcurrentSketch
+// BlockMiddleware creates a middleware function that uses a ConcurrentSketch
 // to identify and potentially block IPs based on request frequency.
-// concurrentSketch: A pre-initialized ConcurrentSketch instance.
-func NewBlockMiddlewareFunc(cs *ConcurrentSketch) func(http.Handler) http.Handler {
-	if cs == nil {
-		// Initialize the underlying sketch
-		//sketch := sliding.New(3, 60, sliding.WithWidth(1024), sliding.WithDepth(3))
-		sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
-		//sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
-		slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
-		
-		// Create a new ConcurrentSketch with default tick size
-		cs = NewConcurrentSketch(sketch, 100) // Default tickSize
-	}
+func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
+	// Initialize the underlying sketch
+	sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
+	slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
+	
+	// Create a new ConcurrentSketch with default tick size
+	cs := NewConcurrentSketch(sketch, 100) // Default tickSize
 
 	// Return the middleware function
 	return func(next http.Handler) http.Handler {

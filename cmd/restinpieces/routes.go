@@ -35,7 +35,7 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		//custom routes example: mixing core middleware and custom handler
 		r.NewRoute("GET /custom").WithHandlerFunc(cAp.Index),
 		// Test route for IP blocking functionality
-		r.NewRoute("GET /blocktest").WithHandlerFunc(cAp.Index).WithMiddleware(core.NewBlockMiddlewareFunc(nil)),
+		r.NewRoute("GET /blocktest").WithHandlerFunc(cAp.Index).WithMiddleware(ap.BlockMiddleware()),
 	)
 
 	//ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
