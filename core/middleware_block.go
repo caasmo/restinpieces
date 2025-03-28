@@ -14,7 +14,7 @@ import (
 // ConcurrentSketch provides thread-safe access to a sketch instance and manages ticking.
 type ConcurrentSketch struct {
 	mu            sync.Mutex
-	sketch        *sliding.CMSSketch
+	sketch        *sliding.Sketch
 	tickSize      uint64        // Number of requests before processing the sketch
 	blockThreshold uint32       // Threshold above which IPs are flagged for blocking
 	totalReqs     atomic.Uint64 // Counter for total requests processed since last tick
@@ -23,7 +23,7 @@ type ConcurrentSketch struct {
 // NewConcurrentSketch creates a new thread-safe sketch wrapper.
 // tickSize: How many requests trigger a sketch tick and top-k check.
 // blockThreshold: The count above which an IP is flagged for blocking.
-func NewConcurrentSketch(instance *sliding.CMSSketch, tickSize uint64, blockThreshold uint32) *ConcurrentSketch {
+func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64, blockThreshold uint32) *ConcurrentSketch {
 	if instance == nil {
 		// Handle nil sketch instance appropriately, maybe return error or panic
 		panic("sketch instance cannot be nil for ConcurrentSketch")

@@ -122,27 +122,27 @@ type Smtp struct {
 }
 
 type Endpoints struct {
-	RefreshAuth         string `json:"refresh_auth"`
-	RequestVerification string `json:"request_verification"`
+	RefreshAuth          string `json:"refresh_auth"`
+	RequestVerification  string `json:"request_verification"`
 	ListEndpoints        string `json:"list_endpoints"`
-	AuthWithPassword      string `json:"auth_with_password"`
-	AuthWithOAuth2        string `json:"auth_with_oauth2"`
-	RegisterWithPassword  string `json:"register_with_password"`
-	ListOAuth2Providers   string `json:"list_oauth2_providers"`
-	ConfirmVerification   string `json:"confirm_verification"`
+	AuthWithPassword     string `json:"auth_with_password"`
+	AuthWithOAuth2       string `json:"auth_with_oauth2"`
+	RegisterWithPassword string `json:"register_with_password"`
+	ListOAuth2Providers  string `json:"list_oauth2_providers"`
+	ConfirmVerification  string `json:"confirm_verification"`
 }
 
 // DefaultEndpoints returns the standard endpoint paths
 func DefaultEndpoints() Endpoints {
 	return Endpoints{
-		RefreshAuth:         "POST /api/refresh-auth",
-		RequestVerification: "POST /api/request-verification",
+		RefreshAuth:          "POST /api/refresh-auth",
+		RequestVerification:  "POST /api/request-verification",
 		ListEndpoints:        "GET /api/list-endpoints",
-		AuthWithPassword:      "POST /api/auth-with-password",
-		AuthWithOAuth2:        "POST /api/auth-with-oauth2",
-		RegisterWithPassword:  "POST /api/register-with-password",
-		ListOAuth2Providers:   "GET /api/list-oauth2-providers",
-		ConfirmVerification:   "POST /api/confirm-verification",
+		AuthWithPassword:     "POST /api/auth-with-password",
+		AuthWithOAuth2:       "POST /api/auth-with-oauth2",
+		RegisterWithPassword: "POST /api/register-with-password",
+		ListOAuth2Providers:  "GET /api/list-oauth2-providers",
+		ConfirmVerification:  "POST /api/confirm-verification",
 	}
 }
 

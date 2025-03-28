@@ -14,4 +14,3 @@ func (a *App) ListEndpointsHandler(w http.ResponseWriter, r *http.Request) {
 		Data: a.config.Endpoints,
 	})
 }
-

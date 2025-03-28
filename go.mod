@@ -9,6 +9,7 @@ require (
 	github.com/domodwyer/mailyak/v3 v3.6.2
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/julienschmidt/httprouter v1.3.0
+	github.com/keilerkonzept/topk v1.1.4
 	github.com/outcaste-io/ristretto v0.1.1-0.20220408180327-81c196f2b5ef
 	golang.org/x/crypto v0.36.0
 	golang.org/x/oauth2 v0.28.0
@@ -17,6 +18,7 @@ require (
 )
 
 require (
+	github.com/OneOfOne/xxhash v1.2.8 // indirect
 	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
