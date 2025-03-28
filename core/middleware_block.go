@@ -142,7 +142,7 @@ func NewBlockMiddlewareFunc(concurrentSketch *ConcurrentSketch) func(http.Handle
 		
 		// Create a new ConcurrentSketch with default tick size and block threshold
 		//concurrentSketch = NewConcurrentSketch(sketch, 1000, 100) // Default values for tickSize and blockThreshold
-		concurrentSketch = NewConcurrentSketch(sketch, 5, 5) // Default values for tickSize and blockThreshold
+		cs = NewConcurrentSketch(sketch, 5, 5) // Default values for tickSize and blockThreshold
 	}
 
 	// Return the middleware function
