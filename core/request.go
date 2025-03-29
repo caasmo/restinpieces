@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	MimeTypeJSON        = "application/json"
-	MimeTypeHTML        = "text/html" 
-	MimeTypeJavascript  = "text/javascript"
-	MimeTypeApplication = "application/javascript"
+	MimeTypeJSON               = "application/json"
+	MimeTypeHTML               = "text/html" 
+	MimeTypeJavaScript         = "text/javascript"
+	MimeTypeJavaScriptApplication = "application/javascript"
 )
 
 // ValidateEmail checks if an email address is valid according to RFC 5322
