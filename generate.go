@@ -1,3 +1,3 @@
-//go:generate go run scripts/gogenerate-assets.go
+//go:generate go run gen/gogenerate-assets.go
 
 package restinpieces
