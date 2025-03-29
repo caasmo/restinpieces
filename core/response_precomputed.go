@@ -58,7 +58,14 @@ func precomputeBasicResponse(status int, code, message string) jsonResponse {
 		Code:    code,
 		Message: message,
 	}
-	body, _ := json.Marshal(basic)
+	body, err := json.Marshal(basic)
+	if err != nil {
+		// Fallback to a safe error response if JSON marshaling fails
+		return jsonResponse{
+			status: http.StatusInternalServerError,
+			body: []byte(`{"status":500,"code":"err_json_marshal_failed","message":"Failed to generate JSON response"}`),
+		}
+	}
 	return jsonResponse{status: status, body: body}
 }
 
@@ -73,7 +80,14 @@ func precomputeWithDataResponse(status int, code, message string, data interface
 		},
 		Data: data,
 	}
-	body, _ := json.Marshal(response)
+	body, err := json.Marshal(response)
+	if err != nil {
+		// Fallback to a safe error response if JSON marshaling fails
+		return jsonResponse{
+			status: http.StatusInternalServerError,
+			body: []byte(`{"status":500,"code":"err_json_marshal_failed","message":"Failed to generate JSON response"}`),
+		}
+	}
 	return jsonResponse{status: status, body: body}
 }
 
