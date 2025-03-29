@@ -16,6 +16,10 @@ import (
 // Authenticated: Yes
 // Allowed Mimetype: application/json
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
+	if err, resp := a.ValidateContentType(r, "application/json"); err != nil {
+		writeJsonError(w, resp)
+		return
+	}
 	// Authenticate the user using the token from the request
 	user, err, authResp := a.Authenticate(r)
 	if err != nil {
@@ -45,6 +49,10 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 // Authenticated: No
 // Allowed Mimetype: application/json
 func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
+	if err, resp := a.ValidateContentType(r, "application/json"); err != nil {
+		writeJsonError(w, resp)
+		return
+	}
 
 	var req struct {
 		Identity string `json:"identity"` // username or email, only mail implemented
@@ -100,6 +108,10 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 // Authenticated: No
 // Allowed Mimetype: application/json
 func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request) {
+	if err, resp := a.ValidateContentType(r, "application/json"); err != nil {
+		writeJsonError(w, resp)
+		return
+	}
 	var req struct {
 		Email string `json:"email"`
 	}
@@ -192,6 +204,10 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 //	 "type": "verification"
 //	}
 func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request) {
+	if err, resp := a.ValidateContentType(r, "application/json"); err != nil {
+		writeJsonError(w, resp)
+		return
+	}
 	type request struct {
 		Token string `json:"token"`
 	}
@@ -265,6 +281,10 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 // provider
 // if password exist CreateUserWithPassword will succeed but the password will be not updated.
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
+	if err, resp := a.ValidateContentType(r, "application/json"); err != nil {
+		writeJsonError(w, resp)
+		return
+	}
 
 	var req struct {
 		Identity        string `json:"identity"`
