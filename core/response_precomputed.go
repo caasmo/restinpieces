@@ -42,6 +42,7 @@ const (
 	CodeErrorAuthDatabaseError              = "err_auth_database_error"
 	CodeErrorIpBlocked                      = "err_ip_blocked"
 	CodeErrorInvalidContentType             = "err_invalid_content_type"
+	errorInvalidContentType             	  = precomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type. Content-Type must be application/json")
 	// oks
 )
 
