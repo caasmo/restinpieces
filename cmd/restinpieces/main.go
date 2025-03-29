@@ -32,6 +32,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	slog.Debug("embedded assets", "count", len(restinpieces.EmbeddedAssets))
+
 	ap, err := initApp(cfg)
 	if err != nil {
 		slog.Error("failed to initialize app", "error", err)
