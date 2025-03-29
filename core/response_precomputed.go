@@ -44,6 +44,7 @@ const (
 	errorInvalidContentType             = precomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type. Content-Type must be application/json")
 
 	// oks
+)
 
 // ResponseBasicFormat is used  for short ok and error responses
 // precomputeBasicResponse() will be executed during initialization (before main() runs),
