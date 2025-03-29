@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io/fs"
 	"log/slog"
 	"os"
 
@@ -32,7 +33,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	slog.Debug("embedded assets", "count", len(restinpieces.EmbeddedAssets))
+	// Count embedded assets
+	assetCount := 0
+	fs.WalkDir(restinpieces.EmbeddedAssets, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			assetCount++
+		}
+		return nil
+	})
+	slog.Debug("embedded assets", "count", assetCount)
 
 	ap, err := initApp(cfg)
 	if err != nil {
