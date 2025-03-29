@@ -30,9 +30,9 @@ func main() {
 	}
 
 	// 2. Copy HTML files
-	//if err := copyHTML(); err != nil {
-	//	log.Fatalf("HTML copy failed: %v", err)
-	//}
+	if err := copyHTML(); err != nil {
+		log.Fatalf("HTML copy failed: %v", err)
+	}
 
 	// 3. Gzip all assets
 	if err := gzipAssets(); err != nil {
