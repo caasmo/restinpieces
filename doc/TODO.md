@@ -2,6 +2,11 @@
 
 
 - document magix numbers of sketch. move it to new package, configuration
+- init command, bootstrap create tables, create config and put in db.
+    - config toml or db. or json
+    - dump-config to toml, maybe json
+    - load-config 
+    - start --config a --db\, minimize the number of flags
 - if in db config, how to edit the easiest, toml?
 - maek method, global middleware before mux. block ip documentation, proper conf. fix TODO 
 - verify addresses paths shoudl be random or pseudo random?
@@ -14,6 +19,7 @@
 - updatebenchmark
 - block ua: cache db,  
 - block jwt: cache db,  
+- block referrer
 - block non wnanted mimetypes: we go with per handler endpoint method, not allowing empty. document each handler 
     - the mimetype required by a handler, is part of the logic of the handler. it should be handled there. document
     - a global middleware, allowing only supported server json, html, css, js
