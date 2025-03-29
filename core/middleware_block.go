@@ -10,7 +10,7 @@ import (
 
 // ConcurrentSketch provides thread-safe access to a sketch instance and manages ticking.
 const (
-	thresholdPercent = 80 // 10% of window capacity
+	thresholdPercent = 80 // 80% of window capacity
 )
 
 type ConcurrentSketch struct {
@@ -19,6 +19,7 @@ type ConcurrentSketch struct {
 	tickSize  uint64 // number of request per tick
 	tickReq   uint64 // Counter for requests processed since last tick
 	tickCount uint64 // Counter for total ticks processed
+	threshold int    // Precomputed threshold value
 }
 
 // NewConcurrentSketch creates a new thread-safe sketch wrapper.
@@ -30,9 +31,14 @@ func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentS
 	if tickSize == 0 {
 		tickSize = 1000 // Default tick size if not specified
 	}
+	
+	windowCapacity := uint64(instance.WindowSize) * tickSize
+	threshold := int((windowCapacity * thresholdPercent) / 100)
+	
 	return &ConcurrentSketch{
-		sketch:   instance,
-		tickSize: tickSize,
+		sketch:    instance,
+		tickSize:  tickSize,
+		threshold: threshold,
 	}
 }
 
@@ -49,14 +55,11 @@ func (cs *ConcurrentSketch) processTick(ip string) []string {
         cs.tickReq = 0
 
 // TODO
-        windowCapacity := uint64(cs.sketch.WindowSize) * cs.tickSize
-        threshold := int((windowCapacity * thresholdPercent) / 100)
-
         items := cs.sketch.SortedSlice()
 
         ipsToBlock := make([]string, 0)
         for _, item := range items {
-            if item.Count > uint32(threshold) {
+            if item.Count > uint32(cs.threshold) {
                 ipsToBlock = append(ipsToBlock, item.Item)
             } else {
                 break // Early exit due to sorted list
