@@ -8,6 +8,12 @@ import (
 	"strings"
 )
 
+const (
+	MimeTypeJSON       = "application/json"
+	MimeTypeHTML       = "text/html"
+	MimeTypeJavascript = "text/javascript"
+)
+
 // ValidateEmail checks if an email address is valid according to RFC 5322
 // Returns nil if valid, or an error describing why the email is invalid
 func ValidateEmail(email string) error {

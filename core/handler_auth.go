@@ -16,7 +16,7 @@ import (
 // Authenticated: Yes
 // Allowed Mimetype: application/json
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.ValidateContentType(r, "application/json"); err != nil {
+	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
 		writeJsonError(w, resp)
 		return
 	}
