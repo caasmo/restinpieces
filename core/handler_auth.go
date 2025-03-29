@@ -49,7 +49,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 // Authenticated: No
 // Allowed Mimetype: application/json
 func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.ValidateContentType(r, "application/json"); err != nil {
+	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
 		writeJsonError(w, resp)
 		return
 	}
@@ -108,7 +108,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 // Authenticated: No
 // Allowed Mimetype: application/json
 func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.ValidateContentType(r, "application/json"); err != nil {
+	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
 		writeJsonError(w, resp)
 		return
 	}
@@ -204,7 +204,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 //	 "type": "verification"
 //	}
 func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.ValidateContentType(r, "application/json"); err != nil {
+	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
 		writeJsonError(w, resp)
 		return
 	}
@@ -281,7 +281,7 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 // provider
 // if password exist CreateUserWithPassword will succeed but the password will be not updated.
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.ValidateContentType(r, "application/json"); err != nil {
+	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
 		writeJsonError(w, resp)
 		return
 	}
