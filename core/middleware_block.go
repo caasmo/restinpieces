@@ -54,7 +54,6 @@ func (cs *ConcurrentSketch) processTick(ip string) []string {
         cs.tickCount++
         cs.tickReq = 0
 
-// TODO
         items := cs.sketch.SortedSlice()
 
         ipsToBlock := make([]string, 0)
