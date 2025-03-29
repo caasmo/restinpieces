@@ -47,7 +47,7 @@ func processJS() error {
 		MinifyWhitespace:  true,
 		MinifyIdentifiers: true,
 		MinifySyntax:      true,
-		Drop:              []string{"console"},
+		Drop:              api.DropConsole,
 		Format:            api.FormatESModule,
 		Target:            api.ES2017,
 		Platform:          api.PlatformBrowser,
