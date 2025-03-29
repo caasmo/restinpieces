@@ -42,11 +42,13 @@ const (
 	CodeErrorAuthDatabaseError              = "err_auth_database_error"
 	CodeErrorIpBlocked                      = "err_ip_blocked"
 	CodeErrorInvalidContentType             = "err_invalid_content_type"
-	errorAuthDatabaseError              = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
-	errorInvalidContentType             = precomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type. Content-Type must be application/json")
-
 	// oks
 )
+
+var jsonMarshalErrorResponse = jsonResponse{
+	status: http.StatusInternalServerError,
+	body:   []byte(`{"status":500,"code":"err_json_marshal_failed","message":"Failed to generate JSON response"}`),
+}
 
 // ResponseBasicFormat is used  for short ok and error responses
 // precomputeBasicResponse() will be executed during initialization (before main() runs),
@@ -56,11 +58,6 @@ const (
 // Any time we use writeJSONResponse(w, response) in the code, it
 // simply writes the pre-computed bytes to the response writer
 // Hardcoded fallback response for JSON marshaling failures
-var jsonMarshalErrorResponse = jsonResponse{
-	status: http.StatusInternalServerError,
-	body:   []byte(`{"status":500,"code":"err_json_marshal_failed","message":"Failed to generate JSON response"}`),
-}
-
 func precomputeBasicResponse(status int, code, message string) jsonResponse {
 	basic := JsonBasic{
 		Status:  status,
