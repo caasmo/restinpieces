@@ -15,6 +15,9 @@ import (
 //
 // Differentiate from the Handler by using suffix
 
+// Admin handler
+// Authenticated: Yes
+// Allowed Mimetype: application/json
 func (a *App) Admin(w http.ResponseWriter, r *http.Request) {
 
 	user := "testuser"
@@ -23,6 +26,9 @@ func (a *App) Admin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+// Tea handler  
+// Authenticated: No
+// Allowed Mimetype: application/json
 func (a *App) Tea(w http.ResponseWriter, r *http.Request) {
 	//params := context.Get(r, "params").(httprouter.Params)
 	//log.Println(params.ByName("id"))
@@ -30,6 +36,9 @@ func (a *App) Tea(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(nil)
 }
 
+// ExampleSqliteReadRandom handler
+// Authenticated: No  
+// Allowed Mimetype: application/json
 func (a *App) ExampleSqliteReadRandom(w http.ResponseWriter, r *http.Request) {
 
 	id := rand.Intn(100000) + 1
@@ -37,6 +46,9 @@ func (a *App) ExampleSqliteReadRandom(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"id":` + strconv.Itoa(id) + `,"value":` + strconv.Itoa(value) + `}`))
 }
 
+// ExampleWriteOne handler
+// Authenticated: No
+// Allowed Mimetype: application/json
 func (a *App) ExampleWriteOne(w http.ResponseWriter, r *http.Request) {
 
 	valStr := a.Router().Param(r, "value")
@@ -51,6 +63,9 @@ func (a *App) ExampleWriteOne(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"id":lipo` + `,"value":` + valStr + `}`))
 }
 
+// BenchmarkSqliteRWRatio handler
+// Authenticated: No
+// Allowed Mimetype: application/json
 func (a *App) BenchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
 
 	ratioStr := a.Router().Param(r, "ratio")
@@ -87,11 +102,17 @@ func (a *App) BenchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"random num":` + strconv.Itoa(nint) + `,"sum":` + strconv.Itoa(sum) + `,"operation":"` + op + `"}`))
 }
 
+// BenchmarkBaseline handler
+// Authenticated: No  
+// Allowed Mimetype: text/plain
 func (a *App) BenchmarkBaseline(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "Baseline")
 }
 
+// BenchmarkRistrettoRead handler
+// Authenticated: Yes
+// Allowed Mimetype: application/json
 func (a *App) BenchmarkRistrettoRead() http.HandlerFunc {
 	// set one time
 	b := a.cache.Set("hi", "hola", 1)
@@ -113,6 +134,9 @@ func (a *App) BenchmarkRistrettoRead() http.HandlerFunc {
 	}
 }
 
+// BenchmarkSqliteRWRatioPool handler
+// Authenticated: No    
+// Allowed Mimetype: application/json
 func (a *App) BenchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request) {
 
 	//fmt.Fprintf(os.Stderr, "[restinpieces] %v+\n", pams)
@@ -153,6 +177,9 @@ func (a *App) BenchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request)
 
 }
 
+// Index handler
+// Authenticated: No
+// Allowed Mimetype: text/plain
 func (a *App) Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Welcome!")
 }
