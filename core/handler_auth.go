@@ -13,6 +13,8 @@ import (
 
 // RefreshAuthHandler handles explicit JWT token refresh requests
 // Endpoint: POST /auth-refresh
+// Authenticated: Yes
+// Allowed Mimetype: application/json
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Authenticate the user using the token from the request
 	user, err, authResp := a.Authenticate(r)
@@ -40,6 +42,8 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 
 // AuthWithPasswordHandler handles password-based authentication (login)
 // Endpoint: POST /auth-with-password
+// Authenticated: No
+// Allowed Mimetype: application/json
 func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
@@ -93,6 +97,8 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 // goroutine generates token
 // RequestVerificationHandler handles email verification requests
 // Endpoint: POST /request-verification
+// Authenticated: No
+// Allowed Mimetype: application/json
 func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email string `json:"email"`
@@ -252,6 +258,8 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 
 // RegisterWithPasswordHandler handles password-based user registration with validation
 // Endpoint: POST /register-with-password
+// Authenticated: No
+// Allowed Mimetype: application/json
 // TODO we allow register with password after the user has oauth, we just
 // update the password and do not require validated email as we trust the oauth2
 // provider
