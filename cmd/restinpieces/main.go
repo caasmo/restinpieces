@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/custom"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
