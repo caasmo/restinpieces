@@ -26,7 +26,7 @@ func (a *App) Admin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-// Tea handler  
+// Tea handler
 // Authenticated: No
 // Allowed Mimetype: application/json
 func (a *App) Tea(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +37,7 @@ func (a *App) Tea(w http.ResponseWriter, r *http.Request) {
 }
 
 // ExampleSqliteReadRandom handler
-// Authenticated: No  
+// Authenticated: No
 // Allowed Mimetype: application/json
 func (a *App) ExampleSqliteReadRandom(w http.ResponseWriter, r *http.Request) {
 
@@ -103,7 +103,7 @@ func (a *App) BenchmarkSqliteRWRatio(w http.ResponseWriter, r *http.Request) {
 }
 
 // BenchmarkBaseline handler
-// Authenticated: No  
+// Authenticated: No
 // Allowed Mimetype: text/plain
 func (a *App) BenchmarkBaseline(w http.ResponseWriter, r *http.Request) {
 
@@ -135,7 +135,7 @@ func (a *App) BenchmarkRistrettoRead() http.HandlerFunc {
 }
 
 // BenchmarkSqliteRWRatioPool handler
-// Authenticated: No    
+// Authenticated: No
 // Allowed Mimetype: application/json
 func (a *App) BenchmarkSqliteRWRatioPool(w http.ResponseWriter, r *http.Request) {
 

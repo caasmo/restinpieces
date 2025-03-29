@@ -31,10 +31,10 @@ func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentS
 	if tickSize == 0 {
 		tickSize = 1000 // Default tick size if not specified
 	}
-	
+
 	windowCapacity := uint64(instance.WindowSize) * tickSize
 	threshold := int((windowCapacity * thresholdPercent) / 100)
-	
+
 	return &ConcurrentSketch{
 		sketch:    instance,
 		tickSize:  tickSize,
@@ -43,30 +43,30 @@ func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentS
 }
 
 func (cs *ConcurrentSketch) processTick(ip string) []string {
-    cs.mu.Lock()
-    defer cs.mu.Unlock()
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
 
-    cs.sketch.Incr(ip)
-    cs.tickReq++
+	cs.sketch.Incr(ip)
+	cs.tickReq++
 
-    if cs.tickReq >= cs.tickSize {
-        cs.sketch.Tick()
-        cs.tickCount++
-        cs.tickReq = 0
+	if cs.tickReq >= cs.tickSize {
+		cs.sketch.Tick()
+		cs.tickCount++
+		cs.tickReq = 0
 
-        items := cs.sketch.SortedSlice()
+		items := cs.sketch.SortedSlice()
 
-        ipsToBlock := make([]string, 0)
-        for _, item := range items {
-            if item.Count > uint32(cs.threshold) {
-                ipsToBlock = append(ipsToBlock, item.Item)
-            } else {
-                break // Early exit due to sorted list
-            }
-        }
-        return ipsToBlock // Return IPs to block
-    }
-    return nil // No blocking needed this tick
+		ipsToBlock := make([]string, 0)
+		for _, item := range items {
+			if item.Count > uint32(cs.threshold) {
+				ipsToBlock = append(ipsToBlock, item.Item)
+			} else {
+				break // Early exit due to sorted list
+			}
+		}
+		return ipsToBlock // Return IPs to block
+	}
+	return nil // No blocking needed this tick
 }
 
 // --- IP Blocking Middleware Function ---
@@ -118,8 +118,6 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 					}
 				}(blockedIPs)
 			}
-
-
 
 			// Proceed to the next handler in the chain
 			next.ServeHTTP(w, r)

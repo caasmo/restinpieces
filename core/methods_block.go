@@ -26,7 +26,7 @@ func formatBlockKey(ip string, bucket int64) string {
 	return fmt.Sprintf("%s|%d", ip, bucket)
 }
 
-// IsBlocked checks if an IP is currently blocked 
+// IsBlocked checks if an IP is currently blocked
 func (a *App) IsBlocked(ip string) bool {
 	currentBucket := getTimeBucket(time.Now())
 
