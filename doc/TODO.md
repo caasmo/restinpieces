@@ -17,6 +17,10 @@
 - gzip, go:generate gz all files html and javascript all files and put in FS, when serving set Content-Encoding: gzip. we avoid dinamyc gzip
     - FS
     - start with js SDK
+	- make maybe package restinpieces only to have generate.go, without build ignore, there we can put embed for FS and migrations files for initialization
+	- go:generate for add dbs in sqlite instead of command bootstrap?
+	- go:generate for config generator toml for example
+	- maybe simple make
 - updatebenchmark
 - block ua: cache db,  
 - block jwt: cache db,  
