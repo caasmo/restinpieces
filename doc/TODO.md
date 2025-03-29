@@ -13,7 +13,12 @@
 - FS 
 - block ua: cache db,  
 - block jwt: cache db,  
-- block non wnanted mimetypes
+- block non wnanted mimetypes: we go with per handler endpoint method, not allowing empty. document each handler 
+    - the mimetype required by a handler, is part of the logic of the handler. it should be handled there. document
+    - a global middleware, allowing only supported server json, html, css, js
+    - but still endpoints shoudl enforce its allowed mimetype. method like auth mimetype(allowed []) with default json?
+    - a mimetype ddos: it 
+    - allow empty?
 - block methods automatically, win against router?
 - in process litestream 
 - rate limit -> no 
