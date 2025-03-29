@@ -2,7 +2,7 @@
 
 
 - document magix numbers of sketch. move it to new package, configuration
-- make defensice goroutine or middleware??? has and checks req/second and maybe server load, dinamically add block modules.
+- if in db config, how to edit the easiest, toml?
 - maek method, global middleware before mux. block ip documentation, proper conf. fix TODO 
 - verify addresses paths shoudl be random or pseudo random?
 - revamp shell tests.
@@ -20,6 +20,7 @@
     - but still endpoints shoudl enforce its allowed mimetype. method like auth mimetype(allowed []) with default json?
     - a mimetype ddos: it 
     - allow empty?
+- make defensice goroutine or middleware??? has and checks req/second and maybe server load, dinamically add block modules.
 - block methods automatically, win against router?
 - in process litestream 
 - rate limit -> no 
