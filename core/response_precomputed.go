@@ -41,7 +41,16 @@ const (
 	CodeErrorOAuth2DatabaseError            = "err_oauth2_database_error"
 	CodeErrorAuthDatabaseError              = "err_auth_database_error"
 	CodeErrorIpBlocked                      = "err_ip_blocked"
+	CodeErrorInvalidContentType             = "err_invalid_content_type"
 )
+```
+
+core/response_precomputed.go
+```go
+<<<<<<< SEARCH
+	errorAuthDatabaseError              = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
+
+	// oks
 
 // ResponseBasicFormat is used  for short ok and error responses
 // precomputeBasicResponse() will be executed during initialization (before main() runs),
