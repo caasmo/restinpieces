@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .login-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+      }
+      .provider-section {
+        padding: 20px;
+        background: #f5f5f5;
+        border-radius: 4px;
+      }
+      .provider-section ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .provider-section li {
+        margin: 10px 0;
+      }
+      .provider-section a {
+        display: block;
+        padding: 10px 20px;
+        background-color: #2196f3;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .provider-section a:hover {
+        background-color: #1976d2;
+      }
+      .form-group {
+        margin-bottom: 15px;
+      }
+      label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+      }
+      button {
+        width: 100%;
+        padding: 10px 20px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #1976d2;
+      }
+      .message {
+        margin-top: 20px;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .error {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+      .success {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+      .user-info {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 4px;
+      }
+      .user-info pre {
+        background: white;
+        padding: 10px;
+        border-radius: 4px;
+        max-height: 300px;
+        overflow: auto;
+      }
+      .button-container {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+      }
+      .button-container button {
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <p style="margin-bottom: 20px">
+      Don't have an account? <a href="/register.html">Register here</a>
+    </p>
+
+    <div class="login-grid">
+      <div class="provider-section">
+        <h2>Login Providers</h2>
+        <ul id="list">
+          <li>Loading OAuth2 providers...</li>
+        </ul>
+      </div>
+
+      <div class="provider-section">
+        <h2>Login with Password</h2>
+        <form id="passwordLoginForm">
+          <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password:</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              minlength="8"
+            />
+          </div>
+
+          <button type="submit">Login</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="error" class="error"></div>
+
+    <script type="module">
+      import Restinpieces from "/assets/js/restinpieces.js";
+
+      class LoginHandler {
+        constructor() {
+          this.rp = new Restinpieces({
+            baseURL: "http://localhost:8080",
+          });
+          this.form = document.getElementById("passwordLoginForm");
+          this.errorDiv = document.getElementById("error");
+          this.providerList = document.getElementById("list");
+
+          this.initEventListeners();
+          this.loadProviders();
+        }
+
+        initEventListeners() {
+          this.form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            this.handleLogin();
+          });
+        }
+
+        loadProviders() {
+          this.rp
+            .listOauth2Providers()
+            .then((response) => {
+              this.providerList.innerHTML = "";
+
+              if (!response?.data?.providers) {
+                this.providerList.innerHTML = "<li>No OAuth2 providers.</li>";
+                return;
+              }
+
+              response.data.providers.forEach((provider) => {
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.textContent = `Login with ${provider.displayName}`;
+                a.href = provider.authURL;
+                a.addEventListener("click", () => {
+                  this.rp.store.provider.save(provider);
+                });
+                li.appendChild(a);
+                this.providerList.appendChild(li);
+              });
+
+              if (response.data.providers.length === 0) {
+                this.providerList.innerHTML = "<li>No OAuth2 providers.</li>";
+              }
+            })
+            .catch((error) => {
+              console.error("Error loading providers:", error);
+              this.providerList.innerHTML = "<li>Error loading providers</li>";
+            });
+        }
+
+        showMessage(text, isError = false) {
+          this.errorDiv.textContent = text;
+          this.errorDiv.className = isError
+            ? "message error"
+            : "message success";
+        }
+
+        createSuccessUI(userRecord) {
+          const userInfo = document.createElement("div");
+          userInfo.className = "user-info";
+          userInfo.innerHTML = `
+                    <h3>Login Successful!</h3>
+                    <pre>${JSON.stringify(userRecord, null, 2)}</pre>
+                `;
+
+          const buttonContainer = document.createElement("div");
+          buttonContainer.className = "button-container";
+
+          const dashboardButton = document.createElement("button");
+          dashboardButton.textContent = "Go to Dashboard";
+          dashboardButton.onclick = () =>
+            (window.location.href = "/dashboard.html");
+          buttonContainer.appendChild(dashboardButton);
+
+          this.errorDiv.textContent = "";
+          this.errorDiv.appendChild(userInfo);
+          this.errorDiv.appendChild(buttonContainer);
+        }
+
+        async handleLogin() {
+          const email = document.getElementById("email").value;
+          const password = document.getElementById("password").value;
+
+          this.showMessage("Logging in...");
+
+          try {
+            const response = await this.rp.authWithPassword({
+              identity: email,
+              password,
+            });
+
+            if (response?.data?.access_token) {
+              this.rp.store.auth.save(response.data);
+              this.createSuccessUI(response.data.record);
+            } else {
+              throw new Error("Invalid login response: missing access token");
+            }
+          } catch (error) {
+            console.error("Login failed:", error);
+            this.showMessage(error.response?.message || error.message, true);
+          }
+        }
+      }
+
+      document.addEventListener("DOMContentLoaded", () => new LoginHandler());
+    </script>
+  </body>
+</html>
