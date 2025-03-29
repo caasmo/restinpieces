@@ -3,6 +3,7 @@ package core
 import (
 	"net/http"
 	"strings"
+	"errors"
 )
 
 // ValidateContentType checks if the request's Content-Type matches the allowed type.
