@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OAuth2 Providers</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .info-section {
+        margin-bottom: 0;
+        padding: 20px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        height: fit-content;
+      }
+
+      .refresh-section {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 4px;
+      }
+      pre {
+        background: white;
+        padding: 15px;
+        border-radius: 4px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      button {
+        padding: 10px 20px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        height: 40px;
+        min-width: 120px;
+      }
+      button:hover {
+        opacity: 0.9;
+      }
+      .error {
+        color: #c62828;
+        background-color: #ffebee;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 20px;
+        display: none;
+      }
+      .error:not(:empty) {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      "
+    >
+      <h1>OAuth2 Providers</h1>
+      <div style="display: flex; gap: 15px">
+        <a href="/login.html" style="text-decoration: none; color: #2196f3"
+          >Login</a
+        >
+        <a href="/dashboard.html" style="text-decoration: none; color: #2196f3"
+          >Dashboard</a
+        >
+      </div>
+    </div>
+
+    <div class="info-section">
+      <button id="get-providers-btn">Get Providers</button>
+      <div id="error" class="error"></div>
+    </div>
+
+    <div class="info-section" id="result-section" style="display: none">
+      <h2 id="providers-header">Providers List</h2>
+      <pre id="result"></pre>
+    </div>
+
+    <script type="module">
+      import Restinpieces from "./assets/js/restinpieces.js";
+
+      function getProviders() {
+        const resultDiv = document.getElementById("result");
+        const errorDiv = document.getElementById("error");
+
+        resultDiv.textContent = "Loading...";
+        errorDiv.textContent = "";
+
+        const rp = new Restinpieces({
+          baseURL: "http://localhost:8080",
+        });
+
+        rp.listOauth2Providers()
+          .then((data) => {
+            resultDiv.textContent = JSON.stringify(data, null, 2);
+            document.getElementById("result-section").style.display = "block";
+          })
+          .catch((error) => {
+            let errorText = "Error: " + error.message + "\n";
+            errorText += "Status: " + error.status + "\n";
+            if (error.response) {
+              errorText +=
+                "Response:\n" + JSON.stringify(error.response, null, 2);
+            }
+            if (error.url) {
+              errorText += "\nURL: " + error.url;
+            }
+            errorDiv.textContent = errorText;
+            resultDiv.textContent = "";
+            console.error(error);
+          });
+      }
+
+      document
+        .getElementById("get-providers-btn")
+        .addEventListener("click", getProviders);
+    </script>
+  </body>
+</html>

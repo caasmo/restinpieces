@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+      }
+
+      .info-section {
+        margin-bottom: 0;
+        padding: 20px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        height: fit-content;
+      }
+
+      .refresh-section {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 4px;
+      }
+      pre {
+        background: white;
+        padding: 15px;
+        border-radius: 4px;
+        overflow: auto;
+        max-height: 300px;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+      .refresh-section {
+        margin-top: 30px;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 0 5px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        height: 40px;
+        min-width: 120px;
+      }
+      button:hover {
+        opacity: 0.9;
+      }
+      .error {
+        color: #c62828;
+        background-color: #ffebee;
+        padding: 10px;
+        border-radius: 4px;
+        margin-top: 20px;
+        display: none; /* Hidden by default */
+      }
+
+      .error:not(:empty) {
+        display: block; /* Show when has content */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-grid">
+      <div class="info-section">
+        <h2>User Information</h2>
+        <pre id="user-info"></pre>
+      </div>
+
+      <div class="info-section">
+        <h2>Current Token</h2>
+        <pre id="current-token"></pre>
+      </div>
+    </div>
+
+    <div class="refresh-section">
+      <div class="button-container">
+        <button id="refresh-token-btn">Refresh Token</button>
+        <button
+          onclick="window.location.href='/verify-email.html'"
+          style="background-color: #4caf50"
+        >
+          Verify Email
+        </button>
+        <button
+          onclick="window.location.href='/list-endpoints.html'"
+          style="background-color: #9c27b0"
+        >
+          List Endpoints
+        </button>
+        <button
+          onclick="window.location.href='/logout.html'"
+          style="background-color: #f44336"
+        >
+          Logout
+        </button>
+      </div>
+      <div id="refresh-result">
+        <h3>Previous Token</h3>
+        <pre id="previous-token"></pre>
+        <h3>New Token</h3>
+        <pre id="new-token"></pre>
+      </div>
+      <div id="refresh-error" class="error"></div>
+    </div>
+
+    <script type="module">
+      import Restinpieces from "/assets/js/restinpieces.js";
+
+      document.addEventListener("DOMContentLoaded", () => {
+        // Initialize Restinpieces with config
+        const rp = new Restinpieces({
+          baseURL: "http://localhost:8080",
+        });
+
+        // Display initial user info and token from store
+        const authData = rp.store.auth.load() || {};
+        const userInfo = authData.record || {};
+        const currentToken = authData.access_token || "";
+
+        document.getElementById("user-info").textContent = JSON.stringify(
+          userInfo,
+          null,
+          2,
+        );
+        document.getElementById("current-token").textContent = currentToken;
+
+        function refreshToken() {
+          const refreshError = document.getElementById("refresh-error");
+          refreshError.textContent = "";
+
+          // Get current auth data before refresh
+          const currentAuth = rp.store.auth.load() || {};
+          const currentToken = currentAuth.access_token || "No token found";
+
+          // Save current token as previous token
+          document.getElementById("previous-token").textContent = currentToken;
+
+          rp.refreshAuth()
+            .then((response) => {
+              if (response?.data?.access_token) {
+                // Save new auth data (preserving existing record)
+                const newAuth = {
+                  ...currentAuth,
+                  access_token: response.data.access_token,
+                  expires_in: response.data.expires_in,
+                };
+                rp.store.auth.save(newAuth);
+
+                // Display new token and update UI
+                document.getElementById("new-token").textContent =
+                  response.data.access_token;
+                document.getElementById("current-token").textContent =
+                  response.data.access_token;
+                // Update previous token for next refresh
+                document.getElementById("previous-token").textContent =
+                  currentToken;
+                // Update user info with any new data from refresh
+                const updatedUserInfo = {
+                  ...userInfo,
+                  ...(response.data.record || {}),
+                };
+                document.getElementById("user-info").textContent =
+                  JSON.stringify(updatedUserInfo, null, 2);
+              } else {
+                throw new Error("No access token in response");
+              }
+            })
+            .catch((error) => {
+              console.error("Token refresh failed:", error);
+              refreshError.textContent = error.response
+                ? JSON.stringify(error.response, null, 2)
+                : error.message;
+            });
+        }
+
+        // Attach click handler directly to button
+        document
+          .querySelector("button")
+          .addEventListener("click", refreshToken);
+      });
+    </script>
+  </body>
+</html>

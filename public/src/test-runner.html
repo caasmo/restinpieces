@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JavaScript Test Runner</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .file-section {
+        margin-bottom: 30px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 15px;
+        background-color: #f9f9f9;
+      }
+      .file-name {
+        font-weight: bold;
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #eee;
+      }
+      .test-result {
+        margin-bottom: 10px;
+        padding: 8px;
+        border-radius: 4px;
+      }
+      .pass {
+        background-color: #e6ffe6;
+        border-left: 4px solid #00cc00;
+      }
+      .fail {
+        background-color: #ffe6e6;
+        border-left: 4px solid #cc0000;
+      }
+      pre {
+        background-color: #f5f5f5;
+        padding: 10px;
+        border-radius: 4px;
+        overflow-x: auto;
+        max-height: 300px;
+        font-size: 14px;
+      }
+      h2 {
+        margin-top: 20px;
+      }
+      .summary {
+        font-weight: bold;
+        margin-top: 10px;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .log-container {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: #f5f5f5;
+        max-height: 200px;
+        overflow-y: auto;
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>JavaScript Test Runner</h1>
+    <div id="files-container"></div>
+    <div id="global-summary" class="global-summary"></div>
+    <div id="log-container" class="log-container"></div>
+
+    <script>
+      // Configuration - Change these paths as needed
+      const SRC_PATH = "/tests/js/"; // Path to source JS files
+      const TEST_PATH = "/tests/js/"; // Path to test JS files
+
+      // List of JS files to test (without extension)
+      const FILES_TO_TEST = [
+        "url-builder",
+        // Add more files here
+      ];
+
+      // Global stats
+      let globalPassCount = 0;
+      let globalFailCount = 0;
+      let loadedFiles = 0;
+
+      // Logging function
+      function log(message) {
+        const logContainer = document.getElementById("log-container");
+        const logEntry = document.createElement("div");
+        logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logContainer.appendChild(logEntry);
+        console.log(message);
+      }
+
+      // Function to create a file section with elements expected by the test
+      function createFileSection(fileName) {
+        const container = document.getElementById("files-container");
+        const section = document.createElement("div");
+        section.className = "file-section";
+        section.id = `section-${fileName}`;
+
+        const fileNameElem = document.createElement("div");
+        fileNameElem.className = "file-name";
+        fileNameElem.textContent = `${fileName}.js`;
+
+        // Create the function-code element that the test is looking for
+        const functionCodeTitle = document.createElement("h2");
+        functionCodeTitle.textContent = "Function Code:";
+
+        const functionCode = document.createElement("pre");
+        functionCode.id = "function-code"; // This is what the test is looking for
+
+        // Create test-results container that the test is looking for
+        const testResultsTitle = document.createElement("h2");
+        testResultsTitle.textContent = "Test Results:";
+
+        const testResults = document.createElement("div");
+        testResults.id = "test-results"; // This is what the test is looking for
+
+        // Create summary element that the test is looking for
+        const summary = document.createElement("div");
+        summary.className = "summary";
+        summary.id = "summary"; // This is what the test is looking for
+
+        section.appendChild(fileNameElem);
+        section.appendChild(functionCodeTitle);
+        section.appendChild(functionCode);
+        section.appendChild(testResultsTitle);
+        section.appendChild(testResults);
+        section.appendChild(summary);
+
+        container.appendChild(section);
+      }
+
+      // Function to fetch file content
+      async function fetchFileContent(path) {
+        log(`Attempting to fetch: ${path}`);
+        try {
+          const response = await fetch(path);
+          if (response.ok) {
+            log(`Successfully loaded: ${path}`);
+            return await response.text();
+          } else {
+            log(`Failed to load file (${response.status}): ${path}`);
+            return null;
+          }
+        } catch (error) {
+          log(`Error fetching file: ${path}, Error: ${error.message}`);
+          return null;
+        }
+      }
+
+      // Function to dynamically load a script
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const script = document.createElement("script");
+          script.src = src;
+          script.onload = () => {
+            log(`Script loaded: ${src}`);
+            resolve();
+          };
+          script.onerror = () => {
+            log(`Failed to load script: ${src}`);
+            reject(new Error(`Failed to load script: ${src}`));
+          };
+          document.body.appendChild(script);
+        });
+      }
+
+      // Function to run test for a file
+      async function runTest(fileName) {
+        log(`Testing file: ${fileName}.js`);
+        createFileSection(fileName);
+
+        try {
+          // Load the source file
+          const filePath = `${SRC_PATH}${fileName}.js`;
+          await loadScript(filePath);
+          log(`Successfully loaded script: ${filePath}`);
+
+          // Load and execute the test file
+          const testFilePath = `${TEST_PATH}${fileName}-test.js`;
+          const testContent = await fetchFileContent(testFilePath);
+
+          if (testContent === null) {
+            log(`Test file not found: ${testFilePath}`);
+            document.getElementById("summary").textContent =
+              "Test file not found";
+            return;
+          }
+
+          log(`Executing test for ${fileName}`);
+
+          try {
+            // Use eval to execute the test code in the current scope
+            eval(testContent);
+            log(`Tests completed for ${fileName}`);
+          } catch (error) {
+            log(`Error executing test: ${error.message}`);
+            const testResults = document.getElementById("test-results");
+            const errorDiv = document.createElement("div");
+            errorDiv.className = "test-result fail";
+            errorDiv.innerHTML = `
+            <strong>Error executing test:</strong> ${error.message}<br>
+            <pre>${error.stack}</pre>
+          `;
+            testResults.appendChild(errorDiv);
+
+            document.getElementById("summary").textContent =
+              "Error executing test";
+            document.getElementById("summary").style.backgroundColor =
+              "#ffe6e6";
+          }
+        } catch (error) {
+          log(`Error loading source file: ${error.message}`);
+          document.getElementById("summary").textContent =
+            "Error loading source file";
+          document.getElementById("summary").style.backgroundColor = "#ffe6e6";
+        }
+
+        loadedFiles++;
+        updateGlobalSummary();
+      }
+
+      // Function to update the global summary
+      function updateGlobalSummary() {
+        if (loadedFiles === FILES_TO_TEST.length) {
+          // Try to gather stats from individual test results
+          const testResults = document.querySelectorAll(".test-result");
+          let passCount = 0;
+          let failCount = 0;
+
+          testResults.forEach((result) => {
+            if (result.classList.contains("pass")) passCount++;
+            else if (result.classList.contains("fail")) failCount++;
+          });
+
+          const globalSummary = document.getElementById("global-summary");
+          globalSummary.textContent = `All tests completed: ${passCount + failCount} total, ${passCount} passed, ${failCount} failed`;
+          globalSummary.style.backgroundColor =
+            failCount > 0 ? "#ffe6e6" : "#e6ffe6";
+        }
+      }
+
+      // Function to initialize everything
+      async function init() {
+        log("Test runner initialized");
+        for (const fileName of FILES_TO_TEST) {
+          await runTest(fileName);
+        }
+      }
+
+      // Start everything when the page loads
+      window.onload = init;
+    </script>
+  </body>
+</html>
