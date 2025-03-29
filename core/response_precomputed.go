@@ -45,11 +45,6 @@ const (
 	// oks
 )
 
-var jsonMarshalErrorResponse = jsonResponse{
-	status: http.StatusInternalServerError,
-	body:   []byte(`{"status":500,"code":"err_json_marshal_failed","message":"Failed to generate JSON response"}`),
-}
-
 // ResponseBasicFormat is used  for short ok and error responses
 // precomputeBasicResponse() will be executed during initialization (before main() runs),
 // and the JSON body will be precomputed and stored in the response variables.
@@ -57,17 +52,13 @@ var jsonMarshalErrorResponse = jsonResponse{
 // It avoids repeated JSON marshaling during request handling
 // Any time we use writeJSONResponse(w, response) in the code, it
 // simply writes the pre-computed bytes to the response writer
-// Hardcoded fallback response for JSON marshaling failures
 func precomputeBasicResponse(status int, code, message string) jsonResponse {
 	basic := JsonBasic{
 		Status:  status,
 		Code:    code,
 		Message: message,
 	}
-	body, err := json.Marshal(basic)
-	if err != nil {
-		return jsonMarshalErrorResponse
-	}
+	body, _ := json.Marshal(basic)
 	return jsonResponse{status: status, body: body}
 }
 
@@ -82,15 +73,7 @@ func precomputeWithDataResponse(status int, code, message string, data interface
 		},
 		Data: data,
 	}
-	body, err := json.Marshal(response)
-	if err != nil {
-		// Fallback to a safe error response if JSON marshaling fails
-		return precomputeBasicResponse(
-			http.StatusInternalServerError,
-			"err_json_marshal_failed", 
-			"Failed to generate JSON response",
-		)
-	}
+	body, _ := json.Marshal(response)
 	return jsonResponse{status: status, body: body}
 }
 
