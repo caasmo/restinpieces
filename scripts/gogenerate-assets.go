@@ -42,7 +42,7 @@ func main() {
 
 func processJS() error {
 	result := api.Build(api.BuildOptions{
-		EntryPoints:       []string{"assets/src/js/restinpieces.js"},
+		EntryPoints:       []string{"public/src/js/restinpieces.js"},
 		Bundle:            true,
 		MinifyWhitespace:  true,
 		MinifyIdentifiers: true,
@@ -51,7 +51,7 @@ func processJS() error {
 		Format:            api.FormatESModule,
 		Target:            api.ES2017,
 		Platform:          api.PlatformBrowser,
-		Outfile:           "assets/dist/js/restinpieces.min.js",
+		Outfile:           "public/dist/js/restinpieces.min.js",
 		Write:             true,
 	})
 
