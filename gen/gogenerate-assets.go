@@ -51,7 +51,7 @@ func processJS() error {
 		Format:            api.FormatESModule,
 		Target:            api.ES2017,
 		Platform:          api.PlatformBrowser,
-		Outfile:           "public/dist/js/restinpieces.min.js",
+		Outfile:           "public/dist/js/restinpieces.js",
 		Write:             true,
 	})
 
