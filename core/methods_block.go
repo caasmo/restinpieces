@@ -43,16 +43,18 @@ func (a *App) BlockIP(ip string) error {
 	now := time.Now()
 	currentBucket := getTimeBucket(now)
 	nextBucket := currentBucket + 1
+	until := now.Add(blockingDuration)
 
 	// Block in current bucket with full blocking duration
 	currentKey := formatBlockKey(ip, currentBucket)
-	successCurrent := a.cache.SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration)
-	until := now.Add(blockingDuration)
+	if !a.cache.SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration) {
+		slog.Error("failed to block IP in current bucket", "ip", ip, "bucket", currentBucket)
+		return fmt.Errorf("failed to block IP %s in current bucket %d", ip, currentBucket)
+	}
 	slog.Info("IP blocked in current bucket",
 		"ip", ip,
 		"bucket", currentBucket,
-		"until", until.Format(time.RFC3339),
-		"success", successCurrent)
+		"until", until.Format(time.RFC3339))
 
 	// Calculate time until next bucket starts
 	nowUnix := now.Unix()
@@ -61,12 +63,14 @@ func (a *App) BlockIP(ip string) error {
 
 	if ttlNext > 0 {
 		nextKey := formatBlockKey(ip, nextBucket)
-		successNext := a.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext)
+		if !a.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext) {
+			slog.Error("failed to block IP in next bucket", "ip", ip, "bucket", nextBucket)
+			return fmt.Errorf("failed to block IP %s in next bucket %d", ip, nextBucket)
+		}
 		slog.Info("IP blocked in next bucket",
 			"ip", ip,
 			"bucket", nextBucket,
-			"until", until.Format(time.RFC3339),
-			"success", successNext)
+			"until", until.Format(time.RFC3339))
 	}
 
 	return nil
