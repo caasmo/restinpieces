@@ -40,6 +40,8 @@ const (
 	CodeErrorOAuth2UserInfoProcessingFailed = "err_oauth2_user_info_processing_failed"
 	CodeErrorOAuth2DatabaseError            = "err_oauth2_database_error"
 	CodeErrorAuthDatabaseError              = "err_auth_database_error"
+	CodeErrorIpBlocked                      = "err_ip_blocked"
+	CodeErrorInvalidContentType             = "err_invalid_content_type"
 	errorAuthDatabaseError              = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
 	errorInvalidContentType             = precomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type. Content-Type must be application/json")
 
