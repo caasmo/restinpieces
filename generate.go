@@ -4,7 +4,7 @@
 
 package restinpieces
 
-import _ "embed"
+import "embed"
 
 //go:embed public/dist/*
 var EmbeddedAssets embed.FS  // move to embed.go 
