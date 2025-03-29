@@ -4,11 +4,14 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/evanw/esbuild/pkg/api"
 )
 
 func main() {
@@ -37,22 +40,28 @@ func main() {
 	}
 }
 
-		//"--bundle",
 func processJS() error {
-	cmd := exec.Command("./esbuild",
-		"assets/src/js/restinpieces.js",
-		"--bundle",
-		//"--bundle=./assets/src/js/main.js",
-		"--minify",
-		"--drop:console",
-		"--format=esm",
-		"--target=es2017",
-		"--platform=browser",
-		"--outfile=assets/dist/js/restinpieces.min.js",
-	)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	result := api.Build(api.BuildOptions{
+		EntryPoints:       []string{"assets/src/js/restinpieces.js"},
+		Bundle:            true,
+		MinifyWhitespace:  true,
+		MinifyIdentifiers: true,
+		MinifySyntax:      true,
+		Drop:              []string{"console"},
+		Format:            api.FormatESModule,
+		Target:            api.ES2017,
+		Platform:          api.PlatformBrowser,
+		Outfile:           "assets/dist/js/restinpieces.min.js",
+		Write:             true,
+	})
+
+	if len(result.Errors) > 0 {
+		for _, err := range result.Errors {
+			log.Printf("ESBuild error: %s", err.Text)
+		}
+		return fmt.Errorf("ESBuild failed with %d errors", len(result.Errors))
+	}
+	return nil
 }
 
 func copyHTML() error {
