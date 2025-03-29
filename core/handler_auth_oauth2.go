@@ -43,6 +43,8 @@ type oauth2Request struct {
 
 // AuthWithOAuth2Handler handles OAuth2 authentication
 // Endpoint: POST /auth-with-oauth2
+// Authenticated: No
+// Allowed Mimetype: application/json
 func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	var req oauth2Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -189,6 +191,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ListOAuth2ProvidersHandler returns available OAuth2 providers
+// Authenticated: No
+// Allowed Mimetype: application/json
 // Example OAuth2 Providers List Response:
 //
 //	{
