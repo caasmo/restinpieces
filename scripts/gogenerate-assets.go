@@ -17,7 +17,7 @@ import (
 func main() {
 	// Clean and create dist directories
 	os.RemoveAll("public/dist")
-	createDirs := []string{"html", "js"}
+	createDirs := []string{"js"}
 	for _, dir := range createDirs {
 		if err := os.MkdirAll(filepath.Join("public", "dist", dir), 0755); err != nil {
 			log.Fatal(err)
@@ -65,13 +65,18 @@ func processJS() error {
 }
 
 func copyHTML() error {
-	return filepath.Walk("public/src/html", func(path string, info os.FileInfo, err error) error {
+	return filepath.Walk("public/src", func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}
 
-		relPath, _ := filepath.Rel("public/src/html", path)
-		dest := filepath.Join("public/dist/html", relPath)
+		// Only process HTML files
+		if filepath.Ext(path) != ".html" {
+			return nil
+		}
+
+		relPath, _ := filepath.Rel("public/src", path)
+		dest := filepath.Join("public/dist", relPath)
 
 		// Create destination directory
 		os.MkdirAll(filepath.Dir(dest), 0755)
