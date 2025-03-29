@@ -1,13 +1,15 @@
 ### TODOs
 
 
+- document magix numbers of sketch. move it to new package, configuration
 - make defensice goroutine or middleware, checks req/second and maybe load, adn dinamically add block modules.
 - maek method, global middleware before mux. block ip documentation, proper conf. fix TODO 
 - verify addresses paths shoudl be random or pseudo random?
 - revamp shell tests.
-- store?
+- store?, just a sync.Map, do not overcomplicate,
 - CORS gzip middlewares 
--updatebenchmark
+- gzip, go:generate gz all files html and javascript all files and put in FS, when serving set Content-Encoding: gzip. we avoid dinamyc gzip
+- updatebenchmark
 - FS 
 - block ua: cache db,  
 - block jwt: cache db,  
