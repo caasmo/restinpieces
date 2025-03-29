@@ -36,7 +36,7 @@ func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentS
 	}
 }
 
-func (cs *ConcurrentSketch) processTick(a *App, ip string) {
+func (cs *ConcurrentSketch) processTick(ip string) []string {
     cs.mu.Lock()
     defer cs.mu.Unlock()
 
@@ -48,73 +48,23 @@ func (cs *ConcurrentSketch) processTick(a *App, ip string) {
         cs.tickCount++
         cs.tickReq = 0
 
+// TODO
         windowCapacity := uint64(cs.sketch.WindowSize) * cs.tickSize
         threshold := int((windowCapacity * thresholdPercent) / 100)
 
         items := cs.sketch.SortedSlice()
 
-        // Phase 1: Collect IPs to block (under mutex protection)
         ipsToBlock := make([]string, 0)
         for _, item := range items {
             if item.Count > uint32(threshold) {
                 ipsToBlock = append(ipsToBlock, item.Item)
             } else {
-                break
+                break // Early exit due to sorted list
             }
         }
-
-        // Release the mutex before calling Ristretto
-        //
-        // Even if multiple goroutines call a.BlockIP for the same IP
-        // concurrently, Ristretto will handle it safely. Blocking an IP
-        // multiple times is harmless if the operation is idempotent (same key).
-        // Ristretto batches writes into a ring buffer, so frequent Set calls
-        // for the same key will be merged efficiently. The last write (in
-        // buffer order) will determine the final value.
-        // Ristretto uses a buffered write mechanism (a ring buffer) to batch
-        // Set/Del operations for performance.
-        go func(ips []string) {
-            for _, ip := range ips {
-                if err := a.BlockIP(ip); err != nil {
-                    // Handle error (e.g., log it)
-                }
-            }
-        }(ipsToBlock)
+        return ipsToBlock // Return IPs to block
     }
-}
-
-// processTick handles the sketch tick and IP blocking logic
-func (cs *ConcurrentSketch) processTickWith(a *App, ip string) {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
-	
-	cs.sketch.Incr(ip)
-	cs.tickReq++
-	
-	if cs.tickReq >= cs.tickSize {
-		cs.sketch.Tick()
-		cs.tickCount++
-		cs.tickReq = 0
-		
-		// Calculate threshold for this window
-        // todo
-		windowCapacity := uint64(cs.sketch.WindowSize) * cs.tickSize
-		threshold := int((windowCapacity * thresholdPercent) / 100)
-		
-		// Get top items from sketch
-		items := cs.sketch.SortedSlice()
-		
-		// Check items against threshold
-		for _, item := range items {
-			if item.Count > uint32(threshold) {
-				if err := a.BlockIP(item.Item); err != nil {
-				}
-			} else {
-				// Since list is sorted, we can break early
-				break
-			}
-		}
-	}
+    return nil // No blocking needed this tick
 }
 
 // --- IP Blocking Middleware Function ---
@@ -144,7 +94,30 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			cs.processTick(a, ip)
+			blockedIPs := cs.processTick(ip)
+
+			// Handle blocking outside the mutex
+			//
+			// Even if multiple goroutines call a.BlockIP for the same IP
+			// concurrently, Ristretto will handle it safely. Blocking an IP
+			// multiple times is harmless if the operation is idempotent (same key).
+			// Ristretto batches writes into a ring buffer, so frequent Set calls
+			// for the same key will be merged efficiently. The last write (in
+			// buffer order) will determine the final value.
+			// Ristretto uses a buffered write mechanism (a ring buffer) to batch
+			// Set/Del operations for performance.
+			if len(blockedIPs) > 0 {
+				go func(ips []string) {
+					for _, ip := range ips {
+						if err := a.BlockIP(ip); err != nil {
+							// Handle error (e.g., log or retry)
+							// TODO
+						}
+					}
+				}(blockedIPs)
+			}
+
+
 
 			// Proceed to the next handler in the chain
 			next.ServeHTTP(w, r)
