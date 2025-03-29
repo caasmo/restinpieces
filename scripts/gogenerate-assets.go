@@ -16,10 +16,10 @@ import (
 
 func main() {
 	// Clean and create dist directories
-	os.RemoveAll("assets/dist")
+	os.RemoveAll("public/dist")
 	createDirs := []string{"html", "js"}
 	for _, dir := range createDirs {
-		if err := os.MkdirAll(filepath.Join("assets", "dist", dir), 0755); err != nil {
+		if err := os.MkdirAll(filepath.Join("public", "dist", dir), 0755); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -65,13 +65,13 @@ func processJS() error {
 }
 
 func copyHTML() error {
-	return filepath.Walk("assets/src/html", func(path string, info os.FileInfo, err error) error {
+	return filepath.Walk("public/src/html", func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}
 
-		relPath, _ := filepath.Rel("assets/src/html", path)
-		dest := filepath.Join("assets/dist/html", relPath)
+		relPath, _ := filepath.Rel("public/src/html", path)
+		dest := filepath.Join("public/dist/html", relPath)
 
 		// Create destination directory
 		os.MkdirAll(filepath.Dir(dest), 0755)
@@ -95,7 +95,7 @@ func copyHTML() error {
 }
 
 func gzipAssets() error {
-	return filepath.Walk("assets/dist", func(path string, info os.FileInfo, err error) error {
+	return filepath.Walk("public/dist", func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
 			return err
 		}

@@ -5,4 +5,4 @@
 .aider*
 
 # Ignore built assets
-assets/dist
+public/dist
