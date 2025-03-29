@@ -109,11 +109,11 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 			// Ristretto uses a buffered write mechanism (a ring buffer) to batch
 			// Set/Del operations for performance.
 			if len(blockedIPs) > 0 {
+				slog.Info("IPs to be blocked", "ips", blockedIPs)
 				go func(ips []string) {
 					for _, ip := range ips {
 						if err := a.BlockIP(ip); err != nil {
-							// Handle error (e.g., log or retry)
-							// TODO
+							slog.Error("failed to block IP", "ip", ip, "error", err)
 						}
 					}
 				}(blockedIPs)
