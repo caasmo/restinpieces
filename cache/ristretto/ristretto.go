@@ -41,7 +41,6 @@ func (rc *Cache[K, V]) Set(key K, value V, cost int64) bool {
 func (rc *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) bool {
 	// Wait for the item to be processed by the cache
 	success := rc.cache.SetWithTTL(key, value, cost, ttl)
-	rc.cache.Wait()
 	return success
 }
 

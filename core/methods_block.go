@@ -36,9 +36,9 @@ func (a *App) IsBlocked(ip string) bool {
 	}
 
 	// Check next bucket
-	if _, found := a.cache.Get(formatBlockKey(ip, currentBucket+1)); found {
-		return true
-	}
+	//if _, found := a.cache.Get(formatBlockKey(ip, currentBucket+1)); found {
+	//	return true
+	//}
 
 	return false
 }

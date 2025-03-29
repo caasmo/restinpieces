@@ -36,8 +36,55 @@ func NewConcurrentSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentS
 	}
 }
 
-// processTick handles the sketch tick and IP blocking logic
 func (cs *ConcurrentSketch) processTick(a *App, ip string) {
+    cs.mu.Lock()
+    defer cs.mu.Unlock()
+
+    cs.sketch.Incr(ip)
+    cs.tickReq++
+
+    if cs.tickReq >= cs.tickSize {
+        cs.sketch.Tick()
+        cs.tickCount++
+        cs.tickReq = 0
+
+        windowCapacity := uint64(cs.sketch.WindowSize) * cs.tickSize
+        threshold := int((windowCapacity * thresholdPercent) / 100)
+
+        items := cs.sketch.SortedSlice()
+
+        // Phase 1: Collect IPs to block (under mutex protection)
+        ipsToBlock := make([]string, 0)
+        for _, item := range items {
+            if item.Count > uint32(threshold) {
+                ipsToBlock = append(ipsToBlock, item.Item)
+            } else {
+                break
+            }
+        }
+
+        // Release the mutex before calling Ristretto
+        //
+        // Even if multiple goroutines call a.BlockIP for the same IP
+        // concurrently, Ristretto will handle it safely. Blocking an IP
+        // multiple times is harmless if the operation is idempotent (same key).
+        // Ristretto batches writes into a ring buffer, so frequent Set calls
+        // for the same key will be merged efficiently. The last write (in
+        // buffer order) will determine the final value.
+        // Ristretto uses a buffered write mechanism (a ring buffer) to batch
+        // Set/Del operations for performance.
+        go func(ips []string) {
+            for _, ip := range ips {
+                if err := a.BlockIP(ip); err != nil {
+                    // Handle error (e.g., log it)
+                }
+            }
+        }(ipsToBlock)
+    }
+}
+
+// processTick handles the sketch tick and IP blocking logic
+func (cs *ConcurrentSketch) processTickWith(a *App, ip string) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 	
@@ -50,6 +97,7 @@ func (cs *ConcurrentSketch) processTick(a *App, ip string) {
 		cs.tickReq = 0
 		
 		// Calculate threshold for this window
+        // todo
 		windowCapacity := uint64(cs.sketch.WindowSize) * cs.tickSize
 		threshold := int((windowCapacity * thresholdPercent) / 100)
 		
@@ -60,9 +108,6 @@ func (cs *ConcurrentSketch) processTick(a *App, ip string) {
 		for _, item := range items {
 			if item.Count > uint32(threshold) {
 				if err := a.BlockIP(item.Item); err != nil {
-					slog.Error("failed to block IP", 
-						"ip", item.Item, 
-						"error", err)
 				}
 			} else {
 				// Since list is sorted, we can break early
