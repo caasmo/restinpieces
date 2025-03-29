@@ -11,10 +11,6 @@ type Cache[K comparable, V any] struct {
 	cache *ristr.Cache
 }
 
-func (rc *Cache[K, V]) Del(key K) {
-	rc.cache.Del(key)
-}
-
 func (rc *Cache[K, V]) Get(key K) (V, bool) {
 	value, found := rc.cache.Get(key)
 	if !found {
@@ -22,16 +18,6 @@ func (rc *Cache[K, V]) Get(key K) (V, bool) {
 		return zero, false
 	}
 	return value.(V), true
-}
-
-func (rc *Cache[K, V]) GetTTL(key K) (time.Duration, bool) {
-	// Ristretto doesn't expose TTL directly, so we return 0/false
-	// Alternatively could implement custom TTL tracking
-	return 0, false
-}
-
-func (rc *Cache[K, V]) MaxCost() int64 {
-	return rc.cache.MaxCost()
 }
 
 func (rc *Cache[K, V]) Set(key K, value V, cost int64) bool {
