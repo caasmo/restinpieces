@@ -1,3 +1,6 @@
 # Ignore all SQLite database files
 *.db
 .aider*
+
+# Ignore built assets
+assets/dist
