@@ -4,11 +4,11 @@
 package main
 
 import (
+	"compress/gzip"
 	"fmt"
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"github.com/evanw/esbuild/pkg/api"
@@ -100,9 +100,26 @@ func gzipAssets() error {
 			return err
 		}
 
-		cmd := exec.Command("gzip", "-kf", path)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
+		// Open the original file
+		in, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+
+		// Create output gzip file
+		out, err := os.Create(path + ".gz")
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+
+		// Create gzip writer
+		gz := gzip.NewWriter(out)
+		defer gz.Close()
+
+		// Copy content
+		_, err = io.Copy(gz, in)
+		return err
 	})
 }
