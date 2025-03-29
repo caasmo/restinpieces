@@ -17,6 +17,21 @@ import (
 	"github.com/caasmo/restinpieces/server"
 )
 
+func logEmbeddedAssets(assets fs.FS) {
+	assetCount := 0
+	fs.WalkDir(assets, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !d.IsDir() {
+			assetCount++
+			slog.Debug("embedded asset", "path", path)
+		}
+		return nil
+	})
+	slog.Debug("total embedded assets", "count", assetCount)
+}
+
 func main() {
 	// Initialize logging
 	logHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
@@ -33,18 +48,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Count embedded assets
-	assetCount := 0
-	fs.WalkDir(restinpieces.EmbeddedAssets, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if !d.IsDir() {
-			assetCount++
-		}
-		return nil
-	})
-	slog.Debug("embedded assets", "count", assetCount)
+	// Log embedded assets
+	logEmbeddedAssets(restinpieces.EmbeddedAssets)
 
 	ap, err := initApp(cfg)
 	if err != nil {
