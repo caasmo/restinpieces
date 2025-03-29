@@ -63,6 +63,7 @@ func (a *App) BlockIP(ip string) error {
 	nowUnix := now.Unix()
 	timeUntilNextBucket := (nextBucket * bucketDurationSec) - nowUnix
 	ttlNext := blockingDuration - time.Duration(timeUntilNextBucket)*time.Second
+
 	if ttlNext > 0 {
 		nextKey := formatBlockKey(ip, nextBucket)
 		successNext := a.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext)
