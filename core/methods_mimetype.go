@@ -6,12 +6,15 @@ import (
 )
 
 // ValidateContentType checks if the request's Content-Type matches the allowed type.
-// Returns nil if the content type is valid, otherwise returns a precomputed error response.
+// Returns:
+// - error (always "Invalid content type" for security)
+// - precomputed jsonResponse for error cases
 // Uses http.StatusUnsupportedMediaType (415) for invalid content types as per HTTP spec.
-func (a *App) ValidateContentType(r *http.Request, allowedType string) jsonResponse {
+func (a *App) ValidateContentType(r *http.Request, allowedType string) (error, jsonResponse) {
+	errInvalidType := errors.New("Invalid content type")
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "" {
-		return errorInvalidContentType
+		return errInvalidType, errorInvalidContentType
 	}
 
 	// Handle cases where Content-Type includes charset or other parameters
@@ -20,8 +23,8 @@ func (a *App) ValidateContentType(r *http.Request, allowedType string) jsonRespo
 	mediaType = strings.TrimSpace(mediaType)
 
 	if mediaType != allowedType {
-		return errorInvalidContentType
+		return errInvalidType, errorInvalidContentType
 	}
 
-	return jsonResponse{}
+	return nil, jsonResponse{}
 }
