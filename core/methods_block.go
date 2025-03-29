@@ -67,7 +67,6 @@ func (a *App) BlockIP(ip string) error {
 	if ttlNext > 0 {
 		nextKey := formatBlockKey(ip, nextBucket)
 		successNext := a.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext)
-		until := now.Add(blockingDuration)
 		slog.Info("IP blocked in next bucket",
 			"ip", ip,
 			"bucket", nextBucket,
