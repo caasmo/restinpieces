@@ -49,11 +49,3 @@ func CacheControlMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-		// makes them largely redundant for preventing revalidation checks. While ETags could
-		// potentially be used by some CDNs or caches even with 'immutable', generating them
-		// reliably for embedded assets without performance impact adds complexity. Relying
-		// on 'immutable' and URL-based cache busting is simpler and effective for this use case.
-
-		next.ServeHTTP(w, r)
-	})
-}
