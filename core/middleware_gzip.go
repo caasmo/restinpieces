@@ -1,0 +1,58 @@
+package core
+
+// TODO
+// If-Modified-Since
+// For fully static assets (common with embedded files), you can simplify further:
+// http.ServeContent(w, r, name, time.Time{}, f)
+// This disables If-Modified-Since checks but improves performance.
+
+import (
+	"io/fs"
+	"mime"
+	"time"
+	"net/http"
+	"path/filepath"
+	"strings"
+)
+
+func gzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip non-GET/HEAD requests immediately
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// Check Gzip support
+		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			// Attempt to serve precompressed version
+			gzPath := r.URL.Path + ".gz"
+			if f, err := fsys.Open(gzPath); err == nil {
+				defer f.Close()
+
+				// Set headers
+				w.Header().Set("Content-Encoding", "gzip")
+				w.Header().Add("Vary", "Accept-Encoding")
+				
+				// Get and set content type
+				ext := filepath.Ext(r.URL.Path)
+				if ct := mime.TypeByExtension(ext); ct != "" {
+					w.Header().Set("Content-Type", ct)
+				}
+
+				// Serve directly using FileServerFS's underlying mechanisms
+				http.ServeContent(w, r, r.URL.Path, modTime(f), f)
+				return
+			}
+		}
+
+		// Fallback to regular handler
+		next.ServeHTTP(w, r)
+	})
+}
+
+// Helper to get modtime from embedded files
+func modTime(f fs.File) time.Time {
+	info, _ := f.Stat()
+	return info.ModTime()
+}
