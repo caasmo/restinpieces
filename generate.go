@@ -1,4 +1,4 @@
-//go:generate go run gen/gogenerate-assets.go
+//go:generate go run gen/gogenerate-assets.go -baseDir public
 
 package restinpieces
 

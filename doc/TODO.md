@@ -2,6 +2,8 @@
 
 
 - callback.html copy to puclic
+- html no inline?
+- static versioning, net/html to parse ans sustitute with versioned js and css
 - i think public to static 
 - cache and other headers from assets use a middlware for api we have a map that we appli in response
     - try to be consistent
