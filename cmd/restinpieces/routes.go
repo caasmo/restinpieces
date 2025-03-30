@@ -32,7 +32,7 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 	// --- TODO ---
 	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger}
 
-	// --- api routes  ---
+	// --- api core routes  ---
 	ap.Router().Register(
 		//TODO
 		r.NewRoute(cfg.Endpoints.ListEndpoints).WithHandlerFunc(ap.ListEndpointsHandler),
