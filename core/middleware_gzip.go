@@ -51,6 +51,11 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		w.Header().Add("Vary", "Accept-Encoding")
 		
 		// Serve directly using FileServerFS's underlying mechanisms
+		// http.ServeContent automatically sets Content-Type based on:
+		// 1. The file extension in the path parameter (r.URL.Path)
+		// 2. If extension is unknown, it sniffs the first 512 bytes of content
+		// Using time.Time{} as modTime disables If-Modified-Since checks
+		// which is acceptable for immutable embedded assets
 		http.ServeContent(w, r, r.URL.Path, time.Time{}, f.(io.ReadSeeker))
 
 		next.ServeHTTP(w, r)
