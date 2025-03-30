@@ -11,6 +11,7 @@ import (
 	"io/fs"
 	"mime"
 	"time"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -25,9 +26,11 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 			return
 		}
 
+		slog.Debug("trying to serve", "path", r.URL.Path)
 		// Check Gzip support
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			// Attempt to serve precompressed version
+			slog.Debug("found header", "path", r.URL.Path)
 			gzPath := r.URL.Path + ".gz"
 			if f, err := fsys.Open(gzPath); err == nil {
 				defer f.Close()
