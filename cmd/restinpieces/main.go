@@ -54,6 +54,7 @@ func main() {
 	}
 
 	// Log embedded assets
+	slog.Debug("logging embedded assets", "public_dir", cfg.PublicDir)
 	logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg)
 
 	ap, err := initApp(cfg)
