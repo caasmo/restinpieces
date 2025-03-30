@@ -2,22 +2,15 @@
 
 package core
 
-import (
-	"net/http"
-)
+import "net/http"
 
-// StaticHeadersMiddleware adds cache-related HTTP headers suitable for static assets
-// during development (dev build tag). It aims to disable caching entirely.
-// It does NOT apply the production security headers (like CSP) to avoid interfering
-// with development tools (e.g., live reload, browser extensions).
+// StaticHeadersMiddleware for development doesn't set any cache headers,
+// allowing browsers to use their default no-caching behavior.
+// Security headers are also omitted to avoid interfering with dev tools.
 func StaticHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		// Apply development caching headers (effectively disabling caching).
-		// No need to differentiate file types in dev; we want everything fresh.
-		// Security headers (like CSP) are intentionally omitted in dev builds.
-		setHeaders(w, headersCacheStaticDev)
-
+		// No headers set - browsers will handle caching as they see fit
+		// which typically means no caching during development
 		next.ServeHTTP(w, r)
 	})
 }
