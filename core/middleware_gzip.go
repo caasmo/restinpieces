@@ -27,7 +27,9 @@ import (
 //   * Embedded assets are versioned with the application
 //   * No risk of serving stale content
 //   * Cache busting can be done through URL versioning
-func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
+// 
+// TODO no dependency on app. 
+func GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +54,6 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		// So we must remove the leading slash to correctly lookup files in the FS
 		// Example transforms:
 		//   /login.html → login.html.gz
-		//   /css/style.css → css/style.css.gz
 		//   /css/style.css → css/style.css.gz
 		gzPath := strings.TrimPrefix(r.URL.Path, "/") + ".gz"
 		f, err := fsys.Open(gzPath)

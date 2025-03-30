@@ -13,31 +13,22 @@ import (
 )
 
 func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
-	// Serve static files from configured public directory
-	//fs := http.FileServer(http.Dir(cfg.PublicDir))
-	//ap.Router().Handle("/", fs)
-	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
+	// --- file server ---
 	subFS, err := fs.Sub(restinpieces.EmbeddedAssets, cfg.PublicDir)
 	if err != nil {
-		// Handle the error appropriately, maybe log it or panic
+		// TODO
 		panic("failed to create sub filesystem: " + err.Error())
 	}
 
     ffs := http.FileServerFS(subFS)
-	ap.Router().Handle("/", ap.GzipMiddleware(subFS, ffs))
+	ap.Router().Handle("/", core.GzipMiddleware(subFS, ffs))
 
-
-
-
-
-
-
-
-	// Initialize blocking middleware
+	// --- TODO ---
 	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger}
 
-	// API routes with explicit /api prefix
+
+	// --- api routes  ---
 	ap.Router().Register(
 		//TODO
 		r.NewRoute(cfg.Endpoints.ListEndpoints).WithHandlerFunc(ap.ListEndpointsHandler),
@@ -50,7 +41,8 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		r.NewRoute(cfg.Endpoints.ListOAuth2Providers).WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware),
 		r.NewRoute(cfg.Endpoints.ConfirmVerification).WithHandlerFunc(ap.ConfirmVerificationHandler),
 
-		//custom routes example: mixing core middleware and custom handler
+		// --- custom routes  ---
+
 		r.NewRoute("GET /custom").WithHandlerFunc(cAp.Index),
 		// Test route for IP blocking functionality
 		r.NewRoute("GET /blocktest").WithHandlerFunc(cAp.Index).WithMiddleware(ap.BlockMiddleware()),

@@ -3,7 +3,10 @@
 
 - good enough release
 - document magix numbers of sketch. move it to new package, configuration
+- static assets, FS cache control. 
+    - all assets are go generated
 - init command, bootstrap create tables, create config and put in db.
+    - or just go generate
     - config toml or db. or json
     - dump-config to toml, maybe json
     - load-config 
@@ -12,7 +15,6 @@
 - maek method, global middleware before mux. block ip documentation, proper conf. fix TODO 
 - verify addresses paths shoudl be random or pseudo random?
 - revamp shell tests.
-- store?, just a sync.Map, do not overcomplicate,
 - CORS gzip middlewares 
 - gzip, go:generate gz all files html and javascript all files and put in FS, when serving set Content-Encoding: gzip. we avoid dinamyc gzip
     - FS
@@ -26,12 +28,12 @@
 - block jwt: cache db,  
 - block referrer
 - multidomain  
-- block non wnanted mimetypes: we go with per handler endpoint method, not allowing empty. document each handler 
-    - the mimetype required by a handler, is part of the logic of the handler. it should be handled there. document
-    - a global middleware, allowing only supported server json, html, css, js
-    - but still endpoints shoudl enforce its allowed mimetype. method like auth mimetype(allowed []) with default json?
-    - a mimetype ddos: it 
-    - allow empty?
+- store?, just a sync.Map, do not overcomplicate,
+- a global mimetype middleware?, allowing only supported server json, html, css, js,
+    - we already have a mimetype method for handlers. good practices while making a handler is 
+        - use authenticate (do i need auth)
+        - use mimetype (what mimetype do i allow)
+        - method (already handled by router)
 - make defensice goroutine or middleware??? has and checks req/second and maybe server load, dinamically add block modules.
 - block methods automatically, win against router?
 - in process litestream 
@@ -80,6 +82,11 @@
 
 ### done
 
+- block non wnanted mimetypes: with per handler endpoint method, not allowing empty. document each handler 
+    - the mimetype required by a handler, is part of the logic of the handler. it should be handled there. document
+    - but still endpoints shoudl enforce its allowed mimetype. method like auth mimetype(allowed []) with default json?
+    - a mimetype ddos: it 
+    - allow empty?
 - block ip, protecting server: mild DDos
     - CMS https://github.com/shenwei356/countminsketch
         - 2000 x 10 make default 160 k at startup of the middleware
