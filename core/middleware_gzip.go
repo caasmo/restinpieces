@@ -17,22 +17,21 @@ import (
 )
 
 // TODO cache control headers for assets
-//w.Header().Set("Cache-Control", "public, max-age=86400, immutable") // 1 day
-//w.Header().Set("ETag", "") // Empty since we don't support If-None-Match
+// w.Header().Set("Cache-Control", "public, max-age=86400, immutable") // 1 day
+// w.Header().Set("ETag", "") // Empty since we don't support If-None-Match
 // For caching, we shoudl rely on:
 // - Cache-Control header with long max-age (set elsewhere)
 // - Content-based ETags (hash of file contents)
 // - The immutable nature of embedded assets
 // TODO versioning
-//   * Embedded assets are versioned with the application
-//   * No risk of serving stale content
-//   * Cache busting can be done through URL versioning
-// 
-// TODO no dependency on app. 
+//   - Embedded assets are versioned with the application
+//   - No risk of serving stale content
+//   - Cache busting can be done through URL versioning
+//
+// TODO no dependency on app.
 func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 
 			// Skip non-GET/HEAD requests immediately
 			if r.Method != http.MethodGet && r.Method != http.MethodHead {
@@ -81,7 +80,6 @@ func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
 				return
 			}
 
-
 			// Set gzip specific headers
 			w.Header().Set("Content-Encoding", "gzip")
 			w.Header().Add("Vary", "Accept-Encoding")
@@ -100,4 +98,3 @@ func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
 		})
 	}
 }
-

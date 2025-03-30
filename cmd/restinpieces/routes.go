@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces"
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	r "github.com/caasmo/restinpieces/router"
 	"io/fs"
@@ -21,7 +21,7 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		panic("failed to create sub filesystem: " + err.Error())
 	}
 
-    ffs := http.FileServerFS(subFS)
+	ffs := http.FileServerFS(subFS)
 	ap.Router().Register(
 		r.NewRoute("/").WithHandler(ffs).WithMiddleware(
 			core.StaticHeadersMiddleware,
@@ -31,7 +31,6 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 
 	// --- TODO ---
 	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger}
-
 
 	// --- api routes  ---
 	ap.Router().Register(

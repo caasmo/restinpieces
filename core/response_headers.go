@@ -54,8 +54,6 @@ var headersCacheStaticHtml = map[string]string{
 	"Cache-Control": "public, no-cache",
 }
 
-
-
 // headersSecurityStaticHtml defines security-related headers specifically for HTML documents.
 var headersSecurityStaticHtml = map[string]string{
 	// Content-Security-Policy (CSP) governs browser behavior for resources loaded as part of rendering a document.
@@ -65,7 +63,7 @@ var headersSecurityStaticHtml = map[string]string{
 	//                      Needs adjustment if you load resources from CDNs or other domains.
 	//
 	// 'default-src 'self'' disable inline scripts and style! like:
-	// 
+	//
 	// <style>body { color: red }</style>
 	// <script>alert('hi');</script>
 	//
@@ -73,28 +71,28 @@ var headersSecurityStaticHtml = map[string]string{
 	//
 	// <link rel="stylesheet" href="/styles.css">
 	// <script src="/script.js"></script>
-	// 
-	// Using external CSS/JS files via <link> and <script> is more secure than inline code 
-    // Inline scripts/styles (<script>...</script>, <style>...</style>, or
-    // inline event handlers like onclick="...") are high-risk vectors for XSS
-    // attacks. If an attacker injects malicious code into dynamically
-    // generated content (e.g., user comments), the browser will execute it.
-    // External files avoid this because they’re static assets served from your
-    // domain, which attackers can’t easily modify unless they compromise your
-    // server.
-    // 
-    // It also enables Subresource Integrity (SRI). External files can use the
-    // integrity attribute to cryptographically verify that the file hasn’t
-    // been tampered with (e.g., a compromised CDN or MITM attack). Inline code
-    // lacks this safeguard
-    // <script src="/script.js" integrity="sha256-..."></script>
-    //
-    // CSP wants you to:
-    // - Serve all code as external files from trusted origins ('self', trusted CDNs).
-    // - Avoid inline code entirely (no 'unsafe-inline' exceptions).
-    // - Use SRI to ensure file integrity
+	//
+	// Using external CSS/JS files via <link> and <script> is more secure than inline code
+	// Inline scripts/styles (<script>...</script>, <style>...</style>, or
+	// inline event handlers like onclick="...") are high-risk vectors for XSS
+	// attacks. If an attacker injects malicious code into dynamically
+	// generated content (e.g., user comments), the browser will execute it.
+	// External files avoid this because they’re static assets served from your
+	// domain, which attackers can’t easily modify unless they compromise your
+	// server.
+	//
+	// It also enables Subresource Integrity (SRI). External files can use the
+	// integrity attribute to cryptographically verify that the file hasn’t
+	// been tampered with (e.g., a compromised CDN or MITM attack). Inline code
+	// lacks this safeguard
+	// <script src="/script.js" integrity="sha256-..."></script>
+	//
+	// CSP wants you to:
+	// - Serve all code as external files from trusted origins ('self', trusted CDNs).
+	// - Avoid inline code entirely (no 'unsafe-inline' exceptions).
+	// - Use SRI to ensure file integrity
 	//"Content-Security-Policy": "default-src 'self'",
-    "Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
+	"Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
 
 	// Other security headers like X-Frame-Options, Referrer-Policy, Permissions-Policy
 	// could be added here later if needed for HTML responses.
