@@ -15,8 +15,15 @@ import (
 	"strings"
 )
 
+// TODO cache control headers for assets
+//w.Header().Set("Cache-Control", "public, max-age=86400, immutable") // 1 day
+//w.Header().Set("ETag", "") // Empty since we don't support If-None-Match
 func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
+
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+
 		// Skip non-GET/HEAD requests immediately
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
 			slog.Debug("gzip middleware skipping non-GET/HEAD request", "method", r.Method)
