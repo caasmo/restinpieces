@@ -67,6 +67,9 @@ var headersSecurityStaticHtml = map[string]string{
 	// <style>body { color: red }</style>
 	// <script>alert('hi');</script>
 	//
+	// also no
+    //    <button onclick="window.location.href='/verify-email.html'" style="background-color: #4caf50" >
+	//
 	// but allows:
 	//
 	// <link rel="stylesheet" href="/styles.css">
@@ -91,8 +94,8 @@ var headersSecurityStaticHtml = map[string]string{
 	// - Serve all code as external files from trusted origins ('self', trusted CDNs).
 	// - Avoid inline code entirely (no 'unsafe-inline' exceptions).
 	// - Use SRI to ensure file integrity
-	//"Content-Security-Policy": "default-src 'self'",
-	"Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
+	"Content-Security-Policy": "default-src 'self'",
+	//"Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
 
 	// Other security headers like X-Frame-Options, Referrer-Policy, Permissions-Policy
 	// could be added here later if needed for HTML responses.
