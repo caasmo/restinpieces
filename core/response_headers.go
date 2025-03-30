@@ -72,15 +72,20 @@ var headersCacheStaticDev = map[string]string{
 	"Expires": "0",
 }
 
-// TODO
-var htmlHeaders = map[string]string{
 
-	// CSP governs browser behavior for resources loaded as part of rendering a document
+// headersSecurityStaticHtml defines security-related headers specifically for HTML documents.
+var headersSecurityStaticHtml = map[string]string{
+	// Content-Security-Policy (CSP) governs browser behavior for resources loaded as part of rendering a document.
 	// Prevents cross-site scripting (XSS) attacks by controlling which resources can be loaded.
-	// means: “By default, only load resources from this server’s origin, nothing external.”
-	// Unnecessary for pure API servers since they don't serve HTML/JavaScript
+	// 'default-src 'self'': By default, only load resources (scripts, styles, images, fonts, etc.)
+	//                      from the same origin as the HTML document. This is a strong baseline.
+	//                      Needs adjustment if you load resources from CDNs or other domains.
 	"Content-Security-Policy": "default-src 'self'",
 
+	// Other security headers like X-Frame-Options, Referrer-Policy, Permissions-Policy
+	// could be added here later if needed for HTML responses.
+
+	// Example of a previously considered header (X-XSS-Protection):
 	// mitigate reflected XSS attacks: malicious scripts are injected into a
 	// page via user input (e.g., query parameters, form data) and then
 	// "reflected" back to the user in the server’s response.
