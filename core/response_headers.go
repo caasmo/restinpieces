@@ -35,7 +35,7 @@ var apiJsonDefaultHeaders = map[string]string{
 
 // headerCacheStatic defines cache headers for immutable static assets (CSS, JS, images).
 // Assumes filename-based versioning for cache busting.
-var headersCacheStatic = map[string]string{
+var headerCacheStatic = map[string]string{
 	// - public: Allows caching by intermediate proxies and browsers.
 	// - max-age=31536000: Cache for 1 year.
 	// - immutable: Indicates the file content will never change. Browsers
@@ -45,7 +45,7 @@ var headersCacheStatic = map[string]string{
 }
 
 // headerCacheStaticHtml defines cache headers for HTML entry point files.
-var headersCacheStaticHtml = map[string]string{
+var headerCacheStaticHtml = map[string]string{
 	// - public: Allows caching by intermediate proxies and browsers.
 	// - no-cache: Requires the cache to revalidate with the origin server
 	//             before using a cached response. Ensures the latest HTML
