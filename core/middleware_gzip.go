@@ -7,6 +7,7 @@ package core
 // This disables If-Modified-Since checks but improves performance.
 
 import (
+	"io"
 	"io/fs"
 	"mime"
 	"time"
@@ -41,7 +42,7 @@ func gzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 				}
 
 				// Serve directly using FileServerFS's underlying mechanisms
-				http.ServeContent(w, r, r.URL.Path, modTime(f), f)
+				http.ServeContent(w, r, r.URL.Path, time.Time{}, f.(io.ReadSeeker))
 				return
 			}
 		}
@@ -51,8 +52,3 @@ func gzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 	})
 }
 
-// Helper to get modtime from embedded files
-func modTime(f fs.File) time.Time {
-	info, _ := f.Stat()
-	return info.ModTime()
-}
