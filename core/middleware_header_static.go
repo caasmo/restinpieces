@@ -14,18 +14,15 @@ import (
 func StaticHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		// Apply appropriate cache and security headers based on file type using predefined maps.
+		// For HTML files:
 		if strings.HasSuffix(r.URL.Path, ".html") {
-			// For HTML files:
-			// Apply revalidation caching headers.
 			setHeaders(w, headersCacheStaticHtml)
-			// Apply security headers specific to HTML documents.
 			setHeaders(w, headersSecurityStaticHtml)
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// Apply immutable caching headers for non-HTML assets (CSS, JS, images, etc.)
+		// For CSS, JS, images, etc.
 		setHeaders(w, headersCacheStatic)
 
 		// Note: We intentionally avoid deprecated headers like 'Expires' and 'Pragma'.
