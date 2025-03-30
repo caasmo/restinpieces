@@ -46,9 +46,11 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		}
 		defer f.Close()
 
-		// Set headers
+		// Set headers for optimal caching of immutable assets
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Add("Vary", "Accept-Encoding")
+		w.Header().Set("Cache-Control", "public, max-age=86400, immutable") // 1 day
+		w.Header().Set("ETag", "") // Empty since we don't support If-None-Match
 		
 		// Serve directly using FileServerFS's underlying mechanisms
 		// http.ServeContent automatically sets Content-Type based on:
