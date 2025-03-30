@@ -32,9 +32,23 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 			// Attempt to serve precompressed version
 			slog.Debug("found header", "path", r.URL.Path)
 			gzPath := r.URL.Path + ".gz"
-			if f, err := fsys.Open(gzPath); err == nil {
+			slog.Debug("attempting to open gzip file", "path", gzPath)
+			f, err := fsys.Open(gzPath)
+			if err != nil {
+				slog.Debug("failed to open gzip file", "path", gzPath, "error", err)
+				// For debugging, list all files in the FS
+				fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
+					if err != nil {
+						return err
+					}
+					if !d.IsDir() {
+						slog.Debug("available file in FS", "path", path)
+					}
+					return nil
+				})
+			} else {
 				defer f.Close()
-				slog.Debug("serving precompressed gzip file", "path", gzPath)
+				slog.Debug("successfully opened gzip file", "path", gzPath)
 
 				// Set headers
 				w.Header().Set("Content-Encoding", "gzip")
