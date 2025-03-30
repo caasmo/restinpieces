@@ -69,10 +69,13 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		}
 		defer f.Close()
 
-		// Check if the file implements io.ReadSeeker, required by http.ServeContent for efficient serving.
+		// Check if the file implements io.ReadSeeker. While files from standard library
+		// fs.FS implementations (like embed.FS, os.DirFS) typically do, custom implementations
+		// might not. http.ServeContent works most efficiently with io.ReadSeeker (e.g., for Range requests).
+		// This check ensures robustness against different fs.FS sources.
 		seeker, ok := f.(io.ReadSeeker)
 		if !ok {
-			slog.Error("gzipped file does not implement io.ReadSeeker", "path", gzPath)
+			slog.Error("gzipped file does not implement io.ReadSeeker, falling back", "path", gzPath)
 			// Fall back to the next handler as we cannot efficiently serve this file.
 			next.ServeHTTP(w, r)
 			return
