@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/core"
 	r "github.com/caasmo/restinpieces/router"
 	"net/http"
@@ -16,8 +17,9 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 	//ap.Router().Handle("/", fs)
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
-    subFS, _ := fs.Sub(embeddedAssets, cfg.PublicDir)
+    subFS, _ := fs.Sub(restinpieces.EmbeddedAssets, cfg.PublicDir)
     ffs := http.FileServerFS(subFS)
+	ap.Router().Handle("/", ffs)
 
 
 
