@@ -4,6 +4,7 @@
 - cache and other headers from assets use a middlware for api we have a map that we appli in response
     - try to be consistent
     - 'static' form html, js, css ... and api for dinamic 
+    - gzip header moev to response_headers
 
 - good enough release
 - document magix numbers of sketch. move it to new package, configuration
