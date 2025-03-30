@@ -197,3 +197,8 @@ input {
 .button-container button {
   flex: 1;
 }
+
+/* Register page specific styles */
+.register-page {
+  max-width: 400px;
+}
