@@ -31,7 +31,13 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			// Attempt to serve precompressed version
 			slog.Debug("found header", "path", r.URL.Path)
-			// Remove leading slash to match embedded FS paths
+			// URL paths from http.Request always start with a slash (/path/to/file)
+			// Embedded FS paths never start with a slash (path/to/file)
+			// This is because FS paths are relative to the FS root
+			// So we must remove the leading slash to correctly lookup files in the FS
+			// Example transforms:
+			//   /login.html → login.html.gz
+			//   /css/style.css → css/style.css.gz
 			gzPath := strings.TrimPrefix(r.URL.Path, "/") + ".gz"
 			slog.Debug("attempting to open gzip file", "path", gzPath)
 			f, err := fsys.Open(gzPath)
