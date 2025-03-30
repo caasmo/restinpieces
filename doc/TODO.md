@@ -3,6 +3,8 @@
 
 - cache and other headers from assets use a middlware for api we have a map that we appli in response
     - try to be consistent
+    - 'static' form html, js, css ... and api for dinamic 
+
 - good enough release
 - document magix numbers of sketch. move it to new package, configuration
 - static assets, FS cache control. 

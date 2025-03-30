@@ -19,14 +19,14 @@ func CacheControlMiddleware(next http.Handler) http.Handler {
 		// Apply appropriate cache headers based on file type using predefined maps.
 		if !strings.HasSuffix(r.URL.Path, ".html") {
 			// Apply immutable caching headers for non-HTML assets (CSS, JS, images, etc.)
-			setHeaders(w, headerCacheStatic)
+			setHeaders(w, headersCacheStatic)
 			next.ServeHTTP(w, r)
 			return // Return early for non-HTML assets
 		}
 
-		// For HTML files (if we reach here):
+		// For HTML files 
 		// Apply revalidation caching headers for HTML files.
-		setHeaders(w, headerCacheStaticHtml)
+		setHeaders(w, headersCacheStaticHtml)
 
 		// Note: We intentionally avoid deprecated headers like 'Expires' and 'Pragma'.
 		// Note: For immutable assets, 'ETag' and 'Last-Modified' are redundant for
