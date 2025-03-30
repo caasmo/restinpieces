@@ -1,6 +1,8 @@
 ### TODOs
 
 
+- cache and other headers from assets use a middlware for api we have a map that we appli in response
+    - try to be consistent
 - good enough release
 - document magix numbers of sketch. move it to new package, configuration
 - static assets, FS cache control. 
