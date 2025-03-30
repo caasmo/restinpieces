@@ -7,12 +7,13 @@ package core
 // This disables If-Modified-Since checks but improves performance.
 
 import (
+	"errors"
 	"io"
 	"io/fs"
-	"time"
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // TODO cache control headers for assets
@@ -52,14 +53,31 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		// Example transforms:
 		//   /login.html → login.html.gz
 		//   /css/style.css → css/style.css.gz
+		//   /css/style.css → css/style.css.gz
 		gzPath := strings.TrimPrefix(r.URL.Path, "/") + ".gz"
 		f, err := fsys.Open(gzPath)
 		if err != nil {
-			// If gzip file not found, fall through to regular handler
+			if errors.Is(err, fs.ErrNotExist) {
+				// Gzipped file doesn't exist, fall through to next handler (likely serving the uncompressed version)
+				slog.Debug("gzipped file not found, falling back", "path", gzPath)
+			} else {
+				// Log unexpected errors (e.g., permissions)
+				slog.Error("error opening gzipped file", "path", gzPath, "error", err)
+			}
 			next.ServeHTTP(w, r)
 			return
 		}
 		defer f.Close()
+
+		// Check if the file implements io.ReadSeeker, required by http.ServeContent for efficient serving.
+		seeker, ok := f.(io.ReadSeeker)
+		if !ok {
+			slog.Error("gzipped file does not implement io.ReadSeeker", "path", gzPath)
+			// Fall back to the next handler as we cannot efficiently serve this file.
+			next.ServeHTTP(w, r)
+			return
+		}
+
 
 		// Set gzip specific headers
 		w.Header().Set("Content-Encoding", "gzip")
@@ -75,7 +93,7 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		// - The modification time is irrelevant since the content is fixed
 		// - This disables If-Modified-Since checks which is acceptable because:
 		//   * Reduces server-side processing overhead
-		http.ServeContent(w, r, r.URL.Path, time.Time{}, f.(io.ReadSeeker))
+		http.ServeContent(w, r, r.URL.Path, time.Time{}, seeker)
 	})
 }
 
