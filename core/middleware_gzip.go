@@ -31,7 +31,8 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			// Attempt to serve precompressed version
 			slog.Debug("found header", "path", r.URL.Path)
-			gzPath := r.URL.Path + ".gz"
+			// Remove leading slash to match embedded FS paths
+			gzPath := strings.TrimPrefix(r.URL.Path, "/") + ".gz"
 			slog.Debug("attempting to open gzip file", "path", gzPath)
 			f, err := fsys.Open(gzPath)
 			if err != nil {
