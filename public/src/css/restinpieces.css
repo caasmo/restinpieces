@@ -225,3 +225,42 @@ input {
   max-width: 200px;
   font-size: 16px;
 }
+
+/* List endpoints page specific styles */
+.endpoints-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.endpoints-nav {
+  display: flex;
+  gap: 15px;
+}
+
+.endpoints-nav a {
+  text-decoration: none;
+  color: #2196f3;
+}
+
+.endpoints-nav a:last-child {
+  color: #f44336;
+}
+
+.auth-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.endpoints-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.refresh-btn {
+  margin-bottom: 20px;
+}

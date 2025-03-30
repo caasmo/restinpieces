@@ -7,40 +7,24 @@
     <link rel="stylesheet" href="/css/restinpieces.css" />
   </head>
   <body>
-    <div
-      style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-      "
-    >
+    <div class="endpoints-header">
       <h1>API Endpoints</h1>
-      <div style="display: flex; gap: 15px">
-        <a href="/login.html" style="text-decoration: none; color: #2196f3"
-          >Login</a
-        >
-        <a href="/dashboard.html" style="text-decoration: none; color: #2196f3"
-          >Dashboard</a
-        >
-        <a href="/logout.html" style="text-decoration: none; color: #f44336"
-          >Logout</a
-        >
+      <div class="endpoints-nav">
+        <a href="/login.html">Login</a>
+        <a href="/dashboard.html">Dashboard</a>
+        <a href="/logout.html">Logout</a>
       </div>
     </div>
 
-    <div
-      id="auth-status"
-      style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px"
-    >
+    <div id="auth-status" class="auth-status">
       <span id="auth-text">Checking auth status...</span>
     </div>
 
-    <button id="get-endpoints-btn" style="margin-bottom: 20px">
+    <button id="get-endpoints-btn" class="refresh-btn">
       Refresh Endpoints
     </button>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px">
+    <div class="endpoints-grid">
       <div id="saved-endpoints-container">
         <h3>Saved Endpoints</h3>
         <ul id="saved-endpoints-list" class="endpoint-list"></ul>
