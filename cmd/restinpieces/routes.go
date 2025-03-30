@@ -23,7 +23,8 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		// Handle the error appropriately, maybe log it or panic
 		panic("failed to create sub filesystem: " + err.Error())
 	}
-	ffs := http.FileServer(http.FS(subFS))
+
+    ffs := http.FileServerFS(subFS)
 	ap.Router().Handle("/", ffs)
 
 
