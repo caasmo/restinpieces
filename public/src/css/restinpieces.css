@@ -264,3 +264,25 @@ input {
 .refresh-btn {
   margin-bottom: 20px;
 }
+
+/* Providers page specific styles */
+.providers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.providers-nav {
+  display: flex;
+  gap: 15px;
+}
+
+.providers-nav a {
+  text-decoration: none;
+  color: #2196f3;
+}
+
+.providers-result-section {
+  display: none;
+}
