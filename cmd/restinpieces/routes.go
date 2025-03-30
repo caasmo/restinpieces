@@ -22,7 +22,7 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 	}
 
     ffs := http.FileServerFS(subFS)
-	ap.Router().Handle("/", core.GzipMiddleware(subFS, ffs))
+	ap.Router().Handle("/", core.StaticHeadersMiddleware(core.GzipMiddleware(subFS, ffs)))
 
 	// --- TODO ---
 	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger}
