@@ -99,4 +99,5 @@ func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
 			http.ServeContent(w, r, r.URL.Path, time.Time{}, seeker)
 		})
 	}
+}
 
