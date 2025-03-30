@@ -21,9 +21,9 @@ function renderEndpoints(endpoints, listElement, containerElement) {
         </li>`;
     }
     listElement.innerHTML = html;
-    containerElement.style.display = "block";
+    containerElement.classList.remove("hidden");
   } else {
-    containerElement.style.display = "none";
+    containerElement.classList.add("hidden");
   }
 }
 

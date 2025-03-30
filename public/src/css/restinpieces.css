@@ -390,3 +390,7 @@ input {
 .confirm-hidden {
   display: none;
 }
+
+.hidden {
+  display: none;
+}
