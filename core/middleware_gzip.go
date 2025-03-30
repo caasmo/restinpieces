@@ -16,7 +16,7 @@ import (
 	"strings"
 )
 
-func gzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
+func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Skip non-GET/HEAD requests immediately
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {

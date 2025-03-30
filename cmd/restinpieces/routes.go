@@ -25,7 +25,7 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 	}
 
     ffs := http.FileServerFS(subFS)
-	ap.Router().Handle("/", gzipMiddleware(subFS, ffs))
+	ap.Router().Handle("/", ap.GzipMiddleware(subFS, ffs))
 
 
 
