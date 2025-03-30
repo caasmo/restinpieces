@@ -9,11 +9,9 @@ package core
 import (
 	"io"
 	"io/fs"
-	"mime"
 	"time"
 	"log/slog"
 	"net/http"
-	"path/filepath"
 	"strings"
 )
 
