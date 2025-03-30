@@ -64,7 +64,7 @@ var headersSecurityStaticHtml = map[string]string{
 	//                      from the same origin as the HTML document. This is a strong baseline.
 	//                      Needs adjustment if you load resources from CDNs or other domains.
 	//
-	// This disable inline scripts and style! like:
+	// 'default-src 'self'' disable inline scripts and style! like:
 	// 
 	// <style>body { color: red }</style>
 	// <script>alert('hi');</script>
@@ -83,7 +83,7 @@ var headersSecurityStaticHtml = map[string]string{
     // domain, which attackers can’t easily modify unless they compromise your
     // server.
     // 
-    // Enables Subresource Integrity (SRI). External files can use the
+    // It also enables Subresource Integrity (SRI). External files can use the
     // integrity attribute to cryptographically verify that the file hasn’t
     // been tampered with (e.g., a compromised CDN or MITM attack). Inline code
     // lacks this safeguard
