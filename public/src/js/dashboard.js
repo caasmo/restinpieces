@@ -67,8 +67,26 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // Attach click handler directly to button
+  // Attach click handlers to all buttons
   document
     .getElementById("refresh-token-btn")
     .addEventListener("click", refreshToken);
+
+  document
+    .getElementById("verify-email-btn")
+    .addEventListener("click", () => {
+      window.location.href = "/verify-email.html";
+    });
+
+  document
+    .getElementById("list-endpoints-btn")
+    .addEventListener("click", () => {
+      window.location.href = "/list-endpoints.html";
+    });
+
+  document
+    .getElementById("logout-btn")
+    .addEventListener("click", () => {
+      window.location.href = "/logout.html";
+    });
 });
