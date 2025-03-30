@@ -18,8 +18,9 @@ import (
 )
 
 func logEmbeddedAssets(assets fs.FS) {
+	subFS, err := fs.Sub(assets, cfg.PublicDir)
 	assetCount := 0
-	fs.WalkDir(assets, ".", func(path string, d fs.DirEntry, err error) error {
+	fs.WalkDir(subFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
