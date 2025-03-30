@@ -5,6 +5,7 @@ import (
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/core"
 	r "github.com/caasmo/restinpieces/router"
+	"io/fs"
 	"net/http"
 
 	// custom handlers and middleware
@@ -17,8 +18,12 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 	//ap.Router().Handle("/", fs)
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
-    subFS, _ := fs.Sub(restinpieces.EmbeddedAssets, cfg.PublicDir)
-    ffs := http.FileServerFS(subFS)
+	subFS, err := fs.Sub(restinpieces.EmbeddedAssets, cfg.PublicDir)
+	if err != nil {
+		// Handle the error appropriately, maybe log it or panic
+		panic("failed to create sub filesystem: " + err.Error())
+	}
+	ffs := http.FileServer(http.FS(subFS))
 	ap.Router().Handle("/", ffs)
 
 
