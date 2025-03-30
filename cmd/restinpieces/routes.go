@@ -24,8 +24,8 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
     ffs := http.FileServerFS(subFS)
 	ap.Router().Register(
 		r.NewRoute("/").WithHandler(ffs).WithMiddleware(
-			core.StaticHeadersMiddleware,
-			core.GzipMiddleware(subFS),
+			core.StaticHeadersMiddleware(),
+			core.GzipMiddleware(subFS)(),
 		),
 	)
 

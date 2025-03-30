@@ -29,10 +29,9 @@ import (
 //   * Cache busting can be done through URL versioning
 // 
 // TODO no dependency on app. 
-func GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
-
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 
 		// Skip non-GET/HEAD requests immediately
