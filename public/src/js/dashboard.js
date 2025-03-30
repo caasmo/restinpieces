@@ -1,4 +1,4 @@
-import Restinpieces from "/js/restinpieces.js";
+import Restinpieces from "./sdk/restinpieces.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // Initialize Restinpieces with config
