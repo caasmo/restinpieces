@@ -1,6 +1,8 @@
 ### TODOs
 
 
+- callback.html copy to puclic
+- i think public to static 
 - cache and other headers from assets use a middlware for api we have a map that we appli in response
     - try to be consistent
     - 'static' form html, js, css ... and api for dinamic 
