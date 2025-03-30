@@ -12,9 +12,19 @@ import (
 
 func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 	// Serve static files from configured public directory
-	fs := http.FileServer(http.Dir(cfg.PublicDir))
-	ap.Router().Handle("/", fs)
+	//fs := http.FileServer(http.Dir(cfg.PublicDir))
+	//ap.Router().Handle("/", fs)
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
+
+    subFS, _ := fs.Sub(embeddedAssets, cfg.PublicDir)
+    ffs := http.FileServerFS(subFS)
+
+
+
+
+
+
+
 
 	// Initialize blocking middleware
 	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger}
