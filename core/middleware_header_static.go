@@ -15,18 +15,18 @@ func StaticHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// Apply appropriate cache and security headers based on file type using predefined maps.
-		if !strings.HasSuffix(r.URL.Path, ".html") {
-			// Apply immutable caching headers for non-HTML assets (CSS, JS, images, etc.)
-			setHeaders(w, headersCacheStatic)
+		if strings.HasSuffix(r.URL.Path, ".html") {
+			// For HTML files:
+			// Apply revalidation caching headers.
+			setHeaders(w, headersCacheStaticHtml)
+			// Apply security headers specific to HTML documents.
+			setHeaders(w, headersSecurityStaticHtml)
 			next.ServeHTTP(w, r)
-			return // Return early for non-HTML assets
+			return
 		}
 
-		// For HTML files (if we reach here):
-		// Apply revalidation caching headers.
-		setHeaders(w, headersCacheStaticHtml)
-		// Apply security headers specific to HTML documents.
-		setHeaders(w, headersSecurityStaticHtml)
+		// Apply immutable caching headers for non-HTML assets (CSS, JS, images, etc.)
+		setHeaders(w, headersCacheStatic)
 
 		// Note: We intentionally avoid deprecated headers like 'Expires' and 'Pragma'.
 		// Note: For immutable assets, 'ETag' and 'Last-Modified' are redundant for
