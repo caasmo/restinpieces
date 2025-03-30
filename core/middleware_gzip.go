@@ -26,11 +26,8 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 			return
 		}
 
-		slog.Debug("trying to serve", "path", r.URL.Path)
 		// Check Gzip support
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			// Attempt to serve precompressed version
-			slog.Debug("found header", "path", r.URL.Path)
 			// URL paths from http.Request always start with a slash (/path/to/file)
 			// Embedded FS paths never start with a slash (path/to/file)
 			// This is because FS paths are relative to the FS root
@@ -39,23 +36,11 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 			//   /login.html → login.html.gz
 			//   /css/style.css → css/style.css.gz
 			gzPath := strings.TrimPrefix(r.URL.Path, "/") + ".gz"
-			slog.Debug("attempting to open gzip file", "path", gzPath)
 			f, err := fsys.Open(gzPath)
 			if err != nil {
-				slog.Debug("failed to open gzip file", "path", gzPath, "error", err)
-				// For debugging, list all files in the FS
-				fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
-					if err != nil {
-						return err
-					}
-					if !d.IsDir() {
-						slog.Debug("available file in FS", "path", path)
-					}
-					return nil
-				})
+				// If gzip file not found, fall through to regular handler
 			} else {
 				defer f.Close()
-				slog.Debug("successfully opened gzip file", "path", gzPath)
 
 				// Set headers
 				w.Header().Set("Content-Encoding", "gzip")
@@ -73,7 +58,6 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 			}
 		}
 
-		slog.Debug("falling back to regular handler", "path", r.URL.Path)
 		next.ServeHTTP(w, r)
 	})
 }
