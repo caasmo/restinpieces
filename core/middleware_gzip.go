@@ -18,6 +18,14 @@ import (
 // TODO cache control headers for assets
 //w.Header().Set("Cache-Control", "public, max-age=86400, immutable") // 1 day
 //w.Header().Set("ETag", "") // Empty since we don't support If-None-Match
+// For caching, we shoudl rely on:
+// - Cache-Control header with long max-age (set elsewhere)
+// - Content-based ETags (hash of file contents)
+// - The immutable nature of embedded assets
+// TODO versioning
+//   * Embedded assets are versioned with the application
+//   * No risk of serving stale content
+//   * Cache busting can be done through URL versioning
 func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 
 
@@ -66,21 +74,7 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		// - Embedded assets are immutable - they don't change after compilation
 		// - The modification time is irrelevant since the content is fixed
 		// - This disables If-Modified-Since checks which is acceptable because:
-		//   * Embedded assets are versioned with the application
-		//   * No risk of serving stale content
-		//   * Cache busting can be done through URL versioning
 		//   * Reduces server-side processing overhead
-		//
-		// For caching, we rely on:
-		// - Cache-Control header with long max-age (set elsewhere)
-		// - Content-based ETags (hash of file contents)
-		// - The immutable nature of embedded assets
-		//
-		// This approach provides:
-		// - Optimal performance by skipping unnecessary checks
-		// - Effective caching through other mechanisms
-		// - Simplified server implementation
-		// - Security through versioned URLs and content hashes
 		http.ServeContent(w, r, r.URL.Path, time.Time{}, f.(io.ReadSeeker))
 
 		next.ServeHTTP(w, r)
