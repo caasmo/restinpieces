@@ -62,3 +62,45 @@ button:hover {
 .error:not(:empty) {
   display: block; /* Show when has content */
 }
+
+/* Endpoint list styles */
+.endpoint-list {
+  list-style: none;
+  padding: 0;
+}
+
+.endpoint-item {
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.method {
+  display: inline-block;
+  width: 60px;
+  font-weight: bold;
+}
+
+.get {
+  color: #61affe;
+}
+
+.post {
+  color: #49cc90;
+}
+
+.put {
+  color: #fca130;
+}
+
+.delete {
+  color: #f93e3e;
+}
+
+.patch {
+  color: #50e3c2;
+}
