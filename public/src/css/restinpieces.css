@@ -47,6 +47,18 @@ button {
   height: 40px;
   min-width: 120px;
 }
+
+.verify-email-btn {
+  background-color: #4caf50;
+}
+
+.list-endpoints-btn {
+  background-color: #9c27b0;
+}
+
+.logout-btn {
+  background-color: #f44336;
+}
 button:hover {
   opacity: 0.9;
 }
