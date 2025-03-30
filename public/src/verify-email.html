@@ -4,61 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Email Verification Request</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-        text-align: center;
-      }
-      .message {
-        margin: 20px 0;
-        padding: 20px;
-        border-radius: 4px;
-      }
-      .success {
-        background-color: #e8f5e9;
-        color: #2e7d32;
-      }
-      .error {
-        background-color: #ffebee;
-        color: #c62828;
-      }
-      .loading {
-        background-color: #fff3e0;
-        color: #ef6c00;
-      }
-      .button {
-        padding: 10px 20px;
-        margin: 0 10px;
-        border-radius: 4px;
-        background-color: #2196f3;
-        color: white;
-        border: none;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-block;
-      }
-      .button:hover {
-        background-color: #1976d2;
-      }
-      .hidden {
-        display: none;
-      }
-    </style>
+    <link rel="stylesheet" href="/css/restinpieces.css" />
   </head>
-  <body>
+  <body class="verify-email-page">
     <h1>Request Email Verification</h1>
-    <div id="message" class="message hidden"></div>
-    <div id="form" class="hidden">
-      <button id="verifyButton" class="button">
+    <div id="message" class="verify-message verify-hidden"></div>
+    <div id="form" class="verify-hidden">
+      <button id="verifyButton" class="verify-button">
         Resend Verification Email
       </button>
     </div>
-    <div id="actions" class="hidden">
-      <a href="/dashboard.html" class="button">Dashboard</a>
-      <a href="/login.html" class="button">Login</a>
+    <div id="actions" class="verify-hidden">
+      <a href="/dashboard.html" class="verify-button">Dashboard</a>
+      <a href="/login.html" class="verify-button">Login</a>
     </div>
 
     <script type="module">
@@ -73,9 +31,9 @@
         const rp = new Restinpieces("http://localhost:8080");
 
         // Show loading message
-        messageDiv.className = "message loading";
+        messageDiv.className = "verify-message verify-loading";
         messageDiv.textContent = "Loading user information...";
-        messageDiv.classList.remove("hidden");
+        messageDiv.classList.remove("verify-hidden");
 
         // Load auth data
         const authData = rp.store.auth.load();
@@ -85,12 +43,12 @@
         }
 
         // Show form
-        messageDiv.classList.add("hidden");
-        formDiv.classList.remove("hidden");
+        messageDiv.classList.add("verify-hidden");
+        formDiv.classList.remove("verify-hidden");
 
         // Handle verification request
         verifyButton.addEventListener("click", () => {
-          messageDiv.className = "message loading";
+          messageDiv.className = "verify-message verify-loading";
           messageDiv.textContent = "Sending verification email...";
 
           rp.requestVerification({ email: authData.record.email })
@@ -101,7 +59,7 @@
                 );
               }
               showSuccess(response.message);
-              actionsDiv.classList.remove("hidden");
+              actionsDiv.classList.remove("verify-hidden");
             })
             .catch((error) => {
               console.error("Verification request failed:", error);
@@ -119,16 +77,16 @@
         });
 
         function showSuccess(message) {
-          messageDiv.className = "message success";
+          messageDiv.className = "verify-message verify-success";
           messageDiv.textContent = message;
-          formDiv.classList.add("hidden");
+          formDiv.classList.add("verify-hidden");
         }
 
         function showError(message) {
-          messageDiv.className = "message error";
+          messageDiv.className = "verify-message verify-error";
           messageDiv.textContent = message;
-          formDiv.classList.add("hidden");
-          actionsDiv.classList.remove("hidden");
+          formDiv.classList.add("verify-hidden");
+          actionsDiv.classList.remove("verify-hidden");
         }
       });
     </script>
