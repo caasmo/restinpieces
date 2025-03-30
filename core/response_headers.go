@@ -53,6 +53,25 @@ var headersCacheStaticHtml = map[string]string{
 	"Cache-Control": "public, no-cache",
 }
 
+// headersCacheStaticDev defines cache headers for static assets during development.
+// The primary goal is to prevent any caching to ensure changes are reflected immediately.
+var headersCacheStaticDev = map[string]string{
+	// - no-store: The most restrictive directive. Instructs caches (browser, intermediate)
+	//             not to store the response under any circumstances.
+	// - no-cache: While technically redundant with no-store, it's often included
+	//             for broader compatibility with older caches that might misinterpret no-store.
+	//             It forces revalidation, but no-store prevents storage altogether.
+	// - must-revalidate: Also redundant with no-store, but reinforces that caches
+	//                    must revalidate stale resources (which won't happen if they aren't stored).
+	"Cache-Control": "no-store, no-cache, must-revalidate",
+	// Pragma: no-cache is an HTTP/1.0 header sometimes included for compatibility
+	// with very old caches, though Cache-Control is the modern standard.
+	"Pragma": "no-cache",
+	// Expires: 0 is another way to indicate that the content is already expired,
+	// used by older caches.
+	"Expires": "0",
+}
+
 // TODO
 var htmlHeaders = map[string]string{
 
