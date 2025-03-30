@@ -20,6 +20,7 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Skip non-GET/HEAD requests immediately
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			slog.Debug("gzip middleware skipping non-GET/HEAD request", "method", r.Method)
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -30,6 +31,7 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 			gzPath := r.URL.Path + ".gz"
 			if f, err := fsys.Open(gzPath); err == nil {
 				defer f.Close()
+				slog.Debug("serving precompressed gzip file", "path", gzPath)
 
 				// Set headers
 				w.Header().Set("Content-Encoding", "gzip")
@@ -47,7 +49,7 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 			}
 		}
 
-		// Fallback to regular handler
+		slog.Debug("falling back to regular handler", "path", r.URL.Path)
 		next.ServeHTTP(w, r)
 	})
 }
