@@ -202,3 +202,26 @@ input {
 .register-page {
   max-width: 400px;
 }
+
+/* Logout page specific styles */
+.logout-message {
+  margin: 40px 0;
+  padding: 20px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  text-align: center;
+  font-size: 18px;
+}
+
+.logout-button-container {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.logout-button-container button {
+  flex: 1;
+  max-width: 200px;
+  font-size: 16px;
+}
