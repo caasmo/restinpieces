@@ -52,12 +52,6 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Add("Vary", "Accept-Encoding")
 		
-		// Get and set content type
-		ext := filepath.Ext(r.URL.Path)
-		if ct := mime.TypeByExtension(ext); ct != "" {
-			w.Header().Set("Content-Type", ct)
-		}
-
 		// Serve directly using FileServerFS's underlying mechanisms
 		http.ServeContent(w, r, r.URL.Path, time.Time{}, f.(io.ReadSeeker))
 
