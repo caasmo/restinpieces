@@ -76,8 +76,7 @@ func (a *App) GzipMiddleware(fsys fs.FS, next http.Handler) http.Handler {
 		// - This disables If-Modified-Since checks which is acceptable because:
 		//   * Reduces server-side processing overhead
 		http.ServeContent(w, r, r.URL.Path, time.Time{}, f.(io.ReadSeeker))
-
-		next.ServeHTTP(w, r)
+		return // Don't call next handler after serving content
 	})
 }
 
