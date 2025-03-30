@@ -17,8 +17,12 @@ import (
 	"github.com/caasmo/restinpieces/server"
 )
 
-func logEmbeddedAssets(assets fs.FS) {
+func logEmbeddedAssets(assets fs.FS, cfg *config.Config) {
 	subFS, err := fs.Sub(assets, cfg.PublicDir)
+	if err != nil {
+		slog.Error("failed to create sub filesystem for logging assets", "error", err)
+		return // Or handle the error more gracefully
+	}
 	assetCount := 0
 	fs.WalkDir(subFS, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -50,7 +54,7 @@ func main() {
 	}
 
 	// Log embedded assets
-	logEmbeddedAssets(restinpieces.EmbeddedAssets)
+	logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg)
 
 	ap, err := initApp(cfg)
 	if err != nil {
