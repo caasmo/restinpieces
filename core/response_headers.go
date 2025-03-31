@@ -2,7 +2,6 @@ package core
 
 import (
 	"net/http"
-	"log/slog"
 )
 
 // TODO consiten name
@@ -118,7 +117,5 @@ var headersSecurityStaticHtml = map[string]string{
 func setHeaders(w http.ResponseWriter, headers map[string]string) {
 	for key, value := range headers {
 		w.Header()[key] = []string{value}
-         slog.Debug("Set header", "key", key, "value", w.Header().Get(key))
 	}
-    slog.Debug("Final headers state in setHeaders", "headers", w.Header())
 }

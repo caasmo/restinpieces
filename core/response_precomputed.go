@@ -117,14 +117,14 @@ var (
 
 // For successful precomputed responses
 func writeJsonOk(w http.ResponseWriter, resp jsonResponse) {
-	w.WriteHeader(resp.status)
 	setHeaders(w, apiJsonDefaultHeaders)
+	w.WriteHeader(resp.status)
 	w.Write(resp.body)
 }
 
 // writeJsonError writes a precomputed JSON error response
 func writeJsonError(w http.ResponseWriter, resp jsonResponse) {
-	w.WriteHeader(resp.status)
 	setHeaders(w, apiJsonDefaultHeaders)
+	w.WriteHeader(resp.status)
 	w.Write(resp.body)
 }
