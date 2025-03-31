@@ -1,19 +1,6 @@
 ### TODOs
 
-
-- minify html, 5% space.
-- request email verification must be logged
-- callback.html copy to puclic
-- i think public to static 
-- second db interface for custom 
-- add logger
-- cache and other headers from assets use a middlware for api we have a map that we appli in response
-    - try to be consistent
-    - 'static' form html, js, css ... and api for dinamic 
-    - gzip header moev to response_headers
-
 - good enough release
-- document magix numbers of sketch. move it to new package, configuration
 - init command, bootstrap create tables, create config and put in db.
     - or just go generate
     - config toml or db. or json
@@ -21,6 +8,18 @@
     - load-config 
     - start --config a --db\, minimize the number of flags
 - if in db config, how to edit the easiest, toml?
+- reset email 
+- reset password
+- add logger
+- minify html, 5% space.
+- request email verification must be logged
+- i think public to static 
+- second db interface for custom 
+- cache and other headers from assets use a middlware for api we have a map that we appli in response
+    - try to be consistent
+    - 'static' form html, js, css ... and api for dinamic 
+    - gzip header moev to response_headers
+- document magix numbers of sketch. move it to new package, configuration
 - maek method/global middleware before mux. block ip documentation, proper conf. fix TODO 
 - verify addresses paths shoudl be random or pseudo random?
 - revamp shell tests.
@@ -80,6 +79,7 @@
 
 ### done
 
+- callback.html copy to puclic
 - safe api heders, html headers middleware 
 - general rate limit -> no 
 - general rate limit per ip -> no, just protect server of mild attacks with blocking, api resources is ACL
