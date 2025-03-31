@@ -1,4 +1,4 @@
-import Restinpieces from "/assets/js/restinpieces.js";
+import Restinpieces from "./sdk/restinpieces.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   const messageDiv = document.getElementById("message");
