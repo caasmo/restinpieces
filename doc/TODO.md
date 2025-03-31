@@ -8,11 +8,11 @@
     - load-config 
     - start --config a --db\, minimize the number of flags
 - if in db config, how to edit the easiest, toml?
-- work in progress.
+- maintenance middleware: 503 Retry-After: 3600
+	- we can not avoid goroutine
 - reset email 
 - reset password
 - add logger
-    
     - slog.SetDefault(slog.New(myHandler))
     - A "multiplexer" handler is a good approach.
     - stdout Handler: slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: dynamicLevel}) or slog.NewJSONHandler(os.Stdout, ...) (JSON is often better for systemd/journald as it preserves structure).
