@@ -406,9 +406,160 @@ func copyHTML(srcDir, distDir string) error {
 	return err
 }
 
+// --- UPDATED function to rewrite asset paths in HTML files ---
+func rewriteHTMLAssets(distDir string, manifest map[string]string) error {
+	log.Printf("  Walking dist directory for HTML files: %s", distDir)
+
+	// Prefixes to strip if the path in HTML is absolute (from web root perspective)
+	// to align with manifest keys (which are relative to srcDir/distDir base).
+	absolutePathPrefixes := []string{
+		"/" + filepath.Base(distDir) + "/", // e.g. "/dist/" - less common but possible
+		"/",                              // most common absolute path prefix
+	}
+
+	return filepath.Walk(distDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() || filepath.Ext(path) != ".html" {
+			return nil // Only process HTML files
+		}
+
+		log.Printf("    Processing HTML file: %s", path)
+		htmlDir := filepath.Dir(path) // Directory containing the current HTML file
+
+		// Read the HTML file content
+		contentBytes, err := os.ReadFile(path)
+		if err != nil {
+			log.Printf("      Error reading HTML file %s: %v", path, err)
+			return err // Skip this file on read error
+		}
+		contentReader := bytes.NewReader(contentBytes)
+
+		// Parse the HTML
+		doc, err := html.Parse(contentReader)
+		if err != nil {
+			log.Printf("      Error parsing HTML file %s: %v", path, err)
+			return err // Skip this file on parse error
+		}
+
+		var changed bool
+		var traverse func(*html.Node)
+		traverse = func(n *html.Node) {
+			if n.Type == html.ElementNode {
+				var attrKey string
+				if n.Data == "script" {
+					attrKey = "src"
+				} else if n.Data == "link" {
+					isStylesheet := false
+					for _, a := range n.Attr {
+						if a.Key == "rel" && strings.ToLower(a.Val) == "stylesheet" {
+							isStylesheet = true
+							break
+						}
+					}
+					if isStylesheet {
+						attrKey = "href"
+					}
+				}
+
+				if attrKey != "" {
+					originalValue := ""
+					attrIndex := -1
+					for i, a := range n.Attr {
+						if a.Key == attrKey {
+							originalValue = a.Val
+							attrIndex = i
+							break
+						}
+					}
+
+					if originalValue != "" && attrIndex != -1 {
+						trimmedValue := strings.TrimSpace(originalValue)
+						var lookupKey string
+
+						// --- START FIX ---
+						// Determine the correct lookup key based on whether the path is absolute or relative
+						isAbsolute := false
+						for _, prefix := range absolutePathPrefixes {
+							if strings.HasPrefix(trimmedValue, prefix) {
+								// It's an absolute path (relative to web root)
+								// Normalize it by removing the prefix to match manifest key format.
+								lookupKey = strings.TrimPrefix(trimmedValue, prefix)
+								isAbsolute = true
+								break
+							}
+						}
+
+						if !isAbsolute && !filepath.IsAbs(trimmedValue) { // Check if it's not already an OS absolute path either
+							// It's a relative path. Resolve it relative to the HTML file's directory.
+							// 1. Join the HTML dir with the relative path.
+							// 2. Clean the resulting path (handles ../ etc.).
+							// 3. Make it relative to the main distDir.
+							absAssetPath := filepath.Join(htmlDir, trimmedValue)
+							relAssetPath, err := filepath.Rel(distDir, absAssetPath)
+							if err != nil {
+								// This might happen for external URLs, mailto:, etc. - safe to ignore.
+								// log.Printf("      Debug: Could not make path relative for %q: %v", trimmedValue, err)
+							} else {
+								lookupKey = relAssetPath
+							}
+						}
+						// If lookupKey is still empty here, it means it was likely an external URL, data URI, etc.
+						// --- END FIX ---
+
+
+						if lookupKey != "" {
+							// Ensure forward slashes for manifest lookup
+							lookupKey = filepath.ToSlash(lookupKey)
+
+							// Check manifest
+							if hashedPath, ok := manifest[lookupKey]; ok {
+								log.Printf("      Replacing %s=%q with %q (Key: %q)", attrKey, originalValue, hashedPath, lookupKey)
+								n.Attr[attrIndex].Val = hashedPath // Update the attribute value
+								changed = true
+							} else {
+								// Log if a potential local asset wasn't found (optional, can be noisy)
+								// if !strings.Contains(trimmedValue, ":") && !strings.HasPrefix(trimmedValue, "#") && !strings.HasPrefix(trimmedValue, "//") {
+								//     log.Printf("      Debug: No manifest entry found for key %q derived from %q", lookupKey, originalValue)
+								// }
+							}
+						}
+					}
+				}
+			}
+
+			// Traverse children and siblings
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				traverse(c)
+			}
+		}
+
+		traverse(doc)
+
+		// If changes were made, write the modified HTML back
+		if changed {
+			var buf bytes.Buffer
+			if err := html.Render(&buf, doc); err != nil {
+				log.Printf("      Error rendering modified HTML for %s: %v", path, err)
+				return err // Skip writing on render error
+			}
+
+			if err := os.WriteFile(path, buf.Bytes(), info.Mode()); err != nil { // Use original file mode
+				log.Printf("      Error writing modified HTML file %s: %v", path, err)
+				return err
+			}
+			log.Printf("    Successfully rewrote assets in %s", path)
+		} else {
+			log.Printf("    No replaceable asset paths found or changed in %s", path)
+		}
+
+		return nil
+	})
+}
 
 // --- NEW function to rewrite asset paths in HTML files ---
-func rewriteHTMLAssets(distDir string, manifest map[string]string) error {
+func rewriteHTMLAssetsOld(distDir string, manifest map[string]string) error {
 	log.Printf("  Walking dist directory for HTML files: %s", distDir)
 
     // We need this mapping to normalize paths found in HTML src/href
