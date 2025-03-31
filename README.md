@@ -21,11 +21,14 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - Router abstraction supporting standard Mux and httprouter
 - Middleware-compatible handlers
 
-### Development Tools
-- Built-in asset pipeline (minification + gzip bundling for HTML/CSS/JS)
-- JavaScript SDK for frontend integration
-- Background job queue for async tasks (email sending, etc.)
+### Frontend Integration
+- JavaScript SDK for seamless frontend-backend interaction
 - Example frontend pages demonstrating all core functionality
+- Built-in asset pipeline (minification + gzip bundling for HTML/CSS/JS)
+
+### Background Processing  
+- Job queue system for async tasks (email sending, etc.)
+- Worker implementation for processing background jobs
 
 ### Performance
 - Optimized for high throughput (thousands of requests/second)
