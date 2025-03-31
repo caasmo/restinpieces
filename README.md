@@ -2,25 +2,35 @@
 
 A one-file golang server using sqlite, with focus on simplicity, performance and avoiding 3-party packages as much as possible.
 
-## What it provides out of the box
+## Key Features
 
-- auth workflows: login, register with password and oauth2, verifying email, confirm email. 
-- oauth2 implementation for register and login
-- authentication, session management with JWT
-- core API discoverable endpoints: /api/refresh-auth, /api/auth-with-oauth2, /api/list-oauth2-providers ....
-- File server embedded in the binary with gzip support. 
-- in house bundler (minifier, gzip) for css, javascript and html 
-- db interface for suport of differentt slite providers. zombiezen and crawshaw implementations
-- cache interface for cache providers. Ristretto implementation
-- router interface for router providers. standard Mux and httprouter implementations
-- standard handlers and middleware support. Just plug in 3 party middleware
-- smtp client implementation 
-- simple javascript SDK
-- internal async worker with queue implementation to process asyn jobs like sending emails
-- Security headers
-- Ip blocking, easily extensible to other headers
-- Performance: thousand of request per second
-- Working html pages examples for the CORE API, login, register, session management.
+### Authentication & Security
+- Complete authentication workflows:
+  - Password-based registration/login
+  - OAuth2 integration for social login
+  - Email verification with confirmation flow
+- JWT-based session management
+- Built-in security headers and IP blocking
+- Extensible security policies
+
+### Core Infrastructure
+- Embedded file server with gzip compression
+- Discoverable API endpoints (/api/refresh-auth, /api/auth-with-oauth2, etc.)
+- SQLite database interface supporting multiple drivers (Zombiezen, Crawshaw)
+- Cache interface with Ristretto implementation
+- Router abstraction supporting standard Mux and httprouter
+- Middleware-compatible handlers
+
+### Development Tools
+- Built-in asset pipeline (minification + gzip bundling for HTML/CSS/JS)
+- JavaScript SDK for frontend integration
+- Background job queue for async tasks (email sending, etc.)
+- Example frontend pages demonstrating all core functionality
+
+### Performance
+- Optimized for high throughput (thousands of requests/second)
+- Minimal external dependencies
+- Production-ready builds with size optimization
 
 
 ## Building the Project
