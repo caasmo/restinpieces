@@ -54,10 +54,6 @@ For a production build with optimized static assets, security headers, and prope
 
     go build -ldflags="-s -w" -trimpath ./cmd/restinpieces/...
 
-Flags explanation:
-- `-ldflags="-s -w"` - Strips debug symbols to reduce binary size
-- `-trimpath` - Removes filesystem paths from compiled binary for reproducibility
-
 ### Development Build
 For development with relaxed security headers and debugging support:
 
