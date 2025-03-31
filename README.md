@@ -4,7 +4,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 
 ## What it provides out of the box
 
-- auth workflows, verifying email, confirm. register with password and oauth2
+- auth workflows: login, register with password and oauth2, verifying email, confirm email. 
 - oauth2 implementation for register and login
 - authentication, session management with JWT
 - core API discoverable endpoints: /api/refresh-auth, /api/auth-with-oauth2, /api/list-oauth2-providers ....
