@@ -8,9 +8,21 @@
     - load-config 
     - start --config a --db\, minimize the number of flags
 - if in db config, how to edit the easiest, toml?
+- work in progress.
 - reset email 
 - reset password
 - add logger
+    
+    - slog.SetDefault(slog.New(myHandler))
+    - A "multiplexer" handler is a good approach.
+    - stdout Handler: slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: dynamicLevel}) or slog.NewJSONHandler(os.Stdout, ...) (JSON is often better for systemd/journald as it preserves structure).
+    - SQLite Handler: This needs careful implementation (async recommended).
+    - none handler
+	- Global State?: Relies on package-level global state. This makes testing significantly harder.
+	- For most applications, especially web services, APIs, or any system where
+	testability and maintainability are important, injecting the slog.Logger
+	instance is the strongly recommended best practice.
+- config reload
 - minify html, 5% space.
 - request email verification must be logged
 - i think public to static 

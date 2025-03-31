@@ -25,12 +25,10 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
   - OAuth2 integration for social login
   - Email verification with confirmation flow
 - JWT-based session management
-- Token refresh flow
-- User management interfaces
 
 ### Security
 - Built-in security headers (CSP, CORS, etc.)
-- IP blocking and rate limiting
+- IP blocking based on rate limiting
 
 ### Core Infrastructure
 - Embedded file server with gzip compression
