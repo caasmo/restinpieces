@@ -1,10 +1,12 @@
 ### TODOs
 
 
-- tools for go generate
+- minify html, 5% space.
 - request email verification must be logged
 - callback.html copy to puclic
 - i think public to static 
+- second db interface for custom 
+- add logger
 - cache and other headers from assets use a middlware for api we have a map that we appli in response
     - try to be consistent
     - 'static' form html, js, css ... and api for dinamic 
@@ -19,17 +21,10 @@
     - load-config 
     - start --config a --db\, minimize the number of flags
 - if in db config, how to edit the easiest, toml?
-- maek method, global middleware before mux. block ip documentation, proper conf. fix TODO 
+- maek method/global middleware before mux. block ip documentation, proper conf. fix TODO 
 - verify addresses paths shoudl be random or pseudo random?
 - revamp shell tests.
-- CORS gzip middlewares 
-- gzip, go:generate gz all files html and javascript all files and put in FS, when serving set Content-Encoding: gzip. we avoid dinamyc gzip
-    - FS
-    - start with js SDK
-	- make maybe package restinpieces only to have generate.go, without build ignore, there we can put embed for FS and migrations files for initialization
-	- go:generate for add dbs in sqlite instead of command bootstrap?
-	- go:generate for config generator toml for example
-	- maybe simple make
+- CORS 
 - updatebenchmark
 - block ua: cache db,  
 - block jwt: cache db,  
@@ -44,8 +39,6 @@
 - make defensice goroutine or middleware??? has and checks req/second and maybe server load, dinamically add block modules.
 - block methods automatically, win against router?
 - in process litestream 
-- rate limit -> no 
-- rate limit per ip -> no, just protect server of mild attacks with blocking, api resources is ACL
 - rethink payload job unique, per customer or payloads should have customer info
 - document middleware politic, if you have to write in the context, you shoudl not be a middleware.
 	- the first middleare post serverHttp code is the last observer.
@@ -54,7 +47,6 @@
 - register with password after oauth2
 - decide about configuration
 - superuser? just ssh?
-- safe api heders, html headers middleware 
 - endpoints api configurable in conf
 - metrics
 - sheurl hadcoded https. should be configurable if srver http under proxy TLS like cloudflare
@@ -72,7 +64,6 @@
 - zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
 - httprouter params to servemux $ 
 - tls
-- add logging
 - hardening: add headers CORS, etc
 - add toml conf and config struct, add struct to app, router, cache
 - document design in doc. why all decision.
@@ -89,6 +80,17 @@
 
 ### done
 
+- safe api heders, html headers middleware 
+- general rate limit -> no 
+- general rate limit per ip -> no, just protect server of mild attacks with blocking, api resources is ACL
+- gzip, go:generate gz all files html and javascript all files and put in FS, when serving set Content-Encoding: gzip. we avoid dinamyc gzip
+    - FS
+    - start with js SDK
+	- make maybe package restinpieces only to have generate.go, without build ignore, there we can put embed for FS and migrations files for initialization
+	- go:generate for add dbs in sqlite instead of command bootstrap?
+	- go:generate for config generator toml for example
+	- maybe simple make
+- tools for go generate
 - static assets, FS cache control. 
     - all assets are go generated
 - html no inline?
