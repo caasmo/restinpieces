@@ -256,8 +256,90 @@ func processCSS(srcDir, distDir string) (api.BuildResult, error) { // Return res
 	return result, nil // Return result on success
 }
 
-// --- NEW function to generate manifest.json ---
 func generateManifest(jsResult, cssResult api.BuildResult, srcDir, distDir string) (map[string]string, error) {
+	manifest := make(map[string]string)
+
+	// Helper function to process metafile outputs
+	processMeta := func(metafile string, metaType string) error {
+		if metafile == "" {
+			log.Printf("  Skipping %s metafile processing: No metafile generated.", metaType)
+			return nil
+		}
+
+		var meta esbuildMetafile
+		if err := json.Unmarshal([]byte(metafile), &meta); err != nil {
+			return fmt.Errorf("failed to parse %s metafile: %w", metaType, err)
+		}
+
+		log.Printf("  Processing %s metafile (%d outputs)", metaType, len(meta.Outputs))
+		for hashedPath, output := range meta.Outputs {
+			// We only care about outputs that correspond to an original entry point
+			if output.EntryPoint == "" {
+				continue // Skip chunks or other non-entry outputs for the manifest
+			}
+
+			// --- Calculate Manifest Key ---
+			// Key: Relative path from srcDir (e.g., "js/dashboard.js")
+			relSrcPath, err := filepath.Rel(srcDir, output.EntryPoint)
+			if err != nil {
+				log.Printf("    Warning: Could not make source path relative %q: %v", output.EntryPoint, err)
+				continue
+			}
+			manifestKey := filepath.ToSlash(relSrcPath) // Use forward slashes
+
+			// --- Calculate Manifest Value ---
+			// Value: Path relative to distDir, made absolute from web root (e.g., "/js/dashboard-a1b2c3d4.js")
+
+			// 1. Make the hashed path relative to the distribution directory
+			//    hashedPath might be "public/dist/js/file-HASH.js"
+			//    distDir might be "public/dist"
+			//    We want "js/file-HASH.js"
+			relHashedPath, err := filepath.Rel(distDir, hashedPath)
+			if err != nil {
+				log.Printf("    Warning: Could not make hashed path %q relative to dist dir %q: %v", hashedPath, distDir, err)
+				continue // Skip if we can't make it relative
+			}
+
+			// 2. Prepend "/" and ensure forward slashes for the web path
+			manifestValue := "/" + filepath.ToSlash(relHashedPath)
+
+			log.Printf("    Mapping: %s -> %s", manifestKey, manifestValue)
+			manifest[manifestKey] = manifestValue
+		}
+		return nil
+	}
+
+	// Process JS Metafile
+	if err := processMeta(jsResult.Metafile, "JS"); err != nil {
+		return nil, err // Propagate error
+	}
+
+	// Process CSS Metafile
+	if err := processMeta(cssResult.Metafile, "CSS"); err != nil {
+		return nil, err // Propagate error
+	}
+
+	// Write manifest file (if any mappings were generated)
+	if len(manifest) > 0 {
+		manifestPath := filepath.Join(distDir, "manifest.json")
+		manifestData, err := json.MarshalIndent(manifest, "", "  ")
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal manifest: %w", err)
+		}
+		if err := os.WriteFile(manifestPath, manifestData, 0644); err != nil {
+			return nil, fmt.Errorf("failed to write manifest file %s: %w", manifestPath, err)
+		}
+		log.Printf("  Manifest written to %s", manifestPath)
+	} else {
+		log.Println("  No manifest entries generated, skipping manifest file write.")
+	}
+
+
+	return manifest, nil
+}
+
+// --- NEW function to generate manifest.json ---
+func generateManifest2(jsResult, cssResult api.BuildResult, srcDir, distDir string) (map[string]string, error) {
 	manifest := make(map[string]string)
 
 	// Process JS Metafile
