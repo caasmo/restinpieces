@@ -68,7 +68,7 @@ var headersSecurityStaticHtml = map[string]string{
 	// <script>alert('hi');</script>
 	//
 	// also no
-    //    <button onclick="window.location.href='/verify-email.html'" style="background-color: #4caf50" >
+	//    <button onclick="window.location.href='/verify-email.html'" style="background-color: #4caf50" >
 	//
 	// but allows:
 	//
