@@ -13,6 +13,10 @@ import (
 )
 
 func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
+	// Serve static files from configured public directory
+	//fs := http.FileServer(http.Dir(cfg.PublicDir))
+	//ap.Router().Handle("/", fs)
+	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	// --- file server ---
 	subFS, err := fs.Sub(restinpieces.EmbeddedAssets, cfg.PublicDir)

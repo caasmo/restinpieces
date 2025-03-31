@@ -1,19 +1,22 @@
 ### TODOs
 
+- bug api headers
 - good enough release
-- init command, bootstrap create tables, create config and put in db.
-    - or just go generate
+- command init, bootsrap command, 
+    - bootstrap create tables, create config and put in db.
+- command dump 
     - config toml or db. or json
     - dump-config to toml, maybe json
     - load-config 
     - start --config a --db\, minimize the number of flags
+- command serve or none
 - if in db config, how to edit the easiest, toml?
 - maintenance middleware: 503 Retry-After: 3600
 	- we can not avoid goroutine
 - reset email 
 - reset password
 - add logger
-    - slog.SetDefault(slog.New(myHandler))
+    - no slog.SetDefault(slog.New(myHandler))
     - A "multiplexer" handler is a good approach.
     - stdout Handler: slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: dynamicLevel}) or slog.NewJSONHandler(os.Stdout, ...) (JSON is often better for systemd/journald as it preserves structure).
     - SQLite Handler: This needs careful implementation (async recommended).

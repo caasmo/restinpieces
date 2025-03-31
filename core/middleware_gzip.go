@@ -82,7 +82,7 @@ func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
 
 			// Set gzip specific headers
 			w.Header().Set("Content-Encoding", "gzip")
-			w.Header().Add("Vary", "Accept-Encoding")
+			w.Header().Set("Vary", "Accept-Encoding")
 
 			// Serve directly using FileServerFS's underlying mechanisms
 			// http.ServeContent automatically sets Content-Type based on:
