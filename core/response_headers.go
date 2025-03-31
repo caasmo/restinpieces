@@ -80,6 +80,15 @@ var headersCacheStaticHtml = map[string]string{
 	"Cache-Control": "public, no-cache",
 }
 
+// HeadersFavicon defines cache headers for favicon.ico.
+// Favicons are often requested frequently and don't change often.
+var HeadersFavicon = map[string]string{
+	// - public: Allows caching by intermediate proxies and browsers.
+	// - max-age=86400: Cache for 24 hours. Favicons can be cached longer
+	//                  than HTML but shorter than immutable assets.
+	"Cache-Control": "public, max-age=86400",
+}
+
 // headersSecurityStaticHtml defines security-related headers specifically for HTML documents.
 var headersSecurityStaticHtml = map[string]string{
 	// Content-Security-Policy (CSP) governs browser behavior for resources loaded as part of rendering a document.
