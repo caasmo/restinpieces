@@ -1,6 +1,21 @@
 # REST in pieces
 
-A one-file golang server using sqlite, with focus on simplicity, performance and avoiding 3-party packages as much as possible. 
+A one-file golang server using sqlite, with focus on simplicity, performance and avoiding 3-party packages as much as possible.
+
+# Content
+
+- [Key Features](#key-features)
+  - [Authentication](#authentication)
+  - [Security](#security)
+  - [Core Infrastructure](#core-infrastructure)
+  - [Frontend Integration](#frontend-integration)
+  - [Background Processing](#background-processing)
+  - [Performance](#performance)
+- [Building the Project](#building-the-project)
+  - [Asset Generation](#asset-generation)
+  - [Production Build](#production-build)
+  - [Development Build](#development-build)
+- [TODO](#todo)
 
 ## Key Features
 
