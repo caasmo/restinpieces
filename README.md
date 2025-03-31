@@ -48,11 +48,6 @@ For development with relaxed security headers and debugging support:
 
 The `dev` tag disables strict security headers for easier local development.
 
-### Build Options
-- Use `-o bin/restinpieces` to specify output path
-- Add `-v` flag for verbose build output
-- Set `GOOS` and `GOARCH` for cross-compilation
-
 
 ## TODO
 
