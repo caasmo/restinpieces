@@ -1,9 +1,9 @@
 ### TODOs
 
 
+- tools for go generate
+- request email verification must be logged
 - callback.html copy to puclic
-- html no inline?
-- static versioning, net/html to parse ans sustitute with versioned js and css
 - i think public to static 
 - cache and other headers from assets use a middlware for api we have a map that we appli in response
     - try to be consistent
@@ -12,8 +12,6 @@
 
 - good enough release
 - document magix numbers of sketch. move it to new package, configuration
-- static assets, FS cache control. 
-    - all assets are go generated
 - init command, bootstrap create tables, create config and put in db.
     - or just go generate
     - config toml or db. or json
@@ -91,6 +89,10 @@
 
 ### done
 
+- static assets, FS cache control. 
+    - all assets are go generated
+- html no inline?
+- static versioning, net/html to parse ans sustitute with versioned js and css
 - block non wnanted mimetypes: with per handler endpoint method, not allowing empty. document each handler 
     - the mimetype required by a handler, is part of the logic of the handler. it should be handled there. document
     - but still endpoints shoudl enforce its allowed mimetype. method like auth mimetype(allowed []) with default json?
