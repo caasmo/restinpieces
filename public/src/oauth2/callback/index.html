@@ -58,7 +58,7 @@
     </style>
   </head>
   <body>
-    <div id="message" class="message">Authenticating...</div>
+    <div id="message" class="oauth-message">Authenticating...</div>
 
     <script type="module">
       import Restinpieces from "/assets/js/restinpieces.js";
@@ -100,14 +100,14 @@
           messageDiv.classList.add("success");
 
           const userInfo = document.createElement("div");
-          userInfo.className = "user-info";
+          userInfo.className = "oauth-user-info";
           userInfo.innerHTML = `
                     <h3>Authentication Successful!</h3>
                     <pre>${JSON.stringify(record, null, 2)}</pre>
                 `;
 
           const buttonContainer = document.createElement("div");
-          buttonContainer.className = "button-container";
+          buttonContainer.className = "oauth-button-container";
 
           const dashboardButton = document.createElement("button");
           dashboardButton.textContent = "Go to Dashboard";

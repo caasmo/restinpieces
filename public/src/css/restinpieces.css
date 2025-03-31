@@ -349,6 +349,59 @@ input {
   display: none;
 }
 
+/* OAuth callback page specific styles */
+.oauth-message {
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+.oauth-message.error {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.oauth-message.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.oauth-user-info {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+.oauth-user-info pre {
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.oauth-button-container {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.oauth-button-container button {
+  flex: 1;
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  cursor: button;
+}
+
+.oauth-button-container button:hover {
+  background-color: #1976d2;
+}
+
 /* Confirm email page specific styles */
 .confirm-email-page {
   text-align: center;
