@@ -6,6 +6,7 @@
 package tools
 
 import (
+	// embed.go: go run gen/gogenerate-assets.go -baseDir public
 	_ "github.com/evanw/esbuild/pkg/api"
 	_ "golang.org/x/net/html"
 )
