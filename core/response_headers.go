@@ -5,7 +5,7 @@ import (
 )
 
 // TODO consiten name
-var apiJsonDefaultHeaders = map[string]string{
+var HeadersJson = map[string]string{
 
 	"Content-Type": "application/json; charset=utf-8",
 
@@ -32,6 +32,32 @@ var apiJsonDefaultHeaders = map[string]string{
 
 	// HSTS TODO configurable  based on server are we under TLS terminating proxy
 	//"Strict-Transport-Security": "max-age=31536000",
+
+
+    // the main XSS-prevention benefits of CSP don't apply to JSON responses
+    // because they aren't treated as active documents by the browser. However,
+    // using Content-Security-Policy: default-src 'none'; frame-ancestors
+    // 'none'; is not entirely meaningless. It provides valuable
+    // anti-clickjacking protection (frame-ancestors) and reinforces the
+    // non-document nature of the response (default-src). It's a low-cost
+    // security hardening step. 
+    // 
+    // frame-ancestors 'none': This directive is still relevant. It prevents
+    // any domain (including your own) from embedding the API endpoint URL in
+    // an <iframe>, <frame>, <object>, or <embed>. This provides protection
+    // against Clickjacking attacks where an attacker might try to trick a user
+    // into interacting with your API endpoint indirectly via a framed page.
+    // While less common for APIs than for interactive web pages, it's a valid
+    // defense-in-depth measure. This is the modern replacement for
+    // X-Frame-Options: DENY.
+    //
+    // default-src 'none': Setting this essentially acts as a strong assertion:
+    // "This response should never be interpreted as an active document capable
+    // of loading resources." While the Content-Type header already signals
+    // this, adding CSP: default-src 'none' provides an extra layer should
+    // there ever be a browser bug or unusual scenario where the content type
+    // is misinterpreted. It hardens the endpoint.
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
 }
 
 // headerCacheStatic defines cache headers for immutable static assets (CSS, JS, images).
