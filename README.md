@@ -1,6 +1,6 @@
 # REST in pieces
 
-A one-file golang server using sqlite, with focus on simplicity, performance and avoiding 3-party packages as much as possible.
+A one-file golang server using sqlite, with focus on simplicity, performance and avoiding 3-party packages as much as possible. Built with [httprouter](https://github.com/julienschmidt/httprouter), [Zombiezen SQLite](https://github.com/zombiezen/go-sqlite), [Crawshaw SQLite](https://github.com/crawshaw/sqlite), and [Ristretto](https://github.com/dgraph-io/ristretto).
 
 ## Key Features
 
@@ -20,9 +20,9 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 ### Core Infrastructure
 - Embedded file server with gzip compression
 - Discoverable API endpoints (/api/refresh-auth, /api/auth-with-oauth2, etc.)
-- SQLite database interface supporting multiple drivers (Zombiezen, Crawshaw)
-- Cache interface with Ristretto implementation
-- Router abstraction supporting standard Mux and httprouter
+- SQLite database interface supporting multiple drivers ([Zombiezen](https://github.com/zombiezen/go-sqlite), [Crawshaw](https://github.com/crawshaw/sqlite))
+- Cache interface with [Ristretto](https://github.com/dgraph-io/ristretto) implementation
+- Router abstraction supporting standard Mux and [httprouter](https://github.com/julienschmidt/httprouter)
 - Middleware-compatible handlers
 
 ### Frontend Integration
