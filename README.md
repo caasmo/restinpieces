@@ -23,19 +23,35 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - Working html pages examples for the CORE API, login, register, session management.
 
 
-## Build 
+## Building the Project
 
-the follwoing will put in public/dist html and js files, in gzip and normal versions
+### Asset Generation
+To bundle and optimize frontend assets (HTML, CSS, JavaScript) with minification and gzip compression:
 
     go generate
 
-for building for prodcution with static assets proper cache headers and security headers:
+This creates production-ready assets in `public/dist/` with both compressed (.gz) and uncompressed versions.
 
-    go build -ldflags="-s -w" -trimpath  ./cmd/restinpieces/...
+### Production Build
+For a production build with optimized static assets, security headers, and proper caching:
 
-for development, without headers:
+    go build -ldflags="-s -w" -trimpath ./cmd/restinpieces/...
+
+Flags explanation:
+- `-ldflags="-s -w"` - Strips debug symbols to reduce binary size
+- `-trimpath` - Removes filesystem paths from compiled binary for reproducibility
+
+### Development Build
+For development with relaxed security headers and debugging support:
 
     go build -ldflags="-s -w" -trimpath -tags dev ./cmd/restinpieces/...
+
+The `dev` tag disables strict security headers for easier local development.
+
+### Build Options
+- Use `-o bin/restinpieces` to specify output path
+- Add `-v` flag for verbose build output
+- Set `GOOS` and `GOARCH` for cross-compilation
 
 
 ## TODO
