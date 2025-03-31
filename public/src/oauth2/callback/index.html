@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OAuth2 Callback</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      .message {
+        margin-top: 20px;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .error {
+        background-color: #ffebee;
+        color: #c62828;
+      }
+      .success {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+      }
+      .user-info {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 4px;
+      }
+      .user-info pre {
+        background: white;
+        padding: 10px;
+        border-radius: 4px;
+        max-height: 300px;
+        overflow: auto;
+      }
+      .button-container {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+      }
+      button {
+        flex: 1;
+        padding: 10px 20px;
+        border-radius: 4px;
+        font-size: 16px;
+        background-color: #2196f3;
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      button:hover {
+        background-color: #1976d2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="message" class="message">Authenticating...</div>
+
+    <script type="module">
+      import Restinpieces from "/assets/js/restinpieces.js";
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const messageDiv = document.getElementById("message");
+        const params = new URLSearchParams(window.location.search);
+        const rp = new Restinpieces("http://localhost:8080");
+        const provider = rp.store.provider.load();
+
+        if (!provider) {
+          showError("No provider information found");
+          return;
+        }
+
+        const authRequest = {
+          provider: provider.name,
+          code: params.get("code"),
+          code_verifier: provider.codeVerifier,
+          redirect_uri: provider.redirectURL,
+        };
+
+        rp.authWithOauth2(authRequest)
+          .then((response) => {
+            if (response?.data?.access_token && response?.data?.record) {
+              rp.store.auth.save(response.data);
+              showSuccess(response.data.record);
+            } else {
+              throw new Error("No access token in response data");
+            }
+          })
+          .catch((error) => {
+            console.error("Authentication failed:", error);
+            showError(error.response || { message: error.message });
+          });
+
+        function showSuccess(record) {
+          messageDiv.textContent = "Authentication successful!";
+          messageDiv.classList.add("success");
+
+          const userInfo = document.createElement("div");
+          userInfo.className = "user-info";
+          userInfo.innerHTML = `
+                    <h3>Authentication Successful!</h3>
+                    <pre>${JSON.stringify(record, null, 2)}</pre>
+                `;
+
+          const buttonContainer = document.createElement("div");
+          buttonContainer.className = "button-container";
+
+          const dashboardButton = document.createElement("button");
+          dashboardButton.textContent = "Go to Dashboard";
+          dashboardButton.onclick = () =>
+            (window.location.href = "/dashboard.html");
+          buttonContainer.appendChild(dashboardButton);
+
+          messageDiv.textContent = "";
+          messageDiv.appendChild(userInfo);
+          messageDiv.appendChild(buttonContainer);
+        }
+
+        function showError(error) {
+          console.error("OAuth2 error:", error);
+          messageDiv.textContent = error.message || "Authentication failed";
+          messageDiv.classList.add("error");
+        }
+      });
+    </script>
+  </body>
+</html>
