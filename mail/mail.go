@@ -173,3 +173,50 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 	slog.Info("Successfully sent verification email", "email", email)
 	return nil
 }
+
+// SendPasswordResetEmail sends a password reset message to the specified email address
+// with the password reset callback URL that includes the token
+func (m *Mailer) SendPasswordResetEmail(ctx context.Context, email, callbackURL string) error {
+	// Create new mail client for this email
+	mail, err := m.createMailClient()
+	if err != nil {
+		return fmt.Errorf("failed to create mail client: %w", err)
+	}
+
+	// Build email
+	mail.To(email)
+	mail.FromName(m.fromName)
+	mail.From(m.fromAddress)
+	mail.Subject(fmt.Sprintf("Reset your %s password", m.fromName))
+	mail.HTML().Set(fmt.Sprintf(`
+		<p>Hello,</p>
+		<p>We received a request to reset your %s password.</p>
+		<p>Click on the button below to reset your password:</p>
+		<p style="margin: 20px 0;">
+			<a href="%s"
+				style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+				Reset Password
+			</a>
+		</p>
+		<p>If you didn't request this, you can safely ignore this email.</p>
+		<p>Thanks,<br>%s team</p>
+	`, m.fromName, callbackURL, m.fromName))
+
+	// Send email with context timeout
+	done := make(chan error, 1)
+	go func() {
+		done <- mail.Send()
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-done:
+		if err != nil {
+			return fmt.Errorf("failed to send password reset email: %w", err)
+		}
+	}
+
+	slog.Info("Successfully sent password reset email", "email", email)
+	return nil
+}
