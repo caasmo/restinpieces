@@ -2,7 +2,7 @@
 
 - email change payload is not a good unique
 - password change test with real smtp  
-- one two handler per file 
+- request password change html requires email form
 - corfirmation, spam sending the same right jwt 
 - endpointsw discovery has no update each time.
 - good enough release
@@ -113,6 +113,7 @@
 
 ### done
 
+- one two handler per file 
 - verification email cooldown, idea is not to send email
 - password reset logic, unique in job is not enough
     - we want the user to do a reset each two hours, ideally wihtout cache

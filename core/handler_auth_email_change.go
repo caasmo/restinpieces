@@ -53,13 +53,23 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Create queue payload
+    // this is for uniqueness
 	payload := queue.PayloadEmailChange{
-		OldEmail:       user.Email,
-		NewEmail:       req.NewEmail,
+		Email:       user.Email,
 		CooldownBucket: queue.CoolDownBucket(a.config.RateLimits.EmailChangeCooldown, time.Now()),
 	}
 
+	payloadExtra := queue.PayloadEmailChangeExtra{
+		NewEmail:       req.NewEmail,
+	}
+
 	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		writeJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	payloadExtraBytes, err := json.Marshal(payloadExtra)
 	if err != nil {
 		writeJsonError(w, errorInvalidRequest)
 		return
