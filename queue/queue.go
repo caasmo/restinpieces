@@ -28,7 +28,8 @@ type PayloadEmailVerification struct {
 }
 
 type PayloadPasswordReset struct {
-	Email string `json:"email"`
+	Email          string `json:"email"`
+	CooldownBucket int    `json:"cooldown_bucket"` // Time bucket for rate limiting
 }
 
 // Job types
