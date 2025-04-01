@@ -5,11 +5,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const formDiv = document.getElementById("form");
   const actionsDiv = document.getElementById("actions");
   const resetButton = document.getElementById("resetButton");
-  const emailInput = document.getElementById("email");
 
   const rp = new Restinpieces({
     baseURL: "http://localhost:8080"
   });
+
+  // Show loading message
+  messageDiv.className = "verify-message verify-loading";
+  messageDiv.textContent = "Loading user information...";
+  messageDiv.classList.remove("verify-hidden");
+
+  // Load auth data
+  const authData = rp.store.auth.load();
+  if (!authData || !authData.record || !authData.record.email) {
+    showError("You must be logged in to request password reset");
+    return;
+  }
 
   // Show form
   messageDiv.classList.add("verify-hidden");
@@ -17,12 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Handle password reset request
   resetButton.addEventListener("click", () => {
-    const email = emailInput.value.trim();
-    
-    if (!email) {
-      showError("Please enter your email address");
-      return;
-    }
+    const email = authData.record.email;
 
     messageDiv.className = "verify-message verify-loading";
     messageDiv.textContent = "Sending password reset email...";
