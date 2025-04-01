@@ -33,7 +33,7 @@ type PayloadEmailVerification struct {
 }
 
 type PayloadEmailChange struct {
-	OldEmail       string `json:"email"`
+	Email       string `json:"email"`
 	CooldownBucket int    `json:"cooldown_bucket"`
 }
 

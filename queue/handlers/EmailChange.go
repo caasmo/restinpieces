@@ -48,7 +48,7 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 
 	if user == nil {
 		slog.Info("User not found for email change", "email", payload.Email)
-		return nil // Not an error since we don't want to reveal if email exists
+		return fmt.Errorf("failed to get user by email: %w", err)
 	}
 
 	// Create email change token with user ID
