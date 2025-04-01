@@ -58,15 +58,19 @@ const (
 //
 // Parameters:
 // - duration: The fixed time window size to bucket time into (e.g. time.Hour, 5*time.Minute)
+// - t: The time to calculate the bucket for (defaults to time.Now() if nil)
 //
 // Returns:
-// int: The bucket number, calculated as floor(current Unix time / duration)
+// int: The bucket number, calculated as floor(t.Unix() / duration)
 //
 // Errors:
 // - Panics if duration is zero or negative to prevent undefined behavior
-func CoolDownBucket(duration time.Duration) int {
+func CoolDownBucket(duration time.Duration, t time.Time) int {
 	if duration <= 0 {
 		panic("duration must be positive")
 	}
-	return int(time.Now().Unix() / int64(duration.Seconds()))
+	if t.IsZero() {
+		t = time.Now()
+	}
+	return int(t.Unix() / int64(duration.Seconds()))
 }
