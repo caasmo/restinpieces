@@ -40,7 +40,7 @@ type PayloadPasswordReset struct {
 	// This creates a simple but effective rate limit:
 	// - Users can only make one request per time bucket
 	// - If a user requests at the end of a bucket (e.g. 13:58), they can make another request shortly after (e.g. 14:02)
-	// - The unique constraint on (email, cooldown_bucket) prevents multiple requests in the same bucket
+	// - The unique constraint on (payload, type) prevents multiple insertions in the same bucket
 	CooldownBucket int    `json:"cooldown_bucket"`
 }
 
