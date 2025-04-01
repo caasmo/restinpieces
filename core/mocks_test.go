@@ -73,6 +73,10 @@ func (m *MockDB) VerifyEmail(userId string) error {
 	return nil
 }
 
+func (m *MockDB) UpdatePassword(userId string, newPassword string) error {
+	return nil
+}
+
 // MockRouter implements router.Router interface for testing
 type MockRouter struct{}
 

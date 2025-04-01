@@ -42,3 +42,17 @@ func New(path string) (*Db, error) {
 func (d *Db) Close() {
 	d.pool.Close()
 }
+
+func (d *Db) UpdatePassword(userId string, newPassword string) error {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	return sqlitex.Execute(conn,
+		`UPDATE users 
+		SET password = ?,
+			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		WHERE id = ?`,
+		nil,
+		newPassword,
+		userId)
+}
