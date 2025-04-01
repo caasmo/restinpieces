@@ -51,6 +51,7 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		r.NewRoute(cfg.Endpoints.ListOAuth2Providers).WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware),
 		r.NewRoute(cfg.Endpoints.ConfirmVerification).WithHandlerFunc(ap.ConfirmVerificationHandler),
 		r.NewRoute(cfg.Endpoints.RequestPasswordReset).WithHandlerFunc(ap.RequestPasswordResetHandler),
+		r.NewRoute(cfg.Endpoints.ConfirmPasswordReset).WithHandlerFunc(ap.ConfirmPasswordResetHandler),
 
 		// --- custom routes  ---
 

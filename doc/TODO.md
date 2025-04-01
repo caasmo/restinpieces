@@ -1,7 +1,9 @@
 ### TODOs
 
 
+- password change test with real smtp  
 - corfirmation, spam sending the same right jwt 
+- endpointsw discovery ahs no update each time.
 - good enough release
     - litestream
     - logger
