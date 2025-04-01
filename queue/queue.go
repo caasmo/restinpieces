@@ -69,8 +69,6 @@ func CoolDownBucket(duration time.Duration, t time.Time) int {
 	if duration <= 0 {
 		panic("duration must be positive")
 	}
-	if t.IsZero() {
-		t = time.Now()
-	}
+
 	return int(t.Unix() / int64(duration.Seconds()))
 }
