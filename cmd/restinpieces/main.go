@@ -83,6 +83,9 @@ func main() {
 
 		emailVerificationHandler := handlers.NewEmailVerificationHandler(ap.Db(), cfg, mailer)
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
+		
+		passwordResetHandler := handlers.NewPasswordResetHandler(ap.Db(), cfg, mailer)
+		hdls[queue.JobTypePasswordReset] = passwordResetHandler
 	}
 
 	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), executor.NewExecutor(hdls))
