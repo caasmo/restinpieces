@@ -51,10 +51,23 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 		return nil // Not an error since we don't want to reveal if email exists
 	}
 
+	// Create email change token with user ID
+	token, err := crypto.NewJwtEmailChangeToken(
+		user.ID,
+		user.Email,
+		payloadExtra.NewEmail,
+		user.Password,
+		h.config.Jwt.EmailChangeSecret,
+		h.config.Jwt.EmailChangeTokenDuration,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create email change token: %w", err)
+	}
+
 	// Construct callback URL using server's base URL and HTML email change page
-	callbackURL := fmt.Sprintf("%s/confirm-email-change.html?email=%s", 
+	callbackURL := fmt.Sprintf("%s/confirm-email-change.html?token=%s", 
 		h.config.Server.BaseURL(), 
-		payloadExtra.NewEmail)
+		token)
 
 	// Send email change notification
 	if err := h.mailer.SendEmailChangeNotification(ctx, user.Email, payloadExtra.NewEmail, callbackURL); err != nil {
