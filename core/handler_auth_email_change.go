@@ -3,8 +3,8 @@ package core
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
-	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/queue"
 )
 
@@ -79,4 +79,8 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	writeJsonOk(w, okEmailChangeRequested)
+}
+
+func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) {
+		writeJsonError(w, errorAuthDatabaseError)
 }

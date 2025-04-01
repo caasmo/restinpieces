@@ -10,7 +10,8 @@ CREATE TABLE job_queue (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_type TEXT NOT NULL DEFAULT '',  -- Type of job (email_verification, password_reset, etc.)
     --priority INTEGER DEFAULT 1, -- Higher number = higher priority
-    payload TEXT NOT NULL DEFAULT '',   -- JSON payload with job-specific data
+    payload TEXT NOT NULL DEFAULT '',   -- JSON payload with job-specific data, but only the fields needed for uniqueness
+    payload_extra TEXT NOT NULL DEFAULT '',   -- JSON payload with job-specific data, data not unique
     status TEXT NOT NULL DEFAULT 'pending', -- pending, processing, completed, failed
     attempts INTEGER NOT NULL DEFAULT 0, -- Number of processing attempts
     max_attempts INTEGER NOT NULL DEFAULT 0, -- Maximum retry attempts

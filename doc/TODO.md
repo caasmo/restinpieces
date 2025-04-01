@@ -1,6 +1,6 @@
 ### TODOs
 
-
+- email change payload is not a good unique
 - password change test with real smtp  
 - one two handler per file 
 - corfirmation, spam sending the same right jwt 
