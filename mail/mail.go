@@ -201,6 +201,7 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newE
 		<p>Thanks,<br>%s team</p>
 	`, oldEmail, newEmail, callbackURL, m.fromName))
 
+	return fmt.Errorf("CHANGE EMAIL SEND DEBUG: %s", callbackURL)
 	// Send email with context timeout
 	done := make(chan error, 1)
 	go func() {

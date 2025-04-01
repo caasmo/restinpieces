@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
@@ -64,6 +65,7 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 		return fmt.Errorf("failed to create email change token: %w", err)
 	}
 
+    // TODO from config
 	// Construct callback URL using server's base URL and HTML email change page
 	callbackURL := fmt.Sprintf("%s/confirm-email-change.html?token=%s", 
 		h.config.Server.BaseURL(), 
