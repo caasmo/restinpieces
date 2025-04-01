@@ -131,11 +131,14 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	// Check if email exists in system
 	user, err := a.db.GetUserByEmail(req.Email)
 	if err != nil {
+        // TODO
 		writeJsonError(w, errorNotFound)
 		return
 	}
+
 	if user == nil {
-		writeJsonError(w, errorNotFound)
+		// Return success even if email doesn't exist to prevent email enumeration
+		writeJsonOk(w, okPasswordResetRequested)
 		return
 	}
 
