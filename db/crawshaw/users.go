@@ -185,3 +185,17 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 
 	return createdUser, nil
 }
+
+func (d *Db) UpdatePassword(userId string, newPassword string) error {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	return sqlitex.Execute(conn,
+		`UPDATE users 
+		SET password = ?,
+			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		WHERE id = ?`,
+		nil,
+		newPassword,
+		userId)
+}
