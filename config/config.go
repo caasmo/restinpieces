@@ -149,6 +149,8 @@ type Endpoints struct {
 	ConfirmVerification   string `json:"confirm_verification"`
 	RequestPasswordReset  string `json:"request_password_reset"`
 	ConfirmPasswordReset  string `json:"confirm_password_reset"`
+	RequestEmailChange    string `json:"request_email_change"`
+	ConfirmEmailChange    string `json:"confirm_email_change"`
 }
 
 // DefaultEndpoints returns the standard endpoint paths
@@ -164,6 +166,8 @@ func DefaultEndpoints() Endpoints {
 		ConfirmVerification:  "POST /api/confirm-verification",
 		RequestPasswordReset: "POST /api/request-password-reset",
 		ConfirmPasswordReset: "POST /api/confirm-password-reset",
+		RequestEmailChange:   "POST /api/request-email-change",
+		ConfirmEmailChange:   "POST /api/confirm-email-change",
 	}
 }
 
