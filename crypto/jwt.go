@@ -30,6 +30,7 @@ const (
 	ClaimVerificationValue = "verification" // Value for verification type claim
 	ClaimPasswordResetValue = "password_reset" // Value for password reset type claim
 	ClaimEmailChangeValue   = "email_change"   // Value for email change type claim
+	ClaimNewEmail          = "new_email"      // New email address for email change claims
 
 	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)
 	MaxTokenAge = 7 * 24 * 60 * 60
@@ -277,7 +278,7 @@ func NewJwtEmailChangeToken(userID, oldEmail, newEmail, passwordHash string, sec
 	claims := jwt.MapClaims{
 		ClaimUserID: userID,
 		ClaimEmail:  oldEmail,
-		"new_email": newEmail,
+		ClaimNewEmail: newEmail,
 		ClaimType:   ClaimEmailChangeValue,
 	}
 
