@@ -27,9 +27,14 @@ type PayloadEmailVerification struct {
 	Email string `json:"email"`
 }
 
+type PayloadPasswordReset struct {
+	Email string `json:"email"`
+}
+
 // Job types
 const (
 	JobTypeEmailVerification = "job_type_email_verification"
+	JobTypePasswordReset     = "job_type_password_reset"
 )
 
 // Job statuses

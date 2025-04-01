@@ -12,6 +12,7 @@ const (
 	CodeOkAlreadyVerified       = "ok_already_verified"
 	CodeOkEmailVerified         = "ok_email_verified"
 	CodeOkVerificationRequested = "ok_verification_requested" // Success code for email verification request
+	CodeOkPasswordResetRequested = "ok_password_reset_requested" // Success code for password reset request
 
 	//errors
 	CodeErrorTokenGeneration                = "err_token_generation"
@@ -113,6 +114,7 @@ var (
 	okAlreadyVerified       = precomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
 	okEmailVerified         = precomputeBasicResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
 	okVerificationRequested = precomputeBasicResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
+	okPasswordResetRequested = precomputeBasicResponse(http.StatusAccepted, CodeOkPasswordResetRequested, "Password reset instructions will be sent to your email if it exists in our system")
 )
 
 // For successful precomputed responses

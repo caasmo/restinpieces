@@ -369,3 +369,61 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// Return standardized authentication response
 	writeAuthResponse(w, token, retrievedUser)
 }
+
+// RequestPasswordResetHandler handles password reset requests
+// Endpoint: POST /request-password-reset
+// Authenticated: No
+// Allowed Mimetype: application/json
+func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
+	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
+		writeJsonError(w, resp)
+		return
+	}
+
+	var req struct {
+		Email string `json:"email"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	req.Email = strings.TrimSpace(req.Email)
+	if req.Email == "" {
+		writeJsonError(w, errorInvalidRequest)
+		return
+	}
+	if err := ValidateEmail(req.Email); err != nil {
+		writeJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	// Check if email exists in system
+	user, err := a.db.GetUserByEmail(req.Email)
+	if err != nil {
+		writeJsonError(w, errorNotFound)
+		return
+	}
+	if user == nil {
+		// Return success even if email doesn't exist to prevent email enumeration
+		writeJsonOk(w, okPasswordResetRequested)
+		return
+	}
+
+	// Create queue job
+	payload, _ := json.Marshal(queue.PayloadPasswordReset{Email: req.Email})
+	job := queue.Job{
+		JobType: queue.JobTypePasswordReset,
+		Payload: payload,
+	}
+
+	// Insert into job queue
+	err = a.db.InsertJob(job)
+	if err != nil {
+		writeJsonError(w, errorServiceUnavailable)
+		return
+	}
+
+	writeJsonOk(w, okPasswordResetRequested)
+}
