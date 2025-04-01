@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     messageDiv.className = "verify-message verify-loading";
     messageDiv.textContent = "Sending email change request...";
 
-    rp.requestAuth("request_email_change", {}, { 
+    rp.requestEmailChange({ 
       email: currentEmail,
       new_email: newEmail 
     })

@@ -175,6 +175,10 @@ class Restinpieces {
     return this.request("request_password_reset", {}, body, headers, signal);
   }
 
+  requestEmailChange(body = null, headers = {}, signal = null) {
+    return this.requestAuth("request_email_change", {}, body, headers, signal);
+  }
+
   authWithPassword(body = null, headers = {}, signal = null) {
     return this.request("auth_with_password", {}, body, headers, signal);
   }
