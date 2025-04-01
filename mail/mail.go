@@ -202,6 +202,8 @@ func (m *Mailer) SendPasswordResetEmail(ctx context.Context, email, callbackURL 
 		<p>Thanks,<br>%s team</p>
 	`, m.fromName, callbackURL, m.fromName))
 
+	return fmt.Errorf("IN MAIL DEBUGGGGGGGGGGGGGGGGGGGGGGGGG: %s", callbackURL)
+
 	// Send email with context timeout
 	done := make(chan error, 1)
 	go func() {

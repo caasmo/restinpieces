@@ -403,11 +403,15 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Check if email exists in system
+    // this is error of db, return internal server error
+    // TODO
 	user, err := a.db.GetUserByEmail(req.Email)
 	if err != nil {
 		writeJsonError(w, errorNotFound)
 		return
 	}
+
+    // user not found
 	if user == nil {
 		// Return success even if email doesn't exist to prevent email enumeration
 		writeJsonOk(w, okPasswordResetRequested)
