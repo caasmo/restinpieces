@@ -422,7 +422,8 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	// Calculate cooldown bucket for rate limiting
 	cooldownBucket := queue.CoolDownBucket(a.config.RateLimits.PasswordResetCooldown, time.Now())
 
-	// Create queue job with cooldown bucket
+    // Create queue job with cooldown bucket. Second insertion in same bucket
+    // will fail because unique
 	payload, _ := json.Marshal(queue.PayloadPasswordReset{
 		Email:          req.Email,
 		CooldownBucket: cooldownBucket,
