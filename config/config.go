@@ -222,6 +222,9 @@ func Load(dbfile string) (*Config, error) {
 			PasswordResetSecret:            []byte("test_password_reset_secret_32_bytes_xxxx"),
 			PasswordResetTokenDuration:     1 * time.Hour, // Shorter duration for security
 		},
+		RateLimits: RateLimits{
+			PasswordResetCooldown: 2 * time.Hour,
+		},
 		DBFile:    dbfile,
 		PublicDir: "static/dist", // Default public directory
 		Scheduler: Scheduler{
