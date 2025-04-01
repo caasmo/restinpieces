@@ -287,13 +287,32 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	type request struct {
-		Token    string `json:"token"`
-		Password string `json:"password"`
+		Token           string `json:"token"`
+		Password        string `json:"password"`
+		PasswordConfirm string `json:"password_confirm"`
 	}
 
 	var req request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	// Validate required fields
+	if req.Token == "" || req.Password == "" || req.PasswordConfirm == "" {
+		writeJsonError(w, errorMissingFields)
+		return
+	}
+
+	// Validate password match
+	if req.Password != req.PasswordConfirm {
+		writeJsonError(w, errorPasswordMismatch)
+		return
+	}
+
+	// Validate password complexity
+	if len(req.Password) < 8 {
+		writeJsonError(w, errorPasswordComplexity) 
 		return
 	}
 
