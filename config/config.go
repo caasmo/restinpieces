@@ -148,6 +148,7 @@ type Endpoints struct {
 	ListOAuth2Providers   string `json:"list_oauth2_providers"`
 	ConfirmVerification   string `json:"confirm_verification"`
 	RequestPasswordReset  string `json:"request_password_reset"`
+	ConfirmPasswordReset  string `json:"confirm_password_reset"`
 }
 
 // DefaultEndpoints returns the standard endpoint paths
@@ -162,6 +163,7 @@ func DefaultEndpoints() Endpoints {
 		ListOAuth2Providers:  "GET /api/list-oauth2-providers",
 		ConfirmVerification:  "POST /api/confirm-verification",
 		RequestPasswordReset: "POST /api/request-password-reset",
+		ConfirmPasswordReset: "POST /api/confirm-password-reset",
 	}
 }
 
