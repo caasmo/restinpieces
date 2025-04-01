@@ -418,8 +418,14 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Create queue job
-	payload, _ := json.Marshal(queue.PayloadPasswordReset{Email: req.Email})
+	// Calculate cooldown bucket for rate limiting
+	cooldownBucket := queue.CoolDownBucket(a.config.RateLimits.PasswordResetCooldown, time.Now())
+
+	// Create queue job with cooldown bucket
+	payload, _ := json.Marshal(queue.PayloadPasswordReset{
+		Email:          req.Email,
+		CooldownBucket: cooldownBucket,
+	})
 	job := queue.Job{
 		JobType: queue.JobTypePasswordReset,
 		Payload: payload,
