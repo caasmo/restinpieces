@@ -114,6 +114,10 @@ type RateLimits struct {
 	// EmailVerificationCooldown specifies how long a user must wait between
 	// email verification requests to prevent abuse and email spam
 	EmailVerificationCooldown time.Duration
+
+	// EmailChangeCooldown specifies how long a user must wait between
+	// email change requests to prevent abuse and email spam
+	EmailChangeCooldown time.Duration
 }
 
 type Jwt struct {
