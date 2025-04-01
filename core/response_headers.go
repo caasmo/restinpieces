@@ -62,35 +62,28 @@ var HeadersJson = map[string]string{
 
 // headerCacheStatic defines cache headers for immutable static assets (CSS, JS, images).
 // Assumes filename-based versioning for cache busting.
-var headersCacheStatic = map[string]string{
+var headersStatic = map[string]string{
 	// - public: Allows caching by intermediate proxies and browsers.
 	// - max-age=31536000: Cache for 1 year.
 	// - immutable: Indicates the file content will never change. Browsers
 	//              will not even attempt to revalidate it, providing maximum
 	//              caching efficiency. Relies entirely on filename versioning.
 	"Cache-Control": "public, max-age=31536000, immutable",
+
+    // See descrption above
+	"X-Content-Type-Options": "nosniff",
+
+    // Adding CSP to individual static assets doesn't provide security benefits
 }
 
 // headerCacheStaticHtml defines cache headers for HTML entry point files.
-var headersCacheStaticHtml = map[string]string{
+var headersStaticHtml = map[string]string{
 	// - public: Allows caching by intermediate proxies and browsers.
 	// - no-cache: Requires the cache to revalidate with the origin server
 	//             before using a cached response. Ensures the latest HTML
 	//             (with potentially updated asset links) is served.
 	"Cache-Control": "public, no-cache",
-}
 
-// HeadersFavicon defines cache headers for favicon.ico.
-// Favicons are often requested frequently and don't change often.
-var HeadersFavicon = map[string]string{
-	// - public: Allows caching by intermediate proxies and browsers.
-	// - max-age=86400: Cache for 24 hours. Favicons can be cached longer
-	//                  than HTML but shorter than immutable assets.
-	"Cache-Control": "public, max-age=86400",
-}
-
-// headersSecurityStaticHtml defines security-related headers specifically for HTML documents.
-var headersSecurityStaticHtml = map[string]string{
 	// Content-Security-Policy (CSP) governs browser behavior for resources loaded as part of rendering a document.
 	// Prevents cross-site scripting (XSS) attacks by controlling which resources can be loaded.
 	// 'default-src 'self'': By default, only load resources (scripts, styles, images, fonts, etc.)
@@ -132,20 +125,26 @@ var headersSecurityStaticHtml = map[string]string{
 	"Content-Security-Policy": "default-src 'self'",
 	//"Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
 
-	// Other security headers like X-Frame-Options, Referrer-Policy, Permissions-Policy
-	// could be added here later if needed for HTML responses.
 
-	// Example of a previously considered header (X-XSS-Protection):
-	// mitigate reflected XSS attacks: malicious scripts are injected into a
-	// page via user input (e.g., query parameters, form data) and then
-	// "reflected" back to the user in the server’s response.
-	// 1: Enables the browser’s XSS filter
-	// mode=block: Instructs the browser to block the entire page if an XSS attack is detected
-	//
+    // The Referrer-Policy HTTP header controls how much referrer information
+    // browsers include when navigating from your website to another site.
+    // Send full URL for same-origin requests, only origin for cross-origin at
+    // same security level, nothing when security decreases.
+    "Referrer-Policy": "strict-origin-when-cross-origin"
+
+	// (X-XSS-Protection):
 	// Modern browsers (post-2019 Chrome, Edge, etc.) ignore this header, favoring Content Security Policy (CSP)
 	// this header is mostly a legacy tool
-	// Optional for API servers, but no harm
 	//"X-XSS-Protection":           "1; mode=block",
+}
+
+// HeadersFavicon defines cache headers for favicon.ico.
+// Favicons are often requested frequently and don't change often.
+var HeadersFavicon = map[string]string{
+	// - public: Allows caching by intermediate proxies and browsers.
+	// - max-age=86400: Cache for 24 hours. Favicons can be cached longer
+	//                  than HTML but shorter than immutable assets.
+	"Cache-Control": "public, max-age=86400",
 }
 
 // ApplyHeaders sets all headers from a map to the response writer

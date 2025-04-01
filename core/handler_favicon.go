@@ -6,8 +6,7 @@ import "net/http"
 // This prevents 404 errors in logs for browsers that automatically request it.
 // It avoids serving an actual icon file, keeping the API server focused.
 // Caching headers are applied by the middleware or router configuration.
-func faviconHandler(w http.ResponseWriter, r *http.Request) {
-	// Respond with 204 No Content status, indicating success but no response body.
-	// This is very lightweight.
+func FaviconHandler(w http.ResponseWriter, r *http.Request) {
+	setHeaders(w, HeadersFavicon)
 	w.WriteHeader(http.StatusNoContent)
 }

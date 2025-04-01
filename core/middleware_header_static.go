@@ -16,21 +16,16 @@ func StaticHeadersMiddleware(next http.Handler) http.Handler {
 
 		// For HTML files:
 		if strings.HasSuffix(r.URL.Path, ".html") {
-			setHeaders(w, headersCacheStaticHtml)
-			setHeaders(w, headersSecurityStaticHtml)
+			setHeaders(w, headersStaticHtml)
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		// For CSS, JS, images, etc.
-		setHeaders(w, headersCacheStatic)
+		setHeaders(w, headersStatic)
 
 		// Note: We intentionally avoid deprecated headers like 'Expires' and 'Pragma'.
 		// Note: For immutable assets, 'ETag' and 'Last-Modified' are redundant for
-		//       preventing revalidation, so they are not set here for simplicity.
-		//       For HTML ('no-cache'), the browser will perform revalidation anyway,
-		//       and the server (e.g., http.FileServer) might set ETag/Last-Modified
-		//       automatically, which is acceptable.
 
 		next.ServeHTTP(w, r)
 	})

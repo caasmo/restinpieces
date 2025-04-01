@@ -31,9 +31,6 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 			core.StaticHeadersMiddleware,
 			core.GzipMiddleware(subFS),
 		),
-		r.NewRoute("/favicon.ico").WithHandlerFunc(core.faviconHandler).WithMiddleware(
-			core.StaticHeadersMiddleware,
-		),
 	)
 
 	// --- TODO ---
@@ -41,6 +38,8 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 
 	// --- api core routes  ---
 	ap.Router().Register(
+		r.NewRoute("/favicon.ico").WithHandlerFunc(core.FaviconHandler),
+
 		//TODO
 		r.NewRoute(cfg.Endpoints.ListEndpoints).WithHandlerFunc(ap.ListEndpointsHandler),
 

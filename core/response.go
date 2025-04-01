@@ -10,6 +10,7 @@ const (
 	CodeOkEndpointsWithoutAuth = "ok_endpoints_without_auth"
 )
 
+// todo naming 
 type jsonResponse struct {
 	status int
 	body   []byte
