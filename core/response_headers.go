@@ -130,7 +130,7 @@ var headersStaticHtml = map[string]string{
     // browsers include when navigating from your website to another site.
     // Send full URL for same-origin requests, only origin for cross-origin at
     // same security level, nothing when security decreases.
-    "Referrer-Policy": "strict-origin-when-cross-origin"
+    "Referrer-Policy": "strict-origin-when-cross-origin",
 
 	// (X-XSS-Protection):
 	// Modern browsers (post-2019 Chrome, Edge, etc.) ignore this header, favoring Content Security Policy (CSP)
