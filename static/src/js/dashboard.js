@@ -79,9 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   document
-    .getElementById("list-endpoints-btn")
+    .getElementById("change-email-btn")
     .addEventListener("click", () => {
-      window.location.href = "/list-endpoints.html";
+      window.location.href = "/request-email-change.html";
     });
 
   document
