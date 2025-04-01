@@ -29,7 +29,19 @@ type PayloadEmailVerification struct {
 
 type PayloadPasswordReset struct {
 	Email          string `json:"email"`
-	CooldownBucket int    `json:"cooldown_bucket"` // Time bucket for rate limiting
+	// CooldownBucket is the time bucket number calculated from the current time divided by the cooldown duration.
+	// This provides a basic rate limiting mechanism where only one password reset request is allowed per time bucket.
+	// The bucket number is calculated as: floor(current Unix time / cooldown duration in seconds)
+	// 
+	// For example, with a 2 hour cooldown:
+	// - All requests between 12:00-13:59 will get bucket X
+	// - All requests between 14:00-15:59 will get bucket X+1
+	//
+	// This creates a simple but effective rate limit:
+	// - Users can only make one request per time bucket
+	// - If a user requests at the end of a bucket (e.g. 13:58), they can make another request shortly after (e.g. 14:02)
+	// - The unique constraint on (email, cooldown_bucket) prevents multiple requests in the same bucket
+	CooldownBucket int    `json:"cooldown_bucket"`
 }
 
 // Job types
