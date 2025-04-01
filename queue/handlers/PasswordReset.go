@@ -60,7 +60,7 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 	}
 
 	// Construct callback URL using server's base URL and HTML password reset page
-	callbackURL := fmt.Sprintf("%s/reset-password.html?token=%s", h.config.Server.BaseURL(), token)
+	callbackURL := fmt.Sprintf("%s/confirm-password-reset.html?token=%s", h.config.Server.BaseURL(), token)
 
 	// Send password reset email
 	if err := h.mailer.SendPasswordResetEmail(ctx, user.Email, callbackURL); err != nil {
