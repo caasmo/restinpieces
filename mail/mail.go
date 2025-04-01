@@ -175,15 +175,15 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 }
 
 // SendEmailChangeNotification sends an email change notification to both old and new email addresses
-func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newEmail, callbackURL string) error {
+func (m *Mailer) SendEmailChangeNotification(ctx context.Context, newEmail, oldEmail, callbackURL string) error {
 	// Create new mail client for this email
 	mail, err := m.createMailClient()
 	if err != nil {
 		return fmt.Errorf("failed to create mail client: %w", err)
 	}
 
-	// Build email
-	mail.To(oldEmail)
+	// Build email - send to new email address for verification
+	mail.To(newEmail)
 	mail.FromName(m.fromName)
 	mail.From(m.fromAddress)
 	mail.Subject(fmt.Sprintf("Confirm your email change to %s", newEmail))
