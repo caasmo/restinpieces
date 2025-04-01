@@ -106,6 +106,12 @@ func (s *Server) BaseURL() string {
 	return fmt.Sprintf("%s://%s:%s", scheme, host, port)
 }
 
+type RateLimits struct {
+	// PasswordResetCooldown specifies how long a user must wait between
+	// password reset requests to prevent abuse and email spam
+	PasswordResetCooldown time.Duration
+}
+
 type Jwt struct {
 	AuthSecret                     []byte
 	AuthTokenDuration              time.Duration
@@ -160,6 +166,7 @@ type Config struct {
 	DBFile          string
 	Scheduler       Scheduler
 	Server          Server
+	RateLimits      RateLimits
 	OAuth2Providers map[string]OAuth2Provider
 	Smtp            Smtp
 	PublicDir       string // Directory to serve static files from
