@@ -122,7 +122,7 @@ var (
 	okEmailVerified         = precomputeBasicResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
 	okVerificationRequested = precomputeBasicResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
 	okPasswordResetRequested = precomputeBasicResponse(http.StatusAccepted, CodeOkPasswordResetRequested, "Password reset instructions will be sent to your email if it exists in our system")
-	okEmailChangeRequested   = precomputeBasicResponse(http.StatusAccepted, CodeOkEmailChangeRequested, "Verification email sent to your new email address")
+	okEmailChangeRequested   = precomputeBasicResponse(http.StatusAccepted, CodeOkEmailChangeRequested, "Email change instructions will be sent to your new email address")
 )
 
 // For successful precomputed responses

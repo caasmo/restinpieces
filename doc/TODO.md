@@ -1,5 +1,7 @@
 ### TODOs
 
+- check workflow change email
+    - do not allow change if old not verified
 - email change payload is not a good unique
 - password change test with real smtp  
 - request password change html requires email form
