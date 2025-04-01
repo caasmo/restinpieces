@@ -174,6 +174,54 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 	return nil
 }
 
+// SendEmailChangeNotification sends an email change notification to both old and new email addresses
+func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newEmail, callbackURL string) error {
+	// Create new mail client for this email
+	mail, err := m.createMailClient()
+	if err != nil {
+		return fmt.Errorf("failed to create mail client: %w", err)
+	}
+
+	// Build email
+	mail.To(oldEmail)
+	mail.FromName(m.fromName)
+	mail.From(m.fromAddress)
+	mail.Subject(fmt.Sprintf("Confirm your email change to %s", newEmail))
+	mail.HTML().Set(fmt.Sprintf(`
+		<p>Hello,</p>
+		<p>We received a request to change your email from %s to %s.</p>
+		<p>Click on the button below to confirm this change:</p>
+		<p style="margin: 20px 0;">
+			<a href="%s"
+				style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+				Confirm Email Change
+			</a>
+		</p>
+		<p>If you didn't request this change, please contact support immediately.</p>
+		<p>Thanks,<br>%s team</p>
+	`, oldEmail, newEmail, callbackURL, m.fromName))
+
+	// Send email with context timeout
+	done := make(chan error, 1)
+	go func() {
+		done <- mail.Send()
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-done:
+		if err != nil {
+			return fmt.Errorf("failed to send email change notification: %w", err)
+		}
+	}
+
+	slog.Info("Successfully sent email change notification", 
+		"old_email", oldEmail, 
+		"new_email", newEmail)
+	return nil
+}
+
 // SendPasswordResetEmail sends a password reset message to the specified email address
 // with the password reset callback URL that includes the token
 func (m *Mailer) SendPasswordResetEmail(ctx context.Context, email, callbackURL string) error {

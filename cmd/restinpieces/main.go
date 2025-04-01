@@ -86,6 +86,9 @@ func main() {
 		
 		passwordResetHandler := handlers.NewPasswordResetHandler(ap.Db(), cfg, mailer)
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
+
+		emailChangeHandler := handlers.NewEmailChangeHandler(ap.Db(), cfg, mailer)
+		hdls[queue.JobTypeEmailChange] = emailChangeHandler
 	}
 
 	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), executor.NewExecutor(hdls))

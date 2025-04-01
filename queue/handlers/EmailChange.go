@@ -1,0 +1,68 @@
+package handlers
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+
+	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/mail"
+	"github.com/caasmo/restinpieces/queue"
+)
+
+// EmailChangeHandler handles email change requests
+type EmailChangeHandler struct {
+	db     db.Db
+	config *config.Config
+	mailer *mail.Mailer
+}
+
+// NewEmailChangeHandler creates a new EmailChangeHandler
+func NewEmailChangeHandler(db db.Db, cfg *config.Config, mailer *mail.Mailer) *EmailChangeHandler {
+	return &EmailChangeHandler{
+		db:     db,
+		config: cfg,
+		mailer: mailer,
+	}
+}
+
+// Handle implements the JobHandler interface for email change requests
+func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
+	var payload queue.PayloadEmailChange
+	if err := json.Unmarshal(job.Payload, &payload); err != nil {
+		return fmt.Errorf("failed to parse email change payload: %w", err)
+	}
+
+	var payloadExtra queue.PayloadEmailChangeExtra
+	if err := json.Unmarshal(job.PayloadExtra, &payloadExtra); err != nil {
+		return fmt.Errorf("failed to parse email change extra payload: %w", err)
+	}
+
+	// Get user by email
+	user, err := h.db.GetUserByEmail(payload.Email)
+	if err != nil {
+		return fmt.Errorf("failed to get user by email: %w", err)
+	}
+
+	if user == nil {
+		slog.Info("User not found for email change", "email", payload.Email)
+		return nil // Not an error since we don't want to reveal if email exists
+	}
+
+	// Construct callback URL using server's base URL and HTML email change page
+	callbackURL := fmt.Sprintf("%s/confirm-email-change.html?email=%s", 
+		h.config.Server.BaseURL(), 
+		payloadExtra.NewEmail)
+
+	// Send email change notification
+	if err := h.mailer.SendEmailChangeNotification(ctx, user.Email, payloadExtra.NewEmail, callbackURL); err != nil {
+		return fmt.Errorf("failed to send email change notification: %w", err)
+	}
+
+	slog.Info("Successfully sent email change notification", 
+		"old_email", user.Email, 
+		"new_email", payloadExtra.NewEmail)
+	return nil
+}
