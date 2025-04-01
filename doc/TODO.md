@@ -2,6 +2,7 @@
 
 
 - password change test with real smtp  
+- one two handler per file 
 - corfirmation, spam sending the same right jwt 
 - endpointsw discovery has no update each time.
 - good enough release
@@ -22,6 +23,7 @@
     - load-config 
     - start --config a --db\, minimize the number of flags
     - command serve or none
+- assets integrity, bundler 
 - if in db config, how to edit the easiest, toml?
 - maintenance middleware: 503 Retry-After: 3600
 	- we can not avoid goroutine
