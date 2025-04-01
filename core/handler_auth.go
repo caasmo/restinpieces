@@ -160,7 +160,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	err = a.db.InsertJob(job)
 	if err != nil {
 		if err == db.ErrConstraintUnique {
-			writeJsonError(w, errorConflict)
+			writeJsonError(w, errorEmailVerificationAlreadyRequested)
 			return
 		}
 		writeJsonError(w, errorServiceUnavailable)
@@ -437,7 +437,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	err = a.db.InsertJob(job)
 	if err != nil {
 		if err == db.ErrConstraintUnique {
-			writeJsonError(w, errorConflict)
+			writeJsonError(w, errorPasswordResetAlreadyRequested)
 			return
 		}
 		writeJsonError(w, errorServiceUnavailable)

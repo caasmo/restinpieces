@@ -25,6 +25,8 @@ const (
 	CodeErrorEmailConflict                  = "err_email_conflict"
 	CodeErrorNotFound                       = "err_not_found"
 	CodeErrorConflict                       = "err_conflict"
+	CodeErrorEmailVerificationAlreadyRequested = "err_email_verification_already_requested"
+	CodeErrorPasswordResetAlreadyRequested  = "err_password_reset_already_requested"
 	CodeErrorRegistrationFailed             = "err_registration_failed"
 	CodeErrorTooManyRequests                = "err_too_many_requests"
 	CodeErrorServiceUnavailable             = "err_service_unavailable"
