@@ -149,8 +149,14 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Create queue job
-	payload, _ := json.Marshal(queue.PayloadEmailVerification{Email: req.Email})
+	// Calculate cooldown bucket for rate limiting
+	cooldownBucket := queue.CoolDownBucket(a.config.RateLimits.EmailVerificationCooldown, time.Now())
+
+	// Create queue job with cooldown bucket
+	payload, _ := json.Marshal(queue.PayloadEmailVerification{
+		Email:          req.Email,
+		CooldownBucket: cooldownBucket,
+	})
 	job := queue.Job{
 		JobType: queue.JobTypeEmailVerification,
 		Payload: payload,

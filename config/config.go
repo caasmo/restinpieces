@@ -110,6 +110,10 @@ type RateLimits struct {
 	// PasswordResetCooldown specifies how long a user must wait between
 	// password reset requests to prevent abuse and email spam
 	PasswordResetCooldown time.Duration
+
+	// EmailVerificationCooldown specifies how long a user must wait between
+	// email verification requests to prevent abuse and email spam
+	EmailVerificationCooldown time.Duration
 }
 
 type Jwt struct {
@@ -224,6 +228,7 @@ func Load(dbfile string) (*Config, error) {
 		},
 		RateLimits: RateLimits{
 			PasswordResetCooldown: 2 * time.Hour,
+			EmailVerificationCooldown: 1 * time.Hour,
 		},
 		DBFile:    dbfile,
 		PublicDir: "static/dist", // Default public directory

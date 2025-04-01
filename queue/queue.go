@@ -24,7 +24,11 @@ type Job struct {
 
 // PayloadEmailVerification contains the email verification details
 type PayloadEmailVerification struct {
-	Email string `json:"email"`
+	Email          string `json:"email"`
+	// CooldownBucket is the time bucket number calculated from the current time divided by the cooldown duration.
+	// This provides a basic rate limiting mechanism where only one email verification request is allowed per time bucket.
+	// The bucket number is calculated as: floor(current Unix time / cooldown duration in seconds)
+	CooldownBucket int    `json:"cooldown_bucket"`
 }
 
 type PayloadPasswordReset struct {
