@@ -24,7 +24,6 @@ const (
 	CodeErrorPasswordComplexity             = "err_password_complexity"
 	CodeErrorEmailConflict                  = "err_email_conflict"
 	CodeErrorNotFound                       = "err_not_found"
-	CodeErrorConflict                       = "err_conflict"
 	CodeErrorEmailVerificationAlreadyRequested = "err_email_verification_already_requested"
 	CodeErrorPasswordResetAlreadyRequested  = "err_password_reset_already_requested"
 	CodeErrorRegistrationFailed             = "err_registration_failed"
@@ -93,9 +92,8 @@ var (
 	errorPasswordComplexity             = precomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordComplexity, "Password must be at least 8 characters")
 	errorEmailConflict                  = precomputeBasicResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
 	errorNotFound                       = precomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
-	errorConflict                       = precomputeBasicResponse(http.StatusConflict, CodeErrorConflict, "Verification already requested")
-	errorEmailVerificationAlreadyRequested = precomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationAlreadyRequested, "Email verification already requested - please check your inbox")
-	errorPasswordResetAlreadyRequested  = precomputeBasicResponse(http.StatusConflict, CodeErrorPasswordResetAlreadyRequested, "Password reset already requested - please check your inbox")
+	errorEmailVerificationAlreadyRequested = precomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationAlreadyRequested, "Email verification already requested.")
+	errorPasswordResetAlreadyRequested  = precomputeBasicResponse(http.StatusConflict, CodeErrorPasswordResetAlreadyRequested, "Password reset already requested")
 	errorRegistrationFailed             = precomputeBasicResponse(http.StatusBadRequest, CodeErrorRegistrationFailed, "Registration failed due to invalid data")
 	errorTooManyRequests                = precomputeBasicResponse(http.StatusTooManyRequests, CodeErrorTooManyRequests, "Too many requests, please try again later")
 	errorServiceUnavailable             = precomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")

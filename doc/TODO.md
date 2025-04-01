@@ -1,19 +1,6 @@
 ### TODOs
 
-- password reset logic, unique in job is not enough
-    - we want the user to do a reset each two hours, ideally wihtout cache
-    - payload put email type and number of bucket of two hours
-    - user tries to request in the next two hours => conflict RequestPeriod try later
-        - user tries to receive, to make us write email  email
-        
-
-    - job completed, record present, the system do no let more password reset request
-        - user shoudl probably do all request that it wants. we try to not overcomplicate
-        - or add some cache? 
-        - ideally without cache.
-        - atack with a know email in system
-    - job deleted after completion 
-    - paswords reset each two hours
+- verification email cooldown, idea is not to send email
 - good enough release
     - litestream
     - logger
@@ -117,6 +104,20 @@
 
 ### done
 
+- password reset logic, unique in job is not enough
+    - we want the user to do a reset each two hours, ideally wihtout cache
+    - payload put email type and number of bucket of two hours
+    - user tries to request in the next two hours => conflict RequestPeriod try later
+        - user tries to receive, to make us write email. we only allow one per throttle 
+        
+
+    - job completed, record present, the system do no let more password reset request
+        - user shoudl probably do all request that it wants. we try to not overcomplicate
+        - or add some cache? 
+        - ideally without cache.
+        - atack with a know email in system
+    - job deleted after completion 
+    - paswords reset each two hours
 - bug api headers
 - i think public to static 
 - callback.html copy to puclic
