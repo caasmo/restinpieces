@@ -334,6 +334,23 @@ func (d *Db) VerifyEmail(userId string) error {
 		})
 }
 
+func (d *Db) UpdatePassword(userId string, newPassword string) error {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return err
+	}
+	defer d.pool.Put(conn)
+
+	return sqlitex.Execute(conn,
+		`UPDATE users 
+		SET password = ?,
+			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		WHERE id = ?`,
+		&sqlitex.ExecOptions{
+			Args: []interface{}{newPassword, userId},
+		})
+}
+
 func (d *Db) InsertWithPool(value int64) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
