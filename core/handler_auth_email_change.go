@@ -46,6 +46,18 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Validate email format
+	if err := ValidateEmail(req.NewEmail); err != nil {
+		writeJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	// Basic domain validation - must contain a dot
+	if !strings.Contains(req.NewEmail[strings.Index(req.NewEmail, "@")+1:], ".") {
+		writeJsonError(w, errorInvalidRequest)
+		return
+	}
+
 	// Create email change token
 	token, err := crypto.NewJwtEmailChangeToken(
 		user.ID,
