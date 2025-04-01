@@ -28,6 +28,7 @@ const (
 	ClaimEmail             = "email"        // Email address being verified
 	ClaimType              = "type"         // Verification type claim
 	ClaimVerificationValue = "verification" // Value for verification type claim
+	ClaimPasswordResetValue = "password_reset" // Value for password reset type claim
 
 	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)
 	MaxTokenAge = 7 * 24 * 60 * 60
@@ -235,7 +236,25 @@ func NewJwtSessionToken(userID, email, passwordHash string, secret []byte, durat
 	return NewJwt(claims, signingKey, duration)
 }
 
-// TODO make it use agenric NewJwtCredentialsToken with claim signature
+// NewJwtPasswordResetToken creates a JWT specifically for password reset
+func NewJwtPasswordResetToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, error) {
+	// Create signing key from email and secret
+	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
+	if err != nil {
+		return "", fmt.Errorf("failed to create signing key: %w", err)
+	}
+
+	// Set up password reset-specific claims
+	claims := jwt.MapClaims{
+		ClaimUserID: userID,
+		ClaimEmail:  email,
+		ClaimType:   ClaimPasswordResetValue,
+	}
+
+	// Generate and return token
+	return NewJwt(claims, signingKey, duration)
+}
+
 // NewJwtEmailVerificationToken creates a JWT specifically for email verification
 // It includes additional claims needed for verification
 func NewJwtEmailVerificationToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, error) {

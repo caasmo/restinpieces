@@ -111,6 +111,8 @@ type Jwt struct {
 	AuthTokenDuration              time.Duration
 	VerificationEmailSecret        []byte
 	VerificationEmailTokenDuration time.Duration
+	PasswordResetSecret            []byte
+	PasswordResetTokenDuration     time.Duration
 }
 
 type Smtp struct {
@@ -210,6 +212,8 @@ func Load(dbfile string) (*Config, error) {
 			AuthTokenDuration:              45 * time.Minute,
 			VerificationEmailSecret:        []byte("test_verification_secret_32_bytes_xxxx"),
 			VerificationEmailTokenDuration: 24 * time.Hour,
+			PasswordResetSecret:            []byte("test_password_reset_secret_32_bytes_xxxx"),
+			PasswordResetTokenDuration:     1 * time.Hour, // Shorter duration for security
 		},
 		DBFile:    dbfile,
 		PublicDir: "static/dist", // Default public directory
