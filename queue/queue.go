@@ -9,7 +9,8 @@ import (
 type Job struct {
 	ID           int64           `json:"id"`
 	JobType      string          `json:"job_type"`
-	Payload      json.RawMessage `json:"payload"`
+	Payload      json.RawMessage `json:"payload"`        // Unique payload part
+	PayloadExtra json.RawMessage `json:"payload_extra"`  // Non-unique payload part
 	Status       string          `json:"status"`
 	Attempts     int             `json:"attempts"`
 	MaxAttempts  int             `json:"max_attempts"`

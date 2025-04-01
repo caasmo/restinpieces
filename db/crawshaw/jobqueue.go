@@ -17,9 +17,10 @@ func validateQueueJob(job queue.Job) error {
 	if job.JobType == "" {
 		missingFields = append(missingFields, "JobType")
 	}
-	if len(job.Payload) == 0 {
-		missingFields = append(missingFields, "Payload")
-	}
+	// PayloadExtra is optional
+	// if len(job.PayloadExtra) == 0 {
+	// 	missingFields = append(missingFields, "PayloadExtra")
+	// }
 
 	if len(missingFields) > 0 {
 		return fmt.Errorf("%w: %s", db.ErrMissingFields, strings.Join(missingFields, ", "))
@@ -80,6 +81,7 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 				ID:           stmt.GetInt64("id"),
 				JobType:      stmt.GetText("job_type"),
 				Payload:      json.RawMessage(stmt.GetText("payload")),
+				PayloadExtra: json.RawMessage(stmt.GetText("payload_extra")),
 				Status:       stmt.GetText("status"),
 				Attempts:     int(stmt.GetInt64("attempts")),
 				MaxAttempts:  int(stmt.GetInt64("max_attempts")),
@@ -109,14 +111,15 @@ func (d *Db) InsertJob(job queue.Job) error {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
-	err := sqlitex.Exec(conn, `INSERT INTO job_queue 
-		(job_type, payload, attempts, max_attempts) 
-		VALUES (?, ?, ?, ?)`,
-		nil,                 // No results needed for INSERT
-		job.JobType,         // 1. job_type
-		string(job.Payload), // 2. payload
-		job.Attempts,        // 4. attempts
-		job.MaxAttempts,     // 5. max_attempts
+	err := sqlitex.Exec(conn, `INSERT INTO job_queue
+		(job_type, payload, payload_extra, attempts, max_attempts)
+		VALUES (?, ?, ?, ?, ?)`,
+		nil,                    // No results needed for INSERT
+		job.JobType,            // 1. job_type
+		string(job.Payload),    // 2. payload
+		string(job.PayloadExtra), // 3. payload_extra
+		job.Attempts,           // 4. attempts
+		job.MaxAttempts,        // 5. max_attempts
 	)
 
 	if err != nil {
@@ -193,7 +196,7 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 			ORDER BY id ASC
 			LIMIT ?
 		)
-		RETURNING id, job_type, payload, status, attempts, max_attempts, created_at, updated_at,
+		RETURNING id, job_type, payload, payload_extra, status, attempts, max_attempts, created_at, updated_at,
 			scheduled_for, locked_by, locked_at, completed_at, last_error`,
 		func(stmt *sqlite.Stmt) error {
 			createdAt, err := db.TimeParse(stmt.GetText("created_at"))
