@@ -62,7 +62,13 @@ const (
 //
 // Returns:
 // int: The bucket number, calculated as floor(t.Unix() / duration)
+//
+// Errors:
+// - Panics if duration is zero or negative to prevent undefined behavior
 func CoolDownBucket(duration time.Duration, t time.Time) int {
+	if duration <= 0 {
+		panic("duration must be positive")
+	}
 	if t.IsZero() {
 		t = time.Now()
 	}
