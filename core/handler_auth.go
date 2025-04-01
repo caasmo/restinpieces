@@ -421,9 +421,13 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 		Payload: payload,
 	}
 
-	// Insert into job queue
+	// Insert into job queue with deduplication
 	err = a.db.InsertJob(job)
 	if err != nil {
+		if err == db.ErrConstraintUnique {
+			writeJsonError(w, errorConflict)
+			return
+		}
 		writeJsonError(w, errorServiceUnavailable)
 		return
 	}
