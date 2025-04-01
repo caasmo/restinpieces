@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Request Email Change</title>
+    <link rel="stylesheet" href="/css/restinpieces.css" />
+  </head>
+  <body class="verify-email-page">
+    <h1>Request Email Change</h1>
+    <div id="message" class="verify-message verify-hidden"></div>
+    <div id="form" class="verify-hidden">
+      <div class="form-group">
+        <label for="newEmail">New Email Address</label>
+        <input type="email" id="newEmail" required />
+      </div>
+      <button id="changeButton" class="verify-button">
+        Request Email Change
+      </button>
+    </div>
+    <div id="actions" class="verify-hidden">
+      <a href="/dashboard.html" class="verify-button">Dashboard</a>
+    </div>
+
+    <script type="module" src="/js/request-email-change.js"></script>
+  </body>
+</html>
