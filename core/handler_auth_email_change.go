@@ -52,26 +52,6 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Basic domain validation - must contain a dot
-	if !strings.Contains(req.NewEmail[strings.Index(req.NewEmail, "@")+1:], ".") {
-		writeJsonError(w, errorInvalidRequest)
-		return
-	}
-
-	// Create email change token
-	token, err := crypto.NewJwtEmailChangeToken(
-		user.ID,
-		user.Email,
-		req.NewEmail,
-		user.Password,
-		a.config.Jwt.EmailChangeSecret,
-		a.config.Jwt.EmailChangeTokenDuration,
-	)
-	if err != nil {
-		writeJsonError(w, errorTokenGeneration)
-		return
-	}
-
 	// Create queue payload
 	payload := queue.PayloadEmailChange{
 		OldEmail:       user.Email,
