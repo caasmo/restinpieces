@@ -127,6 +127,8 @@ type Jwt struct {
 	VerificationEmailTokenDuration time.Duration
 	PasswordResetSecret            []byte
 	PasswordResetTokenDuration     time.Duration
+	EmailChangeSecret              []byte
+	EmailChangeTokenDuration       time.Duration
 }
 
 type Smtp struct {
