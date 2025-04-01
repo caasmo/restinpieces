@@ -337,11 +337,17 @@ func (d *Db) VerifyEmail(userId string) error {
 func (d *Db) UpdatePassword(userId string, newPassword string) error {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get database connection: %w", err)
 	}
 	defer d.pool.Put(conn)
 
-	return sqlitex.Execute(conn,
+	// Validate password length before update
+	if len(newPassword) < 8 {
+		return fmt.Errorf("password must be at least 8 characters")
+	}
+
+	// Update password and timestamp
+	err = sqlitex.Execute(conn,
 		`UPDATE users 
 		SET password = ?,
 			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
@@ -349,6 +355,11 @@ func (d *Db) UpdatePassword(userId string, newPassword string) error {
 		&sqlitex.ExecOptions{
 			Args: []interface{}{newPassword, userId},
 		})
+	if err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	return nil
 }
 
 func (d *Db) InsertWithPool(value int64) {
