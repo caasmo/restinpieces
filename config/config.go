@@ -235,6 +235,7 @@ func Load(dbfile string) (*Config, error) {
 		RateLimits: RateLimits{
 			PasswordResetCooldown: 2 * time.Hour,
 			EmailVerificationCooldown: 1 * time.Hour,
+			EmailChangeCooldown: 1 * time.Hour,
 		},
 		DBFile:    dbfile,
 		PublicDir: "static/dist", // Default public directory
