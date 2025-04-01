@@ -65,11 +65,11 @@ class ConfirmPasswordReset {
         password_confirm: confirmPassword
       })
       .then((response) => {
-        if (response.data) {
+        if (response?.status === 200 && response?.data?.message) {
           this.showMessage("Password reset successful!");
           this.createSuccessUI();
         } else {
-          throw new Error("Invalid response from server");
+          throw new Error(response?.data?.message || "Invalid response from server");
         }
       })
       .catch((error) => {
