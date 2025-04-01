@@ -311,6 +311,7 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Validate password complexity
+    // TODO
 	if len(req.Password) < 8 {
 		writeJsonError(w, errorPasswordComplexity) 
 		return

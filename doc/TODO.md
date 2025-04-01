@@ -1,6 +1,7 @@
 ### TODOs
 
-- verification email cooldown, idea is not to send email
+
+- corfirmation, spam sending the same right jwt 
 - good enough release
     - litestream
     - logger
@@ -104,6 +105,7 @@
 
 ### done
 
+- verification email cooldown, idea is not to send email
 - password reset logic, unique in job is not enough
     - we want the user to do a reset each two hours, ideally wihtout cache
     - payload put email type and number of bucket of two hours
