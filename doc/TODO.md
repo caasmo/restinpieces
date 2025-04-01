@@ -3,7 +3,7 @@
 
 - password change test with real smtp  
 - corfirmation, spam sending the same right jwt 
-- endpointsw discovery ahs no update each time.
+- endpointsw discovery has no update each time.
 - good enough release
     - litestream
     - logger
@@ -25,6 +25,10 @@
 - if in db config, how to edit the easiest, toml?
 - maintenance middleware: 503 Retry-After: 3600
 	- we can not avoid goroutine
+    - global middleware, wraps router
+        - Block ip method
+        - mimetype white list 
+        - maintenance
 - reset email 
 - reset password
 - add logger
