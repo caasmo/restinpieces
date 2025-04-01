@@ -35,7 +35,7 @@ func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
 
 	var jobs []*queue.Job
 	err := sqlitex.Exec(conn,
-		`SELECT id, job_type, payload, status, attempts, max_attempts, created_at, updated_at, 
+		`SELECT id, job_type, payload, payload_extra, status, attempts, max_attempts, created_at, updated_at, 
 				scheduled_for, locked_by, locked_at, completed_at, last_error
 		FROM job_queue
 			WHERE status IN ('pending', 'failed')
