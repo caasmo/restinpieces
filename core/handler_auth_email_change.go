@@ -77,10 +77,11 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Insert job into queue
 	err = a.db.InsertJob(queue.Job{
-		JobType:  queue.JobTypeEmailChange,
-		Payload:  payloadBytes,
-		Status:   queue.StatusPending,
-		Attempts: 0,
+		JobType:     queue.JobTypeEmailChange,
+		Payload:     payloadBytes,
+		PayloadExtra: payloadExtraBytes,
+		Status:      queue.StatusPending,
+		Attempts:    0,
 		MaxAttempts: 3,
 	})
 	if err != nil {
