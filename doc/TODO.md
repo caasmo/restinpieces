@@ -1,7 +1,15 @@
 ### TODOs
 
-- bug api headers
 - good enough release
+    - litestream
+    - logger
+    - configuration
+    - reset email 
+    - reset password
+    - propably multidomain
+    - basic metrics 
+    - superuser workflows
+    - mantenance page 
 - command init, bootsrap command, 
     - bootstrap create tables, create config and put in db.
 - command dump 
@@ -9,7 +17,7 @@
     - dump-config to toml, maybe json
     - load-config 
     - start --config a --db\, minimize the number of flags
-- command serve or none
+    - command serve or none
 - if in db config, how to edit the easiest, toml?
 - maintenance middleware: 503 Retry-After: 3600
 	- we can not avoid goroutine
@@ -26,9 +34,10 @@
 	testability and maintainability are important, injecting the slog.Logger
 	instance is the strongly recommended best practice.
 - config reload
-- minify html, 5% space.
+- minify html, 5% space. if we already have gzip
+    - https://github.com/tdewolff/minify?tab=readme-ov-file#html 
+    - https://github.com/privatenumber/minification-benchmarks?tab=readme-ov-file#%EF%B8%8F-minifier-showdown
 - request email verification must be logged
-- i think public to static 
 - second db interface for custom 
 - cache and other headers from assets use a middlware for api we have a map that we appli in response
     - try to be consistent
@@ -94,6 +103,8 @@
 
 ### done
 
+- bug api headers
+- i think public to static 
 - callback.html copy to puclic
 - safe api heders, html headers middleware 
 - general rate limit -> no 
