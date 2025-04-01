@@ -18,10 +18,10 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Get user from context (set by auth middleware)
-	user, ok := r.Context().Value(ContextKeyUser).(*db.User)
-	if !ok || user == nil {
-		writeJsonError(w, errorInvalidCredentials)
+	// Authenticate the user using the token from the request
+	user, err, authResp := a.Authenticate(r)
+	if err != nil {
+		writeJsonError(w, authResp)
 		return
 	}
 
