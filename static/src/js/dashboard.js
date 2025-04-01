@@ -89,4 +89,10 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("click", () => {
       window.location.href = "/logout.html";
     });
+
+  document
+    .getElementById("request-password-reset-btn")
+    .addEventListener("click", () => {
+      window.location.href = "/request-password-reset.html";
+    });
 });
