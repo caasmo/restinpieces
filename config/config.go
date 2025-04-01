@@ -127,14 +127,15 @@ type Smtp struct {
 }
 
 type Endpoints struct {
-	RefreshAuth          string `json:"refresh_auth"`
-	RequestVerification  string `json:"request_verification"`
-	ListEndpoints        string `json:"list_endpoints"`
-	AuthWithPassword     string `json:"auth_with_password"`
-	AuthWithOAuth2       string `json:"auth_with_oauth2"`
-	RegisterWithPassword string `json:"register_with_password"`
-	ListOAuth2Providers  string `json:"list_oauth2_providers"`
-	ConfirmVerification  string `json:"confirm_verification"`
+	RefreshAuth           string `json:"refresh_auth"`
+	RequestVerification   string `json:"request_verification"`
+	ListEndpoints         string `json:"list_endpoints"`
+	AuthWithPassword      string `json:"auth_with_password"`
+	AuthWithOAuth2        string `json:"auth_with_oauth2"`
+	RegisterWithPassword  string `json:"register_with_password"`
+	ListOAuth2Providers   string `json:"list_oauth2_providers"`
+	ConfirmVerification   string `json:"confirm_verification"`
+	RequestPasswordReset  string `json:"request_password_reset"`
 }
 
 // DefaultEndpoints returns the standard endpoint paths
@@ -148,6 +149,7 @@ func DefaultEndpoints() Endpoints {
 		RegisterWithPassword: "POST /api/register-with-password",
 		ListOAuth2Providers:  "GET /api/list-oauth2-providers",
 		ConfirmVerification:  "POST /api/confirm-verification",
+		RequestPasswordReset: "POST /api/request-password-reset",
 	}
 }
 
