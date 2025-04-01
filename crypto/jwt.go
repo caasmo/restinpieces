@@ -140,6 +140,34 @@ func ValidateClaimEmail(claims jwt.MapClaims) error {
 	return ErrClaimNotFound
 }
 
+func ValidatePasswordResetClaims(claims jwt.MapClaims) error {
+	// Validate iat claim and token age
+	if err := ValidateClaimIssuedAt(claims); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	// Validate exp claim
+	if err := ValidateClaimExpiresAt(claims); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	// Validate user_id claim
+	if err := ValidateClaimUserID(claims); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	// Validate required claims exist
+	if err := ValidateClaimEmail(claims); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	if err := ValidateClaimType(claims, ClaimPasswordResetValue); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	return nil
+}
+
 func ValidateClaimType(claims jwt.MapClaims, value string) error {
 	// Check if type claim exists
 	if typeVal, exists := claims[ClaimType]; exists {

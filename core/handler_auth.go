@@ -276,6 +276,82 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 	writeJsonOk(w, okEmailVerified)
 }
 
+// ConfirmPasswordResetHandler handles password reset confirmation
+// Endpoint: POST /confirm-password-reset
+// Authenticated: No
+// Allowed Mimetype: application/json
+func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
+	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
+		writeJsonError(w, resp)
+		return
+	}
+
+	type request struct {
+		Token    string `json:"token"`
+		Password string `json:"password"`
+	}
+
+	var req request
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	// Parse unverified claims to discard fast
+	claims, err := crypto.ParseJwtUnverified(req.Token)
+	if err != nil {
+		writeJsonError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+
+	// Validate all required claims exist and have correct values
+	if err := crypto.ValidatePasswordResetClaims(claims); err != nil {
+		writeJsonError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+
+	// Get user from database to get password hash for signing key
+	user, err := a.db.GetUserById(claims[crypto.ClaimUserID].(string))
+	if err != nil || user == nil {
+		writeJsonError(w, errorNotFound)
+		return
+	}
+
+	// Verify token signature using password reset secret
+	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
+		claims[crypto.ClaimEmail].(string),
+		user.Password,
+		a.config.Jwt.PasswordResetSecret,
+	)
+	if err != nil {
+		writeJsonError(w, errorPasswordResetFailed)
+		return
+	}
+
+	// Fully verify token signature and claims
+	_, err = crypto.ParseJwt(req.Token, signingKey)
+	if err != nil {
+		writeJsonError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+
+	// Hash new password before storage
+	hashedPassword, err := crypto.GenerateHash(req.Password)
+	if err != nil {
+		writeJsonError(w, errorTokenGeneration)
+		return
+	}
+
+	// Update user password
+	err = a.db.UpdatePassword(user.ID, string(hashedPassword))
+	if err != nil {
+		writeJsonError(w, errorServiceUnavailable)
+		return
+	}
+
+	writeJsonOk(w, okPasswordReset)
+}
+
 // RegisterWithPasswordHandler handles password-based user registration with validation
 // Endpoint: POST /register-with-password
 // Authenticated: No

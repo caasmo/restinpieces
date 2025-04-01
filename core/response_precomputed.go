@@ -26,6 +26,8 @@ const (
 	CodeErrorNotFound                       = "err_not_found"
 	CodeErrorEmailVerificationAlreadyRequested = "err_email_verification_already_requested"
 	CodeErrorPasswordResetAlreadyRequested  = "err_password_reset_already_requested"
+	CodeErrorPasswordResetFailed            = "err_password_reset_failed"
+	CodeOkPasswordReset                     = "ok_password_reset"
 	CodeErrorRegistrationFailed             = "err_registration_failed"
 	CodeErrorTooManyRequests                = "err_too_many_requests"
 	CodeErrorServiceUnavailable             = "err_service_unavailable"
@@ -94,6 +96,8 @@ var (
 	errorNotFound                       = precomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
 	errorEmailVerificationAlreadyRequested = precomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationAlreadyRequested, "Email verification already requested.")
 	errorPasswordResetAlreadyRequested  = precomputeBasicResponse(http.StatusConflict, CodeErrorPasswordResetAlreadyRequested, "Password reset already requested")
+	errorPasswordResetFailed            = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordResetFailed, "Password reset process failed")
+	okPasswordReset                     = precomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")
 	errorRegistrationFailed             = precomputeBasicResponse(http.StatusBadRequest, CodeErrorRegistrationFailed, "Registration failed due to invalid data")
 	errorTooManyRequests                = precomputeBasicResponse(http.StatusTooManyRequests, CodeErrorTooManyRequests, "Too many requests, please try again later")
 	errorServiceUnavailable             = precomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
