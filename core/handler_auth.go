@@ -299,25 +299,31 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Validate required fields
+	slog.Debug("Validating required fields")
 	if req.Token == "" || req.Password == "" || req.PasswordConfirm == "" {
+		slog.Debug("Missing required fields")
 		writeJsonError(w, errorMissingFields)
 		return
 	}
 
 	// Validate password match
+	slog.Debug("Validating password match")
 	if req.Password != req.PasswordConfirm {
+		slog.Debug("Passwords do not match")
 		writeJsonError(w, errorPasswordMismatch)
 		return
 	}
 
 	// Validate password complexity
-    // TODO
+	slog.Debug("Validating password complexity")
 	if len(req.Password) < 8 {
-		writeJsonError(w, errorPasswordComplexity) 
+		slog.Debug("Password is too short", "length", len(req.Password))
+		writeJsonError(w, errorPasswordComplexity)
 		return
 	}
 
 	// Parse unverified claims to discard fast
+	slog.Debug("Parsing unverified JWT claims")
 	claims, err := crypto.ParseJwtUnverified(req.Token)
 	if err != nil {
 		writeJsonError(w, errorJwtInvalidVerificationToken)
@@ -325,12 +331,15 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Validate all required claims exist and have correct values
+	slog.Debug("Validating password reset claims")
 	if err := crypto.ValidatePasswordResetClaims(claims); err != nil {
+		slog.Debug("Invalid password reset claims", "error", err)
 		writeJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
 	// Get user from database to get password hash for signing key
+	slog.Debug("Fetching user from database", "user_id", claims[crypto.ClaimUserID])
 	user, err := a.db.GetUserById(claims[crypto.ClaimUserID].(string))
 	if err != nil || user == nil {
 		writeJsonError(w, errorNotFound)
@@ -338,24 +347,29 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Verify token signature using password reset secret
+	slog.Debug("Generating signing key for password reset")
 	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
 		claims[crypto.ClaimEmail].(string),
 		user.Password,
 		a.config.Jwt.PasswordResetSecret,
 	)
 	if err != nil {
+		slog.Debug("Failed to generate signing key", "error", err)
 		writeJsonError(w, errorPasswordResetFailed)
 		return
 	}
 
 	// Fully verify token signature and claims
+	slog.Debug("Verifying JWT token signature")
 	_, err = crypto.ParseJwt(req.Token, signingKey)
 	if err != nil {
+		slog.Debug("JWT token verification failed", "error", err)
 		writeJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
 	// Hash new password before storage
+	slog.Debug("Hashing new password")
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
 		writeJsonError(w, errorTokenGeneration)
@@ -363,12 +377,15 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Update user password
+	slog.Debug("Updating user password in database", "user_id", user.ID)
 	err = a.db.UpdatePassword(user.ID, string(hashedPassword))
 	if err != nil {
+		slog.Debug("Failed to update password", "error", err)
 		writeJsonError(w, errorServiceUnavailable)
 		return
 	}
 
+	slog.Debug("Password reset successful", "user_id", user.ID)
 	writeJsonOk(w, okPasswordReset)
 }
 
