@@ -235,6 +235,8 @@ func Load(dbfile string) (*Config, error) {
 			VerificationEmailTokenDuration: 24 * time.Hour,
 			PasswordResetSecret:            []byte("test_password_reset_secret_32_bytes_xxxx"),
 			PasswordResetTokenDuration:     1 * time.Hour, // Shorter duration for security
+			EmailChangeSecret:             []byte("test_email_change_secret_32_bytes_xxxx"),
+			EmailChangeTokenDuration:      1 * time.Hour, // Same as password reset
 		},
 		RateLimits: RateLimits{
 			PasswordResetCooldown: 2 * time.Hour,

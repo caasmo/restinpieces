@@ -31,6 +31,12 @@ type PayloadEmailVerification struct {
 	CooldownBucket int    `json:"cooldown_bucket"`
 }
 
+type PayloadEmailChange struct {
+	OldEmail       string `json:"old_email"`
+	NewEmail       string `json:"new_email"`
+	CooldownBucket int    `json:"cooldown_bucket"`
+}
+
 type PayloadPasswordReset struct {
 	Email          string `json:"email"`
 	// CooldownBucket is the time bucket number calculated from the current time divided by the cooldown duration.
@@ -52,6 +58,7 @@ type PayloadPasswordReset struct {
 const (
 	JobTypeEmailVerification = "job_type_email_verification"
 	JobTypePasswordReset     = "job_type_password_reset"
+	JobTypeEmailChange       = "job_type_email_change"
 )
 
 // Job statuses
