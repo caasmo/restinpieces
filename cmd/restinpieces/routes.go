@@ -52,6 +52,8 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		r.NewRoute(cfg.Endpoints.ConfirmVerification).WithHandlerFunc(ap.ConfirmVerificationHandler),
 		r.NewRoute(cfg.Endpoints.RequestPasswordReset).WithHandlerFunc(ap.RequestPasswordResetHandler),
 		r.NewRoute(cfg.Endpoints.ConfirmPasswordReset).WithHandlerFunc(ap.ConfirmPasswordResetHandler),
+		r.NewRoute(cfg.Endpoints.RequestEmailChange).WithHandlerFunc(ap.RequestEmailChangeHandler),
+		r.NewRoute(cfg.Endpoints.ConfirmEmailChange).WithHandlerFunc(ap.ConfirmEmailChangeHandler),
 
 		// --- custom routes  ---
 
