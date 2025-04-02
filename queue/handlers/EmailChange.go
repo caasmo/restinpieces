@@ -42,15 +42,15 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 		return fmt.Errorf("failed to parse email change extra payload: %w", err)
 	}
 
-	// Get user by email
-	user, err := h.db.GetUserByEmail(payload.Email)
+	// Get user by ID
+	user, err := h.db.GetUserById(payload.UserID)
 	if err != nil {
-		return fmt.Errorf("failed to get user by email: %w", err)
+		return fmt.Errorf("failed to get user by ID: %w", err)
 	}
 
 	if user == nil {
-		slog.Info("User not found for email change", "email", payload.Email)
-		return fmt.Errorf("failed to get user by email: %w", err)
+		slog.Info("User not found for email change", "user_id", payload.UserID)
+		return fmt.Errorf("user not found")
 	}
 
 	// Create email change token with user ID
