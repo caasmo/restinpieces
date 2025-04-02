@@ -15,6 +15,20 @@ import (
 // Endpoint: POST /request-password-reset
 // Authenticated: No
 // Allowed Mimetype: application/json
+// 
+// Behavior:
+// - Validates email format and stores trimmed version
+// - Checks if email is verified - returns errorUnverifiedEmail if not
+// - Prevents email enumeration by returning same success for both existing/non-existing emails
+// - Uses cooldown buckets based on config.RateLimits.PasswordResetCooldown to prevent spam
+// - Returns errorPasswordResetAlreadyRequested if request already exists in same cooldown bucket
+// - Creates async job to send password reset email
+// 
+// Important Security Notes:
+// - Sending emails is an expensive operation and potential spam vector
+// - Rate limiting is enforced via cooldown buckets
+// - Email enumeration is prevented by uniform success responses
+// - Email verification check prevents password reset on unverified accounts
 func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
 		writeJsonError(w, resp)
@@ -53,6 +67,12 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	if user == nil {
 		// Return success even if email doesn't exist to prevent email enumeration
 		writeJsonOk(w, okPasswordResetRequested)
+		return
+	}
+
+	// Check if email is verified before allowing password reset
+	if !user.Verified {
+		writeJsonError(w, errorUnverifiedEmail)
 		return
 	}
 
