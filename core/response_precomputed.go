@@ -29,6 +29,7 @@ const (
 	CodeErrorNotFound                          = "err_not_found"
 	CodeErrorEmailVerificationAlreadyRequested = "err_email_verification_already_requested"
 	CodeErrorPasswordResetAlreadyRequested     = "err_password_reset_already_requested"
+	CodeErrorEmailChangeAlreadyRequested       = "err_email_change_already_requested"
 	CodeErrorPasswordResetFailed               = "err_password_reset_failed"
 	CodeOkPasswordReset                        = "ok_password_reset"
 	CodeErrorRegistrationFailed                = "err_registration_failed"
@@ -100,6 +101,7 @@ var (
 	errorNotFound                          = precomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
 	errorEmailVerificationAlreadyRequested = precomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationAlreadyRequested, "Email verification already requested.")
 	errorPasswordResetAlreadyRequested     = precomputeBasicResponse(http.StatusConflict, CodeErrorPasswordResetAlreadyRequested, "Password reset already requested")
+	errorEmailChangeAlreadyRequested       = precomputeBasicResponse(http.StatusConflict, CodeErrorEmailChangeAlreadyRequested, "Email change already requested")
 	errorPasswordResetFailed               = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordResetFailed, "Password reset process failed")
 	okPasswordReset                        = precomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")
 	errorRegistrationFailed                = precomputeBasicResponse(http.StatusBadRequest, CodeErrorRegistrationFailed, "Registration failed due to invalid data")

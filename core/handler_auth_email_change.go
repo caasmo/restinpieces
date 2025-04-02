@@ -82,7 +82,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Insert job into queue
+	// Insert job into queue with deduplication
 	err = a.db.InsertJob(queue.Job{
 		JobType:      queue.JobTypeEmailChange,
 		Payload:      payloadBytes,
@@ -92,6 +92,10 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		MaxAttempts:  3,
 	})
 	if err != nil {
+		if err == db.ErrConstraintUnique {
+			writeJsonError(w, errorEmailChangeAlreadyRequested)
+			return
+		}
 		writeJsonError(w, errorAuthDatabaseError)
 		return
 	}
