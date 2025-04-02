@@ -74,7 +74,7 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-func ValidateVerificationClaims(claims jwt.MapClaims) error {
+func ValidateEmailVerificationClaims(claims jwt.MapClaims) error {
 	// Validate iat claim and token age
 	if err := validateClaimIssuedAt(claims[ClaimIssuedAt]); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
