@@ -85,38 +85,6 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	writeJsonOk(w, okVerificationRequested)
 }
 
-// confirm-
-//
-//	user created per email, requires validation of email, we have already emaila dn user id in table
-//
-// queue job creates payload like this:
-//
-//	{
-//	 "email": "lipo@goole.com",
-//	 "type": "verification"
-//	}
-//
-// with a new verification secret, create method in crypto
-// with map claim in a good place with signing key email, passwordhash
-// receives token
-// parse unverified, should have all fiedls above reject if no
-// validate all fields
-// we can not write in the db yet
-// we get user password from table. build signed key and try to verify the message if verified
-// run VerifyEmail, document no race conditions, why
-// get id, builds sig key with verification email secret
-// jwt validate signed
-// set verified
-// key := (m.TokenKey() + m.Collection().VerificationToken.Secret)
-// is a jwt
-//
-//	{
-//	 "collectionId": "_pb_users_auth_",
-//	 "email": "lipo@google.com",
-//	 "exp": 1736630179,
-//	 "id": "m648zm0q421yfc0",
-//	 "type": "verification"
-//	}
 func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
 		writeJsonError(w, resp)
