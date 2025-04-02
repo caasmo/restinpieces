@@ -99,5 +99,109 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) {
-	writeJsonError(w, errorAuthDatabaseError)
+	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
+		writeJsonError(w, resp)
+		return
+	}
+
+	type request struct {
+		Token    string `json:"token"`
+		Password string `json:"password"`
+	}
+
+	var req request
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	// Validate required fields
+	if req.Token == "" || req.Password == "" {
+		writeJsonError(w, errorMissingFields)
+		return
+	}
+
+	// Parse unverified claims to discard fast
+	claims, err := crypto.ParseJwtUnverified(req.Token)
+	if err != nil {
+		writeJsonError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+
+	// Validate all required claims exist and have correct values
+	if err := crypto.ValidateClaimType(claims, "email_change"); err != nil {
+		writeJsonError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+	if err := crypto.ValidateClaimIssuedAt(claims); err != nil {
+		writeJsonError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+	if err := crypto.ValidateClaimExpiresAt(claims); err != nil {
+		writeJsonError(w, errorJwtTokenExpired)
+		return
+	}
+	if err := crypto.ValidateClaimUserID(claims); err != nil {
+		writeJsonError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+	if err := crypto.ValidateClaimEmail(claims); err != nil {
+		writeJsonError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+
+	// Get user from database to get password hash for signing key
+	user, err := a.db.GetUserById(claims[crypto.ClaimUserID].(string))
+	if err != nil || user == nil {
+		writeJsonError(w, errorNotFound)
+		return
+	}
+
+	// Verify password matches current password
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		writeJsonError(w, errorInvalidCredentials)
+		return
+	}
+
+	// Verify token signature using email change secret
+	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
+		claims[crypto.ClaimEmail].(string),
+		user.Password,
+		a.config.Jwt.EmailChangeSecret,
+	)
+	if err != nil {
+		writeJsonError(w, errorTokenGeneration)
+		return
+	}
+
+	// Fully verify token signature and claims
+	_, err = crypto.ParseJwt(req.Token, signingKey)
+	if err != nil {
+		writeJsonError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+
+	// Get new email from claims
+	newEmail, ok := claims["new_email"].(string)
+	if !ok || newEmail == "" {
+		writeJsonError(w, errorJwtInvalidVerificationToken)
+		return
+	}
+
+	// Validate new email format
+	if err := ValidateEmail(newEmail); err != nil {
+		writeJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	// TODO: Implement actual email update in database
+	// This would require adding a UpdateEmail method to the DB interface
+	// and implementing it in the concrete DB implementations
+	// err = a.db.UpdateEmail(user.ID, newEmail)
+	// if err != nil {
+	//     writeJsonError(w, errorServiceUnavailable)
+	//     return
+	// }
+
+	writeJsonOk(w, okEmailChangeRequested)
 }
