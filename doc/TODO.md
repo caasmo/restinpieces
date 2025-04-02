@@ -35,6 +35,7 @@
         - mimetype white list 
         - maintenance
 		- multidomain
+	- we have a handler struct with mthods that can be applied before passing to router
 	- global custom mux that embed router and modify just host in the request
 		- standar mux/route is given just a new request
 - confirmation endpoints spam attacks

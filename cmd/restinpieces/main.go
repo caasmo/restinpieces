@@ -11,6 +11,7 @@ import (
 	"github.com/caasmo/restinpieces/custom"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/proxy"
 	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
