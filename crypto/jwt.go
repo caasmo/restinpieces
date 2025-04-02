@@ -75,146 +75,135 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 }
 
 func ValidateVerificationClaims(claims jwt.MapClaims) error {
-
 	// Validate iat claim and token age
-	if err := ValidateClaimIssuedAt(claims); err != nil {
+	if err := validateClaimIssuedAt(claims[ClaimIssuedAt]); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
 	// Validate exp claim
-	if err := ValidateClaimExpiresAt(claims); err != nil {
+	if err := validateClaimExpiresAt(claims[ClaimExpiresAt]); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
 	// Validate user_id claim
-	if err := ValidateClaimUserID(claims); err != nil {
+	if err := validateClaimUserID(claims[ClaimUserID]); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
 	// Validate required claims exist
-	if err := ValidateClaimEmail(claims); err != nil {
+	if err := validateClaimEmail(claims[ClaimEmail]); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
-	if err := ValidateClaimType(claims, ClaimVerificationValue); err != nil {
+	if err := validateClaimType(claims[ClaimType], ClaimVerificationValue); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
 	return nil
-}
-
-// TODO for verification other constant !!!!111
-func ValidateClaimIssuedAt(claims jwt.MapClaims) error {
-	if iat, ok := claims[ClaimIssuedAt]; ok {
-		// there are two main reasons why the JWT library uses float64
-		// JSON which represents all numbers as float64
-		// Sub-second Precision
-		if iatTime, ok := iat.(float64); ok {
-			iatUnix := int64(iatTime)
-			nowUnix := time.Now().Unix()
-			if iatUnix > nowUnix {
-				return ErrTokenUsedBeforeIssued
-			}
-			if nowUnix-iatUnix > MaxTokenAge {
-				return ErrTokenTooOld
-			}
-			return nil
-		}
-		return ErrInvalidClaimFormat
-	}
-	return ErrClaimNotFound
-}
-
-// ValidateClaimUserID is a standalone function to validate the user_id claim
-// that can be called separately when needed
-func ValidateClaimEmail(claims jwt.MapClaims) error {
-	// Check if email exists
-	if email, exists := claims[ClaimEmail]; exists {
-		// Verify it's a string and not empty
-		if emailStr, ok := email.(string); ok {
-			if emailStr == "" {
-				return ErrInvalidClaimFormat
-			}
-			return nil
-		}
-		return ErrInvalidClaimFormat
-	}
-	return ErrClaimNotFound
 }
 
 func ValidatePasswordResetClaims(claims jwt.MapClaims) error {
 	// Validate iat claim and token age
-	if err := ValidateClaimIssuedAt(claims); err != nil {
+	if err := validateClaimIssuedAt(claims[ClaimIssuedAt]); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
 	// Validate exp claim
-	if err := ValidateClaimExpiresAt(claims); err != nil {
+	if err := validateClaimExpiresAt(claims[ClaimExpiresAt]); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
 	// Validate user_id claim
-	if err := ValidateClaimUserID(claims); err != nil {
+	if err := validateClaimUserID(claims[ClaimUserID]); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
 	// Validate required claims exist
-	if err := ValidateClaimEmail(claims); err != nil {
+	if err := validateClaimEmail(claims[ClaimEmail]); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
-	if err := ValidateClaimType(claims, ClaimPasswordResetValue); err != nil {
+	if err := validateClaimType(claims[ClaimType], ClaimPasswordResetValue); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
 	return nil
 }
 
-func ValidateClaimType(claims jwt.MapClaims, value string) error {
-	// Check if type claim exists
-	if typeVal, exists := claims[ClaimType]; exists {
-		// Verify it's a string and matches expected value
-		if typeStr, ok := typeVal.(string); ok {
-			if typeStr != value {
-				return ErrInvalidClaimFormat
-			}
-			return nil
-		}
-		return ErrInvalidClaimFormat
+func validateClaimIssuedAt(iat any) error {
+	if iat == nil {
+		return ErrClaimNotFound
 	}
-	return ErrClaimNotFound
+
+	if iatTime, ok := iat.(float64); ok {
+		iatUnix := int64(iatTime)
+		nowUnix := time.Now().Unix()
+		if iatUnix > nowUnix {
+			return ErrTokenUsedBeforeIssued
+		}
+		if nowUnix-iatUnix > MaxTokenAge {
+			return ErrTokenTooOld
+		}
+		return nil
+	}
+	return ErrInvalidClaimFormat
 }
 
-func ValidateClaimExpiresAt(claims jwt.MapClaims) error {
-	// Check if exp claim exists
-	if exp, exists := claims[ClaimExpiresAt]; exists {
-		// Verify it's a float64 and not expired
-		if expTime, ok := exp.(float64); ok {
-			now := time.Now().Unix()
-			if int64(expTime) < now {
-				return ErrJwtTokenExpired
-			}
-			return nil
-		}
-		return ErrInvalidClaimFormat
+func validateClaimEmail(email any) error {
+	if email == nil {
+		return ErrClaimNotFound
 	}
-	return ErrClaimNotFound
+
+	if emailStr, ok := email.(string); ok {
+		if emailStr == "" {
+			return ErrInvalidClaimFormat
+		}
+		return nil
+	}
+	return ErrInvalidClaimFormat
 }
 
-func ValidateClaimUserID(claims jwt.MapClaims) error {
-	// Check if user_id exists
-	if userID, exists := claims[ClaimUserID]; exists {
-		// Verify it's a string and not empty
-		if userIDStr, ok := userID.(string); ok {
-			if userIDStr == "" {
-				return ErrInvalidClaimFormat
-			}
-			// Additional user_id validation could go here
-			return nil
-		}
-		return ErrInvalidClaimFormat
+func validateClaimType(typeVal any, expectedValue string) error {
+	if typeVal == nil {
+		return ErrClaimNotFound
 	}
-	return ErrClaimNotFound
+
+	if typeStr, ok := typeVal.(string); ok {
+		if typeStr != expectedValue {
+			return ErrInvalidClaimFormat
+		}
+		return nil
+	}
+	return ErrInvalidClaimFormat
+}
+
+func validateClaimExpiresAt(exp any) error {
+	if exp == nil {
+		return ErrClaimNotFound
+	}
+
+	if expTime, ok := exp.(float64); ok {
+		now := time.Now().Unix()
+		if int64(expTime) < now {
+			return ErrJwtTokenExpired
+		}
+		return nil
+	}
+	return ErrInvalidClaimFormat
+}
+
+func validateClaimUserID(userID any) error {
+	if userID == nil {
+		return ErrClaimNotFound
+	}
+
+	if userIDStr, ok := userID.(string); ok {
+		if userIDStr == "" {
+			return ErrInvalidClaimFormat
+		}
+		return nil
+	}
+	return ErrInvalidClaimFormat
 }
 
 // ParseJwt verifies and parses JWT and returns its claims.
