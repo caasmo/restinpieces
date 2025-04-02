@@ -142,7 +142,7 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Verify password matches current password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+	if !crypto.CheckPassword(req.Password, user.Password) {
 		writeJsonError(w, errorInvalidCredentials)
 		return
 	}
