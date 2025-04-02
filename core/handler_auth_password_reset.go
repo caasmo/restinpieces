@@ -193,7 +193,7 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 
 	// Check if new password matches old one
 	if crypto.CheckPassword(req.Password, user.Password) {
-		writeJsonOk(w, okNoChangeNeeded)
+		writeJsonOk(w, okPasswordResetNotNeeded)
 		return
 	}
 
