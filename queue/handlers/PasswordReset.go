@@ -59,9 +59,11 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 		return fmt.Errorf("failed to create password reset token: %w", err)
 	}
 
-	// TODO end point come from the config
-	// Construct callback URL using server's base URL and HTML password reset page
-	callbackURL := fmt.Sprintf("%s/confirm-password-reset.html?token=%s", h.config.Server.BaseURL(), token)
+	// Construct callback URL using server's base URL and configured endpoint
+	callbackURL := fmt.Sprintf("%s%s?token=%s", 
+		h.config.Server.BaseURL(), 
+		h.config.Endpoints.ConfirmPasswordReset, 
+		token)
 
 	// Send password reset email
 	if err := h.mailer.SendPasswordResetEmail(ctx, user.Email, callbackURL); err != nil {
