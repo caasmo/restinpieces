@@ -35,19 +35,10 @@ func (a *App) Authenticate(r *http.Request) (*db.User, error, jsonResponse) {
 		return nil, errAuth, errorJwtInvalidToken
 	}
 
-	// Validate essential claims before fetching user
-	if err := crypto.ValidateClaimIssuedAt(claims); err != nil {
-		if errors.Is(err, crypto.ErrTokenUsedBeforeIssued) {
-			// Although unlikely for session tokens, handle just in case
-			return nil, errAuth, errorJwtInvalidToken
-		}
-		// Map other potential 'iat' errors if needed, otherwise treat as invalid
+	// Validate session claims before fetching user
+	if err := crypto.ValidateSessionClaims(claims); err != nil {
 		return nil, errAuth, errorJwtInvalidToken
 	}
-	if err := crypto.ValidateClaimUserID(claims); err != nil {
-		return nil, errAuth, errorJwtInvalidToken
-	}
-	// We don't validate expiry here yet, as ParseJwt will do it after signature verification.
 
 	// Get user from database using UserID from claims
 	userID := claims[crypto.ClaimUserID].(string)
