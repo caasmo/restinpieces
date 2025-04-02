@@ -74,12 +74,16 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	// Create queue job with cooldown bucket. Second insertion in same bucket
 	// will fail because unique
 	payload, _ := json.Marshal(queue.PayloadPasswordReset{
-		Email:          req.Email,
+		UserID:         user.ID,
 		CooldownBucket: cooldownBucket,
 	})
+	payloadExtra, _ := json.Marshal(queue.PayloadPasswordResetExtra{
+		Email: req.Email,
+	})
 	job := queue.Job{
-		JobType: queue.JobTypePasswordReset,
-		Payload: payload,
+		JobType:      queue.JobTypePasswordReset,
+		Payload:      payload,
+		PayloadExtra: payloadExtra,
 	}
 
 	// Insert into job queue with deduplication
