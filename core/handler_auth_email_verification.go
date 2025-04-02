@@ -55,7 +55,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 
 	// Verify the authenticated user matches the requested email
 	if user.Email != req.Email {
-		writeJsonError(w, errorForbidden)
+		writeJsonError(w, errorEmailConflict)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		Payload: payload,
 	}
 
-	err = a.db.InsertJob(job)
+	err := a.db.InsertJob(job)
 	if err != nil {
 		if err == db.ErrConstraintUnique {
 			writeJsonError(w, errorEmailVerificationAlreadyRequested)
