@@ -168,6 +168,19 @@ func (e Endpoints) Path(endpoint string) string {
 	return endpoint // fallback if no method prefix
 }
 
+// ConfirmHtml returns the HTML confirmation page path for an endpoint
+// Follows naming convention: /api/confirm-X → /confirm-X.html
+// This ensures consistency between API endpoints and their corresponding HTML pages
+func (e Endpoints) ConfirmHtml(endpoint string) string {
+	path := e.Path(endpoint)
+	
+	// Remove /api/ prefix if present
+	path = strings.TrimPrefix(path, "/api")
+	
+	// Replace path with .html version
+	return path + ".html"
+}
+
 // DefaultEndpoints returns the standard endpoint paths
 func DefaultEndpoints() Endpoints {
 	return Endpoints{
