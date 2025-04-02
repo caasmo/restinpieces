@@ -94,6 +94,6 @@ func main() {
 
 	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), executor.NewExecutor(hdls))
 
-	//server.Run(cfg.Server, ap.Router(), nil)
-	server.Run(cfg.Server, ap.Router(), scheduler)
+	proxy := proxy.NewProxy(ap.Router(), cfg)
+	server.Run(cfg.Server, proxy, scheduler)
 }
