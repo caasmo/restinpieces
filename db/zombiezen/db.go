@@ -362,6 +362,29 @@ func (d *Db) UpdatePassword(userId string, newPassword string) error {
 	return nil
 }
 
+func (d *Db) UpdateEmail(userId string, newEmail string) error {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to get database connection: %w", err)
+	}
+	defer d.pool.Put(conn)
+
+	// Update email and timestamp
+	err = sqlitex.Execute(conn,
+		`UPDATE users 
+		SET email = ?,
+			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		WHERE id = ?`,
+		&sqlitex.ExecOptions{
+			Args: []interface{}{newEmail, userId},
+		})
+	if err != nil {
+		return fmt.Errorf("failed to update email: %w", err)
+	}
+
+	return nil
+}
+
 func (d *Db) InsertWithPool(value int64) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
