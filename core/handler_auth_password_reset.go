@@ -16,14 +16,6 @@ import (
 // Authenticated: No
 // Allowed Mimetype: application/json
 // 
-// Behavior:
-// - Validates email format and stores trimmed version
-// - Checks if email is verified - returns errorUnverifiedEmail if not
-// - Prevents email enumeration by returning same success for both existing/non-existing emails
-// - Uses cooldown buckets based on config.RateLimits.PasswordResetCooldown to prevent spam
-// - Returns errorPasswordResetAlreadyRequested if request already exists in same cooldown bucket
-// - Creates async job to send password reset email
-// 
 // Important Security Notes:
 // - Sending emails is an expensive operation and potential spam vector
 // - Rate limiting is enforced via cooldown buckets

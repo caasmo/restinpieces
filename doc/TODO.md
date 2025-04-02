@@ -10,7 +10,6 @@
     - user click first email for password change, success, makes invalid password reset token
     - user click first email for password reset, success, makes invalid change email token
 - password reset without verified email?
-	- if user/attacker does not have control email, it cant follow
 	- login oririnates send email, expensice operation
 	- it can now ask for password change, that creates another send email
 	- block
@@ -21,6 +20,11 @@
 - request password change html requires email form
 - corfirmation, spam sending the same right jwt 
 - endpointsw discovery has no update each time.
+- db interface for custom
+	- should be empty
+	- implmenter can work just with its driver choice
+	- implmenter is provided with empty db interface.
+	- core db interface shoudl not be used by implementer
 - good enough release
     - litestream
     - logger
