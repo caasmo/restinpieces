@@ -176,8 +176,8 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 
 // SendEmailChangeNotification sends an email change notification to both old and new email addresses
 //
-// If the user uses OAuth2 login, includes a warning about passwordless login being invalidated
-func (m *Mailer) SendEmailChangeNotification(ctx context.Context, user *db.User, newEmail, oldEmail, callbackURL string) error {
+// hasOauth2Login determines if we should include a warning about passwordless login being invalidated
+func (m *Mailer) SendEmailChangeNotification(ctx context.Context, newEmail string, hasOauth2Login bool, oldEmail, callbackURL string) error {
 	// Create new mail client for this email
 	mail, err := m.createMailClient()
 	if err != nil {
@@ -204,7 +204,7 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, user *db.User,
 		<p>Thanks,<br>%s team</p>
 	`, oldEmail, newEmail, 
 		func() string {
-			if user.Oauth2 {
+			if hasOauth2Login {
 				return `<p style="color: #d32f2f;">
 					Please consider that your old email is used for passwordless login (OAuth2). 
 					By changing your email you will invalidate that login method.
