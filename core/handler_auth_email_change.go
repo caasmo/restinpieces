@@ -174,14 +174,12 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// TODO: Implement actual email update in database
-	// This would require adding a UpdateEmail method to the DB interface
-	// and implementing it in the concrete DB implementations
-	// err = a.db.UpdateEmail(user.ID, newEmail)
-	// if err != nil {
-	//     writeJsonError(w, errorServiceUnavailable)
-	//     return
-	// }
+	// Update email in database
+	err = a.db.UpdateEmail(user.ID, newEmail)
+	if err != nil {
+		writeJsonError(w, errorServiceUnavailable)
+		return
+	}
 
 	writeJsonOk(w, okEmailChangeRequested)
 }

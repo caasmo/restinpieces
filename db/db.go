@@ -22,6 +22,7 @@ type Db interface {
 	MarkFailed(jobID int64, errMsg string) error
 	VerifyEmail(userId string) error
 	UpdatePassword(userId string, newPassword string) error
+	UpdateEmail(userId string, newEmail string) error
 }
 
 // TimeFormat converts a time.Time to RFC3339 string in UTC.

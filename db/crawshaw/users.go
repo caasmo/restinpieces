@@ -205,3 +205,23 @@ func (d *Db) UpdatePassword(userId string, newPassword string) error {
 
 	return nil
 }
+
+func (d *Db) UpdateEmail(userId string, newEmail string) error {
+	conn := d.pool.Get(nil)
+	defer d.pool.Put(conn)
+
+	// Update email and timestamp
+	err := sqlitex.Exec(conn,
+		`UPDATE users 
+		SET email = ?,
+			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		WHERE id = ?`,
+		nil,
+		newEmail,
+		userId)
+	if err != nil {
+		return fmt.Errorf("failed to update email: %w", err)
+	}
+
+	return nil
+}
