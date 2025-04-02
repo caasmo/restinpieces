@@ -13,10 +13,17 @@ import (
 
 // RequestVerificationHandler handles email verification requests
 // Endpoint: POST /request-verification
-// Authenticated: No
+// Authenticated: Yes
 // Allowed Mimetype: application/json
 func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
+		writeJsonError(w, resp)
+		return
+	}
+
+	// Require authentication
+	user, _, resp := a.Authenticate(r)
+	if user == nil {
 		writeJsonError(w, resp)
 		return
 	}
@@ -39,17 +46,9 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Check if email exists in system
-	user, err := a.db.GetUserByEmail(req.Email)
-	if err != nil {
-		// TODO
-		writeJsonError(w, errorNotFound)
-		return
-	}
-
-	if user == nil {
-		// Return success even if email doesn't exist to prevent email enumeration
-		writeJsonOk(w, okPasswordResetRequested)
+	// Verify the authenticated user matches the requested email
+	if user.Email != req.Email {
+		writeJsonError(w, errorForbidden)
 		return
 	}
 
