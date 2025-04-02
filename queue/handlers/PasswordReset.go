@@ -36,15 +36,20 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 		return fmt.Errorf("failed to parse password reset payload: %w", err)
 	}
 
-	// Get user by email
-	user, err := h.db.GetUserByEmail(payload.Email)
+	var payloadExtra queue.PayloadPasswordResetExtra 
+	if err := json.Unmarshal(job.PayloadExtra, &payloadExtra); err != nil {
+		return fmt.Errorf("failed to parse password reset extra payload: %w", err)
+	}
+
+	// Get user by ID
+	user, err := h.db.GetUserById(payload.UserID)
 	if err != nil {
-		return fmt.Errorf("failed to get user by email: %w", err)
+		return fmt.Errorf("failed to get user by ID: %w", err)
 	}
 
 	if user == nil {
-		slog.Info("User not found for password reset", "email", payload.Email)
-		return nil // Not an error since we don't want to reveal if email exists
+		slog.Info("User not found for password reset", "user_id", payload.UserID)
+		return nil // Not an error since we don't want to reveal if user exists
 	}
 
 	// Create password reset token with user ID
@@ -66,7 +71,7 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 		token)
 
 	// Send password reset email
-	if err := h.mailer.SendPasswordResetEmail(ctx, user.Email, callbackURL); err != nil {
+	if err := h.mailer.SendPasswordResetEmail(ctx, payloadExtra.Email, callbackURL); err != nil {
 		return fmt.Errorf("failed to send password reset email: %w", err)
 	}
 
