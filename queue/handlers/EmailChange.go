@@ -66,10 +66,10 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 		return fmt.Errorf("failed to create email change token: %w", err)
 	}
 
-	// Construct callback URL using server's base URL and configured endpoint path
+	// Construct callback URL to HTML page that will handle the email change
 	callbackURL := fmt.Sprintf("%s%s?token=%s",
 		h.config.Server.BaseURL(),
-		h.config.Endpoints.Path(h.config.Endpoints.ConfirmEmailChange),
+		h.config.Endpoints.ConfirmHtml(h.config.Endpoints.ConfirmEmailChange),
 		token)
 
 	// Send email change notification including OAuth2 warning if needed
