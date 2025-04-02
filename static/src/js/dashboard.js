@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("verify-email-btn")
     .addEventListener("click", () => {
-      window.location.href = "/verify-email.html";
+      window.location.href = "/request-email-verification.html";
     });
 
   document
