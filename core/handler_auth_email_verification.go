@@ -15,7 +15,7 @@ import (
 // Endpoint: POST /request-verification
 // Authenticated: No
 // Allowed Mimetype: application/json
-func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
 		writeJsonError(w, resp)
 		return
@@ -117,7 +117,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 //	 "id": "m648zm0q421yfc0",
 //	 "type": "verification"
 //	}
-func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
 		writeJsonError(w, resp)
 		return
