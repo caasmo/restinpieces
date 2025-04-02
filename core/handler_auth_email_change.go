@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/queue"
 )

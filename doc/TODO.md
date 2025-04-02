@@ -6,6 +6,12 @@
 	- damage is 1 read 1 idempotent write
 	- for confirmation and expensice path, maybe hash the page (or paht) in cache with ttl, already requested try in a minutes
 - request change endpoints spam attacks TODO
+- email change payload should be user id, 
+	- being email the user can succesfully chagne email with different emails
+	- it can not rotate, it must be a new email each bucket.
+	- but still, enforce user level
+	- enforment is User can only request 1 mail change per time
+	- enforment is User can only request 1 password reset  per time
 - user request pasword and email change at the same time. possible collions?
 	- both processes will change auth jwt signing key
 	- token in email for passord reset is signed with old password adn old email
