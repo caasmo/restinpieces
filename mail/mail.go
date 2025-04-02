@@ -175,7 +175,9 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 }
 
 // SendEmailChangeNotification sends an email change notification to both old and new email addresses
-func (m *Mailer) SendEmailChangeNotification(ctx context.Context, newEmail, oldEmail, callbackURL string) error {
+//
+// If the user uses OAuth2 login, includes a warning about passwordless login being invalidated
+func (m *Mailer) SendEmailChangeNotification(ctx context.Context, user *db.User, newEmail, oldEmail, callbackURL string) error {
 	// Create new mail client for this email
 	mail, err := m.createMailClient()
 	if err != nil {
@@ -190,6 +192,7 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, newEmail, oldE
 	mail.HTML().Set(fmt.Sprintf(`
 		<p>Hello,</p>
 		<p>We received a request to change your email from %s to %s.</p>
+		%s
 		<p>Click on the button below to confirm this change:</p>
 		<p style="margin: 20px 0;">
 			<a href="%s"
@@ -199,7 +202,17 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, newEmail, oldE
 		</p>
 		<p>If you didn't request this change, please contact support immediately.</p>
 		<p>Thanks,<br>%s team</p>
-	`, oldEmail, newEmail, callbackURL, m.fromName))
+	`, oldEmail, newEmail, 
+		func() string {
+			if user.Oauth2 {
+				return `<p style="color: #d32f2f;">
+					Please consider that your old email is used for passwordless login (OAuth2). 
+					By changing your email you will invalidate that login method.
+				</p>`
+			}
+			return ""
+		}(),
+		callbackURL, m.fromName))
 
 	return fmt.Errorf("CHANGE EMAIL SEND DEBUG: %s", callbackURL)
 	// Send email with context timeout

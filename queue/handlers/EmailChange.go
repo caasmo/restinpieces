@@ -72,8 +72,8 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 		h.config.Server.BaseURL(),
 		token)
 
-	// Send email change notification
-	if err := h.mailer.SendEmailChangeNotification(ctx, user.Email, payloadExtra.NewEmail, callbackURL); err != nil {
+	// Send email change notification including OAuth2 warning if needed
+	if err := h.mailer.SendEmailChangeNotification(ctx, user, user.Email, payloadExtra.NewEmail, callbackURL); err != nil {
 		return fmt.Errorf("failed to send email change notification: %w", err)
 	}
 
