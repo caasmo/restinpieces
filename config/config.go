@@ -159,6 +159,15 @@ type Endpoints struct {
 	ConfirmEmailChange      string `json:"confirm_email_change"`
 }
 
+// Path extracts just the path portion from an endpoint string (removes method prefix)
+func (e Endpoints) Path(endpoint string) string {
+	parts := strings.SplitN(endpoint, " ", 2)
+	if len(parts) == 2 {
+		return parts[1]
+	}
+	return endpoint // fallback if no method prefix
+}
+
 // DefaultEndpoints returns the standard endpoint paths
 func DefaultEndpoints() Endpoints {
 	return Endpoints{
