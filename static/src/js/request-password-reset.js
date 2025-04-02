@@ -15,20 +15,18 @@ document.addEventListener("DOMContentLoaded", () => {
   messageDiv.textContent = "Loading user information...";
   messageDiv.classList.remove("verify-hidden");
 
-  // Load auth data
-  const authData = rp.store.auth.load();
-  if (!authData || !authData.record || !authData.record.email) {
-    showError("You must be logged in to request password reset");
-    return;
-  }
-
-  // Show form
+  // Show form immediately since no auth is required
   messageDiv.classList.add("verify-hidden");
-  formDiv.classList.remove("verify-hidden");
 
   // Handle password reset request
   resetButton.addEventListener("click", () => {
-    const email = authData.record.email;
+    const emailInput = document.getElementById("email");
+    const email = emailInput.value.trim();
+
+    if (!email) {
+      showError("Please enter your email address");
+      return;
+    }
 
     messageDiv.className = "verify-message verify-loading";
     messageDiv.textContent = "Sending password reset email...";
