@@ -9,8 +9,8 @@ import (
 type Job struct {
 	ID           int64           `json:"id"`
 	JobType      string          `json:"job_type"`
-	Payload      json.RawMessage `json:"payload"`        // Unique payload part
-	PayloadExtra json.RawMessage `json:"payload_extra"`  // Non-unique payload part
+	Payload      json.RawMessage `json:"payload"`       // Unique payload part
+	PayloadExtra json.RawMessage `json:"payload_extra"` // Non-unique payload part
 	Status       string          `json:"status"`
 	Attempts     int             `json:"attempts"`
 	MaxAttempts  int             `json:"max_attempts"`
@@ -25,28 +25,28 @@ type Job struct {
 
 // PayloadEmailVerification contains the email verification details
 type PayloadEmailVerification struct {
-	Email          string `json:"email"`
+	Email string `json:"email"`
 	// CooldownBucket is the time bucket number calculated from the current time divided by the cooldown duration.
 	// This provides a basic rate limiting mechanism where only one email verification request is allowed per time bucket.
 	// The bucket number is calculated as: floor(current Unix time / cooldown duration in seconds)
-	CooldownBucket int    `json:"cooldown_bucket"`
+	CooldownBucket int `json:"cooldown_bucket"`
 }
 
 type PayloadEmailChange struct {
-	Email       string `json:"email"`
+	Email          string `json:"email"`
 	CooldownBucket int    `json:"cooldown_bucket"`
 }
 
 type PayloadEmailChangeExtra struct {
-	NewEmail       string `json:"new_email"`
+	NewEmail string `json:"new_email"`
 }
 
 type PayloadPasswordReset struct {
-	Email          string `json:"email"`
+	Email string `json:"email"`
 	// CooldownBucket is the time bucket number calculated from the current time divided by the cooldown duration.
 	// This provides a basic rate limiting mechanism where only one password reset request is allowed per time bucket.
 	// The bucket number is calculated as: floor(current Unix time / cooldown duration in seconds)
-	// 
+	//
 	// For example, with a 2 hour cooldown:
 	// - All requests between 12:00-13:59 will get bucket X
 	// - All requests between 14:00-15:59 will get bucket X+1
@@ -55,7 +55,7 @@ type PayloadPasswordReset struct {
 	// - Users can only make one request per time bucket
 	// - If a user requests at the end of a bucket (e.g. 13:58), they can make another request shortly after (e.g. 14:02)
 	// - The unique constraint on (payload, type) prevents multiple insertions in the same bucket
-	CooldownBucket int    `json:"cooldown_bucket"`
+	CooldownBucket int `json:"cooldown_bucket"`
 }
 
 // Job types

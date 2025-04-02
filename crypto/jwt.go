@@ -25,12 +25,12 @@ const (
 	ClaimUserID    = "user_id" // JWT User ID claim key
 
 	// Email verification specific claims
-	ClaimEmail             = "email"        // Email address being verified
-	ClaimType              = "type"         // Verification type claim
-	ClaimVerificationValue = "verification" // Value for verification type claim
+	ClaimEmail              = "email"          // Email address being verified
+	ClaimType               = "type"           // Verification type claim
+	ClaimVerificationValue  = "verification"   // Value for verification type claim
 	ClaimPasswordResetValue = "password_reset" // Value for password reset type claim
 	ClaimEmailChangeValue   = "email_change"   // Value for email change type claim
-	ClaimNewEmail          = "new_email"      // New email address for email change claims
+	ClaimNewEmail           = "new_email"      // New email address for email change claims
 
 	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)
 	MaxTokenAge = 7 * 24 * 60 * 60
@@ -276,10 +276,10 @@ func NewJwtEmailChangeToken(userID, oldEmail, newEmail, passwordHash string, sec
 
 	// Set up email change-specific claims
 	claims := jwt.MapClaims{
-		ClaimUserID: userID,
-		ClaimEmail:  oldEmail,
+		ClaimUserID:   userID,
+		ClaimEmail:    oldEmail,
 		ClaimNewEmail: newEmail,
-		ClaimType:   ClaimEmailChangeValue,
+		ClaimType:     ClaimEmailChangeValue,
 	}
 
 	// Generate and return token

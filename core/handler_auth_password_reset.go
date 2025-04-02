@@ -41,15 +41,15 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Check if email exists in system
-    // this is error of db, return internal server error
-    // TODO
+	// this is error of db, return internal server error
+	// TODO
 	user, err := a.db.GetUserByEmail(req.Email)
 	if err != nil {
 		writeJsonError(w, errorNotFound)
 		return
 	}
 
-    // user not found
+	// user not found
 	if user == nil {
 		// Return success even if email doesn't exist to prevent email enumeration
 		writeJsonOk(w, okPasswordResetRequested)
@@ -59,8 +59,8 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	// Calculate cooldown bucket for rate limiting
 	cooldownBucket := queue.CoolDownBucket(a.config.RateLimits.PasswordResetCooldown, time.Now())
 
-    // Create queue job with cooldown bucket. Second insertion in same bucket
-    // will fail because unique
+	// Create queue job with cooldown bucket. Second insertion in same bucket
+	// will fail because unique
 	payload, _ := json.Marshal(queue.PayloadPasswordReset{
 		Email:          req.Email,
 		CooldownBucket: cooldownBucket,
@@ -177,4 +177,3 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 	writeJsonOk(w, okPasswordReset)
 }
-

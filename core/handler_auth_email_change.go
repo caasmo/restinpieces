@@ -25,7 +25,6 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Check if user is verified
 	if !user.Verified {
 		writeJsonError(w, errorUnverifiedEmail)
 		return
@@ -59,14 +58,14 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Create queue payload
-    // this is for uniqueness
+	// this is for uniqueness
 	payload := queue.PayloadEmailChange{
-		Email:       user.Email,
+		Email:          user.Email,
 		CooldownBucket: queue.CoolDownBucket(a.config.RateLimits.EmailChangeCooldown, time.Now()),
 	}
 
 	payloadExtra := queue.PayloadEmailChangeExtra{
-		NewEmail:       req.NewEmail,
+		NewEmail: req.NewEmail,
 	}
 
 	payloadBytes, err := json.Marshal(payload)
@@ -83,12 +82,12 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Insert job into queue
 	err = a.db.InsertJob(queue.Job{
-		JobType:     queue.JobTypeEmailChange,
-		Payload:     payloadBytes,
+		JobType:      queue.JobTypeEmailChange,
+		Payload:      payloadBytes,
 		PayloadExtra: payloadExtraBytes,
-		Status:      queue.StatusPending,
-		Attempts:    0,
-		MaxAttempts: 3,
+		Status:       queue.StatusPending,
+		Attempts:     0,
+		MaxAttempts:  3,
 	})
 	if err != nil {
 		writeJsonError(w, errorAuthDatabaseError)
@@ -99,5 +98,5 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) {
-		writeJsonError(w, errorAuthDatabaseError)
+	writeJsonError(w, errorAuthDatabaseError)
 }

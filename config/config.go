@@ -145,18 +145,18 @@ type Smtp struct {
 }
 
 type Endpoints struct {
-	RefreshAuth           string `json:"refresh_auth"`
-	RequestVerification   string `json:"request_verification"`
-	ListEndpoints         string `json:"list_endpoints"`
-	AuthWithPassword      string `json:"auth_with_password"`
-	AuthWithOAuth2        string `json:"auth_with_oauth2"`
-	RegisterWithPassword  string `json:"register_with_password"`
-	ListOAuth2Providers   string `json:"list_oauth2_providers"`
-	ConfirmVerification   string `json:"confirm_verification"`
-	RequestPasswordReset  string `json:"request_password_reset"`
-	ConfirmPasswordReset  string `json:"confirm_password_reset"`
-	RequestEmailChange    string `json:"request_email_change"`
-	ConfirmEmailChange    string `json:"confirm_email_change"`
+	RefreshAuth          string `json:"refresh_auth"`
+	RequestVerification  string `json:"request_verification"`
+	ListEndpoints        string `json:"list_endpoints"`
+	AuthWithPassword     string `json:"auth_with_password"`
+	AuthWithOAuth2       string `json:"auth_with_oauth2"`
+	RegisterWithPassword string `json:"register_with_password"`
+	ListOAuth2Providers  string `json:"list_oauth2_providers"`
+	ConfirmVerification  string `json:"confirm_verification"`
+	RequestPasswordReset string `json:"request_password_reset"`
+	ConfirmPasswordReset string `json:"confirm_password_reset"`
+	RequestEmailChange   string `json:"request_email_change"`
+	ConfirmEmailChange   string `json:"confirm_email_change"`
 }
 
 // DefaultEndpoints returns the standard endpoint paths
@@ -237,13 +237,13 @@ func Load(dbfile string) (*Config, error) {
 			VerificationEmailTokenDuration: 24 * time.Hour,
 			PasswordResetSecret:            []byte("test_password_reset_secret_32_bytes_xxxx"),
 			PasswordResetTokenDuration:     1 * time.Hour, // Shorter duration for security
-			EmailChangeSecret:             []byte("test_email_change_secret_32_bytes_xxxx"),
-			EmailChangeTokenDuration:      1 * time.Hour, // Same as password reset
+			EmailChangeSecret:              []byte("test_email_change_secret_32_bytes_xxxx"),
+			EmailChangeTokenDuration:       1 * time.Hour, // Same as password reset
 		},
 		RateLimits: RateLimits{
-			PasswordResetCooldown: 2 * time.Hour,
+			PasswordResetCooldown:     2 * time.Hour,
 			EmailVerificationCooldown: 1 * time.Hour,
-			EmailChangeCooldown: 1 * time.Hour,
+			EmailChangeCooldown:       1 * time.Hour,
 		},
 		DBFile:    dbfile,
 		PublicDir: "static/dist", // Default public directory

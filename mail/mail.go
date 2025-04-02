@@ -217,8 +217,8 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, newEmail, oldE
 		}
 	}
 
-	slog.Info("Successfully sent email change notification", 
-		"old_email", oldEmail, 
+	slog.Info("Successfully sent email change notification",
+		"old_email", oldEmail,
 		"new_email", newEmail)
 	return nil
 }

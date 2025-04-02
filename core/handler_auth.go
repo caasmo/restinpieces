@@ -99,7 +99,6 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	writeAuthResponse(w, token, user)
 }
 
-
 // RegisterWithPasswordHandler handles password-based user registration with validation
 // Endpoint: POST /register-with-password
 // Authenticated: No
@@ -202,4 +201,3 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// Return standardized authentication response
 	writeAuthResponse(w, token, retrievedUser)
 }
-

@@ -43,7 +43,7 @@ func (a *App) RequestVerificationHandler(w http.ResponseWriter, r *http.Request)
 	// Check if email exists in system
 	user, err := a.db.GetUserByEmail(req.Email)
 	if err != nil {
-        // TODO
+		// TODO
 		writeJsonError(w, errorNotFound)
 		return
 	}
@@ -186,4 +186,3 @@ func (a *App) ConfirmVerificationHandler(w http.ResponseWriter, r *http.Request)
 
 	writeJsonOk(w, okEmailVerified)
 }
-
