@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     messageDiv.className = "verify-message verify-loading";
     messageDiv.textContent = "Sending verification email...";
 
-    rp.requestVerification({ email: authData.record.email })
+    rp.requestEmailVerification({ email: authData.record.email })
       .then((response) => {
         if (!response?.message) {
           throw new Error(

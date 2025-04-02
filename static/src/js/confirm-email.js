@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const rp = new Restinpieces({
     baseURL: "http://localhost:8080",
   });
-  rp.confirmVerification({ token })
+  rp.confirmEmailVerification({ token })
     .then((response) => {
       if (!response.message) {
         throw new Error("Invalid verification response: missing message");

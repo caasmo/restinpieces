@@ -163,12 +163,12 @@ class Restinpieces {
     return this.request("register_with_password", {}, body, headers, signal);
   }
 
-  requestVerification(body = null, headers = {}, signal = null) {
-    return this.request("request_verification", {}, body, headers, signal);
+  requestEmailVerification(body = null, headers = {}, signal = null) {
+    return this.requestAuth("request_email_verification", {}, body, headers, signal);
   }
 
-  confirmVerification(body = null, headers = {}, signal = null) {
-    return this.request("confirm_verification", {}, body, headers, signal);
+  confirmEmailVerification(body = null, headers = {}, signal = null) {
+    return this.request("confirm_email_verification", {}, body, headers, signal);
   }
 
   confirmEmailChange(body = null, headers = {}, signal = null) {
