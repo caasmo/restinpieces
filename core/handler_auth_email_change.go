@@ -96,7 +96,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	writeJsonOk(w, okEmailChange)
+	writeJsonOk(w, okEmailChangeRequested)
 }
 
 func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) {
