@@ -108,7 +108,7 @@ func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	// Validate all required claims exist and have correct values
-	if err := crypto.ValidateVerificationClaims(claims); err != nil {
+	if err := crypto.ValidateEmailVerificationClaims(claims); err != nil {
 		writeJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
