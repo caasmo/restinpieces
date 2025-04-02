@@ -166,17 +166,7 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Get new email from claims
-	newEmail, ok := claims["new_email"].(string)
-	if !ok || newEmail == "" {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
-		return
-	}
-
-	// Validate new email format
-	if err := ValidateEmail(newEmail); err != nil {
-		writeJsonError(w, errorInvalidRequest)
-		return
-	}
+	newEmail := claims["new_email"].(string)
 
 	// TODO: Implement actual email update in database
 	// This would require adding a UpdateEmail method to the DB interface
