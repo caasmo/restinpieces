@@ -27,6 +27,13 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		writeJsonError(w, resp)
 		return
 	}
+
+	// Check if user is already verified
+	if user.Verified {
+		writeJsonOk(w, okAlreadyVerified)
+		return
+	}
+
 	var req struct {
 		Email string `json:"email"`
 	}
@@ -49,12 +56,6 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	// Verify the authenticated user matches the requested email
 	if user.Email != req.Email {
 		writeJsonError(w, errorForbidden)
-		return
-	}
-
-	// Check if user is already verified
-	if user.Verified {
-		writeJsonOk(w, okAlreadyVerified)
 		return
 	}
 

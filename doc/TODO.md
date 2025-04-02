@@ -6,22 +6,12 @@
 	- damage is 1 read 1 idempotent write
 	- for confirmation and expensice path, maybe hash the page (or paht) in cache with ttl, already requested try in a minutes
 - request change endpoints spam attacks TODO
-- email change payload should be user id, 
-	- being email the user can succesfully chagne email with different emails
-	- it can not rotate, it must be a new email each bucket.
-	- but still, enforce user level
-	- enforment is User can only request 1 mail change per time
-	- enforment is User can only request 1 password reset  per time
 - user request pasword and email change at the same time. possible collions?
 	- both processes will change auth jwt signing key
 	- token in email for passord reset is signed with old password adn old email
 	- token in email for email change is signed with old email  
     - user click first email for password change, success, makes invalid password reset token
     - user click first email for password reset, success, makes invalid change email token
-- password reset without verified email?
-	- login oririnates send email, expensice operation
-	- it can now ask for password change, that creates another send email
-	- block
 - generally sending emails is expensive operation, check it is rate limited
 - email change payload 
 	- somewhre in flow tell user old email is also used for oauth2  -> email
@@ -60,8 +50,6 @@
         - Block ip method
         - mimetype white list 
         - maintenance
-- reset email 
-- reset password
 - add logger
     - no slog.SetDefault(slog.New(myHandler))
     - A "multiplexer" handler is a good approach.
@@ -142,6 +130,18 @@
 
 ### done
 
+- reset email 
+- reset password
+- password reset without verified email?
+	- login oririnates send email, expensice operation
+	- it can now ask for password change, that creates another send email
+	- block
+- email change payload should be user id, 
+	- being email the user can succesfully chagne email with different emails
+	- it can not rotate, it must be a new email each bucket.
+	- but still, enforce user level
+	- enforment is User can only request 1 mail change per time
+	- enforment is User can only request 1 password reset  per time
 - check workflow change email
     - do not allow change if old not verified
 - one two handler per file 
