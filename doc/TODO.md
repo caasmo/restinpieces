@@ -1,5 +1,6 @@
 ### TODOs
 
+- confirmation endpoints attacks
 - user request pasword and email change at the same time. possible collions?
 - password reset without validated email?
 - check workflow change email
