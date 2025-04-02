@@ -184,6 +184,15 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newE
 		return fmt.Errorf("failed to create mail client: %w", err)
 	}
 
+	// Create warning message if user has OAuth2 login
+	warning := ""
+	if hasOauth2Login {
+		warning = `<p style="color: #d32f2f;">
+			Please consider that your old email is used for passwordless login (OAuth2). 
+			By changing your email you will invalidate that login method.
+		</p>`
+	}
+
 	// Build email - send to new email address for verification
 	mail.To(newEmail)
 	mail.FromName(m.fromName)
