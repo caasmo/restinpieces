@@ -181,6 +181,12 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Check if new password matches old one
+	if crypto.CheckPassword(req.Password, user.Password) {
+		writeJsonOk(w, okNoChangeNeeded)
+		return
+	}
+
 	// Update user password
 	err = a.db.UpdatePassword(user.ID, string(hashedPassword))
 	if err != nil {
