@@ -1,29 +1,5 @@
 ### TODOs
 
-- confirmation endpoints spam attacks
-	- attacker with valid email token (1 hour) can spam until token expiration
-	- this is jwt attack, 
-	- damage is 1 read 1 idempotent write
-	- for confirmation and expensice path, maybe hash the page (or paht) in cache with ttl, already requested try in a minutes
-- request change endpoints spam attacks TODO
-- user request pasword and email change at the same time. possible collions?
-	- both processes will change auth jwt signing key
-	- token in email for passord reset is signed with old password adn old email
-	- token in email for email change is signed with old email  
-    - user click first email for password change, success, makes invalid password reset token
-    - user click first email for password reset, success, makes invalid change email token
-- generally sending emails is expensive operation, check it is rate limited
-- email change payload 
-	- somewhre in flow tell user old email is also used for oauth2  -> email
-- password change test with real smtp  
-- request password change html requires email form
-- corfirmation, spam sending the same right jwt 
-- endpointsw discovery has no update each time.
-- db interface for custom
-	- should be empty
-	- implmenter can work just with its driver choice
-	- implmenter is provided with empty db interface.
-	- core db interface shoudl not be used by implementer
 - good enough release
     - litestream
     - logger
@@ -34,6 +10,14 @@
     - basic metrics 
     - superuser workflows
     - mantenance page 
+- password change test with real smtp  
+- corfirmation, spam sending the same right jwt 
+- endpointsw discovery has no update each time.
+- db interface for custom
+	- should be empty
+	- implmenter can work just with its driver choice
+	- implmenter is provided with empty db interface.
+	- core db interface shoudl not be used by implementer
 - command init, bootsrap command, 
     - bootstrap create tables, create config and put in db.
 - command dump 
@@ -50,6 +34,12 @@
         - Block ip method
         - mimetype white list 
         - maintenance
+- confirmation endpoints spam attacks
+	- attacker with valid email token (1 hour) can spam until token expiration
+	- this is jwt attack, 
+	- damage is 1 read 1 idempotent write
+	- for confirmation and expensice path, maybe hash the page (or paht) in cache with ttl, already requested try in a minutes
+- request change endpoints spam attacks TODO
 - add logger
     - no slog.SetDefault(slog.New(myHandler))
     - A "multiplexer" handler is a good approach.
@@ -130,6 +120,16 @@
 
 ### done
 
+- request password change html requires email form
+- user request pasword and email change at the same time. possible collions?
+	- both processes will change auth jwt signing key
+	- token in email for passord reset is signed with old password adn old email
+	- token in email for email change is signed with old email  
+    - user click first email for password change, success, makes invalid password reset token
+    - user click first email for password reset, success, makes invalid change email token
+- generally sending emails is expensive operation, check it is rate limited
+- email change payload 
+	- somewhre in flow tell user old email is also used for oauth2  -> email
 - reset email 
 - reset password
 - password reset without verified email?
