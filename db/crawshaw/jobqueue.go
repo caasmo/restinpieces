@@ -237,6 +237,7 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 				ID:           stmt.GetInt64("id"),
 				JobType:      stmt.GetText("job_type"),
 				Payload:      json.RawMessage(stmt.GetText("payload")),
+				PayloadExtra: json.RawMessage(stmt.GetText("payload_extra")),
 				Status:       stmt.GetText("status"),
 				Attempts:     int(stmt.GetInt64("attempts")),
 				MaxAttempts:  int(stmt.GetInt64("max_attempts")),

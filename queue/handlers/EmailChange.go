@@ -31,15 +31,31 @@ func NewEmailChangeHandler(db db.Db, cfg *config.Config, mailer *mail.Mailer) *E
 
 // Handle implements the JobHandler interface for email change requests
 func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
+
+    // Add debug logging
+    slog.Debug("Handling email change",
+        "payload", string(job.Payload),
+        "payload_extra", string(job.PayloadExtra),
+        "payload_extra_len", len(job.PayloadExtra))
+
+
+
+
 	var payload queue.PayloadEmailChange
 	if err := json.Unmarshal(job.Payload, &payload); err != nil {
 		return fmt.Errorf("failed to parse email change payload: %w", err)
 	}
 
-	var payloadExtra queue.PayloadEmailChangeExtra
-	if err := json.Unmarshal(job.PayloadExtra, &payloadExtra); err != nil {
-		return fmt.Errorf("failed to parse email change extra payload: %w", err)
-	}
+    var payloadExtra queue.PayloadEmailChangeExtra
+    if err := json.Unmarshal(job.PayloadExtra, &payloadExtra); err != nil {
+        // Add detailed error logging
+        slog.Error("Failed to parse PayloadExtra",
+            "error", err,
+            "raw_payload_extra", string(job.PayloadExtra),
+            "hex_dump", fmt.Sprintf("%x", job.PayloadExtra))
+        return fmt.Errorf("failed to parse email change extra payload: %w", err)
+    }
+
 
 	// Get user by email
 	user, err := h.db.GetUserByEmail(payload.Email)
