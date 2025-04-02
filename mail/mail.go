@@ -3,13 +3,11 @@ package mail
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/smtp"
 
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/queue"
 	"github.com/domodwyer/mailyak/v3"
 )
 
@@ -61,19 +59,6 @@ type Mailer struct {
 	// Used with port 587
 	// If true, upgrades plain connection to TLS after initial handshake
 	useStartTLS bool
-}
-
-// Handle implements JobHandler for email verification jobs
-func (m *Mailer) Handle(ctx context.Context, job queue.Job) error {
-	var payload queue.PayloadEmailVerification
-	if err := json.Unmarshal(job.Payload, &payload); err != nil {
-		return fmt.Errorf("failed to parse email verification payload: %w", err)
-	}
-
-	// Generate a random callback URL for testing
-	callbackURL := "http://localhost:8080/verify-email" // TODO: Make this configurable
-	callbackURL = fmt.Sprintf("%s?token=%d", callbackURL, job.ID)
-	return m.SendVerificationEmail(ctx, payload.Email, callbackURL)
 }
 
 // New creates a new Mailer instance from config

@@ -1,8 +1,11 @@
 ### TODOs
 
-- confirmation endpoints attacks
+- confirmation endpoints spam attacks
 	- attacker with valid email token (1 hour) can spam until token expiration
+	- this is jwt attack, 
 	- damage is 1 read 1 idempotent write
+	- for confirmation and expensice path, maybe hash the page (or paht) in cache with ttl, already requested try in a minutes
+- request change endpoints spam attacks TODO
 - user request pasword and email change at the same time. possible collions?
 	- both processes will change auth jwt signing key
 	- token in email for passord reset is signed with old password adn old email
