@@ -211,17 +211,7 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newE
 		</p>
 		<p>If you didn't request this change, please contact support immediately.</p>
 		<p>Thanks,<br>%s team</p>
-	`, oldEmail, newEmail, 
-		func() string {
-			if hasOauth2Login {
-				return `<p style="color: #d32f2f;">
-					Please consider that your old email is used for passwordless login (OAuth2). 
-					By changing your email you will invalidate that login method.
-				</p>`
-			}
-			return ""
-		}(),
-		callbackURL, m.fromName))
+	`, oldEmail, newEmail, warning, callbackURL, m.fromName))
 
 	return fmt.Errorf("CHANGE EMAIL SEND DEBUG: %s", callbackURL)
 	// Send email with context timeout
