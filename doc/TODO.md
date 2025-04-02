@@ -1,10 +1,20 @@
 ### TODOs
 
 - confirmation endpoints attacks
+	- attacker with valid email token (1 hour) can spam until token expiration
+	- damage is 1 read 1 idempotent write
 - user request pasword and email change at the same time. possible collions?
-- password reset without validated email?
-- check workflow change email
-    - do not allow change if old not verified
+	- both processes will change auth jwt signing key
+	- token in email for passord reset is signed with old password adn old email
+	- token in email for email change is signed with old email  
+    - user click first email for password change, success, makes invalid password reset token
+    - user click first email for password reset, success, makes invalid change email token
+- password reset without verified email?
+	- if user/attacker does not have control email, it cant follow
+	- login oririnates send email, expensice operation
+	- it can now ask for password change, that creates another send email
+	- block
+- generally sending emails is expensive operation, check it is rate limited
 - email change payload 
 	- somewhre in flow tell user old email is also used for oauth2  -> email
 - password change test with real smtp  
@@ -119,6 +129,8 @@
 
 ### done
 
+- check workflow change email
+    - do not allow change if old not verified
 - one two handler per file 
 - verification email cooldown, idea is not to send email
 - password reset logic, unique in job is not enough
