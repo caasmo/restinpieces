@@ -68,7 +68,6 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	payloadExtra := queue.PayloadEmailChangeExtra{
-		OldEmail: user.Email,
 		NewEmail: req.NewEmail,
 	}
 

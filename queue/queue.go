@@ -38,7 +38,6 @@ type PayloadEmailChange struct {
 }
 
 type PayloadEmailChangeExtra struct {
-	OldEmail string `json:"old_email"`
 	NewEmail string `json:"new_email"`
 }
 
