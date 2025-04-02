@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirm Email Change</title>
+    <link rel="stylesheet" href="/css/restinpieces.css" />
+  </head>
+  <body class="confirm-email-page">
+    <h1>Confirm Email Change</h1>
+    <div id="message" class="confirm-message confirm-hidden"></div>
+    <div id="form">
+      <div class="form-group">
+        <label for="password">Current Password</label>
+        <input type="password" id="password" required />
+      </div>
+      <button id="confirmButton" class="confirm-button">
+        Confirm Email Change
+      </button>
+    </div>
+    <div id="actions" class="confirm-hidden">
+      <a href="/dashboard.html" class="confirm-button">Dashboard</a>
+      <a href="/login.html" class="confirm-button">Login</a>
+    </div>
+
+    <script type="module" src="/js/confirm-email-change.js"></script>
+  </body>
+</html>

@@ -171,6 +171,10 @@ class Restinpieces {
     return this.request("confirm_verification", {}, body, headers, signal);
   }
 
+  confirmEmailChange(body = null, headers = {}, signal = null) {
+    return this.request("confirm_email_change", {}, body, headers, signal);
+  }
+
   requestPasswordReset(body = null, headers = {}, signal = null) {
     return this.request("request_password_reset", {}, body, headers, signal);
   }
