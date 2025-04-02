@@ -64,8 +64,11 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 		return fmt.Errorf("failed to create verification token: %w", err)
 	}
 
-	// Construct callback URL using server's base URL and HTML verification page
-	callbackURL := fmt.Sprintf("%s/confirm-email.html?token=%s", h.config.Server.BaseURL(), token)
+	// Construct callback URL using server's base URL and configured endpoint path
+	callbackURL := fmt.Sprintf("%s%s?token=%s",
+		h.config.Server.BaseURL(),
+		h.config.Endpoints.Path(h.config.Endpoints.ConfirmEmailVerification),
+		token)
 
 	// Send verification email
 	if err := h.mailer.SendVerificationEmail(ctx, user.Email, callbackURL); err != nil {
