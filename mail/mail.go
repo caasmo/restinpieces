@@ -177,7 +177,7 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 // SendEmailChangeNotification sends an email change notification to both old and new email addresses
 //
 // hasOauth2Login determines if we should include a warning about passwordless login being invalidated
-func (m *Mailer) SendEmailChangeNotification(ctx context.Context, newEmail string, hasOauth2Login bool, oldEmail, callbackURL string) error {
+func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newEmail string, hasOauth2Login bool, callbackURL string) error {
 	// Create new mail client for this email
 	mail, err := m.createMailClient()
 	if err != nil {
