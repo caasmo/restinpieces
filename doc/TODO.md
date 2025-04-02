@@ -4,12 +4,11 @@
     - litestream
     - logger
     - configuration
-    - reset email 
-    - reset password
-    - propably multidomain
     - basic metrics 
     - superuser workflows
     - mantenance page 
+	- all shell test 
+	- unit test
 - password change test with real smtp  
 - corfirmation, spam sending the same right jwt 
 - endpointsw discovery has no update each time.
@@ -28,6 +27,7 @@
     - command serve or none
 - assets integrity, bundler 
 - if in db config, how to edit the easiest, toml?
+- propably multidomain
 - maintenance middleware: 503 Retry-After: 3600
 	- we can not avoid goroutine
     - global middleware, wraps router
