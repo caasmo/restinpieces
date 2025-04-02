@@ -25,6 +25,12 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Check if user is verified
+	if !user.Verified {
+		writeJsonError(w, errorUnverifiedUser)
+		return
+	}
+
 	var req struct {
 		NewEmail string `json:"new_email"`
 	}

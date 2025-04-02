@@ -47,6 +47,7 @@ const (
 	CodeErrorAuthDatabaseError              = "err_auth_database_error"
 	CodeErrorIpBlocked                      = "err_ip_blocked"
 	CodeErrorInvalidContentType             = "err_invalid_content_type"
+	CodeErrorUnverifiedUser                = "err_unverified_user"
 	// oks
 )
 
@@ -116,6 +117,7 @@ var (
 	errorOAuth2DatabaseError            = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorOAuth2DatabaseError, "Database error during OAuth2 authentication")
 	errorAuthDatabaseError              = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
 	errorInvalidContentType             = precomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type")
+	errorUnverifiedUser                = precomputeBasicResponse(http.StatusForbidden, CodeErrorUnverifiedUser, "User must be verified before changing email")
 
 	// oks
 	okAlreadyVerified       = precomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
