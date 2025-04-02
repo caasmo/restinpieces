@@ -34,6 +34,9 @@
         - Block ip method
         - mimetype white list 
         - maintenance
+		- multidomain
+	- global custom mux that embed router and modify just host in the request
+		- standar mux/route is given just a new request
 - confirmation endpoints spam attacks
 	- attacker with valid email token (1 hour) can spam until token expiration
 	- this is jwt attack, 
