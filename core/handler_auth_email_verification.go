@@ -11,7 +11,6 @@ import (
 	"github.com/caasmo/restinpieces/queue"
 )
 
-// todo already verified.
 // RequestVerificationHandler handles email verification requests
 // Endpoint: POST /request-verification
 // Authenticated: No
