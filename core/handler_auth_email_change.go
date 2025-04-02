@@ -27,7 +27,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Check if user is verified
 	if !user.Verified {
-		writeJsonError(w, errorUnverifiedUser)
+		writeJsonError(w, errorUnverifiedEmail)
 		return
 	}
 
