@@ -22,13 +22,13 @@ func NewProxy(r router.Router, cfg *config.Config) *Proxy {
 }
 
 func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	domain := getDomain(r.Host)
-	path := r.URL.Path
-	
-	if allowed := px.isPathAllowedForDomain(domain, path); !allowed {
-		http.Error(w, "Not found", http.StatusNotFound)
-		return
-	}
+	//domain := getDomain(r.Host)
+	//path := r.URL.Path
+	//
+	//if allowed := px.isPathAllowedForDomain(domain, path); !allowed {
+	//	http.Error(w, "Not found", http.StatusNotFound)
+	//	return
+	//}
 	
 	px.r.ServeHTTP(w, r)
 }
