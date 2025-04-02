@@ -129,23 +129,7 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Validate all required claims exist and have correct values
-	if err := crypto.ValidateClaimType(claims, "email_change"); err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
-		return
-	}
-	if err := crypto.ValidateClaimIssuedAt(claims); err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
-		return
-	}
-	if err := crypto.ValidateClaimExpiresAt(claims); err != nil {
-		writeJsonError(w, errorJwtTokenExpired)
-		return
-	}
-	if err := crypto.ValidateClaimUserID(claims); err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
-		return
-	}
-	if err := crypto.ValidateClaimEmail(claims); err != nil {
+	if err := crypto.ValidateEmailChangeClaims(claims); err != nil {
 		writeJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
