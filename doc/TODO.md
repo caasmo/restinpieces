@@ -1,8 +1,11 @@
 ### TODOs
 
+- user request pasword and email change at the same time. possible collions?
+- password reset without validated email?
 - check workflow change email
     - do not allow change if old not verified
-- email change payload is not a good unique
+- email change payload 
+	- somewhre in flow tell user old email is also used for oauth2  -> email
 - password change test with real smtp  
 - request password change html requires email form
 - corfirmation, spam sending the same right jwt 

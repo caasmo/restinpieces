@@ -59,6 +59,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Create queue payload
 	// this is for uniqueness
+	// use one request per bucket. 
 	payload := queue.PayloadEmailChange{
 		Email:          user.Email,
 		CooldownBucket: queue.CoolDownBucket(a.config.RateLimits.EmailChangeCooldown, time.Now()),
