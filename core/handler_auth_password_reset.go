@@ -70,7 +70,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 
 	// Check if user has no password (oauth2 only)
 	if user.Password == "" {
-		writeJsonOk(w, okPasswordResetNotNeeded)
+		writeJsonOk(w, okPasswordNotRequired)
 		return
 	}
 
