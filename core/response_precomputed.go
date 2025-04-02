@@ -16,6 +16,7 @@ const (
 	CodeOkEmailChange            = "ok_email_change"             // Success code for completed email change
 	CodeOkEmailChangeRequested   = "ok_email_change_requested"   // Success code for email change request
 	CodeOkNoChangeNeeded         = "ok_no_change_needed"         // Success code when no changes required
+	CodeOkPasswordResetNotNeeded = "ok_password_reset_not_needed" // Success code when password reset not needed
 
 	//errors
 	CodeErrorTokenGeneration                   = "err_token_generation"
@@ -131,6 +132,7 @@ var (
 	okEmailChangeRequested   = precomputeBasicResponse(http.StatusAccepted, CodeOkEmailChangeRequested, "Email change instructions will be sent to your new email address")
 	okEmailChange            = precomputeBasicResponse(http.StatusOK, CodeOkEmailChange, "Email change was completed")
 	okNoChangeNeeded         = precomputeBasicResponse(http.StatusOK, CodeOkNoChangeNeeded, "No changes needed")
+	okPasswordResetNotNeeded = precomputeBasicResponse(http.StatusOK, CodeOkPasswordResetNotNeeded, "Current authentication does not require password")
 )
 
 // For successful precomputed responses

@@ -68,6 +68,12 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// Check if user has no password (oauth2 only)
+	if user.Password == "" {
+		writeJsonOk(w, okPasswordResetNotNeeded)
+		return
+	}
+
 	// Calculate cooldown bucket for rate limiting
 	cooldownBucket := queue.CoolDownBucket(a.config.RateLimits.PasswordResetCooldown, time.Now())
 
