@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/queue/scheduler"
-	"github.com/caasmo/restinpieces/router"
+	"github.com/caasmo/restinpieces/proxy"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"
@@ -13,7 +13,7 @@ import (
 	"syscall"
 )
 
-func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
+func Run(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler) {
 
 	slog.Info("Server configuration",
 		"addr", cfg.Addr,
@@ -26,7 +26,7 @@ func Run(cfg config.Server, r router.Router, scheduler *scheduler.Scheduler) {
 
 	srv := &http.Server{
 		Addr:              cfg.Addr,
-		Handler:           r,
+		Handler:           p,
 		ReadTimeout:       cfg.ReadTimeout,
 		ReadHeaderTimeout: cfg.ReadHeaderTimeout,
 		WriteTimeout:      cfg.WriteTimeout,
