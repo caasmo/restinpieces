@@ -206,6 +206,39 @@ func validateClaimUserID(userID any) error {
 	return ErrInvalidClaimFormat
 }
 
+func ValidateEmailChangeClaims(claims jwt.MapClaims) error {
+	// Validate iat claim and token age
+	if err := validateClaimIssuedAt(claims[ClaimIssuedAt]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	// Validate exp claim
+	if err := validateClaimExpiresAt(claims[ClaimExpiresAt]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	// Validate user_id claim
+	if err := validateClaimUserID(claims[ClaimUserID]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	// Validate required claims exist
+	if err := validateClaimEmail(claims[ClaimEmail]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	// Validate new email claim
+	if err := validateClaimEmail(claims[ClaimNewEmail]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	if err := validateClaimType(claims[ClaimType], ClaimEmailChangeValue); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
+	}
+
+	return nil
+}
+
 // ParseJwt verifies and parses JWT and returns its claims.
 // returns a map map[string]any that you can access like any other Go map.
 //
