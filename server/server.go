@@ -13,9 +13,9 @@ import (
 	"syscall"
 )
 
-func Run(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler) {
+func Run(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler, logger *slog.Logger) {
 
-	app.Logger.Info("Server configuration",
+	logger.Info("Server configuration",
 		"addr", cfg.Addr,
 		"read_timeout", cfg.ReadTimeout,
 		"read_header_timeout", cfg.ReadHeaderTimeout,
@@ -36,9 +36,9 @@ func Run(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler) {
 	// Start HTTP server
 	serverError := make(chan error, 1)
 	go func() {
-		app.Logger.Info("Starting HTTP server", "addr", cfg.Addr)
+		logger.Info("Starting HTTP server", "addr", cfg.Addr)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			app.Logger.Error("ListenAndServe error", "err", err)
+			logger.Error("ListenAndServe error", "err", err)
 			serverError <- err
 		}
 	}()
@@ -56,9 +56,9 @@ func Run(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler) {
 	// Wait for either interrupt signal or server error
 	select {
 	case <-ctx.Done():
-		app.Logger.Info("Received shutdown signal - gracefully shutting down")
+		logger.Info("Received shutdown signal - gracefully shutting down")
 	case err := <-serverError:
-		app.Logger.Error("Server error - initiating shutdown", "err", err)
+		logger.Error("Server error - initiating shutdown", "err", err)
 	}
 
 	// Reset signals default behavior, similar to signal.Reset
