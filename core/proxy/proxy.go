@@ -9,15 +9,13 @@ import (
 )
 
 type Proxy struct {
-	r      router.Router
-	config *config.Config
+	app *core.App
 }
 
-// NewProxy creates a new Proxy instance with the given router and config
-func NewProxy(r router.Router, cfg *config.Config) *Proxy {
+// NewProxy creates a new Proxy instance with the given app
+func NewProxy(app *core.App) *Proxy {
 	return &Proxy{
-		r:      r,
-		config: cfg,
+		app: app,
 	}
 }
 
@@ -30,7 +28,7 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	//	return
 	//}
 
-	px.r.ServeHTTP(w, r)
+	px.app.Router().ServeHTTP(w, r)
 }
 
 // getDomain extracts the main domain from host
@@ -41,15 +39,15 @@ func getDomain(host string) string {
 
 func (px *Proxy) isPathAllowedForDomain(domain, path string) bool {
 	// Check if domain exists in OAuth2 providers
-	if _, exists := px.config.OAuth2Providers[domain]; exists {
+	if _, exists := px.app.Config().OAuth2Providers[domain]; exists {
 		return true
 	}
 
 	// Check against endpoints configuration
 	for _, endpoint := range []string{
-		px.config.Endpoints.RefreshAuth,
-		px.config.Endpoints.RequestEmailVerification,
-		px.config.Endpoints.ConfirmEmailVerification,
+		px.app.Config().Endpoints.RefreshAuth,
+		px.app.Config().Endpoints.RequestEmailVerification,
+		px.app.Config().Endpoints.ConfirmEmailVerification,
 		// Add other endpoints as needed
 	} {
 		if strings.HasPrefix(path, config.Endpoints{}.Path(endpoint)) {

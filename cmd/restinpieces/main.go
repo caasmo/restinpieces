@@ -72,6 +72,6 @@ func main() {
 	}
 
 	// proxi is of the app TODO app.Proxy
-	proxy := proxy.NewProxy(app.Router(), cfg)
+	proxy := proxy.NewProxy(app)
 	server.Run(cfg.Server, proxy, scheduler, app.Logger())
 }
