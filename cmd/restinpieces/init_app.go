@@ -1,6 +1,9 @@
 package main
 
 import (
+	"log/slog"
+	"os"
+
 	"github.com/caasmo/restinpieces/core"
 	// TOD0 problem cgo compile check?
 	"github.com/caasmo/restinpieces/cache/ristretto"
@@ -43,10 +46,15 @@ func WithCacheRistretto() core.Option {
 }
 
 func initApp(cfg *config.Config) (*core.App, error) {
+	// Initialize a default logger
+	// TODO: Make logger configuration more flexible (e.g., JSON handler, level)
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+
 	return core.NewApp(
 		WithDBCrawshaw(cfg.DBFile),
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		core.WithConfig(cfg),
+		core.WithLogger(logger), // Provide the logger
 	)
 }

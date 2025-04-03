@@ -2,6 +2,8 @@ package core
 
 import (
 	"fmt"
+	"log/slog"
+
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
@@ -19,6 +21,7 @@ type App struct {
 	router router.Router
 	cache  cache.Cache[string, interface{}] // Using string keys and interface{} values
 	config *config.Config
+	logger *slog.Logger
 }
 
 // TODO move
@@ -52,6 +55,13 @@ func WithConfig(cfg *config.Config) Option {
 	}
 }
 
+// WithLogger sets the logger implementation
+func WithLogger(l *slog.Logger) Option {
+	return func(a *App) {
+		a.logger = l
+	}
+}
+
 func NewApp(opts ...Option) (*App, error) {
 	a := &App{}
 	for _, opt := range opts {
@@ -66,6 +76,11 @@ func NewApp(opts ...Option) (*App, error) {
 	}
 	if a.config == nil {
 		return nil, fmt.Errorf("config is required but was not provided")
+	}
+	if a.logger == nil {
+		// Default to slog.Default() if no logger is provided? Or require it?
+		// Let's require it for now for explicitness.
+		return nil, fmt.Errorf("logger is required but was not provided")
 	}
 
 	return a, nil
@@ -84,4 +99,9 @@ func (a *App) Close() {
 // Db returns the database instance
 func (a *App) Db() db.Db {
 	return a.db
+}
+
+// Logger returns the application's logger instance
+func (a *App) Logger() *slog.Logger {
+	return a.logger
 }
