@@ -30,6 +30,9 @@ type Scheduler struct {
 	// executor handles the actual execution of jobs
 	executor executor.JobExecutor
 
+	// logger is used for structured logging
+	logger *slog.Logger
+
 	// ctx is the context used to control the scheduler's lifecycle
 	// It allows graceful shutdown when Stop() is called from outside.
 	// The context is passed to all job execution goroutines.
@@ -47,12 +50,13 @@ type Scheduler struct {
 }
 
 // NewScheduler creates a new scheduler with executor
-func NewScheduler(cfg config.Scheduler, db db.Db, executor executor.JobExecutor) *Scheduler {
+func NewScheduler(cfg config.Scheduler, db db.Db, executor executor.JobExecutor, logger *slog.Logger) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Scheduler{
 		cfg:          cfg,
 		db:           db,
 		executor:     executor,
+		logger:       logger,
 		ctx:          ctx,
 		cancel:       cancel,
 		shutdownDone: make(chan struct{}),
