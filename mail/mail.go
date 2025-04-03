@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log/slog"
 	"net/smtp"
 
 	"github.com/caasmo/restinpieces/config"
@@ -155,7 +154,7 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 		}
 	}
 
-	app.Logger.Info("Successfully sent verification email", "email", email)
+	//app.Logger.Info("Successfully sent verification email", "email", email)
 	return nil
 }
 
@@ -214,9 +213,7 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newE
 		}
 	}
 
-	app.Logger.Info("Successfully sent email change notification",
-		"old_email", oldEmail,
-		"new_email", newEmail)
+	//app.Logger.Info("Successfully sent email change notification", "old_email", oldEmail, "new_email", newEmail)
 	return nil
 }
 
@@ -265,6 +262,6 @@ func (m *Mailer) SendPasswordResetEmail(ctx context.Context, email, callbackURL 
 		}
 	}
 
-	app.Logger.Info("Successfully sent password reset email", "email", email)
+	//app.Logger.Info("Successfully sent password reset email", "email", email)
 	return nil
 }

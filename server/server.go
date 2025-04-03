@@ -72,33 +72,33 @@ func Run(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler, logg
 
 	// Shutdown HTTP server in a goroutine
 	shutdownGroup.Go(func() error {
-		app.Logger.Info("Shutting down HTTP server")
+		logger.Info("Shutting down HTTP server")
 		if err := srv.Shutdown(gracefulCtx); err != nil {
-			app.Logger.Error("HTTP server shutdown error", "err", err)
+			logger.Error("HTTP server shutdown error", "err", err)
 			return err
 		}
-		app.Logger.Info("HTTP server stopped gracefully")
+		logger.Info("HTTP server stopped gracefully")
 		return nil
 	})
 
 	// Shutdown scheduler in a goroutine, passing the graceful context
 	shutdownGroup.Go(func() error {
-		app.Logger.Info("Shutting down scheduler...")
+		logger.Info("Shutting down scheduler...")
 		if err := scheduler.Stop(gracefulCtx); err != nil {
-			app.Logger.Error("Scheduler shutdown error", "err", err)
+			logger.Error("Scheduler shutdown error", "err", err)
 			return err
 		}
-		app.Logger.Info("Scheduler stopped gracefully")
+		logger.Info("Scheduler stopped gracefully")
 		return nil
 	})
 
 	// Wait for all shutdown tasks to complete
 	if err := shutdownGroup.Wait(); err != nil {
-		app.Logger.Error("Error during shutdown", "err", err)
+		logger.Error("Error during shutdown", "err", err)
 		os.Exit(1)
 	}
 
-	app.Logger.Info("All systems stopped gracefully")
+	logger.Info("All systems stopped gracefully")
 	os.Exit(0)
 
 }

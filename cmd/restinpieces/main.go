@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"io/fs"
-	"log/slog"
 	"os"
 
 	"github.com/caasmo/restinpieces"

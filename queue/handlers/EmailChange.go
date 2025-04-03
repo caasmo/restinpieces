@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
@@ -49,7 +48,7 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 	}
 
 	if user == nil {
-		app.Logger.Info("User not found for email change", "user_id", payload.UserID)
+		//app.Logger.Info("User not found for email change", "user_id", payload.UserID)
 		return fmt.Errorf("user not found")
 	}
 
@@ -77,8 +76,6 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 		return fmt.Errorf("failed to send email change notification: %w", err)
 	}
 
-	app.Logger.Info("Successfully sent email change notification",
-		"old_email", user.Email,
-		"new_email", payloadExtra.NewEmail)
+	//app.Logger.Info("Successfully sent email change notification", "old_email", user.Email, "new_email", payloadExtra.NewEmail)
 	return nil
 }

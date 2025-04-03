@@ -1,7 +1,6 @@
 package core
 
 import (
-	"log/slog"
 	"net/http"
 	"sync"
 

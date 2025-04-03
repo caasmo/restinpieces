@@ -2,7 +2,6 @@ package core
 
 import (
 	"encoding/json"
-	"log/slog"
 	"net/http"
 	"strings"
 

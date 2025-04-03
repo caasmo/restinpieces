@@ -67,17 +67,17 @@ func NewScheduler(cfg config.Scheduler, db db.Db, executor executor.JobExecutor,
 // that will create gorotines to handle backend jobs
 func (s *Scheduler) Start() {
 	go func() {
-		app.Logger.Info("⏰scheduler: starting", "interval", s.cfg.Interval)
+		s.logger.Info("⏰scheduler: starting", "interval", s.cfg.Interval)
 		ticker := time.NewTicker(s.cfg.Interval)
 		defer ticker.Stop()
 
 		for {
 			select {
 			case <-s.ctx.Done():
-				app.Logger.Info("⏰scheduler: received shutdown signal")
+				s.logger.Info("⏰scheduler: received shutdown signal")
 				// Wait for all jobs to complete
 				//if err := s.eg.Wait(); err != nil {
-				//	app.Logger.Error("Error waiting for jobs to complete", "err", err)
+				//	s.logger.Error("Error waiting for jobs to complete", "err", err)
 				//}
 				close(s.shutdownDone) // Signal that scheduler has completely shut down
 				return
@@ -91,16 +91,16 @@ func (s *Scheduler) Start() {
 // Stop signals the scheduler to stop and waits for all jobs to complete
 // or the context to be canceled, whichever comes first
 func (s *Scheduler) Stop(ctx context.Context) error {
-	app.Logger.Info("⏰scheduler: stopping")
+	s.logger.Info("⏰scheduler: stopping")
 	s.cancel()
 
 	// Wait for either scheduler completion or context timeout
 	select {
 	case <-s.shutdownDone:
-		app.Logger.Info("⏰scheduler: stopped gracefully")
+		s.logger.Info("⏰scheduler: stopped gracefully")
 		return nil
 	case <-ctx.Done():
-		app.Logger.Info("⏰scheduler: shutdown timed out")
+		s.logger.Info("⏰scheduler: shutdown timed out")
 		return ctx.Err()
 	}
 }
@@ -109,11 +109,11 @@ func (s *Scheduler) processJobs() {
 	// Claim jobs up to configured limit per tick
 	jobs, err := s.db.Claim(s.cfg.MaxJobsPerTick)
 	if err != nil {
-		app.Logger.Error("⏰scheduler: failed to claim jobs", "err", err)
+		s.logger.Error("⏰scheduler: failed to claim jobs", "err", err)
 		return
 	}
 
-	app.Logger.Info("⏰scheduler: tick claimed jobs", "count", len(jobs))
+	s.logger.Info("⏰scheduler: tick claimed jobs", "count", len(jobs))
 
 	// Create a new error group for this batch of jobs
 	// Use the scheduler's context as parent to ensure jobs receive shutdown signal
@@ -135,11 +135,11 @@ func (s *Scheduler) processJobs() {
 			// Handle job completion status
 			switch {
 			case err == nil:
-				app.Logger.Info("⏰scheduler: job completed successfully",
+				s.logger.Info("⏰scheduler: job completed successfully",
 					"jobID", jobCopy.ID,
 					"jobType", jobCopy.JobType)
 				if updateErr := s.db.MarkCompleted(jobCopy.ID); updateErr != nil {
-					app.Logger.Error("⏰scheduler: failed to mark job as completed",
+					s.logger.Error("⏰scheduler: failed to mark job as completed",
 						"jobID", jobCopy.ID,
 						"error", updateErr)
 				}
@@ -147,35 +147,35 @@ func (s *Scheduler) processJobs() {
 
 			case errors.Is(err, context.DeadlineExceeded):
 				msg := "job execution timed out"
-				app.Logger.Warn("⏰scheduler: job timeout",
+				s.logger.Warn("⏰scheduler: job timeout",
 					"jobID", jobCopy.ID,
 					"jobType", jobCopy.JobType,
 					"error", err)
 				if updateErr := s.db.MarkFailed(jobCopy.ID, msg); updateErr != nil {
-					app.Logger.Error("⏰scheduler: failed to mark job as timed out",
+					s.logger.Error("⏰scheduler: failed to mark job as timed out",
 						"jobID", jobCopy.ID,
 						"error", updateErr)
 				}
 
 			case errors.Is(err, context.Canceled):
 				msg := "job execution canceled"
-				app.Logger.Info("⏰scheduler: job canceled",
+				s.logger.Info("⏰scheduler: job canceled",
 					"jobID", jobCopy.ID,
 					"jobType", jobCopy.JobType,
 					"error", err)
 				if updateErr := s.db.MarkFailed(jobCopy.ID, msg); updateErr != nil {
-					app.Logger.Error("⏰scheduler: failed to mark job as interrupted",
+					s.logger.Error("⏰scheduler: failed to mark job as interrupted",
 						"jobID", jobCopy.ID,
 						"error", updateErr)
 				}
 
 			default:
-				app.Logger.Error("⏰scheduler: job execution failed",
+				s.logger.Error("⏰scheduler: job execution failed",
 					"jobID", jobCopy.ID,
 					"jobType", jobCopy.JobType,
 					"error", err)
 				if updateErr := s.db.MarkFailed(jobCopy.ID, err.Error()); updateErr != nil {
-					app.Logger.Error("⏰scheduler: failed to mark job as failed",
+					s.logger.Error("⏰scheduler: failed to mark job as failed",
 						"jobID", jobCopy.ID,
 						"error", updateErr)
 				}
@@ -189,14 +189,14 @@ func (s *Scheduler) processJobs() {
 	// returns the first error that was encountered, or nil if none occurred.
 	if err := g.Wait(); err != nil {
 		if errors.Is(err, context.Canceled) {
-			app.Logger.Info("⏰scheduler: job batch interrupted due to shutdown")
+			s.logger.Info("⏰scheduler: job batch interrupted due to shutdown")
 		} else {
-			app.Logger.Error("⏰scheduler: received one or more tick errors. First:", "err", err)
+			s.logger.Error("⏰scheduler: received one or more tick errors. First:", "err", err)
 		}
 	}
 
 	if len(jobs) > 0 {
-		app.Logger.Info("⏰scheduler: finished processing claimed jobs", "success", processed, "total", len(jobs))
+		s.logger.Info("⏰scheduler: finished processing claimed jobs", "success", processed, "total", len(jobs))
 	}
 }
 
@@ -207,7 +207,7 @@ func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) er
 	}
 
 	// Log job starting
-	app.Logger.Info("⏰scheduler: calling executor", "job_id", job.ID, "job_type", job.JobType, "attempt", job.Attempts)
+	s.logger.Info("⏰scheduler: calling executor", "job_id", job.ID, "job_type", job.JobType, "attempt", job.Attempts)
 
 	// Use the executor to handle the job
 	return s.executor.Execute(ctx, job)
