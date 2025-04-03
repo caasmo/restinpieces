@@ -49,7 +49,7 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 	}
 
 	if user == nil {
-		slog.Info("User not found for email change", "user_id", payload.UserID)
+		app.Logger.Info("User not found for email change", "user_id", payload.UserID)
 		return fmt.Errorf("user not found")
 	}
 
@@ -77,7 +77,7 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 		return fmt.Errorf("failed to send email change notification: %w", err)
 	}
 
-	slog.Info("Successfully sent email change notification",
+	app.Logger.Info("Successfully sent email change notification",
 		"old_email", user.Email,
 		"new_email", payloadExtra.NewEmail)
 	return nil

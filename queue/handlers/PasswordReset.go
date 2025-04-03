@@ -48,7 +48,7 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 	}
 
 	if user == nil {
-		slog.Info("User not found for password reset", "user_id", payload.UserID)
+		app.Logger.Info("User not found for password reset", "user_id", payload.UserID)
 		return nil // Not an error since we don't want to reveal if user exists
 	}
 
@@ -75,6 +75,6 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 		return fmt.Errorf("failed to send password reset email: %w", err)
 	}
 
-	slog.Info("Successfully sent password reset email", "email", user.Email)
+	app.Logger.Info("Successfully sent password reset email", "email", user.Email)
 	return nil
 }

@@ -56,7 +56,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Debug("OAuth2 fields",
+	a.Logger().Debug("OAuth2 fields",
 		"provider", req.Provider,
 		"code", req.Code,
 		"codeVerifier", req.CodeVerifier,
@@ -75,7 +75,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Create OAuth2 config
-	slog.Debug("Creating OAuth2 config", "provider", req.Provider, "scopes", provider.Scopes)
+	a.Logger().Debug("Creating OAuth2 config", "provider", req.Provider, "scopes", provider.Scopes)
 	oauth2Config := oauth2.Config{
 		ClientID:     provider.ClientID,
 		ClientSecret: provider.ClientSecret,
@@ -89,17 +89,17 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Exchange code for token with timeout
 	// Using a timeout prevents hanging if the OAuth2 provider is unresponsive
-	slog.Debug("Setting up context with timeout for token exchange")
+	a.Logger().Debug("Setting up context with timeout for token exchange")
 	ctx, cancel := context.WithTimeout(r.Context(), oauth2TokenExchangeTimeout)
 	defer cancel()
 
-	slog.Debug("Exchanging OAuth2 code for token", "provider", req.Provider)
+	a.Logger().Debug("Exchanging OAuth2 code for token", "provider", req.Provider)
 	token, err := oauth2Config.Exchange(
 		ctx,
 		req.Code,
 		oauth2.SetAuthURLParam("code_verifier", req.CodeVerifier),
 	)
-	slog.Debug("OAuth2 token exchange completed", "provider", req.Provider, "token", token != nil)
+	a.Logger().Debug("OAuth2 token exchange completed", "provider", req.Provider, "token", token != nil)
 	if err != nil {
 		writeJsonError(w, errorOAuth2TokenExchangeFailed)
 		return
@@ -116,7 +116,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	oauthUser, err := oauth2provider.UserFromUserInfoURL(resp, provider.Name)
 	if err != nil {
-		slog.Debug("Failed to map provider user info", "error", err)
+		a.Logger().Debug("Failed to map provider user info", "error", err)
 		writeJsonError(w, errorOAuth2UserInfoProcessingFailed)
 		return
 	}
@@ -182,7 +182,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT session token
-	slog.Debug("Generating JWT for user", "userID", user.ID)
+	a.Logger().Debug("Generating JWT for user", "userID", user.ID)
 	jwtToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, "", a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
 		writeJsonError(w, errorTokenGeneration)
@@ -190,7 +190,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Return standardized authentication response
-	slog.Debug("Preparing successful authentication response")
+	a.Logger().Debug("Preparing successful authentication response")
 	writeAuthResponse(w, jwtToken, user)
 }
 

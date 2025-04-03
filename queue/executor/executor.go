@@ -3,7 +3,6 @@ package executor
 import (
 	"context"
 	"fmt"
-	"log/slog"
 
 	"github.com/caasmo/restinpieces/queue"
 )
@@ -33,16 +32,10 @@ func NewExecutor(handlers map[string]JobHandler) *DefaultExecutor {
 // Execute implements the JobExecutor interface
 func (e *DefaultExecutor) Execute(ctx context.Context, job queue.Job) error {
 
-	slog.Info("executor: received job",
-		"job_id", job.ID,
-		"job_type", job.JobType,
-		"attempt", job.Attempts,
-	)
 
 	handler, exists := e.registry[job.JobType]
 	if !exists {
 		err := fmt.Errorf("no handler registered for job type: %s", job.JobType)
-		slog.Error("executor: unregisted job type", "job_id", job.ID, "job_type", job.JobType, "error", err)
 		return err
 	}
 

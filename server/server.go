@@ -15,7 +15,7 @@ import (
 
 func Run(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler) {
 
-	slog.Info("Server configuration",
+	app.Logger.Info("Server configuration",
 		"addr", cfg.Addr,
 		"read_timeout", cfg.ReadTimeout,
 		"read_header_timeout", cfg.ReadHeaderTimeout,
@@ -36,9 +36,9 @@ func Run(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler) {
 	// Start HTTP server
 	serverError := make(chan error, 1)
 	go func() {
-		slog.Info("Starting HTTP server", "addr", cfg.Addr)
+		app.Logger.Info("Starting HTTP server", "addr", cfg.Addr)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-			slog.Error("ListenAndServe error", "err", err)
+			app.Logger.Error("ListenAndServe error", "err", err)
 			serverError <- err
 		}
 	}()
@@ -56,9 +56,9 @@ func Run(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler) {
 	// Wait for either interrupt signal or server error
 	select {
 	case <-ctx.Done():
-		slog.Info("Received shutdown signal - gracefully shutting down")
+		app.Logger.Info("Received shutdown signal - gracefully shutting down")
 	case err := <-serverError:
-		slog.Error("Server error - initiating shutdown", "err", err)
+		app.Logger.Error("Server error - initiating shutdown", "err", err)
 	}
 
 	// Reset signals default behavior, similar to signal.Reset
@@ -72,33 +72,33 @@ func Run(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler) {
 
 	// Shutdown HTTP server in a goroutine
 	shutdownGroup.Go(func() error {
-		slog.Info("Shutting down HTTP server")
+		app.Logger.Info("Shutting down HTTP server")
 		if err := srv.Shutdown(gracefulCtx); err != nil {
-			slog.Error("HTTP server shutdown error", "err", err)
+			app.Logger.Error("HTTP server shutdown error", "err", err)
 			return err
 		}
-		slog.Info("HTTP server stopped gracefully")
+		app.Logger.Info("HTTP server stopped gracefully")
 		return nil
 	})
 
 	// Shutdown scheduler in a goroutine, passing the graceful context
 	shutdownGroup.Go(func() error {
-		slog.Info("Shutting down scheduler...")
+		app.Logger.Info("Shutting down scheduler...")
 		if err := scheduler.Stop(gracefulCtx); err != nil {
-			slog.Error("Scheduler shutdown error", "err", err)
+			app.Logger.Error("Scheduler shutdown error", "err", err)
 			return err
 		}
-		slog.Info("Scheduler stopped gracefully")
+		app.Logger.Info("Scheduler stopped gracefully")
 		return nil
 	})
 
 	// Wait for all shutdown tasks to complete
 	if err := shutdownGroup.Wait(); err != nil {
-		slog.Error("Error during shutdown", "err", err)
+		app.Logger.Error("Error during shutdown", "err", err)
 		os.Exit(1)
 	}
 
-	slog.Info("All systems stopped gracefully")
+	app.Logger.Info("All systems stopped gracefully")
 	os.Exit(0)
 
 }

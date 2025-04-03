@@ -10,7 +10,6 @@ import (
 	"errors"
 	"io"
 	"io/fs"
-	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -35,7 +34,6 @@ func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
 
 			// Skip non-GET/HEAD requests immediately
 			if r.Method != http.MethodGet && r.Method != http.MethodHead {
-				slog.Debug("gzip middleware skipping non-GET/HEAD request", "method", r.Method)
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -58,10 +56,8 @@ func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
 			if err != nil {
 				if errors.Is(err, fs.ErrNotExist) {
 					// Gzipped file doesn't exist, fall through to next handler (likely serving the uncompressed version)
-					slog.Debug("gzipped file not found, falling back", "path", gzPath)
 				} else {
 					// Log unexpected errors (e.g., permissions)
-					slog.Error("error opening gzipped file", "path", gzPath, "error", err)
 				}
 				next.ServeHTTP(w, r)
 				return
@@ -74,7 +70,6 @@ func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
 			// This check ensures robustness against different fs.FS sources.
 			seeker, ok := f.(io.ReadSeeker)
 			if !ok {
-				slog.Error("gzipped file does not implement io.ReadSeeker, falling back", "path", gzPath)
 				// Fall back to the next handler as we cannot efficiently serve this file.
 				next.ServeHTTP(w, r)
 				return

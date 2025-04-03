@@ -33,11 +33,11 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// Generate new token with fresh expiration using NewJwtSession
 	newToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
-		slog.Error("Failed to generate new token", "error", err)
+		a.Logger().Error("Failed to generate new token", "error", err)
 		writeJsonError(w, errorTokenGeneration)
 		return
 	}
-	slog.Debug("New token generated", "token_length", len(newToken))
+	a.Logger().Debug("New token generated", "token_length", len(newToken))
 
 	// Return standardized authentication response
 	writeAuthResponse(w, newToken, user)
@@ -185,7 +185,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 		err = a.db.InsertJob(job)
 		if err != nil {
-			slog.Error("Failed to insert verification job", "error", err, "job", job)
+			a.Logger().Error("Failed to insert verification job", "error", err, "job", job)
 			writeJsonError(w, errorServiceUnavailable)
 			return
 		}

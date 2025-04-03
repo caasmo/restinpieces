@@ -21,7 +21,7 @@ import (
 func logEmbeddedAssets(assets fs.FS, cfg *config.Config) {
 	subFS, err := fs.Sub(assets, cfg.PublicDir)
 	if err != nil {
-		slog.Error("failed to create sub filesystem for logging assets", "error", err)
+		app.Logger.Error("failed to create sub filesystem for logging assets", "error", err)
 		return // Or handle the error more gracefully
 	}
 	assetCount := 0
@@ -31,11 +31,11 @@ func logEmbeddedAssets(assets fs.FS, cfg *config.Config) {
 		}
 		if !d.IsDir() {
 			assetCount++
-			slog.Debug("embedded asset", "path", path)
+			app.Logger.Debug("embedded asset", "path", path)
 		}
 		return nil
 	})
-	slog.Debug("total embedded assets", "count", assetCount)
+	app.Logger.Debug("total embedded assets", "count", assetCount)
 }
 
 func main() {
@@ -45,18 +45,18 @@ func main() {
 
 	cfg, err := config.Load(*dbfile)
 	if err != nil {
-		slog.Error("failed to load config", "error", err)
+		app.Logger.Error("failed to load config", "error", err)
 		os.Exit(1)
 	}
 
 	ap, err := initApp(cfg)
 	if err != nil {
-		slog.Error("failed to initialize app", "error", err)
+		app.Logger.Error("failed to initialize app", "error", err)
 		os.Exit(1)
 	}
 
 	// Log embedded assets
-	slog.Debug("logging embedded assets", "public_dir", cfg.PublicDir)
+	app.Logger.Debug("logging embedded assets", "public_dir", cfg.PublicDir)
 	logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg)
 
 	// TODO better custom/app move to init_app
@@ -73,7 +73,7 @@ func main() {
 	if (cfg.Smtp != config.Smtp{}) {
 		mailer, err := mail.New(cfg.Smtp)
 		if err != nil {
-			slog.Error("failed to create mailer", "error", err)
+			app.Logger.Error("failed to create mailer", "error", err)
 			os.Exit(1)
 		}
 

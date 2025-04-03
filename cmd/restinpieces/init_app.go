@@ -75,7 +75,7 @@ func WithPhusLogger(opts *slog.HandlerOptions) core.Option {
 func WithTextHandler(opts *slog.HandlerOptions) core.Option {
 	// Ensure opts is not nil to avoid panic
 	if opts == nil {
-		opts = &slog.HandlerOptions{} // Use default options if nil
+		opts = DefaultLoggerOptions // Use package-level defaults
 	}
 	// Use os.Stdout for text logs, os.Stderr for JSON logs is common practice
 	logger := slog.New(slog.NewTextHandler(os.Stdout, opts))

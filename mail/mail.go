@@ -155,7 +155,7 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 		}
 	}
 
-	slog.Info("Successfully sent verification email", "email", email)
+	app.Logger.Info("Successfully sent verification email", "email", email)
 	return nil
 }
 
@@ -214,7 +214,7 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newE
 		}
 	}
 
-	slog.Info("Successfully sent email change notification",
+	app.Logger.Info("Successfully sent email change notification",
 		"old_email", oldEmail,
 		"new_email", newEmail)
 	return nil
@@ -265,6 +265,6 @@ func (m *Mailer) SendPasswordResetEmail(ctx context.Context, email, callbackURL 
 		}
 	}
 
-	slog.Info("Successfully sent password reset email", "email", email)
+	app.Logger.Info("Successfully sent password reset email", "email", email)
 	return nil
 }

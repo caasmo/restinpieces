@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log/slog"
 	"net"
 	"os"
 	"strings"
@@ -335,13 +334,7 @@ func Load(dbfile string) (*Config, error) {
 	// If Gmail credentials are detected, add to SMTP config
 	if strings.HasSuffix(gmailSmtp.Username, "@gmail.com") && gmailSmtp.Password != "" {
 		cfg.Smtp = gmailSmtp
-		slog.Info("Gmail SMTP configuration loaded",
-			"host", gmailSmtp.Host,
-			"port", gmailSmtp.Port,
-			"username", gmailSmtp.Username)
-	} else {
-		slog.Warn("Gmail SMTP configuration: Missing env variables. Skipping SMTP configuration")
-	}
+	} 
 
 	// Configure Google OAuth2 provider
 	googleConfig := OAuth2Provider{
@@ -361,9 +354,7 @@ func Load(dbfile string) (*Config, error) {
 	}
 	if googleConfig.ClientID != "" && googleConfig.ClientSecret != "" {
 		cfg.OAuth2Providers[OAuth2ProviderGoogle] = googleConfig
-	} else {
-		slog.Warn("skipping Google OAuth2 provider - missing client ID or secret")
-	}
+	} 
 
 	// Configure GitHub OAuth2 provider
 	githubConfig := OAuth2Provider{
@@ -380,9 +371,7 @@ func Load(dbfile string) (*Config, error) {
 	}
 	if githubConfig.ClientID != "" && githubConfig.ClientSecret != "" {
 		cfg.OAuth2Providers[OAuth2ProviderGitHub] = githubConfig
-	} else {
-		slog.Warn("skipping GitHub OAuth2 provider - missing client ID or secret")
-	}
+	} 
 
 	return cfg, nil
 }

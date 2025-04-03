@@ -77,7 +77,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 	// TODO
 	// Initialize the underlying sketch
 	sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
-	slog.Info("sketch memory usage", "bytes", sketch.SizeBytes())
+	a.Logger().Info("sketch memory usage", "bytes", sketch.SizeBytes())
 
 	// Create a new ConcurrentSketch with default tick size
 	cs := NewConcurrentSketch(sketch, 100) // Default tickSize
@@ -92,7 +92,7 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 			// TODO not here
 			if a.IsBlocked(ip) {
 				writeJsonError(w, errorIpBlocked)
-				slog.Info("IP blocked from accessing endpoint", "ip", ip)
+				a.Logger().Info("IP blocked from accessing endpoint", "ip", ip)
 				return
 			}
 
@@ -109,11 +109,11 @@ func (a *App) BlockMiddleware() func(http.Handler) http.Handler {
 			// Ristretto uses a buffered write mechanism (a ring buffer) to batch
 			// Set/Del operations for performance.
 			if len(blockedIPs) > 0 {
-				slog.Info("IPs to be blocked", "ips", blockedIPs)
+				a.Logger().Info("IPs to be blocked", "ips", blockedIPs)
 				go func(ips []string) {
 					for _, ip := range ips {
 						if err := a.BlockIP(ip); err != nil {
-							slog.Error("failed to block IP", "ip", ip, "error", err)
+							a.Logger().Error("failed to block IP", "ip", ip, "error", err)
 						}
 					}
 				}(blockedIPs)

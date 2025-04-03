@@ -48,7 +48,7 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 
 	// Check if user is already verified
 	if user.Verified {
-		slog.Info("User already verified, skipping email", "email", user.Email)
+		app.Logger.Info("User already verified, skipping email", "email", user.Email)
 		return nil
 	}
 
@@ -75,6 +75,6 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 		return fmt.Errorf("failed to send verification email: %w", err)
 	}
 
-	slog.Info("Successfully sent verification email", "email", user.Email)
+	app.Logger.Info("Successfully sent verification email", "email", user.Email)
 	return nil
 }
