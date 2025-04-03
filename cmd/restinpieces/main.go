@@ -9,12 +9,8 @@ import (
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/custom"
-	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/proxy"
-	"github.com/caasmo/restinpieces/queue"
-	"github.com/caasmo/restinpieces/queue/executor"
-	"github.com/caasmo/restinpieces/queue/handlers"
-	scl "github.com/caasmo/restinpieces/queue/scheduler"
+	"github.com/caasmo/restinpieces/setup"
 	"github.com/caasmo/restinpieces/server"
 )
 
@@ -49,7 +45,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	app, err := initApp(cfg)
+	app, err := setup.Setup(cfg)
 	defer app.Close()
 	if err != nil {
 		//app.Logger.Error("failed to initialize app", "error", err)
@@ -66,27 +62,13 @@ func main() {
 	// TODO with custom
 	route(cfg, app, cApp)
 
-	// Create mailer and executor only if SMTP is configured
-	hdls := make(map[string]executor.JobHandler)
 
-	if (cfg.Smtp != config.Smtp{}) {
-		mailer, err := mail.New(cfg.Smtp)
-		if err != nil {
-			app.Logger().Error("failed to create mailer", "error", err)
-			os.Exit(1)
-		}
-
-		emailVerificationHandler := handlers.NewEmailVerificationHandler(app.Db(), cfg, mailer)
-		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
-
-		passwordResetHandler := handlers.NewPasswordResetHandler(app.Db(), cfg, mailer)
-		hdls[queue.JobTypePasswordReset] = passwordResetHandler
-
-		emailChangeHandler := handlers.NewEmailChangeHandler(app.Db(), cfg, mailer)
-		hdls[queue.JobTypeEmailChange] = emailChangeHandler
+	// TODO
+	scheduler, err := setup.SetupScheduler(cfg, app.Db(), app.Logger())
+	if err != nil {
+		//app.Logger.Error("failed to initialize app", "error", err)
+		os.Exit(1)
 	}
-
-	scheduler := scl.NewScheduler(cfg.Scheduler, app.Db(), executor.NewExecutor(hdls), app.Logger())
 
 	proxy := proxy.NewProxy(app.Router(), cfg)
 	server.Run(cfg.Server, proxy, scheduler, app.Logger())
