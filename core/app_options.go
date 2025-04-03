@@ -9,7 +9,6 @@ import (
 	"github.com/caasmo/restinpieces/router"
 )
 
-// TODO move
 type Option func(*App)
 
 // WithCache sets the cache implementation
