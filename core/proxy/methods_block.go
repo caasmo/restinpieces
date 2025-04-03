@@ -30,7 +30,7 @@ func (px *Proxy) IsBlocked(ip string) bool {
 	currentBucket := getTimeBucket(time.Now())
 
 	// Check current bucket
-	if _, found := px.app.cache.Get(formatBlockKey(ip, currentBucket)); found {
+	if _, found := px.app.Cache().Get(formatBlockKey(ip, currentBucket)); found {
 		return true
 	}
 
@@ -46,7 +46,7 @@ func (px *Proxy) BlockIP(ip string) error {
 
 	// Block in current bucket with full blocking duration
 	currentKey := formatBlockKey(ip, currentBucket)
-	if !px.app.cache.SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration) {
+	if !px.app.Cache().SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration) {
 		px.app.Logger().Error("failed to block IP in current bucket", "ip", ip, "bucket", currentBucket)
 		return fmt.Errorf("failed to block IP %s in current bucket %d", ip, currentBucket)
 	}
@@ -62,7 +62,7 @@ func (px *Proxy) BlockIP(ip string) error {
 
 	if ttlNext > 0 {
 		nextKey := formatBlockKey(ip, nextBucket)
-		if !px.app.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext) {
+		if !px.app.Cache().SetWithTTL(nextKey, true, defaultBlockCost, ttlNext) {
 			px.app.Logger().Error("failed to block IP in next bucket", "ip", ip, "bucket", nextBucket)
 			return fmt.Errorf("failed to block IP %s in next bucket %d", ip, nextBucket)
 		}

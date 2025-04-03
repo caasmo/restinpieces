@@ -68,3 +68,8 @@ func (a *App) Db() db.Db {
 func (a *App) Logger() *slog.Logger {
 	return a.logger
 }
+
+// Cache returns the application's cache instance
+func (a *App) Cache() cache.Cache[string, interface{}] {
+	return a.cache
+}
