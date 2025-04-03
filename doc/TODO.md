@@ -1,7 +1,7 @@
 ### TODOs
 
 - good enough release
-    - litestream
+    - litestream or just cron each 5 minutes: see litestream 
     - logger
     - configuration
     - basic metrics 
@@ -9,6 +9,9 @@
     - mantenance page 
 	- all shell test 
 	- unit test
+	- workflow for recovery, 
+- password reset if no password ie oauth2 user => no only register with email
+- verify email for oauth -> yes verifed
 - password change test with real smtp  
 - corfirmation, spam sending the same right jwt 
 - endpointsw discovery has no update each time.
@@ -17,14 +20,18 @@
 	- implmenter can work just with its driver choice
 	- implmenter is provided with empty db interface.
 	- core db interface shoudl not be used by implementer
-- command init, bootsrap command, 
-    - bootstrap create tables, create config and put in db.
-- command dump 
+- command init, bootsrap command, --clean --config --db 
+    - bootstrap create tables, 
+	- create config and put in sqlite
+	- crete env variable an put in env 
+	- can load sqlfile, do not do much. sqlit3 exists
+- command dump --db --d 
     - config toml or db. or json
     - dump-config to toml, maybe json
     - load-config 
     - start --config a --db\, minimize the number of flags
     - command serve or none
+	- no db, we can do it with sqlite, cronjobs. see litestream jobs alternative in litestrem docs
 - assets integrity, bundler 
 - if in db config, how to edit the easiest, toml?
 - propably multidomain

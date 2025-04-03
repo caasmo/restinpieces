@@ -36,6 +36,8 @@ github.com/ncruces/go-strftime v0.1.9 h1:bY0MQC28UADQmHmaF5dgpLmImcShSi2kHU9XLdh
 github.com/ncruces/go-strftime v0.1.9/go.mod h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls=
 github.com/outcaste-io/ristretto v0.1.1-0.20220408180327-81c196f2b5ef h1:dIkI3Prr7RMQMfp7IQhc80yWpiQNIUs49vK9+2akAPA=
 github.com/outcaste-io/ristretto v0.1.1-0.20220408180327-81c196f2b5ef/go.mod h1:+KcgdPQTh/p3Fwt7M7Y1RcEJavGLFT65kQB7DjbQjIs=
+github.com/phuslu/log v1.0.115 h1:bq0jdXXXIIi4YlXWAZutwBCC3GZfjVavOaDsbVjmcSE=
+github.com/phuslu/log v1.0.115/go.mod h1:F8osGJADo5qLK/0F88djWwdyoZZ9xDJQL1HYRHFEkS0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

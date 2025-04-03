@@ -33,9 +33,6 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		),
 	)
 
-	// --- TODO ---
-	commonNewMiddleware := []func(http.Handler) http.Handler{ap.Logger}
-
 	// --- api core routes  ---
 	ap.Router().Register(
 		r.NewRoute("/favicon.ico").WithHandlerFunc(core.FaviconHandler),
@@ -48,7 +45,7 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		r.NewRoute(cfg.Endpoints.AuthWithOAuth2).WithHandlerFunc(ap.AuthWithOAuth2Handler),
 		r.NewRoute(cfg.Endpoints.RequestEmailVerification).WithHandlerFunc(ap.RequestEmailVerificationHandler),
 		r.NewRoute(cfg.Endpoints.RegisterWithPassword).WithHandlerFunc(ap.RegisterWithPasswordHandler),
-		r.NewRoute(cfg.Endpoints.ListOAuth2Providers).WithHandlerFunc(ap.ListOAuth2ProvidersHandler).WithMiddlewareChain(commonNewMiddleware),
+		r.NewRoute(cfg.Endpoints.ListOAuth2Providers).WithHandlerFunc(ap.ListOAuth2ProvidersHandler),
 		r.NewRoute(cfg.Endpoints.ConfirmEmailVerification).WithHandlerFunc(ap.ConfirmEmailVerificationHandler),
 		r.NewRoute(cfg.Endpoints.RequestPasswordReset).WithHandlerFunc(ap.RequestPasswordResetHandler),
 		r.NewRoute(cfg.Endpoints.ConfirmPasswordReset).WithHandlerFunc(ap.ConfirmPasswordResetHandler),

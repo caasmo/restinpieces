@@ -56,15 +56,12 @@ func WithPhusLog(level slog.Level) core.Option {
 }
 
 func initApp(cfg *config.Config) (*core.App, error) {
-	// Initialize a default logger (using standard library text handler)
-	// TODO: Make logger configuration more flexible (e.g., JSON handler, level)
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	return core.NewApp(
 		WithDBCrawshaw(cfg.DBFile),
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		core.WithConfig(cfg),
-		core.WithLogger(logger), // Provide the logger
+        WithPhusLog(slog.LevelInfo), // Provide the logger
 	)
 }
