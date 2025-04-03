@@ -4,6 +4,7 @@ import (
 	"flag"
 	"io/fs"
 	"os"
+	"log/slog"
 
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
@@ -34,7 +35,7 @@ func logEmbeddedAssets(assets fs.FS, cfg *config.Config, logger *slog.Logger) {
 		}
 		return nil
 	})
-	app.Logger.Debug("total embedded assets", "count", assetCount)
+	logger.Debug("total embedded assets", "count", assetCount)
 }
 
 func main() {
