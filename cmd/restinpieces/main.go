@@ -45,7 +45,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	app, err := setup.Setup(cfg)
+	// DOcumetn App is services and standard enpoints
+	app, err := setup.SetupApp(cfg)
 	defer app.Close()
 	if err != nil {
 		//app.Logger.Error("failed to initialize app", "error", err)
@@ -70,6 +71,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	// proxi is of the app TODO app.Proxy
 	proxy := proxy.NewProxy(app.Router(), cfg)
 	server.Run(cfg.Server, proxy, scheduler, app.Logger())
 }

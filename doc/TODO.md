@@ -1,5 +1,7 @@
 ### TODOs
 
+- reanem appServices?? 
+- is a framework, clear workflow 
 - good enough release
     - litestream or just cron each 5 minutes: see litestream 
     - logger 
