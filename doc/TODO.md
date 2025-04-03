@@ -2,15 +2,18 @@
 
 - good enough release
     - litestream or just cron each 5 minutes: see litestream 
-    - logger
+    - logger 
     - configuration
     - basic metrics 
+		https://github.com/prometheus/client_golang
     - superuser workflows
     - mantenance page 
 	- tls 
 	- all shell test 
 	- unit test
 	- workflow for recovery, 
+- Bug: users with aouth2 and password. Refresh
+- order in init/main. modular. Brainstrom 
 - deactivate security if under proxy/filter like nginx
 - password reset if no password ie oauth2 user => no only register with email
 - verify email for oauth -> yes verifed
@@ -102,6 +105,7 @@
 - superuser? just ssh?
 - endpoints api configurable in conf
 - metrics
+	https://github.com/prometheus/client_golang
 - sheurl hadcoded https. should be configurable if srver http under proxy TLS like cloudflare
 - downtime page schedule, all routes to, lock db ...
 - error in trhe sequnce of step f ex register can let inconsitent state, ex

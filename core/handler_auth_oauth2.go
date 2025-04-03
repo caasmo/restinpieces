@@ -181,8 +181,11 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate JWT session token
+	// If user has no password, because he logged in always with oauth2,
+	// password is empty and thats fine. But the user can have both password and auth.
+	// We always pass to the signingkey the passwordHash
 	a.Logger().Debug("Generating JWT for user", "userID", user.ID)
-	jwtToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, "", a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
+	jwtToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
 	if err != nil {
 		writeJsonError(w, errorTokenGeneration)
 		return
