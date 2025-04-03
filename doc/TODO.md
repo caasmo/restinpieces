@@ -7,9 +7,11 @@
     - basic metrics 
     - superuser workflows
     - mantenance page 
+	- tls 
 	- all shell test 
 	- unit test
 	- workflow for recovery, 
+- deactivate security if under proxy/filter like nginx
 - password reset if no password ie oauth2 user => no only register with email
 - verify email for oauth -> yes verifed
 - password change test with real smtp  

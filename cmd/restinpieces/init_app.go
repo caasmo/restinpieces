@@ -20,7 +20,8 @@ import (
 var DefaultLoggerOptions = &slog.HandlerOptions{
 	Level: slog.LevelDebug,
 	ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-		if a.Key == slog.TimeKey || a.Key == slog.LevelKey {
+		//if a.Key == slog.TimeKey || a.Key == slog.LevelKey {
+		if a.Key == slog.TimeKey {
 			return slog.Attr{} // Return empty Attr to remove
 		}
 		return a
@@ -72,7 +73,7 @@ func WithPhusLogger(opts *slog.HandlerOptions) core.Option {
 }
 
 // WithTextHandler configures slog with the standard library's text handler.
-func WithTextHandler(opts *slog.HandlerOptions) core.Option {
+func WithTextLogger(opts *slog.HandlerOptions) core.Option {
 	// Ensure opts is not nil to avoid panic
 	if opts == nil {
 		opts = DefaultLoggerOptions // Use package-level defaults
@@ -89,9 +90,7 @@ func initApp(cfg *config.Config) (*core.App, error) {
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		core.WithConfig(cfg),
-		// Use default logger options by passing nil
-		WithPhusLogger(nil), // Provide the logger using defaults
-		// Or provide specific options:
-		// WithPhusLogger(&slog.HandlerOptions{Level: slog.LevelInfo, AddSource: true}),
+		//WithPhusLogger(nil), // Provide the logger using defaults
+		WithTextLogger(nil), // Provide the logger using defaults
 	)
 }
