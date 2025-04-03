@@ -66,6 +66,17 @@ func WithPhusLogger(level slog.Level) core.Option {
 	return core.WithLogger(logger)
 }
 
+// WithTextHandler configures slog with the standard library's text handler.
+func WithTextHandler(level slog.Level) core.Option {
+	opts := &slog.HandlerOptions{
+		Level: level,
+		// AddSource: true, // Uncomment if you want source file/line info
+	}
+	// Use os.Stdout for text logs, os.Stderr for JSON logs is common practice
+	logger := slog.New(slog.NewTextHandler(os.Stdout, opts))
+	return core.WithLogger(logger)
+}
+
 func initApp(cfg *config.Config) (*core.App, error) {
 
 	return core.NewApp(
