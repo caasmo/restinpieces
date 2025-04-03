@@ -48,10 +48,18 @@ func WithCacheRistretto() core.Option {
 
 // WithPhusLog configures slog with phuslu/log's JSON handler.
 func WithPhusLogger(level slog.Level) core.Option {
-	logger := slog.New(phuslog.SlogNewJSONHandler(os.Stderr, &slog.HandlerOptions{
+	opts := &slog.HandlerOptions{
 		Level: level,
+		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+			// Remove time and level attributes from the output
+			if a.Key == slog.TimeKey || a.Key == slog.LevelKey {
+				return slog.Attr{} // Return an empty Attr to remove it
+			}
+			return a
+		},
 		// AddSource: true, // Uncomment if you want source file/line info
-	}))
+	}
+	logger := slog.New(phuslog.SlogNewJSONHandler(os.Stderr, opts))
 
 	// TODO remove
 	slog.SetDefault(logger)
