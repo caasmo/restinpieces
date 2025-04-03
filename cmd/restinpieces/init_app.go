@@ -12,6 +12,7 @@ import (
 	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/caasmo/restinpieces/router/servemux"
+	phuslog "github.com/phuslu/log"
 )
 
 func WithDBCrawshaw(dbPath string) core.Option {
@@ -45,8 +46,17 @@ func WithCacheRistretto() core.Option {
 	return core.WithCache(cache)
 }
 
+// WithPhusLog configures slog with phuslu/log's JSON handler.
+func WithPhusLog(level slog.Level) core.Option {
+	logger := slog.New(phuslog.SlogNewJSONHandler(os.Stderr, &slog.HandlerOptions{
+		Level: level,
+		// AddSource: true, // Uncomment if you want source file/line info
+	}))
+	return core.WithLogger(logger)
+}
+
 func initApp(cfg *config.Config) (*core.App, error) {
-	// Initialize a default logger
+	// Initialize a default logger (using standard library text handler)
 	// TODO: Make logger configuration more flexible (e.g., JSON handler, level)
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
