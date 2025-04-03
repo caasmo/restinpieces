@@ -47,11 +47,14 @@ func WithCacheRistretto() core.Option {
 }
 
 // WithPhusLog configures slog with phuslu/log's JSON handler.
-func WithPhusLog(level slog.Level) core.Option {
+func WithPhusLogger(level slog.Level) core.Option {
 	logger := slog.New(phuslog.SlogNewJSONHandler(os.Stderr, &slog.HandlerOptions{
 		Level: level,
 		// AddSource: true, // Uncomment if you want source file/line info
 	}))
+
+	// TODO remove
+	slog.SetDefault(logger)
 	return core.WithLogger(logger)
 }
 
@@ -62,6 +65,6 @@ func initApp(cfg *config.Config) (*core.App, error) {
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		core.WithConfig(cfg),
-        WithPhusLog(slog.LevelInfo), // Provide the logger
+        WithPhusLogger(slog.LevelDebug), // Provide the logger
 	)
 }

@@ -39,11 +39,6 @@ func logEmbeddedAssets(assets fs.FS, cfg *config.Config) {
 }
 
 func main() {
-	// Initialize logging
-	logHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelDebug,
-	})
-	slog.SetDefault(slog.New(logHandler))
 
 	dbfile := flag.String("dbfile", "bench.db", "SQLite database file path")
 	flag.Parse()
@@ -54,15 +49,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Log embedded assets
-	slog.Debug("logging embedded assets", "public_dir", cfg.PublicDir)
-	logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg)
-
 	ap, err := initApp(cfg)
 	if err != nil {
 		slog.Error("failed to initialize app", "error", err)
 		os.Exit(1)
 	}
+
+	// Log embedded assets
+	slog.Debug("logging embedded assets", "public_dir", cfg.PublicDir)
+	logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg)
 
 	// TODO better custom/app move to init_app
 	cAp := custom.NewApp(ap)
