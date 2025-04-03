@@ -93,7 +93,7 @@ func (s *Server) Run() {
 			s.logger.Error("HTTP server shutdown error", "err", err)
 			return err
 		}
-		logger.Info("HTTP server stopped gracefully")
+		s.logger.Info("HTTP server stopped gracefully")
 		return nil
 	})
 
@@ -104,7 +104,7 @@ func (s *Server) Run() {
 			s.logger.Error("Scheduler shutdown error", "err", err)
 			return err
 		}
-		logger.Info("Scheduler stopped gracefully")
+		s.logger.Info("Scheduler stopped gracefully")
 		return nil
 	})
 
