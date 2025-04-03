@@ -15,6 +15,18 @@ import (
 	phuslog "github.com/phuslu/log"
 )
 
+// DefaultLoggerOptions provides default settings for slog handlers.
+// Level: Debug, Removes time and level attributes from output.
+var DefaultLoggerOptions = &slog.HandlerOptions{
+	Level: slog.LevelDebug,
+	ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+		if a.Key == slog.TimeKey || a.Key == slog.LevelKey {
+			return slog.Attr{} // Return empty Attr to remove
+		}
+		return a
+	},
+}
+
 func WithDBCrawshaw(dbPath string) core.Option {
 	db, _ := crawshaw.New(dbPath)
 	// TODO erro log fatal
@@ -47,35 +59,14 @@ func WithCacheRistretto() core.Option {
 }
 
 // WithPhusLog configures slog with phuslu/log's JSON handler.
+// Uses DefaultLoggerOptions if opts is nil.
 func WithPhusLogger(opts *slog.HandlerOptions) core.Option {
-	// Ensure opts is not nil to avoid panic
 	if opts == nil {
-		opts = &slog.HandlerOptions{} // Use default options if nil
-	}
-
-	// If ReplaceAttr is already set, chain the removal logic.
-	// Otherwise, just set the removal logic.
-	originalReplaceAttr := opts.ReplaceAttr
-	opts.ReplaceAttr = func(groups []string, a slog.Attr) slog.Attr {
-		// Apply original ReplaceAttr first if it exists
-		if originalReplaceAttr != nil {
-			a = originalReplaceAttr(groups, a)
-			// If the original function removed the attribute, respect that
-			if a.Key == "" {
-				return a
-			}
-		}
-		// Remove time and level attributes from the output
-		if a.Key == slog.TimeKey || a.Key == slog.LevelKey {
-				return slog.Attr{} // Return an empty Attr to remove it
-			}
-			return a
-		},
-		// AddSource: true, // Uncomment if you want source file/line info
+		opts = DefaultLoggerOptions // Use package-level defaults
 	}
 	logger := slog.New(phuslog.SlogNewJSONHandler(os.Stderr, opts))
 
-	// TODO remove
+	// TODO remove slog.SetDefault call? It affects global state.
 	slog.SetDefault(logger)
 	return core.WithLogger(logger)
 }
@@ -98,10 +89,9 @@ func initApp(cfg *config.Config) (*core.App, error) {
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		core.WithConfig(cfg),
-		// Create HandlerOptions here
-		WithPhusLogger(&slog.HandlerOptions{
-			Level: slog.LevelDebug,
-			// AddSource: true, // Example: enable source info
-		}), // Provide the logger
+		// Use default logger options by passing nil
+		WithPhusLogger(nil), // Provide the logger using defaults
+		// Or provide specific options:
+		// WithPhusLogger(&slog.HandlerOptions{Level: slog.LevelInfo, AddSource: true}),
 	)
 }
