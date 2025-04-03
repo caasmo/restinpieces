@@ -44,27 +44,26 @@ func main() {
 
 	cfg, err := config.Load(*dbfile)
 	if err != nil {
-		app.Logger.Error("failed to load config", "error", err)
+		//app.Logger.Error("failed to load config", "error", err)
 		os.Exit(1)
 	}
 
-	ap, err := initApp(cfg)
+	app, err := initApp(cfg)
+	defer app.Close()
 	if err != nil {
-		app.Logger.Error("failed to initialize app", "error", err)
+		//app.Logger.Error("failed to initialize app", "error", err)
 		os.Exit(1)
 	}
 
 	// Log embedded assets
-	app.Logger.Debug("logging embedded assets", "public_dir", cfg.PublicDir)
+	app.Logger().Debug("logging embedded assets", "public_dir", cfg.PublicDir)
 	logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg)
 
 	// TODO better custom/app move to init_app
-	cAp := custom.NewApp(ap)
+	cApp := custom.NewApp(app)
 
 	// TODO with custom
-	defer ap.Close()
-
-	route(cfg, ap, cAp)
+	route(cfg, app, cApp)
 
 	// Create mailer and executor only if SMTP is configured
 	hdls := make(map[string]executor.JobHandler)
@@ -72,22 +71,22 @@ func main() {
 	if (cfg.Smtp != config.Smtp{}) {
 		mailer, err := mail.New(cfg.Smtp)
 		if err != nil {
-			app.Logger.Error("failed to create mailer", "error", err)
+			app.Logger().Error("failed to create mailer", "error", err)
 			os.Exit(1)
 		}
 
-		emailVerificationHandler := handlers.NewEmailVerificationHandler(ap.Db(), cfg, mailer)
+		emailVerificationHandler := handlers.NewEmailVerificationHandler(app.Db(), cfg, mailer)
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
 
-		passwordResetHandler := handlers.NewPasswordResetHandler(ap.Db(), cfg, mailer)
+		passwordResetHandler := handlers.NewPasswordResetHandler(app.Db(), cfg, mailer)
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
 
-		emailChangeHandler := handlers.NewEmailChangeHandler(ap.Db(), cfg, mailer)
+		emailChangeHandler := handlers.NewEmailChangeHandler(app.Db(), cfg, mailer)
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
 	}
 
-	scheduler := scl.NewScheduler(cfg.Scheduler, ap.Db(), executor.NewExecutor(hdls), app.Logger())
+	scheduler := scl.NewScheduler(cfg.Scheduler, app.Db(), executor.NewExecutor(hdls), app.Logger())
 
-	proxy := proxy.NewProxy(ap.Router(), cfg)
+	proxy := proxy.NewProxy(app.Router(), cfg)
 	server.Run(cfg.Server, proxy, scheduler, app.Logger())
 }
