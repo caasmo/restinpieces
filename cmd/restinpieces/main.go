@@ -9,7 +9,7 @@ import (
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/custom"
-	"github.com/caasmo/restinpieces/proxy"
+	"github.com/caasmo/restinpieces/core/proxy"
 	"github.com/caasmo/restinpieces/setup"
 	"github.com/caasmo/restinpieces/server"
 )
