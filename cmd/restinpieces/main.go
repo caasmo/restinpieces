@@ -57,7 +57,7 @@ func main() {
 
 	// Log embedded assets
 	app.Logger().Debug("logging embedded assets", "public_dir", cfg.PublicDir)
-	logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg)
+	logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg, app.Logger())
 
 	// TODO better custom/app move to init_app
 	cApp := custom.NewApp(app)
