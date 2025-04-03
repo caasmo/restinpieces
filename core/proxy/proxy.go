@@ -18,13 +18,18 @@ func NewProxy(app *core.App) *Proxy {
 }
 
 func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	//domain := getDomain(r.Host)
-	//path := r.URL.Path
-	//
-	//if allowed := px.isPathAllowedForDomain(domain, path); !allowed {
-	//	http.Error(w, "Not found", http.StatusNotFound)
-	//	return
-	//}
+	// Get client IP from request
+	ip := r.RemoteAddr
+	if colonIndex := strings.LastIndex(ip, ":"); colonIndex != -1 {
+		ip = ip[:colonIndex] // Remove port if present
+	}
+
+	// Block IP if it's not already blocked
+	if !px.IsBlocked(ip) {
+		if err := px.BlockIP(ip); err != nil {
+			px.app.Logger().Error("failed to block IP", "ip", ip, "err", err)
+		}
+	}
 
 	px.app.Router().ServeHTTP(w, r)
 }
