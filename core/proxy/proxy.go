@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"net/http"
-	"strings"
 	"github.com/caasmo/restinpieces/core"
 )
 
@@ -18,11 +17,8 @@ func NewProxy(app *core.App) *Proxy {
 }
 
 func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Get client IP from request
-	ip := r.RemoteAddr
-	if colonIndex := strings.LastIndex(ip, ":"); colonIndex != -1 {
-		ip = ip[:colonIndex] // Remove port if present
-	}
+	// Get client IP from request using app's method
+	ip := px.app.GetClientIP(r)
 
 	// Block IP if it's not already blocked
 	if !px.IsBlocked(ip) {
