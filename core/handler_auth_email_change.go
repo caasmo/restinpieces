@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/crypto"
+	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
 )
 
@@ -61,7 +61,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Create queue payload
 	// this is for uniqueness
-	// use one request per bucket. 
+	// use one request per bucket.
 	payload := queue.PayloadEmailChange{
 		UserID:         user.ID,
 		CooldownBucket: queue.CoolDownBucket(a.config.RateLimits.EmailChangeCooldown, time.Now()),

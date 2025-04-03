@@ -11,10 +11,10 @@ const (
 
 	CodeOkAlreadyVerified        = "ok_already_verified"
 	CodeOkEmailVerified          = "ok_email_verified"
-	CodeOkVerificationRequested  = "ok_verification_requested"   // Success code for email verification request
-	CodeOkPasswordResetRequested = "ok_password_reset_requested" // Success code for password reset request
-	CodeOkEmailChange            = "ok_email_change"             // Success code for completed email change
-	CodeOkEmailChangeRequested   = "ok_email_change_requested"   // Success code for email change request
+	CodeOkVerificationRequested  = "ok_verification_requested"    // Success code for email verification request
+	CodeOkPasswordResetRequested = "ok_password_reset_requested"  // Success code for password reset request
+	CodeOkEmailChange            = "ok_email_change"              // Success code for completed email change
+	CodeOkEmailChangeRequested   = "ok_email_change_requested"    // Success code for email change request
 	CodeOkPasswordResetNotNeeded = "ok_password_reset_not_needed" // Success code when password reset is not needed
 	CodeOkPasswordNotRequired    = "ok_password_not_required"     // Success code when password is not required for auth
 

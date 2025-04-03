@@ -15,7 +15,7 @@ import (
 // Endpoint: POST /request-password-reset
 // Authenticated: No
 // Allowed Mimetype: application/json
-// 
+//
 // Important Security Notes:
 // - Sending emails is an expensive operation and potential spam vector
 // - Rate limiting is enforced via cooldown buckets

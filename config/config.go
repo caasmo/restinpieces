@@ -144,18 +144,18 @@ type Smtp struct {
 }
 
 type Endpoints struct {
-	RefreshAuth             string `json:"refresh_auth"`
+	RefreshAuth              string `json:"refresh_auth"`
 	RequestEmailVerification string `json:"request_email_verification"`
 	ConfirmEmailVerification string `json:"confirm_email_verification"`
-	ListEndpoints           string `json:"list_endpoints"`
-	AuthWithPassword        string `json:"auth_with_password"`
-	AuthWithOAuth2          string `json:"auth_with_oauth2"`
-	RegisterWithPassword    string `json:"register_with_password"`
-	ListOAuth2Providers     string `json:"list_oauth2_providers"`
-	RequestPasswordReset    string `json:"request_password_reset"`
-	ConfirmPasswordReset    string `json:"confirm_password_reset"`
-	RequestEmailChange      string `json:"request_email_change"`
-	ConfirmEmailChange      string `json:"confirm_email_change"`
+	ListEndpoints            string `json:"list_endpoints"`
+	AuthWithPassword         string `json:"auth_with_password"`
+	AuthWithOAuth2           string `json:"auth_with_oauth2"`
+	RegisterWithPassword     string `json:"register_with_password"`
+	ListOAuth2Providers      string `json:"list_oauth2_providers"`
+	RequestPasswordReset     string `json:"request_password_reset"`
+	ConfirmPasswordReset     string `json:"confirm_password_reset"`
+	RequestEmailChange       string `json:"request_email_change"`
+	ConfirmEmailChange       string `json:"confirm_email_change"`
 }
 
 // Path extracts just the path portion from an endpoint string (removes method prefix)
@@ -172,10 +172,10 @@ func (e Endpoints) Path(endpoint string) string {
 // This ensures consistency between API endpoints and their corresponding HTML pages
 func (e Endpoints) ConfirmHtml(endpoint string) string {
 	path := e.Path(endpoint)
-	
+
 	// Remove /api/ prefix if present
 	path = strings.TrimPrefix(path, "/api")
-	
+
 	// Replace path with .html version
 	return path + ".html"
 }
@@ -183,18 +183,18 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 // DefaultEndpoints returns the standard endpoint paths
 func DefaultEndpoints() Endpoints {
 	return Endpoints{
-		RefreshAuth:             "POST /api/refresh-auth",
+		RefreshAuth:              "POST /api/refresh-auth",
 		RequestEmailVerification: "POST /api/request-email-verification",
 		ConfirmEmailVerification: "POST /api/confirm-email-verification",
-		ListEndpoints:           "GET /api/list-endpoints",
-		AuthWithPassword:        "POST /api/auth-with-password",
-		AuthWithOAuth2:          "POST /api/auth-with-oauth2",
-		RegisterWithPassword:    "POST /api/register-with-password",
-		ListOAuth2Providers:     "GET /api/list-oauth2-providers",
-		RequestPasswordReset:    "POST /api/request-password-reset",
-		ConfirmPasswordReset:    "POST /api/confirm-password-reset",
-		RequestEmailChange:      "POST /api/request-email-change",
-		ConfirmEmailChange:      "POST /api/confirm-email-change",
+		ListEndpoints:            "GET /api/list-endpoints",
+		AuthWithPassword:         "POST /api/auth-with-password",
+		AuthWithOAuth2:           "POST /api/auth-with-oauth2",
+		RegisterWithPassword:     "POST /api/register-with-password",
+		ListOAuth2Providers:      "GET /api/list-oauth2-providers",
+		RequestPasswordReset:     "POST /api/request-password-reset",
+		ConfirmPasswordReset:     "POST /api/confirm-password-reset",
+		RequestEmailChange:       "POST /api/request-email-change",
+		ConfirmEmailChange:       "POST /api/confirm-email-change",
 	}
 }
 
@@ -334,7 +334,7 @@ func Load(dbfile string) (*Config, error) {
 	// If Gmail credentials are detected, add to SMTP config
 	if strings.HasSuffix(gmailSmtp.Username, "@gmail.com") && gmailSmtp.Password != "" {
 		cfg.Smtp = gmailSmtp
-	} 
+	}
 
 	// Configure Google OAuth2 provider
 	googleConfig := OAuth2Provider{
@@ -354,7 +354,7 @@ func Load(dbfile string) (*Config, error) {
 	}
 	if googleConfig.ClientID != "" && googleConfig.ClientSecret != "" {
 		cfg.OAuth2Providers[OAuth2ProviderGoogle] = googleConfig
-	} 
+	}
 
 	// Configure GitHub OAuth2 provider
 	githubConfig := OAuth2Provider{
@@ -371,7 +371,7 @@ func Load(dbfile string) (*Config, error) {
 	}
 	if githubConfig.ClientID != "" && githubConfig.ClientSecret != "" {
 		cfg.OAuth2Providers[OAuth2ProviderGitHub] = githubConfig
-	} 
+	}
 
 	return cfg, nil
 }

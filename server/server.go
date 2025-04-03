@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/proxy"
+	"github.com/caasmo/restinpieces/queue/scheduler"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"

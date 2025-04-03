@@ -29,4 +29,3 @@ func (a *App) Auth(next http.Handler) http.Handler {
 
 	return http.HandlerFunc(fn)
 }
-

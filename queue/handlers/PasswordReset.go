@@ -36,7 +36,7 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 		return fmt.Errorf("failed to parse password reset payload: %w", err)
 	}
 
-	var payloadExtra queue.PayloadPasswordResetExtra 
+	var payloadExtra queue.PayloadPasswordResetExtra
 	if err := json.Unmarshal(job.PayloadExtra, &payloadExtra); err != nil {
 		return fmt.Errorf("failed to parse password reset extra payload: %w", err)
 	}
@@ -65,8 +65,8 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 	}
 
 	// Construct callback URL to HTML page that will handle the password reset
-	callbackURL := fmt.Sprintf("%s%s?token=%s", 
-		h.config.Server.BaseURL(), 
+	callbackURL := fmt.Sprintf("%s%s?token=%s",
+		h.config.Server.BaseURL(),
 		h.config.Endpoints.ConfirmHtml(h.config.Endpoints.ConfirmPasswordReset),
 		token)
 
