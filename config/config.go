@@ -217,9 +217,10 @@ type BlockIp struct {
 	// Add other blocking-related settings here (e.g., duration, thresholds)
 }
 
-// ProxyConfig holds configuration for the proxy layer.
+// Proxy holds configuration for the proxy layer.
 type Proxy struct {
-	BlockIp BlockIp
+	BlockIp            BlockIp
+	MimetypesWhitelist []string // List of allowed Content-Type values for uploads/requests
 }
 
 const (
@@ -288,7 +289,18 @@ func Load(dbfile string) (*Config, error) {
 		OAuth2Providers: make(map[string]OAuth2Provider),
 		Proxy: Proxy{
 			BlockIp: BlockIp{
-				Enabled: true, // Default IP blocking to disabled
+				Enabled: true, // Default IP blocking to enabled (adjust as needed)
+			},
+			// Default whitelist for common web content types
+			MimetypesWhitelist: []string{
+				"application/json",
+				"text/html",
+				"text/javascript",
+				"application/javascript", // Often used alongside text/javascript
+				"text/css",
+				// Add other essential types like form data if needed:
+				// "application/x-www-form-urlencoded",
+				// "multipart/form-data",
 			},
 		},
 	}
