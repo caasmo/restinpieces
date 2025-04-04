@@ -22,9 +22,10 @@ type Feature interface {
 	IsEnabled() bool
 }
 
-// Blocker defines an interface for checking if an IP address is blocked.
+// Blocker defines an interface for checking if an IP address is blocked and blocking it.
 type Blocker interface {
 	IsBlocked(ip string) bool
+	Block(ip string) error // Adds the IP to the block list
 }
 
 // FeatureBlocker combines the Feature and Blocker interfaces.

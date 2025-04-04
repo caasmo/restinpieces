@@ -30,6 +30,11 @@ func (b *BlockIp) IsBlocked(ip string) bool {
 	return false
 }
 
+// Block for DisabledBlock does nothing and returns nil.
+func (d *DisabledBlock) Block(ip string) error {
+	return nil // Blocking is disabled
+}
+
 // DisabledBlock implements the FeatureBlocker interface but always returns false,
 // effectively disabling the blocking feature.
 type DisabledBlock struct{}
