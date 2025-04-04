@@ -26,7 +26,7 @@ func formatBlockKey(ip string, bucket int64) string {
 }
 
 // IsBlocked checks if an IP is currently blocked
-func (px *Proxy) IsBlocked(ip string) bool {
+func (px *Proxy) IsBlockeda(ip string) bool {
 	currentBucket := getTimeBucket(time.Now())
 
 	// Check current bucket
@@ -38,7 +38,7 @@ func (px *Proxy) IsBlocked(ip string) bool {
 }
 
 // BlockIP adds an IP to the blocklist in current and next time bucket with adjusted TTL
-func (px *Proxy) BlockIP(ip string) error {
+func (px *Proxy) BlockIPa(ip string) error {
 	now := time.Now()
 	currentBucket := getTimeBucket(now)
 	nextBucket := currentBucket + 1

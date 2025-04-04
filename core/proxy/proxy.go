@@ -75,9 +75,9 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // IsBlocked checks if an IP is blocked using the configured ipBlocker.
-func (px *Proxy) IsBlocked(ip string) bool {
-	return px.ipBlocker.IsBlocked(ip)
-}
+//func (px *Proxy) IsBlocked(ip string) bool {
+//	return px.ipBlocker.IsBlocked(ip)
+//}
 
 // TODO: Decide if BlockIP should be part of the Proxy or the Blocker interface itself.
 // If part of the Blocker, the implementation in BlockIp struct would need access
@@ -86,14 +86,14 @@ func (px *Proxy) IsBlocked(ip string) bool {
 
 // BlockIP attempts to block the given IP address.
 // This might be called from specific handlers upon detecting abuse.
-func (px *Proxy) BlockIP(ip string) error {
-	// Check if blocking is enabled at all
-	if !px.ipBlocker.IsEnabled() {
-		return nil // Blocking is disabled, do nothing
-	}
-	// Delegate to the core app's blocking logic (which uses the cache)
-	// This assumes the core.App retains the BlockIP method.
-	// If BlockIP logic moves entirely into the BlockIp struct, this needs adjustment.
-	return px.app.BlockIP(ip)
-}
+//func (px *Proxy) BlockIP(ip string) error {
+//	// Check if blocking is enabled at all
+//	if !px.ipBlocker.IsEnabled() {
+//		return nil // Blocking is disabled, do nothing
+//	}
+//	// Delegate to the core app's blocking logic (which uses the cache)
+//	// This assumes the core.App retains the BlockIP method.
+//	// If BlockIP logic moves entirely into the BlockIp struct, this needs adjustment.
+//	return px.app.BlockIP(ip)
+//}
 

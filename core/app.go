@@ -22,8 +22,9 @@ type App struct {
 	db     db.Db
 	router router.Router
 	cache  cache.Cache[string, interface{}] // Using string keys and interface{} values
-	config *config.Config
+	config *config.Config // TODO lowercase. now because of Proxy, rewire Proxy as part of app. so it soes not need from the app
 	logger *slog.Logger
+	proxy *proxy.Proxy
 }
 
 
@@ -74,4 +75,8 @@ func (a *App) Logger() *slog.Logger {
 // Cache returns the application's cache instance
 func (a *App) Cache() cache.Cache[string, interface{}] {
 	return a.cache
+}
+
+func (a *App) Proxy() proxy.Proxy {
+	return a.proxy
 }
