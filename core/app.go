@@ -22,9 +22,9 @@ type App struct {
 	db     db.Db
 	router router.Router
 	cache  cache.Cache[string, interface{}] // Using string keys and interface{} values
-	config *config.Config // TODO lowercase. now because of Proxy, rewire Proxy as part of app. so it soes not need from the app
+	config *config.Config 
 	logger *slog.Logger
-	proxy *proxy.Proxy
+	//proxy *proxy.Proxy
 }
 
 
@@ -84,16 +84,12 @@ func (a *App) Config() *config.Config {
 
 // SetProxy sets the proxy instance on the App.
 // This is typically called after App initialization to resolve circular dependencies.
-func (a *App) SetProxy(p *proxy.Proxy) {
-	a.proxy = p
-}
+//func (a *App) SetProxy(p *proxy.Proxy) {
+//	a.proxy = p
+//}
 
 // Proxy returns the application's proxy instance
 // It might panic if SetProxy was not called after NewApp.
-func (a *App) Proxy() *proxy.Proxy {
-	if a.proxy == nil {
-		// This indicates a setup error - the proxy should have been set after NewApp.
-		panic("proxy accessed before it was set on the app")
-	}
-	return a.proxy
-}
+//func (a *App) Proxy() *proxy.Proxy {
+//	return a.proxy
+//}

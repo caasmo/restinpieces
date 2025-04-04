@@ -35,7 +35,7 @@ func SetupApp(cfg *config.Config) (*core.App, error) {
 	px := proxy.NewProxy(app, cfg)
 
 	// Set the proxy on the app instance
-	app.SetProxy(px)
+	//app.SetProxy(px)
 
 	return app, nil
 }

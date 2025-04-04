@@ -9,7 +9,6 @@ import (
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/custom"
-	"github.com/caasmo/restinpieces/core/proxy"
 	"github.com/caasmo/restinpieces/setup"
 	"github.com/caasmo/restinpieces/server"
 )
@@ -71,8 +70,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// proxi is of the app TODO app.Proxy
-	proxy := proxy.NewProxy(app, app.Config)
-	srv := server.NewServer(cfg.Server, proxy, scheduler, app.Logger())
+	srv := server.NewServer(cfg.Server, app.Proxy(), scheduler, app.Logger())
 	srv.Run()
 }
