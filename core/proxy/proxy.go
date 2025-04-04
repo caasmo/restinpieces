@@ -64,6 +64,7 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
+	} // <-- Add missing closing brace for the 'if px.ipBlocker.IsEnabled()' block
 
 
 	px.app.Router().ServeHTTP(w, r)
