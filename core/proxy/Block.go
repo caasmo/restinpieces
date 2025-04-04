@@ -34,7 +34,7 @@ func formatBlockKey(ip string, bucket int64) string {
 // BlockIp implements the FeatureBlocker interface using a cache for storage and a TopK sketch for detection.
 type BlockIp struct {
 	cache  cache.Cache[string, interface{}]
-	sketch *topk.ConcurrentSketch
+	sketch *topk.TopKSketch
 	logger *slog.Logger
 }
 
@@ -50,7 +50,6 @@ func NewBlockIp(cache cache.Cache[string, interface{}], logger *slog.Logger) *Bl
 	sketchInstance := sliding.New(window, segments, sliding.WithWidth(width), sliding.WithDepth(depth))
 	logger.Info("TopK sketch memory usage", "bytes", sketchInstance.SizeBytes())
 
-	// Create a new ConcurrentSketch
 	cs := topk.NewTopkSketch(sketchInstance, tickSize)
 
 	return &BlockIp{
