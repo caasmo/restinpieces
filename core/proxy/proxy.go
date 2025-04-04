@@ -43,15 +43,22 @@ func NewProxy(app *core.App) *Proxy {
 		// config is no longer stored directly on Proxy
 	}
 
+	// Call the method to set up the blocker based on config
+	px.UpdateByConfig()
+
+	return px
+}
+
+// UpdateByConfig configures the Proxy's features, like the IP blocker,
+// based on the current application configuration.
+func (px *Proxy) UpdateByConfig() {
 	// Initialize the IP Blocker based on application configuration
-	if app.Config().Proxy.BlockIp.Enabled {
+	if px.app.Config().Proxy.BlockIp.Enabled {
 		// Pass the application's cache and logger to the BlockIp implementation
-		px.ipBlocker = NewBlockIp(app.Cache(), app.Logger())
+		px.ipBlocker = NewBlockIp(px.app.Cache(), px.app.Logger())
 	} else {
 		px.ipBlocker = &DisabledBlock{}
 	}
-
-	return px
 }
 
 func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
