@@ -62,6 +62,7 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
+	px.app.Logger().Warn("in Proxy", "ip", ip)
 
 	// // Example of how blocking might be triggered (moved from here)
 	// // Block IP if it's not already blocked
