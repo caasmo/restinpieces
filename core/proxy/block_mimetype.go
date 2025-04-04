@@ -67,10 +67,10 @@ func (b *BlockMimetype) Block(mimetype string) error {
 }
 
 // Process is a placeholder for the Blocker interface. Mimetype blocking doesn't
-// typically involve processing like a sketch.
-func (b *BlockMimetype) Process(mimetype string) []string {
+// typically involve processing like a sketch. Returns nil.
+func (b *BlockMimetype) Process(mimetype string) error {
 	// Nothing to process like an IP sketch
-	return nil // Placeholder
+	return nil
 }
 
 // TODO: Add methods like IsAllowed(mimetype string) bool

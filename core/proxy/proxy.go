@@ -27,8 +27,8 @@ type Feature interface {
 // and processing requests to identify IPs for blocking.
 type Blocker interface {
 	IsBlocked(ip string) bool
-	Block(ip string) error           // Adds the IP to the block list
-	Process(ip string) []string // Processes the IP (e.g., via sketch) and returns IPs to block
+	Block(ip string) error      // Adds the IP to the block list
+	Process(ip string) error // Processes the IP (e.g., via sketch), returns error on failure
 }
 
 // FeatureBlocker combines the Feature and Blocker interfaces.
@@ -74,7 +74,12 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusTooManyRequests)
 			return
 		} else {
-			px.ipBlocker.Process(ip)
+			// Process the IP (e.g., add to sketch). Log any processing errors.
+			if err := px.ipBlocker.Process(ip); err != nil {
+				// Log the error but typically continue processing the request,
+				// as failure here might just mean the sketch update failed.
+				px.app.Logger().Error("Error processing IP in blocker", "ip", ip, "error", err)
+			}
 		}
 	}
 

@@ -117,12 +117,12 @@ func (b *BlockIp) Block(ip string) error {
 }
 
 // Process passes the IP to the underlying TopK sketch for tracking and potential blocking.
-// It returns a slice of IPs identified by the sketch as exceeding the threshold.
-// TODO return
-func (b *BlockIp) Process(ip string) []string {
+// It processes the IP using the sketch and potentially triggers blocking.
+// Returns an error if the processing itself fails (unlikely here).
+func (b *BlockIp) Process(ip string) error {
 	blockedIPs := b.sketch.ProcessTick(ip)
 
-	// Handle blocking outside the mutex
+	// Handle blocking asynchronously
 	//
 	// Even if multiple goroutines call a.BlockIP for the same IP
 	// concurrently, Ristretto will handle it safely. Blocking an IP
@@ -143,6 +143,7 @@ func (b *BlockIp) Process(ip string) []string {
 		}(blockedIPs)
 	}
 
+	// Return nil as errors are handled within the goroutine or sketch processing
 	return nil
 }
 
@@ -161,7 +162,7 @@ func (d *DisabledBlock) IsEnabled() bool {
 }
 
 // Process for DisabledBlock does nothing and returns nil.
-func (d *DisabledBlock) Process(ip string) []string {
+func (d *DisabledBlock) Process(ip string) error {
 	return nil // Blocking is disabled
 }
 
