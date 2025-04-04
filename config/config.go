@@ -208,6 +208,18 @@ type Config struct {
 	Smtp            Smtp
 	PublicDir       string // Directory to serve static files from
 	Endpoints       Endpoints
+	Proxy           ProxyConfig
+}
+
+// BlockIpConfig holds configuration specific to IP blocking.
+type BlockIpConfig struct {
+	Enabled bool // Whether IP blocking is active
+	// Add other blocking-related settings here (e.g., duration, thresholds)
+}
+
+// ProxyConfig holds configuration for the proxy layer.
+type ProxyConfig struct {
+	BlockIp BlockIpConfig
 }
 
 const (
@@ -274,6 +286,11 @@ func Load(dbfile string) (*Config, error) {
 			ConcurrencyMultiplier: 2, // Default to 2x CPU cores
 		},
 		OAuth2Providers: make(map[string]OAuth2Provider),
+		Proxy: ProxyConfig{
+			BlockIp: BlockIpConfig{
+				Enabled: false, // Default IP blocking to disabled
+			},
+		},
 	}
 
 	cfg.Server = FillServer(cfg)
