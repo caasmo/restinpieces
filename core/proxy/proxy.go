@@ -3,8 +3,7 @@ package proxy
 import (
 	"net/http"
 
-	"sync/atomic" // Import atomic
-	"github.com/caasmo/restinpieces/config"
+	//"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 )
 
@@ -15,8 +14,7 @@ type Proxy struct {
 	// TODO app http.Handler no Proxy needs all the services of app
 	// app is also handler, the serverHttp method is to call its router
 	app       *core.App
-	ipBlocker atomic.Pointer[FeatureBlocker] 
-	//ipBlocker FeatureBlocker
+	ipBlocker FeatureBlocker
 }
 
 // Feature defines an interface for features that can be enabled or disabled.
@@ -46,42 +44,35 @@ func NewProxy(app *core.App) *Proxy {
 	}
 
 	// Call the method to set up the blocker based on config
-	px.UpdateByConfig(app.Config())
+	px.UpdateByConfig()
 
 	return px
 }
 
 // UpdateByConfig configures the Proxy's features, like the IP blocker,
-// based on the current application configuration (dinamically)
-func (px *Proxy) UpdateByConfig(cfg *config.Config) {
+// based on the current application configuration.
+func (px *Proxy) UpdateByConfig() {
 	// Initialize the IP Blocker based on application configuration
-	var newBlocker FeatureBlocker
-	if cfg.Proxy.BlockIp.Enabled {
+	if px.app.Config().Proxy.BlockIp.Enabled {
 		// Pass the application's cache and logger to the BlockIp implementation
-		newBlocker = NewBlockIp(px.app.Cache(), px.app.Logger())
+		px.ipBlocker = NewBlockIp(px.app.Cache(), px.app.Logger())
 	} else {
-		newBlocker = &DisabledBlock{}
+		px.ipBlocker = &DisabledBlock{}
 	}
-
-	px.ipBlocker.Store(&newBlocker)
 }
 
 func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	blockerPtr := px.ipBlocker.Load()
 	// Check if IP blocking is enabled first
-	// Dereference the pointer to get the actual interface value (FeatureBlocker)
-	blocker := *blockerPtr
-
-	if blocker.IsEnabled() {
+	if px.ipBlocker.IsEnabled() {
 		// Get client IP from request using app's method
 		ip := px.app.GetClientIP(r)
 
 		// Check if the IP is already blocked (cache check)
-		if blocker.IsBlocked(ip) {
+		if px.ipBlocker.IsBlocked(ip) {
 			w.WriteHeader(http.StatusTooManyRequests)
 			return
 		} else {
-			blocker.Process(ip)
+			px.ipBlocker.Process(ip)
 		}
 	} 
 

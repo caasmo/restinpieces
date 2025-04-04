@@ -18,6 +18,7 @@
 	- basic framework use
 - configuration
     sqlite based
+- config reload? nee
 - workflows
 - basic metrics 
     - go ones
