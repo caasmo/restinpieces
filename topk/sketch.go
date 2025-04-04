@@ -22,7 +22,7 @@ type TopKSketch struct {
 // NewConcurrentSketch creates a new thread-safe sketch wrapper.
 // tickSize: How many requests trigger a sketch tick and top-k check.
 // TODO reove reference to Ips
-func NewTopkSketch(instance *sliding.Sketch, tickSize uint64, logger *slog.Logger) *ConcurrentSketch {
+func NewTopkSketch(instance *sliding.Sketch, tickSize uint64) *TopKSketch {
 	if instance == nil {
 		panic("sketch instance cannot be nil for ConcurrentSketch")
 	}
@@ -33,7 +33,7 @@ func NewTopkSketch(instance *sliding.Sketch, tickSize uint64, logger *slog.Logge
 	windowCapacity := uint64(instance.WindowSize) * tickSize
 	threshold := int((windowCapacity * thresholdPercent) / 100)
 
-	return &ConcurrentSketch{
+	return &TopKSketch{
 		sketch:    instance,
 		tickSize:  tickSize,
 		threshold: threshold,

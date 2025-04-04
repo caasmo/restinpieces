@@ -51,12 +51,11 @@ func NewBlockIp(cache cache.Cache[string, interface{}], logger *slog.Logger) *Bl
 	logger.Info("TopK sketch memory usage", "bytes", sketchInstance.SizeBytes())
 
 	// Create a new ConcurrentSketch
-	cs := topk.NewTopkSketch(sketchInstance, tickSize, logger)
+	cs := topk.NewTopkSketch(sketchInstance, tickSize)
 
 	return &BlockIp{
 		cache:  cache,
 		sketch: cs,
-		logger: logger,
 	}
 }
 
