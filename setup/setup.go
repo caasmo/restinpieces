@@ -16,7 +16,7 @@ import (
 )
 
 
-func SetupApp(cfg *config.Config) (*core.App, error) {
+func SetupApp(cfg *config.Config) (*core.App, *proxy.Proxy, error) {
 
 	// Create the App instance first (without the proxy)
 	app, err := core.NewApp(
