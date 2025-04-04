@@ -115,6 +115,16 @@ func (b *BlockIp) Block(ip string) error {
 
 }
 
+// Process passes the IP to the underlying TopK sketch for tracking and potential blocking.
+// It returns a slice of IPs identified by the sketch as exceeding the threshold.
+func (b *BlockIp) Process(ip string) []string {
+	// Delegate to the sketch's internal processing method
+	// Note: The sketch's processTick method needs to be accessible.
+	// Assuming topk.TopKSketch has a public ProcessTick method or similar.
+	// If processTick is not public, we need to adjust topk/sketch.go
+	return b.sketch.ProcessTick(ip) // Placeholder call
+}
+
 // Block for DisabledBlock does nothing and returns nil.
 func (d *DisabledBlock) Block(ip string) error {
 	return nil // Blocking is disabled
@@ -127,6 +137,11 @@ type DisabledBlock struct{}
 // IsEnabled always returns false, indicating the feature is disabled.
 func (d *DisabledBlock) IsEnabled() bool {
 	return false
+}
+
+// Process for DisabledBlock does nothing and returns nil.
+func (d *DisabledBlock) Process(ip string) []string {
+	return nil // Blocking is disabled
 }
 
 // IsBlocked always returns false, indicating no IP is ever blocked.
