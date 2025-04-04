@@ -77,6 +77,23 @@ func (a *App) Cache() cache.Cache[string, interface{}] {
 	return a.cache
 }
 
-func (a *App) Proxy() proxy.Proxy {
+// Config returns the application's config instance
+func (a *App) Config() *config.Config {
+	return a.config
+}
+
+// SetProxy sets the proxy instance on the App.
+// This is typically called after App initialization to resolve circular dependencies.
+func (a *App) SetProxy(p *proxy.Proxy) {
+	a.proxy = p
+}
+
+// Proxy returns the application's proxy instance
+// It might panic if SetProxy was not called after NewApp.
+func (a *App) Proxy() *proxy.Proxy {
+	if a.proxy == nil {
+		// This indicates a setup error - the proxy should have been set after NewApp.
+		panic("proxy accessed before it was set on the app")
+	}
 	return a.proxy
 }

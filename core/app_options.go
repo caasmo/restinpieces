@@ -5,6 +5,7 @@ import (
 
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/core/proxy"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/router"
 )
@@ -43,6 +44,13 @@ func WithConfig(cfg *config.Config) Option {
 func WithLogger(l *slog.Logger) Option {
 	return func(a *App) {
 		a.logger = l
+	}
+}
+
+// WithProxy sets the proxy implementation
+func WithProxy(p *proxy.Proxy) Option {
+	return func(a *App) {
+		a.proxy = p
 	}
 }
 

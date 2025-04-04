@@ -6,6 +6,7 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
+	"github.com/caasmo/restinpieces/core/proxy"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/queue/handlers"
@@ -17,7 +18,8 @@ import (
 
 func SetupApp(cfg *config.Config) (*core.App, error) {
 
-	return core.NewApp(
+	// Create the App instance first (without the proxy)
+	app, err := core.NewApp(
 		WithDBCrawshaw(cfg.DBFile),
 		WithRouterServeMux(),
 		WithCacheRistretto(),
@@ -25,6 +27,17 @@ func SetupApp(cfg *config.Config) (*core.App, error) {
 		//WithPhusLogger(nil), // Provide the logger using defaults
 		WithTextLogger(nil), // Provide the logger using defaults
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the Proxy instance, passing the app and config
+	px := proxy.NewProxy(app, cfg)
+
+	// Set the proxy on the app instance
+	app.SetProxy(px)
+
+	return app, nil
 }
 
 // to file setup_scheduler
