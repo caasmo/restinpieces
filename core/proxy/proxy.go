@@ -5,7 +5,12 @@ import (
 	"github.com/caasmo/restinpieces/core"
 )
 
+// represent the Proxy of an app handler
+// mostly global conunters, metrics, and most important blocking, filtering 
+// maybe can be part of app. app has a proxy, 
 type Proxy struct {
+	// TODO app http.Handler no Proxy needs all the services of app
+	// app is also handler, the serverHttp method is to call its router
 	app *core.App
 }
 
@@ -28,11 +33,5 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	px.app.Router().ServeHTTP(w, r)
-}
-
-// getDomain extracts the main domain from host
-func getDomain(host string) string {
-	parts := strings.Split(host, ":")
-	return parts[0] // Remove port if present
 }
 
