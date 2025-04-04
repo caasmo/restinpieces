@@ -55,6 +55,7 @@ func NewBlockIp(cache cache.Cache[string, interface{}], logger *slog.Logger) *Bl
 	return &BlockIp{
 		cache:  cache,
 		sketch: cs,
+		logger: logger,
 	}
 }
 

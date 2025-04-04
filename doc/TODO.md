@@ -1,6 +1,7 @@
 ### TODOs
 
 - reanem appServices?? 
+    - proxy, app clear wiring
 - is a framework, clear workflow 
 - good enough release
     - litestream or just cron each 5 minutes: see litestream 
@@ -15,14 +16,9 @@
 	- unit test
 	- workflow for recovery, 
 	- basic framework use
-
 - configuration
     sqlite based
-
-
 - workflows
-    
-    
 - basic metrics 
     - go ones
     - basic superuser endpoint
@@ -36,6 +32,7 @@
 		- servehttp executes Proxy that execute as next the Path router
 		- we have WithProxyEmpty, no proxy is one, it has features activated or not, WithProxy(pruxy)
 			
+- race detection
 - Proxy:
 	- has Features like Blocker but othre
 	- interface Feature, interteface Blocker, interface FeatureBlocker
