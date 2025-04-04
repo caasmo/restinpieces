@@ -117,12 +117,31 @@ func (b *BlockIp) Block(ip string) error {
 
 // Process passes the IP to the underlying TopK sketch for tracking and potential blocking.
 // It returns a slice of IPs identified by the sketch as exceeding the threshold.
+// TODO return
 func (b *BlockIp) Process(ip string) []string {
-	// Delegate to the sketch's internal processing method
-	// Note: The sketch's processTick method needs to be accessible.
-	// Assuming topk.TopKSketch has a public ProcessTick method or similar.
-	// If processTick is not public, we need to adjust topk/sketch.go
-	//return b.sketch.ProcessTick(ip) // Placeholder call
+	blockedIPs := b.sketch.ProcessTick(ip)
+
+	// Handle blocking outside the mutex
+	//
+	// Even if multiple goroutines call a.BlockIP for the same IP
+	// concurrently, Ristretto will handle it safely. Blocking an IP
+	// multiple times is harmless if the operation is idempotent (same key).
+	// Ristretto batches writes into a ring buffer, so frequent Set calls
+	// for the same key will be merged efficiently. The last write (in
+	// buffer order) will determine the final value.
+	// Ristretto uses a buffered write mechanism (a ring buffer) to batch
+	// Set/Del operations for performance.
+	if len(blockedIPs) > 0 {
+		b.logger.Info("IPs to be blocked", "ips", blockedIPs)
+		go func(ips []string) {
+			for _, ip := range ips {
+				if err := b.Block(ip); err != nil {
+					b.logger.Error("failed to block IP", "ip", ip, "error", err)
+				}
+			}
+		}(blockedIPs)
+	}
+
 	return nil
 }
 

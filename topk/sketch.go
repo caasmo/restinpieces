@@ -40,7 +40,7 @@ func NewTopkSketch(instance *sliding.Sketch, tickSize uint64) *TopKSketch {
 	}
 }
 
-func (cs *TopKSketch) processTick(ip string) []string {
+func (cs *TopKSketch) ProcessTick(ip string) []string {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
