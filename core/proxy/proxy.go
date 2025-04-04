@@ -76,8 +76,22 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		} else {
 			px.ipBlocker.Process(ip)
 		}
-	} 
+	}
 
+	// Check if Mimetype blocking is enabled
+	if px.mimetypeBlocker.IsEnabled() {
+		contentType := r.Header.Get("Content-Type")
+		// Pass the full Content-Type header value to IsBlocked for parsing
+		if px.mimetypeBlocker.IsBlocked(contentType) {
+			// Log the block action via the blocker's Block method
+			// (which currently just logs, but follows the pattern)
+			_ = px.mimetypeBlocker.Block(contentType) // Ignore error for logging
+
+			// Return 415 Unsupported Media Type
+			http.Error(w, "Unsupported Media Type", http.StatusUnsupportedMediaType)
+			return // Stop processing
+		}
+	}
 
 	px.app.Router().ServeHTTP(w, r)
 }

@@ -1,38 +1,72 @@
 package proxy
 
-import "github.com/caasmo/restinpieces/core"
+import (
+	"mime" // Import the mime package
+	"strings"
+
+	"github.com/caasmo/restinpieces/core"
+)
 
 // BlockMimetype handles blocking requests based on MIME types.
 // It uses a whitelist defined in the configuration.
 type BlockMimetype struct {
 	// Reference to the core application for accessing logger, config, etc.
-	app *core.App
-	// TODO: Add fields for storing the whitelist efficiently (e.g., a map[string]struct{})
+	app       *core.App
+	whitelist map[string]struct{} // Use a map for efficient lookup
 }
 
 // NewBlockMimetype creates a new instance of BlockMimetype.
 func NewBlockMimetype(app *core.App) *BlockMimetype {
-	// TODO: Initialize the internal whitelist map from app.Config().Proxy.MimetypesWhitelist
+	wl := make(map[string]struct{})
+	// Initialize the whitelist map from configuration
+	for _, mtype := range app.Config().Proxy.Mimetype.Whitelist {
+		// Store lowercase for case-insensitive matching
+		wl[strings.ToLower(mtype)] = struct{}{}
+	}
+	app.Logger().Info("Initialized Mimetype blocker", "whitelist_count", len(wl))
 	return &BlockMimetype{
-		app: app,
+		app:       app,
+		whitelist: wl,
 	}
 }
 
-// IsEnabled checks if the mimetype blocking feature is enabled.
-// Placeholder: Assumes enabled if this blocker is used. Config check needed.
+// IsEnabled checks if the mimetype blocking feature is enabled in the config.
 func (b *BlockMimetype) IsEnabled() bool {
-	// TODO: Check app.Config().Proxy.MimetypesWhitelist is not empty or a specific enabled flag?
-	return true // Placeholder
+	// Check the Enabled flag in the configuration
+	return b.app.Config().Proxy.Mimetype.Enabled
 }
 
-// IsBlocked checks if a given mimetype is blocked (i.e., not in the whitelist).
-// Placeholder: Always returns false.
-func (b *BlockMimetype) IsBlocked(mimetype string) bool {
-	// TODO: Implement check against the internal whitelist map
-	return false // Placeholder
+// IsBlocked checks if a given mimetype (from Content-Type header) is blocked (i.e., not in the whitelist).
+func (b *BlockMimetype) IsBlocked(contentTypeHeader string) bool {
+	if contentTypeHeader == "" {
+		// Decide policy for missing Content-Type. Usually allow unless specifically configured.
+		// For now, assume allowed if header is missing.
+		return false
+	}
+
+	// Parse the media type and parameters, handle potential errors
+	mediaType, _, err := mime.ParseMediaType(contentTypeHeader)
+	if err != nil {
+		b.app.Logger().Warn("Failed to parse Content-Type header", "header", contentTypeHeader, "error", err)
+		// Decide policy for unparseable Content-Type. Block for safety?
+		return true // Block if unparseable
+	}
+
+	// Check if the parsed media type (lowercase) exists in the whitelist map
+	_, found := b.whitelist[strings.ToLower(mediaType)]
+	return !found // Blocked if NOT found in whitelist
 }
 
-// Block is a placeholder for the Blocker interface. Mimetype blocking is typically about
+// Block logs that a block attempt was triggered for a mimetype.
+// The actual HTTP 415 response is sent by the Proxy's ServeHTTP.
+func (b *BlockMimetype) Block(mimetype string) error {
+	// Log the effective block action (which is returning 415 in ServeHTTP)
+	b.app.Logger().Warn("Blocked request due to unsupported Content-Type", "mimetype", mimetype)
+	// No actual state change needed here like in IP blocking
+	return nil
+}
+
+// Process is a placeholder for the Blocker interface. Mimetype blocking doesn't
 // allowing/denying based on type, not actively blocking an entity like an IP.
 // This might log a warning or potentially add the mimetype to a temporary blocklist if needed.
 func (b *BlockMimetype) Block(mimetype string) error {

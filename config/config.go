@@ -219,8 +219,8 @@ type BlockIp struct {
 
 // Mimetype holds configuration specific to MIME type blocking.
 type Mimetype struct {
+	Enabled   bool     // Whether MIME type blocking is active
 	Whitelist []string // List of allowed Content-Type values for uploads/requests
-	// Add other mimetype-related settings here if needed (e.g., Enabled flag)
 }
 
 // Proxy holds configuration for the proxy layer.
@@ -298,6 +298,7 @@ func Load(dbfile string) (*Config, error) {
 				Enabled: true, // Default IP blocking to enabled (adjust as needed)
 			},
 			Mimetype: Mimetype{
+				Enabled: false, // Default Mimetype blocking to disabled
 				// Default whitelist for common web content types
 				Whitelist: []string{
 					"application/json",
