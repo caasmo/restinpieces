@@ -1,5 +1,14 @@
 package proxy
 
+import (
+	"github.com/caasmo/restinpieces/config"
+)
+
+// BlockIp implements the FeatureBlocker interface using configuration settings.
+type BlockIp struct {
+	config *config.Config
+}
+
 // DisabledBlock implements the FeatureBlocker interface but always returns false,
 // effectively disabling the blocking feature.
 type DisabledBlock struct{}
