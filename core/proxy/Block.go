@@ -122,7 +122,8 @@ func (b *BlockIp) Process(ip string) []string {
 	// Note: The sketch's processTick method needs to be accessible.
 	// Assuming topk.TopKSketch has a public ProcessTick method or similar.
 	// If processTick is not public, we need to adjust topk/sketch.go
-	return b.sketch.ProcessTick(ip) // Placeholder call
+	//return b.sketch.ProcessTick(ip) // Placeholder call
+	return nil
 }
 
 // Block for DisabledBlock does nothing and returns nil.
