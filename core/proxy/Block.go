@@ -1,57 +1,33 @@
 package proxy
 
 import (
-	"fmt"
-	"time"
-
-	"github.com/caasmo/restinpieces/cache"
+	"github.com/caasmo/restinpieces/config"
 )
 
-const (
-	// Duration for which an IP remains blocked (e.g., 1 hour)
-	// TODO: Make this configurable via config.Config
-	blockDuration     = 1 * time.Hour
-	bucketDurationSec = int64(blockDuration / time.Second)
-)
-
-// BlockIp implements the FeatureBlocker interface using a cache for storage.
+// BlockIp implements the FeatureBlocker interface using configuration settings.
 type BlockIp struct {
-	cache cache.Cache[string, interface{}]
+	config *config.Config
 }
 
-// NewBlockIp creates a new BlockIp instance with the given cache.
-func NewBlockIp(cache cache.Cache[string, interface{}]) *BlockIp {
+// NewBlockIp creates a new BlockIp instance with the given configuration.
+func NewBlockIp(cfg *config.Config) *BlockIp {
 	return &BlockIp{
-		cache: cache,
+		config: cfg,
 	}
 }
 
-// IsEnabled indicates that if this blocker is in use, the feature is considered enabled.
-// The decision to use this blocker vs DisabledBlock is made during Proxy initialization based on config.
+// IsEnabled checks if the IP blocking feature is enabled based on configuration.
+// Placeholder implementation: always returns true.
 func (b *BlockIp) IsEnabled() bool {
+	// TODO: Implement actual logic based on b.config
 	return true
 }
 
-// IsBlocked checks if a given IP address is currently blocked by looking in the cache.
+// IsBlocked checks if a given IP address is currently blocked.
+// Placeholder implementation: always returns false.
 func (b *BlockIp) IsBlocked(ip string) bool {
-	currentBucket := getTimeBucket(time.Now())
-	key := formatBlockKey(ip, currentBucket)
-	_, found := b.cache.Get(key)
-	return found
-}
-
-// TODO: Add a Block(ip string) method here?
-// func (b *BlockIp) Block(ip string) error { ... }
-// This would require access to logger potentially.
-
-// getTimeBucket calculates the time bucket based on the configured duration.
-func getTimeBucket(t time.Time) int64 {
-	return t.Unix() / bucketDurationSec
-}
-
-// formatBlockKey creates a unique cache key for an IP address and time bucket.
-func formatBlockKey(ip string, bucket int64) string {
-	return fmt.Sprintf("block|%s|%d", ip, bucket)
+	// TODO: Implement actual blocking check logic
+	return false
 }
 
 // DisabledBlock implements the FeatureBlocker interface but always returns false,
