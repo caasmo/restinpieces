@@ -13,8 +13,9 @@ import (
 type Proxy struct {
 	// TODO app http.Handler no Proxy needs all the services of app
 	// app is also handler, the serverHttp method is to call its router
-	app       *core.App
-	ipBlocker FeatureBlocker
+	app             *core.App
+	ipBlocker       FeatureBlocker
+	mimetypeBlocker *BlockMimetype // Add Mimetype blocker
 }
 
 // Feature defines an interface for features that can be enabled or disabled.
@@ -41,9 +42,10 @@ func NewProxy(app *core.App) *Proxy {
 	px := &Proxy{
 		app: app,
 		// config is no longer stored directly on Proxy
+		mimetypeBlocker: NewBlockMimetype(app), // Initialize Mimetype blocker
 	}
 
-	// Call the method to set up the blocker based on config
+	// Call the method to set up the ipBlocker based on config
 	px.UpdateByConfig()
 
 	return px
