@@ -35,6 +35,13 @@ type BlockIp struct {
 
 // NewBlockIp creates a new BlockIp instance with the given cache.
 func NewBlockIp(cache cache.Cache[string, interface{}]) *BlockIp {
+
+	sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
+	a.Logger().Info("sketch memory usage", "bytes", sketch.SizeBytes())
+
+	// Create a new ConcurrentSketch with default tick size
+	cs := NewConcurrentSketch(sketch, 100) // Default tickSize
+
 	return &BlockIp{
 		cache: cache,
 	}
