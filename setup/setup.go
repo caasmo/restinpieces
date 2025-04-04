@@ -34,10 +34,8 @@ func SetupApp(cfg *config.Config) (*core.App, error) {
 	// Create the Proxy instance, passing the app and config
 	px := proxy.NewProxy(app, cfg)
 
-	// Set the proxy on the app instance
-	//app.SetProxy(px)
-
-	return app, nil
+	// Return the app, the proxy, and no error
+	return app, px, nil
 }
 
 // to file setup_scheduler
