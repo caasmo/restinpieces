@@ -3,7 +3,7 @@ package proxy
 import (
 	"net/http"
 
-	"github.com/caasmo/restinpieces/config"
+	//"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 )
 

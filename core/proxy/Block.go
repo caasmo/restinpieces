@@ -61,7 +61,7 @@ func (b *BlockIp) Block(ip string) error {
 	now := time.Now()
 	currentBucket := getTimeBucket(now)
 	nextBucket := currentBucket + 1
-	until := now.Add(blockingDuration)
+	//until := now.Add(blockingDuration)
 
 	// Block in current bucket with full blocking duration
 	currentKey := formatBlockKey(ip, currentBucket)
