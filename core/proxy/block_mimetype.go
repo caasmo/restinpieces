@@ -40,16 +40,11 @@ func (b *BlockMimetype) IsEnabled() bool {
 func (b *BlockMimetype) IsBlocked(contentTypeHeader string) bool {
 	if contentTypeHeader == "" {
 		// Block requests with empty Content-Type header
-		b.app.Logger().Debug("Blocking request due to empty Content-Type header")
 		return true
 	}
 
 	// Perform direct, case-insensitive lookup against the whitelist
 	_, found := b.whitelist[strings.ToLower(contentTypeHeader)]
-
-	if !found {
-		b.app.Logger().Debug("Blocking request due to non-whitelisted Content-Type", "content_type", contentTypeHeader)
-	}
 
 	return !found // Blocked if NOT found in whitelist
 }
