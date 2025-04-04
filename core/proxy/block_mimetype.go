@@ -67,14 +67,6 @@ func (b *BlockMimetype) Block(mimetype string) error {
 }
 
 // Process is a placeholder for the Blocker interface. Mimetype blocking doesn't
-// allowing/denying based on type, not actively blocking an entity like an IP.
-// This might log a warning or potentially add the mimetype to a temporary blocklist if needed.
-func (b *BlockMimetype) Block(mimetype string) error {
-	b.app.Logger().Warn("Block called on BlockMimetype (placeholder)", "mimetype", mimetype)
-	return nil // Placeholder
-}
-
-// Process is a placeholder for the Blocker interface. Mimetype blocking doesn't
 // typically involve processing like a sketch.
 func (b *BlockMimetype) Process(mimetype string) []string {
 	// Nothing to process like an IP sketch
