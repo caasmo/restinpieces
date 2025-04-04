@@ -14,7 +14,6 @@ type Proxy struct {
 	// TODO app http.Handler no Proxy needs all the services of app
 	// app is also handler, the serverHttp method is to call its router
 	app       *core.App
-	config    *config.Config
 	ipBlocker FeatureBlocker
 }
 
@@ -34,16 +33,17 @@ type FeatureBlocker interface {
 	Blocker
 }
 
-// NewProxy creates a new Proxy instance with the given app and config, and configures its features.
-func NewProxy(app *core.App, cfg *config.Config) *Proxy {
+// NewProxy creates a new Proxy instance with the given app and configures its features.
+func NewProxy(app *core.App) *Proxy {
 	px := &Proxy{
-		app:    app,
-		config: cfg,
+		app: app,
+		// config is no longer stored directly on Proxy
 	}
 
-	// Initialize the IP Blocker based on configuration
-	if cfg.Proxy.BlockIp.Enabled {
-		px.ipBlocker = NewBlockIp(cfg) // Pass the config
+	// Initialize the IP Blocker based on application configuration
+	if app.Config().Proxy.BlockIp.Enabled {
+		// Pass the application's cache to the BlockIp implementation
+		px.ipBlocker = NewBlockIp(app.Cache())
 	} else {
 		px.ipBlocker = &DisabledBlock{}
 	}

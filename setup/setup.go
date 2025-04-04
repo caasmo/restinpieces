@@ -31,8 +31,9 @@ func SetupApp(cfg *config.Config) (*core.App, *proxy.Proxy, error) {
 		return nil, nil, err
 	}
 
-	// Create the Proxy instance, passing the app and config
-	px := proxy.NewProxy(app, cfg)
+	// Create the Proxy instance, passing the app
+	// Proxy reads config from the app instance internally now
+	px := proxy.NewProxy(app)
 
 	// Return the app, the proxy, and no error
 	return app, px, nil
