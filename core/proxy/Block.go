@@ -1,7 +1,11 @@
 package proxy
 
 import (
-	"github.com/caasmo/restinpieces/config"
+	"fmt"
+	"time"
+
+	"github.com/caasmo/restinpieces/cache"
+	// "github.com/caasmo/restinpieces/config" // No longer needed here
 )
 
 const (
@@ -24,15 +28,15 @@ func formatBlockKey(ip string, bucket int64) string {
 	return fmt.Sprintf("%s|%d", ip, bucket)
 }
 
-// BlockIp implements the FeatureBlocker interface using configuration settings.
+// BlockIp implements the FeatureBlocker interface using a cache for storage.
 type BlockIp struct {
-	config *config.Config
+	cache cache.Cache[string, interface{}]
 }
 
-// NewBlockIp creates a new BlockIp instance with the given configuration.
-func NewBlockIp(cfg *config.Config) *BlockIp {
+// NewBlockIp creates a new BlockIp instance with the given cache.
+func NewBlockIp(cache cache.Cache[string, interface{}]) *BlockIp {
 	return &BlockIp{
-		config: cfg,
+		cache: cache,
 	}
 }
 
@@ -43,17 +47,12 @@ func (b *BlockIp) IsEnabled() bool {
 	return true
 }
 
-// IsBlocked checks if a given IP address is currently blocked.
-// Placeholder implementation: always returns false.
+// IsBlocked checks if a given IP address is currently blocked by looking in the cache.
 func (b *BlockIp) IsBlocked(ip string) bool {
 	currentBucket := getTimeBucket(time.Now())
-
-	// Check current bucket
-	if _, found := px.app.Cache().Get(formatBlockKey(ip, currentBucket)); found {
-		return true
-	}
-
-	return false
+	key := formatBlockKey(ip, currentBucket)
+	_, found := b.cache.Get(key)
+	return found
 }
 
 // Block adds the given IP to the block list.
@@ -66,14 +65,16 @@ func (b *BlockIp) Block(ip string) error {
 
 	// Block in current bucket with full blocking duration
 	currentKey := formatBlockKey(ip, currentBucket)
-	if !px.app.Cache().SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration) {
-		px.app.Logger().Error("failed to block IP in current bucket", "ip", ip, "bucket", currentBucket)
+	// Use the internal cache instance (b.cache)
+	// Removed logging as BlockIp doesn't have a logger instance
+	if !b.cache.SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration) {
+		// px.app.Logger().Error("failed to block IP in current bucket", "ip", ip, "bucket", currentBucket)
 		return fmt.Errorf("failed to block IP %s in current bucket %d", ip, currentBucket)
 	}
-	px.app.Logger().Info("IP blocked in current bucket",
-		"ip", ip,
-		"bucket", currentBucket,
-		"until", until.Format(time.RFC3339))
+	// px.app.Logger().Info("IP blocked in current bucket",
+	// 	"ip", ip,
+	// 	"bucket", currentBucket,
+	// 	"until", until.Format(time.RFC3339))
 
 	// Calculate time until next bucket starts
 	nowUnix := now.Unix()
@@ -82,14 +83,16 @@ func (b *BlockIp) Block(ip string) error {
 
 	if ttlNext > 0 {
 		nextKey := formatBlockKey(ip, nextBucket)
-		if !px.app.Cache().SetWithTTL(nextKey, true, defaultBlockCost, ttlNext) {
-			px.app.Logger().Error("failed to block IP in next bucket", "ip", ip, "bucket", nextBucket)
+		// Use the internal cache instance (b.cache)
+		// Removed logging as BlockIp doesn't have a logger instance
+		if !b.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext) {
+			// px.app.Logger().Error("failed to block IP in next bucket", "ip", ip, "bucket", nextBucket)
 			return fmt.Errorf("failed to block IP %s in next bucket %d", ip, nextBucket)
 		}
-		px.app.Logger().Info("IP blocked in next bucket",
-			"ip", ip,
-			"bucket", nextBucket,
-			"until", until.Format(time.RFC3339))
+		// px.app.Logger().Info("IP blocked in next bucket",
+		// 	"ip", ip,
+		// 	"bucket", nextBucket,
+		// 	"until", until.Format(time.RFC3339))
 	}
 
 	return nil
