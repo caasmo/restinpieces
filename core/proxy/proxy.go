@@ -14,6 +14,22 @@ type Proxy struct {
 	app *core.App
 }
 
+// Feature defines an interface for features that can be enabled or disabled.
+type Feature interface {
+	IsEnabled() bool
+}
+
+// Blocker defines an interface for checking if an IP address is blocked.
+type Blocker interface {
+	IsBlocked(ip string) bool
+}
+
+// FeatureBlocker combines the Feature and Blocker interfaces.
+type FeatureBlocker interface {
+	Feature
+	Blocker
+}
+
 // NewProxy creates a new Proxy instance with the given app
 func NewProxy(app *core.App) *Proxy {
 	return &Proxy{
