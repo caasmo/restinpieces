@@ -211,16 +211,22 @@ type Config struct {
 	Proxy           Proxy
 }
 
-// BlockIpConfig holds configuration specific to IP blocking.
+// BlockIp holds configuration specific to IP blocking.
 type BlockIp struct {
 	Enabled bool // Whether IP blocking is active
 	// Add other blocking-related settings here (e.g., duration, thresholds)
 }
 
+// Mimetype holds configuration specific to MIME type blocking.
+type Mimetype struct {
+	Whitelist []string // List of allowed Content-Type values for uploads/requests
+	// Add other mimetype-related settings here if needed (e.g., Enabled flag)
+}
+
 // Proxy holds configuration for the proxy layer.
 type Proxy struct {
-	BlockIp            BlockIp
-	MimetypesWhitelist []string // List of allowed Content-Type values for uploads/requests
+	BlockIp  BlockIp
+	Mimetype Mimetype // Changed from MimetypesWhitelist
 }
 
 const (
@@ -291,16 +297,18 @@ func Load(dbfile string) (*Config, error) {
 			BlockIp: BlockIp{
 				Enabled: true, // Default IP blocking to enabled (adjust as needed)
 			},
-			// Default whitelist for common web content types
-			MimetypesWhitelist: []string{
-				"application/json",
-				"text/html",
-				"text/javascript",
-				"application/javascript", // Often used alongside text/javascript
-				"text/css",
-				// Add other essential types like form data if needed:
-				// "application/x-www-form-urlencoded",
-				// "multipart/form-data",
+			Mimetype: Mimetype{
+				// Default whitelist for common web content types
+				Whitelist: []string{
+					"application/json",
+					"text/html",
+					"text/javascript",
+					"application/javascript", // Often used alongside text/javascript
+					"text/css",
+					// Add other essential types like form data if needed:
+					// "application/x-www-form-urlencoded",
+					// "multipart/form-data",
+				},
 			},
 		},
 	}
