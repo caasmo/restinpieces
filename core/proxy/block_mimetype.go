@@ -57,24 +57,12 @@ func (b *BlockMimetype) IsBlocked(contentTypeHeader string) bool {
 	return !found // Blocked if NOT found in whitelist
 }
 
-// Block logs that a block attempt was triggered for a mimetype.
-// The actual HTTP 415 response is sent by the Proxy's ServeHTTP.
 func (b *BlockMimetype) Block(mimetype string) error {
-	// Log the effective block action (which is returning 415 in ServeHTTP)
-	b.app.Logger().Warn("Blocked request due to unsupported Content-Type", "mimetype", mimetype)
-	// No actual state change needed here like in IP blocking
 	return nil
 }
 
-// Process is a placeholder for the Blocker interface. Mimetype blocking doesn't
-// typically involve processing like a sketch. Returns nil.
 func (b *BlockMimetype) Process(mimetype string) error {
 	// Nothing to process like an IP sketch
 	return nil
 }
 
-// TODO: Add methods like IsAllowed(mimetype string) bool
-// IsAllowed would be the inverse of IsBlocked.
-// func (b *BlockMimetype) IsAllowed(mimetype string) bool {
-// 	 return !b.IsBlocked(mimetype)
-// }
