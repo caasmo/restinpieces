@@ -93,7 +93,7 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			_ = px.mimetypeBlocker.Block(contentType) // Ignore error for logging
 
 			// Return 415 Unsupported Media Type
-			http.Error(w, "Unsupported Media Type", http.StatusUnsupportedMediaType)
+			w.WriteHeader(http.StatusUnsupportedMediaType)
 			return // Stop processing
 		}
 	}
