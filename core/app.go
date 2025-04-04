@@ -16,6 +16,8 @@ import (
 // For simplicity, all handlers and middleware should have App as receiver.
 // That why App needs to be in the same package "main" as the handlers.
 
+// app is a service with heavy objects for the handlers.
+// and also a out the box coded endpoints handlers. (methods)
 type App struct {
 	db     db.Db
 	router router.Router

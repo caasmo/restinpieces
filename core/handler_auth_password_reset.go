@@ -154,6 +154,7 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Validate all required claims exist and have correct values
+	// TODO Validate methods more to request Jwt. no crypto
 	if err := crypto.ValidatePasswordResetClaims(claims); err != nil {
 		writeJsonError(w, errorJwtInvalidVerificationToken)
 		return

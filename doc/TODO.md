@@ -4,17 +4,75 @@
 - is a framework, clear workflow 
 - good enough release
     - litestream or just cron each 5 minutes: see litestream 
-    - logger 
     - configuration
     - basic metrics 
 		https://github.com/prometheus/client_golang
     - superuser workflows
     - mantenance page 
+        0 https://developers.cloudflare.com/rules/snippets/examples/maintenance/
 	- tls 
 	- all shell test 
 	- unit test
 	- workflow for recovery, 
-- Bug: users with aouth2 and password. Refresh
+	- basic framework use
+
+- configuration
+    sqlite based
+
+
+- workflows
+    
+    
+- basic metrics 
+    - go ones
+    - basic superuser endpoint
+        - or not jsut notification
+    - some made in Proxy, conunters etc
+    - no prometheus page
+        - prometheus online services? YES Managed Prometheus
+- APP
+	- app is handler?
+		- is given to the server
+		- servehttp executes Proxy that execute as next the Path router
+		- we have WithProxyEmpty, no proxy is one, it has features activated or not, WithProxy(pruxy)
+			
+- Proxy:
+	- has Features like Blocker but othre
+	- interface Feature, interteface Blocker, interface FeatureBlocker
+	- has harcoded features interface values BlockIp, BlockMimetype
+	- Feature interface just IsActivated bool method
+	- when config change Proxy.ApplyConfig()
+	- AppliConfig used also in initial config contructor
+	- Applyconfig upon change
+		- read each feature config ex BlockIP
+		- if disabled create NoOpFeature, automatically the pointer to old Loaded with sketch Feature is garbaga collected candidate
+	- in serverHttp method it checks if Isactivated is true and call it Blocking methods (other interface maybe)
+	- ? noOpFeature has to satisfy blocker interface
+		- put the Feature fucntionality inside the Feature struct
+		- or we do not need Feature interface at all, just nil pointers.
+			- setup method check if BlockerIP struct is not nil
+	- has WithBlocIp, WithBlockMimetype? WithFeatureIpBlock
+	- can call app methods
+
+- scheduler How to simply add recurrent jobs
+	- has tick
+		-  config based 
+            - not only check entries, but check config? Nee 
+		- scheduler writes new after completion of last
+            - on startup scheduler creates recurrent jobs entries based start time.
+		    - has start and duration and recurrent
+			    - recurrent if recurernt scheduler markSuccesful and creates next
+	- notification executor handler 
+- mantenance
+    - if path api.
+    - if not harcoded page
+    - mantenance page service redirect
+- superuser
+	- basic metrics
+	- hourly X ok telegram message
+	- more detailed 
+- Move validate claims to request jwt 
+	- not really crypto
 - order in init/main. modular. Brainstrom 
 - deactivate security if under proxy/filter like nginx
 - password reset if no password ie oauth2 user => no only register with email
@@ -139,6 +197,7 @@
 
 ### done
 
+- Bug: users with aouth2 and password. Refresh
 - request password change html requires email form
 - user request pasword and email change at the same time. possible collions?
 	- both processes will change auth jwt signing key
