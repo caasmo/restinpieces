@@ -9,6 +9,13 @@ type BlockIp struct {
 	config *config.Config
 }
 
+// NewBlockIp creates a new BlockIp instance with the given configuration.
+func NewBlockIp(cfg *config.Config) *BlockIp {
+	return &BlockIp{
+		config: cfg,
+	}
+}
+
 // DisabledBlock implements the FeatureBlocker interface but always returns false,
 // effectively disabling the blocking feature.
 type DisabledBlock struct{}
