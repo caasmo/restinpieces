@@ -62,12 +62,9 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// Check if the IP is already blocked (cache check)
 		if px.ipBlocker.IsBlocked(ip) {
-			px.app.Logger().Warn("blocked request from already blocked IP", "ip", ip)
-			// TODO
-			http.Error(w, "Forbidden", http.StatusForbidden)
+			w.WriteHeader(http.StatusTooManyRequests)
 			return
 		} else {
-			// TODO return
 			px.ipBlocker.Process(ip)
 		}
 	} 
