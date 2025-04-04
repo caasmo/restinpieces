@@ -34,6 +34,7 @@
 		- we have WithProxyEmpty, no proxy is one, it has features activated or not, WithProxy(pruxy)
 			
 - race detection
+- No hot reloading.
 - Proxy:
 	- has Features like Blocker but othre
 	- interface Feature, interteface Blocker, interface FeatureBlocker
