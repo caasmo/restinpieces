@@ -15,7 +15,7 @@ type Proxy struct {
 	// app is also handler, the serverHttp method is to call its router
 	app             *core.App
 	ipBlocker       FeatureBlocker
-	mimetypeBlocker *BlockMimetype // Add Mimetype blocker
+	mimetypeBlocker FeatureBlocker // Change type to interface
 }
 
 // Feature defines an interface for features that can be enabled or disabled.
