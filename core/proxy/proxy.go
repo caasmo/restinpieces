@@ -2,6 +2,8 @@ package proxy
 
 import (
 	"net/http"
+
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 )
 
@@ -12,6 +14,7 @@ type Proxy struct {
 	// TODO app http.Handler no Proxy needs all the services of app
 	// app is also handler, the serverHttp method is to call its router
 	app       *core.App
+	config    *config.Config
 	ipBlocker FeatureBlocker
 }
 
@@ -31,17 +34,16 @@ type FeatureBlocker interface {
 	Blocker
 }
 
-// NewProxy creates a new Proxy instance with the given app and configures its features.
-func NewProxy(app *core.App) *Proxy {
+// NewProxy creates a new Proxy instance with the given app and config, and configures its features.
+func NewProxy(app *core.App, cfg *config.Config) *Proxy {
 	px := &Proxy{
-		app: app,
+		app:    app,
+		config: cfg,
 	}
 
 	// Initialize the IP Blocker based on configuration
-	// TODO: Need access to app.config - assuming direct access for now.
-	// If app.Config() getter exists, use that instead.
-	if app.Config().Proxy.BlockIp.Enabled {
-		px.ipBlocker = NewBlockIp(app.Config()) // Pass the full config for potential future use
+	if cfg.Proxy.BlockIp.Enabled {
+		px.ipBlocker = NewBlockIp(cfg) // Pass the config
 	} else {
 		px.ipBlocker = &DisabledBlock{}
 	}
