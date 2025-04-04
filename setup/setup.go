@@ -28,7 +28,7 @@ func SetupApp(cfg *config.Config) (*core.App, *proxy.Proxy, error) {
 		WithTextLogger(nil), // Provide the logger using defaults
 	)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Create the Proxy instance, passing the app and config

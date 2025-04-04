@@ -45,7 +45,7 @@ func main() {
 	}
 
 	// DOcumetn App is services and standard enpoints
-	app, err := setup.SetupApp(cfg)
+	app, proxy, err := setup.SetupApp(cfg)
 	defer app.Close()
 	if err != nil {
 		//app.Logger.Error("failed to initialize app", "error", err)
@@ -70,6 +70,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	srv := server.NewServer(cfg.Server, app.Proxy(), scheduler, app.Logger())
+	srv := server.NewServer(cfg.Server, proxy, scheduler, app.Logger())
 	srv.Run()
 }

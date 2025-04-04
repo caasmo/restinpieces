@@ -64,44 +64,9 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
-		// Optional: Log allowed IPs if needed, but can be noisy
-		// px.app.Logger().Debug("allowing request from IP", "ip", ip)
 	}
 
-	// If blocking is disabled or the IP is not blocked, proceed to the app router
-	// px.app.Logger().Warn("in Proxy", "ip", ip) // Removed potentially noisy log
-
-	// // Example of how blocking might be triggered (moved from here)
-	// // Block IP if it's not already blocked
-	// if !px.IsBlocked(ip) {
-	// 	if err := px.BlockIP(ip); err != nil {
-	// 		px.app.Logger().Error("failed to block IP", "ip", ip, "err", err)
-	// 	}
-	// }
 
 	px.app.Router().ServeHTTP(w, r)
 }
-
-// IsBlocked checks if an IP is blocked using the configured ipBlocker.
-//func (px *Proxy) IsBlocked(ip string) bool {
-//	return px.ipBlocker.IsBlocked(ip)
-//}
-
-// TODO: Decide if BlockIP should be part of the Proxy or the Blocker interface itself.
-// If part of the Blocker, the implementation in BlockIp struct would need access
-// to the cache, logger etc., likely via the App instance.
-// For now, keeping the original methods_block.go logic accessible via Proxy.
-
-// BlockIP attempts to block the given IP address.
-// This might be called from specific handlers upon detecting abuse.
-//func (px *Proxy) BlockIP(ip string) error {
-//	// Check if blocking is enabled at all
-//	if !px.ipBlocker.IsEnabled() {
-//		return nil // Blocking is disabled, do nothing
-//	}
-//	// Delegate to the core app's blocking logic (which uses the cache)
-//	// This assumes the core.App retains the BlockIP method.
-//	// If BlockIP logic moves entirely into the BlockIp struct, this needs adjustment.
-//	return px.app.BlockIP(ip)
-//}
 
