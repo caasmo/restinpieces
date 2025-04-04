@@ -52,17 +52,24 @@ func NewProxy(app *core.App, cfg *config.Config) *Proxy {
 }
 
 func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Get client IP from request using app's method
-	ip := px.app.GetClientIP(r)
+	// Check if IP blocking is enabled first
+	if px.ipBlocker.IsEnabled() {
+		// Get client IP from request using app's method
+		ip := px.app.GetClientIP(r)
 
-	// Check if the IP is blocked using the configured blocker
-	if px.ipBlocker.IsBlocked(ip) {
-		// TODO: Implement actual blocking response (e.g., http.StatusForbidden)
-		px.app.Logger().Warn("blocked request from IP", "ip", ip)
-		http.Error(w, "Forbidden", http.StatusForbidden)
-		return
+		// Check if the IP is blocked using the configured blocker
+		if px.ipBlocker.IsBlocked(ip) {
+			// TODO: Implement actual blocking response (e.g., http.StatusForbidden)
+			px.app.Logger().Warn("blocked request from IP", "ip", ip)
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		// Optional: Log allowed IPs if needed, but can be noisy
+		// px.app.Logger().Debug("allowing request from IP", "ip", ip)
 	}
-	px.app.Logger().Warn("in Proxy", "ip", ip)
+
+	// If blocking is disabled or the IP is not blocked, proceed to the app router
+	// px.app.Logger().Warn("in Proxy", "ip", ip) // Removed potentially noisy log
 
 	// // Example of how blocking might be triggered (moved from here)
 	// // Block IP if it's not already blocked
