@@ -36,24 +36,21 @@ func (b *BlockMimetype) IsEnabled() bool {
 	return b.app.Config().Proxy.Mimetype.Enabled
 }
 
-// IsBlocked checks if a given mimetype (from Content-Type header) is blocked (i.e., not in the whitelist).
+// IsBlocked checks if a given Content-Type header value is blocked (i.e., empty or not in the whitelist).
 func (b *BlockMimetype) IsBlocked(contentTypeHeader string) bool {
 	if contentTypeHeader == "" {
-		// Decide policy for missing Content-Type. Usually allow unless specifically configured.
-		// For now, assume allowed if header is missing.
-		return false
+		// Block requests with empty Content-Type header
+		b.app.Logger().Debug("Blocking request due to empty Content-Type header")
+		return true
 	}
 
-	// Parse the media type and parameters, handle potential errors
-	mediaType, _, err := mime.ParseMediaType(contentTypeHeader)
-	if err != nil {
-		b.app.Logger().Warn("Failed to parse Content-Type header", "header", contentTypeHeader, "error", err)
-		// Decide policy for unparseable Content-Type. Block for safety?
-		return true // Block if unparseable
+	// Perform direct, case-insensitive lookup against the whitelist
+	_, found := b.whitelist[strings.ToLower(contentTypeHeader)]
+
+	if !found {
+		b.app.Logger().Debug("Blocking request due to non-whitelisted Content-Type", "content_type", contentTypeHeader)
 	}
 
-	// Check if the parsed media type (lowercase) exists in the whitelist map
-	_, found := b.whitelist[strings.ToLower(mediaType)]
 	return !found // Blocked if NOT found in whitelist
 }
 
