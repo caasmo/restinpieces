@@ -16,6 +16,20 @@ func NewBlockIp(cfg *config.Config) *BlockIp {
 	}
 }
 
+// IsEnabled checks if the IP blocking feature is enabled based on configuration.
+// Placeholder implementation: always returns true.
+func (b *BlockIp) IsEnabled() bool {
+	// TODO: Implement actual logic based on b.config
+	return true
+}
+
+// IsBlocked checks if a given IP address is currently blocked.
+// Placeholder implementation: always returns false.
+func (b *BlockIp) IsBlocked(ip string) bool {
+	// TODO: Implement actual blocking check logic
+	return false
+}
+
 // DisabledBlock implements the FeatureBlocker interface but always returns false,
 // effectively disabling the blocking feature.
 type DisabledBlock struct{}
