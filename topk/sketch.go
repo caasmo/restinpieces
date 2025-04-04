@@ -17,14 +17,20 @@ type TopKSketch struct {
 	tickReq   uint64 // Counter for requests processed since last tick
 	tickCount uint64 // Counter for total ticks processed
 	threshold int    // Precomputed threshold value
+	logger    *slog.Logger
 }
 
 // NewConcurrentSketch creates a new thread-safe sketch wrapper.
 // tickSize: How many requests trigger a sketch tick and top-k check.
+// logger: Logger for logging events like blocking IPs.
 // TODO reove reference to Ips
-func NewTopkSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentSketch {
+func NewTopkSketch(instance *sliding.Sketch, tickSize uint64, logger *slog.Logger) *ConcurrentSketch {
 	if instance == nil {
 		panic("sketch instance cannot be nil for ConcurrentSketch")
+	}
+	if logger == nil {
+		// Fallback to default logger if none provided, though requiring it is better
+		logger = slog.Default()
 	}
 	if tickSize == 0 {
 		tickSize = 1000 // Default tick size if not specified
@@ -37,6 +43,7 @@ func NewTopkSketch(instance *sliding.Sketch, tickSize uint64) *ConcurrentSketch 
 		sketch:    instance,
 		tickSize:  tickSize,
 		threshold: threshold,
+		logger:    logger,
 	}
 }
 
@@ -61,6 +68,9 @@ func (cs *TopKSketch) processTick(ip string) []string {
 			} else {
 				break // Early exit due to sorted list
 			}
+		}
+		if len(ipsToBlock) > 0 {
+			cs.logger.Info("TopK sketch identified IPs exceeding threshold", "count", len(ipsToBlock), "threshold", cs.threshold, "ips", ipsToBlock)
 		}
 		return ipsToBlock // Return IPs to block
 	}

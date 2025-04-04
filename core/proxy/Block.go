@@ -2,9 +2,12 @@ package proxy
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/caasmo/restinpieces/cache"
+	"github.com/caasmo/restinpieces/topk"
+	"github.com/keilerkonzept/topk/sliding"
 	// "github.com/caasmo/restinpieces/config" // No longer needed here
 )
 
@@ -28,22 +31,32 @@ func formatBlockKey(ip string, bucket int64) string {
 	return fmt.Sprintf("%s|%d", ip, bucket)
 }
 
-// BlockIp implements the FeatureBlocker interface using a cache for storage.
+// BlockIp implements the FeatureBlocker interface using a cache for storage and a TopK sketch for detection.
 type BlockIp struct {
-	cache cache.Cache[string, interface{}]
+	cache  cache.Cache[string, interface{}]
+	sketch *topk.ConcurrentSketch
+	logger *slog.Logger
 }
 
-// NewBlockIp creates a new BlockIp instance with the given cache.
-func NewBlockIp(cache cache.Cache[string, interface{}]) *BlockIp {
+// NewBlockIp creates a new BlockIp instance with the given cache and logger.
+func NewBlockIp(cache cache.Cache[string, interface{}], logger *slog.Logger) *BlockIp {
+	// TODO: Make sketch parameters configurable (window, segments, width, depth, tickSize)
+	window := 3
+	segments := 10
+	width := 1024
+	depth := 3
+	tickSize := uint64(100) // Process sketch every 100 requests
 
-	sketch := sliding.New(3, 10, sliding.WithWidth(1024), sliding.WithDepth(3))
-	a.Logger().Info("sketch memory usage", "bytes", sketch.SizeBytes())
+	sketchInstance := sliding.New(window, segments, sliding.WithWidth(width), sliding.WithDepth(depth))
+	logger.Info("TopK sketch memory usage", "bytes", sketchInstance.SizeBytes())
 
-	// Create a new ConcurrentSketch with default tick size
-	cs := NewConcurrentSketch(sketch, 100) // Default tickSize
+	// Create a new ConcurrentSketch
+	cs := topk.NewTopkSketch(sketchInstance, tickSize, logger)
 
 	return &BlockIp{
-		cache: cache,
+		cache:  cache,
+		sketch: cs,
+		logger: logger,
 	}
 }
 
@@ -72,16 +85,15 @@ func (b *BlockIp) Block(ip string) error {
 
 	// Block in current bucket with full blocking duration
 	currentKey := formatBlockKey(ip, currentBucket)
-	// Use the internal cache instance (b.cache)
-	// Removed logging as BlockIp doesn't have a logger instance
+	// Use the internal cache instance (b.cache) and logger
 	if !b.cache.SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration) {
-		// px.app.Logger().Error("failed to block IP in current bucket", "ip", ip, "bucket", currentBucket)
+		b.logger.Error("failed to block IP in current bucket", "ip", ip, "bucket", currentBucket)
 		return fmt.Errorf("failed to block IP %s in current bucket %d", ip, currentBucket)
 	}
-	// px.app.Logger().Info("IP blocked in current bucket",
-	// 	"ip", ip,
-	// 	"bucket", currentBucket,
-	// 	"until", until.Format(time.RFC3339))
+	b.logger.Info("IP blocked in current bucket",
+		"ip", ip,
+		"bucket", currentBucket,
+		"duration", blockingDuration)
 
 	// Calculate time until next bucket starts
 	nowUnix := now.Unix()
@@ -90,16 +102,15 @@ func (b *BlockIp) Block(ip string) error {
 
 	if ttlNext > 0 {
 		nextKey := formatBlockKey(ip, nextBucket)
-		// Use the internal cache instance (b.cache)
-		// Removed logging as BlockIp doesn't have a logger instance
+		// Use the internal cache instance (b.cache) and logger
 		if !b.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext) {
-			// px.app.Logger().Error("failed to block IP in next bucket", "ip", ip, "bucket", nextBucket)
+			b.logger.Error("failed to block IP in next bucket", "ip", ip, "bucket", nextBucket)
 			return fmt.Errorf("failed to block IP %s in next bucket %d", ip, nextBucket)
 		}
-		// px.app.Logger().Info("IP blocked in next bucket",
-		// 	"ip", ip,
-		// 	"bucket", nextBucket,
-		// 	"until", until.Format(time.RFC3339))
+		b.logger.Info("IP blocked in next bucket",
+			"ip", ip,
+			"bucket", nextBucket,
+			"duration", ttlNext)
 	}
 
 	return nil

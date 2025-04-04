@@ -43,8 +43,8 @@ func NewProxy(app *core.App) *Proxy {
 
 	// Initialize the IP Blocker based on application configuration
 	if app.Config().Proxy.BlockIp.Enabled {
-		// Pass the application's cache to the BlockIp implementation
-		px.ipBlocker = NewBlockIp(app.Cache())
+		// Pass the application's cache and logger to the BlockIp implementation
+		px.ipBlocker = NewBlockIp(app.Cache(), app.Logger())
 	} else {
 		px.ipBlocker = &DisabledBlock{}
 	}
@@ -58,16 +58,60 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Get client IP from request using app's method
 		ip := px.app.GetClientIP(r)
 
-		// Check if the IP is blocked using the configured blocker
+		// Check if the IP is already blocked (cache check)
 		if px.ipBlocker.IsBlocked(ip) {
-			// TODO: Implement actual blocking response (e.g., http.StatusForbidden)
-			px.app.Logger().Warn("blocked request from IP", "ip", ip)
+			px.app.Logger().Warn("blocked request from already blocked IP", "ip", ip)
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
+
+		// Process the request through the TopK sketch
+		// This requires BlockIp to expose its sketch or a method to process ticks.
+		// Let's assume BlockIp has a method ProcessRequest(ip string) []string
+		// that internally calls sketch.processTick and returns IPs to block.
+		// We need to add this method to BlockIp.
+
+		// --- Add ProcessRequest method to BlockIp ---
+		// In core/proxy/Block.go:
+		// func (b *BlockIp) ProcessRequest(ip string) []string {
+		// 	 return b.sketch.processTick(ip)
+		// }
+		// ---
+
+		// Check if the sketch identified this or other IPs to block
+		// Need to cast ipBlocker to *BlockIp to access ProcessRequest, or add ProcessRequest to the interface.
+		// Adding to interface is cleaner.
+		// --- Add ProcessRequest to Blocker interface ---
+		// type Blocker interface {
+		// 	 IsBlocked(ip string) bool
+		// 	 Block(ip string) error
+		// 	 ProcessRequest(ip string) []string // Returns IPs identified for blocking by the sketch
+		// }
+		// --- Implement in DisabledBlock ---
+		// func (d *DisabledBlock) ProcessRequest(ip string) []string { return nil }
+		// ---
+
+		// Let's assume the interface and methods are added for now.
+		if blockIPs := px.ipBlocker.ProcessRequest(ip); blockIPs != nil {
+			for _, blockIP := range blockIPs {
+				// Block the IP using the blocker's Block method
+				if err := px.ipBlocker.Block(blockIP); err != nil {
+					px.app.Logger().Error("failed to block IP identified by sketch", "ip", blockIP, "error", err)
+					// Decide if we should continue or return an error here.
+					// For now, log and continue; the current request might still be allowed if it wasn't the one blocked.
+				} else {
+					// If the *current* request's IP was just blocked, return Forbidden immediately.
+					if blockIP == ip {
+						px.app.Logger().Warn("blocked request from IP identified by sketch", "ip", ip)
+						http.Error(w, "Forbidden", http.StatusForbidden)
+						return
+					}
+				}
+			}
+		}
 	}
 
-
+	// If blocking is disabled or the IP is not blocked, proceed to the app router
 	px.app.Router().ServeHTTP(w, r)
 }
 
