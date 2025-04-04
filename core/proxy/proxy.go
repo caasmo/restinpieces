@@ -67,8 +67,8 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		} else {
-			px.ipBlocker.IsBlocked(ip)
-
+			// TODO return
+			px.ipBlocker.Process(ip)
 		}
 	} 
 

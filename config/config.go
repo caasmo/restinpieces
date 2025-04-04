@@ -288,7 +288,7 @@ func Load(dbfile string) (*Config, error) {
 		OAuth2Providers: make(map[string]OAuth2Provider),
 		Proxy: ProxyConfig{
 			BlockIp: BlockIpConfig{
-				Enabled: false, // Default IP blocking to disabled
+				Enabled: true, // Default IP blocking to disabled
 			},
 		},
 	}
