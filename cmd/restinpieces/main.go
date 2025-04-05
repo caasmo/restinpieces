@@ -55,6 +55,11 @@ func handleServe(args []string) error {
 	serveCmd := flag.NewFlagSet("serve", flag.ExitOnError)
 	dbfile := serveCmd.String("dbfile", "bench.db", "SQLite database file path")
 	
+	// Don't redefine global flags in subcommands
+	if *globalVerbose {
+		fmt.Println("Verbose mode enabled")
+	}
+	
 	serveCmd.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s serve [flags]\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Start the application server\n\n")
@@ -100,6 +105,9 @@ func handleServe(args []string) error {
 
 	// Start the server
 	srv := server.NewServer(configProvider, proxy, scheduler, app.Logger())
+	if *globalVerbose {
+		app.Logger().Info("Starting server in verbose mode")
+	}
 	srv.Run()
 	return nil
 }
