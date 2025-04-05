@@ -46,6 +46,7 @@ func NewProxy(app *core.App) *Proxy {
 	}
 
 	// Call the method to set up the ipBlocker based on config
+	// TODO
 	px.UpdateByConfig()
 
 	return px
@@ -64,6 +65,18 @@ func (px *Proxy) UpdateByConfig() {
 }
 
 func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Check if Mimetype blocking is enabled
+	if px.mimetypeBlocker.IsEnabled() {
+		contentType := r.Header.Get("Content-Type")
+		if px.mimetypeBlocker.IsBlocked(contentType) {
+			px.app.Logger().Error("enabled mime")
+
+			// Return 415 Unsupported Media Type
+			w.WriteHeader(http.StatusUnsupportedMediaType)
+			return // Stop processing
+		}
+	}
+
 	// Check if IP blocking is enabled first
 	if px.ipBlocker.IsEnabled() {
 		// Get client IP from request using app's method
@@ -83,20 +96,6 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Check if Mimetype blocking is enabled
-	if px.mimetypeBlocker.IsEnabled() {
-		contentType := r.Header.Get("Content-Type")
-		// Pass the full Content-Type header value to IsBlocked for parsing
-		if px.mimetypeBlocker.IsBlocked(contentType) {
-			// Log the block action via the blocker's Block method
-			// (which currently just logs, but follows the pattern)
-			_ = px.mimetypeBlocker.Block(contentType) // Ignore error for logging
-
-			// Return 415 Unsupported Media Type
-			w.WriteHeader(http.StatusUnsupportedMediaType)
-			return // Stop processing
-		}
-	}
 
 	px.app.Router().ServeHTTP(w, r)
 }
