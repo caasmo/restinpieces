@@ -65,26 +65,25 @@ func (s *Server) Run() {
 	// Start the job scheduler
 	s.scheduler.Start()
 
-	// Channel for termination signals (SIGINT, SIGQUIT)
-	ctxTerminate, stopTerminate := signal.NotifyContext(
-		context.Background(),
+	// Channel for all signals we want to handle
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan,
 		syscall.SIGINT,  // kill -SIGINT XXXX or Ctrl+c
 		syscall.SIGQUIT, // kill -SIGQUIT XXXX
+		syscall.SIGHUP,  // kill -SIGHUP XXXX
 	)
 
-	// Channel specifically for SIGHUP
-	reloadChan := make(chan os.Signal, 1)
-	signal.Notify(reloadChan, syscall.SIGHUP) // kill -SIGHUP XXXX
-
-	// Wait for termination, SIGHUP, or server error
+	// Wait for signals or server error
 	running := true
 	for running {
 		select {
-		case <-ctxTerminate.Done():
-			s.logger.Info("Received termination signal - gracefully shutting down")
-			running = false // Exit the loop
-		case <-reloadChan:
-			s.logger.Info("Received SIGHUP signal - attempting to reload configuration")
+		case sig := <-sigChan:
+			switch sig {
+			case syscall.SIGINT, syscall.SIGQUIT:
+				s.logger.Info("Received termination signal - gracefully shutting down", "signal", sig)
+				running = false
+			case syscall.SIGHUP:
+				s.logger.Info("Received SIGHUP signal - attempting to reload configuration", "signal", sig)
 			// TODO: Need the dbfile path here. How to get it?
 			// Option 1: Store it in the Server struct.
 			// Option 2: Get it from the initial config stored in the provider (if it's there).
@@ -110,9 +109,8 @@ func (s *Server) Run() {
 	}
 
 	// Stop listening for signals
-	stopTerminate()
-	signal.Stop(reloadChan)
-	close(reloadChan)
+	signal.Stop(sigChan)
+	close(sigChan)
 
 	// Get shutdown timeout from the *current* config
 	shutdownTimeout := serverCfg.ShutdownGracefulTimeout
