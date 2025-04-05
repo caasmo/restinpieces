@@ -15,10 +15,11 @@ import (
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 )
 
-// SetupApp initializes the core application components using the provided config provider and logger.
+// SetupApp initializes the core application components using the provided config provider.
 func SetupApp(configProvider *config.Provider, dbFile string) (*core.App, *proxy.Proxy, error) {
 
 	// Create the App instance first (without the proxy)
+	// Logger is now configured via core.WithLogger() option below
 	app, err := core.NewApp(
 		// Database setup needs the file path from the *initial* config,
 		// as the DB connection is typically established once at startup.
@@ -27,7 +28,7 @@ func SetupApp(configProvider *config.Provider, dbFile string) (*core.App, *proxy
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		core.WithConfigProvider(configProvider), // Pass the provider
-		core.WithLogger(),                 // Pass the logger
+		core.WithLogger(),                       // Initialize logger using default setup option
 	)
 	if err != nil {
 		return nil, nil, err
@@ -42,16 +43,18 @@ func SetupApp(configProvider *config.Provider, dbFile string) (*core.App, *proxy
 }
 
 // SetupScheduler initializes the job scheduler.
-// It now accepts a ConfigProvider to access configuration dynamically.
-func SetupScheduler(configProvider *config.Provider, db db.Db, logger *slog.Logger) (*scl.Scheduler, error) {
+// It currently accepts the initial *config.Config.
+// TODO: Update this to accept *config.Provider later.
+func SetupScheduler(cfg *config.Config, db db.Db, logger *slog.Logger) (*scl.Scheduler, error) {
 
 	hdls := make(map[string]executor.JobHandler)
 
-	// Get the current config snapshot for setup
-	currentCfg := configProvider.Get()
+	// Get the config snapshot for setup (using the passed initial cfg)
+	currentCfg := cfg // Use the initial config passed as argument
 
 	// Setup mailer only if SMTP is configured in the current config
 	if (currentCfg.Smtp != config.Smtp{}) {
+
 		// Note: Mailer itself might not be easily hot-reloadable if connection details change.
 		// If SMTP settings need to be dynamic, the mailer creation/logic might need adjustment,
 		// potentially recreating the mailer inside the job handlers when needed.
@@ -63,18 +66,19 @@ func SetupScheduler(configProvider *config.Provider, db db.Db, logger *slog.Logg
 			os.Exit(1) // Or return err
 		}
 
-		// Pass the configProvider to handlers so they can get fresh config if needed
-		// (e.g., for JWT secrets, durations, rate limits used *during* handling)
-		emailVerificationHandler := handlers.NewEmailVerificationHandler(db, configProvider, mailer)
+		// Pass the initial config (cfg) to handlers for now
+		// TODO: Update handlers to accept *config.Provider later
+		emailVerificationHandler := handlers.NewEmailVerificationHandler(db, cfg, mailer)
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
 
-		passwordResetHandler := handlers.NewPasswordResetHandler(db, configProvider, mailer)
+		passwordResetHandler := handlers.NewPasswordResetHandler(db, cfg, mailer)
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
 
-		emailChangeHandler := handlers.NewEmailChangeHandler(db, configProvider, mailer)
+		emailChangeHandler := handlers.NewEmailChangeHandler(db, cfg, mailer)
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
 	}
 
-	// Pass the configProvider to the scheduler itself
-	return scl.NewScheduler(configProvider, db, executor.NewExecutor(hdls), logger), nil
+	// Pass the initial config (cfg.Scheduler) to the scheduler itself for now
+	// TODO: Update scheduler to accept *config.Provider later
+	return scl.NewScheduler(cfg.Scheduler, db, executor.NewExecutor(hdls), logger), nil
 }
