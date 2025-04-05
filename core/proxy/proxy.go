@@ -90,18 +90,6 @@ func NewProxy(app *core.App) *Proxy {
 // UpdateByConfig method removed.
 
 func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Check if Mimetype blocking is enabled
-	if px.mimetypeBlocker.IsEnabled() {
-		contentType := r.Header.Get("Content-Type")
-			px.app.Logger().Info("yolo", "ct", contentType)
-		if px.mimetypeBlocker.IsBlocked(contentType) {
-			px.app.Logger().Info("yolo", "ye is blocked", contentType)
-
-			// Return 415 Unsupported Media Type
-			w.WriteHeader(http.StatusUnsupportedMediaType)
-			return // Stop processing
-		}
-	}
 
 	// Check if IP blocking is enabled first
 	if px.ipBlocker.IsEnabled() {
