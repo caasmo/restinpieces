@@ -2,11 +2,56 @@ package config
 
 import (
 	"fmt"
+	"log/slog" // Added for logging in Provider
 	"net"
 	"os"
 	"strings"
+	"sync/atomic" // Added for atomic value
 	"time"
 )
+
+// Provider holds the application configuration and allows for atomic updates.
+type Provider struct {
+	value atomic.Value // Holds the current *Config
+	// Optional: Add a logger if needed for update events
+	logger *slog.Logger
+}
+
+// NewProvider creates a new configuration provider with the initial config.
+// It panics if the initialConfig is nil.
+func NewProvider(initialConfig *Config, logger *slog.Logger) *Provider {
+	if initialConfig == nil {
+		panic("initial config cannot be nil")
+	}
+	p := &Provider{
+		logger: logger, // Store logger
+	}
+	p.value.Store(initialConfig)
+	return p
+}
+
+// Get returns the current configuration snapshot.
+// It's safe for concurrent use.
+func (p *Provider) Get() *Config {
+	// Load returns interface{}, assert to *Config
+	// This is safe because Store only accepts *Config.
+	return p.value.Load().(*Config)
+}
+
+// Update atomically swaps the current configuration with the new one.
+// It logs an error if the newConfig is nil.
+func (p *Provider) Update(newConfig *Config) {
+	if newConfig == nil {
+		if p.logger != nil {
+			p.logger.Error("config provider: attempted to update with nil configuration")
+		}
+		return // Don't store nil
+	}
+	p.value.Store(newConfig)
+	if p.logger != nil {
+		p.logger.Info("config provider: configuration updated successfully")
+	}
+}
 
 const (
 	EnvGoogleClientID     = "OAUTH2_GOOGLE_CLIENT_ID"
