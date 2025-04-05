@@ -32,17 +32,15 @@ func WithRouter(r router.Router) Option {
 	}
 }
 
-// WithConfig sets the initial application configuration.
-// It stores the provided config into the atomic.Value.
-func WithConfig(cfg *config.Config) Option {
+// WithConfigProvider sets the application's configuration provider.
+func WithConfigProvider(p *config.Provider) Option {
 	return func(a *App) {
-		if cfg == nil {
-			// Handle nil config case if necessary, maybe panic or log
-			// For now, let's assume a valid config is always provided initially.
-			// If not, NewApp will return an error later.
-			return // Or panic("initial config cannot be nil")
+		if p == nil {
+			// Handle nil provider case if necessary, maybe panic or log
+			// NewApp checks for nil provider later.
+			return // Or panic("config provider cannot be nil")
 		}
-		a.config.Store(cfg)
+		a.configProvider = p
 	}
 }
 
