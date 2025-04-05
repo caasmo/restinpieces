@@ -65,23 +65,54 @@ func (s *Server) Run() {
 	// Start the job scheduler
 	s.scheduler.Start()
 
-	ctx, stop := signal.NotifyContext(
+	// Channel for termination signals (SIGINT, SIGQUIT)
+	ctxTerminate, stopTerminate := signal.NotifyContext(
 		context.Background(),
-		syscall.SIGHUP,  // kill -SIGHUP XXXX
 		syscall.SIGINT,  // kill -SIGINT XXXX or Ctrl+c
 		syscall.SIGQUIT, // kill -SIGQUIT XXXX
 	)
 
-	// Wait for either interrupt signal or server error
-	select {
-	case <-ctx.Done():
-		s.logger.Info("Received shutdown signal - gracefully shutting down")
-	case err := <-serverError:
-		s.logger.Error("Server error - initiating shutdown", "err", err)
+	// Channel specifically for SIGHUP
+	reloadChan := make(chan os.Signal, 1)
+	signal.Notify(reloadChan, syscall.SIGHUP) // kill -SIGHUP XXXX
+
+	// Wait for termination, SIGHUP, or server error
+	running := true
+	for running {
+		select {
+		case <-ctxTerminate.Done():
+			s.logger.Info("Received termination signal - gracefully shutting down")
+			running = false // Exit the loop
+		case <-reloadChan:
+			s.logger.Info("Received SIGHUP signal - attempting to reload configuration")
+			// TODO: Need the dbfile path here. How to get it?
+			// Option 1: Store it in the Server struct.
+			// Option 2: Get it from the initial config stored in the provider (if it's there).
+			// Let's assume DBFile is in the config for now.
+			dbFile := s.configProvider.Get().DBFile
+			if dbFile == "" {
+				s.logger.Error("Cannot reload config: DBFile path not found in current configuration")
+				continue // Skip reload if path is missing
+			}
+			newCfg, err := config.Load(dbFile)
+			if err != nil {
+				s.logger.Error("Failed to reload configuration on SIGHUP", "error", err)
+				// Continue with the old configuration
+			} else {
+				s.configProvider.Update(newCfg)
+				s.logger.Info("Configuration reloaded successfully via SIGHUP")
+				// Note: Server restart needed for changes in Server config section.
+			}
+		case err := <-serverError:
+			s.logger.Error("Server error - initiating shutdown", "err", err)
+			running = false // Exit the loop
+		}
 	}
 
-	// Reset signals default behavior, similar to signal.Reset
-	stop()
+	// Stop listening for signals
+	stopTerminate()
+	signal.Stop(reloadChan)
+	close(reloadChan)
 
 	// Get shutdown timeout from the *current* config
 	shutdownTimeout := serverCfg.ShutdownGracefulTimeout
