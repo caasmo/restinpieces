@@ -1,7 +1,11 @@
 ### TODOs
 
-- reanem appServices?? 
-    - proxy, app clear wiring
+- config reload
+- proxy, app clear wiring
+    - proxy design is overkill, 
+        - move to app
+        - just initailiza alwya the sketch
+        - check conf to use or not
 - is a framework, clear workflow 
 - good enough release
     - litestream or just cron each 5 minutes: see litestream 
