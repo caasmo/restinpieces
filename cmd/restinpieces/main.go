@@ -29,11 +29,20 @@ func handleBootstrap(args []string) error {
 	files := bootstrapCmd.String("files", "", "Files directory path")
 	dbfile := bootstrapCmd.String("dbfile", "bench.db", "SQLite database file path")
 
+	// Ensure all flags except dbfile require arguments
+	bootstrapCmd.SetOutput(os.Stderr)
+
 	// 3. Custom usage
 	bootstrapCmd.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s bootstrap [flags]\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Initialize application resources\n\n")
-		bootstrapCmd.PrintDefaults()
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		fmt.Fprintf(os.Stderr, "  --config string    Path to configuration file\n")
+		fmt.Fprintf(os.Stderr, "  --db string       Path to database file\n") 
+		fmt.Fprintf(os.Stderr, "  --env string      Environment (development|staging|production) (default \"development\")\n")
+		fmt.Fprintf(os.Stderr, "  --files string    Path to files directory\n")
+		fmt.Fprintf(os.Stderr, "  --dbfile string   SQLite database file (default \"bench.db\")\n\n")
+		fmt.Fprintf(os.Stderr, "All flags except --dbfile require values when specified\n")
 	}
 
 	// 4. Parse args
