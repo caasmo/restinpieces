@@ -48,9 +48,7 @@ func main() {
 	// Create the config provider with the initial config
 	configProvider := config.NewProvider(cfg)
 
-	// Setup App, passing the provider and the db file path
-	// Logger is initialized inside SetupApp via core.WithLogger()
-	app, proxy, err := setup.SetupApp(configProvider, *dbfile) // Pass provider and dbfile
+	app, proxy, err := setup.SetupApp(configProvider) // Pass provider and dbfile
 	if err != nil {
 		// Use default logger if app setup fails before logger is initialized
 		//slog.Error("failed to initialize app", "error", err)
