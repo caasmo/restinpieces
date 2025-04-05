@@ -24,6 +24,8 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
   - Password-based registration/login
   - OAuth2 integration for social login
   - Email verification with confirmation flow
+  - Password reset via email
+  - Email address change with confirmation
 - JWT-based session management
 
 ### Security
