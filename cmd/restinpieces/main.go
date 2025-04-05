@@ -41,7 +41,7 @@ func main() {
 	// Load initial configuration
 	cfg, err := config.Load(*dbfile)
 	if err != nil {
-		slog.Error("failed to load initial config", "error", err) // Use default logger before app logger is ready
+		///slog.Error("failed to load initial config", "error", err) // Use default logger before app logger is ready
 		os.Exit(1)
 	}
 
@@ -53,7 +53,7 @@ func main() {
 	app, proxy, err := setup.SetupApp(configProvider, *dbfile) // Pass provider and dbfile
 	if err != nil {
 		// Use default logger if app setup fails before logger is initialized
-		slog.Error("failed to initialize app", "error", err)
+		//slog.Error("failed to initialize app", "error", err)
 		os.Exit(1)
 	}
 	defer app.Close() // Defer close after successful app initialization
@@ -71,17 +71,9 @@ func main() {
 	// Setup Scheduler - Pass initial config (cfg) for now
 	scheduler, err := setup.SetupScheduler(cfg, app.Db(), app.Logger())
 	if err != nil {
-		app.Logger().Error("failed to initialize scheduler", "error", err)
+		//app.Logger().Error("failed to initialize scheduler", "error", err)
 		os.Exit(1)
 	}
 
-	// Create Server - Pass initial server config (cfg.Server) for now
 	srv := server.NewServer(cfg.Server, proxy, scheduler, app.Logger())
-
-	// Run the server (blocking call)
-	app.Logger().Info("starting server", "addr", cfg.Server.Addr)
-	if err := srv.Run(); err != nil {
-		app.Logger().Error("server run failed", "error", err)
-		os.Exit(1) // Exit if server fails to run
-	}
 }
