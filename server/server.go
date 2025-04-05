@@ -20,6 +20,28 @@ type Server struct {
 	logger         *slog.Logger
 }
 
+func (s *Server) handleSIGHUP() {
+	s.logger.Info("Received SIGHUP signal - attempting to reload configuration")
+	// TODO: Need the dbfile path here. How to get it?
+	// Option 1: Store it in the Server struct.
+	// Option 2: Get it from the initial config stored in the provider (if it's there).
+	// Let's assume DBFile is in the config for now.
+	dbFile := s.configProvider.Get().DBFile
+	if dbFile == "" {
+		s.logger.Error("Cannot reload config: DBFile path not found in current configuration")
+		return // Skip reload if path is missing
+	}
+	newCfg, err := config.Load(dbFile)
+	if err != nil {
+		s.logger.Error("Failed to reload configuration on SIGHUP", "error", err)
+		// Continue with the old configuration
+	} else {
+		s.configProvider.Update(newCfg)
+		s.logger.Info("Configuration reloaded successfully via SIGHUP")
+		// Note: Server restart needed for changes in Server config section.
+	}
+}
+
 func NewServer(provider *config.Provider, p *proxy.Proxy, scheduler *scheduler.Scheduler, logger *slog.Logger) *Server {
 	return &Server{
 		configProvider: provider,
@@ -83,25 +105,7 @@ func (s *Server) Run() {
 				s.logger.Info("Received termination signal - gracefully shutting down", "signal", sig)
 				running = false
 			case syscall.SIGHUP:
-				s.logger.Info("Received SIGHUP signal - attempting to reload configuration", "signal", sig)
-				// TODO: Need the dbfile path here. How to get it?
-				// Option 1: Store it in the Server struct.
-				// Option 2: Get it from the initial config stored in the provider (if it's there).
-				// Let's assume DBFile is in the config for now.
-				dbFile := s.configProvider.Get().DBFile
-				if dbFile == "" {
-					s.logger.Error("Cannot reload config: DBFile path not found in current configuration")
-					continue // Skip reload if path is missing
-				}
-				newCfg, err := config.Load(dbFile)
-				if err != nil {
-					s.logger.Error("Failed to reload configuration on SIGHUP", "error", err)
-					// Continue with the old configuration
-				} else {
-					s.configProvider.Update(newCfg)
-					s.logger.Info("Configuration reloaded successfully via SIGHUP")
-					// Note: Server restart needed for changes in Server config section.
-				}
+				s.handleSIGHUP()
 			}
 		case err := <-serverError:
 			s.logger.Error("Server error - initiating shutdown", "err", err)
