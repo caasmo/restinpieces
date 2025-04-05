@@ -18,7 +18,7 @@ type Provider struct {
 // NewProvider creates a new configuration provider with the initial config.
 // It panics if the initialConfig is nil.
 func NewProvider(c *Config) *Provider {
-	if c  == nil {
+	if c == nil {
 		panic("initial config cannot be nil")
 	}
 	p := &Provider{}
@@ -253,7 +253,7 @@ type BlockIp struct {
 
 // Proxy holds configuration for the proxy layer.
 type Proxy struct {
-	BlockIp  BlockIp
+	BlockIp BlockIp
 }
 
 const (

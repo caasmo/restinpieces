@@ -6,8 +6,8 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/cache/ristretto"
+	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/db/crawshaw"
 	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/router/httprouter"
@@ -82,5 +82,3 @@ func WithTextLogger(opts *slog.HandlerOptions) core.Option {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, opts))
 	return core.WithLogger(logger)
 }
-
-

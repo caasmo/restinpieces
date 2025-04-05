@@ -8,13 +8,13 @@ import (
 )
 
 // represent the Proxy of an app handler
-// mostly global conunters, metrics, and most important blocking, filtering 
-// maybe can be part of app. app has a proxy, 
+// mostly global conunters, metrics, and most important blocking, filtering
+// maybe can be part of app. app has a proxy,
 type Proxy struct {
 	// TODO app http.Handler no Proxy needs all the services of app
 	// app is also handler, the serverHttp method is to call its router
-	app             *core.App
-	ipBlocker       FeatureBlocker
+	app       *core.App
+	ipBlocker FeatureBlocker
 }
 
 // Feature defines an interface for features that can be enabled or disabled.
@@ -26,7 +26,7 @@ type Feature interface {
 // and processing requests to identify IPs for blocking.
 type Blocker interface {
 	IsBlocked(ip string) bool
-	Block(ip string) error      // Adds the IP to the block list
+	Block(ip string) error   // Adds the IP to the block list
 	Process(ip string) error // Processes the IP (e.g., via sketch), returns error on failure
 }
 
@@ -102,7 +102,5 @@ func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-
 	px.app.Router().ServeHTTP(w, r)
 }
-

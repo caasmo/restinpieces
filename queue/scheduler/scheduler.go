@@ -57,9 +57,9 @@ func NewScheduler(configProvider *config.Provider, db db.Db, executor executor.J
 		db:             db,
 		executor:       executor,
 		logger:         logger,
-		ctx:          ctx,
-		cancel:       cancel,
-		shutdownDone: make(chan struct{}),
+		ctx:            ctx,
+		cancel:         cancel,
+		shutdownDone:   make(chan struct{}),
 	}
 }
 

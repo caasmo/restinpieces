@@ -1,4 +1,5 @@
 package topk
+
 import (
 	"sync"
 
@@ -66,4 +67,3 @@ func (cs *TopKSketch) ProcessTick(ip string) []string {
 	}
 	return nil // No blocking needed this tick
 }
-

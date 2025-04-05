@@ -53,4 +53,3 @@ func WithLogger(l *slog.Logger) Option {
 //		a.proxy = p
 //	}
 //}
-

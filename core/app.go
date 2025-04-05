@@ -28,7 +28,6 @@ type App struct {
 	//proxy *proxy.Proxy
 }
 
-
 func NewApp(opts ...Option) (*App, error) {
 	a := &App{}
 	for _, opt := range opts {
@@ -85,4 +84,3 @@ func (a *App) Config() *config.Config {
 	// Delegate fetching the config to the provider
 	return a.configProvider.Get()
 }
-

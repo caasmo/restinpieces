@@ -1,6 +1,5 @@
 package core
 
-
 // --- IP Blocking Middleware Function ---
 
 // BlockMiddleware creates a middleware function that uses a ConcurrentSketch

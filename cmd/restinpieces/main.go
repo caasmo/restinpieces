@@ -9,8 +9,8 @@ import (
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/custom"
-	"github.com/caasmo/restinpieces/setup"
 	"github.com/caasmo/restinpieces/server"
+	"github.com/caasmo/restinpieces/setup"
 )
 
 func logEmbeddedAssets(assets fs.FS, cfg *config.Config, logger *slog.Logger) {
@@ -48,7 +48,7 @@ func main() {
 	// Create the config provider with the initial config
 	configProvider := config.NewProvider(cfg)
 
-	app, proxy, err := setup.SetupApp(configProvider) 
+	app, proxy, err := setup.SetupApp(configProvider)
 	if err != nil {
 		// Use default logger if app setup fails before logger is initialized
 		slog.Error("failed to initialize app", "error", err)

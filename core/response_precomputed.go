@@ -90,7 +90,6 @@ func precomputeWithDataResponse(status int, code, message string, data interface
 // Precomputed error and ok responses with status codes
 var (
 
-
 	//errors
 	errorTokenGeneration                   = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
 	errorClaimsNotFound                    = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorClaimsNotFound, "Failed to generate token: Claims not found")
