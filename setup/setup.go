@@ -49,7 +49,7 @@ func SetupScheduler(configProvider *config.Provider, db db.Db, logger *slog.Logg
 	// Setup mailer only if SMTP is configured in the current config
 	if (cfg.Smtp != config.Smtp{}) {
 
-		mailer, err := mail.New(cfg.Smtp) 
+		mailer, err := mail.New(configProvider) 
 		if err != nil {
 			logger.Error("failed to create mailer", "error", err)
 			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?
