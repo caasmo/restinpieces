@@ -102,6 +102,7 @@ func (s *Server) Run() {
 					s.logger.Info("Configuration reloaded successfully via SIGHUP")
 					// Note: Server restart needed for changes in Server config section.
 				}
+			}
 		case err := <-serverError:
 			s.logger.Error("Server error - initiating shutdown", "err", err)
 			running = false // Exit the loop
