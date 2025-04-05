@@ -15,10 +15,6 @@ import (
 	"github.com/caasmo/restinpieces/setup"
 )
 
-// --- Global Flags ---
-var (
-	globalVerbose *bool
-)
 
 // --- Command Handlers ---
 
@@ -54,11 +50,7 @@ func handleBootstrap(args []string) error {
 func handleServe(args []string) error {
 	serveCmd := flag.NewFlagSet("serve", flag.ExitOnError)
 	dbfile := serveCmd.String("dbfile", "bench.db", "SQLite database file path")
-	
-	// Don't redefine global flags in subcommands
-	if *globalVerbose {
-		fmt.Println("Verbose mode enabled")
-	}
+	verbose := serveCmd.Bool("v", false, "Enable verbose output")
 	
 	serveCmd.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s serve [flags]\n\n", os.Args[0])
@@ -105,7 +97,7 @@ func handleServe(args []string) error {
 
 	// Start the server
 	srv := server.NewServer(configProvider, proxy, scheduler, app.Logger())
-	if *globalVerbose {
+	if *verbose {
 		app.Logger().Info("Starting server in verbose mode")
 	}
 	srv.Run()
@@ -171,8 +163,7 @@ func logEmbeddedAssets(assets fs.FS, cfg *config.Config, logger *slog.Logger) {
 }
 
 func main() {
-	// --- 1. Define GLOBAL flags ---
-	globalVerbose = flag.Bool("v", false, "Enable global verbose output")
+	// No global flags defined here
 
 	// Set custom usage message
 	flag.Usage = func() {
