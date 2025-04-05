@@ -73,6 +73,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	srv := server.NewServer(cfg.Server, proxy, scheduler, app.Logger())
+	// Pass the configProvider to the server
+	srv := server.NewServer(configProvider, proxy, scheduler, app.Logger())
 	srv.Run()
 }

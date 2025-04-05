@@ -14,45 +14,48 @@ import (
 )
 
 type Server struct {
-	cfg      config.Server
-	proxy    *proxy.Proxy
-	scheduler *scheduler.Scheduler
-	logger   *slog.Logger
+	configProvider *config.Provider
+	proxy          *proxy.Proxy
+	scheduler      *scheduler.Scheduler
+	logger         *slog.Logger
 }
 
-func NewServer(cfg config.Server, p *proxy.Proxy, scheduler *scheduler.Scheduler, logger *slog.Logger) *Server {
+func NewServer(provider *config.Provider, p *proxy.Proxy, scheduler *scheduler.Scheduler, logger *slog.Logger) *Server {
 	return &Server{
-		cfg:      cfg,
-		proxy:    p,
-		scheduler: scheduler,
-		logger:   logger,
+		configProvider: provider,
+		proxy:          p,
+		scheduler:      scheduler,
+		logger:         logger,
 	}
 }
 
 func (s *Server) Run() {
+	// Get initial server config
+	serverCfg := s.configProvider.Get().Server
 
 	s.logger.Info("Server configuration",
-		"addr", s.cfg.Addr,
-		"read_timeout", s.cfg.ReadTimeout,
-		"read_header_timeout", s.cfg.ReadHeaderTimeout,
-		"write_timeout", s.cfg.WriteTimeout,
-		"idle_timeout", s.cfg.IdleTimeout,
-		"shutdown_timeout", s.cfg.ShutdownGracefulTimeout,
+		"addr", serverCfg.Addr,
+		"read_timeout", serverCfg.ReadTimeout,
+		"read_header_timeout", serverCfg.ReadHeaderTimeout,
+		"write_timeout", serverCfg.WriteTimeout,
+		"idle_timeout", serverCfg.IdleTimeout,
+		"shutdown_timeout", serverCfg.ShutdownGracefulTimeout,
 	)
 
 	srv := &http.Server{
-		Addr:              s.cfg.Addr,
+		Addr:              serverCfg.Addr,
 		Handler:           s.proxy,
-		ReadTimeout:       s.cfg.ReadTimeout,
-		ReadHeaderTimeout: s.cfg.ReadHeaderTimeout,
-		WriteTimeout:      s.cfg.WriteTimeout,
-		IdleTimeout:       s.cfg.IdleTimeout,
+		ReadTimeout:       serverCfg.ReadTimeout,
+		ReadHeaderTimeout: serverCfg.ReadHeaderTimeout,
+		WriteTimeout:      serverCfg.WriteTimeout,
+		IdleTimeout:       serverCfg.IdleTimeout,
 	}
 
 	// Start HTTP server
 	serverError := make(chan error, 1)
 	go func() {
-		s.logger.Info("Starting HTTP server", "addr", s.cfg.Addr)
+		// Use the Addr from the initial config used to create the server
+		s.logger.Info("Starting HTTP server", "addr", serverCfg.Addr)
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 			s.logger.Error("ListenAndServe error", "err", err)
 			serverError <- err
@@ -80,7 +83,9 @@ func (s *Server) Run() {
 	// Reset signals default behavior, similar to signal.Reset
 	stop()
 
-	gracefulCtx, cancelShutdown := context.WithTimeout(context.Background(), s.cfg.ShutdownGracefulTimeout)
+	// Get shutdown timeout from the *current* config
+	shutdownTimeout := s.configProvider.Get().Server.ShutdownGracefulTimeout
+	gracefulCtx, cancelShutdown := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancelShutdown()
 
 	// Create a wait group for shutdown tasks
