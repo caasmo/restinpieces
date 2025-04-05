@@ -15,7 +15,6 @@ type Proxy struct {
 	// app is also handler, the serverHttp method is to call its router
 	app             *core.App
 	ipBlocker       FeatureBlocker
-	mimetypeBlocker FeatureBlocker // Change type to interface
 }
 
 // Feature defines an interface for features that can be enabled or disabled.
@@ -67,13 +66,6 @@ func NewProxy(app *core.App) *Proxy {
 		app: app,
 		// config is no longer stored directly on Proxy
 		// mimetypeBlocker initialized below based on config
-	}
-
-	// Initialize Mimetype Blocker based on configuration
-	if app.Config().Proxy.Mimetype.Enabled {
-		px.mimetypeBlocker = NewBlockMimetype(app)
-	} else {
-		px.mimetypeBlocker = &DisabledBlock{}
 	}
 
 	// Initialize the IP Blocker based on application configuration
