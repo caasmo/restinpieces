@@ -21,8 +21,8 @@ const (
 
 // Scheduler handles scheduled jobs
 type Scheduler struct {
-	// cfg contains the scheduler configuration including interval and max jobs per tick
-	cfg config.Scheduler
+	// configProvider provides access to the application configuration
+	configProvider *config.Provider
 
 	// db is the database connection used to fetch and update jobs
 	db db.Db
@@ -50,13 +50,13 @@ type Scheduler struct {
 }
 
 // NewScheduler creates a new scheduler with executor
-func NewScheduler(cfg config.Scheduler, db db.Db, executor executor.JobExecutor, logger *slog.Logger) *Scheduler {
+func NewScheduler(configProvider *config.Provider, db db.Db, executor executor.JobExecutor, logger *slog.Logger) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Scheduler{
-		cfg:          cfg,
-		db:           db,
-		executor:     executor,
-		logger:       logger,
+		configProvider: configProvider,
+		db:             db,
+		executor:       executor,
+		logger:         logger,
 		ctx:          ctx,
 		cancel:       cancel,
 		shutdownDone: make(chan struct{}),
@@ -67,11 +67,21 @@ func NewScheduler(cfg config.Scheduler, db db.Db, executor executor.JobExecutor,
 // that will create gorotines to handle backend jobs
 func (s *Scheduler) Start() {
 	go func() {
-		s.logger.Info("⏰scheduler: starting", "interval", s.cfg.Interval)
-		ticker := time.NewTicker(s.cfg.Interval)
+		// Get initial interval from provider
+		interval := s.configProvider.Get().Scheduler.Interval
+		s.logger.Info("⏰scheduler: starting", "interval", interval)
+		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
 		for {
+			// Inside the loop, potentially re-fetch interval if it needs to be dynamic
+			// currentInterval := s.configProvider.Get().Scheduler.Interval
+			// if currentInterval != interval {
+			//    ticker.Reset(currentInterval)
+			//    interval = currentInterval
+			//    s.logger.Info("⏰scheduler: interval updated", "new_interval", interval)
+			// }
+			// For now, we use the initial interval.
 			select {
 			case <-s.ctx.Done():
 				s.logger.Info("⏰scheduler: received shutdown signal")
@@ -106,8 +116,11 @@ func (s *Scheduler) Stop(ctx context.Context) error {
 }
 
 func (s *Scheduler) processJobs() {
+	// Get current scheduler config from provider for this tick
+	schedulerCfg := s.configProvider.Get().Scheduler
+
 	// Claim jobs up to configured limit per tick
-	jobs, err := s.db.Claim(s.cfg.MaxJobsPerTick)
+	jobs, err := s.db.Claim(schedulerCfg.MaxJobsPerTick)
 	if err != nil {
 		s.logger.Error("⏰scheduler: failed to claim jobs", "err", err)
 		return
@@ -118,7 +131,7 @@ func (s *Scheduler) processJobs() {
 	// Create a new error group for this batch of jobs
 	// Use the scheduler's context as parent to ensure jobs receive shutdown signal
 	g, ctx := errgroup.WithContext(s.ctx) // <- Shutdown context
-	g.SetLimit(runtime.NumCPU() * s.cfg.ConcurrencyMultiplier)
+	g.SetLimit(runtime.NumCPU() * schedulerCfg.ConcurrencyMultiplier)
 
 	var processed int
 	for _, job := range jobs {
