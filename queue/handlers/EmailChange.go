@@ -14,22 +14,24 @@ import (
 
 // EmailChangeHandler handles email change requests
 type EmailChangeHandler struct {
-	db     db.Db
-	config *config.Config
-	mailer *mail.Mailer
+	db             db.Db
+	configProvider *config.Provider
+	mailer         *mail.Mailer
 }
 
 // NewEmailChangeHandler creates a new EmailChangeHandler
-func NewEmailChangeHandler(db db.Db, cfg *config.Config, mailer *mail.Mailer) *EmailChangeHandler {
+func NewEmailChangeHandler(db db.Db, provider *config.Provider, mailer *mail.Mailer) *EmailChangeHandler {
 	return &EmailChangeHandler{
-		db:     db,
-		config: cfg,
-		mailer: mailer,
+		db:             db,
+		configProvider: provider,
+		mailer:         mailer,
 	}
 }
 
 // Handle implements the JobHandler interface for email change requests
 func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
+	// Get current config snapshot
+	cfg := h.configProvider.Get()
 
 	var payload queue.PayloadEmailChange
 	if err := json.Unmarshal(job.Payload, &payload); err != nil {
@@ -58,8 +60,8 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 		user.Email,
 		payloadExtra.NewEmail,
 		user.Password,
-		h.config.Jwt.EmailChangeSecret,
-		h.config.Jwt.EmailChangeTokenDuration,
+		cfg.Jwt.EmailChangeSecret,
+		cfg.Jwt.EmailChangeTokenDuration,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create email change token: %w", err)
@@ -67,8 +69,8 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 
 	// Construct callback URL to HTML page that will handle the email change
 	callbackURL := fmt.Sprintf("%s%s?token=%s",
-		h.config.Server.BaseURL(),
-		h.config.Endpoints.ConfirmHtml(h.config.Endpoints.ConfirmEmailChange),
+		cfg.Server.BaseURL(),
+		cfg.Endpoints.ConfirmHtml(cfg.Endpoints.ConfirmEmailChange),
 		token)
 
 	// Send email change notification including OAuth2 warning if needed
