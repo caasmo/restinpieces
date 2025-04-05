@@ -173,10 +173,11 @@ func main() {
 
 	// Set custom usage message
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [-v] <command> [command-flags] [arguments...]\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s [-v] [command] [command-flags] [arguments...]\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Available commands:\n")
+		fmt.Fprintf(os.Stderr, "  (default)      Start the application server (same as 'serve')\n")
 		fmt.Fprintf(os.Stderr, "  bootstrap     Initialize application resources\n")
-		fmt.Fprintf(os.Stderr, "  serve         Start the application server\n")
+		fmt.Fprintf(os.Stderr, "  serve         Start the application server\n") 
 		fmt.Fprintf(os.Stderr, "  dump-config   Dump current configuration\n")
 		fmt.Fprintf(os.Stderr, "  load-config   Load configuration from file\n")
 		fmt.Fprintf(os.Stderr, "\nUse \"%s <command> -h\" for command-specific help.\n", os.Args[0])
@@ -187,15 +188,17 @@ func main() {
 
 	// --- 3. Get remaining args ---
 	args := flag.Args()
-	if len(args) < 1 {
-		fmt.Fprintln(os.Stderr, "Error: No command specified.")
-		flag.Usage()
-		os.Exit(1)
-	}
+	var command string
+	var commandArgs []string
 
-	// --- 4. Dispatch command ---
-	command := args[0]
-	commandArgs := args[1:]
+	if len(args) < 1 {
+		// Default to serve command if none specified
+		command = "serve"
+		commandArgs = []string{}
+	} else {
+		command = args[0]
+		commandArgs = args[1:]
+	}
 
 	var err error
 	switch command {
