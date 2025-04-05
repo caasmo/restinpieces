@@ -22,7 +22,7 @@ func SetupApp(configProvider *config.Provider) (*core.App, *proxy.Proxy, error) 
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		core.WithConfigProvider(configProvider), // Pass the provider
-		core.WithLogger(),                       // Initialize logger using default setup option
+		core.WithLogger(nil),                       // Initialize logger using default setup option
 	)
 	if err != nil {
 		return nil, nil, err
