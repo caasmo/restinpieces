@@ -11,6 +11,6 @@ func (a *App) ListEndpointsHandler(w http.ResponseWriter, r *http.Request) {
 			Code:    CodeOkEndpoints,
 			Message: "List of all available endpoints",
 		},
-		Data: a.config.Endpoints,
+		Data: a.Config().Endpoints, // Use Config() method
 	})
 }

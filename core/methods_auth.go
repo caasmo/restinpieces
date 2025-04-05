@@ -51,7 +51,8 @@ func (a *App) Authenticate(r *http.Request) (*db.User, error, jsonResponse) {
 
 	// Generate signing key using user credentials
 	// Use user.Email and user.Password which are confirmed to belong to userID
-	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(user.Email, user.Password, a.config.Jwt.AuthSecret)
+	cfg := a.Config() // Get the current config
+	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(user.Email, user.Password, cfg.Jwt.AuthSecret)
 	if err != nil {
 		// Errors here are likely config issues (e.g., short secret) or bad user data
 		// Map to a generic server-side error for the client
