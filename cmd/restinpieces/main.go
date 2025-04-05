@@ -54,7 +54,7 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 
 	// Create the config provider
-	configProvider := config.NewProvider(initialCfg, logger) // Pass logger to provider
+	configProvider := config.NewProvider(initialCfg) // Logger removed from provider
 
 	// Setup App using the provider
 	app, proxy, err := setup.SetupApp(configProvider, logger, *dbfile) // Pass provider, logger, dbfile

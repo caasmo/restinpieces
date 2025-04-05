@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"log/slog" // Added for logging in Provider
+	//"log/slog" // No longer needed for Provider
 	"net"
 	"os"
 	"strings"
@@ -13,19 +13,15 @@ import (
 // Provider holds the application configuration and allows for atomic updates.
 type Provider struct {
 	value atomic.Value // Holds the current *Config
-	// Optional: Add a logger if needed for update events
-	logger *slog.Logger
 }
 
 // NewProvider creates a new configuration provider with the initial config.
 // It panics if the initialConfig is nil.
-func NewProvider(initialConfig *Config, logger *slog.Logger) *Provider {
+func NewProvider(initialConfig *Config) *Provider {
 	if initialConfig == nil {
 		panic("initial config cannot be nil")
 	}
-	p := &Provider{
-		logger: logger, // Store logger
-	}
+	p := &Provider{}
 	p.value.Store(initialConfig)
 	return p
 }
@@ -39,18 +35,11 @@ func (p *Provider) Get() *Config {
 }
 
 // Update atomically swaps the current configuration with the new one.
-// It logs an error if the newConfig is nil.
+// The caller is responsible for ensuring newConfig is not nil.
 func (p *Provider) Update(newConfig *Config) {
-	if newConfig == nil {
-		if p.logger != nil {
-			p.logger.Error("config provider: attempted to update with nil configuration")
-		}
-		return // Don't store nil
-	}
+	// Assume newConfig is valid as the check is moved to the caller (signal handler)
 	p.value.Store(newConfig)
-	if p.logger != nil {
-		p.logger.Info("config provider: configuration updated successfully")
-	}
+	// Logging is now handled by the caller (e.g., signal handler in main.go)
 }
 
 const (
