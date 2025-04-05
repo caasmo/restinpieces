@@ -40,18 +40,16 @@ func SetupApp(configProvider *config.Provider) (*core.App, *proxy.Proxy, error) 
 }
 
 // SetupScheduler initializes the job scheduler.
-// It now accepts a ConfigProvider to access configuration dynamically.
 func SetupScheduler(configProvider *config.Provider, db db.Db, logger *slog.Logger) (*scl.Scheduler, error) {
 
 	hdls := make(map[string]executor.JobHandler)
 
-	// Get the current config snapshot for setup (e.g., for mailer)
-	currentCfg := configProvider.Get()
+	cfg := configProvider.Get()
 
 	// Setup mailer only if SMTP is configured in the current config
-	if (currentCfg.Smtp != config.Smtp{}) {
+	if (cfg.Smtp != config.Smtp{}) {
 
-		mailer, err := mail.New(currentCfg.Smtp) // Use currentCfg here
+		mailer, err := mail.New(cfg.Smtp) 
 		if err != nil {
 			logger.Error("failed to create mailer", "error", err)
 			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?
@@ -59,18 +57,15 @@ func SetupScheduler(configProvider *config.Provider, db db.Db, logger *slog.Logg
 			os.Exit(1) // Or return err
 		}
 
-		// Pass the configProvider to handlers so they can get fresh config if needed
-		// TODO: Update handler constructors and implementations later
-		emailVerificationHandler := handlers.NewEmailVerificationHandler(db, currentCfg, mailer) // Still passing initial cfg for now
+		emailVerificationHandler := handlers.NewEmailVerificationHandler(db, cfg, mailer) // Still passing initial cfg for now
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
 
-		passwordResetHandler := handlers.NewPasswordResetHandler(db, currentCfg, mailer) // Still passing initial cfg for now
+		passwordResetHandler := handlers.NewPasswordResetHandler(db, cfg, mailer) // Still passing initial cfg for now
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
 
-		emailChangeHandler := handlers.NewEmailChangeHandler(db, currentCfg, mailer) // Still passing initial cfg for now
+		emailChangeHandler := handlers.NewEmailChangeHandler(db, cfg, mailer) // Still passing initial cfg for now
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
 	}
 
-	// Pass the configProvider to the scheduler itself
 	return scl.NewScheduler(configProvider, db, executor.NewExecutor(hdls), logger), nil
 }

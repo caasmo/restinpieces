@@ -67,7 +67,7 @@ func main() {
 	route(cfg, app, cApp)
 
 	// Setup Scheduler - Pass initial config (cfg) for now
-	scheduler, err := setup.SetupScheduler(cfg, app.Db(), app.Logger())
+	scheduler, err := setup.SetupScheduler(configProvider, app.Db(), app.Logger())
 	if err != nil {
 		//app.Logger().Error("failed to initialize scheduler", "error", err)
 		os.Exit(1)
