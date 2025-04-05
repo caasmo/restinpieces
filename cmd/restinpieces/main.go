@@ -100,7 +100,8 @@ func handleServe(args []string) error {
 
 	// Start the server
 	srv := server.NewServer(configProvider, proxy, scheduler, app.Logger())
-	return srv.Run()
+	srv.Run()
+	return nil
 }
 
 func handleDumpConfig(args []string) error {
