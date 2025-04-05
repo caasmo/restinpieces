@@ -60,7 +60,8 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	// Calculate cooldown bucket for rate limiting
-	cooldownBucket := queue.CoolDownBucket(a.config.RateLimits.EmailVerificationCooldown, time.Now())
+	cfg := a.Config() // Get the current config
+	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.EmailVerificationCooldown, time.Now())
 
 	// Create queue job with cooldown bucket
 	payload, _ := json.Marshal(queue.PayloadEmailVerification{
@@ -121,10 +122,11 @@ func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	// Verify token signature using verification email secret
+	cfg := a.Config() // Get the current config
 	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
 		claims[crypto.ClaimEmail].(string),
 		user.Password,
-		a.config.Jwt.VerificationEmailSecret,
+		cfg.Jwt.VerificationEmailSecret,
 	)
 	if err != nil {
 		writeJsonError(w, errorEmailVerificationFailed)

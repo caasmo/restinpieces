@@ -67,7 +67,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get provider config
-	provider, ok := a.config.OAuth2Providers[req.Provider]
+	cfg := a.Config() // Get the current config
+	provider, ok := cfg.OAuth2Providers[req.Provider]
 	if !ok {
 		writeJsonError(w, errorInvalidOAuth2Provider)
 		return
@@ -185,7 +186,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// password is empty and thats fine. But the user can have both password and auth.
 	// We always pass to the signingkey the passwordHash
 	a.Logger().Debug("Generating JWT for user", "userID", user.ID)
-	jwtToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, a.config.Jwt.AuthSecret, a.config.Jwt.AuthTokenDuration)
+	cfg := a.Config() // Get the current config
+	jwtToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration)
 	if err != nil {
 		writeJsonError(w, errorTokenGeneration)
 		return
@@ -226,7 +228,8 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 	var providers []OAuth2ProviderInfo
 
 	// Loop through configured providers
-	for name, provider := range a.config.OAuth2Providers {
+	cfg := a.Config() // Get the current config
+	for name, provider := range cfg.OAuth2Providers {
 
 		state := crypto.Oauth2State()
 		oauth2Config := oauth2.Config{
