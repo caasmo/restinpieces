@@ -16,7 +16,7 @@ import (
 )
 
 // SetupApp initializes the core application components using the provided config provider and logger.
-func SetupApp(configProvider *config.Provider, logger *slog.Logger, dbFile string) (*core.App, *proxy.Proxy, error) {
+func SetupApp(configProvider *config.Provider, dbFile string) (*core.App, *proxy.Proxy, error) {
 
 	// Create the App instance first (without the proxy)
 	app, err := core.NewApp(
@@ -27,7 +27,7 @@ func SetupApp(configProvider *config.Provider, logger *slog.Logger, dbFile strin
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		core.WithConfigProvider(configProvider), // Pass the provider
-		core.WithLogger(logger),                 // Pass the logger
+		core.WithLogger(),                 // Pass the logger
 	)
 	if err != nil {
 		return nil, nil, err
