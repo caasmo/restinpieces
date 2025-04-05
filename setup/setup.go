@@ -17,10 +17,10 @@ import (
 
 func SetupApp(configProvider *config.Provider) (*core.App, *proxy.Proxy, error) {
 
-	initialCfg := configProvider.Get()
+	cfg := configProvider.Get()
 
 	app, err := core.NewApp(
-		WithDBCrawshaw(initialCfg.DBFile),
+		WithDBCrawshaw(cfg.DBFile),
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		core.WithConfigProvider(configProvider),
@@ -44,7 +44,7 @@ func SetupScheduler(cfg *config.Config, db db.Db, logger *slog.Logger) (*scl.Sch
 
 	if (cfg.Smtp != config.Smtp{}) {
 
-		mailer, err := mail.New(currentCfg.Smtp)
+		mailer, err := mail.New(cfg.Smtp)
 		if err != nil {
 			logger.Error("failed to create mailer", "error", err)
 			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?

@@ -74,4 +74,5 @@ func main() {
 	}
 
 	srv := server.NewServer(cfg.Server, proxy, scheduler, app.Logger())
+	srv.Run()
 }
