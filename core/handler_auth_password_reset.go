@@ -75,7 +75,8 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Calculate cooldown bucket for rate limiting
-	cooldownBucket := queue.CoolDownBucket(a.config.RateLimits.PasswordResetCooldown, time.Now())
+	cfg := a.Config() // Get the current config
+	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.PasswordResetCooldown, time.Now())
 
 	// Create queue job with cooldown bucket. Second insertion in same bucket
 	// will fail because unique
@@ -168,10 +169,11 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Verify token signature using password reset secret
+	cfg := a.Config() // Get the current config
 	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
 		claims[crypto.ClaimEmail].(string),
 		user.Password,
-		a.config.Jwt.PasswordResetSecret,
+		cfg.Jwt.PasswordResetSecret,
 	)
 	if err != nil {
 		writeJsonError(w, errorPasswordResetFailed)
