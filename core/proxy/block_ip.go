@@ -146,27 +146,3 @@ func (b *BlockIp) Process(ip string) error {
 	// Return nil as errors are handled within the goroutine or sketch processing
 	return nil
 }
-
-// Block for DisabledBlock does nothing and returns nil.
-func (d *DisabledBlock) Block(ip string) error {
-	return nil // Blocking is disabled
-}
-
-// DisabledBlock implements the FeatureBlocker interface but always returns false,
-// effectively disabling the blocking feature.
-type DisabledBlock struct{}
-
-// IsEnabled always returns false, indicating the feature is disabled.
-func (d *DisabledBlock) IsEnabled() bool {
-	return false
-}
-
-// Process for DisabledBlock does nothing and returns nil.
-func (d *DisabledBlock) Process(ip string) error {
-	return nil // Blocking is disabled
-}
-
-// IsBlocked always returns false, indicating no IP is ever blocked.
-func (d *DisabledBlock) IsBlocked(ip string) bool {
-	return false
-}

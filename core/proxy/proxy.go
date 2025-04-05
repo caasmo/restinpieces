@@ -37,12 +37,43 @@ type FeatureBlocker interface {
 	Blocker
 }
 
+// DisabledBlock implements the FeatureBlocker interface but always returns false,
+// effectively disabling the blocking feature.
+type DisabledBlock struct{}
+
+// IsEnabled always returns false, indicating the feature is disabled.
+func (d *DisabledBlock) IsEnabled() bool {
+	return false
+}
+
+// Block for DisabledBlock does nothing and returns nil.
+func (d *DisabledBlock) Block(ip string) error {
+	return nil // Blocking is disabled
+}
+
+// Process for DisabledBlock does nothing and returns nil.
+func (d *DisabledBlock) Process(ip string) error {
+	return nil // Blocking is disabled
+}
+
+// IsBlocked always returns false, indicating no IP is ever blocked.
+func (d *DisabledBlock) IsBlocked(ip string) bool {
+	return false
+}
+
 // NewProxy creates a new Proxy instance with the given app and configures its features.
 func NewProxy(app *core.App) *Proxy {
 	px := &Proxy{
 		app: app,
 		// config is no longer stored directly on Proxy
-		mimetypeBlocker: NewBlockMimetype(app), // Initialize Mimetype blocker
+		// mimetypeBlocker initialized below based on config
+	}
+
+	// Initialize Mimetype Blocker based on configuration
+	if app.Config().Proxy.Mimetype.Enabled {
+		px.mimetypeBlocker = NewBlockMimetype(app)
+	} else {
+		px.mimetypeBlocker = &DisabledBlock{}
 	}
 
 	// Call the method to set up the ipBlocker based on config
