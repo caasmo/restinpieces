@@ -76,24 +76,18 @@ func NewProxy(app *core.App) *Proxy {
 		px.mimetypeBlocker = &DisabledBlock{}
 	}
 
-	// Call the method to set up the ipBlocker based on config
-	// TODO
-	px.UpdateByConfig()
+	// Initialize the IP Blocker based on application configuration
+	if app.Config().Proxy.BlockIp.Enabled {
+		// Pass the application's cache and logger to the BlockIp implementation
+		px.ipBlocker = NewBlockIp(app.Cache(), app.Logger())
+	} else {
+		px.ipBlocker = &DisabledBlock{}
+	}
 
 	return px
 }
 
-// UpdateByConfig configures the Proxy's features, like the IP blocker,
-// based on the current application configuration.
-func (px *Proxy) UpdateByConfig() {
-	// Initialize the IP Blocker based on application configuration
-	if px.app.Config().Proxy.BlockIp.Enabled {
-		// Pass the application's cache and logger to the BlockIp implementation
-		px.ipBlocker = NewBlockIp(px.app.Cache(), px.app.Logger())
-	} else {
-		px.ipBlocker = &DisabledBlock{}
-	}
-}
+// UpdateByConfig method removed.
 
 func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Check if Mimetype blocking is enabled
