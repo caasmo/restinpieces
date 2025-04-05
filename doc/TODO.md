@@ -7,6 +7,21 @@
         - just initailiza alwya the sketch
         - check conf to use or not
 - is a framework, clear workflow 
+- commands
+    - bootstrap 
+        --config
+            - it puts default config harcoded in sqlite with zombiezen.
+        --env
+            - it makes a env file with prepoluplated secrets and placeholder string for services oauth like google. smtp
+        --db
+            - it go to migration, use zombiezen. to run script
+        --files
+            - creates files with comments ,b
+    - dump-config --json
+    - load-config --json
+    - serve stars the server
+        - default nothing
+    
 - good enough release
     - litestream or just cron each 5 minutes: see litestream 
     - configuration
