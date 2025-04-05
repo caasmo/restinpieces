@@ -35,11 +35,6 @@ func WithRouter(r router.Router) Option {
 // WithConfigProvider sets the application's configuration provider.
 func WithConfigProvider(p *config.Provider) Option {
 	return func(a *App) {
-		if p == nil {
-			// Handle nil provider case if necessary, maybe panic or log
-			// NewApp checks for nil provider later.
-			return // Or panic("config provider cannot be nil")
-		}
 		a.configProvider = p
 	}
 }

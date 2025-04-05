@@ -23,7 +23,7 @@ func SetupApp(configProvider *config.Provider) (*core.App, *proxy.Proxy, error) 
 		WithDBCrawshaw(cfg.DBFile),
 		WithRouterServeMux(),
 		WithCacheRistretto(),
-		core.WithConfig(cfg),
+		core.WithConfigProvider(configProvider),
 		//WithPhusLogger(nil), // Provide the logger using defaults
 		WithTextLogger(nil), // Provide the logger using defaults
 	)
