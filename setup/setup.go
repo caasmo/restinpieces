@@ -57,10 +57,10 @@ func SetupScheduler(configProvider *config.Provider, db db.Db, logger *slog.Logg
 			os.Exit(1) // Or return err
 		}
 
-		emailVerificationHandler := handlers.NewEmailVerificationHandler(db, cfg, mailer) // Still passing initial cfg for now
+		emailVerificationHandler := handlers.NewEmailVerificationHandler(db, configProvider, mailer) // Pass provider
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
 
-		passwordResetHandler := handlers.NewPasswordResetHandler(db, cfg, mailer) // Still passing initial cfg for now
+		passwordResetHandler := handlers.NewPasswordResetHandler(db, configProvider, mailer) // Pass provider
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
 
 		emailChangeHandler := handlers.NewEmailChangeHandler(db, configProvider, mailer) // Pass provider

@@ -15,22 +15,24 @@ import (
 
 // PasswordResetHandler handles password reset requests
 type PasswordResetHandler struct {
-	db     db.Db
-	config *config.Config
-	mailer *mail.Mailer
+	db             db.Db
+	configProvider *config.Provider
+	mailer         *mail.Mailer
 }
 
 // NewPasswordResetHandler creates a new PasswordResetHandler
-func NewPasswordResetHandler(db db.Db, cfg *config.Config, mailer *mail.Mailer) *PasswordResetHandler {
+func NewPasswordResetHandler(db db.Db, provider *config.Provider, mailer *mail.Mailer) *PasswordResetHandler {
 	return &PasswordResetHandler{
-		db:     db,
-		config: cfg,
-		mailer: mailer,
+		db:             db,
+		configProvider: provider,
+		mailer:         mailer,
 	}
 }
 
 // Handle implements the JobHandler interface for password reset requests
 func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error {
+	cfg := h.configProvider.Get()
+
 	var payload queue.PayloadPasswordReset
 	if err := json.Unmarshal(job.Payload, &payload); err != nil {
 		return fmt.Errorf("failed to parse password reset payload: %w", err)
@@ -57,8 +59,8 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 		user.ID,
 		user.Email,
 		user.Password,
-		h.config.Jwt.PasswordResetSecret,
-		h.config.Jwt.PasswordResetTokenDuration,
+		cfg.Jwt.PasswordResetSecret,
+		cfg.Jwt.PasswordResetTokenDuration,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create password reset token: %w", err)
@@ -66,8 +68,8 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 
 	// Construct callback URL to HTML page that will handle the password reset
 	callbackURL := fmt.Sprintf("%s%s?token=%s",
-		h.config.Server.BaseURL(),
-		h.config.Endpoints.ConfirmHtml(h.config.Endpoints.ConfirmPasswordReset),
+		cfg.Server.BaseURL(),
+		cfg.Endpoints.ConfirmHtml(cfg.Endpoints.ConfirmPasswordReset),
 		token)
 
 	// Send password reset email

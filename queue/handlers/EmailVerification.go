@@ -15,22 +15,24 @@ import (
 
 // EmailVerificationHandler handles email verification jobs
 type EmailVerificationHandler struct {
-	db     db.Db
-	config *config.Config
-	mailer *mail.Mailer
+	db             db.Db
+	configProvider *config.Provider
+	mailer         *mail.Mailer
 }
 
 // NewEmailVerificationHandler creates a new EmailVerificationHandler
-func NewEmailVerificationHandler(db db.Db, cfg *config.Config, mailer *mail.Mailer) *EmailVerificationHandler {
+func NewEmailVerificationHandler(db db.Db, provider *config.Provider, mailer *mail.Mailer) *EmailVerificationHandler {
 	return &EmailVerificationHandler{
-		db:     db,
-		config: cfg,
-		mailer: mailer,
+		db:             db,
+		configProvider: provider,
+		mailer:         mailer,
 	}
 }
 
 // Handle implements the JobHandler interface for email verification
 func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) error {
+	cfg := h.configProvider.Get()
+
 	var payload queue.PayloadEmailVerification
 	if err := json.Unmarshal(job.Payload, &payload); err != nil {
 		return fmt.Errorf("failed to parse email verification payload: %w", err)
@@ -57,8 +59,8 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 		user.ID,
 		user.Email,
 		user.Password,
-		h.config.Jwt.VerificationEmailSecret,
-		h.config.Jwt.VerificationEmailTokenDuration,
+		cfg.Jwt.VerificationEmailSecret,
+		cfg.Jwt.VerificationEmailTokenDuration,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create verification token: %w", err)
@@ -66,8 +68,8 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 
 	// Construct callback URL to HTML page that will handle the verification
 	callbackURL := fmt.Sprintf("%s%s?token=%s",
-		h.config.Server.BaseURL(),
-		h.config.Endpoints.ConfirmHtml(h.config.Endpoints.ConfirmEmailVerification),
+		cfg.Server.BaseURL(),
+		cfg.Endpoints.ConfirmHtml(cfg.Endpoints.ConfirmEmailVerification),
 		token)
 
 	// Send verification email
