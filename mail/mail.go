@@ -10,103 +10,62 @@ import (
 	"github.com/domodwyer/mailyak/v3"
 )
 
-// Mailer handles sending emails and implements queue.JobHandler
+// Mailer handles sending emails using configuration from a provider.
 type Mailer struct {
-	// host is the SMTP server hostname or IP address
-	// Example: "smtp.example.com" or "192.168.1.100"
-	host string
-
-	// port is the SMTP server port number
-	// Common ports: 25 (unencrypted), 465 (SSL/TLS), 587 (STARTTLS)
-	port int
-
-	// username is the authentication username for the SMTP server
-	// Typically an email address or system username
-	username string
-
-	// password is the authentication password for the SMTP server
-	// Should be stored securely and not logged
-	password string
-
-	// fromName is the sender name that will appear in the "From" header
-	// Example: "My App"
-	fromName string
-
-	// fromAddress is the email address that will appear in the "From" header
-	// Example: "noreply@example.com"
-	fromAddress string
-
-	// localName is the HELO/EHLO domain to use in SMTP communication
-	// If empty, defaults to "localhost"
-	localName string
-
-	// authMethod specifies the SMTP authentication mechanism
-	// Supported values: "plain", "cram-md5", "none"
-	// - "plain": Standard SMTP AUTH PLAIN (RFC 4616) - Recommended for most use cases
-	// - "cram-md5": CRAM-MD5 challenge-response (RFC 2195) - Less secure than PLAIN
-	// - "none": No authentication - Only for testing with local SMTP servers
-	// Note: The LOGIN authentication method has been removed as it is considered deprecated
-	// and insecure. Modern SMTP servers should use PLAIN authentication over TLS.
-	authMethod string
-
-	// useTLS enables explicit TLS encryption for the SMTP connection
-	// Used with port 465 (SMTPS)
-	// If true, establishes TLS connection immediately
-	useTLS bool
-
-	// useStartTLS enables STARTTLS encryption for the SMTP connection
-	// Used with port 587
-	// If true, upgrades plain connection to TLS after initial handshake
-	useStartTLS bool
+	configProvider *config.Provider
 }
 
-// New creates a new Mailer instance from config
-func New(cfg config.Smtp) (*Mailer, error) {
+// New creates a new Mailer instance using a config provider.
+func New(provider *config.Provider) (*Mailer, error) {
+	if provider == nil {
+		return nil, fmt.Errorf("config provider cannot be nil")
+	}
+	// Initial check if SMTP config is present? Or defer to send time?
+	// Let's defer to send time for now, allows starting without SMTP configured.
 	return &Mailer{
-		host:        cfg.Host,
-		port:        cfg.Port,
-		username:    cfg.Username,
-		password:    cfg.Password,
-		fromName:    cfg.FromName,
-		fromAddress: cfg.FromAddress,
-		localName:   cfg.LocalName,
-		authMethod:  cfg.AuthMethod,
-		useTLS:      cfg.UseTLS,
-		useStartTLS: cfg.UseStartTLS,
+		configProvider: provider,
 	}, nil
 }
 
-// createMailClient creates a new mailyak instance
+// createMailClient creates a new mailyak instance using current config from provider.
 func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
+	// Get the current SMTP configuration
+	smtpCfg := m.configProvider.Get().Smtp
+	if smtpCfg.Host == "" {
+		return nil, fmt.Errorf("SMTP host is not configured")
+	}
+
 	var auth smtp.Auth
-	switch m.authMethod {
+	switch smtpCfg.AuthMethod {
 	case "cram-md5":
-		auth = smtp.CRAMMD5Auth(m.username, m.password)
+		auth = smtp.CRAMMD5Auth(smtpCfg.Username, smtpCfg.Password)
 	case "none":
 		auth = nil
 	default: // "plain" or empty
-		auth = smtp.PlainAuth("", m.username, m.password, m.host)
+		auth = smtp.PlainAuth("", smtpCfg.Username, smtpCfg.Password, smtpCfg.Host)
 	}
 
-	if m.useTLS {
+	addr := fmt.Sprintf("%s:%d", smtpCfg.Host, smtpCfg.Port)
+
+	if smtpCfg.UseTLS {
 		// Use explicit TLS (SMTPS)
-		mail, err := mailyak.NewWithTLS(fmt.Sprintf("%s:%d", m.host, m.port), auth, &tls.Config{
-			ServerName:         m.host,
+		mail, err := mailyak.NewWithTLS(addr, auth, &tls.Config{
+			ServerName:         smtpCfg.Host,
 			InsecureSkipVerify: false, // Always verify certs in production
 		})
 		if err != nil {
 			return nil, err
 		}
-		if m.localName != "" {
-			mail.LocalName(m.localName)
+		if smtpCfg.LocalName != "" {
+			mail.LocalName(smtpCfg.LocalName)
 		}
 		return mail, nil
 	}
 
-	// Use plain connection (will automatically upgrade to STARTTLS if server supports it)
-	mail := mailyak.New(fmt.Sprintf("%s:%d", m.host, m.port), auth)
-	if m.localName != "" {
-		mail.LocalName(m.localName)
+	// Use plain connection (mailyak handles STARTTLS automatically if available)
+	mail := mailyak.New(addr, auth)
+	if smtpCfg.LocalName != "" {
+		mail.LocalName(smtpCfg.LocalName)
 	}
 	return mail, nil
 }
@@ -120,11 +79,14 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 		return fmt.Errorf("failed to create mail client: %w", err)
 	}
 
+	// Get current SMTP config for FromName/FromAddress
+	smtpCfg := m.configProvider.Get().Smtp
+
 	// Build email
 	mail.To(email)
-	mail.FromName(m.fromName)
-	mail.From(m.fromAddress)
-	mail.Subject(fmt.Sprintf("Verify your %s email", m.fromName))
+	mail.FromName(smtpCfg.FromName)
+	mail.From(smtpCfg.FromAddress)
+	mail.Subject(fmt.Sprintf("Verify your %s email", smtpCfg.FromName))
 	mail.HTML().Set(fmt.Sprintf(`
 		<p>Hello,</p>
 		<p>Thank you for joining us at %s.</p>
@@ -136,9 +98,9 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 			</a>
 		</p>
 		<p>Thanks,<br>%s team</p>
-	`, m.fromName, callbackURL, m.fromName))
+	`, smtpCfg.FromName, callbackURL, smtpCfg.FromName))
 
-	return fmt.Errorf("IN MAIL DEBUG: %s", callbackURL)
+	//return fmt.Errorf("IN MAIL DEBUG: %s", callbackURL)
 	// Send email with context timeout
 	done := make(chan error, 1)
 	go func() {
@@ -168,6 +130,9 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newE
 		return fmt.Errorf("failed to create mail client: %w", err)
 	}
 
+	// Get current SMTP config for FromName/FromAddress
+	smtpCfg := m.configProvider.Get().Smtp
+
 	// Create warning message if user has OAuth2 login
 	warning := ""
 	if hasOauth2Login {
@@ -179,8 +144,8 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newE
 
 	// Build email - send to new email address for verification
 	mail.To(newEmail)
-	mail.FromName(m.fromName)
-	mail.From(m.fromAddress)
+	mail.FromName(smtpCfg.FromName)
+	mail.From(smtpCfg.FromAddress)
 	mail.Subject(fmt.Sprintf("Confirm your email change to %s", newEmail))
 	mail.HTML().Set(fmt.Sprintf(`
 		<p>Hello,</p>
@@ -195,9 +160,9 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newE
 		</p>
 		<p>If you didn't request this change, please contact support immediately.</p>
 		<p>Thanks,<br>%s team</p>
-	`, oldEmail, newEmail, warning, callbackURL, m.fromName))
+	`, oldEmail, newEmail, warning, callbackURL, smtpCfg.FromName))
 
-	return fmt.Errorf("CHANGE EMAIL SEND DEBUG: %s", callbackURL)
+	//return fmt.Errorf("CHANGE EMAIL SEND DEBUG: %s", callbackURL)
 	// Send email with context timeout
 	done := make(chan error, 1)
 	go func() {
@@ -226,11 +191,14 @@ func (m *Mailer) SendPasswordResetEmail(ctx context.Context, email, callbackURL 
 		return fmt.Errorf("failed to create mail client: %w", err)
 	}
 
+	// Get current SMTP config for FromName/FromAddress
+	smtpCfg := m.configProvider.Get().Smtp
+
 	// Build email
 	mail.To(email)
-	mail.FromName(m.fromName)
-	mail.From(m.fromAddress)
-	mail.Subject(fmt.Sprintf("Reset your %s password", m.fromName))
+	mail.FromName(smtpCfg.FromName)
+	mail.From(smtpCfg.FromAddress)
+	mail.Subject(fmt.Sprintf("Reset your %s password", smtpCfg.FromName))
 	mail.HTML().Set(fmt.Sprintf(`
 		<p>Hello,</p>
 		<p>We received a request to reset your %s password.</p>
@@ -243,9 +211,9 @@ func (m *Mailer) SendPasswordResetEmail(ctx context.Context, email, callbackURL 
 		</p>
 		<p>If you didn't request this, you can safely ignore this email.</p>
 		<p>Thanks,<br>%s team</p>
-	`, m.fromName, callbackURL, m.fromName))
+	`, smtpCfg.FromName, callbackURL, smtpCfg.FromName))
 
-	return fmt.Errorf("IN MAIL DEBUGGGGGGGGGGGGGGGGGGGGGGGGG: %s", callbackURL)
+	//return fmt.Errorf("IN MAIL DEBUGGGGGGGGGGGGGGGGGGGGGGGGG: %s", callbackURL)
 
 	// Send email with context timeout
 	done := make(chan error, 1)
