@@ -62,9 +62,10 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	// Create queue payload
 	// this is for uniqueness
 	// use one request per bucket.
+	cfg := a.Config() // Get the current config
 	payload := queue.PayloadEmailChange{
 		UserID:         user.ID,
-		CooldownBucket: queue.CoolDownBucket(a.config.RateLimits.EmailChangeCooldown, time.Now()),
+		CooldownBucket: queue.CoolDownBucket(cfg.RateLimits.EmailChangeCooldown, time.Now()),
 	}
 
 	payloadExtra := queue.PayloadEmailChangeExtra{
@@ -154,10 +155,11 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Verify token signature using email change secret
+	cfg := a.Config() // Get the current config
 	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(
 		claims[crypto.ClaimEmail].(string),
 		user.Password,
-		a.config.Jwt.EmailChangeSecret,
+		cfg.Jwt.EmailChangeSecret,
 	)
 	if err != nil {
 		writeJsonError(w, errorTokenGeneration)
