@@ -17,8 +17,11 @@ import (
 
 func SetupApp(configProvider *config.Provider) (*core.App, *proxy.Proxy, error) {
 
+	// Get the initial config snapshot to retrieve DBFile path
+	initialCfg := configProvider.Get()
+
 	app, err := core.NewApp(
-		WithDBCrawshaw(dbFile), 
+		WithDBCrawshaw(initialCfg.DBFile), // Get DBFile from the provider's config
 		WithRouterServeMux(),
 		WithCacheRistretto(),
 		core.WithConfigProvider(configProvider), // Pass the provider
