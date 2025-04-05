@@ -23,8 +23,9 @@ func SetupApp(configProvider *config.Provider) (*core.App, *proxy.Proxy, error) 
 		WithDBCrawshaw(cfg.DBFile),
 		WithRouterServeMux(),
 		WithCacheRistretto(),
-		core.WithConfigProvider(configProvider),
-		core.WithLogger(nil),                       // Initialize logger using default setup option
+		core.WithConfig(cfg),
+		//WithPhusLogger(nil), // Provide the logger using defaults
+		WithTextLogger(nil), // Provide the logger using defaults
 	)
 	if err != nil {
 		return nil, nil, err

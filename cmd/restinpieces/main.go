@@ -41,17 +41,17 @@ func main() {
 	// Load initial configuration
 	cfg, err := config.Load(*dbfile)
 	if err != nil {
-		///slog.Error("failed to load initial config", "error", err) // Use default logger before app logger is ready
+		slog.Error("failed to load initial config", "error", err) // Use default logger before app logger is ready
 		os.Exit(1)
 	}
 
 	// Create the config provider with the initial config
 	configProvider := config.NewProvider(cfg)
 
-	app, proxy, err := setup.SetupApp(configProvider) // Pass provider and dbfile
+	app, proxy, err := setup.SetupApp(configProvider) 
 	if err != nil {
 		// Use default logger if app setup fails before logger is initialized
-		//slog.Error("failed to initialize app", "error", err)
+		slog.Error("failed to initialize app", "error", err)
 		os.Exit(1)
 	}
 	defer app.Close() // Defer close after successful app initialization
