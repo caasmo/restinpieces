@@ -298,8 +298,7 @@ func Load(dbfile string) (*Config, error) {
 				Enabled: true, // Default IP blocking to enabled (adjust as needed)
 			},
 			Mimetype: Mimetype{
-				Enabled: false, // Default Mimetype blocking to disabled
-				// Default whitelist for common web content types
+				Enabled: true, 
 				Whitelist: []string{
 					"application/json",
 					"text/html",

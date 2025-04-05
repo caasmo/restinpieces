@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"mime" // Import the mime package
 	"strings"
 
 	"github.com/caasmo/restinpieces/core"
@@ -37,14 +36,18 @@ func (b *BlockMimetype) IsEnabled() bool {
 }
 
 // IsBlocked checks if a given Content-Type header value is blocked (i.e., empty or not in the whitelist).
-func (b *BlockMimetype) IsBlocked(contentTypeHeader string) bool {
-	if contentTypeHeader == "" {
+func (b *BlockMimetype) IsBlocked(contentType string) bool {
+	if contentType== "" {
 		// Block requests with empty Content-Type header
 		return true
 	}
 
+	b.app.Logger().Info("fucking mt", "yo", contentType)
+	mediaType := strings.Split(contentType, ";")[0]
+	mediaType = strings.TrimSpace(mediaType)
+
 	// Perform direct, case-insensitive lookup against the whitelist
-	_, found := b.whitelist[strings.ToLower(contentTypeHeader)]
+	_, found := b.whitelist[strings.ToLower(mediaType)]
 
 	return !found // Blocked if NOT found in whitelist
 }
