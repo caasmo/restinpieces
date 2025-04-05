@@ -186,7 +186,6 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// password is empty and thats fine. But the user can have both password and auth.
 	// We always pass to the signingkey the passwordHash
 	a.Logger().Debug("Generating JWT for user", "userID", user.ID)
-	cfg := a.Config() // Get the current config
 	jwtToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration)
 	if err != nil {
 		writeJsonError(w, errorTokenGeneration)
