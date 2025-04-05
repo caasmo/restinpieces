@@ -49,13 +49,11 @@ func main() {
 	configProvider := config.NewProvider(cfg)
 
 	// Setup App, passing the provider and the db file path
-	// Note: SetupApp needs the logger, let's create one here
-	// TODO: Make logger configurable
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	// Logger is initialized inside SetupApp via core.WithLogger()
 	app, proxy, err := setup.SetupApp(configProvider, *dbfile) // Pass provider and dbfile
 	if err != nil {
-		logger.Error("failed to initialize app", "error", err) // Use the created logger
-		os.Exit(1)
+		// Use default logger if app setup fails before logger is initialized
+		slog.Error("failed to initialize app", "error", err)
 		os.Exit(1)
 	}
 	defer app.Close() // Defer close after successful app initialization
