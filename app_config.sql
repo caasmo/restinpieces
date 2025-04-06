@@ -15,9 +15,9 @@ CREATE TABLE IF NOT EXISTS app_config (
 
     -- created_at: Timestamp when this version was inserted, used for ordering
     -- format UTC, RFC3339
-    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
-
-    -- Index for efficient querying by creation time
-    INDEX idx_app_config_created (created_at DESC)
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
+
+-- Create index separately to avoid trailing bytes in table creation
+CREATE INDEX IF NOT EXISTS idx_app_config_created ON app_config(created_at DESC)
 
