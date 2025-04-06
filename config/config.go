@@ -295,10 +295,11 @@ func FillServer(cfg *Config) Server {
 	return s
 }
 
-//go:embed config.toml
-var defaultConfigToml []byte
-
 func Load(dbfile string) (*Config, error) {
+	// Embed the config file directly within the function scope
+	//go:embed config.toml
+	var defaultConfigToml []byte
+
 	// 1. Start with an empty config struct
 	cfg := &Config{}
 
