@@ -3,22 +3,23 @@ package main
 import (
 	"context"
 	"flag"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 type AppCreator struct {
-	dbfile        string
-	migrationsDir string
-	verbose       bool
-	logger        *slog.Logger
-	pool          *sqlitex.Pool
+	dbfile  string
+	verbose bool
+	logger  *slog.Logger
+	pool    *sqlitex.Pool
 }
 
 func NewAppCreator(dbfile string, verbose bool) *AppCreator {
@@ -33,10 +34,9 @@ func NewAppCreator(dbfile string, verbose bool) *AppCreator {
 	}
 
 	return &AppCreator{
-		dbfile:        dbfile,
-		migrationsDir: migrationsDir,
-		verbose:       verbose,
-		logger:        logger,
+		dbfile:  dbfile,
+		verbose: verbose,
+		logger:  logger,
 	}
 }
 
@@ -123,7 +123,7 @@ func main() {
 	verbose := flag.Bool("v", false, "Enable verbose output")
 	flag.Parse()
 
-	creator := NewAppCreator(*dbfile, *migrationsDir, *verbose)
+	creator := NewAppCreator(*dbfile, *verbose)
 
 	if err := creator.CreateDatabase(); err != nil {
 		os.Exit(1)
