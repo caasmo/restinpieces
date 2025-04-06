@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"io/fs"
 	"log/slog"
 	"os"
