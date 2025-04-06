@@ -6,7 +6,7 @@
 -- your job payloads. If payload too long, consider deterministic serialization
 -- + hash
 CREATE TABLE job_queue (
-	-- the comlumn is already defined as an INTEGER PRIMARY KEY, it's actually an alias for the rowid
+	-- the column is already defined as an INTEGER PRIMARY KEY, it's actually an alias for the rowid
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     job_type TEXT NOT NULL DEFAULT '',  -- Type of job (email_verification, password_reset, etc.)
     payload TEXT NOT NULL DEFAULT '',   -- JSON payload with job-specific data, but only the fields needed for uniqueness
