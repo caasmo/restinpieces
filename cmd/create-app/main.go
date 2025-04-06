@@ -21,21 +21,12 @@ type AppCreator struct {
 	pool   *sqlitex.Pool
 }
 
-func NewAppCreator(dbfile string, verbose bool) *AppCreator {
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-
-	if verbose {
-		logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		}))
-	}
-
+func NewAppCreator(dbfile string) *AppCreator {
 	return &AppCreator{
-		dbfile:  dbfile,
-		verbose: verbose,
-		logger:  logger,
+		dbfile: dbfile,
+		logger: slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})),
 	}
 }
 
