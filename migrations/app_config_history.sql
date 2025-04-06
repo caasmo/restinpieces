@@ -21,15 +21,3 @@ CREATE TABLE IF NOT EXISTS config_history (
     INDEX idx_config_history_created (created_at DESC)
 );
 
--- Create a trigger to automatically maintain a limited history
--- Keeps only the most recent 100 versions (adjust as needed)
-CREATE TRIGGER IF NOT EXISTS trim_config_history
-AFTER INSERT ON config_history
-BEGIN
-    DELETE FROM config_history
-    WHERE id NOT IN (
-        SELECT id FROM config_history
-        ORDER BY created_at DESC
-        LIMIT 100
-    );
-END;
