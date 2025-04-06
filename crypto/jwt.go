@@ -108,7 +108,7 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 // - Creating the signing key from user credentials
 // - Setting up standard claims
 // - Generating and signing the token
-func NewJwtSessionToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, error) {
+func NewJwtSessionToken(userID, email, passwordHash, secret string, duration time.Duration) (string, error) {
 	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
@@ -125,7 +125,7 @@ func NewJwtSessionToken(userID, email, passwordHash string, secret []byte, durat
 }
 
 // NewJwtPasswordResetToken creates a JWT specifically for password reset
-func NewJwtEmailChangeToken(userID, oldEmail, newEmail, passwordHash string, secret []byte, duration time.Duration) (string, error) {
+func NewJwtEmailChangeToken(userID, oldEmail, newEmail, passwordHash, secret string, duration time.Duration) (string, error) {
 	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(oldEmail, passwordHash, secret)
 	if err != nil {
@@ -144,7 +144,7 @@ func NewJwtEmailChangeToken(userID, oldEmail, newEmail, passwordHash string, sec
 	return NewJwt(claims, signingKey, duration)
 }
 
-func NewJwtPasswordResetToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, error) {
+func NewJwtPasswordResetToken(userID, email, passwordHash, secret string, duration time.Duration) (string, error) {
 	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
@@ -164,7 +164,7 @@ func NewJwtPasswordResetToken(userID, email, passwordHash string, secret []byte,
 
 // NewJwtEmailVerificationToken creates a JWT specifically for email verification
 // It includes additional claims needed for verification
-func NewJwtEmailVerificationToken(userID, email, passwordHash string, secret []byte, duration time.Duration) (string, error) {
+func NewJwtEmailVerificationToken(userID, email, passwordHash, secret string, duration time.Duration) (string, error) {
 	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
