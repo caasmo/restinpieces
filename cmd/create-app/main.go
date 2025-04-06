@@ -125,10 +125,9 @@ func (ac *AppCreator) InsertConfig() error {
 }
 
 func main() {
-	dbfile := flag.String("dbfile", "app.db", "SQLite database file to create")
-	flag.Parse()
-
-	creator := NewAppCreator(*dbfile)
+	const defaultDbFile = "app.db"
+	creator := NewAppCreator(defaultDbFile)
+	creator.logger.Info("creating sqlite file", "path", defaultDbFile)
 
 	// Always create .env file if it doesn't exist
 	if err := creator.CreateEnvFile(); err != nil && !os.IsExist(err) {
@@ -149,5 +148,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	creator.logger.Info("database created successfully", "file", *dbfile)
+	creator.logger.Info("database created successfully", "file", defaultDbFile)
 }
