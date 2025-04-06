@@ -41,7 +41,7 @@ func WithRouterHttprouter() core.Option {
 }
 
 func WithCacheRistretto() core.Option {
-	cache, _ := ristretto.New[string, interface{}]() // Explicit string keys and interface{} values
+	cache, _ := ristretto.New[any]() // Explicit string keys and interface{} values
 	// TODO fatal
 	return core.WithCache(cache)
 }
