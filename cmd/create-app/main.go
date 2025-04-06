@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
+	"context"
 
 	"github.com/caasmo/restinpieces/config"
 	"zombiezen.com/go/sqlite"
