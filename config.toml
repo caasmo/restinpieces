@@ -1,0 +1,179 @@
+# Configuration for the RestInPieces application
+
+# Path to the SQLite database file.
+DBFile = "bench.db"
+
+# Directory containing static web assets (relative to application root).
+# These assets can be embedded in the binary or served from the filesystem.
+PublicDir = "static/dist"
+
+
+# --- Server Settings ---
+[Server]
+  # Network address and port the HTTP server listens on.
+  # Examples: ":8080" (all interfaces, port 8080), "localhost:9000"
+  Addr = ":8080"
+
+  # Maximum duration the server waits for ongoing requests to complete before shutting down.
+  ShutdownGracefulTimeout = "15s"
+
+  # Maximum duration for reading the entire request, including the body.
+  ReadTimeout = "2s"
+
+  # Maximum duration for reading only the request headers.
+  ReadHeaderTimeout = "2s"
+
+  # Maximum duration before timing out writes of the response.
+  WriteTimeout = "3s"
+
+  # Maximum duration for waiting for the next request on a keep-alive connection.
+  IdleTimeout = "1m"
+
+  # If behind a trusted proxy, specify the header containing the real client IP.
+  # Common values: "X-Forwarded-For", "X-Real-IP". Leave empty if not behind a proxy.
+  ClientIpProxyHeader = ""
+
+
+# --- Proxy Layer Settings ---
+[Proxy]
+  # Settings related to IP address blocking.
+  [Proxy.BlockIp]
+    # Enable or disable automatic IP blocking based on request frequency.
+    Enabled = true
+    # Future settings like block duration, thresholds, etc., would go here.
+
+
+# --- Background Job Scheduler Settings ---
+[Scheduler]
+  # How often the scheduler checks the database for pending jobs.
+  Interval = "60s"
+
+  # Maximum number of jobs fetched from the database in each interval.
+  # Prevents overwhelming workers if the queue is large.
+  MaxJobsPerTick = 10
+
+  # Number of concurrent job processing workers per available CPU core.
+  # Increase for I/O-bound jobs, decrease for CPU-bound jobs.
+  ConcurrencyMultiplier = 2
+
+
+# --- Rate Limiting Settings ---
+[RateLimits]
+  # Minimum time a user must wait between requesting password resets for the same account.
+  PasswordResetCooldown = "2h"
+
+  # Minimum time a user must wait between requesting email verifications for the same email.
+  EmailVerificationCooldown = "1h"
+
+  # Minimum time a user must wait between requesting email address changes.
+  EmailChangeCooldown = "1h"
+
+
+# --- JWT (JSON Web Token) Settings ---
+# IMPORTANT: Actual secret keys MUST NOT be stored here.
+# They should be loaded securely, typically from environment variables or a secret manager.
+[Jwt]
+  # Duration for which standard authentication tokens are valid.
+  AuthTokenDuration = "45m"
+
+  # Duration for which email verification tokens are valid.
+  VerificationEmailTokenDuration = "24h"
+
+  # Duration for which password reset tokens are valid.
+  PasswordResetTokenDuration = "1h"
+
+  # Duration for which email change confirmation tokens are valid.
+  EmailChangeTokenDuration = "1h"
+
+  # AuthSecret: 32-byte secret for signing auth tokens. LOAD FROM ENV/SECRET STORE.
+  # VerificationEmailSecret: 32-byte secret for email verification tokens. LOAD FROM ENV/SECRET STORE.
+  # PasswordResetSecret: 32-byte secret for password reset tokens. LOAD FROM ENV/SECRET STORE.
+  # EmailChangeSecret: 32-byte secret for email change tokens. LOAD FROM ENV/SECRET STORE.
+
+
+# --- SMTP Settings for Sending Emails ---
+[Smtp]
+  # SMTP server hostname or IP address.
+  Host = "smtp.gmail.com" # Example: Gmail
+
+  # SMTP server port (e.g., 587 for TLS/STARTTLS, 465 for SSL, 25 for unencrypted).
+  Port = 587 # Example: Gmail STARTTLS
+
+  # Display name for the sender (e.g., "My Application").
+  FromName = "My App"
+
+  # Email address emails will be sent from (e.g., "noreply@example.com").
+  # For Gmail, this might need to be the same as Username or a configured alias.
+  # Load from ENV recommended: e.g., SMTP_FROM_ADDRESS
+  FromAddress = "" # Set via environment variable SMTP_FROM_ADDRESS
+
+  # Domain name sent during HELO/EHLO handshake. Defaults to "localhost".
+  # Set to your application's domain name for better deliverability.
+  LocalName = ""
+
+  # Authentication method: "plain", "login", "cram-md5", or "none".
+  AuthMethod = "plain" # Example: Gmail requires PLAIN
+
+  # Use explicit TLS (connects directly using TLS, usually port 465).
+  UseTLS = false
+
+  # Use STARTTLS (connects unencrypted, then upgrades to TLS, usually port 587).
+  UseStartTLS = true # Example: Gmail requires STARTTLS on port 587
+
+  # Username: SMTP account username. LOAD FROM ENV (e.g., SMTP_USERNAME).
+  # Password: SMTP account password or app-specific password. LOAD FROM ENV (e.g., SMTP_PASSWORD).
+
+
+# --- API Endpoint Paths ---
+# Defines the HTTP method and path for core API actions.
+[Endpoints]
+  RefreshAuth              = "POST /api/refresh-auth"
+  RequestEmailVerification = "POST /api/request-email-verification"
+  ConfirmEmailVerification = "POST /api/confirm-email-verification"
+  ListEndpoints            = "GET /api/list-endpoints"
+  AuthWithPassword         = "POST /api/auth-with-password"
+  AuthWithOAuth2           = "POST /api/auth-with-oauth2"
+  RegisterWithPassword     = "POST /api/register-with-password"
+  ListOAuth2Providers      = "GET /api/list-oauth2-providers"
+  RequestPasswordReset     = "POST /api/request-password-reset"
+  ConfirmPasswordReset     = "POST /api/confirm-password-reset"
+  RequestEmailChange       = "POST /api/request-email-change"
+  ConfirmEmailChange       = "POST /api/confirm-email-change"
+
+
+# --- OAuth2 Provider Settings ---
+# Define configurations for supported OAuth2 providers (e.g., Google, GitHub).
+# Client IDs and Secrets MUST be loaded from environment variables.
+[OAuth2Providers]
+
+  # Example configuration for Google OAuth2
+  [OAuth2Providers.google]
+    Name         = "google"
+    DisplayName  = "Google"
+    # RedirectURL is typically constructed dynamically based on Server.Addr/BaseURL.
+    # Example format: "http://localhost:8080/oauth2/callback/"
+    # RedirectURL  = "" # Set dynamically or ensure it matches provider console setup.
+    AuthURL      = "https://accounts.google.com/o/oauth2/v2/auth"
+    TokenURL     = "https://oauth2.googleapis.com/token"
+    UserInfoURL  = "https://www.googleapis.com/oauth2/v3/userinfo"
+    Scopes       = ["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"]
+    PKCE         = true
+    # ClientID: Load from environment variable OAUTH2_GOOGLE_CLIENT_ID
+    # ClientSecret: Load from environment variable OAUTH2_GOOGLE_CLIENT_SECRET
+
+  # Example configuration for GitHub OAuth2
+  [OAuth2Providers.github]
+    Name         = "github"
+    DisplayName  = "GitHub"
+    # RedirectURL is typically constructed dynamically based on Server.Addr/BaseURL.
+    # Example format: "http://localhost:8080/oauth2/callback/"
+    # RedirectURL  = "" # Set dynamically or ensure it matches provider console setup.
+    AuthURL      = "https://github.com/login/oauth/authorize"
+    TokenURL     = "https://github.com/login/oauth/access_token"
+    UserInfoURL  = "https://api.github.com/user"
+    Scopes       = ["read:user", "user:email"]
+    PKCE         = true
+    # ClientID: Load from environment variable OAUTH2_GITHUB_CLIENT_ID
+    # ClientSecret: Load from environment variable OAUTH2_GITHUB_CLIENT_SECRET
+
+# Add other providers (e.g., Facebook, Microsoft) here following the same pattern.
