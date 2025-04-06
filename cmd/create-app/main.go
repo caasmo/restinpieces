@@ -127,13 +127,13 @@ func (ac *AppCreator) InsertConfig() error {
 func main() {
 	const defaultDbFile = "app.db"
 	creator := NewAppCreator(defaultDbFile)
-	creator.logger.Info("creating sqlite file", "path", defaultDbFile)
 
 	// Create new .env file from example (will exit if .env exists)
 	if err := creator.CreateEnvFile(); err != nil {
 		os.Exit(1)
 	}
 
+	creator.logger.Info("creating sqlite file", "path", defaultDbFile)
 	if err := creator.CreateDatabase(); err != nil {
 		os.Exit(1)
 	}
