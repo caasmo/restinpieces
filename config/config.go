@@ -19,16 +19,6 @@ var defaultConfigToml []byte
 // LoadSecret loads a secret from an environment variable.
 // If the env var is empty, it returns the defaultValue.
 // Returns an error if both are empty.
-func LoadSecret(envVar string, defaultValue string) (string, error) {
-	if value := os.Getenv(envVar); value != "" {
-		return value, nil
-	}
-	if defaultValue != "" {
-		return defaultValue, nil
-	}
-	return "", fmt.Errorf("secret required: set %s in environment variables or in config", envVar)
-}
-
 type Provider struct {
 	value atomic.Value // Holds the current *Config
 }
@@ -255,6 +245,17 @@ type BlockIp struct {
 type Proxy struct {
 	BlockIp BlockIp
 }
+
+func LoadSecret(envVar string, defaultValue string) (string, error) {
+	if value := os.Getenv(envVar); value != "" {
+		return value, nil
+	}
+	if defaultValue != "" {
+		return defaultValue, nil
+	}
+	return "", fmt.Errorf("secret required: set %s in environment variables or in config", envVar)
+}
+
 
 func Load(dbfile string) (*Config, error) {
 	// 1. Start with an empty config struct
