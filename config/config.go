@@ -162,13 +162,13 @@ type RateLimits struct {
 }
 
 type Jwt struct {
-	AuthSecret                     []byte
+	AuthSecret                     string
 	AuthTokenDuration              time.Duration
-	VerificationEmailSecret        []byte
+	VerificationEmailSecret        string
 	VerificationEmailTokenDuration time.Duration
-	PasswordResetSecret            []byte
+	PasswordResetSecret            string
 	PasswordResetTokenDuration     time.Duration
-	EmailChangeSecret              []byte
+	EmailChangeSecret              string
 	EmailChangeTokenDuration       time.Duration
 }
 
@@ -258,29 +258,25 @@ func LoadEnvSecret(envVar string, defaultValue string) (string, error) {
 
 func LoadJwt(cfg *Config) error {
 	var err error
-	authSecret, err := LoadEnvSecret("JWT_AUTH_SECRET", string(cfg.Jwt.AuthSecret))
+	cfg.Jwt.AuthSecret, err = LoadEnvSecret("JWT_AUTH_SECRET", cfg.Jwt.AuthSecret)
 	if err != nil {
 		return fmt.Errorf("failed to load auth secret: %w", err)
 	}
-	cfg.Jwt.AuthSecret = []byte(authSecret)
 
-	verifSecret, err := LoadEnvSecret("JWT_VERIFICATION_EMAIL_SECRET", string(cfg.Jwt.VerificationEmailSecret))
+	cfg.Jwt.VerificationEmailSecret, err = LoadEnvSecret("JWT_VERIFICATION_EMAIL_SECRET", cfg.Jwt.VerificationEmailSecret)
 	if err != nil {
 		return fmt.Errorf("failed to load verification email secret: %w", err)
 	}
-	cfg.Jwt.VerificationEmailSecret = []byte(verifSecret)
 
-	resetSecret, err := LoadEnvSecret("JWT_PASSWORD_RESET_SECRET", string(cfg.Jwt.PasswordResetSecret))
+	cfg.Jwt.PasswordResetSecret, err = LoadEnvSecret("JWT_PASSWORD_RESET_SECRET", cfg.Jwt.PasswordResetSecret)
 	if err != nil {
 		return fmt.Errorf("failed to load password reset secret: %w", err)
 	}
-	cfg.Jwt.PasswordResetSecret = []byte(resetSecret)
 
-	changeSecret, err := LoadEnvSecret("JWT_EMAIL_CHANGE_SECRET", string(cfg.Jwt.EmailChangeSecret))
+	cfg.Jwt.EmailChangeSecret, err = LoadEnvSecret("JWT_EMAIL_CHANGE_SECRET", cfg.Jwt.EmailChangeSecret)
 	if err != nil {
 		return fmt.Errorf("failed to load email change secret: %w", err)
 	}
-	cfg.Jwt.EmailChangeSecret = []byte(changeSecret)
 
 	return nil
 }
