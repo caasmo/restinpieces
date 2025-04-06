@@ -21,6 +21,11 @@ type AppCreator struct {
 }
 
 func (ac *AppCreator) CreateEnvFile() error {
+	if _, err := os.Stat(".env"); err == nil {
+		ac.logger.Error(".env file already exists - remove it first if you want to recreate it")
+		return os.ErrExist
+	}
+
 	if err := os.WriteFile(".env", config.DefaultEnvExample, 0644); err != nil {
 		ac.logger.Error("failed to create .env file", "error", err)
 		return err
@@ -124,13 +129,7 @@ func main() {
 	creator := NewAppCreator(defaultDbFile)
 	creator.logger.Info("creating sqlite file", "path", defaultDbFile)
 
-	// Check if .env exists and exit if it does
-	if _, err := os.Stat(".env"); err == nil {
-		creator.logger.Error(".env file already exists - remove it first if you want to recreate it")
-		os.Exit(1)
-	}
-
-	// Create new .env file from example
+	// Create new .env file from example (will exit if .env exists)
 	if err := creator.CreateEnvFile(); err != nil {
 		os.Exit(1)
 	}
