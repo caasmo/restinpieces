@@ -1,6 +1,6 @@
 -- Table for tracking configuration history with versioning
 -- All time fields are UTC, RFC3339
-CREATE TABLE IF NOT EXISTS app_config_history (
+CREATE TABLE IF NOT EXISTS config_history (
     -- id: Unique identifier for this specific version of the config
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -24,11 +24,11 @@ CREATE TABLE IF NOT EXISTS app_config_history (
 -- Create a trigger to automatically maintain a limited history
 -- Keeps only the most recent 100 versions (adjust as needed)
 CREATE TRIGGER IF NOT EXISTS trim_config_history
-AFTER INSERT ON app_config_history
+AFTER INSERT ON config_history
 BEGIN
-    DELETE FROM app_config_history
+    DELETE FROM config_history
     WHERE id NOT IN (
-        SELECT id FROM app_config_history
+        SELECT id FROM config_history
         ORDER BY created_at DESC
         LIMIT 100
     );
