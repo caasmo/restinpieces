@@ -1,6 +1,6 @@
 -- Table for tracking configuration history with versioning
 -- All time fields are UTC, RFC3339
-CREATE TABLE IF NOT EXISTS config_history (
+CREATE TABLE IF NOT EXISTS app_config (
     -- id: Unique identifier for this specific version of the config
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
@@ -18,6 +18,6 @@ CREATE TABLE IF NOT EXISTS config_history (
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
 
     -- Index for efficient querying by creation time
-    INDEX idx_config_history_created (created_at DESC)
+    INDEX idx_app_config_created (created_at DESC)
 );
 
