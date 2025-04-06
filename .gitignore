@@ -1,5 +1,6 @@
 # Environment files
 .env
+!.env.example
 
 # Ignore all SQLite database files
 *.db
