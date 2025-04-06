@@ -85,10 +85,17 @@ PublicDir = "static/dist"
   # Duration for which email change confirmation tokens are valid.
   EmailChangeTokenDuration = "1h"
 
-  # AuthSecret: 32-byte secret for signing auth tokens. LOAD FROM ENV/SECRET STORE.
-  # VerificationEmailSecret: 32-byte secret for email verification tokens. LOAD FROM ENV/SECRET STORE.
-  # PasswordResetSecret: 32-byte secret for password reset tokens. LOAD FROM ENV/SECRET STORE.
-  # EmailChangeSecret: 32-byte secret for email change tokens. LOAD FROM ENV/SECRET STORE.
+  # AuthSecret: Set via JWT_AUTH_SECRET environment variable
+  AuthSecret = ""
+  
+  # VerificationEmailSecret: Set via JWT_VERIFICATION_EMAIL_SECRET environment variable
+  VerificationEmailSecret = ""
+  
+  # PasswordResetSecret: Set via JWT_PASSWORD_RESET_SECRET environment variable
+  PasswordResetSecret = ""
+  
+  # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable
+  EmailChangeSecret = ""
 
 
 # --- SMTP Settings for Sending Emails ---
