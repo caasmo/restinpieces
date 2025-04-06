@@ -16,10 +16,9 @@ import (
 )
 
 type AppCreator struct {
-	dbfile  string
-	verbose bool
-	logger  *slog.Logger
-	pool    *sqlitex.Pool
+	dbfile string
+	logger *slog.Logger
+	pool   *sqlitex.Pool
 }
 
 func NewAppCreator(dbfile string, verbose bool) *AppCreator {
@@ -120,10 +119,9 @@ func (ac *AppCreator) InsertConfig() error {
 
 func main() {
 	dbfile := flag.String("dbfile", "app.db", "SQLite database file to create")
-	verbose := flag.Bool("v", false, "Enable verbose output")
 	flag.Parse()
 
-	creator := NewAppCreator(*dbfile, *verbose)
+	creator := NewAppCreator(*dbfile)
 
 	if err := creator.CreateDatabase(); err != nil {
 		os.Exit(1)
