@@ -126,7 +126,11 @@ func main() {
 			os.Exit(1)
 		}
 		slog.Info("created .env file from example")
-		os.Exit(0)
+		
+		// Don't exit if -dbfile was also provided
+		if *dbfile == "app.db" {
+			os.Exit(0)
+		}
 	}
 
 	creator := NewAppCreator(*dbfile)
