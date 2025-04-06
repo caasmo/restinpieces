@@ -246,7 +246,7 @@ type Proxy struct {
 	BlockIp BlockIp
 }
 
-func LoadSecret(envVar string, defaultValue string) (string, error) {
+func LoadEnvSecret(envVar string, defaultValue string) (string, error) {
 	if value := os.Getenv(envVar); value != "" {
 		return value, nil
 	}
@@ -258,25 +258,25 @@ func LoadSecret(envVar string, defaultValue string) (string, error) {
 
 func LoadJwt(cfg *Config) error {
 	var err error
-	authSecret, err := LoadSecret("JWT_AUTH_SECRET", string(cfg.Jwt.AuthSecret))
+	authSecret, err := LoadEnvSecret("JWT_AUTH_SECRET", string(cfg.Jwt.AuthSecret))
 	if err != nil {
 		return fmt.Errorf("failed to load auth secret: %w", err)
 	}
 	cfg.Jwt.AuthSecret = []byte(authSecret)
 
-	verifSecret, err := LoadSecret("JWT_VERIFICATION_EMAIL_SECRET", string(cfg.Jwt.VerificationEmailSecret))
+	verifSecret, err := LoadEnvSecret("JWT_VERIFICATION_EMAIL_SECRET", string(cfg.Jwt.VerificationEmailSecret))
 	if err != nil {
 		return fmt.Errorf("failed to load verification email secret: %w", err)
 	}
 	cfg.Jwt.VerificationEmailSecret = []byte(verifSecret)
 
-	resetSecret, err := LoadSecret("JWT_PASSWORD_RESET_SECRET", string(cfg.Jwt.PasswordResetSecret))
+	resetSecret, err := LoadEnvSecret("JWT_PASSWORD_RESET_SECRET", string(cfg.Jwt.PasswordResetSecret))
 	if err != nil {
 		return fmt.Errorf("failed to load password reset secret: %w", err)
 	}
 	cfg.Jwt.PasswordResetSecret = []byte(resetSecret)
 
-	changeSecret, err := LoadSecret("JWT_EMAIL_CHANGE_SECRET", string(cfg.Jwt.EmailChangeSecret))
+	changeSecret, err := LoadEnvSecret("JWT_EMAIL_CHANGE_SECRET", string(cfg.Jwt.EmailChangeSecret))
 	if err != nil {
 		return fmt.Errorf("failed to load email change secret: %w", err)
 	}
@@ -289,7 +289,7 @@ func LoadSmtp(cfg *Config) error {
 	cfg.Smtp.Username = os.Getenv(EnvSmtpUsername)
 	
 	var err error
-	cfg.Smtp.Password, err = LoadSecret(EnvSmtpPassword, cfg.Smtp.Password)
+	cfg.Smtp.Password, err = LoadEnvSecret(EnvSmtpPassword, cfg.Smtp.Password)
 	if err != nil {
 		return fmt.Errorf("failed to load SMTP password: %w", err)
 	}
@@ -307,8 +307,8 @@ func LoadOAuth2(cfg *Config) error {
 	// Google OAuth2
 	if googleCfg, ok := cfg.OAuth2Providers[OAuth2ProviderGoogle]; ok {
 		var errID, errSecret error
-		googleCfg.ClientID, errID = LoadSecret(EnvGoogleClientID, googleCfg.ClientID)
-		googleCfg.ClientSecret, errSecret = LoadSecret(EnvGoogleClientSecret, googleCfg.ClientSecret)
+		googleCfg.ClientID, errID = LoadEnvSecret(EnvGoogleClientID, googleCfg.ClientID)
+		googleCfg.ClientSecret, errSecret = LoadEnvSecret(EnvGoogleClientSecret, googleCfg.ClientSecret)
 		googleCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
 		
 		if errID != nil || errSecret != nil {
@@ -321,8 +321,8 @@ func LoadOAuth2(cfg *Config) error {
 	// GitHub OAuth2
 	if githubCfg, ok := cfg.OAuth2Providers[OAuth2ProviderGitHub]; ok {
 		var errID, errSecret error
-		githubCfg.ClientID, errID = LoadSecret(EnvGithubClientID, githubCfg.ClientID)
-		githubCfg.ClientSecret, errSecret = LoadSecret(EnvGithubClientSecret, githubCfg.ClientSecret)
+		githubCfg.ClientID, errID = LoadEnvSecret(EnvGithubClientID, githubCfg.ClientID)
+		githubCfg.ClientSecret, errSecret = LoadEnvSecret(EnvGithubClientSecret, githubCfg.ClientSecret)
 		githubCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
 		
 		if errID != nil || errSecret != nil {
