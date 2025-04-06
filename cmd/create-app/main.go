@@ -64,9 +64,11 @@ func (ac *AppCreator) RunMigrations() error {
 		return err
 	}
 	defer ac.pool.Put(conn)
-	migrations, err := os.ReadDir(ac.migrationsDir)
+	
+	// Read migration files from embedded FS
+	migrations, err := fs.ReadDir(migrations.Schema(), ".")
 	if err != nil {
-		ac.logger.Error("failed to read migrations directory", "error", err)
+		ac.logger.Error("failed to read embedded migrations", "error", err)
 		return err
 	}
 
@@ -75,10 +77,11 @@ func (ac *AppCreator) RunMigrations() error {
 			continue
 		}
 
-		path := filepath.Join(ac.migrationsDir, migration.Name())
-		sql, err := os.ReadFile(path)
+		sql, err := fs.ReadFile(migrations.Schema(), migration.Name())
 		if err != nil {
-			ac.logger.Error("failed to read migration file", "file", path, "error", err)
+			ac.logger.Error("failed to read embedded migration", 
+				"file", migration.Name(), 
+				"error", err)
 			return err
 		}
 
