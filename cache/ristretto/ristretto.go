@@ -1,14 +1,11 @@
 package ristretto
 
 import (
-	"time"
-
-	"github.com/caasmo/restinpieces/cache"
-	// https://pkg.go.dev/github.com/dgraph-io/ristretto/v2
 	"fmt"
 	"time"
 
 	"github.com/caasmo/restinpieces/cache"
+	// https://pkg.go.dev/github.com/dgraph-io/ristretto/v2
 	ristr "github.com/dgraph-io/ristretto/v2"
 )
 

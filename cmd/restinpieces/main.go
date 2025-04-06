@@ -15,7 +15,6 @@ import (
 	"github.com/caasmo/restinpieces/setup"
 )
 
-
 // --- Command Handlers ---
 
 func handleBootstrap(args []string) error {
@@ -35,7 +34,7 @@ func handleBootstrap(args []string) error {
 		fmt.Fprintf(os.Stderr, "Initialize application resources\n\n")
 		fmt.Fprintf(os.Stderr, "Flags:\n")
 		fmt.Fprintf(os.Stderr, "  --config        Initialize configuration\n")
-		fmt.Fprintf(os.Stderr, "  --db           Initialize database\n") 
+		fmt.Fprintf(os.Stderr, "  --db           Initialize database\n")
 		fmt.Fprintf(os.Stderr, "  --env          Initialize environment\n")
 		fmt.Fprintf(os.Stderr, "  --files        Initialize files directory\n")
 		fmt.Fprintf(os.Stderr, "  --dbfile string   SQLite database file (default \"bench.db\")\n\n")
@@ -57,7 +56,7 @@ func handleServe(args []string) error {
 	serveCmd := flag.NewFlagSet("serve", flag.ExitOnError)
 	dbfile := serveCmd.String("dbfile", "bench.db", "SQLite database file path")
 	verbose := serveCmd.Bool("v", false, "Enable verbose output")
-	
+
 	serveCmd.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s serve [flags]\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Start the application server\n\n")
@@ -177,7 +176,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Available commands:\n")
 		fmt.Fprintf(os.Stderr, "  (default)      Start the application server (same as 'serve')\n")
 		fmt.Fprintf(os.Stderr, "  bootstrap     Initialize application resources\n")
-		fmt.Fprintf(os.Stderr, "  serve         Start the application server\n") 
+		fmt.Fprintf(os.Stderr, "  serve         Start the application server\n")
 		fmt.Fprintf(os.Stderr, "  dump-config   Dump current configuration\n")
 		fmt.Fprintf(os.Stderr, "  load-config   Load configuration from file\n")
 		fmt.Fprintf(os.Stderr, "\nUse \"%s <command> -h\" for command-specific help.\n", os.Args[0])
