@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml" 
-	"embed"
+	_ "embed"
 )
 
 //go:embed config.toml
@@ -261,52 +261,11 @@ type Proxy struct {
 	BlockIp BlockIp
 }
 
-const (
-	DefaultReadTimeout         = 2 * time.Second
-	DefaultReadHeaderTimeout   = 2 * time.Second
-	DefaultWriteTimeout        = 3 * time.Second
-	DefaultIdleTimeout         = 1 * time.Minute
-	DefaultShutdownTimeout     = 15 * time.Second
-	CodeOkEndpointsWithAuth    = "ok_endpoints_with_auth"
-	CodeOkEndpointsWithoutAuth = "ok_endpoints_without_auth"
-	MsgEndpointsWithAuth       = "List of all available endpoints"
-	MsgEndpointsWithoutAuth    = "List of endpoints available without authentication"
-)
-
-func FillServer(cfg *Config) Server {
-	s := cfg.Server
-
-	if s.Addr == "" {
-		s.Addr = ":8080"
-	}
-	if s.ShutdownGracefulTimeout == 0 {
-		s.ShutdownGracefulTimeout = DefaultShutdownTimeout
-	}
-	if s.ReadTimeout == 0 {
-		s.ReadTimeout = DefaultReadTimeout
-	}
-	if s.ReadHeaderTimeout == 0 {
-		s.ReadHeaderTimeout = DefaultReadHeaderTimeout
-	}
-	if s.WriteTimeout == 0 {
-		s.WriteTimeout = DefaultWriteTimeout
-	}
-	if s.IdleTimeout == 0 {
-		s.IdleTimeout = DefaultIdleTimeout
-	}
-
-	return s
-}
-
-
 func Load(dbfile string) (*Config, error) {
 	// 1. Start with an empty config struct
 	cfg := &Config{}
 
 	// 2. Load defaults from the embedded TOML file
-	// We need to import a TOML parser, e.g., github.com/BurntSushi/toml
-	// Ensure 'toml' is added to imports if not already present.
-	// Let's assume 'toml' is imported for this block.
 	if _, err := toml.Decode(string(defaultConfigToml), cfg); err != nil {
 		return nil, fmt.Errorf("failed to decode embedded default config: %w", err)
 	}
