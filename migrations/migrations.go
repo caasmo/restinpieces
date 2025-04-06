@@ -1,9 +1,18 @@
 package migrations
 
-import _ "embed"
+import (
+	"embed"
+	"io/fs"
+)
 
-//go:embed users.sql
-var UsersSchema string
+//go:embed schema/*.sql
+var schemaFS embed.FS
 
-//go:embed  job_queue.sql
-var JobQueueSchema string
+// Schema returns the embedded schema filesystem
+func Schema() fs.FS {
+	fs, err := fs.Sub(schemaFS, "schema")
+	if err != nil {
+		panic(err) // should never happen since we control the embed path
+	}
+	return fs
+}

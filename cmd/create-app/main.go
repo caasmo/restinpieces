@@ -21,7 +21,7 @@ type AppCreator struct {
 	pool          *sqlitex.Pool
 }
 
-func NewAppCreator(dbfile, migrationsDir string, verbose bool) *AppCreator {
+func NewAppCreator(dbfile string, verbose bool) *AppCreator {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
@@ -117,7 +117,6 @@ func (ac *AppCreator) InsertConfig() error {
 
 func main() {
 	dbfile := flag.String("dbfile", "app.db", "SQLite database file to create")
-	migrationsDir := flag.String("migrations", "migrations", "Directory containing migration SQL files")
 	verbose := flag.Bool("v", false, "Enable verbose output")
 	flag.Parse()
 
