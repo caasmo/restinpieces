@@ -12,11 +12,11 @@ import (
 	_ "embed"
 )
 
-//go:embed config.toml .env.example
-var (
-	DefaultConfigToml []byte
-	DefaultEnvExample []byte
-)
+//go:embed config.toml
+var DefaultConfigToml []byte
+
+//go:embed .env.example
+var DefaultEnvExample []byte
 
 // Provider holds the application configuration and allows for atomic updates.
 // LoadSecret loads a secret from an environment variable.
