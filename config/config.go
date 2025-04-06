@@ -13,7 +13,7 @@ import (
 )
 
 //go:embed config.toml
-var defaultConfigToml []byte
+var DefaultConfigToml []byte
 
 // Provider holds the application configuration and allows for atomic updates.
 // LoadSecret loads a secret from an environment variable.
@@ -335,7 +335,7 @@ func LoadOAuth2(cfg *Config) error {
 func Load(dbfile string) (*Config, error) {
 	cfg := &Config{}
 
-	if _, err := toml.Decode(string(defaultConfigToml), cfg); err != nil {
+	if _, err := toml.Decode(string(DefaultConfigToml), cfg); err != nil {
 		return nil, fmt.Errorf("failed to decode embedded default config: %w", err)
 	}
 
