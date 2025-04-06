@@ -1,12 +1,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
-	"context"
 
 	"github.com/caasmo/restinpieces/config"
 	"zombiezen.com/go/sqlite"
@@ -102,13 +102,13 @@ func (ac *AppCreator) InsertConfig() error {
 	}
 	defer ac.pool.Put(conn)
 	ac.logger.Info("inserting default configuration")
-	err := sqlitex.Execute(conn,
+	err = sqlitex.Execute(conn,
 		`INSERT INTO app_config (content, format, description)
 		VALUES (?, ?, ?)`,
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
 				string(config.DefaultConfigToml),
-				"toml", 
+				"toml",
 				"Initial default configuration",
 			},
 		})
