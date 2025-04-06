@@ -126,20 +126,14 @@ func (ac *AppCreator) InsertConfig() error {
 
 func main() {
 	dbfile := flag.String("dbfile", "app.db", "SQLite database file to create")
-	createEnv := flag.Bool("env", false, "Create .env file from example")
 	flag.Parse()
 
-	if *createEnv {
-		if err := creator.CreateEnvFile(); err != nil {
-			os.Exit(1)
-		}
-		// Don't exit if -dbfile was also provided
-		if *dbfile == "app.db" {
-			os.Exit(0)
-		}
-	}
-
 	creator := NewAppCreator(*dbfile)
+
+	// Always create .env file if it doesn't exist
+	if err := creator.CreateEnvFile(); err != nil && !os.IsExist(err) {
+		os.Exit(1)
+	}
 
 	if err := creator.CreateDatabase(); err != nil {
 		os.Exit(1)
