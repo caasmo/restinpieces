@@ -105,8 +105,8 @@ func (ac *AppCreator) InsertConfig() error {
 		VALUES (?, ?, ?)`,
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
-				"", // Empty config content for now
-				"toml",
+				string(config.DefaultConfigToml),
+				"toml", 
 				"Initial default configuration",
 			},
 		})
