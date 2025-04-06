@@ -5,41 +5,61 @@ import (
 
 	"github.com/caasmo/restinpieces/cache"
 	// https://pkg.go.dev/github.com/dgraph-io/ristretto/v2
+	"fmt"
+	"time"
+
+	"github.com/caasmo/restinpieces/cache"
 	ristr "github.com/dgraph-io/ristretto/v2"
 )
 
-type Cache[K comparable, V any] struct {
-	c *ristr.Cache
+// Cache wrapper specialized for string keys.
+// It remains generic over the value type V.
+type Cache[V any] struct {
+	// Instantiate ristr.Cache with string as the key type
+	c *ristr.Cache[string, V]
 }
 
-func (rc *Cache[K, V]) Get(key K) (V, bool) {
+// Ensure our specialized Cache implements the generic cache.Cache interface
+// for string keys.
+var _ cache.Cache[string, any] = (*Cache[any])(nil)
+
+// Get retrieves a value using a string key.
+func (rc *Cache[V]) Get(key string) (V, bool) {
+	// Assuming ristretto.Cache[string, V].Get returns V directly as per user request.
 	value, found := rc.c.Get(key)
 	if !found {
 		var zero V
 		return zero, false
 	}
-	return value.(V), true
+	// No type assertion needed if Get returns V directly.
+	return value, true
 }
 
-func (rc *Cache[K, V]) Set(key K, value V, cost int64) bool {
+// Set stores a value with a string key.
+func (rc *Cache[V]) Set(key string, value V, cost int64) bool {
 	return rc.c.Set(key, value, cost)
 }
 
-func (rc *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) bool {
-	// Wait for the item to be processed by the cache
-	success := rc.c.SetWithTTL(key, value, cost, ttl)
-	return success
+// SetWithTTL stores a value with a string key and TTL.
+func (rc *Cache[V]) SetWithTTL(key string, value V, cost int64, ttl time.Duration) bool {
+	return rc.c.SetWithTTL(key, value, cost, ttl)
 }
 
-func New[K comparable, V any]() (cache.Cache[K, V], error) {
-	ristretto, err := ristr.NewCache(&ristr.Config{
+// New creates a new Ristretto cache instance specialized for string keys
+// and generic for the value type V.
+func New[V any]() (cache.Cache[string, V], error) {
+	// Instantiate ristretto.NewCache with string and V
+	ristrettoCache, err := ristr.NewCache[string, V](&ristr.Config{
 		NumCounters: 1e7,     // number of keys to track frequency of (10M)
 		MaxCost:     1 << 30, // maximum cost of cache (1GB)
 		BufferItems: 64,      // number of keys per Get buffer
+		// Metrics: true, // Enable metrics if needed
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create ristretto cache: %w", err)
 	}
 
-	return &Cache[K, V]{c: ristretto}, nil
+	// Return our specialized wrapper Cache[V]
+	// which implements cache.Cache[string, V]
+	return &Cache[V]{c: ristrettoCache}, nil
 }
