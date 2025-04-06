@@ -1,4 +1,0 @@
-CREATE TABLE foo (
-    id INTEGER NOT NULL,
-    value INTEGER NOT NULL
-);
