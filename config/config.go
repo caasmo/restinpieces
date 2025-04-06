@@ -232,24 +232,6 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 	return path + ".html"
 }
 
-// DefaultEndpoints returns the standard endpoint paths
-func DefaultEndpoints() Endpoints {
-	return Endpoints{
-		RefreshAuth:              "POST /api/refresh-auth",
-		RequestEmailVerification: "POST /api/request-email-verification",
-		ConfirmEmailVerification: "POST /api/confirm-email-verification",
-		ListEndpoints:            "GET /api/list-endpoints",
-		AuthWithPassword:         "POST /api/auth-with-password",
-		AuthWithOAuth2:           "POST /api/auth-with-oauth2",
-		RegisterWithPassword:     "POST /api/register-with-password",
-		ListOAuth2Providers:      "GET /api/list-oauth2-providers",
-		RequestPasswordReset:     "POST /api/request-password-reset",
-		ConfirmPasswordReset:     "POST /api/confirm-password-reset",
-		RequestEmailChange:       "POST /api/request-email-change",
-		ConfirmEmailChange:       "POST /api/confirm-email-change",
-	}
-}
-
 type Config struct {
 	Jwt             Jwt
 	DBFile          string
@@ -331,7 +313,6 @@ func Load(dbfile string) (*Config, error) {
 	// Load SMTP credentials
 	cfg.Smtp.Username = os.Getenv(EnvSmtpUsername)
 	
-	var err error
 	cfg.Smtp.Password, err = LoadSecret(EnvSmtpPassword, cfg.Smtp.Password)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load SMTP password: %w", err)
