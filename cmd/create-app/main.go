@@ -63,7 +63,9 @@ func main() {
 		}
 
 		logger.Info("applying migration", "file", migration.Name())
-		if err := sqlitex.ExecuteTransient(conn, string(sql), nil); err != nil {
+		if err := sqlitex.ExecuteScript(conn, string(sql), &sqlitex.ExecOptions{
+			Args: nil,
+		}); err != nil {
 			logger.Error("failed to execute migration", 
 				"file", migration.Name(), 
 				"error", err)
