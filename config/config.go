@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync/atomic" // Added for atomic value
 	"time"
+
+	"github.com/BurntSushi/toml" // Import TOML parser
 )
 
 // Provider holds the application configuration and allows for atomic updates.
