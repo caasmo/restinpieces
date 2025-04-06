@@ -21,6 +21,19 @@ type AppCreator struct {
 	pool   *sqlitex.Pool
 }
 
+func (ac *AppCreator) CreateEnvFile() error {
+	if _, err := os.Stat(".env"); err == nil {
+		ac.logger.Error(".env file already exists")
+		return os.ErrExist
+	}
+	if err := os.WriteFile(".env", config.DefaultEnvExample, 0644); err != nil {
+		ac.logger.Error("failed to create .env file", "error", err)
+		return err
+	}
+	ac.logger.Info("created .env file from example")
+	return nil
+}
+
 func NewAppCreator(dbfile string) *AppCreator {
 	return &AppCreator{
 		dbfile: dbfile,
@@ -117,16 +130,9 @@ func main() {
 	flag.Parse()
 
 	if *createEnv {
-		if _, err := os.Stat(".env"); err == nil {
-			slog.Error(".env file already exists")
+		if err := creator.CreateEnvFile(); err != nil {
 			os.Exit(1)
 		}
-		if err := os.WriteFile(".env", config.DefaultEnvExample, 0644); err != nil {
-			slog.Error("failed to create .env file", "error", err)
-			os.Exit(1)
-		}
-		slog.Info("created .env file from example")
-		
 		// Don't exit if -dbfile was also provided
 		if *dbfile == "app.db" {
 			os.Exit(0)
