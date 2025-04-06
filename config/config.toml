@@ -86,16 +86,16 @@ PublicDir = "static/dist"
   EmailChangeTokenDuration = "1h"
 
   # AuthSecret: Set via JWT_AUTH_SECRET environment variable
-  AuthSecret = ""
+  AuthSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>"
   
   # VerificationEmailSecret: Set via JWT_VERIFICATION_EMAIL_SECRET environment variable
-  VerificationEmailSecret = ""
+  VerificationEmailSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>"
   
   # PasswordResetSecret: Set via JWT_PASSWORD_RESET_SECRET environment variable
-  PasswordResetSecret = ""
+  PasswordResetSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>"
   
   # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable
-  EmailChangeSecret = ""
+  EmailChangeSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>"
 
 
 # --- SMTP Settings for Sending Emails ---
