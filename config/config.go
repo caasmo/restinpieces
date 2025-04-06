@@ -1,7 +1,6 @@
 package config
 
 import (
-	"embed"
 	"fmt"
 	"net"
 	"os"
@@ -9,8 +8,12 @@ import (
 	"sync/atomic" // Added for atomic value
 	"time"
 
-	"github.com/BurntSushi/toml" // Import TOML parser
+	"github.com/BurntSushi/toml" 
+	"embed"
 )
+
+//go:embed config.toml
+var defaultConfigToml []byte
 
 // Provider holds the application configuration and allows for atomic updates.
 type Provider struct {
@@ -295,8 +298,6 @@ func FillServer(cfg *Config) Server {
 	return s
 }
 
-//go:embed config.toml
-var defaultConfigToml []byte
 
 func Load(dbfile string) (*Config, error) {
 	// 1. Start with an empty config struct

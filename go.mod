@@ -4,6 +4,7 @@ go 1.24.2
 
 require (
 	crawshaw.io/sqlite v0.3.3-0.20220618202545-d1964889ea3c
+	github.com/BurntSushi/toml v1.5.0
 	github.com/dgraph-io/ristretto/v2 v2.2.0
 	github.com/domodwyer/mailyak/v3 v3.6.2
 	github.com/evanw/esbuild v0.25.2
