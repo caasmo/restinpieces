@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/cache"
-	ristr "github.com/outcaste-io/ristretto"
+	ristr "github.com/dgraph-io/ristretto/v2"
 )
 
 type Cache[K comparable, V any] struct {
