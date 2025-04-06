@@ -16,6 +16,7 @@ type AppCreator struct {
 	migrationsDir string
 	verbose       bool
 	logger        *slog.Logger
+	pool          *sqlitex.Pool
 }
 
 func NewAppCreator(dbfile, migrationsDir string, verbose bool) *AppCreator {
@@ -37,21 +38,30 @@ func NewAppCreator(dbfile, migrationsDir string, verbose bool) *AppCreator {
 	}
 }
 
-func (ac *AppCreator) CreateDatabase() (*sqlite.Conn, error) {
+func (ac *AppCreator) CreateDatabase() error {
 	if _, err := os.Stat(ac.dbfile); err == nil {
 		ac.logger.Error("database file already exists", "file", ac.dbfile)
-		return nil, os.ErrExist
+		return os.ErrExist
 	}
 
-	conn, err := sqlite.OpenConn(ac.dbfile, sqlite.OpenReadWrite|sqlite.OpenCreate)
+	pool, err := sqlitex.NewPool(ac.dbfile, sqlitex.PoolOptions{
+		Flags:    sqlite.OpenReadWrite | sqlite.OpenCreate,
+		PoolSize: runtime.NumCPU(),
+	})
 	if err != nil {
-		ac.logger.Error("failed to create database", "error", err)
-		return nil, err
+		ac.logger.Error("failed to create database pool", "error", err)
+		return err
 	}
-	return conn, nil
+	ac.pool = pool
+	return nil
 }
 
-func (ac *AppCreator) RunMigrations(conn *sqlite.Conn) error {
+func (ac *AppCreator) RunMigrations() error {
+	conn, err := ac.pool.Take(context.Background())
+	if err != nil {
+		return err
+	}
+	defer ac.pool.Put(conn)
 	migrations, err := os.ReadDir(ac.migrationsDir)
 	if err != nil {
 		ac.logger.Error("failed to read migrations directory", "error", err)
@@ -83,7 +93,12 @@ func (ac *AppCreator) RunMigrations(conn *sqlite.Conn) error {
 	return nil
 }
 
-func (ac *AppCreator) InsertConfig(conn *sqlite.Conn) error {
+func (ac *AppCreator) InsertConfig() error {
+	conn, err := ac.pool.Take(context.Background())
+	if err != nil {
+		return err
+	}
+	defer ac.pool.Put(conn)
 	ac.logger.Info("inserting default configuration")
 	err := sqlitex.Execute(conn,
 		`INSERT INTO app_config (content, format, description)
@@ -106,17 +121,16 @@ func main() {
 
 	creator := NewAppCreator(*dbfile, *migrationsDir, *verbose)
 
-	conn, err := creator.CreateDatabase()
-	if err != nil {
+	if err := creator.CreateDatabase(); err != nil {
 		os.Exit(1)
 	}
-	defer conn.Close()
+	defer creator.pool.Close()
 
-	if err := creator.RunMigrations(conn); err != nil {
+	if err := creator.RunMigrations(); err != nil {
 		os.Exit(1)
 	}
 
-	if err := creator.InsertConfig(conn); err != nil {
+	if err := creator.InsertConfig(); err != nil {
 		creator.logger.Error("failed to insert config", "error", err)
 		os.Exit(1)
 	}
