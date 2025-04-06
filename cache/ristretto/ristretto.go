@@ -45,8 +45,8 @@ func (rc *Cache[V]) SetWithTTL(key string, value V, cost int64, ttl time.Duratio
 // New creates a new Ristretto cache instance specialized for string keys
 // and generic for the value type V.
 func New[V any]() (cache.Cache[string, V], error) {
-	// Instantiate ristretto.NewCache with string and V
-	ristrettoCache, err := ristr.NewCache[string, V](&ristr.Config{
+	// Instantiate ristretto.NewCache and ristr.Config with string and V
+	ristrettoCache, err := ristr.NewCache[string, V](&ristr.Config[string, V]{
 		NumCounters: 1e7,     // number of keys to track frequency of (10M)
 		MaxCost:     1 << 30, // maximum cost of cache (1GB)
 		BufferItems: 64,      // number of keys per Get buffer
