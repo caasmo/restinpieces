@@ -256,85 +256,63 @@ func LoadSecret(envVar string, defaultValue string) (string, error) {
 	return "", fmt.Errorf("secret required: set %s in environment variables or in config", envVar)
 }
 
-
-func Load(dbfile string) (*Config, error) {
-	// 1. Start with an empty config struct
-	cfg := &Config{}
-
-	// 2. Load defaults from the embedded TOML file
-	if _, err := toml.Decode(string(defaultConfigToml), cfg); err != nil {
-		return nil, fmt.Errorf("failed to decode embedded default config: %w", err)
-	}
-
-	// 3. Override specific fields based on runtime parameters or logic
-	cfg.DBFile = dbfile // Set DBFile from argument
-
-	// Ensure nested maps are initialized if needed (TOML decoder might handle this)
-	if cfg.OAuth2Providers == nil {
-		cfg.OAuth2Providers = make(map[string]OAuth2Provider)
-	}
-
-	// 4. Load secrets and provider-specific details from environment variables
-	//    This overrides any placeholders potentially present in the embedded TOML.
-
-	// Load JWT secrets (replace placeholders/defaults from TOML)
-	// TODO: Define env vars for JWT secrets and load them here, e.g.:
-	// cfg.Jwt.AuthSecret = []byte(os.Getenv("JWT_AUTH_SECRET"))
-	// cfg.Jwt.VerificationEmailSecret = []byte(os.Getenv("JWT_VERIFICATION_EMAIL_SECRET"))
-	// cfg.Jwt.PasswordResetSecret = []byte(os.Getenv("JWT_PASSWORD_RESET_SECRET"))
-	// cfg.Jwt.EmailChangeSecret = []byte(os.Getenv("JWT_EMAIL_CHANGE_SECRET"))
-	// Add error handling if secrets are missing in production.
-	// For now, retain the test secrets if env vars are not set (consider removing in prod builds)
+func LoadJwt(cfg *Config) error {
 	var err error
 	authSecret, err := LoadSecret("JWT_AUTH_SECRET", string(cfg.Jwt.AuthSecret))
 	if err != nil {
-		return nil, fmt.Errorf("failed to load auth secret: %w", err)
+		return fmt.Errorf("failed to load auth secret: %w", err)
 	}
 	cfg.Jwt.AuthSecret = []byte(authSecret)
 
 	verifSecret, err := LoadSecret("JWT_VERIFICATION_EMAIL_SECRET", string(cfg.Jwt.VerificationEmailSecret))
 	if err != nil {
-		return nil, fmt.Errorf("failed to load verification email secret: %w", err)
+		return fmt.Errorf("failed to load verification email secret: %w", err)
 	}
 	cfg.Jwt.VerificationEmailSecret = []byte(verifSecret)
 
 	resetSecret, err := LoadSecret("JWT_PASSWORD_RESET_SECRET", string(cfg.Jwt.PasswordResetSecret))
 	if err != nil {
-		return nil, fmt.Errorf("failed to load password reset secret: %w", err)
+		return fmt.Errorf("failed to load password reset secret: %w", err)
 	}
 	cfg.Jwt.PasswordResetSecret = []byte(resetSecret)
 
 	changeSecret, err := LoadSecret("JWT_EMAIL_CHANGE_SECRET", string(cfg.Jwt.EmailChangeSecret))
 	if err != nil {
-		return nil, fmt.Errorf("failed to load email change secret: %w", err)
+		return fmt.Errorf("failed to load email change secret: %w", err)
 	}
 	cfg.Jwt.EmailChangeSecret = []byte(changeSecret)
 
+	return nil
+}
 
-	// Load SMTP credentials
+func LoadSmtp(cfg *Config) error {
 	cfg.Smtp.Username = os.Getenv(EnvSmtpUsername)
 	
+	var err error
 	cfg.Smtp.Password, err = LoadSecret(EnvSmtpPassword, cfg.Smtp.Password)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load SMTP password: %w", err)
+		return fmt.Errorf("failed to load SMTP password: %w", err)
 	}
 
 	if fromAddr := os.Getenv("SMTP_FROM_ADDRESS"); fromAddr != "" {
 		cfg.Smtp.FromAddress = fromAddr
 	}
 
-	// Load OAuth2 credentials and update RedirectURLs (overrides TOML placeholders/defaults)
-	baseURL := cfg.Server.BaseURL() // Calculate BaseURL after server defaults are potentially set by TOML
+	return nil
+}
+
+func LoadOAuth2(cfg *Config) error {
+	baseURL := cfg.Server.BaseURL()
 
 	// Google OAuth2
 	if googleCfg, ok := cfg.OAuth2Providers[OAuth2ProviderGoogle]; ok {
 		var errID, errSecret error
 		googleCfg.ClientID, errID = LoadSecret(EnvGoogleClientID, googleCfg.ClientID)
 		googleCfg.ClientSecret, errSecret = LoadSecret(EnvGoogleClientSecret, googleCfg.ClientSecret)
-		googleCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL) // Update RedirectURL
+		googleCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
 		
 		if errID != nil || errSecret != nil {
-			delete(cfg.OAuth2Providers, OAuth2ProviderGoogle) // Remove if secrets are missing
+			delete(cfg.OAuth2Providers, OAuth2ProviderGoogle)
 		} else {
 			cfg.OAuth2Providers[OAuth2ProviderGoogle] = googleCfg
 		}
@@ -345,18 +323,42 @@ func Load(dbfile string) (*Config, error) {
 		var errID, errSecret error
 		githubCfg.ClientID, errID = LoadSecret(EnvGithubClientID, githubCfg.ClientID)
 		githubCfg.ClientSecret, errSecret = LoadSecret(EnvGithubClientSecret, githubCfg.ClientSecret)
-		githubCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL) // Update RedirectURL
+		githubCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
 		
 		if errID != nil || errSecret != nil {
-			delete(cfg.OAuth2Providers, OAuth2ProviderGitHub) // Remove if secrets are missing
+			delete(cfg.OAuth2Providers, OAuth2ProviderGitHub)
 		} else {
 			cfg.OAuth2Providers[OAuth2ProviderGitHub] = githubCfg
 		}
 	}
 
-	// 5. Apply any final programmatic defaults or validations if needed
-	//    (FillServer might be redundant now if TOML covers server defaults)
-	// cfg.Server = FillServer(cfg) // Re-evaluate if this is needed
+	return nil
+}
+
+func Load(dbfile string) (*Config, error) {
+	cfg := &Config{}
+
+	if _, err := toml.Decode(string(defaultConfigToml), cfg); err != nil {
+		return nil, fmt.Errorf("failed to decode embedded default config: %w", err)
+	}
+
+	cfg.DBFile = dbfile
+
+	if cfg.OAuth2Providers == nil {
+		cfg.OAuth2Providers = make(map[string]OAuth2Provider)
+	}
+
+	if err := LoadJwt(cfg); err != nil {
+		return nil, err
+	}
+
+	if err := LoadSmtp(cfg); err != nil {
+		return nil, err
+	}
+
+	if err := LoadOAuth2(cfg); err != nil {
+		return nil, err
+	}
 
 	return cfg, nil
 }
