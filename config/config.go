@@ -303,25 +303,29 @@ func Load(dbfile string) (*Config, error) {
 	// Add error handling if secrets are missing in production.
 	// For now, retain the test secrets if env vars are not set (consider removing in prod builds)
 	var err error
-	cfg.Jwt.AuthSecret, err = LoadSecret("JWT_AUTH_SECRET", string(cfg.Jwt.AuthSecret))
+	authSecret, err := LoadSecret("JWT_AUTH_SECRET", string(cfg.Jwt.AuthSecret))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load auth secret: %w", err)
 	}
+	cfg.Jwt.AuthSecret = []byte(authSecret)
 
-	cfg.Jwt.VerificationEmailSecret, err = LoadSecret("JWT_VERIFICATION_EMAIL_SECRET", string(cfg.Jwt.VerificationEmailSecret))
+	verifSecret, err := LoadSecret("JWT_VERIFICATION_EMAIL_SECRET", string(cfg.Jwt.VerificationEmailSecret))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load verification email secret: %w", err)
 	}
+	cfg.Jwt.VerificationEmailSecret = []byte(verifSecret)
 
-	cfg.Jwt.PasswordResetSecret, err = LoadSecret("JWT_PASSWORD_RESET_SECRET", string(cfg.Jwt.PasswordResetSecret))
+	resetSecret, err := LoadSecret("JWT_PASSWORD_RESET_SECRET", string(cfg.Jwt.PasswordResetSecret))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load password reset secret: %w", err)
 	}
+	cfg.Jwt.PasswordResetSecret = []byte(resetSecret)
 
-	cfg.Jwt.EmailChangeSecret, err = LoadSecret("JWT_EMAIL_CHANGE_SECRET", string(cfg.Jwt.EmailChangeSecret))
+	changeSecret, err := LoadSecret("JWT_EMAIL_CHANGE_SECRET", string(cfg.Jwt.EmailChangeSecret))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load email change secret: %w", err)
 	}
+	cfg.Jwt.EmailChangeSecret = []byte(changeSecret)
 
 
 	// Load SMTP credentials
