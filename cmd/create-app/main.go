@@ -85,12 +85,12 @@ func (ac *AppCreator) RunMigrations(conn *sqlite.Conn) error {
 
 func (ac *AppCreator) InsertConfig(conn *sqlite.Conn) error {
 	ac.logger.Info("inserting default configuration")
-	_, err := sqlitex.Execute(conn,
+	err := sqlitex.Execute(conn,
 		`INSERT INTO app_config (content, format, description)
 		VALUES (?, ?, ?)`,
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
-				string(config.DefaultConfigToml),
+				"", // Empty config content for now
 				"toml",
 				"Initial default configuration",
 			},
@@ -99,7 +99,7 @@ func (ac *AppCreator) InsertConfig(conn *sqlite.Conn) error {
 }
 
 func main() {
-	flag.String("dbfile", "app.db", "SQLite database file to create")
+	dbfile := flag.String("dbfile", "app.db", "SQLite database file to create")
 	migrationsDir := flag.String("migrations", "migrations", "Directory containing migration SQL files")
 	verbose := flag.Bool("v", false, "Enable verbose output")
 	flag.Parse()
