@@ -1,14 +1,10 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"fmt"
-	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
