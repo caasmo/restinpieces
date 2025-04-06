@@ -4,11 +4,11 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/cache"
-	ristr "github.com/dgraph-io/ristretto/v2"
+	"github.com/dgraph-io/ristretto/v2"
 )
 
 type Cache[K comparable, V any] struct {
-	cache *ristr.Cache
+	cache *ristretto.Cache
 }
 
 func (rc *Cache[K, V]) Get(key K) (V, bool) {
@@ -31,7 +31,7 @@ func (rc *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration)
 }
 
 func New[K comparable, V any]() (cache.Cache[K, V], error) {
-	c, err := ristr.NewCache(&ristr.Config{
+	c, err := ristretto.NewCache(&ristretto.Config{
 		NumCounters: 1e7,     // number of keys to track frequency of (10M)
 		MaxCost:     1 << 30, // maximum cost of cache (1GB)
 		BufferItems: 64,      // number of keys per Get buffer
