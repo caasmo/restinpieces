@@ -18,12 +18,20 @@ func WithCache(c cache.Cache[string, interface{}]) Option {
 	}
 }
 
-// WithDB sets the database implementation
+// WithDB sets the database implementation (DEPRECATED - Use WithDbProvider or specific WithExisting...Pool options)
+// Keeping this temporarily for compatibility during refactor.
 func WithDB(d db.Db) Option {
 	return func(a *App) {
 		a.db = d
 	}
 }
+
+// SetDb is a temporary method for the placeholder in restinpieces_options.go
+// Remove this once WithDbProvider is fully implemented and used.
+func (a *App) SetDb(d db.Db) {
+	a.db = d
+}
+
 
 // WithRouter sets the router implementation
 func WithRouter(r router.Router) Option {

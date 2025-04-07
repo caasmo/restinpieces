@@ -12,23 +12,44 @@ import (
 	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/caasmo/restinpieces/router/servemux"
+	crawshawPool "crawshaw.io/sqlite/sqlitex" // Alias for crawshaw pool type
 	phuslog "github.com/phuslu/log"
+	zombiezenPool "zombiezen.com/go/sqlite/sqlitex" // Alias for zombiezen pool type
 )
 
-func WithDBCrawshaw(dbPath string) core.Option {
-	db, _ := crawshaw.New(dbPath)
-	// TODO erro log fatal
 
-	return core.WithDB(db)
+// WithExistingCrawshawPool configures the App to use an existing Crawshaw SQLite pool.
+func WithExistingCrawshawPool(pool *crawshawPool.Pool) core.Option {
+	dbInstance, err := crawshaw.NewWithPool(pool)
+	if err != nil {
+		// Handle error appropriately - perhaps panic or log fatal
+		// For now, let's panic as this indicates a setup issue.
+		panic(fmt.Sprintf("failed to initialize crawshaw DB with existing pool: %v", err))
+	}
+	// Assuming WithDB is replaced by WithDbProvider later
+	// return core.WithDB(dbInstance)
+	// Placeholder until WithDbProvider is introduced:
+	return func(a *core.App) {
+		// This assignment will need to change when App uses DbProvider
+		a.SetDb(dbInstance) // Assuming a temporary SetDb method exists or is added
+	}
 }
 
-func WithDBZombiezen() core.Option {
-
-	db, _ := zombiezen.New("bench.db")
-	// TODO erro log fatal
-
-	return core.WithDB(db)
+// WithExistingZombiezenPool configures the App to use an existing Zombiezen SQLite pool.
+func WithExistingZombiezenPool(pool *zombiezenPool.Pool) core.Option {
+	dbInstance, err := zombiezen.NewWithPool(pool)
+	if err != nil {
+		panic(fmt.Sprintf("failed to initialize zombiezen DB with existing pool: %v", err))
+	}
+	// Assuming WithDB is replaced by WithDbProvider later
+	// return core.WithDB(dbInstance)
+	// Placeholder until WithDbProvider is introduced:
+	return func(a *core.App) {
+		// This assignment will need to change when App uses DbProvider
+		a.SetDb(dbInstance) // Assuming a temporary SetDb method exists or is added
+	}
 }
+
 
 func WithRouterServeMux() core.Option {
 	r := servemux.New()
@@ -41,9 +62,11 @@ func WithRouterHttprouter() core.Option {
 }
 
 func WithCacheRistretto() core.Option {
-	cache, _ := ristretto.New[any]() // Explicit string keys and interface{} values
-	// TODO fatal
-	return core.WithCache(cache)
+	cacheInstance, err := ristretto.New[any]() // Explicit string keys and interface{} values
+	if err != nil {
+		panic(fmt.Sprintf("failed to initialize ristretto cache: %v", err))
+	}
+	return core.WithCache(cacheInstance)
 }
 
 // DefaultLoggerOptions provides default settings for slog handlers.

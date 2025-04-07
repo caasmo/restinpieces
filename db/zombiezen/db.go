@@ -15,43 +15,94 @@ import (
 
 type Db struct {
 	pool *sqlitex.Pool
-	//rwConn *sqlitex.Conn
-	rwCh chan *sqlite.Conn
+	pool     *sqlitex.Pool
+	ownsPool bool // Flag to indicate if this instance created the pool
+	rwCh     chan *sqlite.Conn
 }
 
 // Verify interface implementation (non-allocating check)
 var _ db.Db = (*Db)(nil)
 
+// New creates a new Db instance, including creating its own pool.
 func New(path string) (*Db, error) {
 	poolSize := runtime.NumCPU()
-	initString := fmt.Sprintf("file:%s", path)
+	// Enable WAL mode and set a busy timeout for better concurrency handling.
+	initString := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)", path)
 
 	p, err := sqlitex.NewPool(initString, sqlitex.PoolOptions{
-		Flags:    0, // Use all default flags including WAL
+		// Flags:    0, // Default flags usually include WAL if enabled in URI
 		PoolSize: poolSize,
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create zombiezen pool at %s: %w", path, err)
 	}
 
 	conn, err := p.Take(context.TODO())
 	if err != nil {
-		return nil, err
+		p.Close() // Clean up the pool if we can't get a connection
+		return nil, fmt.Errorf("failed to get initial connection from pool: %w", err)
 	}
-	// TODO keep track of closing
-	//defer db.Put(conn)
+
 	ch := make(chan *sqlite.Conn, 1)
 	go func(conn *sqlite.Conn, ch chan *sqlite.Conn) {
-		// TODO Use context to select with timeout to cleanly clean up goroutine
 		ch <- conn
 	}(conn, ch)
 
-	return &Db{pool: p, rwCh: ch}, nil
+	return &Db{pool: p, ownsPool: true, rwCh: ch}, nil
 }
 
-func (d *Db) Close() {
-	d.pool.Close()
+// NewWithPool creates a new Db instance using an existing pool.
+func NewWithPool(pool *sqlitex.Pool) (*Db, error) {
+	if pool == nil {
+		return nil, fmt.Errorf("provided pool cannot be nil")
+	}
+
+	conn, err := pool.Take(context.TODO())
+	if err != nil {
+		// Don't close the pool here as we don't own it
+		return nil, fmt.Errorf("failed to get initial connection from provided pool: %w", err)
+	}
+
+	ch := make(chan *sqlite.Conn, 1)
+	go func(conn *sqlite.Conn, ch chan *sqlite.Conn) {
+		ch <- conn
+	}(conn, ch)
+
+	// ownsPool is false because the pool was provided externally
+	return &Db{pool: pool, ownsPool: false, rwCh: ch}, nil
 }
+
+
+// Close releases resources used by Db. It only closes the pool if it owns it.
+func (d *Db) Close() {
+	// Handle the writer channel first (ensure connection is returned)
+	if d.rwCh != nil {
+		select {
+		case conn := <-d.rwCh:
+			if conn != nil && d.pool != nil {
+				// Use Put instead of Take for zombiezen
+				d.pool.Put(conn)
+			}
+		default:
+			// Channel was empty or already closed
+		}
+		// Consider closing the channel if the writer goroutine expects it
+		// close(d.rwCh)
+	}
+
+	// Only close the pool if this Db instance created it.
+	if d.ownsPool && d.pool != nil {
+		err := d.pool.Close()
+		if err != nil {
+			// Log the error appropriately
+			fmt.Printf("Error closing owned zombiezen pool: %v\n", err)
+		}
+	}
+	// Set pool to nil to prevent further use after Close
+	d.pool = nil
+	d.rwCh = nil
+}
+
 
 func (d *Db) GetById(id int64) int {
 	conn, err := d.pool.Take(context.TODO())

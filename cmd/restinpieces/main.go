@@ -6,13 +6,71 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"context" // Required for zombiezen pool creation
+	"errors"
+	"flag"
+	"fmt"
+	"io/fs"
+	"log/slog"
 	"os"
+	"runtime" // Required for pool size calculation
+	"time"    // Required for pool creation options
 
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/core" // Import core for options
 	//"github.com/caasmo/restinpieces/custom"
 	//"github.com/caasmo/restinpieces/server"
+
+	crawshawPool "crawshaw.io/sqlite/sqlitex"
+	zombiezenPool "zombiezen.com/go/sqlite/sqlitex"
 )
+
+
+// --- Pool Creation Helpers ---
+
+func createCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
+	poolSize := runtime.NumCPU()
+	// Match the settings used in crawshaw.New for consistency
+	initString := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)", dbPath)
+
+	pool, err := crawshawPool.Open(initString, 0, poolSize)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create crawshaw pool at %s: %w", dbPath, err)
+	}
+	// Optional: Ping the pool to ensure connectivity
+	// conn := pool.Get(nil)
+	// if conn == nil {
+	//  pool.Close()
+	//  return nil, fmt.Errorf("failed to get connection from new crawshaw pool")
+	// }
+	// pool.Put(conn)
+	slog.Info("Crawshaw pool created successfully", "path", dbPath)
+	return pool, nil
+}
+
+func createZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
+	poolSize := runtime.NumCPU()
+	// Match the settings used in zombiezen.New for consistency
+	initString := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)", dbPath)
+
+	pool, err := zombiezenPool.NewPool(initString, zombiezenPool.PoolOptions{
+		PoolSize: poolSize,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zombiezen pool at %s: %w", dbPath, err)
+	}
+	// Optional: Ping the pool
+	// conn, err := pool.Take(context.Background())
+	// if err != nil {
+	//  pool.Close()
+	//  return nil, fmt.Errorf("failed to get connection from new zombiezen pool: %w", err)
+	// }
+	// pool.Put(conn)
+	slog.Info("Zombiezen pool created successfully", "path", dbPath)
+	return pool, nil
+}
+
 
 // --- Command Handlers ---
 
@@ -30,31 +88,54 @@ func handleServe(args []string) error {
 		return err
 	}
 
-	// Initialize the application using the New function
-	// Pass the dbfile path and default options
+	// --- Create the Database Pool ---
+	// Choose which pool to create (e.g., Crawshaw)
+	dbPool, err := createCrawshawPool(*dbfile)
+	// Or: dbPool, err := createZombiezenPool(*dbfile)
+	if err != nil {
+		slog.Error("failed to create database pool", "error", err)
+		return err
+	}
+	// Defer closing the pool here, as the user (main) owns it now.
+	// This must happen *after* app.Close() finishes.
+	defer func() {
+		slog.Info("Closing database pool...")
+		if err := dbPool.Close(); err != nil {
+			slog.Error("Error closing database pool", "error", err)
+		}
+	}()
+
+
+	// --- Initialize the Application ---
+	// Pass the *existing* pool using the new option
 	app, srv, err := restinpieces.New(
-		*dbfile,
-		restinpieces.WithDBCrawshaw(*dbfile), // Pass dbfile here as well for DB init
-		restinpieces.WithRouterServeMux(),    // Using Httprouter as an example default
+		*dbfile, // dbfile might still be needed for config loading? Review restinpieces.New
+		// Use the appropriate option for the pool type created above
+		restinpieces.WithExistingCrawshawPool(dbPool),
+		// Or: restinpieces.WithExistingZombiezenPool(dbPool),
+		restinpieces.WithRouterServeMux(),
 		restinpieces.WithCacheRistretto(),
-		restinpieces.WithTextLogger(nil), // Use default text logger options
+		restinpieces.WithTextLogger(nil),
 	)
 	if err != nil {
 		slog.Error("failed to initialize application", "error", err)
+		// Pool will be closed by the deferred function
 		return err
 	}
-	defer app.Close() // Ensure resources are cleaned up
+	// app.Close() will now call the Db implementation's Close,
+	// which *won't* close the pool itself. The pool closure is handled by the defer above.
+	defer app.Close()
 
-	// Log embedded assets using the app's logger and config
-	// Note: config is now accessed via app.Config()
+
+	// Log embedded assets (if needed)
 	//logEmbeddedAssets(restinpieces.EmbeddedAssets, app.Config(), app.Logger())
 
-	//		app.Logger().Info("Starting server in verbose mode")
-
 	// Start the server
-	srv.Run() // srv is returned by restinpieces.New
+	// Consider passing context for graceful shutdown coordination with pool closing
+	srv.Run()
 
-	return nil
+	slog.Info("Server shut down gracefully.")
+	return nil // Error is handled before returning nil
 }
 
 func handleBootstrap(args []string) error {
