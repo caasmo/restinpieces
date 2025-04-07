@@ -73,7 +73,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		Payload: payload,
 	}
 
-	err := a.db.InsertJob(job)
+	err := a.DbQueue().InsertJob(job)
 	if err != nil {
 		if err == db.ErrConstraintUnique {
 			writeJsonError(w, errorEmailVerificationAlreadyRequested)
@@ -114,8 +114,7 @@ func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Get user from database to get password hash for signing key
-	user, err := a.db.GetUserById(claims[crypto.ClaimUserID].(string))
+	user, err := a.DbAuth().GetUserById(claims[crypto.ClaimUserID].(string))
 	if err != nil || user == nil {
 		writeJsonError(w, errorNotFound)
 		return
@@ -146,8 +145,7 @@ func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Mark user as verified
-	err = a.db.VerifyEmail(user.ID)
+	err = a.DbAuth().VerifyEmail(user.ID)
 	if err != nil {
 		writeJsonError(w, errorServiceUnavailable)
 		return

@@ -84,8 +84,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Insert job into queue with deduplication
-	err = a.db.InsertJob(queue.Job{
+	err = a.DbQueue().InsertJob(queue.Job{
 		JobType:      queue.JobTypeEmailChange,
 		Payload:      payloadBytes,
 		PayloadExtra: payloadExtraBytes,
@@ -141,8 +140,7 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Get user from database to get password hash for signing key
-	user, err := a.db.GetUserById(claims[crypto.ClaimUserID].(string))
+	user, err := a.DbAuth().GetUserById(claims[crypto.ClaimUserID].(string))
 	if err != nil || user == nil {
 		writeJsonError(w, errorNotFound)
 		return
@@ -182,8 +180,7 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Update email in database
-	err = a.db.UpdateEmail(user.ID, newEmail)
+	err = a.DbAuth().UpdateEmail(user.ID, newEmail)
 	if err != nil {
 		writeJsonError(w, errorServiceUnavailable)
 		return
