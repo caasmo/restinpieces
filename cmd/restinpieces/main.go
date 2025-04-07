@@ -12,7 +12,6 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/custom"
 	"github.com/caasmo/restinpieces/server"
-	"github.com/caasmo/restinpieces/setup"
 )
 
 // --- Command Handlers ---
@@ -77,7 +76,7 @@ func handleServe(args []string) error {
 	// Create the config provider with the initial config
 	configProvider := config.NewProvider(cfg)
 
-	app, proxy, err := setup.SetupApp(configProvider)
+	app, proxy, err := restinpieces.SetupApp(configProvider)
 	if err != nil {
 		slog.Error("failed to initialize app", "error", err)
 		return err
@@ -95,7 +94,7 @@ func handleServe(args []string) error {
 	route(cfg, app, cApp)
 
 	// Setup Scheduler
-	scheduler, err := setup.SetupScheduler(configProvider, app.Db(), app.Logger())
+	scheduler, err := restinpieces.SetupScheduler(configProvider, app.Db(), app.Logger())
 	if err != nil {
 		return err
 	}
