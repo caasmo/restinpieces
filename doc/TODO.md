@@ -1,5 +1,18 @@
 ### TODOs
 
+
+- remove dev tag
+- default zombiezen 
+- dbauth, dbQueue, 
+- db for pool?
+- cache alternative syncMap, no garbage collection, noOP
+- fileserver in library?
+- examples directory?
+- Route struct? Register without route? User must import router
+    - user can use Handle
+    - or import Route package framework // Document
+- app, server dicotomy
+- config file or db
 - config reload
 - proxy, app clear wiring
     - proxy design is overkill, 
