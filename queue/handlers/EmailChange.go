@@ -14,15 +14,15 @@ import (
 
 // EmailChangeHandler handles email change requests
 type EmailChangeHandler struct {
-	db             db.Db
+	dbAuth         db.DbAuth
 	configProvider *config.Provider
 	mailer         *mail.Mailer
 }
 
 // NewEmailChangeHandler creates a new EmailChangeHandler
-func NewEmailChangeHandler(db db.Db, provider *config.Provider, mailer *mail.Mailer) *EmailChangeHandler {
+func NewEmailChangeHandler(dbAuth db.DbAuth, provider *config.Provider, mailer *mail.Mailer) *EmailChangeHandler {
 	return &EmailChangeHandler{
-		db:             db,
+		dbAuth:         dbAuth,
 		configProvider: provider,
 		mailer:         mailer,
 	}
@@ -44,7 +44,7 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 	}
 
 	// Get user by ID
-	user, err := h.db.GetUserById(payload.UserID)
+	user, err := h.dbAuth.GetUserById(payload.UserID)
 	if err != nil {
 		return fmt.Errorf("failed to get user by ID: %w", err)
 	}
