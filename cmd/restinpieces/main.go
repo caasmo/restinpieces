@@ -6,12 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
-	"context" // Required for zombiezen pool creation
-	"errors"
-	"flag"
-	"fmt"
-	"io/fs"
-	"log/slog"
+	// "context" // Not currently used, uncomment if createZombiezenPool is used
 	"os"
 	"runtime" // Required for pool size calculation
 	"time"    // Required for pool creation options
