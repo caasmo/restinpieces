@@ -18,12 +18,11 @@ import (
 )
 
 
-// WithExistingCrawshawPool configures the App to use an existing Crawshaw SQLite pool.
-func WithExistingCrawshawPool(pool *crawshawPool.Pool) core.Option {
-	dbInstance, err := crawshaw.NewWithPool(pool)
+// WithCrawshawDB configures the App to use the Crawshaw SQLite implementation with an existing pool.
+func WithCrawshawDB(pool *crawshawPool.Pool) core.Option {
+	dbInstance, err := crawshaw.New(pool) // Use the renamed New function
 	if err != nil {
-		// Handle error appropriately - perhaps panic or log fatal
-		// For now, let's panic as this indicates a setup issue.
+		// Panic is reasonable here as it indicates a fundamental setup error.
 		panic(fmt.Sprintf("failed to initialize crawshaw DB with existing pool: %v", err))
 	}
 	// Assuming WithDB is replaced by WithDbProvider later
@@ -35,9 +34,9 @@ func WithExistingCrawshawPool(pool *crawshawPool.Pool) core.Option {
 	}
 }
 
-// WithExistingZombiezenPool configures the App to use an existing Zombiezen SQLite pool.
-func WithExistingZombiezenPool(pool *zombiezenPool.Pool) core.Option {
-	dbInstance, err := zombiezen.NewWithPool(pool)
+// WithZombiezenDB configures the App to use the Zombiezen SQLite implementation with an existing pool.
+func WithZombiezenDB(pool *zombiezenPool.Pool) core.Option {
+	dbInstance, err := zombiezen.New(pool) // Use the renamed New function
 	if err != nil {
 		panic(fmt.Sprintf("failed to initialize zombiezen DB with existing pool: %v", err))
 	}
