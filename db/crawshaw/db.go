@@ -4,7 +4,6 @@ import (
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 	"fmt"
-	"runtime"
 
 	"github.com/caasmo/restinpieces/db"
 )
