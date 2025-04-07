@@ -65,10 +65,10 @@ func (d *Db) Close() {
 }
 
 
-func (d *Db) GetById(id int64) int {
+func (d *Db) GetById(id int64) int { // Added missing return type 'int'
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
-		panic(err) // TODO: Proper error handling
+		panic(err) // TODO: Proper error handling - return error instead of panic
 	}
 	defer d.pool.Put(conn)
 

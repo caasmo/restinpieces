@@ -53,6 +53,7 @@ func (d *Db) Close() {
 		}
 		// Consider closing the channel if the writer goroutine expects it
 		// close(d.rwCh)
+	} // <-- This closing brace was missing for the 'if d.rwCh != nil' block
 	// Do not close the pool here. The user who created the pool is responsible for closing it.
 	// Set pool to nil to prevent further use after Close
 	d.pool = nil
