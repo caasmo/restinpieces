@@ -31,6 +31,24 @@ func New(dbfile string, opts ...core.Option) (*core.App, error) {
 
 	// Create the config provider with the initial config
 	configProvider := config.NewProvider(cfg)
+	app, proxy, err := restinpieces.SetupApp(configProvider)
+	if err != nil {
+		slog.Error("failed to initialize app", "error", err)
+		return err
+	}
+	defer app.Close()
+	cApp := custom.NewApp(app)
+	route(cfg, app, cApp)
+
+	scheduler, err := restinpieces.SetupScheduler(configProvider, app.Db(), app.Logger())
+	if err != nil {
+		return err
+	}
+
+	// Start the server
+	// proxy is app, and app returned by server?
+	srv := server.NewServer(configProvider, proxy, scheduler, app.Logger())
+//		app.Logger().Info("Starting server in verbose mode")
 
 	return nil, nil // Placeholder return
 }
