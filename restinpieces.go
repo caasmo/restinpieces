@@ -15,6 +15,13 @@ import (
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 )
 
+// New creates a new App instance with the provided options.
+// It initializes the core application components like database, router, cache, etc.
+func New(opts ...core.Option) (*core.App, error) {
+	// TODO: Implement the initialization logic using the provided options.
+	return nil, nil // Placeholder return
+}
+
 func SetupApp(configProvider *config.Provider) (*core.App, *proxy.Proxy, error) {
 
 	cfg := configProvider.Get()
