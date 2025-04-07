@@ -32,43 +32,43 @@ func handleServe(args []string) error {
 	}
 
 	// Load initial configuration
-	cfg, err := config.Load(*dbfile)
-	if err != nil {
-		slog.Error("failed to load initial config", "error", err)
-		return err
-	}
+	//cfg, err := config.Load(*dbfile)
+	//if err != nil {
+	//	slog.Error("failed to load initial config", "error", err)
+	//	return err
+	//}
 
-	// Create the config provider with the initial config
-	configProvider := config.NewProvider(cfg)
+	//// Create the config provider with the initial config
+	//configProvider := config.NewProvider(cfg)
 
-	app, proxy, err := restinpieces.SetupApp(configProvider)
-	if err != nil {
-		slog.Error("failed to initialize app", "error", err)
-		return err
-	}
-	defer app.Close()
+	//app, proxy, err := restinpieces.SetupApp(configProvider)
+	//if err != nil {
+	//	slog.Error("failed to initialize app", "error", err)
+	//	return err
+	//}
+	//defer app.Close()
 
 	// Log embedded assets using the app's logger
-	app.Logger().Debug("logging embedded assets", "public_dir", cfg.PublicDir)
-	logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg, app.Logger())
+	//app.Logger().Debug("logging embedded assets", "public_dir", cfg.PublicDir)
+	//logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg, app.Logger())
 
 	// Setup custom app
-	cApp := custom.NewApp(app)
+	//cApp := custom.NewApp(app)
 
 	// Setup routing
-	route(cfg, app, cApp)
+	//route(cfg, app, cApp)
 
 	// Setup Scheduler
-	scheduler, err := restinpieces.SetupScheduler(configProvider, app.Db(), app.Logger())
-	if err != nil {
-		return err
-	}
+	//scheduler, err := restinpieces.SetupScheduler(configProvider, app.Db(), app.Logger())
+	//if err != nil {
+	//	return err
+	//}
 
-	// Start the server
-	srv := server.NewServer(configProvider, proxy, scheduler, app.Logger())
-	if *verbose {
-		app.Logger().Info("Starting server in verbose mode")
-	}
+	//// Start the server
+	//srv := server.NewServer(configProvider, proxy, scheduler, app.Logger())
+	//if *verbose {
+	//	app.Logger().Info("Starting server in verbose mode")
+	//}
 	srv.Run()
 	return nil
 }
