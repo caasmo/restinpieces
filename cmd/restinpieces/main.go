@@ -9,11 +9,11 @@ import (
 	// "context" // Not currently used, uncomment if createZombiezenPool is used
 	"os"
 	"runtime" // Required for pool size calculation
-	"time"    // Required for pool creation options
+	// "time" // Not currently used
 
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/core" // Import core for options
+	// "github.com/caasmo/restinpieces/core" // Not currently used
 	//"github.com/caasmo/restinpieces/custom"
 	//"github.com/caasmo/restinpieces/server"
 
@@ -106,8 +106,8 @@ func handleServe(args []string) error {
 	app, srv, err := restinpieces.New(
 		*dbfile, // dbfile might still be needed for config loading? Review restinpieces.New
 		// Use the appropriate option for the pool type created above
-		restinpieces.WithExistingCrawshawPool(dbPool),
-		// Or: restinpieces.WithExistingZombiezenPool(dbPool),
+		restinpieces.WithCrawshawDB(dbPool),
+		// Or: restinpieces.WithZombiezenDB(dbPool),
 		restinpieces.WithRouterServeMux(),
 		restinpieces.WithCacheRistretto(),
 		restinpieces.WithTextLogger(nil),
