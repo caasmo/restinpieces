@@ -82,12 +82,12 @@ func (a *App) Close() {
 }
 
 // AuthDb returns the DbAuth interface implementation for authentication operations.
-func (a *App) AuthDb() db.DbAuth {
+func (a *App) DbAuth() db.DbAuth {
 	return a.dbAuth
 }
 
 // QueueDb returns the DbQueue interface implementation for job queue operations.
-func (a *App) QueueDb() db.DbQueue {
+func (a *App) DbQueue() db.DbQueue {
 	return a.dbQueue
 }
 
