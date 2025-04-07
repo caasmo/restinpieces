@@ -4,8 +4,8 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	r "github.com/caasmo/restinpieces/router"
-	"io/fs"
-	"net/http"
+	//"io/fs"
+	//"net/http"
 
 	// custom handlers and middleware
 	"github.com/caasmo/restinpieces/custom"
@@ -18,19 +18,19 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	// --- file server ---
-	subFS, err := fs.Sub(EmbeddedAssets, cfg.PublicDir)
-	if err != nil {
-		// TODO
-		panic("failed to create sub filesystem: " + err.Error())
-	}
+	//subFS, err := fs.Sub(EmbeddedAssets, cfg.PublicDir)
+	//if err != nil {
+	//	// TODO
+	//	panic("failed to create sub filesystem: " + err.Error())
+	//}
 
-	ffs := http.FileServerFS(subFS)
-	ap.Router().Register(
-		r.NewRoute("/").WithHandler(ffs).WithMiddleware(
-			core.StaticHeadersMiddleware,
-			core.GzipMiddleware(subFS),
-		),
-	)
+	//ffs := http.FileServerFS(subFS)
+	//ap.Router().Register(
+	//	r.NewRoute("/").WithHandler(ffs).WithMiddleware(
+	//		core.StaticHeadersMiddleware,
+	//		core.GzipMiddleware(subFS),
+	//	),
+	//)
 
 	// --- api core routes  ---
 	ap.Router().Register(
