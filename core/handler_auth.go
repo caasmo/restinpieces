@@ -75,8 +75,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user from database
-	user, err := a.db.GetUserByEmail(req.Identity)
+	user, err := a.DbAuth().GetUserByEmail(req.Identity)
 	if err != nil || user == nil {
 		writeJsonError(w, errorInvalidCredentials)
 		return
@@ -162,8 +161,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		EmailVisibility: false,
 	}
 
-	// Create user with password authentication
-	retrievedUser, err := a.db.CreateUserWithPassword(newUser)
+	retrievedUser, err := a.DbAuth().CreateUserWithPassword(newUser)
 	if err != nil {
 		writeJsonError(w, errorAuthDatabaseError)
 		return
@@ -184,7 +182,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 			Payload: payload,
 		}
 
-		err = a.db.InsertJob(job)
+		err = a.DbQueue().InsertJob(job)
 		if err != nil {
 			a.Logger().Error("Failed to insert verification job", "error", err, "job", job)
 			writeJsonError(w, errorServiceUnavailable)
