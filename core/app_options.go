@@ -18,20 +18,28 @@ func WithCache(c cache.Cache[string, interface{}]) Option {
 	}
 }
 
-// WithDB sets the database implementation (DEPRECATED - Use WithDbProvider or specific WithExisting...Pool options)
-// Keeping this temporarily for compatibility during refactor.
-func WithDB(d db.Db) Option {
+// DbProvider is an interface combining the required DB roles.
+// The concrete DB implementation (e.g., *crawshaw.Db) must satisfy this interface.
+type DbProvider interface {
+	db.DbAuth
+	db.DbQueue
+	db.DbLifecycle
+}
+
+// WithDbProvider sets the database providers (Auth, Queue, Lifecycle) in the App.
+// It expects a single concrete type (like *crawshaw.Db) that implements DbProvider.
+func WithDbProvider(provider DbProvider) Option {
 	return func(a *App) {
-		a.db = d
+		if provider == nil {
+			// Or panic, depending on desired behavior for nil provider
+			// This helps catch errors early during setup.
+			panic("DbProvider cannot be nil")
+		}
+		a.dbAuth = provider
+		a.dbQueue = provider
+		a.dbLifecycle = provider
 	}
 }
-
-// SetDb is a temporary method for the placeholder in restinpieces_options.go
-// Remove this once WithDbProvider is fully implemented and used.
-func (a *App) SetDb(d db.Db) {
-	a.db = d
-}
-
 
 // WithRouter sets the router implementation
 func WithRouter(r router.Router) Option {

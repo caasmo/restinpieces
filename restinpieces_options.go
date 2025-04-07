@@ -26,13 +26,8 @@ func WithCrawshawDB(pool *crawshawPool.Pool) core.Option {
 		// Panic is reasonable here as it indicates a fundamental setup error.
 		panic(fmt.Sprintf("failed to initialize crawshaw DB with existing pool: %v", err))
 	}
-	// Assuming WithDB is replaced by WithDbProvider later
-	// return core.WithDB(dbInstance)
-	// Placeholder until WithDbProvider is introduced:
-	return func(a *core.App) {
-		// This assignment will need to change when App uses DbProvider
-		a.SetDb(dbInstance) // Assuming a temporary SetDb method exists or is added
-	}
+	// Use the new provider option
+	return core.WithDbProvider(dbInstance)
 }
 
 // WithZombiezenDB configures the App to use the Zombiezen SQLite implementation with an existing pool.
@@ -41,13 +36,8 @@ func WithZombiezenDB(pool *zombiezenPool.Pool) core.Option {
 	if err != nil {
 		panic(fmt.Sprintf("failed to initialize zombiezen DB with existing pool: %v", err))
 	}
-	// Assuming WithDB is replaced by WithDbProvider later
-	// return core.WithDB(dbInstance)
-	// Placeholder until WithDbProvider is introduced:
-	return func(a *core.App) {
-		// This assignment will need to change when App uses DbProvider
-		a.SetDb(dbInstance) // Assuming a temporary SetDb method exists or is added
-	}
+	// Use the new provider option
+	return core.WithDbProvider(dbInstance)
 }
 
 

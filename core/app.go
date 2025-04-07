@@ -20,7 +20,9 @@ import (
 // app is a service with heavy objects for the handlers.
 // and also a out the box coded endpoints handlers. (methods)
 type App struct {
-	db             db.Db
+	dbAuth         db.DbAuth
+	dbQueue        db.DbQueue
+	dbLifecycle    db.DbLifecycle // For managing the connection lifecycle
 	router         router.Router
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
@@ -34,9 +36,17 @@ func NewApp(opts ...Option) (*App, error) {
 		opt(a)
 	}
 
-	if a.db == nil {
-		return nil, fmt.Errorf("db is required but was not provided")
+	// Check for the new required interfaces
+	if a.dbAuth == nil {
+		return nil, fmt.Errorf("dbAuth is required but was not provided (use WithDbProvider)")
 	}
+	if a.dbQueue == nil {
+		return nil, fmt.Errorf("dbQueue is required but was not provided (use WithDbProvider)")
+	}
+	if a.dbLifecycle == nil {
+		return nil, fmt.Errorf("dbLifecycle is required but was not provided (use WithDbProvider)")
+	}
+	// Check other required dependencies
 	if a.router == nil {
 		return nil, fmt.Errorf("router is required but was not provided")
 	}
@@ -58,14 +68,27 @@ func (a *App) Router() router.Router {
 	return a.router
 }
 
-// Close all
+// Close gracefully shuts down application resources, including the database connection.
 func (a *App) Close() {
-	a.db.Close()
+	a.logger.Info("Closing application resources...")
+	if a.dbLifecycle != nil {
+		a.logger.Debug("Closing database connection...")
+		a.dbLifecycle.Close() // Close the DB connection/pool via the lifecycle interface
+	} else {
+		a.logger.Warn("dbLifecycle provider is nil, cannot close database connection.")
+	}
+	// Add closing logic for other resources if needed (e.g., cache)
+	a.logger.Info("Application resources closed.")
 }
 
-// Db returns the database instance
-func (a *App) Db() db.Db {
-	return a.db
+// AuthDb returns the DbAuth interface implementation for authentication operations.
+func (a *App) AuthDb() db.DbAuth {
+	return a.dbAuth
+}
+
+// QueueDb returns the DbQueue interface implementation for job queue operations.
+func (a *App) QueueDb() db.DbQueue {
+	return a.dbQueue
 }
 
 // Logger returns the application's logger instance

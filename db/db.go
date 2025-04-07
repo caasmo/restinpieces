@@ -6,23 +6,29 @@ import (
 	"time"
 )
 
-type Db interface {
-	Close()
-	GetById(id int64) int
-	Insert(value int64)
-	InsertWithPool(value int64)
+// DbAuth defines database operations related to users and authentication.
+type DbAuth interface {
 	GetUserByEmail(email string) (*User, error)
 	GetUserById(id string) (*User, error)
 	CreateUserWithPassword(user User) (*User, error)
 	CreateUserWithOauth2(user User) (*User, error)
-	InsertJob(job queue.Job) error
-	GetJobs(limit int) ([]*queue.Job, error)
-	Claim(limit int) ([]*queue.Job, error)
-	MarkCompleted(jobID int64) error
-	MarkFailed(jobID int64, errMsg string) error
 	VerifyEmail(userId string) error
 	UpdatePassword(userId string, newPassword string) error
 	UpdateEmail(userId string, newEmail string) error
+}
+
+// DbQueue defines database operations related to the job queue.
+type DbQueue interface {
+	InsertJob(job queue.Job) error
+	// GetJobs(limit int) ([]*queue.Job, error) // Removed as Claim is usually preferred
+	Claim(limit int) ([]*queue.Job, error)
+	MarkCompleted(jobID int64) error
+	MarkFailed(jobID int64, errMsg string) error
+}
+
+// DbLifecycle defines operations for managing the database connection lifecycle.
+type DbLifecycle interface {
+	Close()
 }
 
 // TimeFormat converts a time.Time to RFC3339 string in UTC.
@@ -38,10 +44,16 @@ func TimeFormat(tt time.Time) string {
 // back to time.Time values. Returns an error if the input string is not
 // in RFC3339 format.
 func TimeParse(s string) (time.Time, error) {
+	// Handle empty strings gracefully, returning zero time and no error,
+	// as some DB fields might be nullable/empty timestamps.
+	if s == "" {
+		return time.Time{}, nil
+	}
 	return time.Parse(time.RFC3339, s)
 }
 
 var (
 	ErrMissingFields    = errors.New("missing required fields")
 	ErrConstraintUnique = errors.New("unique constraint violation")
+	ErrUserNotFound     = errors.New("user not found") // Added for clarity
 )

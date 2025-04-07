@@ -14,8 +14,10 @@ type Db struct {
         rwCh         chan *sqlite.Conn
     }
 
-    // Verify interface implementation (non-allocating check)
-    var _ db.Db = (*Db)(nil)
+    // Verify interface implementations
+    var _ db.DbAuth = (*Db)(nil)
+    var _ db.DbQueue = (*Db)(nil)
+    var _ db.DbLifecycle = (*Db)(nil)
 
 // New creates a new Db instance using an existing pool provided by the user.
 func New(pool *sqlitex.Pool) (*Db, error) {
