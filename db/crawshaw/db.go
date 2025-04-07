@@ -11,37 +11,37 @@ import (
 
 type Db struct {
 	pool         *sqlitex.Pool
-	ownsPool     bool // Flag to indicate if this instance created the pool
-	//rwConn *sqlitex.Conn
-	rwCh         chan *sqlite.Conn
-}
+        ownsPool     bool // Flag to indicate if this instance created the pool
+        //rwConn *sqlitex.Conn
+        rwCh         chan *sqlite.Conn
+    }
 
-// Verify interface implementation (non-allocating check)
-var _ db.Db = (*Db)(nil)
+    // Verify interface implementation (non-allocating check)
+    var _ db.Db = (*Db)(nil)
 
-// New creates a new Db instance, including creating its own pool.
-func New(path string) (*Db, error) {
-	poolSize := runtime.NumCPU()
-	// Enable WAL mode and set a busy timeout for better concurrency handling.
-	initString := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)", path)
+    // New creates a new Db instance, including creating its own pool.
+    func New(path string) (*Db, error) {
+        poolSize := runtime.NumCPU()
+        // Enable WAL mode and set a busy timeout for better concurrency handling.
+        initString := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)", path)
 
-	p, err := sqlitex.Open(initString, 0, poolSize)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open sqlite pool at %s: %w", path, err)
-	}
+        p, err := sqlitex.Open(initString, 0, poolSize)
+        if err != nil {
+            return nil, fmt.Errorf("failed to open sqlite pool at %s: %w", path, err)
+        }
 
-	// Setup the single writer connection channel (if needed, otherwise remove)
-	conn := p.Get(nil)
-	if conn == nil {
-		p.Close()
-		return nil, fmt.Errorf("failed to get initial connection from pool")
-	}
-	ch := make(chan *sqlite.Conn, 1)
-	go func(initialConn *sqlite.Conn, pool *sqlitex.Pool, ch chan<- *sqlite.Conn) {
-		ch <- initialConn
-	}(conn, p, ch)
+        // Setup the single writer connection channel (if needed, otherwise remove)
+        conn := p.Get(nil)
+        if conn == nil {
+            p.Close()
+            return nil, fmt.Errorf("failed to get initial connection from pool")
+        }
+        ch := make(chan *sqlite.Conn, 1)
+        go func(initialConn *sqlite.Conn, pool *sqlitex.Pool, ch chan<- *sqlite.Conn) {
+            ch <- initialConn
+        }(conn, p, ch)
 
-	return &Db{pool: p, ownsPool: true, rwCh: ch}, nil
+        return &Db{pool: p, ownsPool: true, rwCh: ch}, nil
 }
 
 // NewWithPool creates a new Db instance using an existing pool.
