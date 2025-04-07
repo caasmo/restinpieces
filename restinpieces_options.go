@@ -5,6 +5,7 @@ package restinpieces
 import (
 	"log/slog"
 	"os"
+	"fmt"
 
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/core"
