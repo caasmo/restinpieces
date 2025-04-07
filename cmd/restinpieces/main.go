@@ -35,7 +35,7 @@ func handleServe(args []string) error {
 	app, srv, err := restinpieces.New(
 		*dbfile,
 		restinpieces.WithDBCrawshaw(*dbfile), // Pass dbfile here as well for DB init
-		restinpieces.WithRouterHttprouter(),  // Using Httprouter as an example default
+		restinpieces.WithRouterServeMux(),  // Using Httprouter as an example default
 		restinpieces.WithCacheRistretto(),
 		restinpieces.WithTextLogger(nil), // Use default text logger options
 	)
@@ -47,7 +47,7 @@ func handleServe(args []string) error {
 
 	// Log embedded assets using the app's logger and config
 	// Note: config is now accessed via app.Config()
-	logEmbeddedAssets(restinpieces.EmbeddedAssets, app.Config(), app.Logger())
+	//logEmbeddedAssets(restinpieces.EmbeddedAssets, app.Config(), app.Logger())
 
 //		app.Logger().Info("Starting server in verbose mode")
 
