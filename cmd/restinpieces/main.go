@@ -10,8 +10,8 @@ import (
 
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/custom"
-	"github.com/caasmo/restinpieces/server"
+	//"github.com/caasmo/restinpieces/custom"
+	//"github.com/caasmo/restinpieces/server"
 )
 
 // --- Command Handlers ---
