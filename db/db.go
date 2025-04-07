@@ -57,3 +57,11 @@ var (
 	ErrConstraintUnique = errors.New("unique constraint violation")
 	ErrUserNotFound     = errors.New("user not found") // Added for clarity
 )
+
+// DbProvider is an interface combining the required DB roles.
+// The concrete DB implementation (e.g., *crawshaw.Db) must satisfy this interface.
+type DbProvider interface {
+	DbAuth
+	DbQueue
+	DbLifecycle
+}

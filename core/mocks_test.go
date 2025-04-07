@@ -9,9 +9,9 @@ import (
 )
 
 // Compile-time check to ensure MockDB implements the provider interface
-var _ DbProvider = (*MockDB)(nil)
+var _ db.DbProvider = (*MockDB)(nil)
 
-// MockDB implements core.DbProvider for testing purposes.
+// MockDB implements db.DbProvider for testing purposes.
 // Use function fields to allow overriding behavior in specific tests.
 type MockDB struct {
 	// --- Mock DbAuth Methods ---

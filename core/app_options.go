@@ -18,17 +18,9 @@ func WithCache(c cache.Cache[string, interface{}]) Option {
 	}
 }
 
-// DbProvider is an interface combining the required DB roles.
-// The concrete DB implementation (e.g., *crawshaw.Db) must satisfy this interface.
-type DbProvider interface {
-	db.DbAuth
-	db.DbQueue
-	db.DbLifecycle
-}
-
 // WithDbProvider sets the database providers (Auth, Queue, Lifecycle) in the App.
-// It expects a single concrete type (like *crawshaw.Db) that implements DbProvider.
-func WithDbProvider(provider DbProvider) Option {
+// It expects a single concrete type (like *crawshaw.Db) that implements db.DbProvider.
+func WithDbProvider(provider db.DbProvider) Option {
 	return func(a *App) {
 		if provider == nil {
 			// Or panic, depending on desired behavior for nil provider
