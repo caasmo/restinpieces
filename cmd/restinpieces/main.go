@@ -31,45 +31,32 @@ func handleServe(args []string) error {
 		return err
 	}
 
-	// Load initial configuration
-	//cfg, err := config.Load(*dbfile)
-	//if err != nil {
-	//	slog.Error("failed to load initial config", "error", err)
-	//	return err
-	//}
+	// Initialize the application using the New function
+	// Pass the dbfile path and default options
+	app, srv, err := restinpieces.New(
+		*dbfile,
+		restinpieces.WithDBCrawshaw(*dbfile), // Pass dbfile here as well for DB init
+		restinpieces.WithRouterHttprouter(),  // Using Httprouter as an example default
+		restinpieces.WithCacheRistretto(),
+		restinpieces.WithTextLogger(nil), // Use default text logger options
+	)
+	if err != nil {
+		slog.Error("failed to initialize application", "error", err)
+		return err
+	}
+	defer app.Close() // Ensure resources are cleaned up
 
-	//// Create the config provider with the initial config
-	//configProvider := config.NewProvider(cfg)
+	// Log embedded assets using the app's logger and config
+	// Note: config is now accessed via app.Config()
+	logEmbeddedAssets(restinpieces.EmbeddedAssets, app.Config(), app.Logger())
 
-	//app, proxy, err := restinpieces.SetupApp(configProvider)
-	//if err != nil {
-	//	slog.Error("failed to initialize app", "error", err)
-	//	return err
-	//}
-	//defer app.Close()
+	if *verbose {
+		app.Logger().Info("Starting server in verbose mode")
+	}
 
-	// Log embedded assets using the app's logger
-	//app.Logger().Debug("logging embedded assets", "public_dir", cfg.PublicDir)
-	//logEmbeddedAssets(restinpieces.EmbeddedAssets, cfg, app.Logger())
+	// Start the server
+	srv.Run() // srv is returned by restinpieces.New
 
-	// Setup custom app
-	//cApp := custom.NewApp(app)
-
-	// Setup routing
-	//route(cfg, app, cApp)
-
-	// Setup Scheduler
-	//scheduler, err := restinpieces.SetupScheduler(configProvider, app.Db(), app.Logger())
-	//if err != nil {
-	//	return err
-	//}
-
-	//// Start the server
-	//srv := server.NewServer(configProvider, proxy, scheduler, app.Logger())
-	//if *verbose {
-	//	app.Logger().Info("Starting server in verbose mode")
-	//}
-	srv.Run()
 	return nil
 }
 
