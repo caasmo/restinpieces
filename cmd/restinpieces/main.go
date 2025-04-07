@@ -16,41 +16,6 @@ import (
 
 // --- Command Handlers ---
 
-func handleBootstrap(args []string) error {
-	// 1. Create FlagSet
-	bootstrapCmd := flag.NewFlagSet("bootstrap", flag.ExitOnError)
-
-	// 2. Define flags
-	config := bootstrapCmd.Bool("config", false, "Initialize configuration")
-	db := bootstrapCmd.Bool("db", false, "Initialize database")
-	env := bootstrapCmd.Bool("env", false, "Initialize environment")
-	files := bootstrapCmd.Bool("files", false, "Initialize files directory")
-	dbfile := bootstrapCmd.String("dbfile", "bench.db", "SQLite database file path")
-
-	// 3. Custom usage
-	bootstrapCmd.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s bootstrap [flags]\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Initialize application resources\n\n")
-		fmt.Fprintf(os.Stderr, "Flags:\n")
-		fmt.Fprintf(os.Stderr, "  --config        Initialize configuration\n")
-		fmt.Fprintf(os.Stderr, "  --db           Initialize database\n")
-		fmt.Fprintf(os.Stderr, "  --env          Initialize environment\n")
-		fmt.Fprintf(os.Stderr, "  --files        Initialize files directory\n")
-		fmt.Fprintf(os.Stderr, "  --dbfile string   SQLite database file (default \"bench.db\")\n\n")
-		fmt.Fprintf(os.Stderr, "All flags except --dbfile are boolean switches\n")
-	}
-
-	// 4. Parse args
-	if err := bootstrapCmd.Parse(args); err != nil {
-		return err
-	}
-
-	// 5. Placeholder logic
-	fmt.Printf("Bootstrap command called with config=%t, db=%t, env=%t, files=%t, dbfile=%s\n",
-		*config, *db, *env, *files, *dbfile)
-	return nil
-}
-
 func handleServe(args []string) error {
 	serveCmd := flag.NewFlagSet("serve", flag.ExitOnError)
 	dbfile := serveCmd.String("dbfile", "bench.db", "SQLite database file path")
@@ -107,6 +72,42 @@ func handleServe(args []string) error {
 	srv.Run()
 	return nil
 }
+
+func handleBootstrap(args []string) error {
+	// 1. Create FlagSet
+	bootstrapCmd := flag.NewFlagSet("bootstrap", flag.ExitOnError)
+
+	// 2. Define flags
+	config := bootstrapCmd.Bool("config", false, "Initialize configuration")
+	db := bootstrapCmd.Bool("db", false, "Initialize database")
+	env := bootstrapCmd.Bool("env", false, "Initialize environment")
+	files := bootstrapCmd.Bool("files", false, "Initialize files directory")
+	dbfile := bootstrapCmd.String("dbfile", "bench.db", "SQLite database file path")
+
+	// 3. Custom usage
+	bootstrapCmd.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s bootstrap [flags]\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Initialize application resources\n\n")
+		fmt.Fprintf(os.Stderr, "Flags:\n")
+		fmt.Fprintf(os.Stderr, "  --config        Initialize configuration\n")
+		fmt.Fprintf(os.Stderr, "  --db           Initialize database\n")
+		fmt.Fprintf(os.Stderr, "  --env          Initialize environment\n")
+		fmt.Fprintf(os.Stderr, "  --files        Initialize files directory\n")
+		fmt.Fprintf(os.Stderr, "  --dbfile string   SQLite database file (default \"bench.db\")\n\n")
+		fmt.Fprintf(os.Stderr, "All flags except --dbfile are boolean switches\n")
+	}
+
+	// 4. Parse args
+	if err := bootstrapCmd.Parse(args); err != nil {
+		return err
+	}
+
+	// 5. Placeholder logic
+	fmt.Printf("Bootstrap command called with config=%t, db=%t, env=%t, files=%t, dbfile=%s\n",
+		*config, *db, *env, *files, *dbfile)
+	return nil
+}
+
 
 func handleDumpConfig(args []string) error {
 	dumpCmd := flag.NewFlagSet("dump-config", flag.ExitOnError)
