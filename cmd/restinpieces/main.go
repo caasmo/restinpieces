@@ -19,7 +19,6 @@ import (
 func handleServe(args []string) error {
 	serveCmd := flag.NewFlagSet("serve", flag.ExitOnError)
 	dbfile := serveCmd.String("dbfile", "bench.db", "SQLite database file path")
-	verbose := serveCmd.Bool("v", false, "Enable verbose output")
 
 	serveCmd.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s serve [flags]\n\n", os.Args[0])
@@ -50,9 +49,7 @@ func handleServe(args []string) error {
 	// Note: config is now accessed via app.Config()
 	logEmbeddedAssets(restinpieces.EmbeddedAssets, app.Config(), app.Logger())
 
-	if *verbose {
-		app.Logger().Info("Starting server in verbose mode")
-	}
+//		app.Logger().Info("Starting server in verbose mode")
 
 	// Start the server
 	srv.Run() // srv is returned by restinpieces.New
