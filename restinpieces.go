@@ -18,7 +18,16 @@ import (
 // New creates a new App instance with the provided options.
 // It initializes the core application components like database, router, cache, etc.
 func New(opts ...core.Option) (*core.App, error) {
-	// TODO: Implement the initialization logic using the provided options.
+	// Load initial configuration TODO
+	cfg, err := config.Load(*dbfile)
+	if err != nil {
+		slog.Error("failed to load initial config", "error", err)
+		return err
+	}
+
+	// Create the config provider with the initial config
+	configProvider := config.NewProvider(cfg)
+
 	return nil, nil // Placeholder return
 }
 
