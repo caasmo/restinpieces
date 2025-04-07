@@ -7,14 +7,14 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/proxy"
-	"github.com/caasmo/restinpieces/custom" 
+	"github.com/caasmo/restinpieces/custom"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
-	"github.com/caasmo/restinpieces/server" 
+	"github.com/caasmo/restinpieces/server"
 )
 
 // New creates a new App instance and Server with the provided options.
@@ -130,4 +130,3 @@ func SetupScheduler(configProvider *config.Provider, db db.Db, logger *slog.Logg
 
 	return scl.NewScheduler(configProvider, db, executor.NewExecutor(hdls), logger), nil
 }
-

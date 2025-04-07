@@ -8,8 +8,8 @@ import (
 	"sync/atomic" // Added for atomic value
 	"time"
 
-	"github.com/BurntSushi/toml" 
 	_ "embed"
+	"github.com/BurntSushi/toml"
 )
 
 //go:embed config.toml
@@ -287,7 +287,7 @@ func LoadJwt(cfg *Config) error {
 
 func LoadSmtp(cfg *Config) error {
 	cfg.Smtp.Username = os.Getenv(EnvSmtpUsername)
-	
+
 	var err error
 	cfg.Smtp.Password, err = LoadEnvSecret(EnvSmtpPassword, cfg.Smtp.Password)
 	if err != nil {
@@ -310,7 +310,7 @@ func LoadOAuth2(cfg *Config) error {
 		googleCfg.ClientID, errID = LoadEnvSecret(EnvGoogleClientID, googleCfg.ClientID)
 		googleCfg.ClientSecret, errSecret = LoadEnvSecret(EnvGoogleClientSecret, googleCfg.ClientSecret)
 		googleCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
-		
+
 		if errID != nil || errSecret != nil {
 			delete(cfg.OAuth2Providers, OAuth2ProviderGoogle)
 		} else {
@@ -324,7 +324,7 @@ func LoadOAuth2(cfg *Config) error {
 		githubCfg.ClientID, errID = LoadEnvSecret(EnvGithubClientID, githubCfg.ClientID)
 		githubCfg.ClientSecret, errSecret = LoadEnvSecret(EnvGithubClientSecret, githubCfg.ClientSecret)
 		githubCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
-		
+
 		if errID != nil || errSecret != nil {
 			delete(cfg.OAuth2Providers, OAuth2ProviderGitHub)
 		} else {

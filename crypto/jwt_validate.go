@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -191,4 +190,3 @@ func ValidateEmailChangeClaims(claims jwt.MapClaims) error {
 
 	return nil
 }
-

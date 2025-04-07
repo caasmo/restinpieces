@@ -66,4 +66,3 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 	//ap.Router().Handle("/api/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
 	//ap.Router().Handle("/api/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
 }
-

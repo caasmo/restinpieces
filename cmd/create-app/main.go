@@ -67,7 +67,7 @@ func (ac *AppCreator) RunMigrations() error {
 		return err
 	}
 	defer ac.pool.Put(conn)
-	
+
 	// Get embedded schema filesystem
 	schemaFS := migrations.Schema()
 
@@ -85,8 +85,8 @@ func (ac *AppCreator) RunMigrations() error {
 
 		sql, err := fs.ReadFile(schemaFS, migration.Name())
 		if err != nil {
-			ac.logger.Error("failed to read embedded migration", 
-				"file", migration.Name(), 
+			ac.logger.Error("failed to read embedded migration",
+				"file", migration.Name(),
 				"error", err)
 			return err
 		}
@@ -95,8 +95,8 @@ func (ac *AppCreator) RunMigrations() error {
 		if err := sqlitex.ExecuteScript(conn, string(sql), &sqlitex.ExecOptions{
 			Args: nil,
 		}); err != nil {
-			ac.logger.Error("failed to execute migration", 
-				"file", migration.Name(), 
+			ac.logger.Error("failed to execute migration",
+				"file", migration.Name(),
 				"error", err)
 			return err
 		}

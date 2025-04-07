@@ -82,4 +82,3 @@ func WithTextLogger(opts *slog.HandlerOptions) core.Option {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, opts))
 	return core.WithLogger(logger)
 }
-
