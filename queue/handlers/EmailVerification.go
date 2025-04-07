@@ -15,15 +15,15 @@ import (
 
 // EmailVerificationHandler handles email verification jobs
 type EmailVerificationHandler struct {
-	db             db.Db
+	dbAuth         db.DbAuth
 	configProvider *config.Provider
 	mailer         *mail.Mailer
 }
 
 // NewEmailVerificationHandler creates a new EmailVerificationHandler
-func NewEmailVerificationHandler(db db.Db, provider *config.Provider, mailer *mail.Mailer) *EmailVerificationHandler {
+func NewEmailVerificationHandler(dbAuth db.DbAuth, provider *config.Provider, mailer *mail.Mailer) *EmailVerificationHandler {
 	return &EmailVerificationHandler{
-		db:             db,
+		dbAuth:         dbAuth,
 		configProvider: provider,
 		mailer:         mailer,
 	}
@@ -39,7 +39,7 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 	}
 
 	// Get user by email
-	user, err := h.db.GetUserByEmail(payload.Email)
+	user, err := h.dbAuth.GetUserByEmail(payload.Email)
 	if err != nil {
 		return fmt.Errorf("failed to get user by email: %w", err)
 	}

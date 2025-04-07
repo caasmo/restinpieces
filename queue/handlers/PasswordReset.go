@@ -15,15 +15,15 @@ import (
 
 // PasswordResetHandler handles password reset requests
 type PasswordResetHandler struct {
-	db             db.Db
+	dbAuth         db.DbAuth
 	configProvider *config.Provider
 	mailer         *mail.Mailer
 }
 
 // NewPasswordResetHandler creates a new PasswordResetHandler
-func NewPasswordResetHandler(db db.Db, provider *config.Provider, mailer *mail.Mailer) *PasswordResetHandler {
+func NewPasswordResetHandler(dbAuth db.DbAuth, provider *config.Provider, mailer *mail.Mailer) *PasswordResetHandler {
 	return &PasswordResetHandler{
-		db:             db,
+		dbAuth:         dbAuth,
 		configProvider: provider,
 		mailer:         mailer,
 	}
@@ -44,7 +44,7 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 	}
 
 	// Get user by ID
-	user, err := h.db.GetUserById(payload.UserID)
+	user, err := h.dbAuth.GetUserById(payload.UserID)
 	if err != nil {
 		return fmt.Errorf("failed to get user by ID: %w", err)
 	}
