@@ -25,14 +25,17 @@ import (
 // --- Pool Creation Helpers ---
 
 func createCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
+
+    // TODO documetn option requiring wal for example for litestream
+    p, err := sqlitex.Open(initString, 0, poolSize)
 	poolSize := runtime.NumCPU()
-	// Match the settings used in crawshaw.New for consistency
-	initString := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)", dbPath)
+    initString := fmt.Sprintf("file:%s", path)
 
 	pool, err := crawshawPool.Open(initString, 0, poolSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create crawshaw pool at %s: %w", dbPath, err)
 	}
+
 	// Optional: Ping the pool to ensure connectivity
 	// conn := pool.Get(nil)
 	// if conn == nil {

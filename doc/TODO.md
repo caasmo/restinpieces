@@ -1,6 +1,8 @@
 ### TODOs
 
 
+- app.close method overkill
+- remove channel writer 
 - remove dev tag
 - default zombiezen 
 - dbauth, dbQueue, 
