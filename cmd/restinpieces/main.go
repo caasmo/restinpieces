@@ -25,6 +25,7 @@ func main() {
 
 	// Parse flags
 	flag.Parse()
+	slog.Info("YOLO")
 
 	// --- Create the Database Pool ---
 	// Use the helper from the library to create a pool with suitable defaults.
