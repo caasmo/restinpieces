@@ -65,41 +65,6 @@ func New(dbfile string, opts ...core.Option) (*core.App, *server.Server, error) 
 	return app, srv, nil
 }
 
-// SetupApp is now redundant as its logic is integrated into New.
-// It can be removed or kept if used elsewhere.
-// For now, keeping it but commenting out the core.NewApp call as it's done in New.
-//func SetupApp(configProvider *config.Provider) (*core.App, *proxy.Proxy, error) {
-//	// This function might need refactoring or removal if New handles all setup.
-//	// The core.NewApp call is now primarily handled within the New function.
-//	// If this function is still needed, it should likely receive an already initialized app
-//	// or focus on setting up only the proxy.
-//
-//	cfg := configProvider.Get()
-//
-//	// Example: If SetupApp is only responsible for creating the proxy now:
-//	// Assuming 'app' is passed in or retrieved differently.
-//	// For demonstration, let's assume it needs to create a dummy app for the proxy,
-//	// which isn't ideal. Refactoring is recommended.
-//	// This part needs clarification on the intended role of SetupApp going forward.
-//	// For now, returning nil to avoid compilation errors, but this needs fixing.
-//
-//	// Placeholder: Create a dummy app instance for the proxy if needed,
-//	// but ideally, the app instance should come from the `New` function.
-//	// This section requires clarification on the intended flow.
-//	// app, err := core.NewApp(...) // This was moved to New
-//
-//	// Let's assume for now SetupApp is no longer responsible for creating the core app.
-//	// It might receive the app as an argument or focus solely on proxy setup.
-//	// Returning nil temporarily.
-//	var app *core.App // Placeholder
-//	var px *proxy.Proxy // Placeholder
-//
-//	// If the intention is just to create the proxy for an existing app:
-//	// px := proxy.NewProxy(app) // 'app' would need to be passed in or available
-//
-//	return app, px, nil // Needs proper implementation based on refactored role
-//}
-
 // SetupScheduler initializes the job scheduler.
 func SetupScheduler(configProvider *config.Provider, db db.Db, logger *slog.Logger) (*scl.Scheduler, error) {
 
