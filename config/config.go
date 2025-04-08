@@ -53,15 +53,6 @@ func (p *Provider) Update(newConfig *Config) {
 	// Logging is now handled by the caller (e.g., signal handler in main.go)
 }
 
-// TODO all env constant or none
-const (
-	EnvGoogleClientID     = "OAUTH2_GOOGLE_CLIENT_ID"
-	EnvGoogleClientSecret = "OAUTH2_GOOGLE_CLIENT_SECRET"
-	EnvGithubClientID     = "OAUTH2_GITHUB_CLIENT_ID"
-	EnvGithubClientSecret = "OAUTH2_GITHUB_CLIENT_SECRET"
-	EnvSmtpUsername       = "SMTP_USERNAME"
-	EnvSmtpPassword       = "SMTP_PASSWORD"
-)
 
 const (
 	OAuth2ProviderGoogle = "google"

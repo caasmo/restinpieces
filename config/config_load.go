@@ -9,6 +9,15 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
+const (
+	EnvGoogleClientID     = "OAUTH2_GOOGLE_CLIENT_ID"
+	EnvGoogleClientSecret = "OAUTH2_GOOGLE_CLIENT_SECRET"
+	EnvGithubClientID     = "OAUTH2_GITHUB_CLIENT_ID"
+	EnvGithubClientSecret = "OAUTH2_GITHUB_CLIENT_SECRET"
+	EnvSmtpUsername       = "SMTP_USERNAME"
+	EnvSmtpPassword       = "SMTP_PASSWORD"
+)
+
 // LoadFromToml loads configuration from a TOML file at the given path.
 // Returns error if file doesn't exist or can't be decoded.
 func LoadFromToml(path string, logger *slog.Logger) (*Config, error) {
