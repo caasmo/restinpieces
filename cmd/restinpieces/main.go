@@ -27,7 +27,6 @@ import (
 func createCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
 
     // TODO documetn option requiring wal for example for litestream
-    p, err := sqlitex.Open(initString, 0, poolSize)
 	poolSize := runtime.NumCPU()
     initString := fmt.Sprintf("file:%s", path)
 
