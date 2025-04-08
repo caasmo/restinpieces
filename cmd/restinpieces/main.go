@@ -28,7 +28,7 @@ func createCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
 
     // TODO documetn option requiring wal for example for litestream
 	poolSize := runtime.NumCPU()
-    initString := fmt.Sprintf("file:%s", path)
+    initString := fmt.Sprintf("file:%s", dbPath)
 
 	pool, err := crawshawPool.Open(initString, 0, poolSize)
 	if err != nil {
