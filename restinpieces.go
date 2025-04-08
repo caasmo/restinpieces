@@ -24,7 +24,12 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	// First create app without config
 	app, err := core.NewApp(opts...)
 	if err != nil {
-		slog.Error("failed to initialize core app", "error", err)
+		// Use app's logger if available, otherwise fall back to slog
+		if app != nil && app.Logger() != nil {
+			app.Logger().Error("failed to initialize core app", "error", err)
+		} else {
+			slog.Error("failed to initialize core app", "error", err)
+		}
 		return nil, nil, err
 	}
 
@@ -55,8 +60,7 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 
 	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.Logger())
 	if err != nil {
-		// app.Close() // Removed as DB lifecycle is managed externally
-		slog.Error("failed to setup scheduler", "error", err)
+		app.Logger().Error("failed to setup scheduler", "error", err)
 		return nil, nil, err
 	}
 
