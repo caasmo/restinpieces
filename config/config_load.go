@@ -36,7 +36,7 @@ func LoadFromDb(db db.DbConfig) (*Config, error) {
 	}
 
 	// Decode TOML into Config struct
-	cfg := &Config{Source: "db:" + db.(*db.Db).pool.Path()}
+	cfg := &Config{}
 	if _, err := toml.Decode(configToml, cfg); err != nil {
 		return nil, fmt.Errorf("config: failed to decode: %w", err)
 	}
