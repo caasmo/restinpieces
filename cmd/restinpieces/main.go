@@ -44,7 +44,6 @@ func main() {
 	}()
 
 	// --- Initialize the Application ---
-	slog.Info("Creating App", "error", err)
 	_, srv, err := restinpieces.New(
 		"",
 		restinpieces.WithDbCrawshaw(dbPool),
