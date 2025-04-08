@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	// "context" // Not currently used, uncomment if createZombiezenPool is used
 	"os"
-	"runtime" // Required for pool size calculation
+	"runtime" // Required for pool size calculatio
 	// "time" // Not currently used
 
 	"github.com/caasmo/restinpieces"

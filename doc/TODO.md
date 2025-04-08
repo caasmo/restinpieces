@@ -1,6 +1,10 @@
 ### TODOs
 
 
+- helper method DeafaultDbCrawsawPool
+    - you need a db clietn for the application. It mus be shared. WAL. Use Default or make your own,
+        - warning 
+- modernc?
 - app.close method overkill
 - remove channel writer 
 - remove dev tag
