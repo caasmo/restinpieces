@@ -29,7 +29,7 @@ func WithDbProvider(provider db.DbProvider) Option {
 		}
 		a.dbAuth = provider
 		a.dbQueue = provider
-		a.dbLifecycle = provider
+		// a.dbLifecycle = provider // Removed as lifecycle is managed externally
 	}
 }
 
