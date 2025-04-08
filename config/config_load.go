@@ -29,12 +29,29 @@ func LoadFromToml(path string, dbfile string) (*Config, error) {
 }
 
 // LoadFromDb loads configuration from the database file.
-// This is a placeholder implementation that currently uses the embedded defaults.
+// First tries to load from database, falls back to embedded defaults if not found.
 func LoadFromDb(dbfile string) (*Config, error) {
-	cfg := &Config{}
+	// Get database instance that implements DbConfig
+	dbApp, err := getDbInstance() // This needs to be implemented in db package
+	if err != nil {
+		return nil, fmt.Errorf("config: failed to get db instance: %w", err)
+	}
 
-	if _, err := toml.Decode(string(DefaultConfigToml), cfg); err != nil {
-		return nil, fmt.Errorf("failed to decode embedded default config: %w", err)
+	// Get config TOML from database
+	configToml, err := dbApp.Get()
+	if err != nil {
+		return nil, fmt.Errorf("config: failed to get from db: %w", err)
+	}
+
+	// Fall back to embedded defaults if no config in db
+	if configToml == "" {
+		configToml = string(DefaultConfigToml)
+	}
+
+	// Decode TOML into Config struct
+	cfg := &Config{}
+	if _, err := toml.Decode(configToml, cfg); err != nil {
+		return nil, fmt.Errorf("config: failed to decode: %w", err)
 	}
 
 	cfg.DBFile = dbfile
