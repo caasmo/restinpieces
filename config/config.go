@@ -53,7 +53,6 @@ func (p *Provider) Update(newConfig *Config) {
 	// Logging is now handled by the caller (e.g., signal handler in main.go)
 }
 
-
 const (
 	OAuth2ProviderGoogle = "google"
 	OAuth2ProviderGitHub = "github"

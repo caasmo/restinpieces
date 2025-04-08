@@ -22,8 +22,8 @@ type Server struct {
 
 func (s *Server) handleSIGHUP() {
 	s.logger.Info("Received SIGHUP signal - attempting to reload configuration")
-    // you have app. app.Config()
-    // we have the flag config in the conf source.
+	// you have app. app.Config()
+	// we have the flag config in the conf source.
 	// TODO: Need the dbfile path here. How to get it?
 	// Option 1: Store it in the Server struct.
 	// Option 2: Get it from the initial config stored in the provider (if it's there).

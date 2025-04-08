@@ -10,16 +10,16 @@ import (
 )
 
 const (
-	EnvGoogleClientID            = "OAUTH2_GOOGLE_CLIENT_ID"
-	EnvGoogleClientSecret        = "OAUTH2_GOOGLE_CLIENT_SECRET"
-	EnvGithubClientID            = "OAUTH2_GITHUB_CLIENT_ID"
-	EnvGithubClientSecret        = "OAUTH2_GITHUB_CLIENT_SECRET"
-	EnvSmtpUsername              = "SMTP_USERNAME"
-	EnvSmtpPassword              = "SMTP_PASSWORD"
-	EnvJwtAuthSecret             = "JWT_AUTH_SECRET"
+	EnvGoogleClientID             = "OAUTH2_GOOGLE_CLIENT_ID"
+	EnvGoogleClientSecret         = "OAUTH2_GOOGLE_CLIENT_SECRET"
+	EnvGithubClientID             = "OAUTH2_GITHUB_CLIENT_ID"
+	EnvGithubClientSecret         = "OAUTH2_GITHUB_CLIENT_SECRET"
+	EnvSmtpUsername               = "SMTP_USERNAME"
+	EnvSmtpPassword               = "SMTP_PASSWORD"
+	EnvJwtAuthSecret              = "JWT_AUTH_SECRET"
 	EnvJwtVerificationEmailSecret = "JWT_VERIFICATION_EMAIL_SECRET"
-	EnvJwtPasswordResetSecret    = "JWT_PASSWORD_RESET_SECRET"
-	EnvJwtEmailChangeSecret      = "JWT_EMAIL_CHANGE_SECRET"
+	EnvJwtPasswordResetSecret     = "JWT_PASSWORD_RESET_SECRET"
+	EnvJwtEmailChangeSecret       = "JWT_EMAIL_CHANGE_SECRET"
 )
 
 // LoadFromToml loads configuration from a TOML file at the given path.
@@ -53,7 +53,7 @@ func LoadFromDb(db db.DbConfig, logger *slog.Logger) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("config: failed to get from db: %w", err)
 	}
-	
+
 	// Check if config is empty
 	if configToml == "" {
 		logger.Warn("no configuration found in database")
@@ -114,7 +114,7 @@ func LoadEnvSecret(envVar string, defaultValue string) (string, string, error) {
 func LoadJwt(cfg *Config, logger *slog.Logger) error {
 	var err error
 	var source string
-	
+
 	cfg.Jwt.AuthSecret, source, err = LoadEnvSecret(EnvJwtAuthSecret, cfg.Jwt.AuthSecret)
 	if err != nil {
 		logger.Error("failed to load JWT auth secret", "env_var", EnvJwtAuthSecret, "error", err)
@@ -150,7 +150,7 @@ func LoadJwt(cfg *Config, logger *slog.Logger) error {
 func LoadSmtp(cfg *Config, logger *slog.Logger) error {
 	var err error
 	var source string
-	
+
 	cfg.Smtp.Username, source, err = LoadEnvSecret(EnvSmtpUsername, cfg.Smtp.Username)
 	if err != nil {
 		logger.Error("failed to load SMTP username", "env_var", EnvSmtpUsername, "error", err)
@@ -180,14 +180,14 @@ func LoadOAuth2(cfg *Config, logger *slog.Logger) error {
 	if googleCfg, ok := cfg.OAuth2Providers[OAuth2ProviderGoogle]; ok {
 		var errID, errSecret error
 		var sourceID, sourceSecret string
-		
+
 		googleCfg.ClientID, sourceID, errID = LoadEnvSecret(EnvGoogleClientID, googleCfg.ClientID)
 		googleCfg.ClientSecret, sourceSecret, errSecret = LoadEnvSecret(EnvGoogleClientSecret, googleCfg.ClientSecret)
 		googleCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
 
 		if errID != nil || errSecret != nil {
-			logger.Warn("disabling Google OAuth2 provider due to missing secrets", 
-				"client_id_error", errID, 
+			logger.Warn("disabling Google OAuth2 provider due to missing secrets",
+				"client_id_error", errID,
 				"client_secret_error", errSecret)
 			delete(cfg.OAuth2Providers, OAuth2ProviderGoogle)
 		} else {
@@ -201,14 +201,14 @@ func LoadOAuth2(cfg *Config, logger *slog.Logger) error {
 	if githubCfg, ok := cfg.OAuth2Providers[OAuth2ProviderGitHub]; ok {
 		var errID, errSecret error
 		var sourceID, sourceSecret string
-		
+
 		githubCfg.ClientID, sourceID, errID = LoadEnvSecret(EnvGithubClientID, githubCfg.ClientID)
 		githubCfg.ClientSecret, sourceSecret, errSecret = LoadEnvSecret(EnvGithubClientSecret, githubCfg.ClientSecret)
 		githubCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
 
 		if errID != nil || errSecret != nil {
-			logger.Warn("disabling GitHub OAuth2 provider due to missing secrets", 
-				"client_id_error", errID, 
+			logger.Warn("disabling GitHub OAuth2 provider due to missing secrets",
+				"client_id_error", errID,
 				"client_secret_error", errSecret)
 			delete(cfg.OAuth2Providers, OAuth2ProviderGitHub)
 		} else {
