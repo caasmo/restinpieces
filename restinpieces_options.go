@@ -3,21 +3,20 @@ package restinpieces
 // this shoudl be under custom???
 // just initilizes the custom packges that implments the app
 import (
+	"fmt"
 	"log/slog"
 	"os"
-	"fmt"
 
+	crawshawPool "crawshaw.io/sqlite/sqlitex" // Alias for crawshaw pool type
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/db/crawshaw"
 	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/caasmo/restinpieces/router/servemux"
-	crawshawPool "crawshaw.io/sqlite/sqlitex" // Alias for crawshaw pool type
 	phuslog "github.com/phuslu/log"
 	zombiezenPool "zombiezen.com/go/sqlite/sqlitex" // Alias for zombiezen pool type
 )
-
 
 // WithDbCrawshaw configures the App to use the Crawshaw SQLite implementation with an existing pool.
 func WithDbCrawshaw(pool *crawshawPool.Pool) core.Option {
@@ -39,7 +38,6 @@ func WithDbZombiezen(pool *zombiezenPool.Pool) core.Option {
 	// Use the new provider option
 	return core.WithDbProvider(dbInstance)
 }
-
 
 func WithRouterServeMux() core.Option {
 	r := servemux.New()

@@ -21,14 +21,13 @@ import (
 	zombiezenPool "zombiezen.com/go/sqlite/sqlitex"
 )
 
-
 // --- Pool Creation Helpers ---
 
 func createCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
 
-    // TODO documetn option requiring wal for example for litestream
+	// TODO documetn option requiring wal for example for litestream
 	poolSize := runtime.NumCPU()
-    initString := fmt.Sprintf("file:%s", dbPath)
+	initString := fmt.Sprintf("file:%s", dbPath)
 
 	pool, err := crawshawPool.Open(initString, 0, poolSize)
 	if err != nil {
@@ -68,7 +67,6 @@ func createZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
 	return pool, nil
 }
 
-
 // --- Command Handlers ---
 
 func handleServe(args []string) error {
@@ -102,7 +100,6 @@ func handleServe(args []string) error {
 		}
 	}()
 
-
 	// --- Initialize the Application ---
 	// Pass the *existing* pool using the new option
 	app, srv, err := restinpieces.New(
@@ -122,7 +119,6 @@ func handleServe(args []string) error {
 	// app.Close() will now call the Db implementation's Close,
 	// which *won't* close the pool itself. The pool closure is handled by the defer above.
 	defer app.Close()
-
 
 	// Log embedded assets (if needed)
 	//logEmbeddedAssets(restinpieces.EmbeddedAssets, app.Config(), app.Logger())

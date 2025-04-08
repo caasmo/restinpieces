@@ -13,8 +13,8 @@ import (
 )
 
 type Db struct {
-	pool     *sqlitex.Pool
-	rwCh     chan *sqlite.Conn
+	pool *sqlitex.Pool
+	rwCh chan *sqlite.Conn
 }
 
 // Verify interface implementations
@@ -42,7 +42,6 @@ func New(pool *sqlitex.Pool) (*Db, error) {
 	return &Db{pool: pool, rwCh: ch}, nil
 }
 
-
 // Close releases resources used by Db. It does NOT close the underlying pool,
 // as the pool's lifecycle is managed externally by the user.
 func (d *Db) Close() {
@@ -65,7 +64,6 @@ func (d *Db) Close() {
 	d.pool = nil
 	d.rwCh = nil
 }
-
 
 func (d *Db) GetById(id int64) int { // Added missing return type 'int'
 	conn, err := d.pool.Take(context.TODO())

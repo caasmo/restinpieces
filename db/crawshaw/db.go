@@ -9,15 +9,15 @@ import (
 )
 
 type Db struct {
-	pool         *sqlitex.Pool
-        //rwConn *sqlitex.Conn
-        rwCh         chan *sqlite.Conn
-    }
+	pool *sqlitex.Pool
+	//rwConn *sqlitex.Conn
+	rwCh chan *sqlite.Conn
+}
 
-    // Verify interface implementations
-    var _ db.DbAuth = (*Db)(nil)
-    var _ db.DbQueue = (*Db)(nil)
-    var _ db.DbLifecycle = (*Db)(nil)
+// Verify interface implementations
+var _ db.DbAuth = (*Db)(nil)
+var _ db.DbQueue = (*Db)(nil)
+var _ db.DbLifecycle = (*Db)(nil)
 
 // New creates a new Db instance using an existing pool provided by the user.
 func New(pool *sqlitex.Pool) (*Db, error) {
@@ -37,7 +37,6 @@ func New(pool *sqlitex.Pool) (*Db, error) {
 
 	return &Db{pool: pool, rwCh: ch}, nil
 }
-
 
 // Close releases resources used by Db. It does NOT close the underlying pool,
 // as the pool's lifecycle is managed externally by the user.

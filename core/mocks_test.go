@@ -15,13 +15,13 @@ var _ db.DbProvider = (*MockDB)(nil)
 // Use function fields to allow overriding behavior in specific tests.
 type MockDB struct {
 	// --- Mock DbAuth Methods ---
-	GetUserByEmailFunc       func(email string) (*db.User, error)
-	GetUserByIdFunc          func(id string) (*db.User, error)
+	GetUserByEmailFunc         func(email string) (*db.User, error)
+	GetUserByIdFunc            func(id string) (*db.User, error)
 	CreateUserWithPasswordFunc func(user db.User) (*db.User, error)
-	CreateUserWithOauth2Func func(user db.User) (*db.User, error)
-	VerifyEmailFunc          func(userId string) error
-	UpdatePasswordFunc       func(userId string, newPassword string) error
-	UpdateEmailFunc          func(userId string, newEmail string) error
+	CreateUserWithOauth2Func   func(user db.User) (*db.User, error)
+	VerifyEmailFunc            func(userId string) error
+	UpdatePasswordFunc         func(userId string, newPassword string) error
+	UpdateEmailFunc            func(userId string, newEmail string) error
 
 	// --- Mock DbQueue Methods ---
 	InsertJobFunc     func(job queue.Job) error
