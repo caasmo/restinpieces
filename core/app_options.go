@@ -29,6 +29,7 @@ func WithDbApp(dbApp db.DbApp) Option {
 		}
 		a.dbAuth = dbApp
 		a.dbQueue = dbApp
+		a.dbConfig = dbApp   
 		// a.dbLifecycle = provider // Removed as lifecycle is managed externally
 	}
 }

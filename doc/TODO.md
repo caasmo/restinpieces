@@ -1,6 +1,7 @@
 ### TODOs
 
 
+- remove WithConfigProvider
 - config file or db
 - config reload
 - fileserver in library? -> no. examples repo

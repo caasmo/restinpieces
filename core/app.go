@@ -22,6 +22,7 @@ import (
 type App struct {
 	dbAuth  db.DbAuth
 	dbQueue db.DbQueue
+	dbConfig db.DbConfig
 	// dbLifecycle    db.DbLifecycle // Removed: Lifecycle managed externally
 	router         router.Router
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values

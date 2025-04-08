@@ -1,7 +1,7 @@
 package crawshaw
 
 import (
-	"context"
+	"fmt"
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
 )
