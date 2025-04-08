@@ -31,9 +31,9 @@ func New(dbfile string, configPath string, opts ...core.Option) (*core.App, *ser
 	// Now load config using the initialized DB drivers
 	var cfg *config.Config
 	if configPath != "" {
-		cfg, err = config.LoadFromToml(configPath, dbfile)
+		cfg, err = config.LoadFromToml(configPath)
 	} else {
-		cfg, err = config.LoadFromDb(dbfile)
+		cfg, err = config.LoadFromDb(app.DbConfig())
 	}
 
 	if err != nil {

@@ -41,13 +41,6 @@ func WithRouter(r router.Router) Option {
 	}
 }
 
-// WithConfigProvider sets the application's configuration provider.
-func WithConfigProvider(p *config.Provider) Option {
-	return func(a *App) {
-		a.configProvider = p
-	}
-}
-
 // WithLogger sets the logger implementation
 func WithLogger(l *slog.Logger) Option {
 	return func(a *App) {

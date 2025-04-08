@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
+	"github.com/caasmo/restinpieces/db"
 )
 
 // LoadFromToml loads configuration from a TOML file at the given path.
@@ -21,10 +22,10 @@ func LoadFromToml(path string) (*Config, error) {
 
 // LoadFromDb loads configuration from the database using the provided DbConfig.
 // Falls back to embedded defaults if no config exists in database.
-func LoadFromDb(dbConfig db.DbConfig) (*Config, error) {
+func LoadFromDb(db db.DbConfig) (*Config, error) {
 
 	// Get config TOML from database
-	configToml, err := dbConfig.Get()
+	configToml, err := db.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("config: failed to get from db: %w", err)
 	}
@@ -33,10 +34,6 @@ func LoadFromDb(dbConfig db.DbConfig) (*Config, error) {
 	cfg := &Config{}
 	if _, err := toml.Decode(configToml, cfg); err != nil {
 		return nil, fmt.Errorf("config: failed to decode: %w", err)
-	}
-
-	if err := loadSecrets(cfg); err != nil {
-		return nil, err
 	}
 
 	return cfg, nil

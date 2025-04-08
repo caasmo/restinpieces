@@ -23,12 +23,10 @@ type App struct {
 	dbAuth  db.DbAuth
 	dbQueue db.DbQueue
 	dbConfig db.DbConfig
-	// dbLifecycle    db.DbLifecycle // Removed: Lifecycle managed externally
 	router         router.Router
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
 	logger         *slog.Logger
-	//proxy *proxy.Proxy
 }
 
 func NewApp(opts ...Option) (*App, error) {
@@ -49,10 +47,7 @@ func NewApp(opts ...Option) (*App, error) {
 	if a.router == nil {
 		return nil, fmt.Errorf("router is required but was not provided")
 	}
-	// Check if config provider was set via options
-	if a.configProvider == nil {
-		return nil, fmt.Errorf("config provider is required but was not provided via WithConfigProvider option")
-	}
+
 	if a.logger == nil {
 		// Default to slog.Default() if no logger is provided? Or require it?
 		// Let's require it for now for explicitness.
