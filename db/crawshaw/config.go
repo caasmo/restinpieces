@@ -8,14 +8,11 @@ import (
 
 // Get retrieves the TOML serialized configuration from the database
 func (d *Db) Get() (string, error) {
-	conn, err := d.pool.Take(context.TODO())
-	if err != nil {
-		return "", err
-	}
+	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 
 	var configToml string
-	err = sqlitex.Execute(conn,
+	err := sqlitex.Execute(conn,
 		`SELECT value FROM config WHERE key = 'app';`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
@@ -25,7 +22,7 @@ func (d *Db) Get() (string, error) {
 		})
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to get config: %w", err)
 	}
 
 	if configToml == "" {
