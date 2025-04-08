@@ -1,9 +1,9 @@
 package crawshaw
 
 import (
-	"fmt"
 	"crawshaw.io/sqlite"
 	"crawshaw.io/sqlite/sqlitex"
+	"fmt"
 )
 
 // GetConfig retrieves the latest TOML serialized configuration from the database.

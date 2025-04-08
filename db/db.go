@@ -68,4 +68,3 @@ var (
 	ErrConstraintUnique = errors.New("unique constraint violation")
 	ErrUserNotFound     = errors.New("user not found") // Added for clarity
 )
-

@@ -12,7 +12,7 @@ import (
 // Returns error if file doesn't exist or can't be decoded.
 func LoadFromToml(path string) (*Config, error) {
 	cfg := &Config{}
-	
+
 	if _, err := toml.DecodeFile(path, cfg); err != nil {
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
@@ -152,4 +152,3 @@ func LoadOAuth2(cfg *Config) error {
 
 	return nil
 }
-
