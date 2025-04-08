@@ -17,7 +17,6 @@ func (d *Db) GetConfig() (string, error) {
 		`SELECT content FROM app_config 
 		ORDER BY created_at DESC 
 		LIMIT 1;`,
-		nil,
 		func(stmt *sqlite.Stmt) error {
 			configToml = stmt.GetText("content")
 			return nil
