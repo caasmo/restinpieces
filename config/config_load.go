@@ -29,6 +29,11 @@ func LoadFromDb(db db.DbConfig) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("config: failed to get from db: %w", err)
 	}
+	
+	// Check if config is empty
+	if configToml == "" {
+		return nil, fmt.Errorf("config: no configuration found in database")
+	}
 
 	// Decode TOML into Config struct
 	cfg := &Config{}
