@@ -26,6 +26,20 @@ type DbQueue interface {
 	MarkFailed(jobID int64, errMsg string) error
 }
 
+// DbConfig defines database operations related to configuration.
+type DbConfig interface {
+	// Get returns the TOML serialized configuration from the database
+	Get() (string, error)
+}
+
+// DbApp is an interface combining the required DB roles for the application.
+// The concrete DB implementation (e.g., *crawshaw.Db or *zombiezen.Db) must satisfy this interface.
+type DbApp interface {
+	DbAuth
+	DbQueue
+	DbConfig
+}
+
 // DbLifecycle interface removed.
 
 // TimeFormat converts a time.Time to RFC3339 string in UTC.
@@ -55,17 +69,3 @@ var (
 	ErrUserNotFound     = errors.New("user not found") // Added for clarity
 )
 
-// DbConfig defines database operations related to configuration.
-type DbConfig interface {
-	// Get returns the TOML serialized configuration from the database
-	Get() (string, error)
-}
-
-// DbApp is an interface combining the required DB roles for the application.
-// The concrete DB implementation (e.g., *crawshaw.Db or *zombiezen.Db) must satisfy this interface.
-type DbApp interface {
-	DbAuth
-	DbQueue
-	DbConfig
-	// DbLifecycle removed
-}

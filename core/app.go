@@ -79,6 +79,10 @@ func (a *App) DbQueue() db.DbQueue {
 	return a.dbQueue
 }
 
+func (a *App) DbConfig() db.DbConfig {
+	return a.dbConfig
+}
+
 // Logger returns the application's logger instance
 func (a *App) Logger() *slog.Logger {
 	return a.logger
