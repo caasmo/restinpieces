@@ -66,104 +66,99 @@ func LoadFromDb(db db.DbConfig, logger *slog.Logger) (*Config, error) {
 
 // loadSecrets handles loading all secrets from environment variables
 func loadSecrets(cfg *Config, logger *slog.Logger) error {
-	logger.Debug("loading secrets from environment variables and config")
 	if cfg.OAuth2Providers == nil {
 		cfg.OAuth2Providers = make(map[string]OAuth2Provider)
 	}
 
 	if err := LoadJwt(cfg, logger); err != nil {
-		logger.Error("failed to load JWT secrets", "error", err)
 		return err
 	}
 
 	if err := LoadSmtp(cfg, logger); err != nil {
-		logger.Error("failed to load SMTP secrets", "error", err)
 		return err
 	}
 
 	if err := LoadOAuth2(cfg, logger); err != nil {
-		logger.Error("failed to load OAuth2 secrets", "error", err)
 		return err
 	}
 
-	logger.Debug("finished loading secrets")
 	return nil
 }
 
-// LoadEnvSecret loads a secret from an environment variable.
-// If the env var is empty, it returns the defaultValue.
-// Returns an error if both are empty.
-func LoadEnvSecret(envVar string, defaultValue string) (string, error) {
+// LoadEnvSecret loads a secret from an environment variable or config.
+// Returns: (value, source, error) where source is either "environment" or "config"
+func LoadEnvSecret(envVar string, defaultValue string) (string, string, error) {
 	if value := os.Getenv(envVar); value != "" {
-		return value, nil
+		return value, "environment", nil
 	}
-
 	if defaultValue != "" {
-		return defaultValue, nil
+		return defaultValue, "config", nil
 	}
-	return "", fmt.Errorf("secret required: set %s in environment variables or in config", envVar)
+	return "", "", fmt.Errorf("secret required: set %s in environment variables or in config", envVar)
 }
 
 // LoadJwt loads JWT secrets from environment variables or the config file.
 func LoadJwt(cfg *Config, logger *slog.Logger) error {
-	logger.Debug("loading JWT secrets")
 	var err error
-	cfg.Jwt.AuthSecret, err = LoadEnvSecret("JWT_AUTH_SECRET", cfg.Jwt.AuthSecret)
+	var source string
+	
+	cfg.Jwt.AuthSecret, source, err = LoadEnvSecret("JWT_AUTH_SECRET", cfg.Jwt.AuthSecret)
 	if err != nil {
 		logger.Error("failed to load JWT auth secret", "env_var", "JWT_AUTH_SECRET", "error", err)
 		return fmt.Errorf("failed to load auth secret: %w", err)
 	}
+	logger.Debug("JWT auth secret loaded", "source", source)
 
-	cfg.Jwt.VerificationEmailSecret, err = LoadEnvSecret("JWT_VERIFICATION_EMAIL_SECRET", cfg.Jwt.VerificationEmailSecret)
+	cfg.Jwt.VerificationEmailSecret, source, err = LoadEnvSecret("JWT_VERIFICATION_EMAIL_SECRET", cfg.Jwt.VerificationEmailSecret)
 	if err != nil {
 		logger.Error("failed to load JWT verification email secret", "env_var", "JWT_VERIFICATION_EMAIL_SECRET", "error", err)
 		return fmt.Errorf("failed to load verification email secret: %w", err)
 	}
+	logger.Debug("JWT verification secret loaded", "source", source)
 
-	cfg.Jwt.PasswordResetSecret, err = LoadEnvSecret("JWT_PASSWORD_RESET_SECRET", cfg.Jwt.PasswordResetSecret)
+	cfg.Jwt.PasswordResetSecret, source, err = LoadEnvSecret("JWT_PASSWORD_RESET_SECRET", cfg.Jwt.PasswordResetSecret)
 	if err != nil {
 		logger.Error("failed to load JWT password reset secret", "env_var", "JWT_PASSWORD_RESET_SECRET", "error", err)
 		return fmt.Errorf("failed to load password reset secret: %w", err)
 	}
+	logger.Debug("JWT password reset secret loaded", "source", source)
 
-	cfg.Jwt.EmailChangeSecret, err = LoadEnvSecret("JWT_EMAIL_CHANGE_SECRET", cfg.Jwt.EmailChangeSecret)
+	cfg.Jwt.EmailChangeSecret, source, err = LoadEnvSecret("JWT_EMAIL_CHANGE_SECRET", cfg.Jwt.EmailChangeSecret)
 	if err != nil {
 		logger.Error("failed to load JWT email change secret", "env_var", "JWT_EMAIL_CHANGE_SECRET", "error", err)
 		return fmt.Errorf("failed to load email change secret: %w", err)
 	}
+	logger.Debug("JWT email change secret loaded", "source", source)
 
-	logger.Debug("finished loading JWT secrets")
 	return nil
 }
 
 // LoadSmtp loads SMTP credentials from environment variables or the config file.
 func LoadSmtp(cfg *Config, logger *slog.Logger) error {
-	logger.Debug("loading SMTP secrets")
-	cfg.Smtp.Username = os.Getenv(EnvSmtpUsername)
-	if cfg.Smtp.Username != "" {
-		logger.Debug("loaded SMTP username from environment variable", "env_var", EnvSmtpUsername)
-	}
-
 	var err error
-	cfg.Smtp.Password, err = LoadEnvSecret(EnvSmtpPassword, cfg.Smtp.Password)
+	var source string
+	
+	cfg.Smtp.Username, source, err = LoadEnvSecret(EnvSmtpUsername, cfg.Smtp.Username)
+	if err != nil {
+		logger.Error("failed to load SMTP username", "env_var", EnvSmtpUsername, "error", err)
+		return fmt.Errorf("failed to load SMTP username: %w", err)
+	}
+	logger.Debug("SMTP username loaded", "source", source)
+
+	cfg.Smtp.Password, source, err = LoadEnvSecret(EnvSmtpPassword, cfg.Smtp.Password)
 	if err != nil {
 		logger.Error("failed to load SMTP password", "env_var", EnvSmtpPassword, "error", err)
 		return fmt.Errorf("failed to load SMTP password: %w", err)
 	}
-	// Avoid logging the password itself, just confirm it was loaded if not default
-	if os.Getenv(EnvSmtpPassword) != "" {
-		logger.Debug("loaded SMTP password from environment variable", "env_var", EnvSmtpPassword)
-	} else if cfg.Smtp.Password != "" {
-		logger.Debug("using SMTP password from config file")
+	logger.Debug("SMTP password loaded", "source", source)
+
+	cfg.Smtp.FromAddress, source, err = LoadEnvSecret("SMTP_FROM_ADDRESS", cfg.Smtp.FromAddress)
+	if err != nil {
+		logger.Error("failed to load SMTP from address", "env_var", "SMTP_FROM_ADDRESS", "error", err)
+		return fmt.Errorf("failed to load SMTP from address: %w", err)
 	}
+	logger.Debug("SMTP from address loaded", "source", source)
 
-
-	if fromAddr := os.Getenv("SMTP_FROM_ADDRESS"); fromAddr != "" {
-		cfg.Smtp.FromAddress = fromAddr
-		logger.Debug("loaded SMTP FromAddress from environment variable", "env_var", "SMTP_FROM_ADDRESS")
-	}
-
-	logger.Debug("finished loading SMTP secrets")
 	return nil
 }
 
@@ -171,43 +166,49 @@ func LoadSmtp(cfg *Config, logger *slog.Logger) error {
 // It also constructs the RedirectURL based on the server's BaseURL.
 // Providers without both ClientID and ClientSecret are removed.
 func LoadOAuth2(cfg *Config, logger *slog.Logger) error {
-	logger.Debug("loading OAuth2 secrets")
 	baseURL := cfg.Server.BaseURL()
 
 	// Google OAuth2
 	if googleCfg, ok := cfg.OAuth2Providers[OAuth2ProviderGoogle]; ok {
-		logger.Debug("loading Google OAuth2 secrets")
 		var errID, errSecret error
-		googleCfg.ClientID, errID = LoadEnvSecret(EnvGoogleClientID, googleCfg.ClientID)
-		googleCfg.ClientSecret, errSecret = LoadEnvSecret(EnvGoogleClientSecret, googleCfg.ClientSecret)
-		googleCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL) // Assuming this is correct, adjust if needed
+		var sourceID, sourceSecret string
+		
+		googleCfg.ClientID, sourceID, errID = LoadEnvSecret(EnvGoogleClientID, googleCfg.ClientID)
+		googleCfg.ClientSecret, sourceSecret, errSecret = LoadEnvSecret(EnvGoogleClientSecret, googleCfg.ClientSecret)
+		googleCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
 
 		if errID != nil || errSecret != nil {
-			logger.Warn("disabling Google OAuth2 provider due to missing secrets", "client_id_error", errID, "client_secret_error", errSecret)
+			logger.Warn("disabling Google OAuth2 provider due to missing secrets", 
+				"client_id_error", errID, 
+				"client_secret_error", errSecret)
 			delete(cfg.OAuth2Providers, OAuth2ProviderGoogle)
 		} else {
-			logger.Debug("successfully loaded Google OAuth2 secrets")
 			cfg.OAuth2Providers[OAuth2ProviderGoogle] = googleCfg
+			logger.Debug("Google OAuth2 client ID loaded", "source", sourceID)
+			logger.Debug("Google OAuth2 client secret loaded", "source", sourceSecret)
 		}
 	}
 
 	// GitHub OAuth2
 	if githubCfg, ok := cfg.OAuth2Providers[OAuth2ProviderGitHub]; ok {
-		logger.Debug("loading GitHub OAuth2 secrets")
 		var errID, errSecret error
-		githubCfg.ClientID, errID = LoadEnvSecret(EnvGithubClientID, githubCfg.ClientID)
-		githubCfg.ClientSecret, errSecret = LoadEnvSecret(EnvGithubClientSecret, githubCfg.ClientSecret)
-		githubCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL) // Assuming this is correct, adjust if needed
+		var sourceID, sourceSecret string
+		
+		githubCfg.ClientID, sourceID, errID = LoadEnvSecret(EnvGithubClientID, githubCfg.ClientID)
+		githubCfg.ClientSecret, sourceSecret, errSecret = LoadEnvSecret(EnvGithubClientSecret, githubCfg.ClientSecret)
+		githubCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
 
 		if errID != nil || errSecret != nil {
-			logger.Warn("disabling GitHub OAuth2 provider due to missing secrets", "client_id_error", errID, "client_secret_error", errSecret)
+			logger.Warn("disabling GitHub OAuth2 provider due to missing secrets", 
+				"client_id_error", errID, 
+				"client_secret_error", errSecret)
 			delete(cfg.OAuth2Providers, OAuth2ProviderGitHub)
 		} else {
-			logger.Debug("successfully loaded GitHub OAuth2 secrets")
 			cfg.OAuth2Providers[OAuth2ProviderGitHub] = githubCfg
+			logger.Debug("GitHub OAuth2 client ID loaded", "source", sourceID)
+			logger.Debug("GitHub OAuth2 client secret loaded", "source", sourceSecret)
 		}
 	}
 
-	logger.Debug("finished loading OAuth2 secrets")
 	return nil
 }
