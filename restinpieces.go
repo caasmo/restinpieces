@@ -20,7 +20,7 @@ import (
 // New creates a new App instance and Server with the provided options.
 // It initializes the core application components like database, router, cache first,
 // then loads configuration either from TOML file (if path provided) or DB file.
-func New(dbfile string, configPath string, opts ...core.Option) (*core.App, *server.Server, error) {
+func New(configPath string, opts ...core.Option) (*core.App, *server.Server, error) {
 	// First create app without config
 	app, err := core.NewApp(opts...)
 	if err != nil {

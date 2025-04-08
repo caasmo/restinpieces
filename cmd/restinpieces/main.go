@@ -58,7 +58,6 @@ func handleServe(args []string) error {
 	// --- Initialize the Application ---
 	// Pass the *existing* pool using the new option
 	_, srv, err := restinpieces.New(
-		*dbfile, // dbfile might still be needed for config loading? Review restinpieces.New
 		"",
 		// Use the appropriate option for the pool type created above
 		restinpieces.WithDbCrawshaw(dbPool),

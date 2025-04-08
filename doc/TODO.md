@@ -1,7 +1,7 @@
 ### TODOs
 
 
-- remove WithConfigProvider
+- remove dbfile from new, only enforce pool is correct, only db needs to know the dbfile
 - config file or db
 - config reload
 - fileserver in library? -> no. examples repo
