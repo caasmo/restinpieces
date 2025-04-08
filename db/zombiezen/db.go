@@ -19,6 +19,7 @@ type Db struct {
 // Verify interface implementations
 var _ db.DbAuth = (*Db)(nil)
 var _ db.DbQueue = (*Db)(nil)
+var _ db.DbConfig = (*Db)(nil)
 
 // var _ db.DbLifecycle = (*Db)(nil) // Removed
 
@@ -353,6 +354,34 @@ func (d *Db) UpdateEmail(userId string, newEmail string) error {
 	}
 
 	return nil
+}
+
+// Get retrieves the latest TOML serialized configuration from the database.
+// Returns empty string if no config exists (no error).
+func (d *Db) Get() (string, error) {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return "", fmt.Errorf("failed to get db connection: %w", err)
+	}
+	defer d.pool.Put(conn)
+
+	var configToml string
+	err = sqlitex.Execute(conn,
+		`SELECT content FROM app_config 
+		ORDER BY created_at DESC 
+		LIMIT 1;`,
+		&sqlitex.ExecOptions{
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				configToml = stmt.GetText("content")
+				return nil
+			},
+		})
+
+	if err != nil {
+		return "", fmt.Errorf("failed to get config: %w", err)
+	}
+
+	return configToml, nil
 }
 
 func (d *Db) InsertWithPool(value int64) {
