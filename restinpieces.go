@@ -18,13 +18,18 @@ import (
 )
 
 // New creates a new App instance and Server with the provided options.
-// It initializes the core application components like database, router, cache, etc.
-// configPath is optional - if provided and exists, loads config from TOML file,
-// otherwise falls back to loading from dbfile.
+// It initializes the core application components like database, router, cache first,
+// then loads configuration either from TOML file (if path provided) or DB file.
 func New(dbfile string, configPath string, opts ...core.Option) (*core.App, *server.Server, error) {
-	var cfg *config.Config
-	var err error
+	// First create app without config
+	app, err := core.NewApp(opts...)
+	if err != nil {
+		slog.Error("failed to initialize core app", "error", err)
+		return nil, nil, err
+	}
 
+	// Now load config using the initialized DB drivers
+	var cfg *config.Config
 	if configPath != "" {
 		cfg, err = config.LoadFromToml(configPath, dbfile)
 	} else {
@@ -37,15 +42,7 @@ func New(dbfile string, configPath string, opts ...core.Option) (*core.App, *ser
 	}
 
 	configProvider := config.NewProvider(cfg)
-
-	allOpts := []core.Option{core.WithConfigProvider(configProvider)}
-	allOpts = append(allOpts, opts...) // Append user-provided options
-
-	app, err := core.NewApp(allOpts...)
-	if err != nil {
-		slog.Error("failed to initialize core app", "error", err)
-		return nil, nil, err
-	}
+	app.SetConfigProvider(configProvider)
 
 	// Create the Proxy instance, passing the app
 	px := proxy.NewProxy(app)

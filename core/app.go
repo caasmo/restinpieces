@@ -94,3 +94,8 @@ func (a *App) Config() *config.Config {
 	// Delegate fetching the config to the provider
 	return a.configProvider.Get()
 }
+
+// SetConfigProvider allows setting the config provider after App initialization.
+func (a *App) SetConfigProvider(provider *config.Provider) {
+	a.configProvider = provider
+}
