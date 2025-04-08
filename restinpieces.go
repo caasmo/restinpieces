@@ -24,12 +24,7 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	// First create app without config
 	app, err := core.NewApp(opts...)
 	if err != nil {
-		// Use app's logger if available, otherwise fall back to slog
-		if app != nil && app.Logger() != nil {
-			app.Logger().Error("failed to initialize core app", "error", err)
-		} else {
-			slog.Error("failed to initialize core app", "error", err)
-		}
+		slog.Error("failed to initialize core app", "error", err)
 		return nil, nil, err
 	}
 
