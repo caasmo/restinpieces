@@ -19,6 +19,7 @@ type Db struct {
 // Verify interface implementations
 var _ db.DbAuth = (*Db)(nil)
 var _ db.DbQueue = (*Db)(nil)
+
 // var _ db.DbLifecycle = (*Db)(nil) // Removed
 
 // New creates a new Db instance using an existing pool provided by the user.

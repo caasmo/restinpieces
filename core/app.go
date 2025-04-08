@@ -20,8 +20,8 @@ import (
 // app is a service with heavy objects for the handlers.
 // and also a out the box coded endpoints handlers. (methods)
 type App struct {
-	dbAuth         db.DbAuth
-	dbQueue        db.DbQueue
+	dbAuth  db.DbAuth
+	dbQueue db.DbQueue
 	// dbLifecycle    db.DbLifecycle // Removed: Lifecycle managed externally
 	router         router.Router
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
