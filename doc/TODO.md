@@ -1,28 +1,23 @@
 ### TODOs
 
 
-- helper method DeafaultDbCrawsawPool
-    - you need a db clietn for the application. It mus be shared. WAL. Use Default or make your own,
-        - warning 
-- modernc?
-- default zombiezen 
-- db for pool?
-- cache alternative syncMap, no garbage collection, noOP
-- fileserver in library?
-- examples directory?
-- Route struct? Register without route? User must import router
+- config file or db
+- config reload
+- fileserver in library? -> no. examples repo
+- Route struct? Register without route? User must import router -> Documentation
     - user can use Handle
     - or import Route package framework // Document
 - drivers init string PRAGMAS, flags?
 - app, server dicotomy
-- config file or db
-- config reload
 - proxy, app clear wiring
     - proxy design is overkill, 
         - move to app
         - just initailiza alwya the sketch
         - check conf to use or not
-- is a framework, clear workflow 
+- is a framework, clear workflow  -> examples repo. od use of the features
+- modernc?
+- default zombiezen 
+- cache alternative syncMap, no garbage collection, noOP
 - commands
     - bootstrap 
         --config
@@ -69,7 +64,6 @@
 		- we have WithProxyEmpty, no proxy is one, it has features activated or not, WithProxy(pruxy)
 			
 - race detection
-- No hot reloading.
 - Proxy:
 	- has Features like Blocker but othre
 	- interface Feature, interteface Blocker, interface FeatureBlocker
@@ -231,6 +225,10 @@
 
 ### done
 
+- No hot reloading.
+- helper method DeafaultDbCrawsawPool
+    - you need a db clietn for the application. It mus be shared. WAL. Use Default or make your own,
+        - warning 
 - dbauth, dbQueue, 
 - remove channel writer 
 - remove dev tag
