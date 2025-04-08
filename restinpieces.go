@@ -33,9 +33,11 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	if configPath != "" {
 		app.Logger().Info("loading config from TOML file", "path", configPath)
 		cfg, err = config.LoadFromToml(configPath)
+        cfg.Source=configPath
 	} else {
 		app.Logger().Info("loading config from database")
 		cfg, err = config.LoadFromDb(app.DbConfig())
+        cfg.Source="" // empty for db
 	}
 
 	if err != nil {
