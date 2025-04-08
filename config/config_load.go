@@ -107,28 +107,28 @@ func LoadJwt(cfg *Config, logger *slog.Logger) error {
 		logger.Error("failed to load JWT auth secret", "env_var", "JWT_AUTH_SECRET", "error", err)
 		return fmt.Errorf("failed to load auth secret: %w", err)
 	}
-	logger.Debug("JWT auth secret loaded", "source", source)
+	logger.Debug("loaded JWT_AUTH_SECRET", "source", source)
 
 	cfg.Jwt.VerificationEmailSecret, source, err = LoadEnvSecret("JWT_VERIFICATION_EMAIL_SECRET", cfg.Jwt.VerificationEmailSecret)
 	if err != nil {
 		logger.Error("failed to load JWT verification email secret", "env_var", "JWT_VERIFICATION_EMAIL_SECRET", "error", err)
 		return fmt.Errorf("failed to load verification email secret: %w", err)
 	}
-	logger.Debug("JWT verification secret loaded", "source", source)
+	logger.Debug("loaded JWT_VERIFICATION_EMAIL_SECRET", "source", source)
 
 	cfg.Jwt.PasswordResetSecret, source, err = LoadEnvSecret("JWT_PASSWORD_RESET_SECRET", cfg.Jwt.PasswordResetSecret)
 	if err != nil {
 		logger.Error("failed to load JWT password reset secret", "env_var", "JWT_PASSWORD_RESET_SECRET", "error", err)
 		return fmt.Errorf("failed to load password reset secret: %w", err)
 	}
-	logger.Debug("JWT password reset secret loaded", "source", source)
+	logger.Debug("loaded JWT_PASSWORD_RESET_SECRET", "source", source)
 
 	cfg.Jwt.EmailChangeSecret, source, err = LoadEnvSecret("JWT_EMAIL_CHANGE_SECRET", cfg.Jwt.EmailChangeSecret)
 	if err != nil {
 		logger.Error("failed to load JWT email change secret", "env_var", "JWT_EMAIL_CHANGE_SECRET", "error", err)
 		return fmt.Errorf("failed to load email change secret: %w", err)
 	}
-	logger.Debug("JWT email change secret loaded", "source", source)
+	logger.Debug("loaded JWT_EMAIL_CHANGE_SECRET", "source", source)
 
 	return nil
 }
