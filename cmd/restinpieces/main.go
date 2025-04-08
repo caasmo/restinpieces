@@ -7,12 +7,6 @@ import (
 	"os"
 
 	"github.com/caasmo/restinpieces"
-	// "github.com/caasmo/restinpieces/config" // No longer needed directly
-	// "github.com/caasmo/restinpieces/core" // Not currently used
-	//"github.com/caasmo/restinpieces/custom"
-	//"github.com/caasmo/restinpieces/server"
-	// crawshawPool "crawshaw.io/sqlite/sqlitex" // No longer directly used here
-	// zombiezenPool "zombiezen.com/go/sqlite/sqlitex" // No longer directly used here
 )
 
 // Pool creation helpers moved to restinpieces package
@@ -50,6 +44,7 @@ func main() {
 	}()
 
 	// --- Initialize the Application ---
+	slog.Info("Creating App", "error", err)
 	_, srv, err := restinpieces.New(
 		"",
 		restinpieces.WithDbCrawshaw(dbPool),
