@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
-	// "context" // Not currently used, uncomment if createZombiezenPool is used
+	// "context" // Not currently used
 	"os"
-	"runtime" // Required for pool size calculatio
+	// "runtime" // No longer directly used here
 	// "time" // Not currently used
 
 	"github.com/caasmo/restinpieces"
@@ -17,8 +17,8 @@ import (
 	//"github.com/caasmo/restinpieces/custom"
 	//"github.com/caasmo/restinpieces/server"
 
-	crawshawPool "crawshaw.io/sqlite/sqlitex"
-	zombiezenPool "zombiezen.com/go/sqlite/sqlitex"
+	// crawshawPool "crawshaw.io/sqlite/sqlitex" // No longer directly used here
+	// zombiezenPool "zombiezen.com/go/sqlite/sqlitex" // No longer directly used here
 )
 
 // Pool creation helpers moved to restinpieces package
