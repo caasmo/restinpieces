@@ -165,12 +165,7 @@ func LoadSmtp(cfg *Config, logger *slog.Logger) error {
 	}
 	logger.Debug("Load Envar:", "envvar", EnvSmtpPassword, "source", source)
 
-	if fromAddr := os.Getenv("SMTP_FROM_ADDRESS"); fromAddr != "" {
-		cfg.Smtp.FromAddress = fromAddr
-		logger.Debug("Using SMTP from address from environment", "address", cfg.Smtp.FromAddress)
-	} else {
-		logger.Debug("Using SMTP from address from config", "address", cfg.Smtp.FromAddress)
-	}
+	logger.Debug("Using SMTP from address from config", "address", cfg.Smtp.FromAddress)
 
 	return nil
 }
