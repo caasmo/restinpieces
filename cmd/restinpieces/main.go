@@ -56,7 +56,6 @@ func handleServe(args []string) error {
 	}()
 
 	// --- Initialize the Application ---
-	// Pass the *existing* pool using the new option
 	_, srv, err := restinpieces.New(
 		"",
 		// Use the appropriate option for the pool type created above
