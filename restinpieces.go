@@ -30,8 +30,6 @@ func New(dbfile string, opts ...core.Option) (*core.App, *server.Server, error) 
 
 	configProvider := config.NewProvider(cfg)
 
-	// Initialize the core App with provided options and config provider
-	// Default options can be added here if needed before user options
 	allOpts := []core.Option{core.WithConfigProvider(configProvider)}
 	allOpts = append(allOpts, opts...) // Append user-provided options
 
@@ -57,7 +55,6 @@ func New(dbfile string, opts ...core.Option) (*core.App, *server.Server, error) 
 
 	// Create the server instance
 	srv := server.NewServer(configProvider, px, scheduler, app.Logger())
-	// app.Logger().Info("Starting server in verbose mode") // Keep commented out or remove
 
 	// Return the initialized app and server
 	return app, srv, nil

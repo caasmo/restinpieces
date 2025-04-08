@@ -64,17 +64,9 @@ To bundle and optimize frontend assets (HTML, CSS, JavaScript) with minification
 
 This creates production-ready assets in `public/dist/` with both compressed (.gz) and uncompressed versions.
 
-### Production Build
-For a production build with optimized static assets, security headers, and proper caching:
+### Build
 
     go build -ldflags="-s -w" -trimpath ./cmd/restinpieces/...
-
-### Development Build
-For development with relaxed security headers and debugging support:
-
-    go build -ldflags="-s -w" -trimpath -tags dev ./cmd/restinpieces/...
-
-The `dev` tag disables strict security headers for easier local development.
 
 
 ## TODO
