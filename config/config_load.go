@@ -165,7 +165,7 @@ func LoadSmtp(cfg *Config, logger *slog.Logger) error {
 	}
 	logger.Debug("Load Envar:", "envvar", EnvSmtpPassword, "source", source)
 
-	logger.Debug("Using SMTP from address from config", "address", cfg.Smtp.FromAddress)
+	//logger.Debug("Using SMTP from address from config", "address", cfg.Smtp.FromAddress)
 
 	return nil
 }
