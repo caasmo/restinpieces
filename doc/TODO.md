@@ -1,8 +1,6 @@
 ### TODOs
 
 
-- bug in google login missing client id
-    - also github is being presented
 - config reload
 - app, server dicotomy
 - proxy, app clear wiring
@@ -14,21 +12,6 @@
 - modernc?
 - default zombiezen 
 - cache alternative syncMap, no garbage collection, noOP
-- commands
-    - bootstrap 
-        --config
-            - it puts default config harcoded in sqlite with zombiezen.
-        --env
-            - it makes a env file with prepoluplated secrets and placeholder string for services oauth like google. smtp
-        --db
-            - it go to migration, use zombiezen. to run script
-        --files
-            - creates files with comments ,b
-    - dump-config --json
-    - load-config --json
-    - serve stars the server
-        - default nothing
-    
 - good enough release
     - litestream or just cron each 5 minutes: see litestream 
     - configuration
@@ -46,38 +29,12 @@
     sqlite based
 - config reload? nee
 - workflows
-- basic metrics 
-    - go ones
-    - basic superuser endpoint
-        - or not jsut notification
-    - some made in Proxy, conunters etc
-    - no prometheus page
-        - prometheus online services? YES Managed Prometheus
 - APP
 	- app is handler?
 		- is given to the server
 		- servehttp executes Proxy that execute as next the Path router
 		- we have WithProxyEmpty, no proxy is one, it has features activated or not, WithProxy(pruxy)
-			
 - race detection
-- Proxy:
-	- has Features like Blocker but othre
-	- interface Feature, interteface Blocker, interface FeatureBlocker
-	- has harcoded features interface values BlockIp, BlockMimetype
-	- Feature interface just IsActivated bool method
-	- when config change Proxy.ApplyConfig()
-	- AppliConfig used also in initial config contructor
-	- Applyconfig upon change
-		- read each feature config ex BlockIP
-		- if disabled create NoOpFeature, automatically the pointer to old Loaded with sketch Feature is garbaga collected candidate
-	- in serverHttp method it checks if Isactivated is true and call it Blocking methods (other interface maybe)
-	- ? noOpFeature has to satisfy blocker interface
-		- put the Feature fucntionality inside the Feature struct
-		- or we do not need Feature interface at all, just nil pointers.
-			- setup method check if BlockerIP struct is not nil
-	- has WithBlocIp, WithBlockMimetype? WithFeatureIpBlock
-	- can call app methods
-
 - scheduler How to simply add recurrent jobs
 	- has tick
 		-  config based 
@@ -87,6 +44,13 @@
 		    - has start and duration and recurrent
 			    - recurrent if recurernt scheduler markSuccesful and creates next
 	- notification executor handler 
+- basic metrics 
+    - go ones
+    - basic superuser endpoint
+        - or not jsut notification
+    - some made in Proxy, conunters etc
+    - no prometheus page
+        - prometheus online services? YES Managed Prometheus
 - mantenance
     - if path api.
     - if not harcoded page
@@ -140,20 +104,8 @@
 	- damage is 1 read 1 idempotent write
 	- for confirmation and expensice path, maybe hash the page (or paht) in cache with ttl, already requested try in a minutes
 - request change endpoints spam attacks TODO
-- add logger
-    - no slog.SetDefault(slog.New(myHandler))
-    - A "multiplexer" handler is a good approach.
-    - stdout Handler: slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: dynamicLevel}) or slog.NewJSONHandler(os.Stdout, ...) (JSON is often better for systemd/journald as it preserves structure).
-    - SQLite Handler: This needs careful implementation (async recommended).
-    - none handler
-	- Global State?: Relies on package-level global state. This makes testing significantly harder.
-	- For most applications, especially web services, APIs, or any system where
-	testability and maintainability are important, injecting the slog.Logger
-	instance is the strongly recommended best practice.
+- tls
 - config reload
-- minify html, 5% space. if we already have gzip
-    - https://github.com/tdewolff/minify?tab=readme-ov-file#html 
-    - https://github.com/privatenumber/minification-benchmarks?tab=readme-ov-file#%EF%B8%8F-minifier-showdown
 - request email verification must be logged
 - second db interface for custom 
 - cache and other headers from assets use a middlware for api we have a map that we appli in response
@@ -169,25 +121,12 @@
 - block ua: cache db,  
 - block jwt: cache db,  
 - block referrer
-- multidomain  
-- store?, just a sync.Map, do not overcomplicate,
-- a global mimetype middleware?, allowing only supported server json, html, css, js,
-    - we already have a mimetype method for handlers. good practices while making a handler is 
-        - use authenticate (do i need auth)
-        - use mimetype (what mimetype do i allow)
-        - method (already handled by router)
-- make defensice goroutine or middleware??? has and checks req/second and maybe server load, dinamically add block modules.
 - block methods automatically, win against router?
 - in process litestream 
 - rethink payload job unique, per customer or payloads should have customer info
 - document middleware politic, if you have to write in the context, you shoudl not be a middleware.
 	- the first middleare post serverHttp code is the last observer.
-- implment password reset, email change
-- safe html headers middleware, method
-- register with password after oauth2
-- decide about configuration
 - superuser? just ssh?
-- endpoints api configurable in conf
 - metrics
 	https://github.com/prometheus/client_golang
 - sheurl hadcoded https. should be configurable if srver http under proxy TLS like cloudflare
@@ -204,7 +143,6 @@
 - zombiezen, impl pool with timeout, split in files. 
 - zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
 - httprouter params to servemux $ 
-- tls
 - hardening: add headers CORS, etc
 - add toml conf and config struct, add struct to app, router, cache
 - document design in doc. why all decision.
@@ -218,9 +156,31 @@
 - make command line to copy files and perform changes in the codes based on preferences. maybe using generate
 - More backends: badger and boldb
 - the command (maybe based on configuration) creates dir, copy only needed packages and inserts custom code pa
+- minify html, 5% space. if we already have gzip
+    - https://github.com/tdewolff/minify?tab=readme-ov-file#html 
+    - https://github.com/privatenumber/minification-benchmarks?tab=readme-ov-file#%EF%B8%8F-minifier-showdown
 
 ### done
 
+- decide about configuration
+- add logger
+    - no slog.SetDefault(slog.New(myHandler))
+    - A "multiplexer" handler is a good approach.
+    - stdout Handler: slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: dynamicLevel}) or slog.NewJSONHandler(os.Stdout, ...) (JSON is often better for systemd/journald as it preserves structure).
+    - SQLite Handler: This needs careful implementation (async recommended).
+    - none handler
+	- Global State?: Relies on package-level global state. This makes testing significantly harder.
+	- For most applications, especially web services, APIs, or any system where
+	testability and maintainability are important, injecting the slog.Logger
+	instance is the strongly recommended best practice.
+- store?, just a sync.Map, do not overcomplicate,
+- make defensice goroutine or middleware??? has and checks req/second and maybe server load, dinamically add block modules.
+- endpoints api configurable in conf
+- implment password reset, email change
+- safe html headers middleware, method
+- register with password after oauth2
+- bug in google login missing client id
+    - also github is being presented
 - fileserver in library? -> no. examples repo
 - Route struct? Register without route? User must import router -> Documentation
     - user can use Handle
