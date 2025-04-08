@@ -17,6 +17,11 @@ func LoadFromToml(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
 
+	// Load secrets after initial config load
+	if err := loadSecrets(cfg); err != nil {
+		return nil, fmt.Errorf("failed to load secrets: %w", err)
+	}
+
 	return cfg, nil
 }
 
@@ -39,6 +44,11 @@ func LoadFromDb(db db.DbConfig) (*Config, error) {
 	cfg := &Config{}
 	if _, err := toml.Decode(configToml, cfg); err != nil {
 		return nil, fmt.Errorf("config: failed to decode: %w", err)
+	}
+
+	// Load secrets after initial config load
+	if err := loadSecrets(cfg); err != nil {
+		return nil, fmt.Errorf("failed to load secrets: %w", err)
 	}
 
 	return cfg, nil
