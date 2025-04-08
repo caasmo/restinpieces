@@ -8,19 +8,18 @@ import (
 )
 
 // LoadFromToml loads configuration from a TOML file at the given path.
-// Falls back to dbfile if the TOML file doesn't exist.
-func LoadFromToml(path string, dbfile string) (*Config, error) {
+// Falls back to dbConfig if the TOML file doesn't exist.
+func LoadFromToml(path string, dbConfig db.DbConfig) (*Config, error) {
 	cfg := &Config{}
 	
 	_, err := toml.DecodeFile(path, cfg)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return LoadFromDb(dbfile)
+			return LoadFromDb(dbConfig)
 		}
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
 
-	cfg.DBFile = dbfile
 	if err := loadSecrets(cfg); err != nil {
 		return nil, err
 	}
@@ -28,17 +27,15 @@ func LoadFromToml(path string, dbfile string) (*Config, error) {
 	return cfg, nil
 }
 
-// LoadFromDb loads configuration from the database file.
-// First tries to load from database, falls back to embedded defaults if not found.
-func LoadFromDb(dbfile string) (*Config, error) {
-	// Get database instance that implements DbConfig
-	dbApp, err := getDbInstance() // This needs to be implemented in db package
-	if err != nil {
-		return nil, fmt.Errorf("config: failed to get db instance: %w", err)
+// LoadFromDb loads configuration from the database using the provided DbConfig.
+// Falls back to embedded defaults if no config exists in database.
+func LoadFromDb(dbConfig db.DbConfig) (*Config, error) {
+	if dbConfig == nil {
+		return nil, fmt.Errorf("config: dbConfig cannot be nil")
 	}
 
 	// Get config TOML from database
-	configToml, err := dbApp.Get()
+	configToml, err := dbConfig.Get()
 	if err != nil {
 		return nil, fmt.Errorf("config: failed to get from db: %w", err)
 	}
@@ -54,7 +51,6 @@ func LoadFromDb(dbfile string) (*Config, error) {
 		return nil, fmt.Errorf("config: failed to decode: %w", err)
 	}
 
-	cfg.DBFile = dbfile
 	if err := loadSecrets(cfg); err != nil {
 		return nil, err
 	}
