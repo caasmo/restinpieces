@@ -1,16 +1,11 @@
 ### TODOs
 
 
-- DbLifecycle, DbProvider naming
 - helper method DeafaultDbCrawsawPool
     - you need a db clietn for the application. It mus be shared. WAL. Use Default or make your own,
         - warning 
 - modernc?
-- app.close method overkill
-- remove channel writer 
-- remove dev tag
 - default zombiezen 
-- dbauth, dbQueue, 
 - db for pool?
 - cache alternative syncMap, no garbage collection, noOP
 - fileserver in library?
@@ -236,6 +231,11 @@
 
 ### done
 
+- dbauth, dbQueue, 
+- remove channel writer 
+- remove dev tag
+- app.close method overkill
+- DbLifecycle, DbProvider naming
 - Bug: users with aouth2 and password. Refresh
 - request password change html requires email form
 - user request pasword and email change at the same time. possible collions?
