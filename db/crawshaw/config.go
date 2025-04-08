@@ -6,9 +6,9 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 )
 
-// Get retrieves the latest TOML serialized configuration from the database.
+// GetConfig retrieves the latest TOML serialized configuration from the database.
 // Returns empty string if no config exists (no error).
-func (d *Db) Get() (string, error) {
+func (d *Db) GetConfig() (string, error) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
 

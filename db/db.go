@@ -28,8 +28,8 @@ type DbQueue interface {
 
 // DbConfig defines database operations related to configuration.
 type DbConfig interface {
-	// Get returns the TOML serialized configuration from the database
-	Get() (string, error)
+	// GetConfig returns the TOML serialized configuration from the database
+	GetConfig() (string, error)
 }
 
 // DbApp is an interface combining the required DB roles for the application.

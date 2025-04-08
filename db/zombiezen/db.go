@@ -356,9 +356,9 @@ func (d *Db) UpdateEmail(userId string, newEmail string) error {
 	return nil
 }
 
-// Get retrieves the latest TOML serialized configuration from the database.
+// GetConfig retrieves the latest TOML serialized configuration from the database.
 // Returns empty string if no config exists (no error).
-func (d *Db) Get() (string, error) {
+func (d *Db) GetConfig() (string, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
 		return "", fmt.Errorf("failed to get db connection: %w", err)
