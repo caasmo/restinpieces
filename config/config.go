@@ -237,6 +237,7 @@ type Config struct {
 	PublicDir       string // Directory to serve static files from
 	Endpoints       Endpoints
 	Proxy           Proxy
+	Source          string // Path to config file or DB file
 }
 
 // BlockIp holds configuration specific to IP blocking.

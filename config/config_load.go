@@ -11,7 +11,7 @@ import (
 // LoadFromToml loads configuration from a TOML file at the given path.
 // Returns error if file doesn't exist or can't be decoded.
 func LoadFromToml(path string) (*Config, error) {
-	cfg := &Config{}
+	cfg := &Config{Source: path}
 
 	if _, err := toml.DecodeFile(path, cfg); err != nil {
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
@@ -36,7 +36,7 @@ func LoadFromDb(db db.DbConfig) (*Config, error) {
 	}
 
 	// Decode TOML into Config struct
-	cfg := &Config{}
+	cfg := &Config{Source: "db:" + db.(*db.Db).pool.Path()}
 	if _, err := toml.Decode(configToml, cfg); err != nil {
 		return nil, fmt.Errorf("config: failed to decode: %w", err)
 	}
