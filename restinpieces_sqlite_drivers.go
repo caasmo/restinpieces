@@ -18,9 +18,10 @@ import (
 	zombiezenPool "zombiezen.com/go/sqlite/sqlitex"
 )
 
-// NewDefaultCrawshawPool creates a new Crawshaw SQLite connection pool with default settings.
-// It uses the number of CPU cores for the pool size and enables WAL mode by default.
-func NewDefaultCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
+// NewCrawshawPool creates a new Crawshaw SQLite connection pool with reasonable defaults
+// compatible with restinpieces (e.g., WAL mode enabled).
+// Use this if your application needs to share the pool with restinpieces.
+func NewCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
 	poolSize := runtime.NumCPU()
 	initString := fmt.Sprintf("file:%s", dbPath)
 
@@ -31,11 +32,13 @@ func NewDefaultCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
 	return pool, nil
 }
 
-// NewDefaultZombiezenPool creates a new Zombiezen SQLite connection pool with default settings.
-// It uses the number of CPU cores for the pool size, enables WAL mode by default, and sets a busy timeout.
-func NewDefaultZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
+// NewZombiezenPool creates a new Zombiezen SQLite connection pool with reasonable defaults
+// compatible with restinpieces (e.g., WAL mode enabled, busy_timeout set).
+// Use this if your application needs to share the pool with restinpieces.
+func NewZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
 	poolSize := runtime.NumCPU()
-	initString := fmt.Sprintf("file:%s", dbPath)
+	// Re-add busy_timeout pragma as part of reasonable defaults for Zombiezen.
+	initString := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)", dbPath)
 
 	pool, err := zombiezenPool.NewPool(initString, zombiezenPool.PoolOptions{
 		PoolSize: poolSize,
