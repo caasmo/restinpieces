@@ -7,6 +7,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
+
 // LoadEnvSecret loads a secret from an environment variable.
 // If the env var is empty, it returns the defaultValue.
 // Returns an error if both are empty.
