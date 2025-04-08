@@ -14,7 +14,6 @@ import (
 
 type Db struct {
 	pool *sqlitex.Pool
-	rwCh chan *sqlite.Conn
 }
 
 // Verify interface implementations
@@ -27,42 +26,17 @@ func New(pool *sqlitex.Pool) (*Db, error) {
 	if pool == nil {
 		return nil, fmt.Errorf("provided pool cannot be nil")
 	}
-
-	conn, err := pool.Take(context.TODO())
-	if err != nil {
-		// Don't close the pool here as we don't own it
-		return nil, fmt.Errorf("failed to get initial connection from provided pool: %w", err)
-	}
-
-	ch := make(chan *sqlite.Conn, 1)
-	go func(conn *sqlite.Conn, ch chan *sqlite.Conn) {
-		ch <- conn
-	}(conn, ch)
-
-	return &Db{pool: pool, rwCh: ch}, nil
+	// The pool is managed externally, just store it.
+	return &Db{pool: pool}, nil
 }
 
 // Close releases resources used by Db. It does NOT close the underlying pool,
 // as the pool's lifecycle is managed externally by the user.
+// This implementation currently only prevents further use by setting the pool to nil.
 func (d *Db) Close() {
-	// Handle the writer channel first (ensure connection is returned)
-	if d.rwCh != nil {
-		select {
-		case conn := <-d.rwCh:
-			if conn != nil && d.pool != nil {
-				// Use Put instead of Take for zombiezen
-				d.pool.Put(conn)
-			}
-		default:
-			// Channel was empty or already closed
-		}
-		// Consider closing the channel if the writer goroutine expects it
-		// close(d.rwCh)
-	} // <-- Add missing closing brace for 'if d.rwCh != nil'
 	// Do not close the pool here. The user who created the pool is responsible for closing it.
-	// Set pool to nil to prevent further use after Close
+	// Set pool to nil to prevent further use after Close.
 	d.pool = nil
-	d.rwCh = nil
 }
 
 func (d *Db) GetById(id int64) int { // Added missing return type 'int'
@@ -88,18 +62,6 @@ func (d *Db) GetById(id int64) int { // Added missing return type 'int'
 	}
 
 	return value
-}
-
-func (d *Db) Insert(value int64) {
-	rwConn := <-d.rwCh
-	defer func() { d.rwCh <- rwConn }()
-
-	if err := sqlitex.Execute(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", &sqlitex.ExecOptions{
-		Args: []any{value},
-	}); err != nil {
-		// TODO
-		panic(err)
-	}
 }
 
 // GetUserByEmail retrieves a user by email address.
