@@ -72,6 +72,7 @@ func LoadEnvSecret(envVar string, defaultValue string) (string, error) {
 	if value := os.Getenv(envVar); value != "" {
 		return value, nil
 	}
+
 	if defaultValue != "" {
 		return defaultValue, nil
 	}
