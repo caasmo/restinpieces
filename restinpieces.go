@@ -50,7 +50,7 @@ func New(dbfile string, opts ...core.Option) (*core.App, *server.Server, error) 
 
 	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.Logger())
 	if err != nil {
-		app.Close()
+		// app.Close() // Removed as DB lifecycle is managed externally
 		slog.Error("failed to setup scheduler", "error", err)
 		return nil, nil, err
 	}
