@@ -19,13 +19,21 @@ import (
 
 // New creates a new App instance and Server with the provided options.
 // It initializes the core application components like database, router, cache, etc.
-func New(dbfile string, opts ...core.Option) (*core.App, *server.Server, error) {
-	// Load initial configuration
-	cfg, err := config.Load(dbfile)
+// configPath is optional - if provided and exists, loads config from TOML file,
+// otherwise falls back to loading from dbfile.
+func New(dbfile string, configPath string, opts ...core.Option) (*core.App, *server.Server, error) {
+	var cfg *config.Config
+	var err error
+
+	if configPath != "" {
+		cfg, err = config.LoadFromToml(configPath, dbfile)
+	} else {
+		cfg, err = config.LoadFromDb(dbfile)
+	}
+
 	if err != nil {
-		slog.Error("failed to load initial config", "error", err)
-		// TODO
-		return nil, nil, err // Corrected to return (nil, nil, err)
+		slog.Error("failed to load config", "error", err)
+		return nil, nil, err
 	}
 
 	configProvider := config.NewProvider(cfg)

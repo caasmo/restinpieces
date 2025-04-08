@@ -7,10 +7,30 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// Load decodes the default embedded TOML config, sets the DB file path,
-// initializes the OAuth2 provider map if needed, and then loads secrets
-// (JWT, SMTP, OAuth2) from environment variables or the config file.
-func Load(dbfile string) (*Config, error) {
+// LoadFromToml loads configuration from a TOML file at the given path.
+// Falls back to dbfile if the TOML file doesn't exist.
+func LoadFromToml(path string, dbfile string) (*Config, error) {
+	cfg := &Config{}
+	
+	_, err := toml.DecodeFile(path, cfg)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return LoadFromDb(dbfile)
+		}
+		return nil, fmt.Errorf("failed to decode config file: %w", err)
+	}
+
+	cfg.DBFile = dbfile
+	if err := loadSecrets(cfg); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+// LoadFromDb loads configuration from the database file.
+// This is a placeholder implementation that currently uses the embedded defaults.
+func LoadFromDb(dbfile string) (*Config, error) {
 	cfg := &Config{}
 
 	if _, err := toml.Decode(string(DefaultConfigToml), cfg); err != nil {
@@ -18,24 +38,37 @@ func Load(dbfile string) (*Config, error) {
 	}
 
 	cfg.DBFile = dbfile
+	if err := loadSecrets(cfg); err != nil {
+		return nil, err
+	}
 
+	return cfg, nil
+}
+
+// loadSecrets handles loading all secrets from environment variables
+func loadSecrets(cfg *Config) error {
 	if cfg.OAuth2Providers == nil {
 		cfg.OAuth2Providers = make(map[string]OAuth2Provider)
 	}
 
 	if err := LoadJwt(cfg); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := LoadSmtp(cfg); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := LoadOAuth2(cfg); err != nil {
-		return nil, err
+		return err
 	}
 
-	return cfg, nil
+	return nil
+}
+
+// Load is deprecated - use LoadFromToml or LoadFromDb instead.
+func Load(dbfile string) (*Config, error) {
+	return LoadFromDb(dbfile)
 }
 
 // LoadEnvSecret loads a secret from an environment variable.
