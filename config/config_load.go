@@ -8,15 +8,11 @@ import (
 )
 
 // LoadFromToml loads configuration from a TOML file at the given path.
-// Falls back to dbConfig if the TOML file doesn't exist.
-func LoadFromToml(path string, dbConfig db.DbConfig) (*Config, error) {
+// Returns error if file doesn't exist or can't be decoded.
+func LoadFromToml(path string) (*Config, error) {
 	cfg := &Config{}
 	
-	_, err := toml.DecodeFile(path, cfg)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return LoadFromDb(dbConfig)
-		}
+	if _, err := toml.DecodeFile(path, cfg); err != nil {
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
 
