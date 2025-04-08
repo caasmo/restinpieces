@@ -18,17 +18,17 @@ func WithCache(c cache.Cache[string, interface{}]) Option {
 	}
 }
 
-// WithDbProvider sets the database providers (Auth, Queue, Lifecycle) in the App.
-// It expects a single concrete type (like *crawshaw.Db) that implements db.DbProvider.
-func WithDbProvider(provider db.DbProvider) Option {
+// WithDbApp sets the application's database implementation.
+// It expects a single concrete type (like *crawshaw.Db) that implements db.DbApp.
+func WithDbApp(dbApp db.DbApp) Option {
 	return func(a *App) {
-		if provider == nil {
+		if dbApp == nil {
 			// Or panic, depending on desired behavior for nil provider
 			// This helps catch errors early during setup.
-			panic("DbProvider cannot be nil")
+			panic("DbApp cannot be nil")
 		}
-		a.dbAuth = provider
-		a.dbQueue = provider
+		a.dbAuth = dbApp
+		a.dbQueue = dbApp
 		// a.dbLifecycle = provider // Removed as lifecycle is managed externally
 	}
 }

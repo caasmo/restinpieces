@@ -25,8 +25,8 @@ func WithDbCrawshaw(pool *crawshawPool.Pool) core.Option {
 		// Panic is reasonable here as it indicates a fundamental setup error.
 		panic(fmt.Sprintf("failed to initialize crawshaw DB with existing pool: %v", err))
 	}
-	// Use the new provider option
-	return core.WithDbProvider(dbInstance)
+	// Use the renamed app database option
+	return core.WithDbApp(dbInstance)
 }
 
 // WithDbZombiezen configures the App to use the Zombiezen SQLite implementation with an existing pool.
@@ -35,8 +35,8 @@ func WithDbZombiezen(pool *zombiezenPool.Pool) core.Option {
 	if err != nil {
 		panic(fmt.Sprintf("failed to initialize zombiezen DB with existing pool: %v", err))
 	}
-	// Use the new provider option
-	return core.WithDbProvider(dbInstance)
+	// Use the renamed app database option
+	return core.WithDbApp(dbInstance)
 }
 
 func WithRouterServeMux() core.Option {

@@ -55,9 +55,9 @@ var (
 	ErrUserNotFound     = errors.New("user not found") // Added for clarity
 )
 
-// DbProvider is an interface combining the required DB roles.
+// DbApp is an interface combining the required DB roles for the application.
 // The concrete DB implementation (e.g., *crawshaw.Db or *zombiezen.Db) must satisfy this interface.
-type DbProvider interface {
+type DbApp interface {
 	DbAuth
 	DbQueue
 	// DbLifecycle removed
