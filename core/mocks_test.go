@@ -8,10 +8,10 @@ import (
 	"github.com/caasmo/restinpieces/router"
 )
 
-// Compile-time check to ensure MockDB implements the provider interface
-var _ db.DbProvider = (*MockDB)(nil)
+// Compile-time check to ensure MockDB implements the DbApp interface
+var _ db.DbApp = (*MockDB)(nil)
 
-// MockDB implements db.DbProvider for testing purposes.
+// MockDB implements db.DbApp for testing purposes.
 // Use function fields to allow overriding behavior in specific tests.
 type MockDB struct {
 	// --- Mock DbAuth Methods ---
@@ -29,8 +29,7 @@ type MockDB struct {
 	MarkCompletedFunc func(jobID int64) error
 	MarkFailedFunc    func(jobID int64, errMsg string) error
 
-	// --- Mock DbLifecycle Methods ---
-	CloseFunc func()
+	// DbLifecycle methods removed
 }
 
 // --- Implement DbAuth ---
@@ -107,13 +106,7 @@ func (m *MockDB) MarkFailed(jobID int64, errMsg string) error {
 	return nil // Default: Success
 }
 
-// --- Implement DbLifecycle ---
-func (m *MockDB) Close() {
-	if m.CloseFunc != nil {
-		m.CloseFunc()
-	}
-	// Default: Do nothing
-}
+// --- DbLifecycle methods removed ---
 
 // MockRouter implements router.Router interface for testing
 type MockRouter struct{}
