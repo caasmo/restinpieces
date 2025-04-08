@@ -21,51 +21,7 @@ import (
 	zombiezenPool "zombiezen.com/go/sqlite/sqlitex"
 )
 
-// --- Pool Creation Helpers ---
-
-func createCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
-
-	// TODO documetn option requiring wal for example for litestream
-	poolSize := runtime.NumCPU()
-	initString := fmt.Sprintf("file:%s", dbPath)
-
-	pool, err := crawshawPool.Open(initString, 0, poolSize)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create crawshaw pool at %s: %w", dbPath, err)
-	}
-
-	// Optional: Ping the pool to ensure connectivity
-	// conn := pool.Get(nil)
-	// if conn == nil {
-	//  pool.Close()
-	//  return nil, fmt.Errorf("failed to get connection from new crawshaw pool")
-	// }
-	// pool.Put(conn)
-	slog.Info("Crawshaw pool created successfully", "path", dbPath)
-	return pool, nil
-}
-
-func createZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
-	poolSize := runtime.NumCPU()
-	// Match the settings used in zombiezen.New for consistency
-	initString := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)", dbPath)
-
-	pool, err := zombiezenPool.NewPool(initString, zombiezenPool.PoolOptions{
-		PoolSize: poolSize,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create zombiezen pool at %s: %w", dbPath, err)
-	}
-	// Optional: Ping the pool
-	// conn, err := pool.Take(context.Background())
-	// if err != nil {
-	//  pool.Close()
-	//  return nil, fmt.Errorf("failed to get connection from new zombiezen pool: %w", err)
-	// }
-	// pool.Put(conn)
-	slog.Info("Zombiezen pool created successfully", "path", dbPath)
-	return pool, nil
-}
+// Pool creation helpers moved to restinpieces package
 
 // --- Command Handlers ---
 
@@ -84,11 +40,11 @@ func handleServe(args []string) error {
 	}
 
 	// --- Create the Database Pool ---
-	// Choose which pool to create (e.g., Crawshaw)
-	dbPool, err := createCrawshawPool(*dbfile)
-	// Or: dbPool, err := createZombiezenPool(*dbfile)
+	// Choose which pool to create (e.g., Crawshaw) using the default creator from the library
+	dbPool, err := restinpieces.NewDefaultCrawshawPool(*dbfile)
+	// Or: dbPool, err := restinpieces.NewDefaultZombiezenPool(*dbfile)
 	if err != nil {
-		slog.Error("failed to create database pool", "error", err)
+		slog.Error("failed to create default database pool", "error", err)
 		return err
 	}
 	// Defer closing the pool here, as the user (main) owns it now.
