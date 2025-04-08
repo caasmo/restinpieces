@@ -26,7 +26,6 @@ func main() {
 	// Parse flags
 	flag.Parse()
 
-    slog.Info("Creating Pool")
 	// --- Create the Database Pool ---
 	// Use the helper from the library to create a pool with suitable defaults.
 	dbPool, err := restinpieces.NewCrawshawPool(*dbfile)

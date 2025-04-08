@@ -22,7 +22,6 @@ import (
 // then loads configuration either from TOML file (if path provided) or DB file.
 func New(configPath string, opts ...core.Option) (*core.App, *server.Server, error) {
 	// First create app without config
-	slog.Info("YOLO failed to initialize core app")
 	app, err := core.NewApp(opts...)
 	if err != nil {
 		slog.Error("failed to initialize core app", "error", err)
