@@ -38,7 +38,8 @@ func NewCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
 func NewZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
 	poolSize := runtime.NumCPU()
 	// Re-add busy_timeout pragma as part of reasonable defaults for Zombiezen.
-	initString := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)", dbPath)
+	//initString := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)", dbPath)
+	initString := fmt.Sprintf("file:%s", dbPath)
 
 	pool, err := zombiezenPool.NewPool(initString, zombiezenPool.PoolOptions{
 		PoolSize: poolSize,
