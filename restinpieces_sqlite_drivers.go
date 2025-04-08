@@ -24,6 +24,9 @@ func NewCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
 	poolSize := runtime.NumCPU()
 	initString := fmt.Sprintf("file:%s", dbPath)
 
+	// sqlitex.Open with flags=0 defaults to:
+	// SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_WAL |
+	// SQLITE_OPEN_URI | SQLITE_OPEN_NOMUTEX
 	pool, err := crawshawPool.Open(initString, 0, poolSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create default crawshaw pool at %s: %w", dbPath, err)
@@ -40,6 +43,8 @@ func NewZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
 	//initString := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)", dbPath)
 	initString := fmt.Sprintf("file:%s", dbPath)
 
+	// zombiezen/sqlitex.NewPool with default options uses flags:
+	// sqlite.OpenReadWrite | sqlite.OpenCreate | sqlite.OpenWAL | sqlite.OpenURI
 	pool, err := zombiezenPool.NewPool(initString, zombiezenPool.PoolOptions{
 		PoolSize: poolSize,
 	})
