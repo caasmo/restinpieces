@@ -18,8 +18,12 @@ func NewDefaultCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
 	// See: https://www.sqlite.org/uri.html
 	// See: https://www.sqlite.org/wal.html
 	// Note: Litestream requires WAL mode.
-	initString := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)", dbPath)
+	// The flags=0 argument to sqlitex.Open defaults to enabling WAL mode,
+	// so no explicit pragma is needed in the URI string for that.
+	// It also defaults to SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_URI | SQLITE_OPEN_NOMUTEX.
+	initString := fmt.Sprintf("file:%s", dbPath) // Use file: URI to allow flags like WAL
 
+	// flags = 0 enables WAL by default.
 	pool, err := crawshawPool.Open(initString, 0, poolSize)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create default crawshaw pool at %s: %w", dbPath, err)
@@ -32,9 +36,11 @@ func NewDefaultCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
 // It uses the number of CPU cores for the pool size, enables WAL mode, and sets a busy timeout.
 func NewDefaultZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
 	poolSize := runtime.NumCPU()
-	// Match the settings used in zombiezen.New for consistency, including WAL and busy_timeout.
-	initString := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)", dbPath)
+	// zombiezen/go/sqlite/sqlitex.NewPool also defaults to WAL mode when no flags are specified.
+	// We still need the file: URI prefix and the busy_timeout pragma.
+	initString := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)", dbPath)
 
+	// No explicit OpenFlags needed here; defaults include WAL.
 	pool, err := zombiezenPool.NewPool(initString, zombiezenPool.PoolOptions{
 		PoolSize: poolSize,
 	})
