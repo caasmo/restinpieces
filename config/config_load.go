@@ -22,19 +22,11 @@ func LoadFromToml(path string) (*Config, error) {
 // LoadFromDb loads configuration from the database using the provided DbConfig.
 // Falls back to embedded defaults if no config exists in database.
 func LoadFromDb(dbConfig db.DbConfig) (*Config, error) {
-	if dbConfig == nil {
-		return nil, fmt.Errorf("config: dbConfig cannot be nil")
-	}
 
 	// Get config TOML from database
 	configToml, err := dbConfig.Get()
 	if err != nil {
 		return nil, fmt.Errorf("config: failed to get from db: %w", err)
-	}
-
-	// Fall back to embedded defaults if no config in db
-	if configToml == "" {
-		configToml = string(DefaultConfigToml)
 	}
 
 	// Decode TOML into Config struct
