@@ -30,17 +30,23 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 
 	// Now load config using the initialized DB drivers
 	var cfg *config.Config
+	appLogger := app.Logger() // Get logger once
 	if configPath != "" {
-		app.Logger().Info("loading config from TOML file", "path", configPath)
-		cfg, err = config.LoadFromToml(configPath)
-        cfg.Source=configPath
+		// Logger passed to LoadFromToml will handle detailed logging
+		cfg, err = config.LoadFromToml(configPath, appLogger)
+		if err == nil { // Only set source on success
+			cfg.Source = configPath
+		}
 	} else {
-		app.Logger().Info("loading config from database")
-		cfg, err = config.LoadFromDb(app.DbConfig())
-        cfg.Source="" // empty for db
+		// Logger passed to LoadFromDb will handle detailed logging
+		cfg, err = config.LoadFromDb(app.DbConfig(), appLogger)
+		if err == nil { // Only set source on success
+			cfg.Source = "" // empty for db
+		}
 	}
 
 	if err != nil {
+		// Error already logged by LoadFromToml/LoadFromDb
 		app.Logger().Error("failed to load config", "error", err)
 		return nil, nil, err
 	}
