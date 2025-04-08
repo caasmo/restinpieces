@@ -57,12 +57,6 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 
 ## Building the Project
 
-### Asset Generation
-To bundle and optimize frontend assets (HTML, CSS, JavaScript) with minification and gzip compression:
-
-    go generate
-
-This creates production-ready assets in `public/dist/` with both compressed (.gz) and uncompressed versions.
 
 ### Build
 
