@@ -1,5 +1,14 @@
 package restinpieces
 
+// This file provides helper functions to create SQLite connection pools
+// compatible with restinpieces using common drivers (Crawshaw and Zombiezen).
+// If your application interacts directly with the database alongside restinpieces,
+// it's crucial to use a *single shared pool* to prevent database locking issues (SQLITE_BUSY errors).
+// These functions offer reasonable default configurations (like enabling WAL mode)
+// suitable for use with restinpieces. You can use these functions to create the
+// pool and then pass it to both restinpieces (via options like WithDbCrawshaw)
+// and your own application's database access layer.
+
 import (
 	"fmt"
 	"log/slog"

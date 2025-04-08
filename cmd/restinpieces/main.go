@@ -40,11 +40,11 @@ func handleServe(args []string) error {
 	}
 
 	// --- Create the Database Pool ---
-	// Choose which pool to create (e.g., Crawshaw) using the default creator from the library
-	dbPool, err := restinpieces.NewDefaultCrawshawPool(*dbfile)
-	// Or: dbPool, err := restinpieces.NewDefaultZombiezenPool(*dbfile)
+	// Use the helper from the library to create a pool with suitable defaults.
+	dbPool, err := restinpieces.NewCrawshawPool(*dbfile)
+	// Or: dbPool, err := restinpieces.NewZombiezenPool(*dbfile)
 	if err != nil {
-		slog.Error("failed to create default database pool", "error", err)
+		slog.Error("failed to create database pool", "error", err)
 		return err
 	}
 	// Defer closing the pool here, as the user (main) owns it now.
