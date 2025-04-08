@@ -21,14 +21,9 @@ const (
 
 // Scheduler handles scheduled jobs
 type Scheduler struct {
-	// configProvider provides access to the application configuration
 	configProvider *config.Provider
-
-	// db is the database connection used to fetch and update jobs
-	db db.Db
-
-	// executor handles the actual execution of jobs
-	executor executor.JobExecutor
+	db             db.DbQueue
+	executor       executor.JobExecutor
 
 	// logger is used for structured logging
 	logger *slog.Logger
@@ -49,8 +44,7 @@ type Scheduler struct {
 	shutdownDone chan struct{}
 }
 
-// NewScheduler creates a new scheduler with executor
-func NewScheduler(configProvider *config.Provider, db db.Db, executor executor.JobExecutor, logger *slog.Logger) *Scheduler {
+func NewScheduler(configProvider *config.Provider, db db.DbQueue, executor executor.JobExecutor, logger *slog.Logger) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Scheduler{
 		configProvider: configProvider,
