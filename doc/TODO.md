@@ -17,6 +17,7 @@
 - Route struct? Register without route? User must import router
     - user can use Handle
     - or import Route package framework // Document
+- drivers init string PRAGMAS, flags?
 - app, server dicotomy
 - config file or db
 - config reload
