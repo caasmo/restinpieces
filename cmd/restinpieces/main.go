@@ -116,9 +116,8 @@ func handleServe(args []string) error {
 		// Pool will be closed by the deferred function
 		return err
 	}
-	// app.Close() will now call the Db implementation's Close,
-	// which *won't* close the pool itself. The pool closure is handled by the defer above.
-	defer app.Close()
+	// app.Close() is removed as it no longer manages DB lifecycle.
+	// The pool closure is handled by the defer dbPool.Close() above.
 
 	// Log embedded assets (if needed)
 	//logEmbeddedAssets(restinpieces.EmbeddedAssets, app.Config(), app.Logger())
