@@ -16,7 +16,6 @@ const (
 	EnvGithubClientSecret        = "OAUTH2_GITHUB_CLIENT_SECRET"
 	EnvSmtpUsername              = "SMTP_USERNAME"
 	EnvSmtpPassword              = "SMTP_PASSWORD"
-	EnvSmtpFromAddress           = "SMTP_FROM_ADDRESS"
 	EnvJwtAuthSecret             = "JWT_AUTH_SECRET"
 	EnvJwtVerificationEmailSecret = "JWT_VERIFICATION_EMAIL_SECRET"
 	EnvJwtPasswordResetSecret    = "JWT_PASSWORD_RESET_SECRET"
@@ -166,12 +165,12 @@ func LoadSmtp(cfg *Config, logger *slog.Logger) error {
 	}
 	logger.Debug("Load Envar:", "envvar", EnvSmtpPassword, "source", source)
 
-	cfg.Smtp.FromAddress, source, err = LoadEnvSecret(EnvSmtpFromAddress, cfg.Smtp.FromAddress)
-	if err != nil {
-		logger.Error("failed to load SMTP from address", "env_var", EnvSmtpFromAddress, "error", err)
-		return fmt.Errorf("failed to load SMTP from address: %w", err)
+	if fromAddr := os.Getenv("SMTP_FROM_ADDRESS"); fromAddr != "" {
+		cfg.Smtp.FromAddress = fromAddr
+		logger.Debug("Using SMTP from address from environment", "address", cfg.Smtp.FromAddress)
+	} else {
+		logger.Debug("Using SMTP from address from config", "address", cfg.Smtp.FromAddress)
 	}
-	logger.Debug("Load Envar:", "envvar", EnvSmtpFromAddress, "source", source)
 
 	return nil
 }
