@@ -23,15 +23,6 @@ func (d *Db) GetById(id int64) int {
 	return value
 }
 
-func (d *Db) Insert(value int64) {
-	rwConn := <-d.rwCh
-	defer func() { d.rwCh <- rwConn }()
-
-	if err := sqlitex.Exec(rwConn, "INSERT INTO foo(id, value) values(1000000,?)", nil, any(value)); err != nil {
-		panic(err)
-	}
-}
-
 func (d *Db) InsertWithPool(value int64) {
 	conn := d.pool.Get(nil)
 	defer d.pool.Put(conn)
