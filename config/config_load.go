@@ -10,12 +10,17 @@ import (
 )
 
 const (
-	EnvGoogleClientID     = "OAUTH2_GOOGLE_CLIENT_ID"
-	EnvGoogleClientSecret = "OAUTH2_GOOGLE_CLIENT_SECRET"
-	EnvGithubClientID     = "OAUTH2_GITHUB_CLIENT_ID"
-	EnvGithubClientSecret = "OAUTH2_GITHUB_CLIENT_SECRET"
-	EnvSmtpUsername       = "SMTP_USERNAME"
-	EnvSmtpPassword       = "SMTP_PASSWORD"
+	EnvGoogleClientID            = "OAUTH2_GOOGLE_CLIENT_ID"
+	EnvGoogleClientSecret        = "OAUTH2_GOOGLE_CLIENT_SECRET"
+	EnvGithubClientID            = "OAUTH2_GITHUB_CLIENT_ID"
+	EnvGithubClientSecret        = "OAUTH2_GITHUB_CLIENT_SECRET"
+	EnvSmtpUsername              = "SMTP_USERNAME"
+	EnvSmtpPassword              = "SMTP_PASSWORD"
+	EnvSmtpFromAddress           = "SMTP_FROM_ADDRESS"
+	EnvJwtAuthSecret             = "JWT_AUTH_SECRET"
+	EnvJwtVerificationEmailSecret = "JWT_VERIFICATION_EMAIL_SECRET"
+	EnvJwtPasswordResetSecret    = "JWT_PASSWORD_RESET_SECRET"
+	EnvJwtEmailChangeSecret      = "JWT_EMAIL_CHANGE_SECRET"
 )
 
 // LoadFromToml loads configuration from a TOML file at the given path.
@@ -116,28 +121,28 @@ func LoadJwt(cfg *Config, logger *slog.Logger) error {
 		logger.Error("failed to load JWT auth secret", "env_var", "JWT_AUTH_SECRET", "error", err)
 		return fmt.Errorf("failed to load auth secret: %w", err)
 	}
-	logger.Debug("loaded JWT_AUTH_SECRET", "source", source)
+	logger.Debug("Load Envar:", "envvar", EnvJwtAuthSecret, "source", source)
 
 	cfg.Jwt.VerificationEmailSecret, source, err = LoadEnvSecret("JWT_VERIFICATION_EMAIL_SECRET", cfg.Jwt.VerificationEmailSecret)
 	if err != nil {
 		logger.Error("failed to load JWT verification email secret", "env_var", "JWT_VERIFICATION_EMAIL_SECRET", "error", err)
 		return fmt.Errorf("failed to load verification email secret: %w", err)
 	}
-	logger.Debug("loaded JWT_VERIFICATION_EMAIL_SECRET", "source", source)
+	logger.Debug("Load Envar:", "envvar", EnvJwtVerificationEmailSecret, "source", source)
 
 	cfg.Jwt.PasswordResetSecret, source, err = LoadEnvSecret("JWT_PASSWORD_RESET_SECRET", cfg.Jwt.PasswordResetSecret)
 	if err != nil {
 		logger.Error("failed to load JWT password reset secret", "env_var", "JWT_PASSWORD_RESET_SECRET", "error", err)
 		return fmt.Errorf("failed to load password reset secret: %w", err)
 	}
-	logger.Debug("loaded JWT_PASSWORD_RESET_SECRET", "source", source)
+	logger.Debug("Load Envar:", "envvar", EnvJwtPasswordResetSecret, "source", source)
 
 	cfg.Jwt.EmailChangeSecret, source, err = LoadEnvSecret("JWT_EMAIL_CHANGE_SECRET", cfg.Jwt.EmailChangeSecret)
 	if err != nil {
 		logger.Error("failed to load JWT email change secret", "env_var", "JWT_EMAIL_CHANGE_SECRET", "error", err)
 		return fmt.Errorf("failed to load email change secret: %w", err)
 	}
-	logger.Debug("loaded JWT_EMAIL_CHANGE_SECRET", "source", source)
+	logger.Debug("Load Envar:", "envvar", EnvJwtEmailChangeSecret, "source", source)
 
 	return nil
 }
@@ -152,21 +157,21 @@ func LoadSmtp(cfg *Config, logger *slog.Logger) error {
 		logger.Error("failed to load SMTP username", "env_var", EnvSmtpUsername, "error", err)
 		return fmt.Errorf("failed to load SMTP username: %w", err)
 	}
-	logger.Debug("SMTP username loaded", "source", source)
+	logger.Debug("Load Envar:", "envvar", EnvSmtpUsername, "source", source)
 
 	cfg.Smtp.Password, source, err = LoadEnvSecret(EnvSmtpPassword, cfg.Smtp.Password)
 	if err != nil {
 		logger.Error("failed to load SMTP password", "env_var", EnvSmtpPassword, "error", err)
 		return fmt.Errorf("failed to load SMTP password: %w", err)
 	}
-	logger.Debug("SMTP password loaded", "source", source)
+	logger.Debug("Load Envar:", "envvar", EnvSmtpPassword, "source", source)
 
 	cfg.Smtp.FromAddress, source, err = LoadEnvSecret("SMTP_FROM_ADDRESS", cfg.Smtp.FromAddress)
 	if err != nil {
 		logger.Error("failed to load SMTP from address", "env_var", "SMTP_FROM_ADDRESS", "error", err)
 		return fmt.Errorf("failed to load SMTP from address: %w", err)
 	}
-	logger.Debug("SMTP from address loaded", "source", source)
+	logger.Debug("Load Envar:", "envvar", EnvSmtpFromAddress, "source", source)
 
 	return nil
 }
@@ -193,8 +198,8 @@ func LoadOAuth2(cfg *Config, logger *slog.Logger) error {
 			delete(cfg.OAuth2Providers, OAuth2ProviderGoogle)
 		} else {
 			cfg.OAuth2Providers[OAuth2ProviderGoogle] = googleCfg
-			logger.Debug("Google OAuth2 client ID loaded", "source", sourceID)
-			logger.Debug("Google OAuth2 client secret loaded", "source", sourceSecret)
+			logger.Debug("Load Envar:", "envvar", EnvGoogleClientID, "source", sourceID)
+			logger.Debug("Load Envar:", "envvar", EnvGoogleClientSecret, "source", sourceSecret)
 		}
 	}
 
@@ -214,8 +219,8 @@ func LoadOAuth2(cfg *Config, logger *slog.Logger) error {
 			delete(cfg.OAuth2Providers, OAuth2ProviderGitHub)
 		} else {
 			cfg.OAuth2Providers[OAuth2ProviderGitHub] = githubCfg
-			logger.Debug("GitHub OAuth2 client ID loaded", "source", sourceID)
-			logger.Debug("GitHub OAuth2 client secret loaded", "source", sourceSecret)
+			logger.Debug("Load Envar:", "envvar", EnvGithubClientID, "source", sourceID)
+			logger.Debug("Load Envar:", "envvar", EnvGithubClientSecret, "source", sourceSecret)
 		}
 	}
 
