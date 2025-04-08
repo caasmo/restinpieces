@@ -22,7 +22,7 @@ import (
 type App struct {
 	dbAuth         db.DbAuth
 	dbQueue        db.DbQueue
-	dbLifecycle    db.DbLifecycle // For managing the connection lifecycle
+	// dbLifecycle    db.DbLifecycle // Removed: Lifecycle managed externally
 	router         router.Router
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
@@ -43,9 +43,7 @@ func NewApp(opts ...Option) (*App, error) {
 	if a.dbQueue == nil {
 		return nil, fmt.Errorf("dbQueue is required but was not provided (use WithDbProvider)")
 	}
-	if a.dbLifecycle == nil {
-		return nil, fmt.Errorf("dbLifecycle is required but was not provided (use WithDbProvider)")
-	}
+	// dbLifecycle check removed
 	// Check other required dependencies
 	if a.router == nil {
 		return nil, fmt.Errorf("router is required but was not provided")
@@ -68,18 +66,7 @@ func (a *App) Router() router.Router {
 	return a.router
 }
 
-// Close gracefully shuts down application resources, including the database connection.
-func (a *App) Close() {
-	a.logger.Info("Closing application resources...")
-	if a.dbLifecycle != nil {
-		a.logger.Debug("Closing database connection...")
-		a.dbLifecycle.Close() // Close the DB connection/pool via the lifecycle interface
-	} else {
-		a.logger.Warn("dbLifecycle provider is nil, cannot close database connection.")
-	}
-	// Add closing logic for other resources if needed (e.g., cache)
-	a.logger.Info("Application resources closed.")
-}
+// Close method removed as DB lifecycle is managed externally.
 
 // AuthDb returns the DbAuth interface implementation for authentication operations.
 func (a *App) DbAuth() db.DbAuth {
