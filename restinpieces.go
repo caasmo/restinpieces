@@ -48,10 +48,8 @@ func New(dbfile string, opts ...core.Option) (*core.App, *server.Server, error) 
 	cApp := custom.NewApp(app)
 	route(cfg, app, cApp) // Assuming route function exists and is correctly defined elsewhere
 
-	// Setup the scheduler
-	scheduler, err := SetupScheduler(configProvider, app.Db(), app.Logger())
+	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.Logger())
 	if err != nil {
-		// Clean up app resources if scheduler setup fails
 		app.Close()
 		slog.Error("failed to setup scheduler", "error", err)
 		return nil, nil, err
@@ -65,8 +63,7 @@ func New(dbfile string, opts ...core.Option) (*core.App, *server.Server, error) 
 	return app, srv, nil
 }
 
-// SetupScheduler initializes the job scheduler.
-func SetupScheduler(configProvider *config.Provider, db db.Db, logger *slog.Logger) (*scl.Scheduler, error) {
+func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, logger *slog.Logger) (*scl.Scheduler, error) {
 
 	hdls := make(map[string]executor.JobHandler)
 
@@ -83,15 +80,15 @@ func SetupScheduler(configProvider *config.Provider, db db.Db, logger *slog.Logg
 			os.Exit(1) // Or return err
 		}
 
-		emailVerificationHandler := handlers.NewEmailVerificationHandler(db, configProvider, mailer) // Pass provider
+		emailVerificationHandler := handlers.NewEmailVerificationHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
 
-		passwordResetHandler := handlers.NewPasswordResetHandler(db, configProvider, mailer) // Pass provider
+		passwordResetHandler := handlers.NewPasswordResetHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
 
-		emailChangeHandler := handlers.NewEmailChangeHandler(db, configProvider, mailer) // Pass provider
+		emailChangeHandler := handlers.NewEmailChangeHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
 	}
 
-	return scl.NewScheduler(configProvider, db, executor.NewExecutor(hdls), logger), nil
+	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
 }
