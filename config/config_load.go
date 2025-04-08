@@ -16,10 +16,6 @@ func LoadFromToml(path string) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
 
-	if err := loadSecrets(cfg); err != nil {
-		return nil, err
-	}
-
 	return cfg, nil
 }
 
