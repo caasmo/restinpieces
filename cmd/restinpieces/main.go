@@ -52,9 +52,7 @@ func main() {
 	// --- Initialize the Application ---
 	_, srv, err := restinpieces.New(
 		"",
-		// Use the appropriate option for the pool type created above
 		restinpieces.WithDbCrawshaw(dbPool),
-		// Or: restinpieces.WithDbZombiezen(dbPool),
 		restinpieces.WithRouterServeMux(),
 		restinpieces.WithCacheRistretto(),
 		restinpieces.WithTextLogger(nil),

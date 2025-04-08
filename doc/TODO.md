@@ -1,14 +1,9 @@
 ### TODOs
 
 
-- remove dbfile from new, only enforce pool is correct, only db needs to know the dbfile
-- config file or db
+- bug in google login missing client id
+    - also github is being presented
 - config reload
-- fileserver in library? -> no. examples repo
-- Route struct? Register without route? User must import router -> Documentation
-    - user can use Handle
-    - or import Route package framework // Document
-- drivers init string PRAGMAS, flags?
 - app, server dicotomy
 - proxy, app clear wiring
     - proxy design is overkill, 
@@ -226,6 +221,13 @@
 
 ### done
 
+- fileserver in library? -> no. examples repo
+- Route struct? Register without route? User must import router -> Documentation
+    - user can use Handle
+    - or import Route package framework // Document
+- drivers init string PRAGMAS, flags?
+- remove dbfile from new, only enforce pool is correct, only db needs to know the dbfile
+- config file or db
 - No hot reloading.
 - helper method DeafaultDbCrawsawPool
     - you need a db clietn for the application. It mus be shared. WAL. Use Default or make your own,
