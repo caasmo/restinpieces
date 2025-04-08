@@ -40,12 +40,9 @@ func (a *App) Authenticate(r *http.Request) (*db.User, error, jsonResponse) {
 		return nil, errAuth, errorJwtInvalidToken
 	}
 
-	// Get user from database using UserID from claims
 	userID := claims[crypto.ClaimUserID].(string)
-	user, err := a.db.GetUserById(userID)
-	// Important: Check for both error and nil user, as GetUserById might return (nil, nil) if not found
+	user, err := a.DbAuth().GetUserById(userID)
 	if err != nil || user == nil {
-		// Treat DB errors or user not found as invalid token scenario for security
 		return nil, errors.New("Auth error"), errorJwtInvalidToken
 	}
 
