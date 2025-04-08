@@ -116,30 +116,30 @@ func LoadJwt(cfg *Config, logger *slog.Logger) error {
 	var err error
 	var source string
 	
-	cfg.Jwt.AuthSecret, source, err = LoadEnvSecret("JWT_AUTH_SECRET", cfg.Jwt.AuthSecret)
+	cfg.Jwt.AuthSecret, source, err = LoadEnvSecret(EnvJwtAuthSecret, cfg.Jwt.AuthSecret)
 	if err != nil {
-		logger.Error("failed to load JWT auth secret", "env_var", "JWT_AUTH_SECRET", "error", err)
+		logger.Error("failed to load JWT auth secret", "env_var", EnvJwtAuthSecret, "error", err)
 		return fmt.Errorf("failed to load auth secret: %w", err)
 	}
 	logger.Debug("Load Envar:", "envvar", EnvJwtAuthSecret, "source", source)
 
-	cfg.Jwt.VerificationEmailSecret, source, err = LoadEnvSecret("JWT_VERIFICATION_EMAIL_SECRET", cfg.Jwt.VerificationEmailSecret)
+	cfg.Jwt.VerificationEmailSecret, source, err = LoadEnvSecret(EnvJwtVerificationEmailSecret, cfg.Jwt.VerificationEmailSecret)
 	if err != nil {
-		logger.Error("failed to load JWT verification email secret", "env_var", "JWT_VERIFICATION_EMAIL_SECRET", "error", err)
+		logger.Error("failed to load JWT verification email secret", "env_var", EnvJwtVerificationEmailSecret, "error", err)
 		return fmt.Errorf("failed to load verification email secret: %w", err)
 	}
 	logger.Debug("Load Envar:", "envvar", EnvJwtVerificationEmailSecret, "source", source)
 
-	cfg.Jwt.PasswordResetSecret, source, err = LoadEnvSecret("JWT_PASSWORD_RESET_SECRET", cfg.Jwt.PasswordResetSecret)
+	cfg.Jwt.PasswordResetSecret, source, err = LoadEnvSecret(EnvJwtPasswordResetSecret, cfg.Jwt.PasswordResetSecret)
 	if err != nil {
-		logger.Error("failed to load JWT password reset secret", "env_var", "JWT_PASSWORD_RESET_SECRET", "error", err)
+		logger.Error("failed to load JWT password reset secret", "env_var", EnvJwtPasswordResetSecret, "error", err)
 		return fmt.Errorf("failed to load password reset secret: %w", err)
 	}
 	logger.Debug("Load Envar:", "envvar", EnvJwtPasswordResetSecret, "source", source)
 
-	cfg.Jwt.EmailChangeSecret, source, err = LoadEnvSecret("JWT_EMAIL_CHANGE_SECRET", cfg.Jwt.EmailChangeSecret)
+	cfg.Jwt.EmailChangeSecret, source, err = LoadEnvSecret(EnvJwtEmailChangeSecret, cfg.Jwt.EmailChangeSecret)
 	if err != nil {
-		logger.Error("failed to load JWT email change secret", "env_var", "JWT_EMAIL_CHANGE_SECRET", "error", err)
+		logger.Error("failed to load JWT email change secret", "env_var", EnvJwtEmailChangeSecret, "error", err)
 		return fmt.Errorf("failed to load email change secret: %w", err)
 	}
 	logger.Debug("Load Envar:", "envvar", EnvJwtEmailChangeSecret, "source", source)
@@ -166,9 +166,9 @@ func LoadSmtp(cfg *Config, logger *slog.Logger) error {
 	}
 	logger.Debug("Load Envar:", "envvar", EnvSmtpPassword, "source", source)
 
-	cfg.Smtp.FromAddress, source, err = LoadEnvSecret("SMTP_FROM_ADDRESS", cfg.Smtp.FromAddress)
+	cfg.Smtp.FromAddress, source, err = LoadEnvSecret(EnvSmtpFromAddress, cfg.Smtp.FromAddress)
 	if err != nil {
-		logger.Error("failed to load SMTP from address", "env_var", "SMTP_FROM_ADDRESS", "error", err)
+		logger.Error("failed to load SMTP from address", "env_var", EnvSmtpFromAddress, "error", err)
 		return fmt.Errorf("failed to load SMTP from address: %w", err)
 	}
 	logger.Debug("Load Envar:", "envvar", EnvSmtpFromAddress, "source", source)
