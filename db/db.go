@@ -26,10 +26,7 @@ type DbQueue interface {
 	MarkFailed(jobID int64, errMsg string) error
 }
 
-// DbLifecycle defines operations for managing the database connection lifecycle.
-type DbLifecycle interface {
-	Close()
-}
+// DbLifecycle interface removed.
 
 // TimeFormat converts a time.Time to RFC3339 string in UTC.
 // This should be used when sending time values to SQLite since it doesn't have
@@ -59,9 +56,9 @@ var (
 )
 
 // DbProvider is an interface combining the required DB roles.
-// The concrete DB implementation (e.g., *crawshaw.Db) must satisfy this interface.
+// The concrete DB implementation (e.g., *crawshaw.Db or *zombiezen.Db) must satisfy this interface.
 type DbProvider interface {
 	DbAuth
 	DbQueue
-	DbLifecycle
+	// DbLifecycle removed
 }

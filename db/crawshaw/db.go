@@ -14,9 +14,11 @@ type Db struct {
 // Verify interface implementations
 var _ db.DbAuth = (*Db)(nil)
 var _ db.DbQueue = (*Db)(nil)
-var _ db.DbLifecycle = (*Db)(nil)
+// var _ db.DbLifecycle = (*Db)(nil) // Removed
 
 // New creates a new Db instance using an existing pool provided by the user.
+// Note: The lifecycle of the provided pool (*sqlitex.Pool) is managed externally.
+// This Db type does not close the pool.
 func New(pool *sqlitex.Pool) (*Db, error) {
 	if pool == nil {
 		return nil, fmt.Errorf("provided pool cannot be nil")
@@ -25,11 +27,4 @@ func New(pool *sqlitex.Pool) (*Db, error) {
 	return &Db{pool: pool}, nil
 }
 
-// Close releases resources used by Db. It does NOT close the underlying pool,
-// as the pool's lifecycle is managed externally by the user.
-// This implementation currently only prevents further use by setting the pool to nil.
-func (d *Db) Close() {
-	// Do not close the pool here. The user who created the pool is responsible for closing it.
-	// Set pool to nil to prevent further use after Close.
-	d.pool = nil
-}
+// Close method removed as the pool lifecycle is managed externally.
