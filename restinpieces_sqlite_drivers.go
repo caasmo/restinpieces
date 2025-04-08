@@ -11,7 +11,6 @@ package restinpieces
 
 import (
 	"fmt"
-	"log/slog"
 	"runtime"
 
 	crawshawPool "crawshaw.io/sqlite/sqlitex"
