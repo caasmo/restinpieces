@@ -166,7 +166,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// in the case of two conflicting auth methods, each one will write its
 	// relevant fields (password, ExternalAuth), and the looser gorotuine can
 	// also inform the user of existing user.
-	user, err := a.db.GetUserByEmail(oauthUser.Email)
+	user, err := a.DbAuth().GetUserByEmail(oauthUser.Email)
 	if err != nil {
 		writeJsonError(w, errorOAuth2DatabaseError)
 		return
@@ -174,7 +174,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Create or update user with OAuth2 info if user doesn't exist or has false Oauth2
 	if user == nil || !user.Oauth2 {
-		user, err = a.db.CreateUserWithOauth2(*oauthUser)
+		user, err = a.DbAuth().CreateUserWithOauth2(*oauthUser)
 		if err != nil {
 			writeJsonError(w, errorOAuth2DatabaseError)
 			return

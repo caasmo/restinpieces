@@ -49,7 +49,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	// Check if email exists in system
 	// this is error of db, return internal server error
 	// TODO
-	user, err := a.db.GetUserByEmail(req.Email)
+	user, err := a.DbAuth().GetUserByEmail(req.Email)
 	if err != nil {
 		writeJsonError(w, errorNotFound)
 		return
@@ -94,7 +94,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Insert into job queue with deduplication
-	err = a.db.InsertJob(job)
+	err = a.DbQueue().InsertJob(job)
 	if err != nil {
 		if err == db.ErrConstraintUnique {
 			writeJsonError(w, errorPasswordResetAlreadyRequested)
@@ -162,7 +162,7 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Get user from database to get password hash for signing key
-	user, err := a.db.GetUserById(claims[crypto.ClaimUserID].(string))
+	user, err := a.DbAuth().GetUserById(claims[crypto.ClaimUserID].(string))
 	if err != nil || user == nil {
 		writeJsonError(w, errorNotFound)
 		return
@@ -201,7 +201,7 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// Update user password
-	err = a.db.UpdatePassword(user.ID, string(hashedPassword))
+	err = a.DbAuth().UpdatePassword(user.ID, string(hashedPassword))
 	if err != nil {
 		writeJsonError(w, errorServiceUnavailable)
 		return
