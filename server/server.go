@@ -170,24 +170,24 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 		protocol = "HTTPS"
 	}
 	
-	s.logger.Info("Server: protocol", "protocol", protocol)
-	s.logger.Info("Server: listening address", "address", cfg.Addr)
+	s.logger.Info("Server:", "protocol", protocol)
+	s.logger.Info("Server:", "address", cfg.Addr)
 	
 	if cfg.EnableTLS {
-		s.logger.Info("Server: TLS certificate", "certFile", cfg.CertFile)
-		s.logger.Info("Server: TLS private key", "keyFile", cfg.KeyFile)
+		s.logger.Info("Server:", "certFile", cfg.CertFile)
+		s.logger.Info("Server:", "keyFile", cfg.KeyFile)
 	}
 	
-	s.logger.Info("Server: timeouts",
+	s.logger.Info("Server:",
 		"readTimeout", cfg.ReadTimeout,
 		"readHeaderTimeout", cfg.ReadHeaderTimeout,
 		"writeTimeout", cfg.WriteTimeout,
 		"idleTimeout", cfg.IdleTimeout)
 	
-	s.logger.Info("Server: shutdown grace period", "timeout", cfg.ShutdownGracefulTimeout)
+	s.logger.Info("Server:", "ShutdownGracefulTimeout", cfg.ShutdownGracefulTimeout)
 	
 	if cfg.ClientIpProxyHeader != "" {
-		s.logger.Info("Server: trusting proxy header", "header", cfg.ClientIpProxyHeader)
+		s.logger.Info("Server:", "header", cfg.ClientIpProxyHeader)
 	}
 }
 
