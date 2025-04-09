@@ -58,7 +58,7 @@ func (s *Server) Run() {
 	// Get initial server config
 	serverCfg := s.configProvider.Get().Server
 
-	s.logServerConfig(serverCfg)
+	s.logServerConfig(&serverCfg)
 
 	srv := &http.Server{
 		Addr:              serverCfg.Addr,
