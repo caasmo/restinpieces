@@ -23,6 +23,7 @@ type App struct {
 	dbAuth         db.DbAuth
 	dbQueue        db.DbQueue
 	dbConfig       db.DbConfig
+	dbAcme         db.DbAcme
 	router         router.Router
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
@@ -35,12 +36,15 @@ func NewApp(opts ...Option) (*App, error) {
 		opt(a)
 	}
 
-	// Check for the new required interfaces
+	// Check for required interfaces
 	if a.dbAuth == nil {
-		return nil, fmt.Errorf("dbAuth is required but was not provided (use WithDbProvider)")
+		return nil, fmt.Errorf("dbAuth is required but was not provided (use WithDbApp)")
 	}
 	if a.dbQueue == nil {
-		return nil, fmt.Errorf("dbQueue is required but was not provided (use WithDbProvider)")
+		return nil, fmt.Errorf("dbQueue is required but was not provided (use WithDbApp)")
+	}
+	if a.dbAcme == nil {
+		return nil, fmt.Errorf("dbAcme is required but was not provided (use WithDbApp)")
 	}
 	// dbLifecycle check removed
 	// Check other required dependencies
@@ -76,6 +80,11 @@ func (a *App) DbQueue() db.DbQueue {
 
 func (a *App) DbConfig() db.DbConfig {
 	return a.dbConfig
+}
+
+// DbAcme returns the DbAcme interface implementation for ACME certificate operations.
+func (a *App) DbAcme() db.DbAcme {
+	return a.dbAcme
 }
 
 // Logger returns the application's logger instance

@@ -27,7 +27,7 @@ func WithDbApp(dbApp db.DbApp) Option {
 		a.dbAuth = dbApp
 		a.dbQueue = dbApp
 		a.dbConfig = dbApp
-		// The DbAcme interface is automatically handled since it's part of DbApp
+		a.dbAcme = dbApp
 	}
 }
 
