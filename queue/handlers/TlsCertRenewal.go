@@ -3,8 +3,6 @@ package handlers
 import (
 	"context"
 	"crypto" // Add standard crypto import
-	"crypto/ecdsa"
-	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -114,7 +112,7 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 		err := fmt.Errorf("ACME account private key is missing. Set %s environment variable", config.EnvAcmeLetsencryptPrivateKey)
 		h.logger.Error(err.Error())
 		// Use the renamed environment variable constant
-		err := fmt.Errorf("ACME account private key is missing. Set %s environment variable", config.EnvAcmeLetsencryptPrivateKey)
+		err = fmt.Errorf("ACME account private key is missing. Set %s environment variable", config.EnvAcmeLetsencryptPrivateKey)
 		h.logger.Error(err.Error())
 		return err // Configuration error
 	}

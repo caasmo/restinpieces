@@ -9,6 +9,7 @@
     - make new table tls_cert
     - initail cert, lego?
     - account ACME user. HOw to change password? what happens if lost.
+    - build without https support?
 - app, server dicotomy
 - config reload
 - proxy, app clear wiring
