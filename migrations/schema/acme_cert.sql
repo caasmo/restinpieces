@@ -28,9 +28,6 @@ CREATE TABLE acme_certificates (
     -- Timestamp when this record was created in the database.
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
      -- Timestamp when this record was last updated.
-    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+    updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 );
-
--- Indexes for common lookups
-CREATE INDEX idx_le_certs_expires_at ON letsencrypt_certificates(expires_at);
 
