@@ -13,7 +13,6 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/queue"
-	queue_executor "github.com/caasmo/restinpieces/queue/executor" // Alias import
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/certificate"
 	"github.com/go-acme/lego/v4/challenge/dns01"
@@ -269,11 +268,6 @@ func saveCertificateResource(certFile, keyFile string, resource *certificate.Res
 
 	return nil
 }
-
-// Ensure TLSCertRenewalHandler implements the JobHandler interface.
-// Use the aliased import name 'queue_executor'.
-var _ queue_executor.JobHandler = (*TLSCertRenewalHandler)(nil)
-
 
 // certificateNeedsRenewal checks if the certificate at the given path needs renewal.
 // It returns true if the certificate doesn't exist, fails to parse, or expires within the threshold.
