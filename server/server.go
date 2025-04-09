@@ -58,18 +58,7 @@ func (s *Server) Run() {
 	// Get initial server config
 	serverCfg := s.configProvider.Get().Server
 
-    // TODO why these names
-	s.logger.Info("Server configuration",
-		"Addr", serverCfg.Addr,
-		"ReadTimeout", serverCfg.ReadTimeout,
-		"ReadHeaderTimeout", serverCfg.ReadHeaderTimeout,
-		"WriteTimeout", serverCfg.WriteTimeout,
-		"IdleTimeout", serverCfg.IdleTimeout,
-		"ShutdownGracefulTimeout", serverCfg.ShutdownGracefulTimeout,
-		"EnableTLS", serverCfg.EnableTLS,
-		"CertFile", serverCfg.CertFile,
-		"KeyFile", serverCfg.KeyFile,
-	)
+	s.logServerConfig(serverCfg)
 
 	srv := &http.Server{
 		Addr:              serverCfg.Addr,
@@ -170,6 +159,26 @@ func (s *Server) Run() {
 
 	s.logger.Info("All systems stopped gracefully")
 	os.Exit(0)
+}
+
+// logServerConfig logs server configuration in a readable format with important settings first
+func (s *Server) logServerConfig(cfg *config.Server) {
+	s.logger.Info("Server configuration:")
+	s.logger.Info("- Listening address", "Addr", cfg.Addr)
+	s.logger.Info("- TLS enabled", "EnableTLS", cfg.EnableTLS)
+	if cfg.EnableTLS {
+		s.logger.Info("  - Certificate", "CertFile", cfg.CertFile)
+		s.logger.Info("  - Private key", "KeyFile", cfg.KeyFile)
+	}
+	s.logger.Info("- Timeouts:",
+		"Read", cfg.ReadTimeout,
+		"ReadHeader", cfg.ReadHeaderTimeout,
+		"Write", cfg.WriteTimeout,
+		"Idle", cfg.IdleTimeout)
+	s.logger.Info("- Shutdown grace period", "Timeout", cfg.ShutdownGracefulTimeout)
+	if cfg.ClientIpProxyHeader != "" {
+		s.logger.Info("- Trusting proxy header", "Header", cfg.ClientIpProxyHeader)
+	}
 }
 
 // createTLSConfig returns a *tls.Config with secure defaults
