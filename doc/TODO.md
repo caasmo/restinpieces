@@ -13,6 +13,7 @@
     - account ACME user. HOw to change password? what happens if lost.
     - build without https support? ACME dependencies  
 	- get set in db
+	- Test your setup with tools like ssllabs.com or testssl.sh
 - assests log 
 - app, server dicotomy
 - config reload

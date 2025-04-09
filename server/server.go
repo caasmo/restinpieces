@@ -193,26 +193,8 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 // createTLSConfig returns a *tls.Config with secure defaults
 func createTLSConfig() *tls.Config {
 	return &tls.Config{
-		// Force TLS 1.2 as minimum version (1.3 is preferred)
-		MinVersion: tls.VersionTLS12,
-		
-		// Modern cipher suites prioritizing PFS and AEAD
-		CipherSuites: []uint16{
-			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-		},
-		
-		// Prefer server's cipher suite preference
-		PreferServerCipherSuites: true,
-		
-		// Enable HTTP/2 support
-		NextProtos: []string{"h2", "http/1.1"},
-		
-		// Use only modern elliptic curves
+		MinVersion: tls.VersionTLS13, // Enforce TLS 1.3
+		NextProtos: []string{"h2", "http/1.1"}, // Keep HTTP/2 support
 		CurvePreferences: []tls.CurveID{
 			tls.X25519,
 			tls.CurveP256,
