@@ -80,16 +80,13 @@ func (s *Server) Run() {
 		IdleTimeout:       serverCfg.IdleTimeout,
 	}
 
-	if serverCfg.EnableTLS {
-		srv.TLSConfig = createTLSConfig()
-	}
-
 	// Start HTTP server
 	serverError := make(chan error, 1)
 	go func() {
 		// Use the Addr from the initial config used to create the server
 		var err error
 		if serverCfg.EnableTLS {
+		    srv.TLSConfig = createTLSConfig()
             s.logger.Info("Starting server", "protocol", "HTTPS", "addr", serverCfg.Addr)
 			err = srv.ListenAndServeTLS(serverCfg.CertFile, serverCfg.KeyFile)
 		} else {
