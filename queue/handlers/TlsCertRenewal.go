@@ -113,15 +113,20 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 		// Use the renamed environment variable constant
 		err := fmt.Errorf("ACME account private key is missing. Set %s environment variable", config.EnvAcmeLetsencryptPrivateKey)
 		h.logger.Error(err.Error())
+		// Use the renamed environment variable constant
+		err := fmt.Errorf("ACME account private key is missing. Set %s environment variable", config.EnvAcmeLetsencryptPrivateKey)
+		h.logger.Error(err.Error())
 		return err // Configuration error
 	}
 
-	acmePrivateKey, keyType, err := parseAcmePrivateKeyAndGetType(acmePrivateKeyPEM, h.logger)
+	// Parse the PEM encoded key. We enforce ECDSA P-256.
+	acmePrivateKey, err := certcrypto.ParsePEMPrivateKey([]byte(acmePrivateKeyPEM))
 	if err != nil {
-		// Error already logged by parseAcmePrivateKeyAndGetType
-		return err // Return the wrapped error
+		h.logger.Error("Failed to parse ACME account private key. Ensure it is a valid ECDSA P-256 key in PEM format.", "env_var", config.EnvAcmeLetsencryptPrivateKey, "error", err)
+		return fmt.Errorf("failed to parse ACME account private key (expecting ECDSA P-256 PEM): %w", err)
 	}
-	h.logger.Debug("Successfully parsed ACME private key and determined type", "key_type", keyType)
+	// We don't need to check the type here anymore, but Lego might internally.
+	// The KeyType in the config below tells Lego what *certificate* key type to request.
 
 	acmeUser := AcmeUser{
 		Email:      cfg.Acme.Email,
@@ -130,8 +135,8 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 	}
 
 	legoConfig := lego.NewConfig(&acmeUser)
-	legoConfig.CADirURL = cfg.Acme.CADirectoryURL // Use configured directory (staging/prod)
-	legoConfig.Certificate.KeyType = keyType      // Use the type determined from the loaded key
+	legoConfig.CADirURL = cfg.Acme.CADirectoryURL      // Use configured directory (staging/prod)
+	legoConfig.Certificate.KeyType = certcrypto.EC256 // Enforce ECDSA P-256 for the *certificate* key type as well
 
 	legoClient, err := lego.NewClient(legoConfig)
 	if err != nil {
@@ -346,46 +351,4 @@ func (h *TLSCertRenewalHandler) certificateNeedsRenewal(certPath string, renewal
 	return false, nil
 }
 
-// parseAcmePrivateKeyAndGetType parses the PEM encoded private key string,
-// determines its type for Lego, and returns the crypto.PrivateKey and certcrypto.KeyType.
-func parseAcmePrivateKeyAndGetType(privateKeyPEM string, logger *slog.Logger) (crypto.PrivateKey, certcrypto.KeyType, error) {
-	acmePrivateKey, err := certcrypto.ParsePEMPrivateKey([]byte(privateKeyPEM))
-	if err != nil {
-		// Use the renamed environment variable constant in the error message context
-		logger.Error("Failed to parse ACME account private key from environment variable", "env_var", config.EnvAcmeLetsencryptPrivateKey, "error", err)
-		return nil, "", fmt.Errorf("failed to parse ACME account private key: %w", err)
-	}
-
-	var keyType certcrypto.KeyType
-	switch pk := acmePrivateKey.(type) {
-	case *rsa.PrivateKey:
-		switch pk.N.BitLen() {
-		case 2048:
-			keyType = certcrypto.RSA2048
-		case 3072:
-			keyType = certcrypto.RSA3072
-		case 4096:
-			keyType = certcrypto.RSA4096
-		default:
-			logger.Warn("Using default RSA2048 key type for unknown RSA key size", "bits", pk.N.BitLen())
-			keyType = certcrypto.RSA2048 // Default assumption
-		}
-	case *ecdsa.PrivateKey:
-		switch pk.Curve.Params().Name {
-		case "P-256":
-			keyType = certcrypto.EC256
-		case "P-384":
-			keyType = certcrypto.EC384
-		default:
-			err := fmt.Errorf("unsupported ECDSA curve: %s", pk.Curve.Params().Name)
-			logger.Error(err.Error())
-			return nil, "", err
-		}
-	default:
-		err := fmt.Errorf("unsupported ACME private key type: %T", acmePrivateKey)
-		logger.Error(err.Error())
-		return nil, "", err
-	}
-
-	return acmePrivateKey, keyType, nil
-}
+// Removed parseAcmePrivateKeyAndGetType function as we now enforce ECDSA P-256

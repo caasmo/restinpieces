@@ -75,7 +75,8 @@ PublicDir = "static/dist"
   CADirectoryURL = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
   # CloudflareApiToken: Set via ACME_CLOUDFLARE_API_TOKEN environment variable. DO NOT STORE HERE.
-  # AcmePrivateKey: Set via ACME_LETSENCRYPT_PRIVATE_KEY environment variable. DO NOT STORE HERE.
+  # AcmePrivateKey: Set via ACME_LETSENCRYPT_PRIVATE_KEY environment variable. MUST be an ECDSA P-256 key. DO NOT STORE HERE.
+  # Generate key: openssl ecparam -name prime256v1 -genkey -noout -outform PEM
 
 
 # --- Background Job Scheduler Settings ---

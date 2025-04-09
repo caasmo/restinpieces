@@ -257,9 +257,10 @@ type Acme struct {
     // environment variable. Losing it means you'll need to start the ACME
     // registration process over with a new key. Generating a new key
     // frequently will likely break the renewal process due to rate limiting.
-    // 
-    // ex: openssl genpkey -algorithm RSA -outform PEM -pkeyopt rsa_keygen_bits:2048
-	AcmePrivateKey        string        `toml:"-"` // ACME account private key PEM (loaded from env)
+    //
+    // MUST be an ECDSA P-256 private key in PEM format.
+    // Generate using: openssl ecparam -name prime256v1 -genkey -noout -outform PEM
+	AcmePrivateKey        string        `toml:"-"` // ACME account private key PEM (ECDSA P-256, loaded from env)
 }
 
 // BlockIp holds configuration specific to IP blocking.
