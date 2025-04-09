@@ -15,13 +15,13 @@ func (d *Db) Get() (*db.AcmeCert, error) {
 	var cert db.AcmeCert
 
 	err := sqlitex.Exec(conn,
-		`SELECT private_key, certificate
+		`SELECT private_key, certificate_chain
 		FROM acme_certificates 
 		ORDER BY created_at DESC 
 		LIMIT 1;`,
 		func(stmt *sqlite.Stmt) error {
 			cert.Key = []byte(stmt.GetText("private_key"))
-			cert.Certificate = []byte(stmt.GetText("certificate"))
+			cert.Certificate = []byte(stmt.GetText("certificate_chain"))
 			return nil
 		})
 
