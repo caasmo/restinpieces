@@ -107,10 +107,11 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 	// --- Configure Lego ---
 	h.logger.Info("Starting ACME certificate renewal process", "domains", cfg.Acme.Domains)
 
-	// --- Load and Parse ACME Private Key ---
+	// --- Load and Parse ACME Account Private Key ---
 	acmePrivateKeyPEM := cfg.Acme.AcmePrivateKey
 	if acmePrivateKeyPEM == "" {
-		err := fmt.Errorf("ACME private key is missing. Set %s environment variable", config.EnvAcmePrivateKey)
+		// Use the renamed environment variable constant
+		err := fmt.Errorf("ACME account private key is missing. Set %s environment variable", config.EnvAcmeLetsencryptPrivateKey)
 		h.logger.Error(err.Error())
 		return err // Configuration error
 	}
@@ -350,8 +351,9 @@ func (h *TLSCertRenewalHandler) certificateNeedsRenewal(certPath string, renewal
 func parseAcmePrivateKeyAndGetType(privateKeyPEM string, logger *slog.Logger) (crypto.PrivateKey, certcrypto.KeyType, error) {
 	acmePrivateKey, err := certcrypto.ParsePEMPrivateKey([]byte(privateKeyPEM))
 	if err != nil {
-		logger.Error("Failed to parse ACME private key from environment variable", "env_var", config.EnvAcmePrivateKey, "error", err)
-		return nil, "", fmt.Errorf("failed to parse ACME private key: %w", err)
+		// Use the renamed environment variable constant in the error message context
+		logger.Error("Failed to parse ACME account private key from environment variable", "env_var", config.EnvAcmeLetsencryptPrivateKey, "error", err)
+		return nil, "", fmt.Errorf("failed to parse ACME account private key: %w", err)
 	}
 
 	var keyType certcrypto.KeyType
