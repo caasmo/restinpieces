@@ -170,7 +170,6 @@ func (s *Server) Run() {
 
 // logServerConfig logs server configuration with consistent "Server:" prefix
 func (s *Server) logServerConfig(cfg *config.Server) {
-	
 	protocol := "HTTP"
 	if cfg.EnableTLS {
 		protocol = "HTTPS"
@@ -180,8 +179,17 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 	s.logger.Info("Server:", "protocol", protocol)
 	
 	if cfg.EnableTLS {
-		s.logger.Info("Server:", "certFile", cfg.CertFile)
-		s.logger.Info("Server:", "keyFile", cfg.KeyFile)
+		if len(cfg.CertData) > 0 && len(cfg.KeyData) > 0 {
+			s.logger.Info("Server:", "tls_source", "in-memory_data",
+				"cert_data_length", len(cfg.CertData),
+				"key_data_length", len(cfg.KeyData))
+		} else if cfg.CertFile != "" && cfg.KeyFile != "" {
+			s.logger.Info("Server:", "tls_source", "files",
+				"cert_file", cfg.CertFile,
+				"key_file", cfg.KeyFile)
+		} else {
+			s.logger.Warn("Server:", "tls_source", "none_configured")
+		}
 	}
 	
 	s.logger.Info("Server:",
