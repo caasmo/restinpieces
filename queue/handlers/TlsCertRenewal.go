@@ -3,6 +3,8 @@ package handlers
 import (
 	"context"
 	"crypto" // Add standard crypto import
+	"crypto/ecdsa"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -118,13 +120,54 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 		return fmt.Errorf("failed to parse ACME private key: %w", err)
 	}
 
-	// Determine the key type for Lego config
-	keyType := certcrypto.GetKeyType(acmePrivateKey)
-	if keyType == "" {
-		// This should ideally not happen if ParsePEMPrivateKey succeeded
-		h.logger.Error("Could not determine ACME private key type")
-		return fmt.Errorf("could not determine ACME private key type")
+	// Determine the key type for Lego config by inspecting the parsed key
+	var keyType certcrypto.KeyType
+	switch pk := acmePrivateKey.(type) {
+	case *rsa.PrivateKey:
+		// Determine RSA key size, lego might need specific types like RSA2048, RSA4096 etc.
+		// For simplicity, let's assume common types or check bits.
+		// Lego's constants are like certcrypto.RSA2048, certcrypto.RSA4096 etc.
+		// We might need to adjust this based on exact lego requirements if it distinguishes sizes beyond just "RSA".
+		// Let's default to RSA2048 for now if size check is complex, or use a generic RSA if available.
+		// Checking lego source/docs: It seems KeyType is used to *request* a type,
+		// but when providing an existing key, it mainly cares about the key itself.
+		// Let's try setting a common RSA type. The most common is RSA2048.
+		// If the key is different, lego might handle it or error later.
+		// A safer bet might be to check the bit size, but let's start simple.
+		// Re-checking lego usage: The KeyType in config is primarily for *generating* a new key for the *certificate*,
+		// not necessarily describing the ACME account key type precisely, although they should be compatible.
+		// Let's stick to setting it based on the account key.
+		switch pk.N.BitLen() {
+		case 2048:
+			keyType = certcrypto.RSA2048
+		case 3072:
+			keyType = certcrypto.RSA3072
+		case 4096:
+			keyType = certcrypto.RSA4096
+		default:
+			// Fallback or error if needed, though lego might just use the key regardless of this setting.
+			h.logger.Warn("Using default RSA2048 key type for unknown RSA key size", "bits", pk.N.BitLen())
+			keyType = certcrypto.RSA2048 // Default assumption
+		}
+	case *ecdsa.PrivateKey:
+		// Determine ECDSA curve
+		switch pk.Curve.Params().Name {
+		case "P-256":
+			keyType = certcrypto.EC256
+		case "P-384":
+			keyType = certcrypto.EC384
+		// Add other curves if necessary (e.g., P-521)
+		default:
+			err := fmt.Errorf("unsupported ECDSA curve: %s", pk.Curve.Params().Name)
+			h.logger.Error(err.Error())
+			return err
+		}
+	default:
+		err := fmt.Errorf("unsupported ACME private key type: %T", acmePrivateKey)
+		h.logger.Error(err.Error())
+		return err
 	}
+	h.logger.Debug("Determined ACME private key type for Lego config", "key_type", keyType)
 
 
 	acmeUser := AcmeUser{
