@@ -163,15 +163,14 @@ func (s *Server) Run() {
 
 // logServerConfig logs server configuration with consistent "Server:" prefix
 func (s *Server) logServerConfig(cfg *config.Server) {
-	s.logger.Info("Server: configuration loaded")
 	
 	protocol := "HTTP"
 	if cfg.EnableTLS {
 		protocol = "HTTPS"
 	}
 	
-	s.logger.Info("Server:", "protocol", protocol)
 	s.logger.Info("Server:", "address", cfg.Addr)
+	s.logger.Info("Server:", "protocol", protocol)
 	
 	if cfg.EnableTLS {
 		s.logger.Info("Server:", "certFile", cfg.CertFile)
