@@ -233,7 +233,7 @@ type Config struct {
 	PublicDir       string // Directory to serve static files from
 	Endpoints       Endpoints
 	Proxy           Proxy
-	Source          string // [READONLY] Tracks config source - "file:<path>" or "db" (set internally, not loaded from config)
+	Source          string `toml:"-"` // [READONLY] Tracks config source - "file:<path>" or "db" (set internally, not loaded from config)
 }
 
 // BlockIp holds configuration specific to IP blocking.
