@@ -7,6 +7,7 @@ import (
 	"github.com/caasmo/restinpieces/queue/scheduler"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
+	"crypto/tls"
 	"net/http"
 	"os"
 	"os/signal"
@@ -70,7 +71,6 @@ func (s *Server) Run() {
 		"key_file", serverCfg.KeyFile,
 	)
 
-    // TODO addr 443
 	srv := &http.Server{
 		Addr:              serverCfg.Addr,
 		Handler:           s.proxy,
@@ -78,6 +78,10 @@ func (s *Server) Run() {
 		ReadHeaderTimeout: serverCfg.ReadHeaderTimeout,
 		WriteTimeout:      serverCfg.WriteTimeout,
 		IdleTimeout:       serverCfg.IdleTimeout,
+	}
+
+	if serverCfg.EnableTLS {
+		srv.TLSConfig = createTLSConfig()
 	}
 
 	// Start HTTP server
@@ -169,5 +173,38 @@ func (s *Server) Run() {
 
 	s.logger.Info("All systems stopped gracefully")
 	os.Exit(0)
+}
 
+// createTLSConfig returns a *tls.Config with secure defaults
+func createTLSConfig() *tls.Config {
+	return &tls.Config{
+		// Force TLS 1.2 as minimum version (1.3 is preferred)
+		MinVersion: tls.VersionTLS12,
+		
+		// Modern cipher suites prioritizing PFS and AEAD
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		},
+		
+		// Prefer server's cipher suite preference
+		PreferServerCipherSuites: true,
+		
+		// Enable HTTP/2 support
+		NextProtos: []string{"h2", "http/1.1"},
+		
+		// Enable OCSP stapling
+		OCSPStapling: true,
+		
+		// Use only modern elliptic curves
+		CurvePreferences: []tls.CurveID{
+			tls.X25519,
+			tls.CurveP256,
+			tls.CurveP384,
+		},
+	}
 }
