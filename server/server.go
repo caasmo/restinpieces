@@ -199,43 +199,33 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 
 // createTLSConfig returns a *tls.Config with secure defaults and certificate data
 func createTLSConfig(cfg *config.Server) (*tls.Config, error) {
-	// Prefer direct certificate data if available
+	var cert tls.Certificate
+	var err error
+
+	// Decide which certificate source to use
 	if len(cfg.CertData) > 0 && len(cfg.KeyData) > 0 {
-		cert, err := tls.X509KeyPair(cfg.CertData, cfg.KeyData)
+		cert, err = tls.X509KeyPair(cfg.CertData, cfg.KeyData)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load TLS key pair from config data: %w", err)
 		}
-
-		return &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			MinVersion:   tls.VersionTLS13, // Enforce TLS 1.3
-			NextProtos:   []string{"h2", "http/1.1"}, // Keep HTTP/2 support
-			CurvePreferences: []tls.CurveID{
-				tls.X25519,
-				tls.CurveP256,
-				tls.CurveP384,
-			},
-		}, nil
-	}
-
-	// Fall back to files if no direct data
-	if cfg.CertFile != "" && cfg.KeyFile != "" {
-		cert, err := tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)
+	} else if cfg.CertFile != "" && cfg.KeyFile != "" {
+		cert, err = tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load TLS key pair from files: %w", err)
 		}
-
-		return &tls.Config{
-			Certificates: []tls.Certificate{cert},
-			MinVersion:   tls.VersionTLS13,
-			NextProtos:   []string{"h2", "http/1.1"},
-			CurvePreferences: []tls.CurveID{
-				tls.X25519,
-				tls.CurveP256,
-				tls.CurveP384,
-			},
-		}, nil
+	} else {
+		return nil, fmt.Errorf("no valid TLS certificate configuration found")
 	}
 
-	return nil, fmt.Errorf("no valid TLS certificate configuration found")
+	// Create and return the TLS config with the loaded certificate
+	return &tls.Config{
+		Certificates: []tls.Certificate{cert},
+		MinVersion:   tls.VersionTLS13, // Enforce TLS 1.3
+		NextProtos:   []string{"h2", "http/1.1"}, // Keep HTTP/2 support
+		CurvePreferences: []tls.CurveID{
+			tls.X25519,
+			tls.CurveP256,
+			tls.CurveP384,
+		},
+	}, nil
 }
