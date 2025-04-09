@@ -220,6 +220,7 @@ func LoadOAuth2(cfg *Config, logger *slog.Logger) error {
 
 		googleCfg.ClientID, sourceID, errID = LoadEnvSecret(EnvGoogleClientID, googleCfg.ClientID)
 		googleCfg.ClientSecret, sourceSecret, errSecret = LoadEnvSecret(EnvGoogleClientSecret, googleCfg.ClientSecret)
+        // TODO path is in conf
 		googleCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
 
 		if errID != nil || errSecret != nil {

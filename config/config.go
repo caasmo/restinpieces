@@ -122,29 +122,49 @@ type Server struct {
 
 }
 
-// BaseURL returns the full base URL including scheme and port
-// Uses https in production (when not localhost)
-// If Addr cannot be parsed, returns Addr as-is
+// BaseURL returns the full base URL including scheme and port.
+// It determines the scheme based on the EnableTLS setting.
+// If Addr cannot be parsed, returns Addr as-is.
 func (s *Server) BaseURL() string {
-	// Split host:port
 	host, port, err := net.SplitHostPort(s.Addr)
+	// TODO overkill  
 	if err != nil {
-		return s.Addr
+		// Handle cases like just ":8080" or even just "example.com" (no port)
+		// net.SplitHostPort might fail if only host or only port is given in certain ways.
+		// If Addr itself seems like a valid base (e.g., "http://example.com"), return it.
+		if strings.Contains(s.Addr, "://") {
+			return s.Addr
+		}
+		// If it failed but looks like just a host or just a port, log or handle differently?
+		// For now, fallback to returning Addr might be misleading. Let's try a bit harder.
+		// If Addr is just a port like ":8080", assume localhost.
+		if strings.HasPrefix(s.Addr, ":") {
+			host = "localhost"
+			port = strings.TrimPrefix(s.Addr, ":")
+		} else {
+			// Maybe it's just a hostname? Assume default ports? Risky.
+			// Returning Addr might be the least bad option if parsing fails unexpectedly.
+			// Consider logging a warning here in a real app.
+			fmt.Printf("Warning: Could not parse Server.Addr '%s' in BaseURL, returning as is\n", s.Addr)
+			return s.Addr
+		}
 	}
 
-	// Default to localhost if no host specified
+	// Default to localhost if no host specified (e.g., Addr = ":8080")
 	if host == "" {
 		host = "localhost"
 	}
 
-	// Determine scheme
-	scheme := "https"
-	if host == "localhost" {
-		scheme = "http"
+	// Determine scheme based on TLS configuration
+	scheme := "http"
+	if s.EnableTLS {
+		scheme = "https"
 	}
 
-	// Include port in URL
-	return fmt.Sprintf("%s://%s:%s", scheme, host, port)
+	// Reconstruct the address part, ensuring host and port are present
+	addrPart := net.JoinHostPort(host, port) // Handles IPv6 brackets etc.
+
+	return fmt.Sprintf("%s://%s", scheme, addrPart)
 }
 
 type RateLimits struct {
