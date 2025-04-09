@@ -55,6 +55,7 @@ const (
 	JobTypeEmailVerification = "job_type_email_verification"
 	JobTypePasswordReset     = "job_type_password_reset"
 	JobTypeEmailChange       = "job_type_email_change"
+	JobTypeTLSCertRenewal    = "job_type_tls_cert_renewal"
 )
 
 // Job statuses

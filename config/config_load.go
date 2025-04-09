@@ -20,6 +20,7 @@ const (
 	EnvJwtVerificationEmailSecret = "JWT_VERIFICATION_EMAIL_SECRET"
 	EnvJwtPasswordResetSecret     = "JWT_PASSWORD_RESET_SECRET"
 	EnvJwtEmailChangeSecret       = "JWT_EMAIL_CHANGE_SECRET"
+	EnvAcmeCloudflareApiToken     = "ACME_CLOUDFLARE_API_TOKEN"
 )
 
 // LoadFromToml loads configuration from a TOML file at the given path.
@@ -94,6 +95,32 @@ func loadSecrets(cfg *Config, logger *slog.Logger) error {
 	if err := LoadOAuth2(cfg, logger); err != nil {
 		return err
 	}
+
+	if err := LoadAcme(cfg, logger); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
+// LoadAcme loads ACME provider secrets (like Cloudflare API token)
+func LoadAcme(cfg *Config, logger *slog.Logger) error {
+	// Only load secrets if ACME is enabled and the provider requires them
+	if !cfg.Acme.Enabled || cfg.Acme.DNSPovider != "cloudflare" {
+		logger.Debug("Skipping ACME secret loading (disabled or provider != cloudflare)")
+		return nil
+	}
+
+	var err error
+	var source string
+
+	cfg.Acme.CloudflareApiToken, source, err = LoadEnvSecret(EnvAcmeCloudflareApiToken, "") // Token MUST come from env
+	if err != nil {
+		logger.Error("failed to load ACME Cloudflare API token", "env_var", EnvAcmeCloudflareApiToken, "error", err)
+		return fmt.Errorf("failed to load ACME Cloudflare API token: %w", err)
+	}
+	logger.Debug("Load Envar:", "envvar", EnvAcmeCloudflareApiToken, "source", source)
 
 	return nil
 }

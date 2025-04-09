@@ -233,7 +233,19 @@ type Config struct {
 	PublicDir       string // Directory to serve static files from
 	Endpoints       Endpoints
 	Proxy           Proxy
+	Acme            Acme   // ACME/Let's Encrypt settings
 	Source          string `toml:"-"` // [READONLY] Tracks config source - "file:<path>" or "db" (set internally, not loaded from config)
+}
+
+// Acme holds configuration for ACME (Let's Encrypt) certificate management.
+type Acme struct {
+	Enabled               bool          // Set to true to enable automatic certificate management
+	Email                 string        // Email address for ACME account registration and notifications
+	Domains               []string      // List of domains to include in the certificate
+	DNSPovider            string        // DNS provider name (e.g., "cloudflare")
+	RenewalDaysBeforeExpiry int           // Renew certificate if it expires within this many days
+	CloudflareApiToken    string        `toml:"-"` // Cloudflare API Token (loaded from env)
+	CADirectoryURL        string        // ACME directory URL (e.g., Let's Encrypt staging or production)
 }
 
 // BlockIp holds configuration specific to IP blocking.
