@@ -246,6 +246,19 @@ type Acme struct {
 	RenewalDaysBeforeExpiry int           // Renew certificate if it expires within this many days
 	CloudflareApiToken    string        `toml:"-"` // Cloudflare API Token (loaded from env)
 	CADirectoryURL        string        // ACME directory URL (e.g., Let's Encrypt staging or production)
+
+    // AcmePrivateKey is Primary: The private key is the fundamental identifier of the
+    // Acme account. The email is just contact information associated with it. You
+    // can even have multiple ACME accounts (each with its own unique private
+    // key) registered under the same email address.
+    //
+    // Treat the acmePrivateKey as a vital, long-lived secret. Generate it
+    // once, back it up securely, and provide it to your application via the
+    // environment variable. Losing it means you'll need to start the ACME
+    // registration process over with a new key. Generating a new key
+    // frequently will likely break the renewal process due to rate limiting.
+    // 
+    // ex: openssl genpkey -algorithm RSA -outform PEM -pkeyopt rsa_keygen_bits:2048
 	AcmePrivateKey        string        `toml:"-"` // ACME account private key PEM (loaded from env)
 }
 
