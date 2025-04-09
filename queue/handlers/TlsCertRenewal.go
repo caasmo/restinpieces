@@ -142,6 +142,11 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 		return fmt.Errorf("failed to create Cloudflare provider: %w", err)
 	}
 
+	// Configure the lego client to use the Cloudflare provider for DNS-01 challenges.
+	// This call is NON-BLOCKING and performs NO network communication.
+	// It simply registers the provider internally within the lego client instance.
+	// The provider's methods (`Present` and `CleanUp`) will be called later during the `Obtain` process.
+	// The timeout option configures how long the provider should wait for DNS propagation during `Present`.
 	err = legoClient.Challenge.SetDNS01Provider(cfProvider, dns01.AddDNSTimeout(10*time.Minute)) // Increase timeout
 	if err != nil {
 		h.logger.Error("Failed to set DNS01 provider", "error", err)
@@ -149,8 +154,14 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 	}
 
 	// --- Obtain Certificate ---
-	// Register the account if it doesn't exist
-	// Note: Lego handles checking if registration is needed based on the user provided.
+	// Register the ACME account with the CA (e.g., Let's Encrypt).
+	// This call IS BLOCKING and involves network communication.
+	// Steps:
+	// 1. Sends a signed request to the ACME server's newAccount endpoint using the user's private key.
+	// 2. Includes the user's email and agreement to Terms of Service.
+	// 3. ACME server creates/retrieves the account linked to the key and responds with account details.
+	// 4. Lego populates the user's Registration field with the response.
+	// Note: Lego typically handles checking if an account already exists for the key.
 	if acmeUser.Registration == nil {
 		reg, err := legoClient.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
 		if err != nil {
@@ -168,6 +179,21 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 		Bundle:  true, // Get the full chain
 	}
 
+	// Obtain the certificate from the ACME server.
+	// This call IS BLOCKING and involves significant network communication and potential waiting.
+	// Steps:
+	// 1. Create Order: Request a new certificate order from the ACME server for the domains.
+	// 2. Receive Challenges: Get challenge details (DNS-01 in this case) from the server.
+	// 3. Trigger Challenge Setup: Call `Present` on the registered DNS provider (Cloudflare).
+	//    - Provider uses API to create the TXT record.
+	//    - Provider waits (blocks) for DNS propagation (respecting timeout).
+	// 4. Notify ACME Server: Tell the server to verify the challenge.
+	// 5. ACME Server Verification: Server performs DNS lookups to check the TXT record.
+	// 6. Poll Order Status: Lego polls (blocks/waits) the ACME server until the order is ready or failed.
+	// 7. Finalize Order: Generate a CSR and send it to the ACME server.
+	// 8. Download Certificate: Download the issued certificate chain.
+	// 9. Trigger Challenge Cleanup: Call `CleanUp` on the DNS provider to delete the TXT record.
+	// 10. Return Result: Return the certificate and its corresponding private key.
 	resource, err := legoClient.Certificate.Obtain(request)
 	if err != nil {
 		h.logger.Error("Failed to obtain ACME certificate", "domains", request.Domains, "error", err)
