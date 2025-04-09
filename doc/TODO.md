@@ -25,6 +25,7 @@
 	- unit test
 	- workflow for recovery, 
 	- basic framework use
+- if tls, handle automatic redirection to https
 - configuration
     sqlite based
 - config reload? nee
