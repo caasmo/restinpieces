@@ -5,6 +5,10 @@
     - handler test
     - refactor multiple lego dns provider
     - context for timneout in the handler
+    - are resource file []byte save in new table.
+    - make new table tls_cert
+    - initail cert, lego?
+    - account ACME user. HOw to change password? what happens if lost.
 - app, server dicotomy
 - config reload
 - proxy, app clear wiring
