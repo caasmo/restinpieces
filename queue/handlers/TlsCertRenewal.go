@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"crypto" // Add standard crypto import
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -34,9 +35,6 @@ func NewTLSCertRenewalHandler(provider *config.Provider, logger *slog.Logger) *T
 		logger:         logger.With("job_handler", "tls_cert_renewal"), // Add context to logger
 	}
 }
-
-// AcmeUser implements lego's registration.User interface
-import "crypto" // Add standard crypto import
 
 // AcmeUser implements lego's registration.User interface
 type AcmeUser struct {
