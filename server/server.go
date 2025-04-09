@@ -82,15 +82,12 @@ func (s *Server) Run() {
 	serverError := make(chan error, 1)
 	go func() {
 		// Use the Addr from the initial config used to create the server
-		protocol := "HTTP"
-		if serverCfg.EnableTLS {
-			protocol = "HTTPS"
-		}
-		s.logger.Info("Starting server", "protocol", protocol, "addr", serverCfg.Addr)
 		var err error
 		if serverCfg.EnableTLS {
+            s.logger.Info("Starting server", "protocol", "HTTPS", "addr", serverCfg.Addr)
 			err = srv.ListenAndServeTLS(serverCfg.CertFile, serverCfg.KeyFile)
 		} else {
+            s.logger.Info("Starting server", "protocol", "HTTP", "addr", serverCfg.Addr)
 			err = srv.ListenAndServe()
 		}
 		if err != http.ErrServerClosed {
