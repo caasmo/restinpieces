@@ -114,6 +114,12 @@ type Server struct {
 	// when behind a proxy (e.g. "X-Forwarded-For", "X-Real-IP"). Empty means use
 	// the direct connection IP (r.RemoteAddr).
 	ClientIpProxyHeader string
+
+    // --- New TLS Fields ---
+    EnableTLS       bool   // Default to false if not present
+    CertFile        string // Path to TLS certificate file
+    KeyFile         string // Path to TLS private key file
+
 }
 
 // BaseURL returns the full base URL including scheme and port
@@ -227,7 +233,7 @@ type Config struct {
 	PublicDir       string // Directory to serve static files from
 	Endpoints       Endpoints
 	Proxy           Proxy
-	Source          string // Path to config file or DB file that loaded the config
+	Source          string // Path to toml config file or empty for db 
 }
 
 // BlockIp holds configuration specific to IP blocking.

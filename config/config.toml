@@ -40,7 +40,6 @@ PublicDir = "static/dist"
   [Proxy.BlockIp]
     # Enable or disable automatic IP blocking based on request frequency.
     Enabled = true
-    # Future settings like block duration, thresholds, etc., would go here.
 
 
 # --- Background Job Scheduler Settings ---

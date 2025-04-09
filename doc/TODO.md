@@ -2,6 +2,7 @@
 
 
 - config reload
+- config fields omit, toml 
 - app, server dicotomy
 - proxy, app clear wiring
     - proxy design is overkill, 
@@ -9,7 +10,6 @@
         - just initailiza alwya the sketch
         - check conf to use or not
 - is a framework, clear workflow  -> examples repo. od use of the features
-- modernc?
 - default zombiezen 
 - cache alternative syncMap, no garbage collection, noOP
 - good enough release
@@ -148,17 +148,20 @@
 - document design in doc. why all decision.
 - frontend integration with fs embed 
 - integrate 3 party middleware
-- add prometheus.
-- s3 integration
 - proper error handling from sqlitex, timeouts.
 - document performance read/write 
 - rand source in app. performacen rand
 - make command line to copy files and perform changes in the codes based on preferences. maybe using generate
 - More backends: badger and boldb
+- modernc?
 - the command (maybe based on configuration) creates dir, copy only needed packages and inserts custom code pa
 - minify html, 5% space. if we already have gzip
     - https://github.com/tdewolff/minify?tab=readme-ov-file#html 
     - https://github.com/privatenumber/minification-benchmarks?tab=readme-ov-file#%EF%B8%8F-minifier-showdown
+
+### Maybe
+- add prometheus.
+- s3 integration
 
 ### done
 
