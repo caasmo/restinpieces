@@ -51,6 +51,32 @@ PublicDir = "static/dist"
     Enabled = true
 
 
+# --- ACME / Let's Encrypt Settings ---
+[Acme]
+  # Enable automatic TLS certificate management using ACME (e.g., Let's Encrypt).
+  # Requires Server.EnableTLS = true and Server.CertFile/KeyFile to be set.
+  Enabled = false
+
+  # Email address for ACME account registration and important notifications (e.g., expiry warnings).
+  Email = "your-email@example.com"
+
+  # List of domain names to include in the certificate. The first domain is the primary common name (CN).
+  Domains = ["yourdomain.com", "www.yourdomain.com"]
+
+  # DNS provider used for the DNS-01 challenge. Currently, only "cloudflare" is supported by the handler.
+  DNSPovider = "cloudflare" # e.g., "cloudflare"
+
+  # Renew the certificate if it expires within this many days. Let's Encrypt recommends 30 days.
+  RenewalDaysBeforeExpiry = 30
+
+  # ACME directory URL. Use Let's Encrypt staging for testing, production for live certs.
+  # Staging: "https://acme-staging-v02.api.letsencrypt.org/directory"
+  # Production: "https://acme-v02.api.letsencrypt.org/directory"
+  CADirectoryURL = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+  # CloudflareApiToken: Set via ACME_CLOUDFLARE_API_TOKEN environment variable. DO NOT STORE HERE.
+
+
 # --- Background Job Scheduler Settings ---
 [Scheduler]
   # How often the scheduler checks the database for pending jobs.
