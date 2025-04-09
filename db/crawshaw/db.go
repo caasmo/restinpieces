@@ -14,6 +14,7 @@ type Db struct {
 // Verify interface implementations
 var _ db.DbAuth = (*Db)(nil)
 var _ db.DbQueue = (*Db)(nil)
+var _ db.DbAcme = (*Db)(nil)
 
 // var _ db.DbLifecycle = (*Db)(nil) // Removed
 
