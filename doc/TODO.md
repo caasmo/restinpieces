@@ -2,7 +2,7 @@
 
 
 - config reload
-- config fields omit, toml 
+- test tls 
 - app, server dicotomy
 - proxy, app clear wiring
     - proxy design is overkill, 
@@ -11,7 +11,6 @@
         - check conf to use or not
 - is a framework, clear workflow  -> examples repo. od use of the features
 - default zombiezen 
-- cache alternative syncMap, no garbage collection, noOP
 - good enough release
     - litestream or just cron each 5 minutes: see litestream 
     - configuration
@@ -28,8 +27,6 @@
 - if tls, handle automatic redirection to https
 - configuration
     sqlite based
-- config reload? nee
-- workflows
 - APP
 	- app is handler?
 		- is given to the server
@@ -163,9 +160,11 @@
 ### Maybe
 - add prometheus.
 - s3 integration
+- cache alternative syncMap, no garbage collection, noOP
 
 ### done
 
+- config fields omit, toml 
 - decide about configuration
 - add logger
     - no slog.SetDefault(slog.New(myHandler))
