@@ -1,9 +1,12 @@
 ### TODOs
 
 
-- config reload
 - test tls 
+    - handler test
+    - refactor multiple lego dns provider
+    - context for timneout in the handler
 - app, server dicotomy
+- config reload
 - proxy, app clear wiring
     - proxy design is overkill, 
         - move to app
