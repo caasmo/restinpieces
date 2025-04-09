@@ -64,6 +64,9 @@ func (s *Server) Run() {
 		"write_timeout", serverCfg.WriteTimeout,
 		"idle_timeout", serverCfg.IdleTimeout,
 		"shutdown_timeout", serverCfg.ShutdownGracefulTimeout,
+		"enable_tls", serverCfg.EnableTLS,
+		"cert_file", serverCfg.CertFile,
+		"key_file", serverCfg.KeyFile,
 	)
 
 	srv := &http.Server{
@@ -79,8 +82,18 @@ func (s *Server) Run() {
 	serverError := make(chan error, 1)
 	go func() {
 		// Use the Addr from the initial config used to create the server
-		s.logger.Info("Starting HTTP server", "addr", serverCfg.Addr)
-		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		protocol := "HTTP"
+		if serverCfg.EnableTLS {
+			protocol = "HTTPS"
+		}
+		s.logger.Info("Starting server", "protocol", protocol, "addr", serverCfg.Addr)
+		var err error
+		if serverCfg.EnableTLS {
+			err = srv.ListenAndServeTLS(serverCfg.CertFile, serverCfg.KeyFile)
+		} else {
+			err = srv.ListenAndServe()
+		}
+		if err != http.ErrServerClosed {
 			s.logger.Error("ListenAndServe error", "err", err)
 			serverError <- err
 		}
