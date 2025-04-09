@@ -164,8 +164,12 @@ func (s *Server) Run() {
 // logServerConfig logs server configuration in a readable format with important settings first
 func (s *Server) logServerConfig(cfg *config.Server) {
 	s.logger.Info("Server configuration:")
+	protocol := "HTTP"
+	if cfg.EnableTLS {
+		protocol = "HTTPS"
+	}
+	s.logger.Info("- Protocol", "Protocol", protocol)
 	s.logger.Info("- Listening address", "Addr", cfg.Addr)
-	s.logger.Info("- TLS enabled", "EnableTLS", cfg.EnableTLS)
 	if cfg.EnableTLS {
 		s.logger.Info("  - Certificate", "CertFile", cfg.CertFile)
 		s.logger.Info("  - Private key", "KeyFile", cfg.KeyFile)
