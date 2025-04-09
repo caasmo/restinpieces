@@ -64,7 +64,7 @@ PublicDir = "static/dist"
   Domains = ["yourdomain.com", "www.yourdomain.com"]
 
   # DNS provider used for the DNS-01 challenge. Currently, only "cloudflare" is supported by the handler.
-  DNSPovider = "cloudflare" # e.g., "cloudflare"
+  DNSProvider = "cloudflare" # e.g., "cloudflare"
 
   # Renew the certificate if it expires within this many days. Let's Encrypt recommends 30 days.
   RenewalDaysBeforeExpiry = 30

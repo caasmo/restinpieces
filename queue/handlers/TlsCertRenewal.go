@@ -63,8 +63,8 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 		return nil // Not an error, just disabled
 	}
 
-	if cfg.Acme.DNSPovider != "cloudflare" {
-		err := fmt.Errorf("unsupported DNS provider configured: %s. Only 'cloudflare' is supported", cfg.Acme.DNSPovider)
+	if cfg.Acme.DNSProvider != "cloudflare" {
+		err := fmt.Errorf("unsupported DNS provider configured: %s. Only 'cloudflare' is supported", cfg.Acme.DNSProvider)
 		h.logger.Error(err.Error())
 		return err // Configuration error
 	}

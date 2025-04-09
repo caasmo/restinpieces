@@ -242,7 +242,7 @@ type Acme struct {
 	Enabled               bool          // Set to true to enable automatic certificate management
 	Email                 string        // Email address for ACME account registration and notifications
 	Domains               []string      // List of domains to include in the certificate
-	DNSPovider            string        // DNS provider name (e.g., "cloudflare")
+	DNSProvider           string        // DNS provider name (e.g., "cloudflare")
 	RenewalDaysBeforeExpiry int           // Renew certificate if it expires within this many days
 	CloudflareApiToken    string        `toml:"-"` // Cloudflare API Token (loaded from env)
 	CADirectoryURL        string        // ACME directory URL (e.g., Let's Encrypt staging or production)

@@ -107,7 +107,7 @@ func loadSecrets(cfg *Config, logger *slog.Logger) error {
 // LoadAcme loads ACME provider secrets (like Cloudflare API token)
 func LoadAcme(cfg *Config, logger *slog.Logger) error {
 	// Only load secrets if ACME is enabled and the provider requires them
-	if !cfg.Acme.Enabled || cfg.Acme.DNSPovider != "cloudflare" {
+	if !cfg.Acme.Enabled || cfg.Acme.DNSProvider != "cloudflare" {
 		logger.Debug("Skipping ACME secret loading (disabled or provider != cloudflare)")
 		return nil
 	}
