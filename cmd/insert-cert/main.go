@@ -93,19 +93,14 @@ func (ci *CertInserter) InsertCert(keyPath, certPath string) error {
 }
 
 func main() {
-	if len(os.Args) != 3 {
-		slog.Error("usage: insert-cert <key-file> <cert-file>")
+	if len(os.Args) != 4 {
+		slog.Error("usage: insert-cert <key-file> <cert-file> <db-file>")
 		os.Exit(1)
 	}
 
 	keyPath := os.Args[1]
 	certPath := os.Args[2]
-
-	// Use same default DB path as create-app
-	dbPath := "app.db"
-	if envDb := os.Getenv("DB_FILE"); envDb != "" {
-		dbPath = envDb
-	}
+	dbPath := os.Args[3]
 
 	inserter := NewCertInserter(dbPath)
 	if err := inserter.OpenDatabase(); err != nil {
