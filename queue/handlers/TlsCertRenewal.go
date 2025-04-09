@@ -36,10 +36,13 @@ func NewTLSCertRenewalHandler(provider *config.Provider, logger *slog.Logger) *T
 }
 
 // AcmeUser implements lego's registration.User interface
+import "crypto" // Add standard crypto import
+
+// AcmeUser implements lego's registration.User interface
 type AcmeUser struct {
 	Email        string
 	Registration *registration.Resource
-	PrivateKey   certcrypto.PrivateKey // Use certcrypto's type
+	PrivateKey   crypto.PrivateKey // Use standard crypto.PrivateKey interface type
 }
 
 func (u *AcmeUser) GetEmail() string {
@@ -48,7 +51,7 @@ func (u *AcmeUser) GetEmail() string {
 func (u *AcmeUser) GetRegistration() *registration.Resource {
 	return u.Registration
 }
-func (u *AcmeUser) GetPrivateKey() certcrypto.PrivateKey {
+func (u *AcmeUser) GetPrivateKey() crypto.PrivateKey { // Return type matches interface
 	return u.PrivateKey
 }
 
