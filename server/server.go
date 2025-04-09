@@ -60,15 +60,15 @@ func (s *Server) Run() {
 
     // TODO why these names
 	s.logger.Info("Server configuration",
-		"addr", serverCfg.Addr,
-		"read_timeout", serverCfg.ReadTimeout,
-		"read_header_timeout", serverCfg.ReadHeaderTimeout,
-		"write_timeout", serverCfg.WriteTimeout,
-		"idle_timeout", serverCfg.IdleTimeout,
-		"shutdown_timeout", serverCfg.ShutdownGracefulTimeout,
-		"enable_tls", serverCfg.EnableTLS,
-		"cert_file", serverCfg.CertFile,
-		"key_file", serverCfg.KeyFile,
+		"Addr", serverCfg.Addr,
+		"ReadTimeout", serverCfg.ReadTimeout,
+		"ReadHeaderTimeout", serverCfg.ReadHeaderTimeout,
+		"WriteTimeout", serverCfg.WriteTimeout,
+		"IdleTimeout", serverCfg.IdleTimeout,
+		"ShutdownGracefulTimeout", serverCfg.ShutdownGracefulTimeout,
+		"EnableTLS", serverCfg.EnableTLS,
+		"CertFile", serverCfg.CertFile,
+		"KeyFile", serverCfg.KeyFile,
 	)
 
 	srv := &http.Server{
