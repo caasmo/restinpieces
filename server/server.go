@@ -57,6 +57,7 @@ func (s *Server) Run() {
 	// Get initial server config
 	serverCfg := s.configProvider.Get().Server
 
+    // TODO why these names
 	s.logger.Info("Server configuration",
 		"addr", serverCfg.Addr,
 		"read_timeout", serverCfg.ReadTimeout,
