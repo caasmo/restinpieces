@@ -269,6 +269,7 @@ func saveCertificateResource(certFile, keyFile string, resource *certificate.Res
 	return nil
 }
 
+
 // certificateNeedsRenewal checks if the certificate at the given path needs renewal.
 // It returns true if the certificate doesn't exist, fails to parse, or expires within the threshold.
 // It returns an error only for file system read errors (excluding os.IsNotExist).
