@@ -23,15 +23,15 @@ import (
 
 // TLSCertRenewalHandler handles the job for renewing TLS certificates via ACME.
 type TLSCertRenewalHandler struct {
-	app    *App // Access to config, logger, etc.
-	logger *slog.Logger
+	configProvider *config.Provider // Access to config
+	logger         *slog.Logger
 }
 
 // NewTLSCertRenewalHandler creates a new handler instance.
-func NewTLSCertRenewalHandler(app *App) *TLSCertRenewalHandler {
+func NewTLSCertRenewalHandler(provider *config.Provider, logger *slog.Logger) *TLSCertRenewalHandler {
 	return &TLSCertRenewalHandler{
-		app:    app,
-		logger: app.Logger().With("job_handler", "tls_cert_renewal"),
+		configProvider: provider,
+		logger:         logger.With("job_handler", "tls_cert_renewal"), // Add context to logger
 	}
 }
 
@@ -54,7 +54,8 @@ func (u *AcmeUser) GetPrivateKey() certcrypto.PrivateKey {
 
 // Handle executes the certificate renewal logic.
 func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error {
-	cfg := h.app.Config()
+	// Get current config snapshot directly from the provider
+	cfg := h.configProvider.Get()
 
 	if !cfg.Acme.Enabled {
 		h.logger.Info("ACME certificate renewal is disabled in config, skipping job.")

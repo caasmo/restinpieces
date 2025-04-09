@@ -101,5 +101,17 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
 	}
 
+	// Instantiate and register the TLS Cert Renewal Handler if ACME is enabled in config
+	// Note: We check cfg.Acme.Enabled here to avoid unnecessary instantiation if not used.
+	// The handler itself also checks this, but this prevents adding it to the map if globally disabled.
+	if cfg.Acme.Enabled {
+		tlsCertRenewalHandler := handlers.NewTLSCertRenewalHandler(configProvider, logger)
+		hdls[queue.JobTypeTLSCertRenewal] = tlsCertRenewalHandler
+		logger.Info("Registered TLSCertRenewalHandler")
+	} else {
+		logger.Info("ACME is disabled, skipping registration of TLSCertRenewalHandler")
+	}
+
+
 	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
 }
