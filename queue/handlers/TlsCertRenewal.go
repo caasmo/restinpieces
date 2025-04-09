@@ -88,45 +88,18 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 	}
 
 	// --- Check Expiry ---
-	certNeedsRenewal := false
 	certPath := cfg.Server.CertFile
-	keyPath := cfg.Server.KeyFile
+	keyPath := cfg.Server.KeyFile // Keep keyPath definition here for later use
 
-	certPEM, err := os.ReadFile(certPath)
+	needsRenewal, err := h.certificateNeedsRenewal(certPath, cfg.Acme.RenewalDaysBeforeExpiry)
 	if err != nil {
-		if os.IsNotExist(err) {
-			h.logger.Info("Certificate file not found, proceeding with initial issuance.", "path", certPath)
-			certNeedsRenewal = true
-		} else {
-			h.logger.Error("Failed to read existing certificate file", "path", certPath, "error", err)
-			return fmt.Errorf("failed to read certificate file %s: %w", certPath, err)
-		}
-	} else {
-		// Attempt to load to parse expiry
-		block, _ := pem.Decode(certPEM) // Use helper to decode PEM
-		if block == nil {
-			h.logger.Warn("Failed to decode PEM block from certificate file, assuming renewal needed.", "path", certPath)
-			certNeedsRenewal = true
-		} else {
-			cert, err := x509.ParseCertificate(block.Bytes)
-			if err != nil {
-				h.logger.Warn("Failed to parse certificate file, assuming renewal needed.", "path", certPath, "error", err)
-				certNeedsRenewal = true
-			} else {
-				// Check expiry
-				daysLeft := time.Until(cert.NotAfter).Hours() / 24
-				h.logger.Info("Checking certificate expiry", "domain", cert.Subject.CommonName, "expiry", cert.NotAfter, "days_left", int(daysLeft))
-				if daysLeft < float64(cfg.Acme.RenewalDaysBeforeExpiry) {
-					h.logger.Info("Certificate is expiring soon, renewal required.", "days_left", int(daysLeft), "threshold_days", cfg.Acme.RenewalDaysBeforeExpiry)
-					certNeedsRenewal = true
-				} else {
-					h.logger.Info("Certificate is not expiring soon, renewal not required.")
-				}
-			}
-		}
+		// This indicates a file read error other than NotExist
+		h.logger.Error("Failed to check certificate expiry", "path", certPath, "error", err)
+		return err
 	}
 
-	if !certNeedsRenewal {
+	if !needsRenewal {
+		h.logger.Info("Certificate renewal not required.")
 		return nil // Nothing to do
 	}
 
@@ -202,7 +175,7 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 		return fmt.Errorf("failed to obtain ACME certificate: %w", err)
 	}
 
-	h.logger.Info("Successfully obtained ACME certificate", "domains", request.Domains, "expiry", resource.CertURL) // CertURL isn't expiry, but gives some info
+	h.logger.Info("Successfully obtained ACME certificate", "domains", request.Domains, "certificate_url", resource.CertURL)
 
 	// --- Save Files ---
 	if err := saveCertificateResource(certPath, keyPath, resource, h.logger); err != nil {
@@ -238,7 +211,8 @@ func saveCertificateResource(certFile, keyFile string, resource *certificate.Res
 		logger.Error("Failed to create temporary certificate file", "dir", certDir, "error", err)
 		return fmt.Errorf("failed to create temp cert file: %w", err)
 	}
-	// Ensure temp file is cleaned up on error *before* rename
+	// Ensure temp file is cleaned up on error *before* rename.
+	// If Rename succeeds, this defer will run but os.Remove will fail harmlessly as the file no longer exists at the temp path.
 	defer os.Remove(certTmpFile.Name())
 
 	keyTmpFile, err := os.CreateTemp(keyDir, filepath.Base(keyFile)+".tmp-*")
@@ -246,7 +220,8 @@ func saveCertificateResource(certFile, keyFile string, resource *certificate.Res
 		logger.Error("Failed to create temporary key file", "dir", keyDir, "error", err)
 		return fmt.Errorf("failed to create temp key file: %w", err)
 	}
-	// Ensure temp file is cleaned up on error *before* rename
+	// Ensure temp file is cleaned up on error *before* rename.
+	// If Rename succeeds, this defer will run but os.Remove will fail harmlessly as the file no longer exists at the temp path.
 	defer os.Remove(keyTmpFile.Name())
 
 	// Write content
@@ -298,3 +273,46 @@ func saveCertificateResource(certFile, keyFile string, resource *certificate.Res
 // Ensure TLSCertRenewalHandler implements the JobHandler interface.
 // Use the aliased import name 'queue_executor'.
 var _ queue_executor.JobHandler = (*TLSCertRenewalHandler)(nil)
+
+
+// certificateNeedsRenewal checks if the certificate at the given path needs renewal.
+// It returns true if the certificate doesn't exist, fails to parse, or expires within the threshold.
+// It returns an error only for file system read errors (excluding os.IsNotExist).
+func (h *TLSCertRenewalHandler) certificateNeedsRenewal(certPath string, renewalDaysThreshold int) (bool, error) {
+	certPEM, err := os.ReadFile(certPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			h.logger.Info("Certificate file not found, renewal required.", "path", certPath)
+			return true, nil // Needs renewal, not a file system error for the caller
+		}
+		// Other read error (permissions, etc.)
+		return false, fmt.Errorf("failed to read certificate file %s: %w", certPath, err)
+	}
+
+	block, _ := pem.Decode(certPEM)
+	if block == nil {
+		h.logger.Warn("Failed to decode PEM block from certificate file, assuming renewal needed.", "path", certPath)
+		return true, nil // Treat as needing renewal
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		h.logger.Warn("Failed to parse certificate from file, assuming renewal needed.", "path", certPath, "error", err)
+		return true, nil // Treat as needing renewal
+	}
+
+	daysLeft := time.Until(cert.NotAfter).Hours() / 24
+	h.logger.Info("Checking certificate expiry",
+		"path", certPath,
+		"subject", cert.Subject.CommonName,
+		"expiry", cert.NotAfter.Format(time.RFC3339),
+		"days_left", int(daysLeft))
+
+	if daysLeft < float64(renewalDaysThreshold) {
+		h.logger.Info("Certificate is expiring soon, renewal required.", "days_left", int(daysLeft), "threshold_days", renewalDaysThreshold)
+		return true, nil
+	}
+
+	// Certificate exists, is valid, and is not expiring soon.
+	return false, nil
+}
