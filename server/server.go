@@ -161,27 +161,33 @@ func (s *Server) Run() {
 	os.Exit(0)
 }
 
-// logServerConfig logs server configuration in a readable format with important settings first
+// logServerConfig logs server configuration with consistent "Server:" prefix
 func (s *Server) logServerConfig(cfg *config.Server) {
-	s.logger.Info("Server configuration:")
+	s.logger.Info("Server: configuration loaded")
+	
 	protocol := "HTTP"
 	if cfg.EnableTLS {
 		protocol = "HTTPS"
 	}
-	s.logger.Info("- Protocol", "Protocol", protocol)
-	s.logger.Info("- Listening address", "Addr", cfg.Addr)
+	
+	s.logger.Info("Server: protocol", "protocol", protocol)
+	s.logger.Info("Server: listening address", "address", cfg.Addr)
+	
 	if cfg.EnableTLS {
-		s.logger.Info("  - Certificate", "CertFile", cfg.CertFile)
-		s.logger.Info("  - Private key", "KeyFile", cfg.KeyFile)
+		s.logger.Info("Server: TLS certificate", "certFile", cfg.CertFile)
+		s.logger.Info("Server: TLS private key", "keyFile", cfg.KeyFile)
 	}
-	s.logger.Info("- Timeouts:",
-		"Read", cfg.ReadTimeout,
-		"ReadHeader", cfg.ReadHeaderTimeout,
-		"Write", cfg.WriteTimeout,
-		"Idle", cfg.IdleTimeout)
-	s.logger.Info("- Shutdown grace period", "Timeout", cfg.ShutdownGracefulTimeout)
+	
+	s.logger.Info("Server: timeouts",
+		"readTimeout", cfg.ReadTimeout,
+		"readHeaderTimeout", cfg.ReadHeaderTimeout,
+		"writeTimeout", cfg.WriteTimeout,
+		"idleTimeout", cfg.IdleTimeout)
+	
+	s.logger.Info("Server: shutdown grace period", "timeout", cfg.ShutdownGracefulTimeout)
+	
 	if cfg.ClientIpProxyHeader != "" {
-		s.logger.Info("- Trusting proxy header", "Header", cfg.ClientIpProxyHeader)
+		s.logger.Info("Server: trusting proxy header", "header", cfg.ClientIpProxyHeader)
 	}
 }
 
