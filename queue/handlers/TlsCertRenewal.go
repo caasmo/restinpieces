@@ -1,8 +1,7 @@
-package core
+package handlers
 
 import (
 	"context"
-	"crypto/tls"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
