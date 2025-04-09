@@ -22,14 +22,12 @@ func WithCache(c cache.Cache[string, interface{}]) Option {
 func WithDbApp(dbApp db.DbApp) Option {
 	return func(a *App) {
 		if dbApp == nil {
-			// Or panic, depending on desired behavior for nil provider
-			// This helps catch errors early during setup.
 			panic("DbApp cannot be nil")
 		}
 		a.dbAuth = dbApp
 		a.dbQueue = dbApp
 		a.dbConfig = dbApp
-		// a.dbLifecycle = provider // Removed as lifecycle is managed externally
+		// The DbAcme interface is automatically handled since it's part of DbApp
 	}
 }
 
