@@ -2,7 +2,6 @@
 
 
 - bug harcoded callback oauth2, path! 
-- certs in db
 - test tls 
     - handler test
     - refactor multiple lego dns provider
@@ -14,6 +13,11 @@
     - build without https support? ACME dependencies  
 	- get set in db
 	- Test your setup with tools like ssllabs.com or testssl.sh
+- content headers TLS
+- Strict-Transport-Security: Enforces HTTPS, preventing downgrade attacks. Essential for TLS.
+- CSP frame-ancestors directive: Prevents clickjacking. Needs to be added explicitly to your CSP.
+- X-Content-Type-Options: Prevents MIME-sniffing attacks. Simple, robust addition.
+- ETag or Last-Modified: Enables efficient cache validation for performance.
 - assests log 
 - app, server dicotomy
 - config reload
@@ -79,23 +83,6 @@
 - password change test with real smtp  
 - corfirmation, spam sending the same right jwt 
 - endpointsw discovery has no update each time.
-- db interface for custom
-	- should be empty
-	- implmenter can work just with its driver choice
-	- implmenter is provided with empty db interface.
-	- core db interface shoudl not be used by implementer
-- command init, bootsrap command, --clean --config --db 
-    - bootstrap create tables, 
-	- create config and put in sqlite
-	- crete env variable an put in env 
-	- can load sqlfile, do not do much. sqlit3 exists
-- command dump --db --d 
-    - config toml or db. or json
-    - dump-config to toml, maybe json
-    - load-config 
-    - start --config a --db\, minimize the number of flags
-    - command serve or none
-	- no db, we can do it with sqlite, cronjobs. see litestream jobs alternative in litestrem docs
 - assets integrity, bundler 
 - if in db config, how to edit the easiest, toml?
 - propably multidomain
@@ -157,13 +144,9 @@
 - hardening: add headers CORS, etc
 - add toml conf and config struct, add struct to app, router, cache
 - document design in doc. why all decision.
-- frontend integration with fs embed 
-- integrate 3 party middleware
-- proper error handling from sqlitex, timeouts.
 - document performance read/write 
 - rand source in app. performacen rand
 - make command line to copy files and perform changes in the codes based on preferences. maybe using generate
-- More backends: badger and boldb
 - modernc?
 - the command (maybe based on configuration) creates dir, copy only needed packages and inserts custom code pa
 - minify html, 5% space. if we already have gzip
@@ -178,6 +161,7 @@
 ### done
 
 - sdk, if http, call http, if https call https
+- certs in db
 - config fields omit, toml 
 - decide about configuration
 - add logger
