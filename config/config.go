@@ -246,6 +246,7 @@ type Acme struct {
 	RenewalDaysBeforeExpiry int           // Renew certificate if it expires within this many days
 	CloudflareApiToken    string        `toml:"-"` // Cloudflare API Token (loaded from env)
 	CADirectoryURL        string        // ACME directory URL (e.g., Let's Encrypt staging or production)
+	AcmePrivateKey        string        `toml:"-"` // ACME account private key PEM (loaded from env)
 }
 
 // BlockIp holds configuration specific to IP blocking.

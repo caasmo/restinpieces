@@ -105,15 +105,27 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 	// --- Configure Lego ---
 	h.logger.Info("Starting ACME certificate renewal process", "domains", cfg.Acme.Domains)
 
-	// User needs a private key for ACME registration/communication
-	// NOTE: In a real app, this key should be persisted securely, not generated each time.
-	// For simplicity here, we generate it. Lego examples often show loading/saving this key.
-	// Consider storing it alongside the cert/key files or in a secure store.
-	acmePrivateKey, err := certcrypto.GeneratePrivateKey(certcrypto.RSA2048) // Or ECDSA P256/P384
-	if err != nil {
-		h.logger.Error("Failed to generate ACME private key", "error", err)
-		return fmt.Errorf("failed to generate ACME private key: %w", err)
+	// --- Load ACME Private Key from Config (Environment Variable) ---
+	if cfg.Acme.AcmePrivateKey == "" {
+		err := fmt.Errorf("ACME private key is missing. Set %s environment variable", config.EnvAcmePrivateKey)
+		h.logger.Error(err.Error())
+		return err // Configuration error
 	}
+
+	acmePrivateKey, err := certcrypto.ParsePEMPrivateKey([]byte(cfg.Acme.AcmePrivateKey))
+	if err != nil {
+		h.logger.Error("Failed to parse ACME private key from environment variable", "env_var", config.EnvAcmePrivateKey, "error", err)
+		return fmt.Errorf("failed to parse ACME private key: %w", err)
+	}
+
+	// Determine the key type for Lego config
+	keyType := certcrypto.GetKeyType(acmePrivateKey)
+	if keyType == "" {
+		// This should ideally not happen if ParsePEMPrivateKey succeeded
+		h.logger.Error("Could not determine ACME private key type")
+		return fmt.Errorf("could not determine ACME private key type")
+	}
+
 
 	acmeUser := AcmeUser{
 		Email:      cfg.Acme.Email,
@@ -123,7 +135,7 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 
 	legoConfig := lego.NewConfig(&acmeUser)
 	legoConfig.CADirURL = cfg.Acme.CADirectoryURL // Use configured directory (staging/prod)
-	legoConfig.Certificate.KeyType = certcrypto.RSA2048 // Match generated key type
+	legoConfig.Certificate.KeyType = keyType      // Use the type determined from the loaded key
 
 	legoClient, err := lego.NewClient(legoConfig)
 	if err != nil {

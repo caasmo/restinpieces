@@ -21,6 +21,7 @@ const (
 	EnvJwtPasswordResetSecret     = "JWT_PASSWORD_RESET_SECRET"
 	EnvJwtEmailChangeSecret       = "JWT_EMAIL_CHANGE_SECRET"
 	EnvAcmeCloudflareApiToken     = "ACME_CLOUDFLARE_API_TOKEN"
+	EnvAcmePrivateKey             = "ACME_PRIVATE_KEY" // Added for ACME private key
 )
 
 // LoadFromToml loads configuration from a TOML file at the given path.
@@ -121,6 +122,15 @@ func LoadAcme(cfg *Config, logger *slog.Logger) error {
 		return fmt.Errorf("failed to load ACME Cloudflare API token: %w", err)
 	}
 	logger.Debug("Load Envar:", "envvar", EnvAcmeCloudflareApiToken, "source", source)
+
+	// Load ACME Private Key
+	cfg.Acme.AcmePrivateKey, source, err = LoadEnvSecret(EnvAcmePrivateKey, "") // Key MUST come from env
+	if err != nil {
+		logger.Error("failed to load ACME private key", "env_var", EnvAcmePrivateKey, "error", err)
+		return fmt.Errorf("failed to load ACME private key: %w", err)
+	}
+	logger.Debug("Load Envar:", "envvar", EnvAcmePrivateKey, "source", source)
+
 
 	return nil
 }
