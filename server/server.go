@@ -175,16 +175,15 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 		protocol = "HTTPS"
 	}
 	
-	s.logger.Info("Server:", "address", cfg.Addr)
-	s.logger.Info("Server:", "protocol", protocol)
+	s.logger.Info("Server:", "address", cfg.Addr, "protocol", protocol)
 	
 	if cfg.EnableTLS {
 		if len(cfg.CertData) > 0 && len(cfg.KeyData) > 0 {
-			s.logger.Info("Server:", "tls_source", "in-memory_data",
+			s.logger.Info("Server:", "tls_cert_source", "in-memory_data",
 				"cert_data_length", len(cfg.CertData),
 				"key_data_length", len(cfg.KeyData))
 		} else if cfg.CertFile != "" && cfg.KeyFile != "" {
-			s.logger.Info("Server:", "tls_source", "files",
+			s.logger.Info("Server:", "tls_cert_source", "files",
 				"cert_file", cfg.CertFile,
 				"key_file", cfg.KeyFile)
 		} else {
