@@ -197,9 +197,6 @@ func createTLSConfig() *tls.Config {
 		// Enable HTTP/2 support
 		NextProtos: []string{"h2", "http/1.1"},
 		
-		// Enable OCSP stapling
-		OCSPStapling: true,
-		
 		// Use only modern elliptic curves
 		CurvePreferences: []tls.CurveID{
 			tls.X25519,
