@@ -1,7 +1,8 @@
 ### TODOs
 
 
-- bug harcoded callback oauth2 
+- bug harcoded callback oauth2, path! 
+- certs in db
 - test tls 
     - handler test
     - refactor multiple lego dns provider
@@ -10,10 +11,10 @@
     - make new table tls_cert
     - initail cert, lego?
     - account ACME user. HOw to change password? what happens if lost.
-    - build without https support?
+    - build without https support? ACME dependencies  
+	- get set in db
 - assests log 
 - app, server dicotomy
-- sdk, if http, call http, if https call https
 - config reload
 - proxy, app clear wiring
     - proxy design is overkill, 
@@ -175,6 +176,7 @@
 
 ### done
 
+- sdk, if http, call http, if https call https
 - config fields omit, toml 
 - decide about configuration
 - add logger
