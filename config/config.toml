@@ -75,6 +75,7 @@ PublicDir = "static/dist"
   CADirectoryURL = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
   # CloudflareApiToken: Set via ACME_CLOUDFLARE_API_TOKEN environment variable. DO NOT STORE HERE.
+  # AcmePrivateKey: Set via ACME_LETSENCRYPT_PRIVATE_KEY environment variable. DO NOT STORE HERE.
 
 
 # --- Background Job Scheduler Settings ---
@@ -119,17 +120,17 @@ PublicDir = "static/dist"
   # Duration for which email change confirmation tokens are valid.
   EmailChangeTokenDuration = "1h"
 
-  # AuthSecret: Set via JWT_AUTH_SECRET environment variable
-  AuthSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>"
-  
-  # VerificationEmailSecret: Set via JWT_VERIFICATION_EMAIL_SECRET environment variable
-  VerificationEmailSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>"
-  
-  # PasswordResetSecret: Set via JWT_PASSWORD_RESET_SECRET environment variable
-  PasswordResetSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>"
-  
-  # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable
-  EmailChangeSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>"
+  # AuthSecret: Set via JWT_AUTH_SECRET environment variable. DO NOT STORE HERE unless absolutely necessary for local dev.
+  AuthSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+
+  # VerificationEmailSecret: Set via JWT_VERIFICATION_EMAIL_SECRET environment variable. DO NOT STORE HERE.
+  VerificationEmailSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+
+  # PasswordResetSecret: Set via JWT_PASSWORD_RESET_SECRET environment variable. DO NOT STORE HERE.
+  PasswordResetSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+
+  # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable. DO NOT STORE HERE.
+  EmailChangeSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
 
 # --- SMTP Settings for Sending Emails ---
@@ -161,8 +162,9 @@ PublicDir = "static/dist"
   # Use STARTTLS (connects unencrypted, then upgrades to TLS, usually port 587).
   UseStartTLS = true # Example: Gmail requires STARTTLS on port 587
 
-  # Username: SMTP account username. LOAD FROM ENV (e.g., SMTP_USERNAME).
-  # Password: SMTP account password or app-specific password. LOAD FROM ENV (e.g., SMTP_PASSWORD).
+  # Username: SMTP account username. Set via SMTP_USERNAME environment variable. DO NOT STORE HERE.
+  # Password: SMTP account password or app-specific password. Set via SMTP_PASSWORD environment variable. DO NOT STORE HERE.
+  # FromAddress: Set via SMTP_FROM_ADDRESS environment variable. DO NOT STORE HERE.
 
 
 # --- API Endpoint Paths ---
@@ -199,8 +201,8 @@ PublicDir = "static/dist"
     UserInfoURL  = "https://www.googleapis.com/oauth2/v3/userinfo"
     Scopes       = ["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"]
     PKCE         = true
-    # ClientID: Load from environment variable OAUTH2_GOOGLE_CLIENT_ID
-    # ClientSecret: Load from environment variable OAUTH2_GOOGLE_CLIENT_SECRET
+    # ClientID: Set via OAUTH2_GOOGLE_CLIENT_ID environment variable. DO NOT STORE HERE.
+    # ClientSecret: Set via OAUTH2_GOOGLE_CLIENT_SECRET environment variable. DO NOT STORE HERE.
 
   # Example configuration for GitHub OAuth2
   [OAuth2Providers.github]
@@ -214,7 +216,7 @@ PublicDir = "static/dist"
     UserInfoURL  = "https://api.github.com/user"
     Scopes       = ["read:user", "user:email"]
     PKCE         = true
-    # ClientID: Load from environment variable OAUTH2_GITHUB_CLIENT_ID
-    # ClientSecret: Load from environment variable OAUTH2_GITHUB_CLIENT_SECRET
+    # ClientID: Set via OAUTH2_GITHUB_CLIENT_ID environment variable. DO NOT STORE HERE.
+    # ClientSecret: Set via OAUTH2_GITHUB_CLIENT_SECRET environment variable. DO NOT STORE HERE.
 
 # Add other providers (e.g., Facebook, Microsoft) here following the same pattern.
