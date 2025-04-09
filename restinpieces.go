@@ -36,7 +36,7 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 			cfg.Source = configPath
 		}
 	} else {
-		cfg, err = config.LoadFromDb(app.DbConfig(), appLogger)
+		cfg, err = config.LoadFromDb(app.DbConfig(), app.DbAcme(), appLogger)
 		if err == nil { // Only set source on success
 			cfg.Source = "" // empty for db
 		}

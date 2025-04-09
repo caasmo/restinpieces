@@ -47,7 +47,7 @@ func LoadFromToml(path string, logger *slog.Logger) (*Config, error) {
 
 // LoadFromDb loads configuration from the database using the provided DbConfig.
 // Falls back to embedded defaults if no config exists in database.
-func LoadFromDb(db db.DbConfig, logger *slog.Logger) (*Config, error) {
+func LoadFromDb(db db.DbConfig, dbAcme db.DbAcme, logger *slog.Logger) (*Config, error) {
 	logger.Info("loading configuration from database")
 
 	// Get config TOML from database
@@ -69,6 +69,14 @@ func LoadFromDb(db db.DbConfig, logger *slog.Logger) (*Config, error) {
 		return nil, fmt.Errorf("config: failed to decode: %w", err)
 	}
 
+	// Load certificates if TLS is enabled
+	if cfg.Server.EnableTLS {
+		if err := loadCerts(cfg, dbAcme, logger); err != nil {
+			logger.Error("failed to load TLS certificates", "error", err)
+			return nil, fmt.Errorf("failed to load TLS certificates: %w", err)
+		}
+	}
+
 	// Load secrets after initial config load
 	if err := loadSecrets(cfg, logger); err != nil {
 		// Error already logged within loadSecrets
@@ -77,6 +85,21 @@ func LoadFromDb(db db.DbConfig, logger *slog.Logger) (*Config, error) {
 
 	logger.Info("successfully loaded configuration from database")
 	return cfg, nil
+}
+
+// loadCerts loads TLS certificates from the database into the config
+func loadCerts(cfg *Config, dbAcme db.DbAcme, logger *slog.Logger) error {
+	cert, err := dbAcme.Get()
+	if err != nil {
+		return fmt.Errorf("failed to get ACME certificate: %w", err)
+	}
+
+	// Store the certificate data directly in the config
+	cfg.Server.CertData = cert.Certificate
+	cfg.Server.KeyData = cert.Key
+
+	logger.Info("successfully loaded TLS certificates from database")
+	return nil
 }
 
 // loadSecrets handles loading all secrets from environment variables
