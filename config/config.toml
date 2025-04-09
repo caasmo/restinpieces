@@ -33,6 +33,15 @@ PublicDir = "static/dist"
   # Common values: "X-Forwarded-For", "X-Real-IP". Leave empty if not behind a proxy.
   ClientIpProxyHeader = ""
 
+  # Enable HTTPS/TLS for secure connections
+  EnableTLS = false
+
+  # Path to TLS certificate file (PEM format)
+  CertFile = ""
+
+  # Path to TLS private key file (PEM format)
+  KeyFile = ""
+
 
 # --- Proxy Layer Settings ---
 [Proxy]
