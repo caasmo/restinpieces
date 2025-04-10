@@ -20,9 +20,8 @@ import (
 )
 
 type AppCreator struct {
-	dbfile string
 	logger *slog.Logger
-	pool   *sqlitex.Pool
+	conn   *sqlite.Conn
 }
 
 func (ac *AppCreator) generateEnvFile() ([]byte, error) {
@@ -86,29 +85,17 @@ func (ac *AppCreator) CreateDatabase(dbPath string) error {
 		return os.ErrExist
 	}
 
-	pool, err := sqlitex.NewPool(dbPath, sqlitex.PoolOptions{
-		Flags:    sqlite.OpenReadWrite | sqlite.OpenCreate,
-		PoolSize: runtime.NumCPU(),
-	})
+	conn, err := sqlite.OpenConn(dbPath, sqlite.OpenReadWrite|sqlite.OpenCreate)
 	if err != nil {
-		ac.logger.Error("failed to create database pool", "error", err)
+		ac.logger.Error("failed to open database", "error", err)
 		return err
 	}
-	ac.pool = pool
+	ac.conn = conn
 	return nil
 }
 
 func (ac *AppCreator) RunMigrations() error {
-	conn, err := ac.pool.Take(context.Background())
-	if err != nil {
-		return err
-	}
-	defer ac.pool.Put(conn)
-
-	// Get embedded schema filesystem
 	schemaFS := migrations.Schema()
-
-	// Read migration files from embedded FS
 	migrations, err := fs.ReadDir(schemaFS, ".")
 	if err != nil {
 		ac.logger.Error("failed to read embedded migrations", "error", err)
@@ -129,7 +116,7 @@ func (ac *AppCreator) RunMigrations() error {
 		}
 
 		ac.logger.Info("applying migration", "file", migration.Name())
-		if err := sqlitex.ExecuteScript(conn, string(sql), &sqlitex.ExecOptions{
+		if err := sqlitex.ExecuteScript(ac.conn, string(sql), &sqlitex.ExecOptions{
 			Args: nil,
 		}); err != nil {
 			ac.logger.Error("failed to execute migration",
@@ -142,13 +129,8 @@ func (ac *AppCreator) RunMigrations() error {
 }
 
 func (ac *AppCreator) InsertConfig() error {
-	conn, err := ac.pool.Take(context.Background())
-	if err != nil {
-		return err
-	}
-	defer ac.pool.Put(conn)
 	ac.logger.Info("inserting default configuration")
-	err = sqlitex.Execute(conn,
+	err := sqlitex.Execute(ac.conn,
 		`INSERT INTO app_config (content, format, description)
 		VALUES (?, ?, ?)`,
 		&sqlitex.ExecOptions{
@@ -198,10 +180,9 @@ func main() {
 	}
 
 	creator := NewAppCreator()
-	var poolClosed bool
 	defer func() {
-		if creator.pool != nil && !poolClosed {
-			creator.pool.Close()
+		if creator.conn != nil {
+			creator.conn.Close()
 		}
 	}()
 
@@ -218,7 +199,6 @@ func main() {
 			if err := creator.CreateDatabase(dbFile); err != nil {
 				os.Exit(1)
 			}
-			poolClosed = true
 
 			if err := creator.RunMigrations(); err != nil {
 				os.Exit(1)
