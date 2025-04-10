@@ -251,8 +251,8 @@ PublicDir = "static/dist"
     UserInfoURL  = "https://www.googleapis.com/oauth2/v3/userinfo"
     Scopes       = ["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"]
     PKCE         = true
-    # ClientID: Set via OAUTH2_GOOGLE_CLIENT_ID environment variable. DO NOT STORE HERE.
-    # ClientSecret: Set via OAUTH2_GOOGLE_CLIENT_SECRET environment variable. DO NOT STORE HERE.
+    ClientID = "" #Set via OAUTH2_GOOGLE_CLIENT_ID environment variable. DO NOT STORE HERE.
+    ClientSecret= "" #Set via OAUTH2_GOOGLE_CLIENT_SECRET environment variable. DO NOT STORE HERE.
 
   # Example configuration for GitHub OAuth2
   [OAuth2Providers.github]
@@ -266,7 +266,7 @@ PublicDir = "static/dist"
     UserInfoURL  = "https://api.github.com/user"
     Scopes       = ["read:user", "user:email"]
     PKCE         = true
-    # ClientID: Set via OAUTH2_GITHUB_CLIENT_ID environment variable. DO NOT STORE HERE.
-    # ClientSecret: Set via OAUTH2_GITHUB_CLIENT_SECRET environment variable. DO NOT STORE HERE.
+    ClientID= "" # Set via OAUTH2_GITHUB_CLIENT_ID environment variable. DO NOT STORE HERE.
+    ClientSecret= "" # Set via OAUTH2_GITHUB_CLIENT_SECRET environment variable. DO NOT STORE HERE.
 
 # Add other providers (e.g., Facebook, Microsoft) here following the same pattern.
