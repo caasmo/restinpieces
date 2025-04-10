@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"flag"
 	"time"
 
 	"github.com/caasmo/restinpieces/config" // Adjust import path if needed
@@ -46,6 +47,7 @@ func main() {
 		"ACME Key Set", cfg.Acme.AcmePrivateKey != "",           // Check if key is present
 	)
 
+		os.Exit(1)
 	// --- Handler Instantiation ---
 	cfgProvider := config.NewProvider(cfg)
 	renewalHandler := handlers.NewTLSCertRenewalHandler(cfgProvider, logger)
