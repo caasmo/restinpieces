@@ -112,13 +112,7 @@ func (d *Db) Save(cert db.AcmeCert) error {
 		})
 
 	if err != nil {
-		// Check for unique constraint violation specifically
-		// Note: Zombiezen might return a different error structure/message than crawshaw
-		if sqlite.ErrCode(err) == sqlite.CONSTRAINT_UNIQUE || strings.Contains(err.Error(), "UNIQUE constraint failed") {
-			// This specific error shouldn't happen with ON CONFLICT...DO UPDATE,
-			// but checking just in case or for other potential constraints.
-			return fmt.Errorf("acme save failed: %w: %w", db.ErrConstraintUnique, err)
-		}
+		// General error handling for save operation
 		return fmt.Errorf("acme: failed to save certificate for identifier %s: %w", cert.Identifier, err)
 	}
 
