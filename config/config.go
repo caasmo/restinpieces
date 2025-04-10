@@ -70,17 +70,15 @@ type Config struct {
 	Acme            Acme   // ACME/Let's Encrypt settings
 }
 
-type OAuth2Provider struct {
-	Name         string
-	ClientID     string
-	ClientSecret string
-	DisplayName  string
-	RedirectURL  string
-	AuthURL      string
-	TokenURL     string
-	UserInfoURL  string
-	Scopes       []string
-	PKCE         bool
+type Jwt struct {
+	AuthSecret                     string
+	AuthTokenDuration              time.Duration
+	VerificationEmailSecret        string
+	VerificationEmailTokenDuration time.Duration
+	PasswordResetSecret            string
+	PasswordResetTokenDuration     time.Duration
+	EmailChangeSecret              string
+	EmailChangeTokenDuration       time.Duration
 }
 
 type Scheduler struct {
@@ -195,15 +193,18 @@ type RateLimits struct {
 	EmailChangeCooldown time.Duration
 }
 
-type Jwt struct {
-	AuthSecret                     string
-	AuthTokenDuration              time.Duration
-	VerificationEmailSecret        string
-	VerificationEmailTokenDuration time.Duration
-	PasswordResetSecret            string
-	PasswordResetTokenDuration     time.Duration
-	EmailChangeSecret              string
-	EmailChangeTokenDuration       time.Duration
+
+type OAuth2Provider struct {
+	Name         string
+	ClientID     string
+	ClientSecret string
+	DisplayName  string
+	RedirectURL  string
+	AuthURL      string
+	TokenURL     string
+	UserInfoURL  string
+	Scopes       []string
+	PKCE         bool
 }
 
 type Smtp struct {
