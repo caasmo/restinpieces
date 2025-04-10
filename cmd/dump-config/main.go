@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"os"
 	"runtime"
@@ -71,13 +72,18 @@ func (cd *ConfigDumper) DumpLatestConfig() (string, error) {
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		slog.Error("usage: dump-config <db-file>")
+	var outputFile string
+	flag.StringVar(&outputFile, "output", "", "output TOML file path")
+	flag.StringVar(&outputFile, "o", "", "output TOML file path (shorthand)")
+	flag.Parse()
+
+	args := flag.Args()
+	if len(args) != 1 {
+		slog.Error("usage: dump-config [-o|--output <file>] <db-file>")
 		os.Exit(1)
 	}
 
-	dbPath := os.Args[1]
-
+	dbPath := args[0]
 	dumper := NewConfigDumper(dbPath)
 	if err := dumper.OpenDatabase(); err != nil {
 		os.Exit(1)
@@ -89,9 +95,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Write config to stdout
-	if _, err := os.Stdout.Write([]byte(configContent)); err != nil {
-		dumper.logger.Error("failed to write config", "error", err)
-		os.Exit(1)
+	// Write to file if output specified, otherwise stdout
+	if outputFile != "" {
+		err := os.WriteFile(outputFile, []byte(configContent), 0644)
+		if err != nil {
+			dumper.logger.Error("failed to write config file", 
+				"path", outputFile,
+				"error", err)
+			os.Exit(1)
+		}
+		dumper.logger.Info("config written to file", "path", outputFile)
+	} else {
+		if _, err := os.Stdout.Write([]byte(configContent)); err != nil {
+			dumper.logger.Error("failed to write config", "error", err)
+			os.Exit(1)
+		}
 	}
 }
