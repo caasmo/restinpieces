@@ -8,7 +8,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"log/slog"
-	"os"
+	// "os" // No longer needed as we check CertData directly
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
@@ -83,20 +83,12 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 		return err // Configuration error
 	}
 
-	if cfg.Server.CertFile == "" || cfg.Server.KeyFile == "" {
-		err := fmt.Errorf("server CertFile or KeyFile path not configured")
-		h.logger.Error(err.Error())
-		return err // Configuration error
-	}
-
 	// --- Check Expiry ---
-	certPath := cfg.Server.CertFile
-	//keyPath := cfg.Server.KeyFile // Keep keyPath definition here for later use
-
-	needsRenewal, err := h.certificateNeedsRenewal(certPath, cfg.Acme.RenewalDaysBeforeExpiry)
+	// Check expiry using CertData directly from config
+	needsRenewal, err := h.certificateNeedsRenewal(cfg.Server.CertData, cfg.Acme.RenewalDaysBeforeExpiry)
 	if err != nil {
-		// This indicates a file read error other than NotExist
-		h.logger.Error("Failed to check certificate expiry", "path", certPath, "error", err)
+		// This indicates a parsing error or other logic error within certificateNeedsRenewal
+		h.logger.Error("Failed to check certificate expiry using CertData", "error", err)
 		return err
 	}
 
@@ -279,35 +271,35 @@ func (h *TLSCertRenewalHandler) saveCertificateResource(resource *certificate.Re
 	return nil
 }
 
-// certificateNeedsRenewal checks if the certificate at the given path needs renewal.
-// It returns true if the certificate doesn't exist, fails to parse, or expires within the threshold.
-// It returns an error only for file system read errors (excluding os.IsNotExist).
-func (h *TLSCertRenewalHandler) certificateNeedsRenewal(certPath string, renewalDaysThreshold int) (bool, error) {
-	certPEM, err := os.ReadFile(certPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			h.logger.Info("Certificate file not found, renewal required.", "path", certPath)
-			return true, nil // Needs renewal, not a file system error for the caller
-		}
-		// Other read error (permissions, etc.)
-		return false, fmt.Errorf("failed to read certificate file %s: %w", certPath, err)
+// certificateNeedsRenewal checks if the certificate PEM data needs renewal.
+// It returns true if the certificate data is empty, fails to parse, or expires within the threshold.
+// It returns an error only for parsing errors.
+func (h *TLSCertRenewalHandler) certificateNeedsRenewal(certPEMData string, renewalDaysThreshold int) (bool, error) {
+	if certPEMData == "" {
+		h.logger.Info("Certificate data is empty in config, renewal required.")
+		return true, nil // Needs renewal
 	}
 
-	block, _ := pem.Decode(certPEM)
+	block, _ := pem.Decode([]byte(certPEMData))
 	if block == nil {
-		h.logger.Warn("Failed to decode PEM block from certificate file, assuming renewal needed.", "path", certPath)
+		h.logger.Warn("Failed to decode PEM block from certificate data in config, assuming renewal needed.")
+		// Return an error here? Or just assume renewal? Let's assume renewal for now.
+		// Consider returning an error if strict validation is needed:
+		// return false, fmt.Errorf("failed to decode PEM block from certificate data")
 		return true, nil // Treat as needing renewal
 	}
 
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		h.logger.Warn("Failed to parse certificate from file, assuming renewal needed.", "path", certPath, "error", err)
+		h.logger.Warn("Failed to parse certificate from config data, assuming renewal needed.", "error", err)
+		// Return an error here? Or just assume renewal? Let's assume renewal for now.
+		// Consider returning an error if strict validation is needed:
+		// return false, fmt.Errorf("failed to parse certificate from config data: %w", err)
 		return true, nil // Treat as needing renewal
 	}
 
 	daysLeft := time.Until(cert.NotAfter).Hours() / 24
-	h.logger.Info("Checking certificate expiry",
-		"path", certPath,
+	h.logger.Info("Checking certificate expiry from config data",
 		"subject", cert.Subject.CommonName,
 		"expiry", cert.NotAfter.Format(time.RFC3339),
 		"days_left", int(daysLeft))
