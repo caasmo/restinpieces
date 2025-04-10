@@ -8,6 +8,33 @@ DBFile = "bench.db"
 PublicDir = "static/dist"
 
 
+# --- JWT Settings ---
+[Jwt]
+  # Duration for which standard authentication tokens are valid.
+  AuthTokenDuration = "45m"
+
+  # Duration for which email verification tokens are valid.
+  VerificationEmailTokenDuration = "24h"
+
+  # Duration for which password reset tokens are valid.
+  PasswordResetTokenDuration = "1h"
+
+  # Duration for which email change confirmation tokens are valid.
+  EmailChangeTokenDuration = "1h"
+
+
+# --- Scheduler Settings ---
+[Scheduler]
+  # How often the scheduler checks the database for pending jobs.
+  Interval = "60s"
+
+  # Maximum number of jobs fetched from the database in each interval.
+  MaxJobsPerTick = 10
+
+  # Number of concurrent job processing workers per available CPU core.
+  ConcurrencyMultiplier = 2
+
+
 # --- Server Settings ---
 [Server]
   # Network address and port the HTTP server listens on.
@@ -168,8 +195,19 @@ PublicDir = "static/dist"
   # FromAddress: Set via SMTP_FROM_ADDRESS environment variable. DO NOT STORE HERE.
 
 
+# --- Rate Limiting Settings ---
+[RateLimits]
+  # Minimum time a user must wait between requesting password resets for the same account.
+  PasswordResetCooldown = "2h"
+
+  # Minimum time a user must wait between requesting email verifications for the same email.
+  EmailVerificationCooldown = "1h"
+
+  # Minimum time a user must wait between requesting email address changes.
+  EmailChangeCooldown = "1h"
+
+
 # --- API Endpoint Paths ---
-# Defines the HTTP method and path for core API actions.
 [Endpoints]
   RefreshAuth              = "POST /api/refresh-auth"
   RequestEmailVerification = "POST /api/request-email-verification"
