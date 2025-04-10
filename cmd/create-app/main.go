@@ -2,14 +2,12 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io/fs"
 	"flag"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"runtime"
 	"text/template"
 
 	"github.com/caasmo/restinpieces/config"
