@@ -7,7 +7,6 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/proxy"
-	"github.com/caasmo/restinpieces/custom"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
@@ -54,8 +53,7 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	px := proxy.NewProxy(app)
 
 	// Setup custom application logic and routes
-	cApp := custom.NewApp(app)
-	route(cfg, app, cApp) // Assuming route function exists and is correctly defined elsewhere
+	route(cfg, app) // Assuming route function exists and is correctly defined elsewhere
 
 	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.Logger())
 	if err != nil {

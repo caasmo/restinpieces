@@ -4,33 +4,9 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	r "github.com/caasmo/restinpieces/router"
-	//"io/fs"
-	//"net/http"
-
-	// custom handlers and middleware
-	"github.com/caasmo/restinpieces/custom"
 )
 
-func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
-	// Serve static files from configured public directory
-	//fs := http.FileServer(http.Dir(cfg.PublicDir))
-	//ap.Router().Handle("/", fs)
-	//ap.Router().Handle("/assets/", http.StripPrefix("/assets/", fs))
-
-	// --- file server ---
-	//subFS, err := fs.Sub(EmbeddedAssets, cfg.PublicDir)
-	//if err != nil {
-	//	// TODO
-	//	panic("failed to create sub filesystem: " + err.Error())
-	//}
-
-	//ffs := http.FileServerFS(subFS)
-	//ap.Router().Register(
-	//	r.NewRoute("/").WithHandler(ffs).WithMiddleware(
-	//		core.StaticHeadersMiddleware,
-	//		core.GzipMiddleware(subFS),
-	//	),
-	//)
+func route(cfg *config.Config, ap *core.App) {
 
 	// --- api core routes  ---
 	ap.Router().Register(
@@ -50,12 +26,6 @@ func route(cfg *config.Config, ap *core.App, cAp *custom.App) {
 		r.NewRoute(cfg.Endpoints.ConfirmPasswordReset).WithHandlerFunc(ap.ConfirmPasswordResetHandler),
 		r.NewRoute(cfg.Endpoints.RequestEmailChange).WithHandlerFunc(ap.RequestEmailChangeHandler),
 		r.NewRoute(cfg.Endpoints.ConfirmEmailChange).WithHandlerFunc(ap.ConfirmEmailChangeHandler),
-
-		// --- custom routes  ---
-
-		r.NewRoute("GET /custom").WithHandlerFunc(cAp.Index),
-		// Test route for IP blocking functionality
-		//r.NewRoute("GET /blocktest").WithHandlerFunc(cAp.Index).WithMiddleware(ap.BlockMiddleware()),
 	)
 
 	//ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
