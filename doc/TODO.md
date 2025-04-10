@@ -1,7 +1,7 @@
 ### TODOs
 
 
-
+- INSERT INTO acme_certificates VALUES(1,'default','[]',replace('-----BEGIN CERTIFICATE-----\nMII
 - key data cerdata string, notthe same mistake
 - server config missing keydata, certdata
     - keydata means dump memory contains  TODO

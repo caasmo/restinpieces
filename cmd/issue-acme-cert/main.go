@@ -31,7 +31,7 @@ func main() {
 	var dbPath string
 	// var forceIssue bool // Removed force flag
 	flag.StringVar(&configPath, "config", "config.toml", "path to config TOML file")
-	flag.StringVar(&dbPath, "dbfile", "restinpieces.db", "path to SQLite database file")
+	flag.StringVar(&dbPath, "dbfile", "app.db", "path to SQLite database file")
 	// flag.BoolVar(&forceIssue, "force", false, "force certificate issuance even if valid cert exists") // Removed force flag
 	flag.Parse()
 
