@@ -210,6 +210,7 @@ type OAuth2Provider struct {
 }
 
 type Smtp struct {
+	Enabled     bool   // Whether SMTP functionality is enabled
 	Host        string
 	Port        int
 	Username    string
