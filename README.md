@@ -1,3 +1,4 @@
+![sloc](https://sloc.xyz/github/revelaction/mankidown)
 # REST in pieces
 
 A one-file golang server using sqlite, with focus on simplicity, performance and avoiding 3-party packages as much as possible.
