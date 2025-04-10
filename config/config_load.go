@@ -217,31 +217,31 @@ func LoadSmtp(cfg *Config, logger *slog.Logger) error {
 	var err error 
 	var source string
 
+	// Require username when SMTP is enabled
 	cfg.Smtp.Username, source, err = LoadEnvSecret(EnvSmtpUsername, cfg.Smtp.Username)
 	if err != nil {
-		logger.Warn("SMTP username not configured", "env_var", EnvSmtpUsername, "error", err)
-	} else {
-		logger.Debug("Loaded SMTP username", "source", source)
+		logger.Error("SMTP username required when SMTP is enabled", "env_var", EnvSmtpUsername, "error", err)
+		return fmt.Errorf("SMTP username required when SMTP is enabled: %w", err)
 	}
+	logger.Debug("Loaded SMTP username", "source", source)
 
+	// Require password when SMTP is enabled
 	cfg.Smtp.Password, source, err = LoadEnvSecret(EnvSmtpPassword, cfg.Smtp.Password)
 	if err != nil {
-		logger.Warn("SMTP password not configured", "env_var", EnvSmtpPassword, "error", err)
-	} else {
-		logger.Debug("Loaded SMTP password", "source", source)
+		logger.Error("SMTP password required when SMTP is enabled", "env_var", EnvSmtpPassword, "error", err)
+		return fmt.Errorf("SMTP password required when SMTP is enabled: %w", err)
 	}
+	logger.Debug("Loaded SMTP password", "source", source)
 
-	// Validate required fields if SMTP is enabled
-	if cfg.Smtp.Enabled {
-		if cfg.Smtp.Host == "" {
-			logger.Warn("SMTP host not configured but SMTP is enabled")
-		}
-		if cfg.Smtp.Port == 0 {
-			logger.Warn("SMTP port not configured but SMTP is enabled")
-		}
-		if cfg.Smtp.FromAddress == "" {
-			logger.Warn("SMTP from address not configured but SMTP is enabled")
-		}
+	// Validate other required fields
+	if cfg.Smtp.Host == "" {
+		logger.Warn("SMTP host not configured but SMTP is enabled")
+	}
+	if cfg.Smtp.Port == 0 {
+		logger.Warn("SMTP port not configured but SMTP is enabled")
+	}
+	if cfg.Smtp.FromAddress == "" {
+		logger.Warn("SMTP from address not configured but SMTP is enabled")
 	}
 
 	return nil
