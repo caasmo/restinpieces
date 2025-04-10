@@ -2,6 +2,7 @@
 
 
 
+- key data cerdata string, notthe same mistake
 - server config missing keydata, certdata
     - keydata means dump memory contains  TODO
         - get from files is exist.
