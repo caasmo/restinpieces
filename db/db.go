@@ -32,13 +32,6 @@ type DbConfig interface {
 	GetConfig() (string, error)
 }
 
-// DbApp is an interface combining the required DB roles for the application.
-// The concrete DB implementation (e.g., *crawshaw.Db or *zombiezen.Db) must satisfy this interface.
-type AcmeCert struct {
-	Key         []byte // Private key data
-	Certificate []byte // Certificate data
-}
-
 type DbAcme interface {
 	// Get retrieves the current ACME certificate
 	Get() (*AcmeCert, error)
