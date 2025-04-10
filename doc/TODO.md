@@ -1,6 +1,7 @@
 ### TODOs
 
 
+- server config missing keydata, certdata
 - if no smtp credentials, warn
 - bug harcoded callback oauth2, path! 
 - config db file used?
