@@ -17,8 +17,8 @@ import (
 //go:embed config.toml.example
 var TomlExample []byte
 
-//go:embed .env.example
-var EnvExample []byte
+//go:embed .env.tmpl.example
+var EnvTemplate []byte
 
 // Provider holds the application configuration and allows for atomic updates.
 type Provider struct {

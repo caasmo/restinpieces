@@ -21,25 +21,50 @@ type AppCreator struct {
 	pool   *sqlitex.Pool
 }
 
+func (ac *AppCreator) generateEnvFile() ([]byte, error) {
+	tmpl, err := template.New("env").Parse(string(config.EnvTemplate))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse env template: %w", err)
+	}
+
+	vars := struct {
+		JWTAuthSecret          string
+		JWTVerificationSecret  string
+		JWTPasswordResetSecret string
+		JWTEmailChangeSecret   string
+	}{
+		JWTAuthSecret:          crypto.RandomString(32, crypto.AlphanumericAlphabet),
+		JWTVerificationSecret:  crypto.RandomString(32, crypto.AlphanumericAlphabet),
+		JWTPasswordResetSecret: crypto.RandomString(32, crypto.AlphanumericAlphabet),
+		JWTEmailChangeSecret:   crypto.RandomString(32, crypto.AlphanumericAlphabet),
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, vars); err != nil {
+		return nil, fmt.Errorf("failed to execute env template: %w", err)
+	}
+
+	return buf.Bytes(), nil
+}
+
 func (ac *AppCreator) CreateEnvFile() error {
 	if _, err := os.Stat(".env"); err == nil {
 		ac.logger.Error(".env file already exists - remove it first if you want to recreate it")
 		return os.ErrExist
 	}
 
-	// Generate secure random values for all JWT secrets
-	envContent := string(config.EnvExample)
-	envContent += "\n# --- Auto-generated JWT Secrets ---\n"
-	envContent += "JWT_AUTH_SECRET=" + crypto.RandomString(32, crypto.AlphanumericAlphabet) + "\n"
-	envContent += "JWT_VERIFICATION_EMAIL_SECRET=" + crypto.RandomString(32, crypto.AlphanumericAlphabet) + "\n"
-	envContent += "JWT_PASSWORD_RESET_SECRET=" + crypto.RandomString(32, crypto.AlphanumericAlphabet) + "\n"
-	envContent += "JWT_EMAIL_CHANGE_SECRET=" + crypto.RandomString(32, crypto.AlphanumericAlphabet) + "\n"
+	envContent, err := ac.generateEnvFile()
+	if err != nil {
+		ac.logger.Error("failed to generate env file content", "error", err)
+		return err
+	}
 
-	if err := os.WriteFile(".env", []byte(envContent), 0644); err != nil {
+	if err := os.WriteFile(".env", envContent, 0644); err != nil {
 		ac.logger.Error("failed to create .env file", "error", err)
 		return err
 	}
-	ac.logger.Info("created .env file with auto-generated JWT secrets")
+
+	ac.logger.Info("created .env file from template with auto-generated secrets")
 	return nil
 }
 
