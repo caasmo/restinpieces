@@ -58,7 +58,7 @@ func main() {
 	defer cancel()
 
 	// Create a dummy job (payload is not used by your current handler)
-	dummyJob := queue.Job{ID: "local-test-run-1"}
+	dummyJob := queue.Job{ID: 1}
 
 	logger.Info("Executing Handle method...")
 	err = renewalHandler.Handle(ctx, dummyJob)

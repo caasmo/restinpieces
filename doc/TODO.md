@@ -1,6 +1,7 @@
 ### TODOs
 
 
+- if no smtp credentials, warn
 - bug harcoded callback oauth2, path! 
 - config db file used?
 - test tls 

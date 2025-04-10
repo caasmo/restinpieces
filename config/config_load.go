@@ -139,7 +139,7 @@ func LoadAcme(cfg *Config, logger *slog.Logger) error {
 	var err error
 	var source string
 
-	cfg.Acme.CloudflareApiToken, source, err = LoadEnvSecret(EnvAcmeCloudflareApiToken, "") // Token MUST come from env
+	cfg.Acme.CloudflareApiToken, source, err = LoadEnvSecret(EnvAcmeCloudflareApiToken, cfg.Acme.CloudflareApiToken) // Token MUST come from env
 	if err != nil {
 		logger.Error("failed to load ACME Cloudflare API token", "env_var", EnvAcmeCloudflareApiToken, "error", err)
 		return fmt.Errorf("failed to load ACME Cloudflare API token: %w", err)
@@ -147,7 +147,7 @@ func LoadAcme(cfg *Config, logger *slog.Logger) error {
 	logger.Debug("Load Envar:", "envvar", EnvAcmeCloudflareApiToken, "source", source)
 
 	// Load ACME Account Private Key
-	cfg.Acme.AcmePrivateKey, source, err = LoadEnvSecret(EnvAcmeLetsencryptPrivateKey, "") // Key MUST come from env
+	cfg.Acme.AcmePrivateKey, source, err = LoadEnvSecret(EnvAcmeLetsencryptPrivateKey, cfg.Acme.AcmePrivateKey) // Key MUST come from env
 	if err != nil {
 		logger.Error("failed to load ACME account private key", "env_var", EnvAcmeLetsencryptPrivateKey, "error", err)
 		return fmt.Errorf("failed to load ACME account private key: %w", err)

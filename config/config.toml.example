@@ -148,34 +148,6 @@ PublicDir = "static/dist"
   EmailChangeCooldown = "1h"
 
 
-# --- JWT (JSON Web Token) Settings ---
-# IMPORTANT: Actual secret keys MUST NOT be stored here.
-# They should be loaded securely, typically from environment variables or a secret manager.
-[Jwt]
-  # Duration for which standard authentication tokens are valid.
-  AuthTokenDuration = "45m"
-
-  # Duration for which email verification tokens are valid.
-  VerificationEmailTokenDuration = "24h"
-
-  # Duration for which password reset tokens are valid.
-  PasswordResetTokenDuration = "1h"
-
-  # Duration for which email change confirmation tokens are valid.
-  EmailChangeTokenDuration = "1h"
-
-  # AuthSecret: Set via JWT_AUTH_SECRET environment variable. DO NOT STORE HERE unless absolutely necessary for local dev.
-  AuthSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
-
-  # VerificationEmailSecret: Set via JWT_VERIFICATION_EMAIL_SECRET environment variable. DO NOT STORE HERE.
-  VerificationEmailSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
-
-  # PasswordResetSecret: Set via JWT_PASSWORD_RESET_SECRET environment variable. DO NOT STORE HERE.
-  PasswordResetSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
-
-  # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable. DO NOT STORE HERE.
-  EmailChangeSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
-
 
 # --- SMTP Settings for Sending Emails ---
 [Smtp]
@@ -211,18 +183,6 @@ PublicDir = "static/dist"
 
   # Password: SMTP account password or app-specific password. Set via SMTP_PASSWORD environment variable. DO NOT STORE HERE.
   Password = "" # Example placeholder - set via environment variable in production
-
-
-# --- Rate Limiting Settings ---
-[RateLimits]
-  # Minimum time a user must wait between requesting password resets for the same account.
-  PasswordResetCooldown = "2h"
-
-  # Minimum time a user must wait between requesting email verifications for the same email.
-  EmailVerificationCooldown = "1h"
-
-  # Minimum time a user must wait between requesting email address changes.
-  EmailChangeCooldown = "1h"
 
 
 # --- API Endpoint Paths ---
