@@ -9,10 +9,10 @@ import (
 
 	"github.com/caasmo/restinpieces/config" // Adjust import path if needed
 	"github.com/caasmo/restinpieces/db"     // Added for DB interface
-	"github.com/caasmo/restinpieces/db/crawshaw" // Added for crawshaw implementation
-	"github.com/caasmo/restinpieces/queue"       // Adjust import path if needed
+	"github.com/caasmo/restinpieces/db/zombiezen" // Changed to zombiezen implementation
+	"github.com/caasmo/restinpieces/queue"        // Adjust import path if needed
 	"github.com/caasmo/restinpieces/queue/handlers" // Adjust import path if needed
-
+	"zombiezen.com/go/sqlite" // Added for zombiezen connection
 )
 
 func main() {
@@ -58,19 +58,21 @@ func main() {
 
 	// --- Database Connection ---
 	logger.Info("Connecting to database...", "path", dbPath)
-	dbPool, err := crawshaw.NewPool(dbPath) // Using crawshaw driver
+	// Use OpenConn similar to create-app, no pool needed for this command
+	conn, err := sqlite.OpenConn(dbPath, sqlite.OpenReadWrite) // Open existing DB ReadWrite
 	if err != nil {
-		logger.Error("Failed to open database pool", "path", dbPath, "error", err)
+		logger.Error("Failed to open database connection", "path", dbPath, "error", err)
 		os.Exit(1)
 	}
 	defer func() {
-		if err := dbPool.Close(); err != nil {
-			logger.Error("Failed to close database pool", "error", err)
+		if err := conn.Close(); err != nil {
+			logger.Error("Failed to close database connection", "error", err)
 		} else {
-			logger.Info("Database pool closed.")
+			logger.Info("Database connection closed.")
 		}
 	}()
-	dbConn := crawshaw.NewDb(dbPool) // Create Db instance satisfying interfaces
+	// Create Db instance satisfying interfaces using the zombiezen implementation
+	dbConn := zombiezen.NewDb(conn)
 
 	// --- Handler Instantiation ---
 	cfgProvider := config.NewProvider(cfg)
