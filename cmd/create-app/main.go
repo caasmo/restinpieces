@@ -72,9 +72,8 @@ func (ac *AppCreator) CreateEnvFile(envPath string) error {
 	return nil
 }
 
-func NewAppCreator(dbfile string) *AppCreator {
+func NewAppCreator() *AppCreator {
 	return &AppCreator{
-		dbfile: dbfile,
 		logger: slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		})),
