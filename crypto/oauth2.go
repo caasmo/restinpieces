@@ -25,7 +25,7 @@ const OauthCodeVerifierLength = 43
 // by linking the authorization request to its callback.
 // Should be URL-safe, Here alphanumeric characters.
 func Oauth2State() string {
-	return RandomString(Oauth2StateLength, alphanumericAlphabet)
+	return RandomString(Oauth2StateLength, AlphanumericAlphabet)
 }
 func Oauth2CodeVerifier() string {
 	return RandomString(OauthCodeVerifierLength, pkceAlphabet)
