@@ -1,4 +1,7 @@
+[![Go Reference](https://pkg.go.dev/badge/github.com/caasmo/restinpieces)](https://pkg.go.dev/github.com/caasmo/restinpieces)
+[![Go Report Card](https://goreportcard.com/badge/github.com/caasmo/restinpieces)](https://goreportcard.com/report/github.com/caasmo/restinpieces)
 ![sloc](https://sloc.xyz/github/caasmo/restinpieces)
+
 # REST in pieces
 
 A one-file golang server using sqlite, with focus on simplicity, performance and avoiding 3-party packages as much as possible.
