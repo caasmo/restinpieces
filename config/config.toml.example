@@ -34,18 +34,6 @@ PublicDir = "static/dist"
   # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable. DO NOT STORE HERE.
   EmailChangeSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
-# --- Scheduler Settings ---
-[Scheduler]
-  # How often the scheduler checks the database for pending jobs.
-  Interval = "60s"
-
-  # Maximum number of jobs fetched from the database in each interval.
-  MaxJobsPerTick = 10
-
-  # Number of concurrent job processing workers per available CPU core.
-  ConcurrencyMultiplier = 2
-
-
 # --- Server Settings ---
 [Server]
   # Network address and port the HTTP server listens on.
