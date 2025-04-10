@@ -266,8 +266,8 @@ type Acme struct {
 	Email                 string        // Email address for ACME account registration and notifications
 	Domains               []string      // List of domains to include in the certificate
 	DNSProvider           string        // DNS provider name (e.g., "cloudflare")
-	RenewalDaysBeforeExpiry int           // Renew certificate if it expires within this many days
-	CloudflareApiToken    string        `toml:"-"` // Cloudflare API Token (loaded from env)
+	RenewalDaysBeforeExpiry int         // Renew certificate if it expires within this many days
+	CloudflareApiToken    string        // Cloudflare API Token (loaded from env)
 	CADirectoryURL        string        // ACME directory URL (e.g., Let's Encrypt staging or production)
 
     // AcmePrivateKey is Primary: The private key is the fundamental identifier of the
@@ -283,7 +283,7 @@ type Acme struct {
     //
     // MUST be an ECDSA P-256 private key in PEM format.
     // Generate using: openssl ecparam -name prime256v1 -genkey -noout -outform PEM
-	AcmePrivateKey        string        `toml:"-"` // ACME account private key PEM (ECDSA P-256, loaded from env)
+	AcmePrivateKey        string        // ACME account private key PEM (ECDSA P-256, loaded from env)
 }
 
 // BlockIp holds configuration specific to IP blocking.
