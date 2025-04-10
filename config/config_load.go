@@ -207,26 +207,26 @@ func LoadJwt(cfg *Config, logger *slog.Logger) error {
 }
 
 // LoadSmtp loads SMTP credentials from environment variables or the config file.
+// Issues warnings rather than errors if credentials are missing since SMTP may not be required.
 func LoadSmtp(cfg *Config, logger *slog.Logger) error {
 	var err error
 	var source string
 
 	cfg.Smtp.Username, source, err = LoadEnvSecret(EnvSmtpUsername, cfg.Smtp.Username)
 	if err != nil {
-		logger.Error("failed to load SMTP username", "env_var", EnvSmtpUsername, "error", err)
-		return fmt.Errorf("failed to load SMTP username: %w", err)
+		logger.Warn("SMTP username not configured", "env_var", EnvSmtpUsername, "error", err)
+	} else {
+		logger.Debug("Load Envar:", "envvar", EnvSmtpUsername, "source", source)
 	}
-	logger.Debug("Load Envar:", "envvar", EnvSmtpUsername, "source", source)
 
 	cfg.Smtp.Password, source, err = LoadEnvSecret(EnvSmtpPassword, cfg.Smtp.Password)
 	if err != nil {
-		logger.Error("failed to load SMTP password", "env_var", EnvSmtpPassword, "error", err)
-		return fmt.Errorf("failed to load SMTP password: %w", err)
+		logger.Warn("SMTP password not configured", "env_var", EnvSmtpPassword, "error", err)
+	} else {
+		logger.Debug("Load Envar:", "envvar", EnvSmtpPassword, "source", source)
 	}
-	logger.Debug("Load Envar:", "envvar", EnvSmtpPassword, "source", source)
 
-	//logger.Debug("Using SMTP from address from config", "address", cfg.Smtp.FromAddress)
-
+	// Always return nil since missing credentials are not fatal
 	return nil
 }
 
