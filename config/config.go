@@ -55,6 +55,21 @@ const (
 	OAuth2ProviderGitHub = "github"
 )
 
+type Config struct {
+	DBFile          string
+	PublicDir       string // Directory to serve static files from TODO
+	Source          string `toml:"-"` // [READONLY] Tracks config source - "file:<path>" or "db" (set internally, not loaded from config)
+	Jwt             Jwt
+	Scheduler       Scheduler
+	Server          Server
+	RateLimits      RateLimits
+	OAuth2Providers map[string]OAuth2Provider
+	Smtp            Smtp
+	Endpoints       Endpoints
+	Proxy           Proxy
+	Acme            Acme   // ACME/Let's Encrypt settings
+}
+
 type OAuth2Provider struct {
 	Name         string
 	ClientID     string
@@ -241,20 +256,6 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 	return path + ".html"
 }
 
-type Config struct {
-	Jwt             Jwt
-	DBFile          string
-	Scheduler       Scheduler
-	Server          Server
-	RateLimits      RateLimits
-	OAuth2Providers map[string]OAuth2Provider
-	Smtp            Smtp
-	PublicDir       string // Directory to serve static files from
-	Endpoints       Endpoints
-	Proxy           Proxy
-	Acme            Acme   // ACME/Let's Encrypt settings
-	Source          string `toml:"-"` // [READONLY] Tracks config source - "file:<path>" or "db" (set internally, not loaded from config)
-}
 
 // Acme holds configuration for ACME (Let's Encrypt) certificate management.
 type Acme struct {
