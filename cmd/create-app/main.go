@@ -162,10 +162,52 @@ func (ac *AppCreator) InsertConfig() error {
 }
 
 func main() {
-	const defaultDbFile = "app.db"
-	creator := NewAppCreator(defaultDbFile)
+	var (
+		envFile string
+		dbFile  string
+	)
 
-	// Create new .env file from example (will exit if .env exists)
+	flag.StringVar(&envFile, "env", "", "create .env file at specified path")
+	flag.StringVar(&dbFile, "db", "", "create database file at specified path")
+	flag.Parse()
+
+	creator := NewAppCreator("") // Initialize with empty path, will set later
+
+	if envFile != "" {
+		// Only create env file
+		creator.dbfile = envFile // Reusing dbfile field for env path
+		if err := creator.CreateEnvFile(); err != nil {
+			os.Exit(1)
+		}
+		return
+	}
+
+	if dbFile != "" {
+		// Only create database
+		creator.dbfile = dbFile
+		creator.logger.Info("creating sqlite file", "path", dbFile)
+		if err := creator.CreateDatabase(); err != nil {
+			os.Exit(1)
+		}
+		defer creator.pool.Close()
+
+		if err := creator.RunMigrations(); err != nil {
+			os.Exit(1)
+		}
+
+		if err := creator.InsertConfig(); err != nil {
+			creator.logger.Error("failed to insert config", "error", err)
+			os.Exit(1)
+		}
+
+		creator.logger.Info("database created successfully", "file", dbFile)
+		return
+	}
+
+	// Default behavior (no flags) - do both with default paths
+	const defaultDbFile = "app.db"
+	creator.dbfile = defaultDbFile
+
 	if err := creator.CreateEnvFile(); err != nil {
 		os.Exit(1)
 	}
@@ -185,5 +227,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	creator.logger.Info("database created successfully", "file", defaultDbFile)
+	creator.logger.Info("application setup completed",
+		"env_file", ".env",
+		"db_file", defaultDbFile)
 }
