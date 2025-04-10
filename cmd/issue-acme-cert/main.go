@@ -29,10 +29,10 @@ func main() {
 	// --- Flags ---
 	var configPath string
 	var dbPath string
-	var forceIssue bool
+	// var forceIssue bool // Removed force flag
 	flag.StringVar(&configPath, "config", "config.toml", "path to config TOML file")
 	flag.StringVar(&dbPath, "dbfile", "restinpieces.db", "path to SQLite database file")
-	flag.BoolVar(&forceIssue, "force", false, "force certificate issuance even if valid cert exists")
+	// flag.BoolVar(&forceIssue, "force", false, "force certificate issuance even if valid cert exists") // Removed force flag
 	flag.Parse()
 
 	// --- Configuration Loading ---
@@ -88,28 +88,11 @@ func main() {
 	// Pass the database connection to the handler
 	renewalHandler := handlers.NewTLSCertRenewalHandler(cfgProvider, dbConn, logger)
 
-	// --- Force Issuance Logic ---
-	if forceIssue {
-		certPath := cfg.Server.CertFile
-		logger.Info("Force flag is set. Checking for existing certificate file to remove.", "path", certPath)
-		if _, err := os.Stat(certPath); err == nil {
-			logger.Warn("Removing existing certificate file due to --force flag.", "path", certPath)
-			if err := os.Remove(certPath); err != nil {
-				logger.Error("Failed to remove existing certificate file. Proceeding anyway.", "path", certPath, "error", err)
-				// Decide if this should be a fatal error? For now, we proceed.
-			}
-		} else if !os.IsNotExist(err) {
-			// Error stating the file other than not existing
-			logger.Error("Error checking existing certificate file status.", "path", certPath, "error", err)
-			// Decide if this should be fatal? For now, we proceed.
-		} else {
-			logger.Info("Certificate file does not exist, no removal needed.", "path", certPath)
-		}
-		// Also remove key file if it exists? Let's assume cert removal is enough for the handler's check.
-	}
-
 	// --- Job Execution ---
 	// Create a context (e.g., with a timeout)
+	// Force issuance logic removed as handler now checks CertData from config provider.
+	// This command loads config from file, where CertData is typically empty,
+	// thus triggering the handler's issuance logic if ACME is enabled.
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute) // Generous timeout for ACME+DNS
 	defer cancel()
 
