@@ -112,9 +112,14 @@ PublicDir = "static/dist"
   # Production: "https://acme-v02.api.letsencrypt.org/directory"
   CADirectoryURL = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
-  # CloudflareApiToken: Set via ACME_CLOUDFLARE_API_TOKEN environment variable. DO NOT STORE HERE.
-  # AcmePrivateKey: Set via ACME_LETSENCRYPT_PRIVATE_KEY environment variable. MUST be an ECDSA P-256 key. DO NOT STORE HERE.
-  # Generate key: openssl ecparam -name prime256v1 -genkey -noout -outform PEM
+  # Cloudflare API Token for DNS-01 challenge validation.
+  # Set via ACME_CLOUDFLARE_API_TOKEN environment variable. DO NOT STORE HERE.
+  CloudflareApiToken = "" # Example placeholder - set via environment variable in production
+
+  # ACME account private key (ECDSA P-256 in PEM format).
+  # Set via ACME_LETSENCRYPT_PRIVATE_KEY environment variable. DO NOT STORE HERE.
+  # Generate with: openssl ecparam -name prime256v1 -genkey -noout -outform PEM
+  AcmePrivateKey = "" # Example placeholder - set via environment variable in production
 
 
 # --- Background Job Scheduler Settings ---
