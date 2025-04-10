@@ -95,8 +95,8 @@ func loadCerts(cfg *Config, dbAcme db.DbAcme, logger *slog.Logger) error {
 	}
 
 	// Store the certificate data directly in the config
-	cfg.Server.CertData = cert.Certificate
-	cfg.Server.KeyData = cert.Key
+	cfg.Server.CertData = cert.CertificateChain
+	cfg.Server.KeyData = cert.PrivateKey
 
 	logger.Info("successfully loaded TLS certificates from database")
 	return nil

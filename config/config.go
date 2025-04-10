@@ -131,8 +131,8 @@ type Server struct {
     EnableTLS       bool   // Default to false if not present
     CertFile        string // Path to TLS certificate file (legacy)
     KeyFile         string // Path to TLS private key file (legacy)
-    CertData        []byte `toml:"-"` // TLS certificate data (preferred)
-    KeyData         []byte `toml:"-"` // TLS private key data (preferred)
+    CertData        string `toml:"-"` // TLS certificate data (preferred)
+    KeyData         string `toml:"-"` // TLS private key data (preferred)
 
 }
 

@@ -211,7 +211,7 @@ func createTLSConfig(cfg *config.Server) (*tls.Config, error) {
 
 	// Decide which certificate source to use
 	if len(cfg.CertData) > 0 && len(cfg.KeyData) > 0 {
-		cert, err = tls.X509KeyPair(cfg.CertData, cfg.KeyData)
+		cert, err = tls.X509KeyPair([]byte(cfg.CertData), []byte(cfg.KeyData))
 		if err != nil {
 			return nil, fmt.Errorf("failed to load TLS key pair from config data: %w", err)
 		}

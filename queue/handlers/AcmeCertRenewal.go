@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath" // Keep even if unused by saveCertificateResource directly
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
@@ -92,7 +91,7 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 
 	// --- Check Expiry ---
 	certPath := cfg.Server.CertFile
-	keyPath := cfg.Server.KeyFile // Keep keyPath definition here for later use
+	//keyPath := cfg.Server.KeyFile // Keep keyPath definition here for later use
 
 	needsRenewal, err := h.certificateNeedsRenewal(certPath, cfg.Acme.RenewalDaysBeforeExpiry)
 	if err != nil {

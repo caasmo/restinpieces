@@ -5,7 +5,6 @@ import (
 	"crawshaw.io/sqlite/sqlitex"
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
-	"strings" // Added for checking constraint errors
 )
 
 // Get retrieves the latest ACME certificate based on issued_at timestamp.

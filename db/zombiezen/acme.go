@@ -4,7 +4,6 @@ import (
 	"context" // Added for Take context
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
-	"strings" // Added for checking constraint errors
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
