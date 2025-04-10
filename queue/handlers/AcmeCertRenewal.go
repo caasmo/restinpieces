@@ -4,14 +4,16 @@ import (
 	"context"
 	"crypto" // Add standard crypto import
 	"crypto/x509"
+	"encoding/json" // Added for domains JSON
 	"encoding/pem"
 	"fmt"
 	"log/slog"
 	"os"
-	"path/filepath"
+	"path/filepath" // Keep even if unused by saveCertificateResource directly
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/db" // Added for db types
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/certificate"
@@ -24,13 +26,15 @@ import (
 // TLSCertRenewalHandler handles the job for renewing TLS certificates via ACME.
 type TLSCertRenewalHandler struct {
 	configProvider *config.Provider // Access to config
+	dbAcme         db.DbAcme        // Database access for ACME certs
 	logger         *slog.Logger
 }
 
 // NewTLSCertRenewalHandler creates a new handler instance.
-func NewTLSCertRenewalHandler(provider *config.Provider, logger *slog.Logger) *TLSCertRenewalHandler {
+func NewTLSCertRenewalHandler(provider *config.Provider, dbAcme db.DbAcme, logger *slog.Logger) *TLSCertRenewalHandler {
 	return &TLSCertRenewalHandler{
 		configProvider: provider,
+		dbAcme:         dbAcme, // Store dbAcme
 		logger:         logger.With("job_handler", "tls_cert_renewal"), // Add context to logger
 	}
 }
@@ -213,21 +217,68 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 
 	h.logger.Info("Successfully obtained ACME certificate", "domains", request.Domains, "certificate_url", resource.CertURL)
 
-	// --- Save Files ---
-	if err := saveCertificateResource(certPath, keyPath, resource, h.logger); err != nil {
+	// --- Save Certificate to Database ---
+	if err := h.saveCertificateResource(resource, h.logger); err != nil {
 		// Error already logged by saveCertificateResource
+		return err // Propagate error
+	}
+
+	// Note: We no longer save to files directly here, assuming DB is the source of truth
+	// or another mechanism handles file writing from DB if needed.
+	h.logger.Info("Successfully processed ACME certificate renewal.", "domains", request.Domains)
+	return nil
+}
+
+// saveCertificateResource saves the obtained certificate resource to the database.
+func (h *TLSCertRenewalHandler) saveCertificateResource(resource *certificate.Resource, logger *slog.Logger) error {
+	// 1. Parse the certificate to get expiry and issue dates
+	block, _ := pem.Decode(resource.Certificate)
+	if block == nil {
+		err := fmt.Errorf("failed to decode PEM block from obtained certificate")
+		logger.Error(err.Error(), "domain", resource.Domain)
+		return err
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		err = fmt.Errorf("failed to parse obtained certificate: %w", err)
+		logger.Error(err.Error(), "domain", resource.Domain)
 		return err
 	}
 
-	h.logger.Info("Successfully saved renewed certificate and key.", "cert_path", certPath, "key_path", keyPath)
+	// 2. Prepare domains list as JSON string
+	// Use the domains from the original request stored in the handler's config snapshot
+	cfg := h.configProvider.Get() // Get current config
+	domainsJSON, err := json.Marshal(cfg.Acme.Domains)
+	if err != nil {
+		err = fmt.Errorf("failed to marshal domains to JSON: %w", err)
+		logger.Error(err.Error(), "domains", cfg.Acme.Domains)
+		return err
+	}
+
+	// 3. Create the db.AcmeCert struct
+	// Assuming db.AcmeCert struct fields match the 'acme_certificates' table schema.
+	// Using resource.Domain as the identifier. Consider making this configurable if needed.
+	dbCert := db.AcmeCert{
+		Identifier:       resource.Domain, // Use primary domain as identifier
+		Domains:          string(domainsJSON),
+		CertificateChain: string(resource.Certificate), // Assumes resource.Certificate is PEM encoded chain
+		PrivateKey:       string(resource.PrivateKey),  // Assumes resource.PrivateKey is PEM encoded key
+		IssuedAt:         cert.NotBefore.UTC().Format(time.RFC3339),
+		ExpiresAt:        cert.NotAfter.UTC().Format(time.RFC3339),
+		// CreatedAt/UpdatedAt are typically handled by the database or Save method.
+		// LastRenewalAttemptAt could be updated here or elsewhere.
+	}
+
+	// 4. Call Save method via the dbAcme interface
+	err = h.dbAcme.Save(dbCert) // Assuming Save takes db.AcmeCert by value
+	if err != nil {
+		logger.Error("Failed to save ACME certificate to database", "identifier", dbCert.Identifier, "error", err)
+		return fmt.Errorf("failed to save ACME certificate for %s: %w", dbCert.Identifier, err)
+	}
+
+	logger.Info("Successfully saved renewed certificate to database", "identifier", dbCert.Identifier, "expiry", dbCert.ExpiresAt)
 	return nil
 }
-
-// saveCertificateResource saves the certificate and private key using atomic writes.
-func saveCertificateResource(certFile, keyFile string, resource *certificate.Resource, logger *slog.Logger) error {
-	return nil
-}
-
 
 // certificateNeedsRenewal checks if the certificate at the given path needs renewal.
 // It returns true if the certificate doesn't exist, fails to parse, or expires within the threshold.

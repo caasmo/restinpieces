@@ -55,7 +55,8 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	// Setup custom application logic and routes
 	route(cfg, app) // Assuming route function exists and is correctly defined elsewhere
 
-	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.Logger())
+	// Pass DbAcme to SetupScheduler
+	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.DbAcme(), app.Logger())
 	if err != nil {
 		app.Logger().Error("failed to setup scheduler", "error", err)
 		return nil, nil, err
@@ -68,7 +69,9 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	return app, srv, nil
 }
 
-func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, logger *slog.Logger) (*scl.Scheduler, error) {
+// SetupScheduler initializes the job scheduler and its handlers.
+// It now requires db.DbAcme to pass to the ACME renewal handler.
+func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, dbAcme db.DbAcme, logger *slog.Logger) (*scl.Scheduler, error) {
 
 	hdls := make(map[string]executor.JobHandler)
 
@@ -99,7 +102,8 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 	// Note: We check cfg.Acme.Enabled here to avoid unnecessary instantiation if not used.
 	// The handler itself also checks this, but this prevents adding it to the map if globally disabled.
 	if cfg.Acme.Enabled {
-		tlsCertRenewalHandler := handlers.NewTLSCertRenewalHandler(configProvider, logger)
+		// Pass dbAcme to the handler constructor
+		tlsCertRenewalHandler := handlers.NewTLSCertRenewalHandler(configProvider, dbAcme, logger)
 		hdls[queue.JobTypeTLSCertRenewal] = tlsCertRenewalHandler
 		logger.Info("Registered TLSCertRenewalHandler")
 	} else {
