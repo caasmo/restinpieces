@@ -9,6 +9,7 @@ import (
 	"runtime"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
@@ -26,11 +27,19 @@ func (ac *AppCreator) CreateEnvFile() error {
 		return os.ErrExist
 	}
 
-	if err := os.WriteFile(".env", config.EnvExample, 0644); err != nil {
+	// Generate secure random values for all JWT secrets
+	envContent := string(config.EnvExample)
+	envContent += "\n# --- Auto-generated JWT Secrets ---\n"
+	envContent += "JWT_AUTH_SECRET=" + crypto.RandomString(32, crypto.alphanumericAlphabet) + "\n"
+	envContent += "JWT_VERIFICATION_EMAIL_SECRET=" + crypto.RandomString(32, crypto.alphanumericAlphabet) + "\n"
+	envContent += "JWT_PASSWORD_RESET_SECRET=" + crypto.RandomString(32, crypto.alphanumericAlphabet) + "\n"
+	envContent += "JWT_EMAIL_CHANGE_SECRET=" + crypto.RandomString(32, crypto.alphanumericAlphabet) + "\n"
+
+	if err := os.WriteFile(".env", []byte(envContent), 0644); err != nil {
 		ac.logger.Error("failed to create .env file", "error", err)
 		return err
 	}
-	ac.logger.Info("created .env file from example")
+	ac.logger.Info("created .env file with auto-generated JWT secrets")
 	return nil
 }
 
