@@ -19,9 +19,6 @@ var DefaultConfigToml []byte
 var DefaultEnvExample []byte
 
 // Provider holds the application configuration and allows for atomic updates.
-// LoadSecret loads a secret from an environment variable.
-// If the env var is empty, it returns the defaultValue.
-// Returns an error if both are empty.
 type Provider struct {
 	value atomic.Value // Holds the current *Config
 }

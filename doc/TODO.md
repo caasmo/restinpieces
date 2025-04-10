@@ -2,20 +2,28 @@
 
 
 - bug harcoded callback oauth2, path! 
+- config db file used?
 - test tls 
     - handler test
+    - handler: write in the db istead of file mangling
+	- if tls set reader
     - refactor multiple lego dns provider
     - context for timneout in the handler
     - are resource file []byte save in new table.
-    - make new table tls_cert
     - initail cert, lego?
     - account ACME user. HOw to change password? what happens if lost.
     - build without https support? ACME dependencies  
 	- get set in db
 	- Test your setup with tools like ssllabs.com or testssl.sh
+- busy timeout and sync normal, for Performance
 - content headers TLS
+	- Strict-Transport-Security: max-age=63072000; includeSubDomains
+	- in proxy/app method we know conf enable tls. set header
+- 10% reduction in req/sec from htttp, to https refresh auth, with block ip
 - Strict-Transport-Security: Enforces HTTPS, preventing downgrade attacks. Essential for TLS.
 - CSP frame-ancestors directive: Prevents clickjacking. Needs to be added explicitly to your CSP.
+	- Content-Security-Policy: default-src 'self'; frame-ancestors 'none'
+	- frame-ancestors 'none' not covered by default-src 'self'
 - X-Content-Type-Options: Prevents MIME-sniffing attacks. Simple, robust addition.
 - ETag or Last-Modified: Enables efficient cache validation for performance.
 - assests log 
