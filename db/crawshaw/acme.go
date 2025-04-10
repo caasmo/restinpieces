@@ -23,17 +23,39 @@ func (d *Db) Get() (*db.AcmeCert, error) {
 		ORDER BY issued_at DESC 
 		LIMIT 1;`, // Order by issued_at to get the most recently issued cert
 		func(stmt *sqlite.Stmt) error {
+			// Parse timestamps using db.TimeParse
+			issuedAt, err := db.TimeParse(stmt.GetText("issued_at"))
+			if err != nil {
+				return fmt.Errorf("acme: error parsing issued_at: %w", err)
+			}
+			expiresAt, err := db.TimeParse(stmt.GetText("expires_at"))
+			if err != nil {
+				return fmt.Errorf("acme: error parsing expires_at: %w", err)
+			}
+			lastRenewalAttemptAt, err := db.TimeParse(stmt.GetText("last_renewal_attempt_at")) // Handles empty string -> zero time
+			if err != nil {
+				return fmt.Errorf("acme: error parsing last_renewal_attempt_at: %w", err)
+			}
+			createdAt, err := db.TimeParse(stmt.GetText("created_at"))
+			if err != nil {
+				return fmt.Errorf("acme: error parsing created_at: %w", err)
+			}
+			updatedAt, err := db.TimeParse(stmt.GetText("updated_at"))
+			if err != nil {
+				return fmt.Errorf("acme: error parsing updated_at: %w", err)
+			}
+
 			cert = &db.AcmeCert{
 				ID:                     stmt.GetInt64("id"),
 				Identifier:             stmt.GetText("identifier"),
 				Domains:                stmt.GetText("domains"),
 				CertificateChain:       stmt.GetText("certificate_chain"),
 				PrivateKey:             stmt.GetText("private_key"),
-				IssuedAt:               stmt.GetText("issued_at"),
-				ExpiresAt:              stmt.GetText("expires_at"),
-				LastRenewalAttemptAt:   stmt.GetText("last_renewal_attempt_at"), // Handle potential null
-				CreatedAt:              stmt.GetText("created_at"),
-				UpdatedAt:              stmt.GetText("updated_at"),
+				IssuedAt:               issuedAt,
+				ExpiresAt:              expiresAt,
+				LastRenewalAttemptAt:   lastRenewalAttemptAt,
+				CreatedAt:              createdAt,
+				UpdatedAt:              updatedAt,
 			}
 			return nil
 		})
@@ -74,8 +96,8 @@ func (d *Db) Save(cert db.AcmeCert) error {
 		cert.Domains,
 		cert.CertificateChain,
 		cert.PrivateKey,
-		cert.IssuedAt,
-		cert.ExpiresAt,
+		db.TimeFormat(cert.IssuedAt),  // Format time.Time to string
+		db.TimeFormat(cert.ExpiresAt), // Format time.Time to string
 	)
 
 	if err != nil {

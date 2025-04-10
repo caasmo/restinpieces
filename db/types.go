@@ -40,13 +40,13 @@ type User struct {
 type AcmeCert struct {
 	ID                     int64  // Primary Key
 	Identifier             string // Unique identifier (e.g., primary domain)
-	Domains                string // JSON array of domains
-	CertificateChain       string // PEM encoded certificate chain
-	PrivateKey             string // PEM encoded private key
-	IssuedAt               string // RFC3339 UTC timestamp
-	ExpiresAt              string // RFC3339 UTC timestamp
-	LastRenewalAttemptAt   string // RFC3339 UTC timestamp (nullable)
-	CreatedAt              string // RFC3339 UTC timestamp
-	UpdatedAt              string // RFC3339 UTC timestamp
+	Domains                string    // JSON array of domains
+	CertificateChain       string    // PEM encoded certificate chain
+	PrivateKey             string    // PEM encoded private key
+	IssuedAt               time.Time // UTC timestamp
+	ExpiresAt              time.Time // UTC timestamp
+	LastRenewalAttemptAt   time.Time // UTC timestamp (zero time if null/not set)
+	CreatedAt              time.Time // UTC timestamp
+	UpdatedAt              time.Time // UTC timestamp
 }
 

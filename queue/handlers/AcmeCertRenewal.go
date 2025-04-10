@@ -263,10 +263,10 @@ func (h *TLSCertRenewalHandler) saveCertificateResource(resource *certificate.Re
 		Domains:          string(domainsJSON),
 		CertificateChain: string(resource.Certificate), // Assumes resource.Certificate is PEM encoded chain
 		PrivateKey:       string(resource.PrivateKey),  // Assumes resource.PrivateKey is PEM encoded key
-		IssuedAt:         cert.NotBefore.UTC().Format(time.RFC3339),
-		ExpiresAt:        cert.NotAfter.UTC().Format(time.RFC3339),
+		IssuedAt:         cert.NotBefore.UTC(),         // Assign time.Time directly
+		ExpiresAt:        cert.NotAfter.UTC(),          // Assign time.Time directly
 		// CreatedAt/UpdatedAt are typically handled by the database or Save method.
-		// LastRenewalAttemptAt could be updated here or elsewhere.
+		// LastRenewalAttemptAt is zero time initially, could be updated elsewhere.
 	}
 
 	// 4. Call Save method via the dbAcme interface

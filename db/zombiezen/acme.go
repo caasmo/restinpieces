@@ -28,17 +28,39 @@ func (d *Db) Get() (*db.AcmeCert, error) {
 		LIMIT 1;`, // Order by issued_at to get the most recently issued cert
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
+				// Parse timestamps using db.TimeParse
+				issuedAt, err := db.TimeParse(stmt.ColumnText(5)) // issued_at
+				if err != nil {
+					return fmt.Errorf("acme: error parsing issued_at: %w", err)
+				}
+				expiresAt, err := db.TimeParse(stmt.ColumnText(6)) // expires_at
+				if err != nil {
+					return fmt.Errorf("acme: error parsing expires_at: %w", err)
+				}
+				lastRenewalAttemptAt, err := db.TimeParse(stmt.ColumnText(7)) // last_renewal_attempt_at (Handles empty string -> zero time)
+				if err != nil {
+					return fmt.Errorf("acme: error parsing last_renewal_attempt_at: %w", err)
+				}
+				createdAt, err := db.TimeParse(stmt.ColumnText(8)) // created_at
+				if err != nil {
+					return fmt.Errorf("acme: error parsing created_at: %w", err)
+				}
+				updatedAt, err := db.TimeParse(stmt.ColumnText(9)) // updated_at
+				if err != nil {
+					return fmt.Errorf("acme: error parsing updated_at: %w", err)
+				}
+
 				cert = &db.AcmeCert{
 					ID:                     stmt.ColumnInt64(0), // id
 					Identifier:             stmt.ColumnText(1),  // identifier
 					Domains:                stmt.ColumnText(2),  // domains
 					CertificateChain:       stmt.ColumnText(3),  // certificate_chain
 					PrivateKey:             stmt.ColumnText(4),  // private_key
-					IssuedAt:               stmt.ColumnText(5),  // issued_at
-					ExpiresAt:              stmt.ColumnText(6),  // expires_at
-					LastRenewalAttemptAt:   stmt.ColumnText(7),  // last_renewal_attempt_at
-					CreatedAt:              stmt.ColumnText(8),  // created_at
-					UpdatedAt:              stmt.ColumnText(9),  // updated_at
+					IssuedAt:               issuedAt,
+					ExpiresAt:              expiresAt,
+					LastRenewalAttemptAt:   lastRenewalAttemptAt,
+					CreatedAt:              createdAt,
+					UpdatedAt:              updatedAt,
 				}
 				return nil
 			},
@@ -84,8 +106,8 @@ func (d *Db) Save(cert db.AcmeCert) error {
 				cert.Domains,
 				cert.CertificateChain,
 				cert.PrivateKey,
-				cert.IssuedAt,
-				cert.ExpiresAt,
+				db.TimeFormat(cert.IssuedAt),  // Format time.Time to string
+				db.TimeFormat(cert.ExpiresAt), // Format time.Time to string
 			},
 		})
 
