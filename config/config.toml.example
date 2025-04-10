@@ -139,6 +139,9 @@ PublicDir = "static/dist"
 
 # --- SMTP Settings for Sending Emails ---
 [Smtp]
+  # Enable or disable SMTP functionality. Set to true to allow sending emails.
+  Enabled = false
+
   # SMTP server hostname or IP address.
   Host = "smtp.gmail.com" # Example: Gmail
 
@@ -198,9 +201,10 @@ PublicDir = "static/dist"
   [OAuth2Providers.google]
     Name         = "google"
     DisplayName  = "Google"
-    # RedirectURL is typically constructed dynamically based on Server.Addr/BaseURL.
-    # Example format: "http://localhost:8080/oauth2/callback/"
-    # RedirectURL  = "" # Set dynamically or ensure it matches provider console setup.
+    # RedirectURL is the callback URL registered with the provider.
+    # It's often constructed dynamically (e.g., BaseURL + "/oauth2/callback/google").
+    # If set here, ensure it matches your provider configuration. Leave empty "" if dynamically set.
+    RedirectURL  = ""
     AuthURL      = "https://accounts.google.com/o/oauth2/v2/auth"
     TokenURL     = "https://oauth2.googleapis.com/token"
     UserInfoURL  = "https://www.googleapis.com/oauth2/v3/userinfo"
@@ -213,9 +217,10 @@ PublicDir = "static/dist"
   [OAuth2Providers.github]
     Name         = "github"
     DisplayName  = "GitHub"
-    # RedirectURL is typically constructed dynamically based on Server.Addr/BaseURL.
-    # Example format: "http://localhost:8080/oauth2/callback/"
-    # RedirectURL  = "" # Set dynamically or ensure it matches provider console setup.
+    # RedirectURL is the callback URL registered with the provider.
+    # It's often constructed dynamically (e.g., BaseURL + "/oauth2/callback/github").
+    # If set here, ensure it matches your provider configuration. Leave empty "" if dynamically set.
+    RedirectURL  = ""
     AuthURL      = "https://github.com/login/oauth/authorize"
     TokenURL     = "https://github.com/login/oauth/access_token"
     UserInfoURL  = "https://api.github.com/user"
