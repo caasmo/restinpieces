@@ -33,8 +33,10 @@ type DbConfig interface {
 }
 
 type DbAcme interface {
-	// Get retrieves the current ACME certificate
+	// Get retrieves the latest ACME certificate based on issued_at timestamp.
 	Get() (*AcmeCert, error)
+	// Save inserts or updates an ACME certificate record based on the Identifier.
+	Save(cert AcmeCert) error
 }
 
 type DbApp interface {

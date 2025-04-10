@@ -34,8 +34,19 @@ type User struct {
 
 // DbApp is an interface combining the required DB roles for the application.
 // The concrete DB implementation (e.g., *crawshaw.Db or *zombiezen.Db) must satisfy this interface.
+
+// AcmeCert represents an ACME certificate record from the database.
+// Timestamps use RFC3339 format in UTC timezone.
 type AcmeCert struct {
-	Key         []byte // Private key data
-	Certificate []byte // Certificate data
+	ID                     int64  // Primary Key
+	Identifier             string // Unique identifier (e.g., primary domain)
+	Domains                string // JSON array of domains
+	CertificateChain       string // PEM encoded certificate chain
+	PrivateKey             string // PEM encoded private key
+	IssuedAt               string // RFC3339 UTC timestamp
+	ExpiresAt              string // RFC3339 UTC timestamp
+	LastRenewalAttemptAt   string // RFC3339 UTC timestamp (nullable)
+	CreatedAt              string // RFC3339 UTC timestamp
+	UpdatedAt              string // RFC3339 UTC timestamp
 }
 
