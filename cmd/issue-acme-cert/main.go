@@ -23,15 +23,20 @@ func main() {
 	logger.Info("Starting local TLS Cert Renewal test runner...")
 
 	// --- Configuration ---
-	// Assuming your config.Provider loads from environment variables by default
-	// If not, you might need to explicitly call a load function here.
-	//cfgProvider, err := config.NewProvider(logger) // Or however it's initialized
+	// Load config from TOML file
+	configPath := os.Getenv("CONFIG_FILE")
+	if configPath == "" {
+		configPath = "config.toml"
+	}
+
+	cfg, err := config.LoadFromToml(configPath, logger)
 	if err != nil {
-		logger.Error("Failed to initialize config provider", "error", err)
+		logger.Error("Failed to load config file", "path", configPath, "error", err)
 		os.Exit(1)
 	}
 
-	logger.Info("Config loaded",
+	logger.Info("Config loaded from file",
+		"path", configPath,
 		"ACME Enabled", cfg.Acme.Enabled,
 		"ACME Email", cfg.Acme.Email,
 		"ACME Domains", cfg.Acme.Domains,
@@ -44,6 +49,7 @@ func main() {
 	)
 
 	// --- Handler Instantiation ---
+	cfgProvider := config.NewProvider(cfg)
 	renewalHandler := handlers.NewTLSCertRenewalHandler(cfgProvider, logger)
 
 	// --- Job Execution ---
