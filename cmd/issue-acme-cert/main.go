@@ -23,11 +23,9 @@ func main() {
 	logger.Info("Starting local TLS Cert Renewal test runner...")
 
 	// --- Configuration ---
-	// Load config from TOML file
-	configPath := os.Getenv("CONFIG_FILE")
-	if configPath == "" {
-		configPath = "config.toml"
-	}
+	var configPath string
+	flag.StringVar(&configPath, "config", "config.toml", "path to config TOML file")
+	flag.Parse()
 
 	cfg, err := config.LoadFromToml(configPath, logger)
 	if err != nil {
