@@ -166,25 +166,36 @@ func main() {
 	var (
 		envFile string
 		dbFile  string
+		envSet  bool // Track if -env flag was set
+		dbSet   bool // Track if -db flag was set
 	)
 
-	flag.StringVar(&envFile, "env", "", "create .env file at specified path")
-	flag.StringVar(&dbFile, "db", "", "create database file at specified path")
+	// Set defaults but track if flags were explicitly set
+	flag.StringVar(&envFile, "env", ".env", "create .env file at specified path (default: .env)")
+	flag.StringVar(&dbFile, "db", "app.db", "create database file at specified path (default: app.db)")
 	flag.Parse()
 
-	// Determine tasks based on flags
+	// Check which flags were explicitly set
+	flag.Visit(func(f *flag.Flag) {
+		switch f.Name {
+		case "env":
+			envSet = true
+		case "db":
+			dbSet = true
+		}
+	})
+
+	// Determine tasks based on which flags were set
 	tasks := []string{}
-	if envFile != "" {
+	if envSet {
 		tasks = append(tasks, "env")
 	}
-	if dbFile != "" {
+	if dbSet {
 		tasks = append(tasks, "db")
 	}
 	if len(tasks) == 0 {
-		// Default case - do both
+		// Default case - do both since no flags were set
 		tasks = []string{"env", "db"}
-		envFile = ".env"
-		dbFile = "app.db"
 	}
 
 	creator := NewAppCreator(dbFile)
@@ -198,7 +209,7 @@ func main() {
 	for _, task := range tasks {
 		switch task {
 		case "env":
-			creator.dbfile = envFile // Reusing dbfile field for env path
+			creator.dbfile = envFile
 			if err := creator.CreateEnvFile(); err != nil {
 				os.Exit(1)
 			}
@@ -210,7 +221,7 @@ func main() {
 			if err := creator.CreateDatabase(); err != nil {
 				os.Exit(1)
 			}
-			poolClosed = true // Mark pool to not close again in defer
+			poolClosed = true
 
 			if err := creator.RunMigrations(); err != nil {
 				os.Exit(1)
