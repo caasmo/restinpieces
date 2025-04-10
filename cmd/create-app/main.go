@@ -30,10 +30,10 @@ func (ac *AppCreator) CreateEnvFile() error {
 	// Generate secure random values for all JWT secrets
 	envContent := string(config.EnvExample)
 	envContent += "\n# --- Auto-generated JWT Secrets ---\n"
-	envContent += "JWT_AUTH_SECRET=" + crypto.RandomString(32, crypto.alphanumericAlphabet) + "\n"
-	envContent += "JWT_VERIFICATION_EMAIL_SECRET=" + crypto.RandomString(32, crypto.alphanumericAlphabet) + "\n"
-	envContent += "JWT_PASSWORD_RESET_SECRET=" + crypto.RandomString(32, crypto.alphanumericAlphabet) + "\n"
-	envContent += "JWT_EMAIL_CHANGE_SECRET=" + crypto.RandomString(32, crypto.alphanumericAlphabet) + "\n"
+	envContent += "JWT_AUTH_SECRET=" + crypto.RandomString(32, crypto.AlphanumericAlphabet) + "\n"
+	envContent += "JWT_VERIFICATION_EMAIL_SECRET=" + crypto.RandomString(32, crypto.AlphanumericAlphabet) + "\n"
+	envContent += "JWT_PASSWORD_RESET_SECRET=" + crypto.RandomString(32, crypto.AlphanumericAlphabet) + "\n"
+	envContent += "JWT_EMAIL_CHANGE_SECRET=" + crypto.RandomString(32, crypto.AlphanumericAlphabet) + "\n"
 
 	if err := os.WriteFile(".env", []byte(envContent), 0644); err != nil {
 		ac.logger.Error("failed to create .env file", "error", err)
