@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/config" // Adjust import path if needed
-	"github.com/caasmo/restinpieces/db"     // Added for DB interface
 	"github.com/caasmo/restinpieces/db/zombiezen" // Changed to zombiezen implementation
 	"github.com/caasmo/restinpieces/queue"        // Adjust import path if needed
 	"github.com/caasmo/restinpieces/queue/handlers" // Adjust import path if needed
