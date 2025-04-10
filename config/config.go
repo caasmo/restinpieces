@@ -12,7 +12,7 @@ import (
 	// "github.com/BurntSushi/toml" // No longer needed here
 )
 
-//go:embed config.toml
+//go:embed config.toml.example
 var DefaultConfigToml []byte
 
 //go:embed .env.example
