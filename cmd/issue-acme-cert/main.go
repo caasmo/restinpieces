@@ -80,10 +80,38 @@ func main() {
 	if err != nil {
 		// This error check was missing in the previous pool refactor, adding it now.
 		logger.Error("Failed to create zombiezen DB instance from pool", "error", err)
+		// This error check was missing in the previous pool refactor, adding it now.
+		logger.Error("Failed to create zombiezen DB instance from pool", "error", err)
 		os.Exit(1)
 	}
 
+	// --- Load Existing Cert from DB into Config ---
+	logger.Info("Attempting to load existing certificate from database...")
+	existingCert, err := dbConn.Get()
+	if err != nil {
+		// Log the error, but proceed if it's just "not found"
+		// Assuming db.Get() returns nil, nil or a specific error for not found
+		// Adjust this check if db.Get() has different error semantics for "not found"
+		if err.Error() == "acme: no certificate found" { // Example check, adjust as needed
+			logger.Info("No existing certificate found in the database. Will attempt issuance if needed.")
+		} else {
+			logger.Warn("Failed to get existing certificate from database. Proceeding, may force issuance.", "error", err)
+			// Proceed, CertData/KeyData will be empty in cfg
+		}
+	} else if existingCert != nil {
+		logger.Info("Existing certificate loaded from database.", "identifier", existingCert.Identifier, "expires", existingCert.ExpiresAt)
+		cfg.Server.CertData = existingCert.CertificateChain
+		cfg.Server.KeyData = existingCert.PrivateKey
+		// Log snippet for verification?
+		// logger.Debug("Loaded CertData (snippet)", "data", cfg.Server.CertData[:min(100, len(cfg.Server.CertData))]+"...")
+	} else {
+		// This case (nil, nil) might indicate "not found" depending on Get() implementation
+		logger.Info("No existing certificate found in the database (Get returned nil, nil). Will attempt issuance if needed.")
+	}
+
+
 	// --- Handler Instantiation ---
+	// Create provider *after* potentially loading cert data into cfg
 	cfgProvider := config.NewProvider(cfg)
 	// Pass the database connection to the handler
 	renewalHandler := handlers.NewTLSCertRenewalHandler(cfgProvider, dbConn, logger)
