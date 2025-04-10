@@ -12,7 +12,8 @@ import (
 	"github.com/caasmo/restinpieces/db/zombiezen" // Changed to zombiezen implementation
 	"github.com/caasmo/restinpieces/queue"        // Adjust import path if needed
 	"github.com/caasmo/restinpieces/queue/handlers" // Adjust import path if needed
-	"zombiezen.com/go/sqlite" // Added for zombiezen connection
+	"zombiezen.com/go/sqlite"                       // Keep for OpenFlags
+	"zombiezen.com/go/sqlite/sqlitex"               // Added for pool
 )
 
 func main() {
@@ -57,22 +58,31 @@ func main() {
 	)
 
 	// --- Database Connection ---
-	logger.Info("Connecting to database...", "path", dbPath)
-	// Use OpenConn similar to create-app, no pool needed for this command
-	conn, err := sqlite.OpenConn(dbPath, sqlite.OpenReadWrite) // Open existing DB ReadWrite
+	logger.Info("Connecting to database pool...", "path", dbPath)
+	// Use a pool, similar to the main application, for consistency
+	pool, err := sqlitex.NewPool(dbPath, sqlitex.PoolOptions{
+		Flags: sqlite.OpenReadWrite, // Ensure DB exists, open read-write
+		// PoolSize can be small for this command, 1 is likely sufficient
+		PoolSize: 1,
+	})
 	if err != nil {
-		logger.Error("Failed to open database connection", "path", dbPath, "error", err)
+		logger.Error("Failed to open database pool", "path", dbPath, "error", err)
 		os.Exit(1)
 	}
 	defer func() {
-		if err := conn.Close(); err != nil {
-			logger.Error("Failed to close database connection", "error", err)
+		if err := pool.Close(); err != nil {
+			logger.Error("Failed to close database pool", "error", err)
 		} else {
-			logger.Info("Database connection closed.")
+			logger.Info("Database pool closed.")
 		}
 	}()
-	// Create Db instance satisfying interfaces using the zombiezen implementation
-	dbConn := zombiezen.NewDb(conn)
+	// Create Db instance satisfying interfaces using the zombiezen implementation with the pool
+	dbConn, err := zombiezen.New(pool) // Use the New constructor which takes a pool
+	if err != nil {
+		// This error check was missing in the previous pool refactor, adding it now.
+		logger.Error("Failed to create zombiezen DB instance from pool", "error", err)
+		os.Exit(1)
+	}
 
 	// --- Handler Instantiation ---
 	cfgProvider := config.NewProvider(cfg)
