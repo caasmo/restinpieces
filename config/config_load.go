@@ -207,26 +207,43 @@ func LoadJwt(cfg *Config, logger *slog.Logger) error {
 }
 
 // LoadSmtp loads SMTP credentials from environment variables or the config file.
-// Issues warnings rather than errors if credentials are missing since SMTP may not be required.
+// Only loads credentials if SMTP is enabled in config.
 func LoadSmtp(cfg *Config, logger *slog.Logger) error {
-	var err error
+	if !cfg.Smtp.Enabled {
+		logger.Debug("SMTP is disabled in config, skipping credential loading")
+		return nil
+	}
+
+	var err error 
 	var source string
 
 	cfg.Smtp.Username, source, err = LoadEnvSecret(EnvSmtpUsername, cfg.Smtp.Username)
 	if err != nil {
 		logger.Warn("SMTP username not configured", "env_var", EnvSmtpUsername, "error", err)
 	} else {
-		logger.Debug("Load Envar:", "envvar", EnvSmtpUsername, "source", source)
+		logger.Debug("Loaded SMTP username", "source", source)
 	}
 
 	cfg.Smtp.Password, source, err = LoadEnvSecret(EnvSmtpPassword, cfg.Smtp.Password)
 	if err != nil {
 		logger.Warn("SMTP password not configured", "env_var", EnvSmtpPassword, "error", err)
 	} else {
-		logger.Debug("Load Envar:", "envvar", EnvSmtpPassword, "source", source)
+		logger.Debug("Loaded SMTP password", "source", source)
 	}
 
-	// Always return nil since missing credentials are not fatal
+	// Validate required fields if SMTP is enabled
+	if cfg.Smtp.Enabled {
+		if cfg.Smtp.Host == "" {
+			logger.Warn("SMTP host not configured but SMTP is enabled")
+		}
+		if cfg.Smtp.Port == 0 {
+			logger.Warn("SMTP port not configured but SMTP is enabled")
+		}
+		if cfg.Smtp.FromAddress == "" {
+			logger.Warn("SMTP from address not configured but SMTP is enabled")
+		}
+	}
+
 	return nil
 }
 
