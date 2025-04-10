@@ -51,8 +51,8 @@ func (ac *AppCreator) generateEnvFile() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (ac *AppCreator) CreateEnvFile() error {
-	if _, err := os.Stat(".env"); err == nil {
+func (ac *AppCreator) CreateEnvFile(envPath string) error {
+	if _, err := os.Stat(envPath); err == nil {
 		ac.logger.Error(".env file already exists - remove it first if you want to recreate it")
 		return os.ErrExist
 	}
@@ -63,8 +63,8 @@ func (ac *AppCreator) CreateEnvFile() error {
 		return err
 	}
 
-	if err := os.WriteFile(".env", envContent, 0644); err != nil {
-		ac.logger.Error("failed to create .env file", "error", err)
+	if err := os.WriteFile(envPath, envContent, 0644); err != nil {
+		ac.logger.Error("failed to create env file", "path", envPath, "error", err)
 		return err
 	}
 
@@ -81,13 +81,13 @@ func NewAppCreator(dbfile string) *AppCreator {
 	}
 }
 
-func (ac *AppCreator) CreateDatabase() error {
-	if _, err := os.Stat(ac.dbfile); err == nil {
-		ac.logger.Error("database file already exists", "file", ac.dbfile)
+func (ac *AppCreator) CreateDatabase(dbPath string) error {
+	if _, err := os.Stat(dbPath); err == nil {
+		ac.logger.Error("database file already exists", "file", dbPath)
 		return os.ErrExist
 	}
 
-	pool, err := sqlitex.NewPool(ac.dbfile, sqlitex.PoolOptions{
+	pool, err := sqlitex.NewPool(dbPath, sqlitex.PoolOptions{
 		Flags:    sqlite.OpenReadWrite | sqlite.OpenCreate,
 		PoolSize: runtime.NumCPU(),
 	})
@@ -198,7 +198,7 @@ func main() {
 		tasks = []string{"env", "db"}
 	}
 
-	creator := NewAppCreator(dbFile)
+	creator := NewAppCreator()
 	var poolClosed bool
 	defer func() {
 		if creator.pool != nil && !poolClosed {
@@ -209,16 +209,14 @@ func main() {
 	for _, task := range tasks {
 		switch task {
 		case "env":
-			creator.dbfile = envFile
-			if err := creator.CreateEnvFile(); err != nil {
+			if err := creator.CreateEnvFile(envFile); err != nil {
 				os.Exit(1)
 			}
 			creator.logger.Info("created env file", "path", envFile)
 
 		case "db":
-			creator.dbfile = dbFile
 			creator.logger.Info("creating sqlite file", "path", dbFile)
-			if err := creator.CreateDatabase(); err != nil {
+			if err := creator.CreateDatabase(dbFile); err != nil {
 				os.Exit(1)
 			}
 			poolClosed = true
