@@ -50,9 +50,11 @@ func (cd *ConfigDumper) DumpLatestConfig() (string, error) {
 		`SELECT content FROM app_config 
 		ORDER BY created_at DESC 
 		LIMIT 1;`,
-		func(stmt *sqlite.Stmt) error {
-			configContent = stmt.GetText("content")
-			return nil
+		&sqlitex.ExecOptions{
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				configContent = stmt.GetText("content")
+				return nil
+			},
 		})
 
 	if err != nil {
