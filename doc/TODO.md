@@ -1,7 +1,24 @@
 ### TODOs
 
 
+
 - server config missing keydata, certdata
+    - keydata means dump memory contains  TODO
+        - get from files is exist.
+        - get from db
+        - handler, get from files, get from db, they are not in config?
+            - what about all others secrets, theya re also in config
+        -remove from config. make secrets struct. under config 
+            for jwt call osGten each time? no way
+            smtp each time a email is send osGetenv
+            the serer has the cert in memory?
+-  config on init all secrets are loading in memory
+    - they can come from db or env variables
+    - they are there till next reload
+    - we need, jwt, cert, smt
+    - server get cert from config: from path or db  
+    - handler get them from config, or path of db
+        - upon retrieval it writes in db, not file.
 - if no smtp credentials, warn
 - bug harcoded callback oauth2, path! 
 - config db file used?
