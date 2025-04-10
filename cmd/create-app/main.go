@@ -172,63 +172,61 @@ func main() {
 	flag.StringVar(&dbFile, "db", "", "create database file at specified path")
 	flag.Parse()
 
-	creator := NewAppCreator("") // Initialize with empty path, will set later
-
+	// Determine tasks based on flags
+	tasks := []string{}
 	if envFile != "" {
-		// Only create env file
-		creator.dbfile = envFile // Reusing dbfile field for env path
-		if err := creator.CreateEnvFile(); err != nil {
-			os.Exit(1)
-		}
-		return
+		tasks = append(tasks, "env")
 	}
-
 	if dbFile != "" {
-		// Only create database
-		creator.dbfile = dbFile
-		creator.logger.Info("creating sqlite file", "path", dbFile)
-		if err := creator.CreateDatabase(); err != nil {
-			os.Exit(1)
+		tasks = append(tasks, "db")
+	}
+	if len(tasks) == 0 {
+		// Default case - do both
+		tasks = []string{"env", "db"}
+		envFile = ".env"
+		dbFile = "app.db"
+	}
+
+	creator := NewAppCreator(dbFile)
+	var poolClosed bool
+	defer func() {
+		if creator.pool != nil && !poolClosed {
+			creator.pool.Close()
 		}
-		defer creator.pool.Close()
+	}()
 
-		if err := creator.RunMigrations(); err != nil {
-			os.Exit(1)
+	for _, task := range tasks {
+		switch task {
+		case "env":
+			creator.dbfile = envFile // Reusing dbfile field for env path
+			if err := creator.CreateEnvFile(); err != nil {
+				os.Exit(1)
+			}
+			creator.logger.Info("created env file", "path", envFile)
+
+		case "db":
+			creator.dbfile = dbFile
+			creator.logger.Info("creating sqlite file", "path", dbFile)
+			if err := creator.CreateDatabase(); err != nil {
+				os.Exit(1)
+			}
+			poolClosed = true // Mark pool to not close again in defer
+
+			if err := creator.RunMigrations(); err != nil {
+				os.Exit(1)
+			}
+
+			if err := creator.InsertConfig(); err != nil {
+				creator.logger.Error("failed to insert config", "error", err)
+				os.Exit(1)
+			}
+			creator.logger.Info("database created successfully", "file", dbFile)
 		}
-
-		if err := creator.InsertConfig(); err != nil {
-			creator.logger.Error("failed to insert config", "error", err)
-			os.Exit(1)
-		}
-
-		creator.logger.Info("database created successfully", "file", dbFile)
-		return
 	}
 
-	// Default behavior (no flags) - do both with default paths
-	const defaultDbFile = "app.db"
-	creator.dbfile = defaultDbFile
-
-	if err := creator.CreateEnvFile(); err != nil {
-		os.Exit(1)
+	if len(tasks) > 1 {
+		creator.logger.Info("application setup completed",
+			"env_file", envFile,
+			"db_file", dbFile)
 	}
-
-	creator.logger.Info("creating sqlite file", "path", defaultDbFile)
-	if err := creator.CreateDatabase(); err != nil {
-		os.Exit(1)
-	}
-	defer creator.pool.Close()
-
-	if err := creator.RunMigrations(); err != nil {
-		os.Exit(1)
-	}
-
-	if err := creator.InsertConfig(); err != nil {
-		creator.logger.Error("failed to insert config", "error", err)
-		os.Exit(1)
-	}
-
-	creator.logger.Info("application setup completed",
-		"env_file", ".env",
-		"db_file", defaultDbFile)
 }
