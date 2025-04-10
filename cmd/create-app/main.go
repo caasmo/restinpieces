@@ -26,7 +26,7 @@ func (ac *AppCreator) CreateEnvFile() error {
 		return os.ErrExist
 	}
 
-	if err := os.WriteFile(".env", config.DefaultEnvExample, 0644); err != nil {
+	if err := os.WriteFile(".env", config.EnvExample, 0644); err != nil {
 		ac.logger.Error("failed to create .env file", "error", err)
 		return err
 	}
@@ -116,7 +116,7 @@ func (ac *AppCreator) InsertConfig() error {
 		VALUES (?, ?, ?)`,
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
-				string(config.DefaultConfigToml),
+				string(config.TomlExample),
 				"toml",
 				"Initial default configuration",
 			},

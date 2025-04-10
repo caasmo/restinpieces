@@ -12,11 +12,13 @@ import (
 	// "github.com/BurntSushi/toml" // No longer needed here
 )
 
+// variables used only by create-app
+//
 //go:embed config.toml.example
-var DefaultConfigToml []byte
+var TomlExample []byte
 
 //go:embed .env.example
-var DefaultEnvExample []byte
+var EnvExample []byte
 
 // Provider holds the application configuration and allows for atomic updates.
 type Provider struct {
