@@ -9,38 +9,52 @@ import (
 
 func route(cfg *config.Config, ap *core.App) {
 
-	// --- api core routes  ---
+	// Create a map to hold routes before registration
+	routes := make(map[string]*core.Chain)
+
+	ap.Router().Register(
+        map[string]*core.Chain){
+            cfg.Endpoints.ListEndpoints]: core.NewChain(http.HandlerFunc(core.FaviconHandler)),
+        }
+    )
+
+
+	// --- api core routes ---
+
 	// Favicon - Note: core.FaviconHandler is already an http.HandlerFunc
-	ap.Router().Handle("/favicon.ico", core.NewChain(http.HandlerFunc(core.FaviconHandler)).Handler())
+	routes["/favicon.ico"] = core.NewChain(http.HandlerFunc(core.FaviconHandler)) // No .Handler()
 
 	// TODO: List Endpoints
-	ap.Router().Handle(cfg.Endpoints.ListEndpoints, core.NewChain(http.HandlerFunc(ap.ListEndpointsHandler)).Handler())
+	routes[cfg.Endpoints.ListEndpoints] = core.NewChain(http.HandlerFunc(ap.ListEndpointsHandler)) // No .Handler()
 
 	// Auth Routes
-	ap.Router().Handle(cfg.Endpoints.RefreshAuth, core.NewChain(http.HandlerFunc(ap.RefreshAuthHandler)).Handler())
-	ap.Router().Handle(cfg.Endpoints.AuthWithPassword, core.NewChain(http.HandlerFunc(ap.AuthWithPasswordHandler)).Handler())
-	ap.Router().Handle(cfg.Endpoints.AuthWithOAuth2, core.NewChain(http.HandlerFunc(ap.AuthWithOAuth2Handler)).Handler())
-	ap.Router().Handle(cfg.Endpoints.RegisterWithPassword, core.NewChain(http.HandlerFunc(ap.RegisterWithPasswordHandler)).Handler())
-	ap.Router().Handle(cfg.Endpoints.ListOAuth2Providers, core.NewChain(http.HandlerFunc(ap.ListOAuth2ProvidersHandler)).Handler())
+	routes[cfg.Endpoints.RefreshAuth] = core.NewChain(http.HandlerFunc(ap.RefreshAuthHandler)) // No .Handler()
+	routes[cfg.Endpoints.AuthWithPassword] = core.NewChain(http.HandlerFunc(ap.AuthWithPasswordHandler)) // No .Handler()
+	routes[cfg.Endpoints.AuthWithOAuth2] = core.NewChain(http.HandlerFunc(ap.AuthWithOAuth2Handler)) // No .Handler()
+	routes[cfg.Endpoints.RegisterWithPassword] = core.NewChain(http.HandlerFunc(ap.RegisterWithPasswordHandler)) // No .Handler()
+	routes[cfg.Endpoints.ListOAuth2Providers] = core.NewChain(http.HandlerFunc(ap.ListOAuth2ProvidersHandler)) // No .Handler()
 
 	// Email Verification
-	ap.Router().Handle(cfg.Endpoints.RequestEmailVerification, core.NewChain(http.HandlerFunc(ap.RequestEmailVerificationHandler)).Handler())
-	ap.Router().Handle(cfg.Endpoints.ConfirmEmailVerification, core.NewChain(http.HandlerFunc(ap.ConfirmEmailVerificationHandler)).Handler())
+	routes[cfg.Endpoints.RequestEmailVerification] = core.NewChain(http.HandlerFunc(ap.RequestEmailVerificationHandler)) // No .Handler()
+	routes[cfg.Endpoints.ConfirmEmailVerification] = core.NewChain(http.HandlerFunc(ap.ConfirmEmailVerificationHandler)) // No .Handler()
 
 	// Password Reset
-	ap.Router().Handle(cfg.Endpoints.RequestPasswordReset, core.NewChain(http.HandlerFunc(ap.RequestPasswordResetHandler)).Handler())
-	ap.Router().Handle(cfg.Endpoints.ConfirmPasswordReset, core.NewChain(http.HandlerFunc(ap.ConfirmPasswordResetHandler)).Handler())
+	routes[cfg.Endpoints.RequestPasswordReset] = core.NewChain(http.HandlerFunc(ap.RequestPasswordResetHandler)) // No .Handler()
+	routes[cfg.Endpoints.ConfirmPasswordReset] = core.NewChain(http.HandlerFunc(ap.ConfirmPasswordResetHandler)) // No .Handler()
 
 	// Email Change
-	ap.Router().Handle(cfg.Endpoints.RequestEmailChange, core.NewChain(http.HandlerFunc(ap.RequestEmailChangeHandler)).Handler())
-	ap.Router().Handle(cfg.Endpoints.ConfirmEmailChange, core.NewChain(http.HandlerFunc(ap.ConfirmEmailChangeHandler)).Handler())
+	routes[cfg.Endpoints.RequestEmailChange] = core.NewChain(http.HandlerFunc(ap.RequestEmailChangeHandler)) // No .Handler()
+	routes[cfg.Endpoints.ConfirmEmailChange] = core.NewChain(http.HandlerFunc(ap.ConfirmEmailChangeHandler)) // No .Handler()
 
 	// --- Example/Benchmark Routes (keep commented for now) ---
-	// ap.Router().Handle("/api/admin", commonMiddleware.Append(ap.Auth).ThenFunc(ap.Admin))
-	// ap.Router().Handle("/api/example/sqlite/writeone/:value", http.HandlerFunc(ap.ExampleWriteOne))
-	//ap.Router().Handle("/api/benchmark/baseline", http.HandlerFunc(ap.BenchmarkBaseline))
-	//ap.Router().Handle("/api/benchmark/sqlite/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
-	//ap.Router().Handle("GET /api/benchmark/sqlite/pool/ratio/{ratio}/read/{reads}", http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
-	//ap.Router().Handle("/api/benchmark/ristretto/read", ap.BenchmarkRistrettoRead())
-	//ap.Router().Handle("/api/teas/:id", commonMiddleware.ThenFunc(ap.Tea))
+	// routes["/api/admin"] = core.NewChain(http.HandlerFunc(ap.Admin)).WithMiddleware(ap.Auth) // Example with middleware
+	// routes["/api/example/sqlite/writeone/:value"] = core.NewChain(http.HandlerFunc(ap.ExampleWriteOne))
+	// routes["/api/benchmark/baseline"] = core.NewChain(http.HandlerFunc(ap.BenchmarkBaseline))
+	// routes["/api/benchmark/sqlite/ratio/{ratio}/read/{reads}"] = core.NewChain(http.HandlerFunc(ap.BenchmarkSqliteRWRatio))
+	// routes["GET /api/benchmark/sqlite/pool/ratio/{ratio}/read/{reads}"] = core.NewChain(http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool))
+	// routes["/api/benchmark/ristretto/read"] = core.NewChain(ap.BenchmarkRistrettoRead()) // Assuming this returns http.HandlerFunc
+	// routes["/api/teas/:id"] = core.NewChain(http.HandlerFunc(ap.Tea))
+
+	// Register all collected routes at once
+	ap.Router().Register(routes)
 }
