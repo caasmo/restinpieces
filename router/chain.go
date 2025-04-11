@@ -11,14 +11,15 @@ type Chain struct {
 	observers   []http.Handler
 }
 
-// NewRoute creates a new Route instance with initialized middlewares slice
-// endpoint parameter is required - provides HTTP method and path pattern
+// NewChain creates a new Chain instance with the base handler and initialized middlewares slice.
 func NewChain(h http.Handler) *Chain {
-	//if endpoint == "" {
-	//	panic("route endpoint cannot be empty")
-	//}
+	if h == nil {
+		panic("chain handler cannot be nil")
+	}
 	return &Chain{
+		handler:     h, // Store the base handler
 		middlewares: make([]func(http.Handler) http.Handler, 0),
+		observers:   make([]http.Handler, 0), // Ensure observers slice is also initialized
 	}
 }
 

@@ -7,6 +7,8 @@ import (
 	"os"
 
 	"github.com/caasmo/restinpieces"
+	"github.com/caasmo/restinpieces/core/proxy" // Import for BlockIp
+	"github.com/caasmo/restinpieces/router"    // Import for NewChain
 )
 
 // Pool creation helpers moved to restinpieces package
@@ -58,8 +60,44 @@ func main() {
 		os.Exit(1) // Exit if app initialization fails
 	}
 
+	// --- User Customization of PreRouter ---
+	// 'app' is now fully initialized with access to cache, logger, config, etc.
+
+	// 1. Create Middleware Instances using App resources
+	blockIpInstance := proxy.NewBlockIp(app.Cache(), app.Logger())
+	// Add other middleware instances here if needed (e.g., metrics, custom logging)
+	// myMetrics := metrics.New(app.Config().Metrics)
+
+	// 2. Build the PreRouter Chain using router.Chain
+	//    Start with app.Router() as the base handler for this chain.
+	preRouterChain := router.NewChain(app.Router())
+
+	// 3. Add Middleware (order matters: first added is outermost)
+	//    Check config via app.Config() if middleware should be enabled.
+	//    Example: if app.Config().BlockIp.Enabled { ... }
+	if blockIpInstance.IsEnabled() { // Assuming IsEnabled checks internal state/config
+		preRouterChain.WithMiddleware(blockIpInstance.Execute)
+		slog.Info("IP Blocking middleware enabled in PreRouter chain")
+	} else {
+		slog.Info("IP Blocking middleware disabled")
+	}
+	// Add other middleware conditionally:
+	// if myMetrics.IsEnabled() {
+	//     preRouterChain.WithMiddleware(myMetrics.Middleware)
+	// }
+	// preRouterChain.WithMiddleware(mySimpleLoggerMiddleware) // Example simple logger
+
+	// 4. Get the final composed handler for the pre-router steps
+	finalPreRouterHandler := preRouterChain.Handler()
+
+	// 5. Update the App's PreRouter
+	app.SetPreRouter(finalPreRouterHandler)
+	slog.Info("Custom PreRouter handler chain configured")
+	// --- End Customization ---
+
 	// Start the server
 	// The Run method likely blocks until the server stops (e.g., via signal)
+	// It will now use the handler set via app.SetPreRouter()
 	srv.Run()
 
 	slog.Info("Server shut down gracefully.")
