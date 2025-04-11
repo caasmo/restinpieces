@@ -68,8 +68,9 @@ type Config struct {
 	OAuth2Providers map[string]OAuth2Provider
 	Smtp            Smtp
 	Endpoints       Endpoints
-	Proxy           Proxy
-	Acme            Acme // ACME/Let's Encrypt settings
+	// Proxy           Proxy // Removed Proxy config section
+	Acme            Acme    // ACME/Let's Encrypt settings
+	BlockIp         BlockIp // Moved BlockIp config here
 }
 
 type Jwt struct {
@@ -291,9 +292,6 @@ type BlockIp struct {
 	// Add other blocking-related settings here (e.g., duration, thresholds)
 }
 
-// Proxy holds configuration for the proxy layer.
-type Proxy struct {
-	BlockIp BlockIp
-}
+// Proxy struct removed as it's no longer used directly in config
 
 // Load functions moved to config_load.go
