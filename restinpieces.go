@@ -11,11 +11,11 @@ import (
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
-	"github.com/caasmo/restinpieces/core/proxy" // Added import
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
-	"github.com/caasmo/restinpieces/router" // Added import
 	"github.com/caasmo/restinpieces/server"
+	"github.com/caasmo/restinpieces/core/proxy" // Import for BlockIp
+	"github.com/caasmo/restinpieces/router"    // Import for NewChain
 )
 
 // New creates a new App instance and Server with the provided options.

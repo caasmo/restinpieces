@@ -7,8 +7,6 @@ import (
 	"os"
 
 	"github.com/caasmo/restinpieces"
-	"github.com/caasmo/restinpieces/core/proxy" // Import for BlockIp
-	"github.com/caasmo/restinpieces/router"    // Import for NewChain
 )
 
 // Pool creation helpers moved to restinpieces package
@@ -47,7 +45,7 @@ func main() {
 	}()
 
 	// --- Initialize the Application ---
-	app, srv, err := restinpieces.New(
+	_, srv, err := restinpieces.New(
 		*configFile,
 		restinpieces.WithDbCrawshaw(dbPool),
 		restinpieces.WithRouterServeMux(),
