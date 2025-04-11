@@ -17,9 +17,8 @@ import (
 	"github.com/caasmo/restinpieces/server"
 )
 
-// Import assets package to ensure embedded data is available during init and build.
-// The underscore means we only want the side effects (init functions, embedding).
-//import _ "github.com/caasmo/restinpieces/assets" // Adjust if your module path is different
+// Import assets package removed as it's no longer needed for maintenance page
+// import _ "github.com/caasmo/restinpieces/assets"
 
 // New creates a new App instance and Server with the provided options.
 // It initializes the core application components like database, router, cache first,

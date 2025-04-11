@@ -2,14 +2,16 @@ package proxy
 
 import (
 	"log/slog"
+	"net" // Keep for potential future IP checks, or remove if definitely not needed
 	"net/http"
 
+	// "github.com/caasmo/restinpieces/assets" // No longer needed for simple text response
 	"github.com/caasmo/restinpieces/core"
 )
 
 // MaintenanceMiddleware handles serving a maintenance page based on configuration.
 type MaintenanceMiddleware struct {
-	app    *core.App // Use App to access config and GetClientIP
+	app    *core.App // Use App to access config
 	logger *slog.Logger
 }
 
@@ -22,12 +24,8 @@ func NewMaintenanceMiddleware(app *core.App, logger *slog.Logger) *MaintenanceMi
 	if logger == nil {
 		panic("logger cannot be nil for MaintenanceMiddleware")
 	}
-	if len(assets.MaintenancePageGzipped) == 0 {
-		// This check helps catch build issues where the embedding failed silently.
-		logger.Warn("Embedded maintenance page is empty. Ensure 'assets/maintenance.html.gz' exists and is embedded correctly.")
-	} else {
-		logger.Debug("Maintenance page loaded", "size_bytes", len(assets.MaintenancePageGzipped))
-	}
+	// No longer need to check embedded page size
+	logger.Debug("Maintenance middleware initialized")
 	return &MaintenanceMiddleware{
 		app:    app,
 		logger: logger.With("middleware", "maintenance"), // Add context to logger
@@ -42,12 +40,13 @@ func (m *MaintenanceMiddleware) Execute(next http.Handler) http.Handler {
 
 		// Check if feature enabled and mode activated
 		if maintCfg.Enabled && maintCfg.Activated {
-			// Use the App's GetClientIP method
+			// IP bypass logic removed for now
 
+			m.logger.Info("Maintenance mode active, serving maintenance text", "path", r.URL.Path)
 
 			// Set headers BEFORE writing status code or body
-			w.Header().Set("Content-Encoding", "gzip")
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			// w.Header().Set("Content-Encoding", "gzip") // No longer gzipped
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8") // Plain text response
 			// Prevent caching of the maintenance page by clients and proxies
 			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
 			w.Header().Set("Pragma", "no-cache") // HTTP/1.0 backward compatibility
@@ -57,15 +56,53 @@ func (m *MaintenanceMiddleware) Execute(next http.Handler) http.Handler {
 
 			w.WriteHeader(http.StatusServiceUnavailable) // 503 Service Unavailable
 
-			_, err := w.Write(assets.MaintenancePageGzipped)
+			// Write the simple text message
+			_, err := w.Write([]byte("Maintenance. Page comes later."))
 			if err != nil {
 				// Log error, but response headers/status might be already sent
-				m.logger.Error("Failed to write maintenance page response body", "error", err)
+				m.logger.Error("Failed to write maintenance text response body", "error", err)
 			}
 			return // Stop processing the request here
 		}
 
-		// If maintenance mode is not active or IP is allowed, proceed to the next handler
+		// If maintenance mode is not active, proceed to the next handler
 		next.ServeHTTP(w, r)
 	})
 }
+
+// isIPAllowed checks if a given client IP matches any of the allowed IPs or CIDR ranges.
+// Removed as AllowedIPs feature is temporarily disabled.
+/*
+func (m *MaintenanceMiddleware) isIPAllowed(clientIP string, allowedEntries []string) bool {
+	if len(allowedEntries) == 0 {
+		return false // No allowed list means no one is allowed by default
+	}
+
+	parsedClientIP := net.ParseIP(clientIP)
+	if parsedClientIP == nil {
+		m.logger.Warn("Could not parse client IP for maintenance bypass check", "ip", clientIP)
+		return false // Cannot check an invalid client IP
+	}
+
+	for _, entry := range allowedEntries {
+		// Try parsing as CIDR first
+		_, ipNet, err := net.ParseCIDR(entry)
+		if err == nil {
+			// Valid CIDR, check if the client IP is within the range
+			if ipNet.Contains(parsedClientIP) {
+				return true
+			}
+		} else {
+			// Not a valid CIDR, try direct IP comparison
+			allowedIP := net.ParseIP(entry)
+			if allowedIP != nil && allowedIP.Equal(parsedClientIP) {
+				return true
+			}
+			// Log if the entry is neither a valid CIDR nor a valid IP? Optional.
+			// m.logger.Warn("Invalid entry in maintenance allowed_ips list", "entry", entry)
+		}
+	}
+
+	return false // IP did not match any allowed entry
+}
+*/
