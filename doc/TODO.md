@@ -1,6 +1,11 @@
 ### TODOs
 
 
+- blockip move
+- preRouter handling
+    - how user overrides, adds
+    - workflow
+    - deactivate security if under proxy/filter like nginx
 - disable standard routes
 - server config missing keydata, certdata
     - keydata means dump memory contains  TODO
@@ -19,7 +24,6 @@
     - server get cert from config: from path or db  
     - handler get them from config, or path of db
         - upon retrieval it writes in db, not file.
-- if no smtp credentials, warn
 - bug harcoded callback oauth2, path! 
 - config db file used?
 - test tls 
@@ -46,7 +50,6 @@
 - X-Content-Type-Options: Prevents MIME-sniffing attacks. Simple, robust addition.
 - ETag or Last-Modified: Enables efficient cache validation for performance.
 - assests log 
-- app, server dicotomy
 - config reload
 - proxy, app clear wiring
     - proxy design is overkill, 
@@ -104,7 +107,6 @@
 - Move validate claims to request jwt 
 	- not really crypto
 - order in init/main. modular. Brainstrom 
-- deactivate security if under proxy/filter like nginx
 - password reset if no password ie oauth2 user => no only register with email
 - verify email for oauth -> yes verifed
 - password change test with real smtp  
@@ -112,7 +114,6 @@
 - endpointsw discovery has no update each time.
 - assets integrity, bundler 
 - if in db config, how to edit the easiest, toml?
-- propably multidomain
 - maintenance middleware: 503 Retry-After: 3600
 	- we can not avoid goroutine
     - global middleware, wraps router
@@ -184,9 +185,11 @@
 - add prometheus.
 - s3 integration
 - cache alternative syncMap, no garbage collection, noOP
+- propably multidomain
 
 ### done
 
+- app, server dicotomy
 - sdk, if http, call http, if https call https
 - certs in db
 - config fields omit, toml 
