@@ -27,12 +27,6 @@ func (s *ServeMuxRouter) Param(req *http.Request, key string) string {
 	return req.PathValue(key)
 }
 
-func (s *ServeMuxRouter) Register(routes ...*router.Route) {
-	for _, r := range routes {
-		s.Handle(r.Endpoint, r.Handler())
-	}
-}
-
 func New() router.Router {
 	return &ServeMuxRouter{ServeMux: http.NewServeMux()}
 }

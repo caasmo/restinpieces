@@ -9,7 +9,12 @@ import (
 func route(cfg *config.Config, ap *core.App) {
 
 	// --- api core routes  ---
+	ap.Router().Handle("/blockedPath", NewChain().WithPreRouterMiddleware(BlockiP))
 	ap.Router().Register(
+        ("/blockedPath", NewChain().WithPreRouterMiddleware(BlockiP))
+
+        // Route is just endpoint  chain, we can keep it, but why?
+        // jsut use Handle and remove register
 		r.NewRoute("/favicon.ico").WithHandlerFunc(core.FaviconHandler),
 
 		//TODO

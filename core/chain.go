@@ -1,12 +1,11 @@
-package router
+package core
 
 import (
 	"net/http"
 )
 
-// Route builder for creating handler chains with middleware
-type Route struct {
-	Endpoint    string // exported field
+type Chain struct {
+	//Endpoint    string // exported field
 	handler     http.Handler
 	middlewares []func(http.Handler) http.Handler
 	observers   []http.Handler
@@ -14,26 +13,25 @@ type Route struct {
 
 // NewRoute creates a new Route instance with initialized middlewares slice
 // endpoint parameter is required - provides HTTP method and path pattern
-func NewRoute(endpoint string) *Route {
-	if endpoint == "" {
-		panic("route endpoint cannot be empty")
-	}
-	return &Route{
-		Endpoint:    endpoint, // update to use exported field
+func NewChain(h http.Handler) *Chain {
+	//if endpoint == "" {
+	//	panic("route endpoint cannot be empty")
+	//}
+	return &Chain{
 		middlewares: make([]func(http.Handler) http.Handler, 0),
 	}
 }
 
 // WithHandler sets the final handler for the route
-func (r *Route) WithHandler(h http.Handler) *Route {
-	r.handler = h
-	return r
-}
+//func (r *Route) WithHandler(h http.Handler) *Route {
+//	r.handler = h
+//	return r
+//}
 
 // WithHandlerFunc sets the final handler function for the route
-func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
-	return r.WithHandler(h)
-}
+//func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
+//	return r.WithHandler(h)
+//}
 
 // WithMiddleware adds one or more middlewares to the chain.
 // Middlewares execute in the order they are defined, from left to right.
@@ -51,7 +49,7 @@ func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
 // Alice (github.com/justinas/alice) where the first middleware in the chain
 // is the outermost handler that runs first. This matches the natural reading
 // order of the code and makes it easier to reason about middleware execution.
-func (r *Route) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *Route {
+func (r *Chain) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *Chain {
 	for _, mw := range middlewares {
 		r.middlewares = append([]func(http.Handler) http.Handler{mw}, r.middlewares...)
 	}
@@ -59,7 +57,7 @@ func (r *Route) WithMiddleware(middlewares ...func(http.Handler) http.Handler) *
 }
 
 // WithMiddlewareChain prepends a chain of middlewares (added in given order)
-func (r *Route) WithMiddlewareChain(middlewares []func(http.Handler) http.Handler) *Route {
+func (r *Chain) WithMiddlewareChain(middlewares []func(http.Handler) http.Handler) *Chain {
 	return r.WithMiddleware(middlewares...)
 }
 
@@ -68,15 +66,15 @@ func (r *Route) WithMiddlewareChain(middlewares []func(http.Handler) http.Handle
 // Note that observers will execute even if middleware returns early or stops processing.
 // Observers should not write to the response as the main handler may have already sent headers.
 // Use carefully as this could lead to unintended side effects when middleware fails.
-func (r *Route) WithObservers(observers ...http.Handler) *Route {
+func (r *Chain) WithObservers(observers ...http.Handler) *Chain {
 	r.observers = append(r.observers, observers...)
 	return r
 }
 
 // Handler returns the final handler with all middlewares and observers applied
-func (r *Route) Handler() http.Handler {
+func (r *Chain) Handler() http.Handler {
 	if r.handler == nil {
-		panic("route handler cannot be nil")
+		panic("handler cannot be nil")
 	}
 	handler := r.handler
 
