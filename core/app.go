@@ -122,12 +122,3 @@ func (a *App) Config() *config.Config {
 func (a *App) SetConfigProvider(provider *config.Provider) {
 	a.configProvider = provider
 }
-
-// SetPreRouter allows replacing the handler used by App's ServeHTTP.
-// This is intended to be called *after* NewApp, typically in main.go.
-func (a *App) SetPreRouter(handler http.Handler) {
-	if handler == nil {
-		panic("PreRouter handler cannot be set to nil")
-	}
-	a.PreRouter = handler
-}
