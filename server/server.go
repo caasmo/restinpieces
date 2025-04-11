@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/core/proxy"
+	// "github.com/caasmo/restinpieces/core/proxy" // Removed proxy import
 	"github.com/caasmo/restinpieces/queue/scheduler"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
@@ -17,7 +17,7 @@ import (
 
 type Server struct {
 	configProvider *config.Provider
-	proxy          *proxy.Proxy
+	handler        http.Handler // Changed from proxy *proxy.Proxy
 	scheduler      *scheduler.Scheduler
 	logger         *slog.Logger
 }
@@ -46,10 +46,11 @@ func (s *Server) handleSIGHUP() {
 	//	}
 }
 
-func NewServer(provider *config.Provider, p *proxy.Proxy, scheduler *scheduler.Scheduler, logger *slog.Logger) *Server {
+// NewServer now accepts any http.Handler.
+func NewServer(provider *config.Provider, handler http.Handler, scheduler *scheduler.Scheduler, logger *slog.Logger) *Server {
 	return &Server{
 		configProvider: provider,
-		proxy:          p,
+		handler:        handler, // Store the provided handler
 		scheduler:      scheduler,
 		logger:         logger,
 	}
@@ -63,7 +64,7 @@ func (s *Server) Run() {
 
 	srv := &http.Server{
 		Addr:              serverCfg.Addr,
-		Handler:           s.proxy,
+		Handler:           s.handler, // Use the handler field here
 		ReadTimeout:       serverCfg.ReadTimeout,
 		ReadHeaderTimeout: serverCfg.ReadHeaderTimeout,
 		WriteTimeout:      serverCfg.WriteTimeout,

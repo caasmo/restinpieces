@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"log/slog"
+	"net/http" // Added import
 	//"sync/atomic" // No longer needed here, moved to config.Provider
 
 	"github.com/caasmo/restinpieces/cache"
@@ -25,9 +26,17 @@ type App struct {
 	dbConfig       db.DbConfig
 	dbAcme         db.DbAcme
 	router         router.Router
+	PreRouter      http.Handler                     // Handler to execute before the main router
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
 	logger         *slog.Logger
+}
+
+// ServeHTTP makes App implement http.Handler.
+// It delegates the request to the PreRouter handler.
+func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// PreRouter is guaranteed to be non-nil after NewApp finishes.
+	a.PreRouter.ServeHTTP(w, r)
 }
 
 func NewApp(opts ...Option) (*App, error) {
@@ -56,6 +65,11 @@ func NewApp(opts ...Option) (*App, error) {
 		// Default to slog.Default() if no logger is provided? Or require it?
 		// Let's require it for now for explicitness.
 		return nil, fmt.Errorf("logger is required but was not provided")
+	}
+
+	// Default PreRouter to the main router if it wasn't set by an Option
+	if a.PreRouter == nil {
+		a.PreRouter = a.router
 	}
 
 	return a, nil

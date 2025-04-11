@@ -6,7 +6,7 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
-	"github.com/caasmo/restinpieces/core/proxy"
+	// "github.com/caasmo/restinpieces/core/proxy" // Removed proxy import
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
@@ -49,9 +49,6 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	configProvider := config.NewProvider(cfg)
 	app.SetConfigProvider(configProvider)
 
-	// Create the Proxy instance, passing the app
-	px := proxy.NewProxy(app)
-
 	// Setup custom application logic and routes
 	route(cfg, app) // Assuming route function exists and is correctly defined elsewhere
 
@@ -62,8 +59,8 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 		return nil, nil, err
 	}
 
-	// Create the server instance
-	srv := server.NewServer(configProvider, px, scheduler, app.Logger())
+	// Create the server instance, passing 'app' as the http.Handler
+	srv := server.NewServer(configProvider, app, scheduler, app.Logger())
 
 	// Return the initialized app and server
 	return app, srv, nil
