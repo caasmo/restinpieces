@@ -26,18 +26,13 @@ type App struct {
 	dbConfig       db.DbConfig
 	dbAcme         db.DbAcme
 	router         router.Router
-	PreRouter      http.Handler                     // Handler to execute before the main router
+	// PreRouter field removed
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
 	logger         *slog.Logger
 }
 
-// ServeHTTP makes App implement http.Handler.
-// It delegates the request to the PreRouter handler.
-func (a *App) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// PreRouter is guaranteed to be non-nil after NewApp finishes.
-	a.PreRouter.ServeHTTP(w, r)
-}
+// ServeHTTP method removed as App no longer acts as the primary handler
 
 func NewApp(opts ...Option) (*App, error) {
 	a := &App{}
@@ -67,10 +62,7 @@ func NewApp(opts ...Option) (*App, error) {
 		return nil, fmt.Errorf("logger is required but was not provided")
 	}
 
-	// Default PreRouter to the main router if it wasn't set by an Option
-	if a.PreRouter == nil {
-		a.PreRouter = a.router
-	}
+	// PreRouter initialization logic removed from NewApp
 
 	return a, nil
 }

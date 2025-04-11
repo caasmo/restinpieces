@@ -62,17 +62,19 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	}
 
 	// Create the server instance, passing 'app' as the http.Handler
-	srv := server.NewServer(configProvider, app, scheduler, app.Logger())
-
 	// Initialize the PreRouter chain with internal middleware
-	initPreRouter(app)
+	preRouterHandler := initPreRouter(app)
+
+	// Create the server instance, passing the composed preRouterHandler
+	srv := server.NewServer(configProvider, preRouterHandler, scheduler, app.Logger())
 
 	// Return the initialized app and server
 	return app, srv, nil
 }
 
-// initPreRouter sets up the internal pre-router middleware chain based on configuration.
-func initPreRouter(app *core.App) {
+// initPreRouter sets up the internal pre-router middleware chain based on configuration
+// and returns the final http.Handler.
+func initPreRouter(app *core.App) http.Handler {
 	logger := app.Logger()
 	cfg := app.Config()
 
@@ -102,10 +104,10 @@ func initPreRouter(app *core.App) {
 	// --- Finalize the PreRouter ---
 	// Get the final composed handler
 	finalPreRouterHandler := preRouterChain.Handler()
-
-	// Set it on the app instance
-	app.SetPreRouter(finalPreRouterHandler)
 	logger.Info("Internal PreRouter handler chain configured")
+
+	// Return the final handler
+	return finalPreRouterHandler
 }
 
 // SetupScheduler initializes the job scheduler and its handlers.
