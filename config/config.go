@@ -71,6 +71,7 @@ type Config struct {
 	// Proxy           Proxy // Removed Proxy config section
 	Acme            Acme    // ACME/Let's Encrypt settings
 	BlockIp         BlockIp // Moved BlockIp config here
+	Maintenance     Maintenance // Maintenance mode settings
 }
 
 type Jwt struct {
@@ -290,6 +291,23 @@ type Acme struct {
 type BlockIp struct {
 	Enabled bool // Whether IP blocking is active
 	// Add other blocking-related settings here (e.g., duration, thresholds)
+}
+
+// Proxy struct removed as it's no longer used directly in config
+
+// BlockIp holds configuration specific to IP blocking.
+type BlockIp struct {
+	Enabled bool // Whether IP blocking is active
+	// Add other blocking-related settings here (e.g., duration, thresholds)
+}
+
+// Maintenance holds configuration for the maintenance mode feature.
+type Maintenance struct {
+	Enabled     bool     `toml:"enabled"`      // Is the maintenance mode feature available?
+	Activated   bool     `toml:"activated"`    // Is maintenance mode currently active?
+	AllowedIPs  []string `toml:"allowed_ips"`  // Optional: IPs/CIDRs that bypass maintenance mode
+	// PageTitle string `toml:"page_title"` // Example: Future enhancement
+	// Message   string `toml:"message"`    // Example: Future enhancement
 }
 
 // Proxy struct removed as it's no longer used directly in config

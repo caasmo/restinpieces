@@ -14,9 +14,13 @@ import (
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/server"
-	"github.com/caasmo/restinpieces/core/proxy" // Import for BlockIp
+	"github.com/caasmo/restinpieces/core/proxy" // Import for BlockIp and MaintenanceMiddleware
 	"github.com/caasmo/restinpieces/router"    // Import for NewChain
 )
+
+// Import assets package to ensure embedded data is available during init and build.
+// The underscore means we only want the side effects (init functions, embedding).
+import _ "github.com/caasmo/restinpieces/assets" // Adjust if your module path is different
 
 // New creates a new App instance and Server with the provided options.
 // It initializes the core application components like database, router, cache first,
@@ -79,22 +83,40 @@ func initPreRouter(app *core.App) http.Handler {
 	cfg := app.Config()
 
 	// Start the chain with the application's main router as the base handler.
+	// The final handler in the chain will be app.Router().ServeHTTP
 	preRouterChain := router.NewChain(app.Router())
 
-	// --- Add Internal Middleware Conditionally ---
+	// --- Add Internal Middleware Conditionally (Order Matters!) ---
+	// Middlewares are added using WithMiddleware, which prepends them.
+	// The last middleware added is the first one to execute.
+	// Execution order will be: Maintenance -> BlockIp -> app.Router()
 
-	// 1. BlockIp Middleware
+	// 1. BlockIp Middleware (Added first, runs second)
 	if cfg.BlockIp.Enabled {
 		// Instantiate using app resources
 		blockIpInstance := proxy.NewBlockIp(app.Cache(), logger)
-		// Add its Execute method to the chain
 		preRouterChain.WithMiddleware(blockIpInstance.Execute)
 		logger.Info("Internal Middleware: BlockIp enabled")
 	} else {
 		logger.Info("Internal Middleware: BlockIp disabled")
 	}
 
-	// 2. Add other internal middleware here (e.g., RateLimiter, Metrics)
+	// 2. Maintenance Middleware (Added second, runs first)
+	// We check Enabled here for setup, but the middleware itself checks Activated dynamically on each request.
+	if cfg.Maintenance.Enabled {
+		// Instantiate using app instance (needed for GetClientIP and config)
+		maintenanceInstance := proxy.NewMaintenanceMiddleware(app, logger)
+		preRouterChain.WithMiddleware(maintenanceInstance.Execute)
+		logger.Info("Internal Middleware: Maintenance enabled")
+	} else {
+		logger.Info("Internal Middleware: Maintenance disabled")
+	}
+
+
+	// 3. Add other internal middleware here (e.g., RateLimiter, Metrics, Logging)
+	// These would typically be added *after* Maintenance and BlockIp in this block
+	// so they execute *before* them.
+	// Example:
 	// if cfg.RateLimiter.Enabled {
 	//    rateLimiter := internal.NewRateLimiter(...)
 	//    preRouterChain.WithMiddleware(rateLimiter.Execute)
