@@ -8,6 +8,10 @@ import (
 	"github.com/caasmo/restinpieces/router"
 )
 
+//func WithPreRouterMiddleware(m )  {
+//    
+//}
+
 func route(cfg *config.Config, ap *core.App) {
 
 	// --- api core routes ---

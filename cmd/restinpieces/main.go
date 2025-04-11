@@ -47,7 +47,7 @@ func main() {
 	}()
 
 	// --- Initialize the Application ---
-	_, srv, err := restinpieces.New(
+	app, srv, err := restinpieces.New(
 		*configFile,
 		restinpieces.WithDbCrawshaw(dbPool),
 		restinpieces.WithRouterServeMux(),
