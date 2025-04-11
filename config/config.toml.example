@@ -76,6 +76,18 @@ PublicDir = "static/dist"
   Enabled = true
 
 
+# --- Maintenance Mode Settings ---
+[Maintenance]
+  # Enable or disable the maintenance mode feature entirely.
+  # If false, the middleware won't even run, regardless of 'activated'.
+  Enabled = false
+
+  # Activate or deactivate the maintenance mode.
+  # If true (and Enabled=true), the maintenance page/message will be shown.
+  Activated = false
+  # AllowedIPs = [] # Example: ["192.168.1.1", "10.0.0.0/8"] - Currently not implemented in middleware
+
+
 # --- ACME / Let's Encrypt Settings ---
 [Acme]
   # Enable automatic TLS certificate management using ACME (e.g., Let's Encrypt).
