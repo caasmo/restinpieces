@@ -27,8 +27,8 @@ func (s *ServeMuxRouter) Param(req *http.Request, key string) string {
 	return req.PathValue(key)
 }
 
-func (s *ServeMuxRouter) Register(chains map[string] *router.Chain) {
-	for endpoint, chain  := range chains {
+func (s *ServeMuxRouter) Register(chains map[string]*router.Chain) {
+	for endpoint, chain := range chains {
 		s.Handle(endpoint, chain.Handler())
 	}
 }

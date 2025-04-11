@@ -9,5 +9,5 @@ type Router interface {
 	HandleFunc(string, func(http.ResponseWriter, *http.Request))
 	ServeHTTP(http.ResponseWriter, *http.Request)
 	Param(*http.Request, string) string
-	Register(map[string] *Chain)
+	Register(map[string]*Chain)
 }
