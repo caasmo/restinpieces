@@ -1,7 +1,7 @@
 package servemux
 
 import (
-	router "github.com/caasmo/restinpieces/router"
+	"github.com/caasmo/restinpieces/core"
 	"net/http"
 )
 
@@ -25,6 +25,12 @@ func (s *ServeMuxRouter) HandleFunc(path string, handler func(http.ResponseWrite
 func (s *ServeMuxRouter) Param(req *http.Request, key string) string {
 	// Uses Go 1.22's PathValue which handles named parameters
 	return req.PathValue(key)
+}
+
+func (s *ServeMuxRouter) Register(chains map[string] *core.Chain) {
+	for endpoint, chain  := range chains {
+		s.Handle(endpoint, chain.Handler())
+	}
 }
 
 func New() router.Router {
