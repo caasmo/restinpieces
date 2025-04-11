@@ -69,12 +69,11 @@ PublicDir = "static/dist"
   KeyFile = ""
 
 
-# --- Proxy Layer Settings ---
-[Proxy]
-  # Settings related to IP address blocking.
-  [Proxy.BlockIp]
-    # Enable or disable automatic IP blocking based on request frequency.
-    Enabled = true
+# --- IP Blocking Settings ---
+# Settings related to automatic IP address blocking based on request frequency.
+[BlockIp]
+  # Enable or disable automatic IP blocking.
+  Enabled = true
 
 
 # --- ACME / Let's Encrypt Settings ---
