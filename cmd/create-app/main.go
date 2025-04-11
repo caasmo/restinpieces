@@ -2,9 +2,9 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io/fs"
-	"flag"
 	"log/slog"
 	"os"
 	"path/filepath"

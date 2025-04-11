@@ -69,7 +69,7 @@ type Config struct {
 	Smtp            Smtp
 	Endpoints       Endpoints
 	Proxy           Proxy
-	Acme            Acme   // ACME/Let's Encrypt settings
+	Acme            Acme // ACME/Let's Encrypt settings
 }
 
 type Jwt struct {
@@ -127,12 +127,12 @@ type Server struct {
 	// the direct connection IP (r.RemoteAddr).
 	ClientIpProxyHeader string
 
-    // --- New TLS Fields ---
-    EnableTLS       bool   // Default to false if not present
-    CertFile        string // Path to TLS certificate file (legacy)
-    KeyFile         string // Path to TLS private key file (legacy)
-    CertData        string `toml:"-"` // TLS certificate data (preferred)
-    KeyData         string `toml:"-"` // TLS private key data (preferred)
+	// --- New TLS Fields ---
+	EnableTLS bool   // Default to false if not present
+	CertFile  string // Path to TLS certificate file (legacy)
+	KeyFile   string // Path to TLS private key file (legacy)
+	CertData  string `toml:"-"` // TLS certificate data (preferred)
+	KeyData   string `toml:"-"` // TLS private key data (preferred)
 
 }
 
@@ -141,7 +141,7 @@ type Server struct {
 // If Addr cannot be parsed, returns Addr as-is.
 func (s *Server) BaseURL() string {
 	host, port, err := net.SplitHostPort(s.Addr)
-	// TODO overkill  
+	// TODO overkill
 	if err != nil {
 		// Handle cases like just ":8080" or even just "example.com" (no port)
 		// net.SplitHostPort might fail if only host or only port is given in certain ways.
@@ -195,7 +195,6 @@ type RateLimits struct {
 	EmailChangeCooldown time.Duration
 }
 
-
 type OAuth2Provider struct {
 	Name         string
 	ClientID     string
@@ -210,7 +209,7 @@ type OAuth2Provider struct {
 }
 
 type Smtp struct {
-	Enabled     bool   // Whether SMTP functionality is enabled
+	Enabled     bool // Whether SMTP functionality is enabled
 	Host        string
 	Port        int
 	Username    string
@@ -260,31 +259,30 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 	return path + ".html"
 }
 
-
 // Acme holds configuration for ACME (Let's Encrypt) certificate management.
 type Acme struct {
-	Enabled               bool          // Set to true to enable automatic certificate management
-	Email                 string        // Email address for ACME account registration and notifications
-	Domains               []string      // List of domains to include in the certificate
-	DNSProvider           string        // DNS provider name (e.g., "cloudflare")
-	RenewalDaysBeforeExpiry int         // Renew certificate if it expires within this many days
-	CloudflareApiToken    string        // Cloudflare API Token (loaded from env)
-	CADirectoryURL        string        // ACME directory URL (e.g., Let's Encrypt staging or production)
+	Enabled                 bool     // Set to true to enable automatic certificate management
+	Email                   string   // Email address for ACME account registration and notifications
+	Domains                 []string // List of domains to include in the certificate
+	DNSProvider             string   // DNS provider name (e.g., "cloudflare")
+	RenewalDaysBeforeExpiry int      // Renew certificate if it expires within this many days
+	CloudflareApiToken      string   // Cloudflare API Token (loaded from env)
+	CADirectoryURL          string   // ACME directory URL (e.g., Let's Encrypt staging or production)
 
-    // AcmePrivateKey is Primary: The private key is the fundamental identifier of the
-    // Acme account. The email is just contact information associated with it. You
-    // can even have multiple ACME accounts (each with its own unique private
-    // key) registered under the same email address.
-    //
-    // Treat the acmePrivateKey as a vital, long-lived secret. Generate it
-    // once, back it up securely, and provide it to your application via the
-    // environment variable. Losing it means you'll need to start the ACME
-    // registration process over with a new key. Generating a new key
-    // frequently will likely break the renewal process due to rate limiting.
-    //
-    // MUST be an ECDSA P-256 private key in PEM format.
-    // Generate using: openssl ecparam -name prime256v1 -genkey -noout -outform PEM
-	AcmePrivateKey        string        // ACME account private key PEM (ECDSA P-256, loaded from env)
+	// AcmePrivateKey is Primary: The private key is the fundamental identifier of the
+	// Acme account. The email is just contact information associated with it. You
+	// can even have multiple ACME accounts (each with its own unique private
+	// key) registered under the same email address.
+	//
+	// Treat the acmePrivateKey as a vital, long-lived secret. Generate it
+	// once, back it up securely, and provide it to your application via the
+	// environment variable. Losing it means you'll need to start the ACME
+	// registration process over with a new key. Generating a new key
+	// frequently will likely break the renewal process due to rate limiting.
+	//
+	// MUST be an ECDSA P-256 private key in PEM format.
+	// Generate using: openssl ecparam -name prime256v1 -genkey -noout -outform PEM
+	AcmePrivateKey string // ACME account private key PEM (ECDSA P-256, loaded from env)
 }
 
 // BlockIp holds configuration specific to IP blocking.

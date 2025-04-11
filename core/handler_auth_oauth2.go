@@ -230,10 +230,9 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 	cfg := a.Config() // Get the current config
 	for name, provider := range cfg.OAuth2Providers {
 
-	a.Logger().Debug("OAuth2 fields",
-		"provider", name,
-		"redirectURI", provider.RedirectURL)
-
+		a.Logger().Debug("OAuth2 fields",
+			"provider", name,
+			"redirectURI", provider.RedirectURL)
 
 		state := crypto.Oauth2State()
 		oauth2Config := oauth2.Config{

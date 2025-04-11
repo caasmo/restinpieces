@@ -45,16 +45,16 @@ func (d *Db) Get() (*db.AcmeCert, error) {
 			}
 
 			cert = &db.AcmeCert{
-				ID:                     stmt.GetInt64("id"),
-				Identifier:             stmt.GetText("identifier"),
-				Domains:                stmt.GetText("domains"),
-				CertificateChain:       stmt.GetText("certificate_chain"),
-				PrivateKey:             stmt.GetText("private_key"),
-				IssuedAt:               issuedAt,
-				ExpiresAt:              expiresAt,
-				LastRenewalAttemptAt:   lastRenewalAttemptAt,
-				CreatedAt:              createdAt,
-				UpdatedAt:              updatedAt,
+				ID:                   stmt.GetInt64("id"),
+				Identifier:           stmt.GetText("identifier"),
+				Domains:              stmt.GetText("domains"),
+				CertificateChain:     stmt.GetText("certificate_chain"),
+				PrivateKey:           stmt.GetText("private_key"),
+				IssuedAt:             issuedAt,
+				ExpiresAt:            expiresAt,
+				LastRenewalAttemptAt: lastRenewalAttemptAt,
+				CreatedAt:            createdAt,
+				UpdatedAt:            updatedAt,
 			}
 			return nil
 		})

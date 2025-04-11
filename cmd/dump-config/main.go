@@ -99,7 +99,7 @@ func main() {
 	if outputFile != "" {
 		err := os.WriteFile(outputFile, []byte(configContent), 0644)
 		if err != nil {
-			dumper.logger.Error("failed to write config file", 
+			dumper.logger.Error("failed to write config file",
 				"path", outputFile,
 				"error", err)
 			os.Exit(1)

@@ -33,7 +33,7 @@ type TLSCertRenewalHandler struct {
 func NewTLSCertRenewalHandler(provider *config.Provider, dbAcme db.DbAcme, logger *slog.Logger) *TLSCertRenewalHandler {
 	return &TLSCertRenewalHandler{
 		configProvider: provider,
-		dbAcme:         dbAcme, // Store dbAcme
+		dbAcme:         dbAcme,                                         // Store dbAcme
 		logger:         logger.With("job_handler", "tls_cert_renewal"), // Add context to logger
 	}
 }
@@ -128,7 +128,7 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 	}
 
 	legoConfig := lego.NewConfig(&acmeUser)
-	legoConfig.CADirURL = cfg.Acme.CADirectoryURL      // Use configured directory (staging/prod)
+	legoConfig.CADirURL = cfg.Acme.CADirectoryURL     // Use configured directory (staging/prod)
 	legoConfig.Certificate.KeyType = certcrypto.EC256 // Enforce ECDSA P-256 for the *certificate* key type as well
 
 	legoClient, err := lego.NewClient(legoConfig)
@@ -178,7 +178,6 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 		h.logger.Info("ACME account registered successfully", "email", acmeUser.Email)
 		// Persist acmeUser.Registration and acmeUser.PrivateKey securely here if needed for reuse.
 	}
-
 
 	request := certificate.ObtainRequest{
 		Domains: cfg.Acme.Domains,

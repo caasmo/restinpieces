@@ -73,12 +73,12 @@ func (ci *CertInserter) InsertCert(keyPath, certPath string) error {
 		) VALUES (?, ?, ?, ?, ?, ?)`,
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
-				"default",               // identifier
-				"[]",                    // domains (empty JSON array)
-				string(keyData),          // private_key
-				string(certData),        // certificate_chain
-				now,                     // issued_at
-				expires,                 // expires_at
+				"default",        // identifier
+				"[]",             // domains (empty JSON array)
+				string(keyData),  // private_key
+				string(certData), // certificate_chain
+				now,              // issued_at
+				expires,          // expires_at
 			},
 		})
 

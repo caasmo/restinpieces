@@ -127,7 +127,6 @@ func loadSecrets(cfg *Config, logger *slog.Logger) error {
 	return nil
 }
 
-
 // LoadAcme loads ACME provider secrets (like Cloudflare API token)
 func LoadAcme(cfg *Config, logger *slog.Logger) error {
 	// Only load secrets if ACME is enabled and the provider requires them
@@ -153,7 +152,6 @@ func LoadAcme(cfg *Config, logger *slog.Logger) error {
 		return fmt.Errorf("failed to load ACME account private key: %w", err)
 	}
 	logger.Debug("Load Envar:", "envvar", EnvAcmeLetsencryptPrivateKey, "source", source)
-
 
 	return nil
 }
@@ -214,7 +212,7 @@ func LoadSmtp(cfg *Config, logger *slog.Logger) error {
 		return nil
 	}
 
-	var err error 
+	var err error
 	var source string
 
 	// Require username when SMTP is enabled
@@ -260,7 +258,7 @@ func LoadOAuth2(cfg *Config, logger *slog.Logger) error {
 
 		googleCfg.ClientID, sourceID, errID = LoadEnvSecret(EnvGoogleClientID, googleCfg.ClientID)
 		googleCfg.ClientSecret, sourceSecret, errSecret = LoadEnvSecret(EnvGoogleClientSecret, googleCfg.ClientSecret)
-        // TODO path is in conf
+		// TODO path is in conf
 		googleCfg.RedirectURL = fmt.Sprintf("%s/oauth2/callback/", baseURL)
 
 		if errID != nil || errSecret != nil {

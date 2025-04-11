@@ -2,15 +2,15 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
+	"fmt"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core/proxy"
 	"github.com/caasmo/restinpieces/queue/scheduler"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
-	"crypto/tls"
 	"net/http"
 	"os"
-	"fmt"
 	"os/signal"
 	"syscall"
 )
@@ -83,10 +83,10 @@ func (s *Server) Run() {
 				return
 			}
 			srv.TLSConfig = tlsConfig
-            s.logger.Info("Starting server", "protocol", "HTTPS", "addr", serverCfg.Addr)
+			s.logger.Info("Starting server", "protocol", "HTTPS", "addr", serverCfg.Addr)
 			err = srv.ListenAndServeTLS("", "") // Empty strings since certs are in config
 		} else {
-            s.logger.Info("Starting server", "protocol", "HTTP", "addr", serverCfg.Addr)
+			s.logger.Info("Starting server", "protocol", "HTTP", "addr", serverCfg.Addr)
 			err = srv.ListenAndServe()
 		}
 		if err != http.ErrServerClosed {
@@ -174,9 +174,9 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 	if cfg.EnableTLS {
 		protocol = "HTTPS"
 	}
-	
+
 	s.logger.Info("Server:", "address", cfg.Addr, "protocol", protocol)
-	
+
 	if cfg.EnableTLS {
 		if len(cfg.CertData) > 0 && len(cfg.KeyData) > 0 {
 			s.logger.Info("Server:", "tls_cert_source", "in-memory_data",
@@ -190,15 +190,15 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 			s.logger.Warn("Server:", "tls_source", "none_configured")
 		}
 	}
-	
+
 	s.logger.Info("Server:",
 		"readTimeout", cfg.ReadTimeout,
 		"readHeaderTimeout", cfg.ReadHeaderTimeout,
 		"writeTimeout", cfg.WriteTimeout,
 		"idleTimeout", cfg.IdleTimeout)
-	
+
 	s.logger.Info("Server:", "ShutdownGracefulTimeout", cfg.ShutdownGracefulTimeout)
-	
+
 	if cfg.ClientIpProxyHeader != "" {
 		s.logger.Info("Server:", "header", cfg.ClientIpProxyHeader)
 	}
@@ -227,7 +227,7 @@ func createTLSConfig(cfg *config.Server) (*tls.Config, error) {
 	// Create and return the TLS config with the loaded certificate
 	return &tls.Config{
 		Certificates: []tls.Certificate{cert},
-		MinVersion:   tls.VersionTLS13, // Enforce TLS 1.3
+		MinVersion:   tls.VersionTLS13,           // Enforce TLS 1.3
 		NextProtos:   []string{"h2", "http/1.1"}, // Keep HTTP/2 support
 		CurvePreferences: []tls.CurveID{
 			tls.X25519,

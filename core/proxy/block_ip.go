@@ -1,11 +1,11 @@
 package proxy
 
 import (
-	"net/http"
 	"fmt"
 	"log/slog"
-	"time"
 	"net"
+	"net/http"
+	"time"
 
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/topk"
@@ -73,30 +73,30 @@ func NewBlockIp(cache cache.Cache[string, interface{}], logger *slog.Logger) *Bl
 }
 
 func (b *BlockIp) Execute(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Check if IP blocking is enabled first
-        if b.IsEnabled() {
-            // Get client IP from request using app's method
-            // TODO
-            ip := GetClientIP(r)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if IP blocking is enabled first
+		if b.IsEnabled() {
+			// Get client IP from request using app's method
+			// TODO
+			ip := GetClientIP(r)
 
-            // Check if the IP is already blocked (cache check)
-            if b.IsBlocked(ip) {
-                w.WriteHeader(http.StatusTooManyRequests)
-                return
-            } else {
-                // TODO
-                // Process the IP (e.g., add to sketch). Log any processing errors.
-                if err := b.Process(ip); err != nil {
-                    // Log the error but typically continue processing the request,
-                    // as failure here might just mean the sketch update failed.
-                    b.logger.Error("Error processing IP in blocker", "ip", ip, "error", err)
-                }
-            }
-        }
+			// Check if the IP is already blocked (cache check)
+			if b.IsBlocked(ip) {
+				w.WriteHeader(http.StatusTooManyRequests)
+				return
+			} else {
+				// TODO
+				// Process the IP (e.g., add to sketch). Log any processing errors.
+				if err := b.Process(ip); err != nil {
+					// Log the error but typically continue processing the request,
+					// as failure here might just mean the sketch update failed.
+					b.logger.Error("Error processing IP in blocker", "ip", ip, "error", err)
+				}
+			}
+		}
 
-        next.ServeHTTP(w, r) 
-    })
+		next.ServeHTTP(w, r)
+	})
 }
 
 // IsEnabled checks if the IP blocking feature is enabled based on configuration.

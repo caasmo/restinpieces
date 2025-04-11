@@ -110,6 +110,5 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 		logger.Info("ACME is disabled, skipping registration of TLSCertRenewalHandler")
 	}
 
-
 	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
 }

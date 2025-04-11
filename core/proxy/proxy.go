@@ -29,7 +29,7 @@ func NewProxy(app *core.App) *Proxy {
 	if app.Config().Proxy.BlockIp.Enabled {
 		// Pass the application's cache and logger to the BlockIp implementation
 		px.ipBlocker = NewBlockIp(app.Cache(), app.Logger())
-    }
+	}
 
 	return px
 }
@@ -38,10 +38,9 @@ func NewProxy(app *core.App) *Proxy {
 
 func (px *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
-    //px.app.Logger().Info("in proxy")
-    // TODO
-    handler := px.ipBlocker.Execute(px.app.Router()) 
-    handler.ServeHTTP(w,r)
-
+	//px.app.Logger().Info("in proxy")
+	// TODO
+	handler := px.ipBlocker.Execute(px.app.Router())
+	handler.ServeHTTP(w, r)
 
 }

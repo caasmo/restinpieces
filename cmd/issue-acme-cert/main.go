@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
+	"flag"
 	"log/slog"
 	"os"
-	"flag"
 	"time"
 
-	"github.com/caasmo/restinpieces/config" // Adjust import path if needed
-	"github.com/caasmo/restinpieces/db/zombiezen" // Changed to zombiezen implementation
-	"github.com/caasmo/restinpieces/queue"        // Adjust import path if needed
+	"github.com/caasmo/restinpieces/config"         // Adjust import path if needed
+	"github.com/caasmo/restinpieces/db/zombiezen"   // Changed to zombiezen implementation
+	"github.com/caasmo/restinpieces/queue"          // Adjust import path if needed
 	"github.com/caasmo/restinpieces/queue/handlers" // Adjust import path if needed
 	"zombiezen.com/go/sqlite"                       // Keep for OpenFlags
 	"zombiezen.com/go/sqlite/sqlitex"               // Added for pool
@@ -108,7 +108,6 @@ func main() {
 		// This case (nil, nil) might indicate "not found" depending on Get() implementation
 		logger.Info("No existing certificate found in the database (Get returned nil, nil). Will attempt issuance if needed.")
 	}
-
 
 	// --- Handler Instantiation ---
 	// Create provider *after* potentially loading cert data into cfg

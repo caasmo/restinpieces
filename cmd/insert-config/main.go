@@ -66,7 +66,7 @@ func (ci *ConfigInserter) InsertConfig(tomlPath string) error {
 		) VALUES (?, ?, ?, ?)`,
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
-				string(configData),  // content
+				string(configData), // content
 				"toml",             // format
 				description,        // description
 				now,                // created_at
