@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"log/slog"
-	"net" // Keep for potential future IP checks, or remove if definitely not needed
 	"net/http"
 
 	// "github.com/caasmo/restinpieces/assets" // No longer needed for simple text response
@@ -70,39 +69,3 @@ func (m *MaintenanceMiddleware) Execute(next http.Handler) http.Handler {
 	})
 }
 
-// isIPAllowed checks if a given client IP matches any of the allowed IPs or CIDR ranges.
-// Removed as AllowedIPs feature is temporarily disabled.
-/*
-func (m *MaintenanceMiddleware) isIPAllowed(clientIP string, allowedEntries []string) bool {
-	if len(allowedEntries) == 0 {
-		return false // No allowed list means no one is allowed by default
-	}
-
-	parsedClientIP := net.ParseIP(clientIP)
-	if parsedClientIP == nil {
-		m.logger.Warn("Could not parse client IP for maintenance bypass check", "ip", clientIP)
-		return false // Cannot check an invalid client IP
-	}
-
-	for _, entry := range allowedEntries {
-		// Try parsing as CIDR first
-		_, ipNet, err := net.ParseCIDR(entry)
-		if err == nil {
-			// Valid CIDR, check if the client IP is within the range
-			if ipNet.Contains(parsedClientIP) {
-				return true
-			}
-		} else {
-			// Not a valid CIDR, try direct IP comparison
-			allowedIP := net.ParseIP(entry)
-			if allowedIP != nil && allowedIP.Equal(parsedClientIP) {
-				return true
-			}
-			// Log if the entry is neither a valid CIDR nor a valid IP? Optional.
-			// m.logger.Warn("Invalid entry in maintenance allowed_ips list", "entry", entry)
-		}
-	}
-
-	return false // IP did not match any allowed entry
-}
-*/
