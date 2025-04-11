@@ -1,7 +1,7 @@
 package servemux
 
 import (
-	"github.com/caasmo/restinpieces/core"
+	"github.com/caasmo/restinpieces/router"
 	"net/http"
 )
 
@@ -27,7 +27,7 @@ func (s *ServeMuxRouter) Param(req *http.Request, key string) string {
 	return req.PathValue(key)
 }
 
-func (s *ServeMuxRouter) Register(chains map[string] *core.Chain) {
+func (s *ServeMuxRouter) Register(chains map[string] *router.Chain) {
 	for endpoint, chain  := range chains {
 		s.Handle(endpoint, chain.Handler())
 	}
