@@ -20,11 +20,11 @@ import (
 // app is a service with heavy objects for the handlers.
 // and also a out the box coded endpoints handlers. (methods)
 type App struct {
-	dbAuth         db.DbAuth
-	dbQueue        db.DbQueue
-	dbConfig       db.DbConfig
-	dbAcme         db.DbAcme
-	router         router.Router
+	dbAuth   db.DbAuth
+	dbQueue  db.DbQueue
+	dbConfig db.DbConfig
+	dbAcme   db.DbAcme
+	router   router.Router
 	// PreRouter field removed
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider

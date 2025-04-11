@@ -6,15 +6,15 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
+	"github.com/caasmo/restinpieces/core/proxy"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
+	"github.com/caasmo/restinpieces/router"
 	"github.com/caasmo/restinpieces/server"
-	"github.com/caasmo/restinpieces/core/proxy" 
-	"github.com/caasmo/restinpieces/router"    
 )
 
 // Import assets package to ensure embedded data is available during init and build.
@@ -110,7 +110,6 @@ func initPreRouter(app *core.App) http.Handler {
 	} else {
 		logger.Info("Internal Middleware: Maintenance disabled")
 	}
-
 
 	// 3. Add other internal middleware here (e.g., RateLimiter, Metrics, Logging)
 	// These would typically be added *after* Maintenance and BlockIp in this block

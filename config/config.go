@@ -69,9 +69,9 @@ type Config struct {
 	Smtp            Smtp
 	Endpoints       Endpoints
 	// Proxy           Proxy // Removed Proxy config section
-	Acme            Acme    // ACME/Let's Encrypt settings
-	BlockIp         BlockIp // Moved BlockIp config here
-	Maintenance     Maintenance // Maintenance mode settings
+	Acme        Acme        // ACME/Let's Encrypt settings
+	BlockIp     BlockIp     // Moved BlockIp config here
+	Maintenance Maintenance // Maintenance mode settings
 }
 
 type Jwt struct {
@@ -295,7 +295,6 @@ type BlockIp struct {
 
 // Maintenance holds configuration for the maintenance mode feature.
 type Maintenance struct {
-	Enabled     bool     `toml:"enabled"`      // Is the maintenance mode feature available?
-	Activated   bool     `toml:"activated"`    // Is maintenance mode currently active?
+	Enabled   bool `toml:"enabled"`   // Is the maintenance mode feature available?
+	Activated bool `toml:"activated"` // Is maintenance mode currently active?
 }
-

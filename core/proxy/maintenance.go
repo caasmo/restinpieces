@@ -2,7 +2,6 @@ package proxy
 
 import (
 	"log/slog"
-	"net"
 	"net/http"
 
 	"github.com/caasmo/restinpieces/core"
@@ -44,39 +43,29 @@ func (m *MaintenanceMiddleware) Execute(next http.Handler) http.Handler {
 		// Check if feature enabled and mode activated
 		if maintCfg.Enabled && maintCfg.Activated {
 			// Use the App's GetClientIP method
-			clientIP := m.app.GetClientIP(r)
 
-			// Check if the client IP is allowed to bypass
-			isAllowed := m.isIPAllowed(clientIP, maintCfg.AllowedIPs)
 
-			if !isAllowed {
-				m.logger.Info("Maintenance mode active, serving maintenance page", "ip", clientIP, "path", r.URL.Path)
+			// Set headers BEFORE writing status code or body
+			w.Header().Set("Content-Encoding", "gzip")
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			// Prevent caching of the maintenance page by clients and proxies
+			w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
+			w.Header().Set("Pragma", "no-cache") // HTTP/1.0 backward compatibility
+			w.Header().Set("Expires", "0")       // Proxies
+			// Indicate service is temporarily unavailable and suggest retrying later (e.g., 10 minutes)
+			w.Header().Set("Retry-After", "600")
 
-				// Set headers BEFORE writing status code or body
-				w.Header().Set("Content-Encoding", "gzip")
-				w.Header().Set("Content-Type", "text/html; charset=utf-8")
-				// Prevent caching of the maintenance page by clients and proxies
-				w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate")
-				w.Header().Set("Pragma", "no-cache") // HTTP/1.0 backward compatibility
-				w.Header().Set("Expires", "0")       // Proxies
-				// Indicate service is temporarily unavailable and suggest retrying later (e.g., 10 minutes)
-				w.Header().Set("Retry-After", "600")
+			w.WriteHeader(http.StatusServiceUnavailable) // 503 Service Unavailable
 
-				w.WriteHeader(http.StatusServiceUnavailable) // 503 Service Unavailable
-
-				_, err := w.Write(assets.MaintenancePageGzipped)
-				if err != nil {
-					// Log error, but response headers/status might be already sent
-					m.logger.Error("Failed to write maintenance page response body", "error", err)
-				}
-				return // Stop processing the request here
-			} else {
-				m.logger.Debug("Maintenance mode active, but IP allowed", "ip", clientIP, "path", r.URL.Path)
+			_, err := w.Write(assets.MaintenancePageGzipped)
+			if err != nil {
+				// Log error, but response headers/status might be already sent
+				m.logger.Error("Failed to write maintenance page response body", "error", err)
 			}
+			return // Stop processing the request here
 		}
 
 		// If maintenance mode is not active or IP is allowed, proceed to the next handler
 		next.ServeHTTP(w, r)
 	})
 }
-
