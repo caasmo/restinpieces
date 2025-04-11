@@ -3,6 +3,7 @@ package restinpieces
 import (
 	"log/slog"
 	"os"
+	"net/http" // Added import
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"

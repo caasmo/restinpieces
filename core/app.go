@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"log/slog"
-	"net/http" // Added import
 	//"sync/atomic" // No longer needed here, moved to config.Provider
 
 	"github.com/caasmo/restinpieces/cache"
