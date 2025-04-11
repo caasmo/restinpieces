@@ -6,7 +6,6 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
-	// "github.com/caasmo/restinpieces/core/proxy" // Removed proxy import
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
@@ -14,13 +13,13 @@ import (
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/server"
-	"github.com/caasmo/restinpieces/core/proxy" // Import for BlockIp and MaintenanceMiddleware
-	"github.com/caasmo/restinpieces/router"    // Import for NewChain
+	"github.com/caasmo/restinpieces/core/proxy" 
+	"github.com/caasmo/restinpieces/router"    
 )
 
 // Import assets package to ensure embedded data is available during init and build.
 // The underscore means we only want the side effects (init functions, embedding).
-import _ "github.com/caasmo/restinpieces/assets" // Adjust if your module path is different
+//import _ "github.com/caasmo/restinpieces/assets" // Adjust if your module path is different
 
 // New creates a new App instance and Server with the provided options.
 // It initializes the core application components like database, router, cache first,
