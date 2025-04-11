@@ -3,7 +3,6 @@ package httprouter
 import (
 	"net/http"
 
-	"github.com/caasmo/restinpieces/core" // Added import
 	"github.com/caasmo/restinpieces/router"
 	jshttprouter "github.com/julienschmidt/httprouter"
 )
