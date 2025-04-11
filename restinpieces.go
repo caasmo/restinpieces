@@ -11,8 +11,10 @@ import (
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
+	"github.com/caasmo/restinpieces/core/proxy" // Added import
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
+	"github.com/caasmo/restinpieces/router" // Added import
 	"github.com/caasmo/restinpieces/server"
 )
 
@@ -62,8 +64,48 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	// Create the server instance, passing 'app' as the http.Handler
 	srv := server.NewServer(configProvider, app, scheduler, app.Logger())
 
+	// Initialize the PreRouter chain with internal middleware
+	initPreRouter(app)
+
 	// Return the initialized app and server
 	return app, srv, nil
+}
+
+// initPreRouter sets up the internal pre-router middleware chain based on configuration.
+func initPreRouter(app *core.App) {
+	logger := app.Logger()
+	cfg := app.Config()
+
+	// Start the chain with the application's main router as the base handler.
+	preRouterChain := router.NewChain(app.Router())
+
+	// --- Add Internal Middleware Conditionally ---
+
+	// 1. BlockIp Middleware
+	if cfg.BlockIp.Enabled {
+		// Instantiate using app resources
+		blockIpInstance := proxy.NewBlockIp(app.Cache(), logger)
+		// Add its Execute method to the chain
+		preRouterChain.WithMiddleware(blockIpInstance.Execute)
+		logger.Info("Internal Middleware: BlockIp enabled")
+	} else {
+		logger.Info("Internal Middleware: BlockIp disabled")
+	}
+
+	// 2. Add other internal middleware here (e.g., RateLimiter, Metrics)
+	// if cfg.RateLimiter.Enabled {
+	//    rateLimiter := internal.NewRateLimiter(...)
+	//    preRouterChain.WithMiddleware(rateLimiter.Execute)
+	//    logger.Info("Internal Middleware: RateLimiter enabled")
+	// }
+
+	// --- Finalize the PreRouter ---
+	// Get the final composed handler
+	finalPreRouterHandler := preRouterChain.Handler()
+
+	// Set it on the app instance
+	app.SetPreRouter(finalPreRouterHandler)
+	logger.Info("Internal PreRouter handler chain configured")
 }
 
 // SetupScheduler initializes the job scheduler and its handlers.
