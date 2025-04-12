@@ -18,9 +18,6 @@ import (
 	"github.com/caasmo/restinpieces/server"
 )
 
-// Import assets package removed as it's no longer needed for maintenance page
-// import _ "github.com/caasmo/restinpieces/assets"
-
 // New creates a new App instance and Server with the provided options.
 // It initializes the core application components like database, router, cache first,
 // then loads configuration either from TOML file (if path provided) or DB file.
