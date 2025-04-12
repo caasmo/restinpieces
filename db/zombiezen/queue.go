@@ -6,26 +6,10 @@ import (
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
-	"strings"
 	"time"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
-
-// validateQueueJob checks for required fields in a job before insertion.
-// Copied from crawshaw implementation for consistency.
-func validateQueueJob(job queue.Job) error {
-	var missingFields []string
-	if job.JobType == "" {
-		missingFields = append(missingFields, "JobType")
-	}
-	// PayloadExtra is optional
-
-	if len(missingFields) > 0 {
-		return fmt.Errorf("%w: %s", db.ErrMissingFields, strings.Join(missingFields, ", "))
-	}
-	return nil
-}
 
 // newJobFromStmt creates a Job struct from a SQLite statement row.
 func newJobFromStmt(stmt *sqlite.Stmt) (*queue.Job, error) {
@@ -85,9 +69,6 @@ func newJobFromStmt(stmt *sqlite.Stmt) (*queue.Job, error) {
 
 // InsertJob adds a new job to the queue.
 func (d *Db) InsertJob(job queue.Job) error {
-	if err := validateQueueJob(job); err != nil {
-		return err
-	}
 
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
