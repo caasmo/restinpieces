@@ -158,6 +158,19 @@ var HeadersMaintenancePage = map[string]string{
 	"Retry-After": "600",
 }
 
+// headersTls defines headers related to enforcing TLS usage.
+// These should typically only be applied when the connection is actually over HTTPS.
+var headersTls = map[string]string{
+	// Strict-Transport-Security (HSTS): Instructs browsers to always connect
+	// to the site using HTTPS for the specified duration (max-age).
+	// - max-age=63072000: Two years in seconds. Choose a duration appropriate for your site.
+	// - includeSubDomains: Apply the policy to all subdomains as well.
+	// - preload (optional): Add this only if you understand the implications and
+	//   intend to submit your domain to HSTS preload lists (https://hstspreload.org/).
+	//   Preloading makes HSTS permanent for browsers that include the list.
+	"Strict-Transport-Security": "max-age=63072000; includeSubDomains", // Omit 'preload' unless intended
+}
+
 // setHeaders applies one or more sets of headers to the response writer.
 // Headers from later maps will overwrite headers from earlier maps if keys conflict.
 func SetHeaders(w http.ResponseWriter, headers ...map[string]string) {
