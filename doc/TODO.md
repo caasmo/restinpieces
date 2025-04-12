@@ -19,7 +19,6 @@
     - how user overrides, adds
     - workflow
     - deactivate security if under proxy/filter like nginx
-- https://github.com/justinas/nosurf
 - disable standard routes
 - server config missing keydata, certdata
     - keydata means dump memory contains  TODO
@@ -57,11 +56,6 @@
 	- Strict-Transport-Security: max-age=63072000; includeSubDomains
 	- in proxy/app method we know conf enable tls. set header
 - 10% reduction in req/sec from htttp, to https refresh auth, with block ip
-- Strict-Transport-Security: Enforces HTTPS, preventing downgrade attacks. Essential for TLS.
-- CSP frame-ancestors directive: Prevents clickjacking. Needs to be added explicitly to your CSP.
-	- Content-Security-Policy: default-src 'self'; frame-ancestors 'none'
-	- frame-ancestors 'none' not covered by default-src 'self'
-- X-Content-Type-Options: Prevents MIME-sniffing attacks. Simple, robust addition.
 - ETag or Last-Modified: Enables efficient cache validation for performance.
 - assests log 
 - config reload
@@ -121,21 +115,12 @@
 - corfirmation, spam sending the same right jwt 
 - endpointsw discovery has no update each time.
 - assets integrity, bundler 
-- maintenance middleware: 503 Retry-After: 3600
-	- we can not avoid goroutine
-    - global middleware, wraps router
-        - Block ip method
-        - maintenance
-	- we have a handler struct with mthods that can be applied before passing to router
-	- global custom mux that embed router and modify just host in the request
-		- standar mux/route is given just a new request
 - confirmation endpoints spam attacks
 	- attacker with valid email token (1 hour) can spam until token expiration
 	- this is jwt attack, 
 	- damage is 1 read 1 idempotent write
 	- for confirmation and expensice path, maybe hash the page (or paht) in cache with ttl, already requested try in a minutes
 - request change endpoints spam attacks TODO
-- tls
 - config reload
 - request email verification must be logged
 - second db interface for custom 
@@ -194,6 +179,20 @@
 
 ### done
 
+- maintenance middleware: 503 Retry-After: 3600
+	- we can not avoid goroutine
+    - global middleware, wraps router
+        - Block ip method
+        - maintenance
+	- we have a handler struct with mthods that can be applied before passing to router
+	- global custom mux that embed router and modify just host in the request
+		- standar mux/route is given just a new request
+- tls
+- Strict-Transport-Security: Enforces HTTPS, preventing downgrade attacks. Essential for TLS.
+- CSP frame-ancestors directive: Prevents clickjacking. Needs to be added explicitly to your CSP.
+	- Content-Security-Policy: default-src 'self'; frame-ancestors 'none'
+	- frame-ancestors 'none' not covered by default-src 'self'
+- X-Content-Type-Options: Prevents MIME-sniffing attacks. Simple, robust addition.
 - APP
 	- app is handler?
 		- is given to the server
