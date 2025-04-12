@@ -15,7 +15,7 @@ func NewTLSHeaderSTS() *TLSHeaderSTS {
 func (m *TLSHeaderSTS) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.TLS != nil {
-			core.SetHeaders(w, core.headersTls)
+			core.SetHeaders(w, core.HeadersTls)
 		}
 		next.ServeHTTP(w, r)
 	})

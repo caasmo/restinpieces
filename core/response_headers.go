@@ -160,7 +160,7 @@ var HeadersMaintenancePage = map[string]string{
 
 // headersTls defines headers related to enforcing TLS usage.
 // These should typically only be applied when the connection is actually over HTTPS.
-var headersTls = map[string]string{
+var HeadersTls = map[string]string{
 	// Strict-Transport-Security (HSTS): Instructs browsers to always connect
 	// to the site using HTTPS for the specified duration (max-age).
 	// - max-age=63072000: Two years in seconds. Choose a duration appropriate for your site.
