@@ -31,8 +31,6 @@ func (m *Maintenance) Execute(next http.Handler) http.Handler {
 
 			w.WriteHeader(http.StatusServiceUnavailable) // 503 Service Unavailable
 
-			_, _ = w.Write([]byte("Maintenance. Page comes later."))
-
 			return 
 		}
 
