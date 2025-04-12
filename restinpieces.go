@@ -93,8 +93,8 @@ func initPreRouter(app *core.App) http.Handler {
 	// 1. BlockIp Middleware (Added first, runs second)
 	if cfg.BlockIp.Enabled {
 		// Instantiate using app resources
-		blockIpInstance := proxy.NewBlockIp(app.Cache(), logger)
-		preRouterChain.WithMiddleware(blockIpInstance.Execute)
+		blockIp:= proxy.NewBlockIp(app.Cache(), logger)
+		preRouterChain.WithMiddleware(blockIp.Execute)
 		logger.Info("Internal Middleware: BlockIp enabled")
 	} else {
 		logger.Info("Internal Middleware: BlockIp disabled")
@@ -104,8 +104,8 @@ func initPreRouter(app *core.App) http.Handler {
 	// We check Enabled here for setup, but the middleware itself checks Activated dynamically on each request.
 	if cfg.Maintenance.Enabled {
 		// Instantiate using app instance (needed for GetClientIP and config)
-		maintenanceInstance := proxy.NewMaintenanceMiddleware(app, logger)
-		preRouterChain.WithMiddleware(maintenanceInstance.Execute)
+		maintenance:= proxy.NewMaintenanceMiddleware(app, logger)
+		preRouterChain.WithMiddleware(maintenance.Execute)
 		logger.Info("Internal Middleware: Maintenance enabled")
 	} else {
 		logger.Info("Internal Middleware: Maintenance disabled")

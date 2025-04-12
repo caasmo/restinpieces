@@ -4,7 +4,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	// "github.com/caasmo/restinpieces/assets" // No longer needed for simple text response
 	"github.com/caasmo/restinpieces/core"
 )
 
@@ -17,13 +16,6 @@ type MaintenanceMiddleware struct {
 // NewMaintenanceMiddleware creates a new maintenance middleware instance.
 // It requires the core App instance to access configuration and IP detection logic.
 func NewMaintenanceMiddleware(app *core.App, logger *slog.Logger) *MaintenanceMiddleware {
-	if app == nil {
-		panic("app cannot be nil for MaintenanceMiddleware")
-	}
-	if logger == nil {
-		panic("logger cannot be nil for MaintenanceMiddleware")
-	}
-	// No longer need to check embedded page size
 	logger.Debug("Maintenance middleware initialized")
 	return &MaintenanceMiddleware{
 		app:    app,

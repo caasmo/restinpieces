@@ -18,6 +18,7 @@
     - how user overrides, adds
     - workflow
     - deactivate security if under proxy/filter like nginx
+- https://github.com/justinas/nosurf
 - disable standard routes
 - server config missing keydata, certdata
     - keydata means dump memory contains  TODO
@@ -84,13 +85,7 @@
 	- workflow for recovery, 
 	- basic framework use
 - if tls, handle automatic redirection to https
-- configuration
-    sqlite based
-- APP
-	- app is handler?
-		- is given to the server
-		- servehttp executes Proxy that execute as next the Path router
-		- we have WithProxyEmpty, no proxy is one, it has features activated or not, WithProxy(pruxy)
+- sdk endpoint
 - race detection
 - scheduler How to simply add recurrent jobs
 	- has tick
@@ -125,14 +120,11 @@
 - corfirmation, spam sending the same right jwt 
 - endpointsw discovery has no update each time.
 - assets integrity, bundler 
-- if in db config, how to edit the easiest, toml?
 - maintenance middleware: 503 Retry-After: 3600
 	- we can not avoid goroutine
     - global middleware, wraps router
         - Block ip method
-        - mimetype white list 
         - maintenance
-		- multidomain
 	- we have a handler struct with mthods that can be applied before passing to router
 	- global custom mux that embed router and modify just host in the request
 		- standar mux/route is given just a new request
@@ -201,6 +193,11 @@
 
 ### done
 
+- APP
+	- app is handler?
+		- is given to the server
+		- servehttp executes Proxy that execute as next the Path router
+		- we have WithProxyEmpty, no proxy is one, it has features activated or not, WithProxy(pruxy)
 - app, server dicotomy
 - sdk, if http, call http, if https call https
 - certs in db
