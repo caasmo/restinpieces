@@ -201,13 +201,11 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 			Args: []interface{}{
 				user.Name,            // 1. name
 				"",                   // 2. password
-				true,                 // 3. verified
+				user.Verified,        // 3. verified
 				true,                 // 4. oauth2
 				user.Avatar,          // 5. avatar
 				user.Email,           // 6. email
 				user.EmailVisibility, // 7. emailVisibility
-				now,                  // 8. created
-				now,                  // 9. updated
 			},
 		})
 
