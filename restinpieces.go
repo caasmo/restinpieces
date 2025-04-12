@@ -86,8 +86,6 @@ func initPreRouter(app *core.App) http.Handler {
 	preRouterChain := router.NewChain(app.Router())
 
 	// --- Add Internal Middleware Conditionally (Order Matters!) ---
-	// Middlewares are added using WithMiddleware, which prepends them.
-	// The last middleware added is the first one to execute.
 	// Execution order will be: BlockIp -> TLSHeaderSTS -> Maintenance -> app.Router()
 
 	// 1. BlockIp Middleware (Added first, runs first)
