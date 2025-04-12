@@ -9,6 +9,32 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
+// newUserFromStmt creates a User struct from a SQLite statement
+func newUserFromStmt(stmt *sqlite.Stmt) (*db.User, error) {
+	created, err := db.TimeParse(stmt.GetText("created"))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing created time: %w", err)
+	}
+
+	updated, err := db.TimeParse(stmt.GetText("updated"))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing updated time: %w", err)
+	}
+
+	return &db.User{
+		ID:              stmt.GetText("id"),
+		Name:            stmt.GetText("name"),
+		Password:        stmt.GetText("password"),
+		Verified:        stmt.GetInt64("verified") != 0,
+		Oauth2:          stmt.GetInt64("oauth2") != 0,
+		Avatar:          stmt.GetText("avatar"),
+		Email:           stmt.GetText("email"),
+		EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
+		Created:         created,
+		Updated:         updated,
+	}, nil
+}
+
 // GetUserByEmail retrieves a user by email address.
 // Returns:
 // - *db.User: User record if found, nil if no matching record exists
@@ -28,30 +54,9 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 		FROM users WHERE email = ? LIMIT 1`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
-				created, err := db.TimeParse(stmt.GetText("created"))
-				if err != nil {
-					return fmt.Errorf("error parsing created time: %w", err)
-				}
-
-				updated, err := db.TimeParse(stmt.GetText("updated"))
-				if err != nil {
-					return fmt.Errorf("error parsing updated time: %w", err)
-				}
-
-				user = &db.User{
-					ID:              stmt.GetText("id"),
-					Name:            stmt.GetText("name"),
-					Password:        stmt.GetText("password"),
-					Verified:        stmt.GetInt64("verified") != 0,
-					Oauth2:          stmt.GetInt64("oauth2") != 0,
-					Avatar:          stmt.GetText("avatar"),
-					Email:           stmt.GetText("email"),
-					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-					// Avatar:          stmt.GetText("avatar"), // Removed duplicate field
-					Created: created,
-					Updated: updated,
-				}
-				return nil
+				var err error
+				user, err = newUserFromStmt(stmt)
+				return err
 			},
 			Args: []interface{}{email},
 		})
@@ -98,28 +103,9 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 		FROM users WHERE id = ? LIMIT 1`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
-				created, err := db.TimeParse(stmt.GetText("created"))
-				if err != nil {
-					return fmt.Errorf("error parsing created time: %w", err)
-				}
-
-				updated, err := db.TimeParse(stmt.GetText("updated"))
-				if err != nil {
-					return fmt.Errorf("error parsing updated time: %w", err)
-				}
-
-				user = &db.User{
-					ID:              stmt.GetText("id"),
-					Email:           stmt.GetText("email"),
-					Name:            stmt.GetText("name"),
-					Password:        stmt.GetText("password"),
-					Created:         created,
-					Updated:         updated,
-					Verified:        stmt.GetInt64("verified") != 0,
-					Oauth2:          stmt.GetInt64("oauth2") != 0,
-					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-				}
-				return nil
+				var err error
+				user, err = newUserFromStmt(stmt)
+				return err
 			},
 			Args: []interface{}{id},
 		})
@@ -148,30 +134,12 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 		RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`, // Match crawshaw RETURNING
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
-				created, err := db.TimeParse(stmt.GetText("created"))
-				if err != nil {
-					return fmt.Errorf("error parsing created time: %w", err)
+				// Use a temporary variable to avoid modifying the outer createdUser directly on error
+				tempUser, err := newUserFromStmt(stmt)
+				if err == nil && tempUser != nil {
+					createdUser = *tempUser // Assign if successful
 				}
-
-				updated, err := db.TimeParse(stmt.GetText("updated"))
-				if err != nil {
-					return fmt.Errorf("error parsing updated time: %w", err)
-				}
-
-				// Populate all fields returned, matching crawshaw's newUserFromStmt
-				createdUser = db.User{
-					ID:              stmt.GetText("id"),
-					Name:            stmt.GetText("name"),
-					Password:        stmt.GetText("password"),
-					Verified:        stmt.GetInt64("verified") != 0,
-					Oauth2:          stmt.GetInt64("oauth2") != 0,
-					Avatar:          stmt.GetText("avatar"),
-					Email:           stmt.GetText("email"),
-					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-					Created:         created,
-					Updated:         updated,
-				}
-				return nil
+				return err
 			},
 			Args: []interface{}{
 				user.Name,            // 1. name
@@ -206,30 +174,12 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 		RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`, // Match crawshaw RETURNING
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
-				created, err := db.TimeParse(stmt.GetText("created"))
-				if err != nil {
-					return fmt.Errorf("error parsing created time: %w", err)
+				// Use a temporary variable to avoid modifying the outer createdUser directly on error
+				tempUser, err := newUserFromStmt(stmt)
+				if err == nil && tempUser != nil {
+					createdUser = *tempUser // Assign if successful
 				}
-
-				updated, err := db.TimeParse(stmt.GetText("updated"))
-				if err != nil {
-					return fmt.Errorf("error parsing updated time: %w", err)
-				}
-
-				// Populate all fields returned, matching crawshaw's newUserFromStmt
-				createdUser = db.User{
-					ID:              stmt.GetText("id"),
-					Name:            stmt.GetText("name"),
-					Password:        stmt.GetText("password"),
-					Verified:        stmt.GetInt64("verified") != 0,
-					Oauth2:          stmt.GetInt64("oauth2") != 0,
-					Avatar:          stmt.GetText("avatar"),
-					Email:           stmt.GetText("email"),
-					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-					Created:         created,
-					Updated:         updated,
-				}
-				return nil
+				return err
 			},
 			Args: []interface{}{
 				user.Name,            // 1. name
