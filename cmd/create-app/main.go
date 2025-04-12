@@ -69,6 +69,23 @@ func (ac *AppCreator) CreateEnvFile(envPath string) error {
 	return nil
 }
 
+// CreateConfigTomlFile creates a TOML configuration file from the embedded example.
+func (ac *AppCreator) CreateConfigTomlFile(tomlPath string) error {
+	if _, err := os.Stat(tomlPath); err == nil {
+		ac.logger.Error("config.toml file already exists - remove it first if you want to recreate it", "path", tomlPath)
+		return os.ErrExist
+	}
+
+	// Use the embedded config.TomlExample
+	if err := os.WriteFile(tomlPath, config.TomlExample, 0644); err != nil {
+		ac.logger.Error("failed to create config.toml file", "path", tomlPath, "error", err)
+		return err
+	}
+
+	ac.logger.Info("created config.toml file from example", "path", tomlPath)
+	return nil
+}
+
 func NewAppCreator() *AppCreator {
 	return &AppCreator{
 		logger: slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
@@ -143,15 +160,18 @@ func (ac *AppCreator) InsertConfig() error {
 
 func main() {
 	var (
-		envFile string
-		dbFile  string
-		envSet  bool // Track if -env flag was set
-		dbSet   bool // Track if -db flag was set
+		envFile  string
+		dbFile   string
+		tomlFile string // Variable for the TOML file path
+		envSet   bool   // Track if -env flag was set
+		dbSet    bool   // Track if -db flag was set
+		tomlSet  bool   // Track if -toml flag was set
 	)
 
 	// Set defaults but track if flags were explicitly set
 	flag.StringVar(&envFile, "env", ".env", "create .env file at specified path (default: .env)")
 	flag.StringVar(&dbFile, "db", "app.db", "create database file at specified path (default: app.db)")
+	flag.StringVar(&tomlFile, "toml", "config.toml", "create config.toml file at specified path (default: config.toml)") // New flag
 	flag.Parse()
 
 	// Check which flags were explicitly set
@@ -161,6 +181,8 @@ func main() {
 			envSet = true
 		case "db":
 			dbSet = true
+		case "toml": // Track the new flag
+			tomlSet = true
 		}
 	})
 
@@ -172,8 +194,11 @@ func main() {
 	if dbSet {
 		tasks = append(tasks, "db")
 	}
+	if tomlSet { // Add toml task if flag is set
+		tasks = append(tasks, "toml")
+	}
 	if len(tasks) == 0 {
-		// Default case - do both since no flags were set
+		// Default case - only do env and db if no flags were set
 		tasks = []string{"env", "db"}
 	}
 
@@ -207,12 +232,31 @@ func main() {
 				os.Exit(1)
 			}
 			creator.logger.Info("database created successfully", "file", dbFile)
+
+		case "toml": // Add case for the new task
+			if err := creator.CreateConfigTomlFile(tomlFile); err != nil {
+				os.Exit(1)
+			}
+			// Log message is already inside CreateConfigTomlFile
 		}
 	}
 
-	if len(tasks) > 1 {
-		creator.logger.Info("application setup completed",
-			"env_file", envFile,
-			"db_file", dbFile)
+	// Log completion based on actual tasks performed
+	logArgs := []any{}
+	if envSet || (!envSet && !dbSet && !tomlSet) { // Log env if explicitly set or default run
+		logArgs = append(logArgs, "env_file", envFile)
+	}
+	if dbSet || (!envSet && !dbSet && !tomlSet) { // Log db if explicitly set or default run
+		logArgs = append(logArgs, "db_file", dbFile)
+	}
+	if tomlSet { // Log toml only if explicitly set
+		logArgs = append(logArgs, "toml_file", tomlFile)
+	}
+
+	if len(logArgs) > 0 {
+		creator.logger.Info("application setup task(s) completed", logArgs...)
+	} else {
+		// This case should ideally not happen with the current logic, but good to handle
+		creator.logger.Info("no application setup tasks performed")
 	}
 }
