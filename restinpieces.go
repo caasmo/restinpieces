@@ -88,31 +88,32 @@ func initPreRouter(app *core.App) http.Handler {
 	// --- Add Internal Middleware Conditionally (Order Matters!) ---
 	// Middlewares are added using WithMiddleware, which prepends them.
 	// The last middleware added is the first one to execute.
-	// Execution order will be: TLSHeaderSTS -> Maintenance -> BlockIp -> app.Router()
+	// Execution order will be: BlockIp -> TLSHeaderSTS -> Maintenance -> app.Router()
 
-	// 1. TLSHeaderSTS Middleware (Added first, runs first)
-	// This should run very early to ensure HSTS is set for TLS requests.
-	tlsHeaderSTS := proxy.NewTLSHeaderSTS()
-	preRouterChain.WithMiddleware(tlsHeaderSTS.Execute)
-
-	// 2. BlockIp Middleware (Added second, runs second)
+	// 1. BlockIp Middleware (Added first, runs first)
 	if cfg.BlockIp.Enabled {
 		// Instantiate using app resources
 		blockIp := proxy.NewBlockIp(app.Cache(), logger) // Keep logger for BlockIp
 		preRouterChain.WithMiddleware(blockIp.Execute)
-		 logger.Info("Internal Middleware: BlockIp enabled") // Log removed
+		logger.Info("Internal Middleware: BlockIp enabled")
 	} else {
-		 logger.Info("Internal Middleware: BlockIp disabled") // Log removed
+		logger.Info("Internal Middleware: BlockIp disabled")
 	}
+
+	// 2. TLSHeaderSTS Middleware (Added second, runs second)
+	// This should run early to ensure HSTS is set for TLS requests, but after IP blocking.
+	tlsHeaderSTS := proxy.NewTLSHeaderSTS()
+	preRouterChain.WithMiddleware(tlsHeaderSTS.Execute)
+	// No specific log for TLSHeaderSTS as it always runs
 
 	// 3. Maintenance Middleware (Added third, runs third)
 	if cfg.Maintenance.Enabled {
 		// Instantiate using app instance (no logger needed)
 		maintenance := proxy.NewMaintenance(app)
 		preRouterChain.WithMiddleware(maintenance.Execute)
-		 logger.Info("Internal Middleware: Maintenance enabled") // Log removed
+		logger.Info("Internal Middleware: Maintenance enabled")
 	} else {
-		 logger.Info("Internal Middleware: Maintenance disabled") // Log removed
+		logger.Info("Internal Middleware: Maintenance disabled")
 	}
 
 	// 4. Add other internal middleware here (e.g., RateLimiter, Metrics, Logging)
@@ -128,7 +129,7 @@ func initPreRouter(app *core.App) http.Handler {
 	// --- Finalize the PreRouter ---
 	// Get the final composed handler
 	finalPreRouterHandler := preRouterChain.Handler()
-	 logger.Info("Internal PreRouter handler chain configured") // Log removed
+	logger.Info("Internal PreRouter handler chain configured")
 
 	// Return the final handler
 	return finalPreRouterHandler
