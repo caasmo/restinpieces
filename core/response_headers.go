@@ -79,6 +79,9 @@ var headersStaticHtml = map[string]string{
 	//             before using a cached response. Ensures the latest HTML
 	//             (with potentially updated asset links) is served.
 	"Cache-Control": "public, no-cache",
+	
+	// Prevent browsers from MIME-sniffing the response away from declared Content-Type
+	"X-Content-Type-Options": "nosniff",
 
 	// Content-Security-Policy (CSP) governs browser behavior for resources loaded as part of rendering a document.
 	// Prevents cross-site scripting (XSS) attacks by controlling which resources can be loaded.
