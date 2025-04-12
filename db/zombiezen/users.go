@@ -47,6 +47,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 					Avatar:          stmt.GetText("avatar"),
 					Email:           stmt.GetText("email"),
 					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
+					Avatar:          stmt.GetText("avatar"), // Added missing Avatar field
 					Created:         created,
 					Updated:         updated,
 				}
@@ -122,7 +123,7 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 		ON CONFLICT(email) DO UPDATE SET
 			password = IIF(password = '', excluded.password, password),
 			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-		RETURNING id, email, name, password, created, updated, verified`,
+		RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`, // Match crawshaw RETURNING
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
 				created, err := db.TimeParse(stmt.GetText("created"))
@@ -135,13 +136,18 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 					return fmt.Errorf("error parsing updated time: %w", err)
 				}
 
+				// Populate all fields returned, matching crawshaw's newUserFromStmt
 				createdUser = db.User{
-					ID:       stmt.GetText("id"),
-					Email:    stmt.GetText("email"),
-					Password: stmt.GetText("password"),
-					Created:  created,
-					Updated:  updated,
-					Verified: stmt.GetInt64("verified") != 0,
+					ID:              stmt.GetText("id"),
+					Name:            stmt.GetText("name"),
+					Password:        stmt.GetText("password"),
+					Verified:        stmt.GetInt64("verified") != 0,
+					Oauth2:          stmt.GetInt64("oauth2") != 0,
+					Avatar:          stmt.GetText("avatar"),
+					Email:           stmt.GetText("email"),
+					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
+					Created:         created,
+					Updated:         updated,
 				}
 				return nil
 			},
@@ -166,7 +172,7 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 	}
 	defer d.pool.Put(conn)
 
-	now := time.Now().UTC().Format(time.RFC3339)
+	// Removed unused 'now' variable
 
 	var createdUser db.User
 	err = sqlitex.Execute(conn,
@@ -175,7 +181,7 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 		ON CONFLICT(email) DO UPDATE SET
 			oauth2 = true,
 			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-		RETURNING id, email, name, password, created, updated, verified`,
+		RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`, // Match crawshaw RETURNING
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
 				created, err := db.TimeParse(stmt.GetText("created"))
@@ -188,13 +194,18 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 					return fmt.Errorf("error parsing updated time: %w", err)
 				}
 
+				// Populate all fields returned, matching crawshaw's newUserFromStmt
 				createdUser = db.User{
-					ID:       stmt.GetText("id"),
-					Email:    stmt.GetText("email"),
-					Password: stmt.GetText("password"),
-					Created:  created,
-					Updated:  updated,
-					Verified: stmt.GetInt64("verified") != 0,
+					ID:              stmt.GetText("id"),
+					Name:            stmt.GetText("name"),
+					Password:        stmt.GetText("password"),
+					Verified:        stmt.GetInt64("verified") != 0,
+					Oauth2:          stmt.GetInt64("oauth2") != 0,
+					Avatar:          stmt.GetText("avatar"),
+					Email:           stmt.GetText("email"),
+					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
+					Created:         created,
+					Updated:         updated,
 				}
 				return nil
 			},
@@ -227,6 +238,11 @@ func (d *Db) VerifyEmail(userId string) error {
 		&sqlitex.ExecOptions{
 			Args: []interface{}{userId},
 		})
+	if err != nil {
+		// Wrap error to match crawshaw behavior
+		return fmt.Errorf("failed to verify email: %w", err)
+	}
+	return nil
 }
 
 func (d *Db) UpdatePassword(userId string, newPassword string) error {
