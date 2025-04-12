@@ -30,9 +30,6 @@ var HeadersJson = map[string]string{
 	// TODO configurable
 	//"Access-Control-Allow-Origin": "*",
 
-	// HSTS TODO configurable  based on server are we under TLS terminating proxy
-	//"Strict-Transport-Security": "max-age=31536000",
-
 	// the main XSS-prevention benefits of CSP don't apply to JSON responses
 	// because they aren't treated as active documents by the browser. However,
 	// using Content-Security-Policy: default-src 'none'; frame-ancestors
