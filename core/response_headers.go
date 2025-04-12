@@ -145,6 +145,19 @@ var HeadersFavicon = map[string]string{
 	"Cache-Control": "public, max-age=86400",
 }
 
+// HeadersMaintenancePage defines essential headers for a maintenance response (typically 503).
+var HeadersMaintenancePage = map[string]string{
+	// Specify plain text content type. Change to text/html if serving HTML.
+	"Content-Type": "text/plain; charset=utf-8",
+
+	// Ensure the response is not stored by any cache.
+	"Cache-Control": "no-store",
+
+	// Suggest clients retry after a certain period (e.g., 600 seconds = 10 minutes).
+	// This is particularly relevant for 503 Service Unavailable responses.
+	"Retry-After": "600",
+}
+
 // setHeaders applies one or more sets of headers to the response writer.
 // Headers from later maps will overwrite headers from earlier maps if keys conflict.
 func SetHeaders(w http.ResponseWriter, headers ...map[string]string) {
