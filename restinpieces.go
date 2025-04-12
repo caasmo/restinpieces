@@ -115,11 +115,9 @@ func initPreRouter(app *core.App) http.Handler {
 	}
 
 	// --- Finalize the PreRouter ---
-	// Get the final composed handler
 	finalPreRouterHandler := preRouterChain.Handler()
 	logger.Info("Internal PreRouter handler chain configured")
 
-	// Return the final handler
 	return finalPreRouterHandler
 }
 
