@@ -14,7 +14,6 @@ type Maintenance struct {
 // NewMaintenance creates a new maintenance middleware instance.
 // It requires the core App instance to access configuration.
 func NewMaintenance(app *core.App) *Maintenance {
-	// No logger needed
 	return &Maintenance{
 		app: app,
 	}
@@ -26,23 +25,17 @@ func (m *Maintenance) Execute(next http.Handler) http.Handler {
 		cfg := m.app.Config() // Get current config snapshot via App
 		maintCfg := cfg.Maintenance
 
-		// Check if feature enabled and mode activated
-		if maintCfg.Enabled && maintCfg.Activated {
-			// IP bypass logic removed for now
+		if maintCfg.Activated {
 
-			// Set maintenance headers using the shared function
 			core.SetHeaders(w, core.HeadersMaintenancePage)
 
 			w.WriteHeader(http.StatusServiceUnavailable) // 503 Service Unavailable
 
-			// Write the simple text message
-			// Ignore potential error on write, as headers/status are already sent.
 			_, _ = w.Write([]byte("Maintenance. Page comes later."))
 
-			return // Stop processing the request here
+			return 
 		}
 
-		// If maintenance mode is not active, proceed to the next handler
 		next.ServeHTTP(w, r)
 	})
 }
