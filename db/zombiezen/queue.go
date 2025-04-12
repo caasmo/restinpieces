@@ -109,11 +109,7 @@ func (d *Db) InsertJob(job queue.Job) error {
 		})
 
 	if err != nil {
-		// Check for unique constraint violation, similar to crawshaw
-		// Use value type assertion like crawshaw
-		if sqliteErr, ok := err.(sqlite.Error); ok && sqliteErr.Code() == sqlite.ResultConstraintUnique {
-			return db.ErrConstraintUnique
-		}
+		// Removed specific unique constraint check
 		return fmt.Errorf("queue insert failed: %w", err)
 	}
 	return nil
