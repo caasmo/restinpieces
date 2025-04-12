@@ -53,9 +53,6 @@
 	- basic metrics
 	- hourly X ok telegram message
 	- more detailed 
-- Move validate claims to request jwt 
-	- not really crypto
-- order in init/main. modular. Brainstrom 
 - password reset if no password ie oauth2 user => no only register with email
 - verify email for oauth -> yes verifed
 - corfirmation, spam sending the same right jwt 
@@ -67,15 +64,12 @@
 	- damage is 1 read 1 idempotent write
 	- for confirmation and expensice path, maybe hash the page (or paht) in cache with ttl, already requested try in a minutes
 - request change endpoints spam attacks TODO
-- config reload
 - request email verification must be logged
-- second db interface for custom 
 - cache and other headers from assets use a middlware for api we have a map that we appli in response
     - try to be consistent
     - 'static' form html, js, css ... and api for dinamic 
     - gzip header moev to response_headers
 - document magix numbers of sketch. move it to new package, configuration
-- maek method/global middleware before mux. block ip documentation, proper conf. fix TODO 
 - verify addresses paths shoudl be random or pseudo random?
 - revamp shell tests.
 - CORS 
@@ -96,7 +90,6 @@
 - integration sh test post invalidation jwt 
 - test requestverification: test also insertion in queue, now only mock nil.
 - more bash test all endpoints
-- test moe all to dbsetup
 - code review jwt tests
 - zombiezen, impl pool with timeout, split in files. 
 - zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
@@ -127,6 +120,10 @@
 
 ### done
 
+- Move validate claims to request jwt 
+	- not really crypto
+- order in init/main. modular. Brainstrom 
+- maek method/global middleware before mux. block ip documentation, proper conf. fix TODO 
 - mantenance if html request css , if json responde json
 - mantenance page 
     - https://developers.cloudflare.com/rules/snippets/examples/maintenance/
