@@ -236,11 +236,6 @@ func (d *Db) UpdatePassword(userId string, newPassword string) error {
 	}
 	defer d.pool.Put(conn)
 
-	// Validate password length before update
-	if len(newPassword) < 8 {
-		return fmt.Errorf("password must be at least 8 characters")
-	}
-
 	// Update password and timestamp
 	err = sqlitex.Execute(conn,
 		`UPDATE users 
