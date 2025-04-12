@@ -114,16 +114,6 @@ func initPreRouter(app *core.App) http.Handler {
 		logger.Info("Internal Middleware: Maintenance disabled")
 	}
 
-	// 4. Add other internal middleware here (e.g., RateLimiter, Metrics, Logging)
-	// These would typically be added *after* Maintenance and BlockIp in this block
-	// so they execute *before* them.
-	// Example:
-	// if cfg.RateLimiter.Enabled {
-	//    rateLimiter := internal.NewRateLimiter(...)
-	//    preRouterChain.WithMiddleware(rateLimiter.Execute)
-	//    logger.Info("Internal Middleware: RateLimiter enabled")
-	// }
-
 	// --- Finalize the PreRouter ---
 	// Get the final composed handler
 	finalPreRouterHandler := preRouterChain.Handler()
