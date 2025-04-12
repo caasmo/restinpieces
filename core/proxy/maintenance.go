@@ -31,10 +31,9 @@ func (m *Maintenance) Execute(next http.Handler) http.Handler {
 
 			w.WriteHeader(http.StatusServiceUnavailable) // 503 Service Unavailable
 
-			return 
+			return
 		}
 
 		next.ServeHTTP(w, r)
 	})
 }
-

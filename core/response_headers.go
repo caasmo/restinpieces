@@ -176,7 +176,7 @@ var HeadersTls = map[string]string{
 func SetHeaders(w http.ResponseWriter, headers ...map[string]string) {
 	for _, headerMap := range headers {
 		for key, value := range headerMap {
-            w.Header()[key] = []string{value}
+			w.Header()[key] = []string{value}
 		}
 	}
 }

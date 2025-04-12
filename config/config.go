@@ -295,8 +295,8 @@ type BlockIp struct {
 
 // Maintenance holds configuration for the maintenance mode feature.
 type Maintenance struct {
-	Enabled     bool     `toml:"enabled"`      // Is the maintenance mode feature available?
-	Activated   bool     `toml:"activated"`    // Is maintenance mode currently active?
+	Enabled   bool `toml:"enabled"`   // Is the maintenance mode feature available?
+	Activated bool `toml:"activated"` // Is maintenance mode currently active?
 	// AllowedIPs  []string `toml:"allowed_ips"`  // Optional: IPs/CIDRs that bypass maintenance mode (Removed for now)
 	// PageTitle string `toml:"page_title"` // Example: Future enhancement
 	// Message   string `toml:"message"`    // Example: Future enhancement

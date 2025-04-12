@@ -2,8 +2,8 @@ package restinpieces
 
 import (
 	"log/slog"
-	"os"
 	"net/http"
+	"os"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
@@ -112,7 +112,7 @@ func initPreRouter(app *core.App) http.Handler {
 	}
 
 	// --- Finalize the PreRouter ---
-    preRouterHandler := preRouterChain.Handler()
+	preRouterHandler := preRouterChain.Handler()
 	logger.Info("PreRouter handler chain configured")
 
 	return preRouterHandler
