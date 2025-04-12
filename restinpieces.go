@@ -93,9 +93,9 @@ func initPreRouter(app *core.App) http.Handler {
 		// Instantiate using app resources
 		blockIp := proxy.NewBlockIp(app.Cache(), logger) // Keep logger for BlockIp
 		preRouterChain.WithMiddleware(blockIp.Execute)
-		logger.Info("Internal Middleware: BlockIp enabled")
+		logger.Info("Prerouter Middleware BlockIp enabled")
 	} else {
-		logger.Info("Internal Middleware: BlockIp disabled")
+		logger.Info("Prerouter Middleware BlockIp disabled")
 	}
 
 	// 2. TLSHeaderSTS Middleware (Added second, runs second)
@@ -109,16 +109,16 @@ func initPreRouter(app *core.App) http.Handler {
 		// Instantiate using app instance (no logger needed)
 		maintenance := proxy.NewMaintenance(app)
 		preRouterChain.WithMiddleware(maintenance.Execute)
-		logger.Info("Internal Middleware: Maintenance enabled")
+		logger.Info("Prerouter Middleware Maintenance enabled")
 	} else {
-		logger.Info("Internal Middleware: Maintenance disabled")
+		logger.Info("Prerouter Middleware Maintenance disabled")
 	}
 
 	// --- Finalize the PreRouter ---
-	finalPreRouterHandler := preRouterChain.Handler()
-	logger.Info("Internal PreRouter handler chain configured")
+    preRouterHandler := preRouterChain.Handler()
+	logger.Info("PreRouter handler chain configured")
 
-	return finalPreRouterHandler
+	return preRouterHandler
 }
 
 // SetupScheduler initializes the job scheduler and its handlers.
