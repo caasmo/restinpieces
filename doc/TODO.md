@@ -1,7 +1,6 @@
 ### TODOs
 
 
-- blockip move
 - disable standard routes
 -  config on init all secrets are loading in memory
     - handler: write in the db istead of file mangling
@@ -9,17 +8,18 @@
     - refactor multiple lego dns provider
     - context for timneout in the handler
     - are resource file []byte save in new table.
-    - initail cert, lego?
+    - initial cert, lego?
     - account ACME user. HOw to change password? what happens if lost.
     - build without https support? ACME dependencies  
 	- get set in db
 	- Test your setup with tools like ssllabs.com or testssl.sh
+- redirect server
 - busy timeout and sync normal, for Performance
 - 10% reduction in req/sec from htttp, to https refresh auth, with block ip
 - assests log 
 - config reload
 - is a framework, clear workflow  -> examples repo. od use of the features
-- default zombiezen 
+- control new features, they can go in other projects/packages
 - good enough release
     - litestream or just cron each 5 minutes: see litestream 
     - configuration
@@ -98,13 +98,13 @@
 - document design in doc. why all decision.
 - document performance read/write 
 - rand source in app. performacen rand
-- modernc?
 - the command (maybe based on configuration) creates dir, copy only needed packages and inserts custom code pa
 - minify html, 5% space. if we already have gzip
     - https://github.com/tdewolff/minify?tab=readme-ov-file#html 
     - https://github.com/privatenumber/minification-benchmarks?tab=readme-ov-file#%EF%B8%8F-minifier-showdown
 
 ### Maybe
+- modernc?
 - add prometheus.
 - s3 integration
 - cache alternative syncMap, no garbage collection, noOP
@@ -120,6 +120,8 @@
 
 ### done
 
+- default zombiezen 
+- blockip move
 - Move validate claims to request jwt 
 	- not really crypto
 - order in init/main. modular. Brainstrom 
@@ -186,7 +188,7 @@
 - register with password after oauth2
 - bug in google login missing client id
     - also github is being presented
-- fileserver in library? -> no. examples repo
+- fileserver in library? -> no. examples repo, sdk
 - Route struct? Register without route? User must import router -> Documentation
     - user can use Handle
     - or import Route package framework // Document

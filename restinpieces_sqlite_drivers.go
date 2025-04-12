@@ -12,6 +12,7 @@ package restinpieces
 import (
 	"fmt"
 	"runtime"
+	"time"
 
 	crawshawPool "crawshaw.io/sqlite/sqlitex"
 	zombiezenPool "zombiezen.com/go/sqlite/sqlitex"
@@ -53,3 +54,52 @@ func NewZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
 	}
 	return pool, nil
 }
+
+var explicitBusyTimeout = 5 * time.Second // Or whatever value you prefer
+
+//func prepareConnExplicit (conn *sqlite.Conn) error {
+//	//log.Printf("Preparing connection %p explicitly...", conn)
+//
+//	// --- Define the explicit PRAGMA settings ---
+//
+//	// Note 1: OpenFlags like OpenWAL, OpenCreate, OpenURI are applied *before*
+//	// this function runs, when sqlitex.Pool calls sqlite.OpenConn internally.
+//	// We replicate the *result* of those flags here where possible via PRAGMA.
+//
+//	// Note 2: Disabling double-quoted strings is done via sqlite3_db_config
+//	// by default in OpenConn and cannot be set via PRAGMA. It's already set.
+//
+//	script := fmt.Sprintf(`
+//	-- Replicate effect of default OpenWAL flag
+//	PRAGMA journal_mode = WAL;
+//
+//	-- Set synchronous mode explicitly (NORMAL is common/default for WAL)
+//	PRAGMA synchronous = NORMAL;
+//
+//	-- Set busy timeout explicitly (overrides library's default SetBlockOnBusy handler)
+//	PRAGMA busy_timeout = %d;
+//
+//	-- Explicitly set foreign key constraint handling (SQLite default is OFF)
+//	PRAGMA foreign_keys = OFF;
+//	-- For most applications, you likely *want* foreign keys ON:
+//	-- PRAGMA foreign_keys = ON;
+//
+//	-- Add any other PRAGMAs you want explicitly set for every connection
+//	-- e.g., PRAGMA cache_size = -4000; -- Set cache to 4MB
+//	`, explicitBusyTimeout.Milliseconds()) // busy_timeout pragma uses milliseconds
+//
+//	err := sqlitex.ExecuteScript(conn, script, nil)
+//	if err != nil {
+//		return fmt.Errorf("failed to apply explicit PRAGMAs: %w", err)
+//	}
+//
+//	//log.Printf("Explicit PRAGMAs applied successfully for connection %p", conn)
+//	return nil // Indicate success
+//}
+
+// --- Create the pool with the explicit prepare function ---
+//pool, err := sqlitex.NewPool(dbPath, sqlitex.PoolOptions{
+//	PoolSize:        10, // Example pool size
+//	ConnPrepareFunc: prepareConnExplicit,
+//})
+
