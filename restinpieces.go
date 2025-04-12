@@ -93,7 +93,6 @@ func initPreRouter(app *core.App) http.Handler {
 	if cfg.BlockIp.Enabled {
 		// Instantiate using app resources
 		blockIp := proxy.NewBlockIp(app.Cache(), logger) // Keep logger for BlockIp
-		preRouterChain.WithMiddleware(blockIp.Execute)
 		logger.Info("Prerouter Middleware BlockIp enabled")
 	} else {
 		logger.Info("Prerouter Middleware BlockIp disabled")
@@ -102,19 +101,18 @@ func initPreRouter(app *core.App) http.Handler {
 	// 2. TLSHeaderSTS Middleware (Added second, runs second)
 	// This should run early to ensure HSTS is set for TLS requests, but after IP blocking.
 	tlsHeaderSTS := proxy.NewTLSHeaderSTS()
-	preRouterChain.WithMiddleware(tlsHeaderSTS.Execute)
 	// No specific log for TLSHeaderSTS as it always runs
 
 	// 3. Maintenance Middleware (Added third, runs third)
 	if cfg.Maintenance.Enabled {
 		// Instantiate using app instance (no logger needed)
 		maintenance := proxy.NewMaintenance(app)
-		preRouterChain.WithMiddleware(maintenance.Execute)
 		logger.Info("Prerouter Middleware Maintenance enabled")
 	} else {
 		logger.Info("Prerouter Middleware Maintenance disabled")
 	}
 
+	preRouterChain.WithMiddleware(blockIp.Execute).WithMiddleware(tlsHeaderSTS.Execute).WithMiddleware(maintenance.Execute)
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
 	logger.Info("PreRouter handler chain configured")
