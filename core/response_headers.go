@@ -148,7 +148,7 @@ var HeadersFavicon = map[string]string{
 // HeadersMaintenancePage defines essential headers for a maintenance response (typically 503).
 var HeadersMaintenancePage = map[string]string{
 	// Specify plain text content type. Change to text/html if serving HTML.
-	"Content-Type": "text/plain; charset=utf-8",
+	//"Content-Type": "text/plain; charset=utf-8",
 
 	// Ensure the response is not stored by any cache.
 	"Cache-Control": "no-store",
