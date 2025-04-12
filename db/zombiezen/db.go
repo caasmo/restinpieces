@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
@@ -37,19 +36,6 @@ func New(pool *sqlitex.Pool) (*Db, error) {
 // Close method removed as the pool lifecycle is managed externally.
 
 
-// CreateUser inserts a new user with RFC3339 formatted UTC timestamps
-// InsertJob placeholder for zombiezen SQLite implementation
-func (d *Db) Claim(limit int) ([]*queue.Job, error) {
-	return nil, fmt.Errorf("Claim not implemented for zombiezen SQLite variant")
-}
-
-func (d *Db) GetJobs(limit int) ([]*queue.Job, error) {
-	return nil, fmt.Errorf("GetJobs not implemented for zombiezen SQLite variant")
-}
-
-func (d *Db) InsertJob(job queue.Job) error {
-	return fmt.Errorf("InsertJob not implemented for zombiezen SQLite variant")
-}
 func (d *Db) GetById(id int64) int { // Added missing return type 'int'
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
@@ -76,13 +62,6 @@ func (d *Db) GetById(id int64) int { // Added missing return type 'int'
 }
 
 
-func (d *Db) MarkCompleted(jobID int64) error {
-	return fmt.Errorf("MarkCompleted not implemented for zombiezen SQLite variant")
-}
-
-func (d *Db) MarkFailed(jobID int64, errMsg string) error {
-	return fmt.Errorf("MarkFailed not implemented for zombiezen SQLite variant")
-}
 
 func (d *Db) VerifyEmail(userId string) error {
 	conn, err := d.pool.Take(context.TODO())
@@ -152,33 +131,6 @@ func (d *Db) UpdateEmail(userId string, newEmail string) error {
 	return nil
 }
 
-// GetConfig retrieves the latest TOML serialized configuration from the database.
-// Returns empty string if no config exists (no error).
-func (d *Db) GetConfig() (string, error) {
-	conn, err := d.pool.Take(context.TODO())
-	if err != nil {
-		return "", fmt.Errorf("failed to get db connection: %w", err)
-	}
-	defer d.pool.Put(conn)
-
-	var configToml string
-	err = sqlitex.Execute(conn,
-		`SELECT content FROM app_config 
-		ORDER BY created_at DESC 
-		LIMIT 1;`,
-		&sqlitex.ExecOptions{
-			ResultFunc: func(stmt *sqlite.Stmt) error {
-				configToml = stmt.GetText("content")
-				return nil
-			},
-		})
-
-	if err != nil {
-		return "", fmt.Errorf("failed to get config: %w", err)
-	}
-
-	return configToml, nil
-}
 
 func (d *Db) InsertWithPool(value int64) {
 	conn, err := d.pool.Take(context.TODO())
