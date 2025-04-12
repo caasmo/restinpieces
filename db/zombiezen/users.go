@@ -152,7 +152,10 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 			},
 		})
 
-	return &createdUser, err
+	if err != nil {
+		return nil, err // Return nil user on error, matching crawshaw
+	}
+	return &createdUser, nil
 }
 
 func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
@@ -192,7 +195,10 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 			},
 		})
 
-	return &createdUser, err
+	if err != nil {
+		return nil, err // Return nil user on error, matching crawshaw
+	}
+	return &createdUser, nil
 }
 
 func (d *Db) UpdatePassword(userId string, newPassword string) error {
