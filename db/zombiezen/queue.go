@@ -1,4 +1,5 @@
-package zombiezen	
+package zombiezen
+
 import (
 	"fmt"
 	"github.com/caasmo/restinpieces/queue"

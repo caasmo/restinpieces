@@ -48,8 +48,8 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 					Email:           stmt.GetText("email"),
 					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
 					// Avatar:          stmt.GetText("avatar"), // Removed duplicate field
-					Created:         created,
-					Updated:         updated,
+					Created: created,
+					Updated: updated,
 				}
 				return nil
 			},
@@ -290,4 +290,3 @@ func (d *Db) UpdateEmail(userId string, newEmail string) error {
 
 	return nil
 }
-

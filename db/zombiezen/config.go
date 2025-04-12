@@ -9,7 +9,6 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-
 // GetConfig retrieves the latest TOML serialized configuration from the database.
 // Returns empty string if no config exists (no error).
 func (d *Db) GetConfig() (string, error) {

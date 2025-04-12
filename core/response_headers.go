@@ -79,7 +79,7 @@ var headersStaticHtml = map[string]string{
 	//             before using a cached response. Ensures the latest HTML
 	//             (with potentially updated asset links) is served.
 	"Cache-Control": "public, no-cache",
-	
+
 	// Prevent browsers from MIME-sniffing the response away from declared Content-Type
 	"X-Content-Type-Options": "nosniff",
 

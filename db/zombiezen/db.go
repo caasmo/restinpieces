@@ -35,7 +35,6 @@ func New(pool *sqlitex.Pool) (*Db, error) {
 
 // Close method removed as the pool lifecycle is managed externally.
 
-
 func (d *Db) GetById(id int64) int { // Added missing return type 'int'
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
@@ -60,9 +59,6 @@ func (d *Db) GetById(id int64) int { // Added missing return type 'int'
 
 	return value
 }
-
-
-
 
 func (d *Db) InsertWithPool(value int64) {
 	conn, err := d.pool.Take(context.TODO())
