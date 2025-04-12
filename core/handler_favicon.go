@@ -7,6 +7,6 @@ import "net/http"
 // It avoids serving an actual icon file, keeping the API server focused.
 // Caching headers are applied by the middleware or router configuration.
 func FaviconHandler(w http.ResponseWriter, r *http.Request) {
-	setHeaders(w, HeadersFavicon)
+	SetHeaders(w, HeadersFavicon)
 	w.WriteHeader(http.StatusNoContent)
 }

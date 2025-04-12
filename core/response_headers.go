@@ -147,7 +147,7 @@ var HeadersFavicon = map[string]string{
 
 // setHeaders applies one or more sets of headers to the response writer.
 // Headers from later maps will overwrite headers from earlier maps if keys conflict.
-func setHeaders(w http.ResponseWriter, headers ...map[string]string) {
+func SetHeaders(w http.ResponseWriter, headers ...map[string]string) {
 	for _, headerMap := range headers {
 		for key, value := range headerMap {
             w.Header()[key] = []string{value}

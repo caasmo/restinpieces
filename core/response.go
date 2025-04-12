@@ -31,7 +31,7 @@ type JsonWithData struct {
 
 // writeJsonWithData writes a structured JSON response with the provided data
 func writeJsonWithData(w http.ResponseWriter, resp JsonWithData) {
-	setHeaders(w, HeadersJson)
+	SetHeaders(w, HeadersJson)
 	w.WriteHeader(resp.Status)
 	json.NewEncoder(w).Encode(resp)
 }
