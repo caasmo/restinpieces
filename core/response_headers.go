@@ -121,7 +121,7 @@ var headersStaticHtml = map[string]string{
 	// - Serve all code as external files from trusted origins ('self', trusted CDNs).
 	// - Avoid inline code entirely (no 'unsafe-inline' exceptions).
 	// - Use SRI to ensure file integrity
-	"Content-Security-Policy": "default-src 'self'",
+	"Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
 	//"Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
 
 	// The Referrer-Policy HTTP header controls how much referrer information
