@@ -63,6 +63,28 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	return user, nil
 }
 
+func (d *Db) VerifyEmail(userId string) error {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return err
+	}
+	defer d.pool.Put(conn)
+
+	err = sqlitex.Execute(conn,
+		`UPDATE users 
+		SET verified = true,
+			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+		WHERE id = ?`,
+		&sqlitex.ExecOptions{
+			Args: []interface{}{userId},
+		})
+	if err != nil {
+		// Wrap error to match crawshaw behavior
+		return fmt.Errorf("failed to verify email: %w", err)
+	}
+	return nil
+}
+
 func (d *Db) GetUserById(id string) (*db.User, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
@@ -221,28 +243,6 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 		})
 
 	return &createdUser, err
-}
-
-func (d *Db) VerifyEmail(userId string) error {
-	conn, err := d.pool.Take(context.TODO())
-	if err != nil {
-		return err
-	}
-	defer d.pool.Put(conn)
-
-	err = sqlitex.Execute(conn,
-		`UPDATE users 
-		SET verified = true,
-			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-		WHERE id = ?`,
-		&sqlitex.ExecOptions{
-			Args: []interface{}{userId},
-		})
-	if err != nil {
-		// Wrap error to match crawshaw behavior
-		return fmt.Errorf("failed to verify email: %w", err)
-	}
-	return nil
 }
 
 func (d *Db) UpdatePassword(userId string, newPassword string) error {
