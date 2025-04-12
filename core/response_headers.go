@@ -145,9 +145,13 @@ var HeadersFavicon = map[string]string{
 	"Cache-Control": "public, max-age=86400",
 }
 
-// ApplyHeaders sets all headers from a map to the response writer
-func setHeaders(w http.ResponseWriter, headers map[string]string) {
-	for key, value := range headers {
-		w.Header()[key] = []string{value}
+// setHeaders applies one or more sets of headers to the response writer.
+// Headers from later maps will overwrite headers from earlier maps if keys conflict.
+func setHeaders(w http.ResponseWriter, headers ...map[string]string) {
+	for _, headerMap := range headers {
+		for key, value := range headerMap {
+			// Using Set() is slightly cleaner than direct map access and handles potential nil map internally.
+			w.Header().Set(key, value)
+		}
 	}
 }
