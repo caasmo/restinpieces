@@ -230,7 +230,7 @@ func (d *Db) VerifyEmail(userId string) error {
 	}
 	defer d.pool.Put(conn)
 
-	return sqlitex.Execute(conn,
+	err = sqlitex.Execute(conn,
 		`UPDATE users 
 		SET verified = true,
 			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
