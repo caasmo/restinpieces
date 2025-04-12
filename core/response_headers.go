@@ -163,8 +163,7 @@ var HeadersMaintenancePage = map[string]string{
 func SetHeaders(w http.ResponseWriter, headers ...map[string]string) {
 	for _, headerMap := range headers {
 		for key, value := range headerMap {
-			// Using Set() is slightly cleaner than direct map access.
-			w.Header().Set(key, value)
+            w.Header()[key] = []string{value}
 		}
 	}
 }
