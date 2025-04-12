@@ -2,29 +2,8 @@
 
 
 - blockip move
-- mantenance if html request css , if json responde json
 - disable standard routes
-- server config missing keydata, certdata
-    - keydata means dump memory contains  TODO
-        - get from files is exist.
-        - get from db
-        - handler, get from files, get from db, they are not in config?
-            - what about all others secrets, theya re also in config
-        -remove from config. make secrets struct. under config 
-            for jwt call osGten each time? no way
-            smtp each time a email is send osGetenv
-            the serer has the cert in memory?
 -  config on init all secrets are loading in memory
-    - they can come from db or env variables
-    - they are there till next reload
-    - we need, jwt, cert, smt
-    - server get cert from config: from path or db  
-    - handler get them from config, or path of db
-        - upon retrieval it writes in db, not file.
-- bug harcoded callback oauth2, path! 
-- config db file used?
-- test tls 
-    - handler test
     - handler: write in the db istead of file mangling
 	- if tls set reader
     - refactor multiple lego dns provider
@@ -36,18 +15,9 @@
 	- get set in db
 	- Test your setup with tools like ssllabs.com or testssl.sh
 - busy timeout and sync normal, for Performance
-- content headers TLS
-	- Strict-Transport-Security: max-age=63072000; includeSubDomains
-	- in proxy/app method we know conf enable tls. set header
 - 10% reduction in req/sec from htttp, to https refresh auth, with block ip
-- ETag or Last-Modified: Enables efficient cache validation for performance.
 - assests log 
 - config reload
-- proxy, app clear wiring
-    - proxy design is overkill, 
-        - move to app
-        - just initailiza alwya the sketch
-        - check conf to use or not
 - is a framework, clear workflow  -> examples repo. od use of the features
 - default zombiezen 
 - good enough release
@@ -56,9 +26,6 @@
     - basic metrics 
 		https://github.com/prometheus/client_golang
     - superuser workflows
-    - mantenance page 
-        0 https://developers.cloudflare.com/rules/snippets/examples/maintenance/
-	- tls 
 	- all shell test 
 	- unit test
 	- workflow for recovery, 
@@ -82,10 +49,6 @@
     - some made in Proxy, conunters etc
     - no prometheus page
         - prometheus online services? YES Managed Prometheus
-- mantenance
-    - if path api.
-    - if not harcoded page
-    - mantenance page service redirect
 - superuser
 	- basic metrics
 	- hourly X ok telegram message
@@ -95,7 +58,6 @@
 - order in init/main. modular. Brainstrom 
 - password reset if no password ie oauth2 user => no only register with email
 - verify email for oauth -> yes verifed
-- password change test with real smtp  
 - corfirmation, spam sending the same right jwt 
 - endpointsw discovery has no update each time.
 - assets integrity, bundler 
@@ -118,12 +80,8 @@
 - revamp shell tests.
 - CORS 
 - updatebenchmark
-- block ua: cache db,  
-- block jwt: cache db,  
-- block referrer
 - block methods automatically, win against router?
 - in process litestream 
-- rethink payload job unique, per customer or payloads should have customer info
 - document middleware politic, if you have to write in the context, you shoudl not be a middleware.
 	- the first middleare post serverHttp code is the last observer.
 - superuser? just ssh?
@@ -144,11 +102,9 @@
 - zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
 - httprouter params to servemux $ 
 - hardening: add headers CORS, etc
-- add toml conf and config struct, add struct to app, router, cache
 - document design in doc. why all decision.
 - document performance read/write 
 - rand source in app. performacen rand
-- make command line to copy files and perform changes in the codes based on preferences. maybe using generate
 - modernc?
 - the command (maybe based on configuration) creates dir, copy only needed packages and inserts custom code pa
 - minify html, 5% space. if we already have gzip
@@ -160,9 +116,37 @@
 - s3 integration
 - cache alternative syncMap, no garbage collection, noOP
 - propably multidomain
+- ETag or Last-Modified: Enables efficient cache validation for performance. -> no: user
+    - no we are talking about html.
+    - at most a weak etag like deploy tag
+    - maybe max-age 1 hour in cache control
+    - opinionaated, user can make its own
+- block ua: cache db,  
+- block jwt: cache db,  
+- block referrer
 
 ### done
 
+- mantenance if html request css , if json responde json
+- mantenance page 
+    - https://developers.cloudflare.com/rules/snippets/examples/maintenance/
+- tls 
+- mantenance
+    - if path api.
+    - if not harcoded page
+    - mantenance page service redirect
+- rethink payload job unique, per customer or payloads should have customer info
+- password change test with real smtp  
+- add toml conf and config struct, add struct to app, router, cache
+- proxy, app clear wiring
+    - proxy design is overkill, 
+        - move to app
+        - just initailiza alwya the sketch
+        - check conf to use or not
+- content headers TLS
+	- Strict-Transport-Security: max-age=63072000; includeSubDomains
+	- in proxy/app method we know conf enable tls. set header
+- make command line to copy files and perform changes in the codes based on preferences. maybe using generate
 - maintenance middleware: 503 Retry-After: 3600
 	- we can not avoid goroutine
     - global middleware, wraps router
