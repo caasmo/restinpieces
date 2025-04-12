@@ -3,7 +3,7 @@ package zombiezen
 import (
 	"context"
 	"fmt"
-	"time"
+	// "time" // Removed unused import
 	"github.com/caasmo/restinpieces/db"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
@@ -47,7 +47,7 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 					Avatar:          stmt.GetText("avatar"),
 					Email:           stmt.GetText("email"),
 					EmailVisibility: stmt.GetInt64("emailVisibility") != 0,
-					Avatar:          stmt.GetText("avatar"), // Added missing Avatar field
+					// Avatar:          stmt.GetText("avatar"), // Removed duplicate field
 					Created:         created,
 					Updated:         updated,
 				}
