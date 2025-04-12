@@ -2,6 +2,7 @@
 
 
 - blockip move
+- mantenance if html request css , if json responde json
 - preRouter handling -> we allow disable in config, we do not allow adding, can put in normal middleware.
     configure the framework's pre-router features; add your own logic at the route level.
     Framework handles everything before routing; user handles everything after routing

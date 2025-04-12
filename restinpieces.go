@@ -100,9 +100,9 @@ func initPreRouter(app *core.App) http.Handler {
 		// Instantiate using app resources
 		blockIp := proxy.NewBlockIp(app.Cache(), logger) // Keep logger for BlockIp
 		preRouterChain.WithMiddleware(blockIp.Execute)
-		// logger.Info("Internal Middleware: BlockIp enabled") // Log removed
+		 logger.Info("Internal Middleware: BlockIp enabled") // Log removed
 	} else {
-		// logger.Info("Internal Middleware: BlockIp disabled") // Log removed
+		 logger.Info("Internal Middleware: BlockIp disabled") // Log removed
 	}
 
 	// 3. Maintenance Middleware (Added third, runs third)
@@ -110,9 +110,9 @@ func initPreRouter(app *core.App) http.Handler {
 		// Instantiate using app instance (no logger needed)
 		maintenance := proxy.NewMaintenance(app)
 		preRouterChain.WithMiddleware(maintenance.Execute)
-		// logger.Info("Internal Middleware: Maintenance enabled") // Log removed
+		 logger.Info("Internal Middleware: Maintenance enabled") // Log removed
 	} else {
-		// logger.Info("Internal Middleware: Maintenance disabled") // Log removed
+		 logger.Info("Internal Middleware: Maintenance disabled") // Log removed
 	}
 
 	// 4. Add other internal middleware here (e.g., RateLimiter, Metrics, Logging)
@@ -128,7 +128,7 @@ func initPreRouter(app *core.App) http.Handler {
 	// --- Finalize the PreRouter ---
 	// Get the final composed handler
 	finalPreRouterHandler := preRouterChain.Handler()
-	// logger.Info("Internal PreRouter handler chain configured") // Log removed
+	 logger.Info("Internal PreRouter handler chain configured") // Log removed
 
 	// Return the final handler
 	return finalPreRouterHandler
