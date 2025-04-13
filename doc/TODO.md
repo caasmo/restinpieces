@@ -2,45 +2,36 @@
 
 
 - disable standard routes
+- if tls, handle automatic redirection to https
+	- redirect server
 - prepareConn explicite
 	- busy timeout and sync normal, for Performance
--  config on init all secrets are loading in memory
-    - handler: write in the db istead of file mangling
-	- if tls set reader
-    - refactor multiple lego dns provider
-    - context for timneout in the handler
-    - are resource file []byte save in new table.
-    - initial cert, lego?
-    - account ACME user. HOw to change password? what happens if lost.
-    - build without https support? ACME dependencies  
-	- get set in db
-	- Test your setup with tools like ssllabs.com or testssl.sh
-- redirect server
-- script modify-config, 
-	- read from db, decode toml, build config struct?
-- assests log 
-- config reload
 - is a framework, clear workflow  -> examples repo. od use of the features
-- control new features, they can go in other projects/packages
 - litestream
 	- in binary, can be configured.
-	- only file or s3.
+	- only file or s3/b2
 	- ssh client scp in intervals. flag ssh address + directory
 	- with age.
 - good enough release
-    - litestream or just cron each 5 minutes: see litestream 
+	- tls: 80 redirect
+    - litestream file or/and s3 
     - basic metrics 
 		- https://github.com/prometheus/client_golang
-		- reqtes second. 
+		- just requets/second. 
     - notification basic
     - superuser workflows
 		- scripts
 	- all shell test 
 	- unit test
+	- code review
 	- workflow for recovery, 
 	- basic framework use examples repo, with examples of features.
-- if tls, handle automatic redirection to https
+- control new features, they can go in other projects/packages
+- script insert-job. --type 
+- config reload
 - sdk endpoint
+	- move to own repo?
+	- rename just to show the sdk
 - race detection
 - scheduler recurrent jobs
 	- has tick
@@ -58,6 +49,8 @@
         - or not jsut notification
     - some made in preRouter, conunters etc
     - no prometheus page
+- script modify-config, ??
+	- read from db, decode toml, build config struct?
 - superuser
 	- basic idea is superuser has simple scripts, to activate disable things. add jobs. etc
 	- hourly X ok telegram message
@@ -129,6 +122,17 @@
 
 ### done
 
+-  config on init all secrets are loading in memory
+    - handler: write in the db istead of file mangling
+	- if tls set reader
+    - refactor multiple lego dns provider
+    - context for timneout in the handler
+    - are resource file []byte save in new table.
+    - initial cert, lego?
+    - account ACME user. HOw to change password? what happens if lost.
+    - build without https support? ACME dependencies  
+	- get set in db
+	- Test your setup with tools like ssllabs.com or testssl.sh
 - default zombiezen 
 - blockip move
 - Move validate claims to request jwt 
