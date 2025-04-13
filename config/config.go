@@ -150,6 +150,32 @@ func (s *Server) BaseURL() string {
 	return fmt.Sprintf("%s://%s", scheme, s.Addr)
 }
 
+// RedirectAddr constructs the listen address for the HTTP-to-HTTPS redirect server.
+// It uses the host part from the main server Addr and the port from RedirectPort.
+// Returns an empty string if RedirectPort is not set, indicating no redirect server.
+func (s *Server) RedirectAddr() string {
+	// No redirect server if RedirectPort is not configured.
+	if s.RedirectPort == "" {
+		return ""
+	}
+
+	// Extract the host from the main server address.
+	// Validation ensures Addr is in a valid host:port format (host might be "localhost").
+	host, _, err := net.SplitHostPort(s.Addr)
+	if err != nil {
+		// This should ideally not happen due to prior validation, but handle defensively.
+		// If Addr somehow became invalid after validation, we cannot determine the host.
+		// Returning "" prevents starting a redirect server with an invalid address.
+		// Consider logging this unexpected error in a real application.
+		// fmt.Printf("Warning: Could not parse Server.Addr '%s' in RedirectAddr: %v\n", s.Addr, err)
+		return ""
+	}
+
+	// Construct the redirect address using the extracted host and the RedirectPort.
+	// net.JoinHostPort handles IPv6 addresses correctly (e.g., "[::]:80").
+	return net.JoinHostPort(host, s.RedirectPort)
+}
+
 type RateLimits struct {
 	// PasswordResetCooldown specifies how long a user must wait between
 	// password reset requests to prevent abuse and email spam
