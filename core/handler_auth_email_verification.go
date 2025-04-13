@@ -30,7 +30,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 
 	// Check if user is already verified
 	if user.Verified {
-		writeJsonOk(w, okAlreadyVerified)
+		WriteJsonOk(w, okAlreadyVerified)
 		return
 	}
 
@@ -83,7 +83,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	writeJsonOk(w, okVerificationRequested)
+	WriteJsonOk(w, okVerificationRequested)
 }
 
 func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Request) {
@@ -141,7 +141,7 @@ func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 
 	// Check if user is already verified
 	if user.Verified {
-		writeJsonOk(w, okAlreadyVerified)
+		WriteJsonOk(w, okAlreadyVerified)
 		return
 	}
 
@@ -151,5 +151,5 @@ func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	writeJsonOk(w, okEmailVerified)
+	WriteJsonOk(w, okEmailVerified)
 }

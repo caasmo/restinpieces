@@ -136,7 +136,7 @@ var (
 )
 
 // For successful precomputed responses
-func writeJsonOk(w http.ResponseWriter, resp jsonResponse) {
+func WriteJsonOk(w http.ResponseWriter, resp jsonResponse) {
 	SetHeaders(w, HeadersJson)
 	w.WriteHeader(resp.status)
 	w.Write(resp.body)

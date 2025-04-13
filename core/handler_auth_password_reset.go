@@ -58,7 +58,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	// user not found
 	if user == nil {
 		// Return success even if email doesn't exist to prevent email enumeration
-		writeJsonOk(w, okPasswordResetRequested)
+		WriteJsonOk(w, okPasswordResetRequested)
 		return
 	}
 
@@ -70,7 +70,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 
 	// Check if user has no password (oauth2 only)
 	if user.Password == "" {
-		writeJsonOk(w, okPasswordNotRequired)
+		WriteJsonOk(w, okPasswordNotRequired)
 		return
 	}
 
@@ -104,7 +104,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	writeJsonOk(w, okPasswordResetRequested)
+	WriteJsonOk(w, okPasswordResetRequested)
 }
 
 // ConfirmPasswordResetHandler handles password reset confirmation
@@ -196,7 +196,7 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 
 	// Check if new password matches old one
 	if crypto.CheckPassword(req.Password, user.Password) {
-		writeJsonOk(w, okPasswordResetNotNeeded)
+		WriteJsonOk(w, okPasswordResetNotNeeded)
 		return
 	}
 
@@ -206,5 +206,5 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 		writeJsonError(w, errorServiceUnavailable)
 		return
 	}
-	writeJsonOk(w, okPasswordReset)
+	WriteJsonOk(w, okPasswordReset)
 }
