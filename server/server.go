@@ -17,33 +17,13 @@ import (
 
 type Server struct {
 	configProvider *config.Provider
-	handler        http.Handler // Changed from proxy *proxy.Proxy
+	handler        http.Handler 
 	scheduler      *scheduler.Scheduler
 	logger         *slog.Logger
 }
 
 func (s *Server) handleSIGHUP() {
 	s.logger.Info("Received SIGHUP signal - attempting to reload configuration")
-	// you have app. app.Config()
-	// we have the flag config in the conf source.
-	// TODO: Need the dbfile path here. How to get it?
-	// Option 1: Store it in the Server struct.
-	// Option 2: Get it from the initial config stored in the provider (if it's there).
-	// Let's assume DBFile is in the config for now.
-	//	dbFile := s.configProvider.Get().DBFile
-	//	if dbFile == "" {
-	//		s.logger.Error("Cannot reload config: DBFile path not found in current configuration")
-	//		return // Skip reload if path is missing
-	//	}
-	//	newCfg, err := config.Load(dbFile)
-	//	if err != nil {
-	//		s.logger.Error("Failed to reload configuration on SIGHUP", "error", err)
-	//		// Continue with the old configuration
-	//	} else {
-	//		s.configProvider.Update(newCfg)
-	//		s.logger.Info("Configuration reloaded successfully via SIGHUP")
-	//		// Note: Server restart needed for changes in Server config section.
-	//	}
 }
 
 // NewServer now accepts any http.Handler.
