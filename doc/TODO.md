@@ -16,25 +16,33 @@
 	- get set in db
 	- Test your setup with tools like ssllabs.com or testssl.sh
 - redirect server
-- 10% reduction in req/sec from htttp, to https refresh auth, with block ip
+- script modify-config, 
+	- read from db, decode toml, build config struct?
 - assests log 
 - config reload
 - is a framework, clear workflow  -> examples repo. od use of the features
 - control new features, they can go in other projects/packages
+- litestream
+	- in binary, can be configured.
+	- only file or s3.
+	- ssh client scp in intervals. flag ssh address + directory
+	- with age.
 - good enough release
     - litestream or just cron each 5 minutes: see litestream 
-    - configuration
     - basic metrics 
-		https://github.com/prometheus/client_golang
+		- https://github.com/prometheus/client_golang
+		- reqtes second. 
+    - notification basic
     - superuser workflows
+		- scripts
 	- all shell test 
 	- unit test
 	- workflow for recovery, 
-	- basic framework use
+	- basic framework use examples repo, with examples of features.
 - if tls, handle automatic redirection to https
 - sdk endpoint
 - race detection
-- scheduler How to simply add recurrent jobs
+- scheduler recurrent jobs
 	- has tick
 		-  config based 
             - not only check entries, but check config? Nee 
@@ -44,16 +52,17 @@
 			    - recurrent if recurernt scheduler markSuccesful and creates next
 	- notification executor handler 
 - basic metrics 
+	- https://pkg.go.dev/runtime/metrics
     - go ones
     - basic superuser endpoint
         - or not jsut notification
-    - some made in Proxy, conunters etc
+    - some made in preRouter, conunters etc
     - no prometheus page
-        - prometheus online services? YES Managed Prometheus
 - superuser
-	- basic metrics
+	- basic idea is superuser has simple scripts, to activate disable things. add jobs. etc
 	- hourly X ok telegram message
-	- more detailed 
+	- more detailed report 
+- 10% reduction in req/sec from htttp, to https refresh auth, with block ip
 - password reset if no password ie oauth2 user => no only register with email
 - verify email for oauth -> yes verifed
 - corfirmation, spam sending the same right jwt 
@@ -74,8 +83,6 @@
 - verify addresses paths shoudl be random or pseudo random?
 - revamp shell tests.
 - CORS 
-- updatebenchmark
-- block methods automatically, win against router?
 - in process litestream 
 - document middleware politic, if you have to write in the context, you shoudl not be a middleware.
 	- the first middleare post serverHttp code is the last observer.
@@ -93,18 +100,17 @@
 - more bash test all endpoints
 - code review jwt tests
 - zombiezen, impl pool with timeout, split in files. 
-- zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
 - httprouter params to servemux $ 
 - hardening: add headers CORS, etc
 - document design in doc. why all decision.
 - document performance read/write 
-- rand source in app. performacen rand
 - the command (maybe based on configuration) creates dir, copy only needed packages and inserts custom code pa
 - minify html, 5% space. if we already have gzip
     - https://github.com/tdewolff/minify?tab=readme-ov-file#html 
     - https://github.com/privatenumber/minification-benchmarks?tab=readme-ov-file#%EF%B8%8F-minifier-showdown
 
 ### Maybe
+- updatebenchmark: to own paclkage resuse modernc and 
 - modernc?
 - add prometheus.
 - s3 integration
@@ -118,6 +124,8 @@
 - block ua: cache db,  
 - block jwt: cache db,  
 - block referrer
+- rand source in app. performacen rand
+- zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
 
 ### done
 
