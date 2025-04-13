@@ -29,11 +29,10 @@ func validateServer(server *Server) error {
 		return err // Error already includes context
 	}
 
-	// Only validate HTTPRedirectPort if TLS is enabled
-	if server.EnableTLS {
-		if err := validateServerHTTPRedirectPort(server); err != nil {
-			return err // Error already includes context
-		}
+	// Always validate HTTPRedirectPort if it's set, regardless of EnableTLS.
+	// validateServerHTTPRedirectPort handles the empty case correctly.
+	if err := validateServerHTTPRedirectPort(server); err != nil {
+		return err // Error already includes context
 	}
 
 	// Add calls to validate other Server fields here if needed
