@@ -56,13 +56,13 @@ const (
 )
 
 // ResponseBasicFormat is used  for short ok and error responses
-// precomputeBasicResponse() will be executed during initialization (before main() runs),
+// PrecomputeBasicResponse() will be executed during initialization (before main() runs),
 // and the JSON body will be precomputed and stored in the response variables.
 // the variables will contain the fully JSON as []byte already
 // It avoids repeated JSON marshaling during request handling
 // Any time we use writeJSONResponse(w, response) in the code, it
 // simply writes the pre-computed bytes to the response writer
-func precomputeBasicResponse(status int, code, message string) jsonResponse {
+func PrecomputeBasicResponse(status int, code, message string) jsonResponse {
 	basic := JsonBasic{
 		Status:  status,
 		Code:    code,
@@ -76,48 +76,48 @@ func precomputeBasicResponse(status int, code, message string) jsonResponse {
 var (
 
 	//errors
-	errorTokenGeneration                   = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
-	errorClaimsNotFound                    = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorClaimsNotFound, "Failed to generate token: Claims not found")
-	errorInvalidRequest                    = precomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidRequest, "The request contains invalid data")
-	errorInvalidCredentials                = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidCredentials, "Invalid credentials provided")
-	errorPasswordMismatch                  = precomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordMismatch, "Password and confirmation do not match")
-	errorMissingFields                     = precomputeBasicResponse(http.StatusBadRequest, CodeErrorMissingFields, "Required fields are missing")
-	errorPasswordComplexity                = precomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordComplexity, "Password must be at least 8 characters")
-	errorEmailConflict                     = precomputeBasicResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
-	errorNotFound                          = precomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
-	errorEmailVerificationAlreadyRequested = precomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationAlreadyRequested, "Email verification already requested.")
-	errorPasswordResetAlreadyRequested     = precomputeBasicResponse(http.StatusConflict, CodeErrorPasswordResetAlreadyRequested, "Password reset already requested")
-	errorEmailChangeAlreadyRequested       = precomputeBasicResponse(http.StatusConflict, CodeErrorEmailChangeAlreadyRequested, "Email change already requested")
-	errorPasswordResetFailed               = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordResetFailed, "Password reset process failed")
-	okPasswordReset                        = precomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")
-	errorRegistrationFailed                = precomputeBasicResponse(http.StatusBadRequest, CodeErrorRegistrationFailed, "Registration failed due to invalid data")
-	errorTooManyRequests                   = precomputeBasicResponse(http.StatusTooManyRequests, CodeErrorTooManyRequests, "Too many requests, please try again later")
-	errorServiceUnavailable                = precomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
-	errorNoAuthHeader                      = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")
-	errorInvalidTokenFormat                = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidTokenFormat, "Invalid authorization token format")
-	errorJwtInvalidSignMethod              = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidSignMethod, "Invalid JWT signing method")
-	errorJwtTokenExpired                   = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
-	errorJwtInvalidToken                   = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidToken, "Invalid authentication token")
-	errorJwtInvalidVerificationToken       = precomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidVerificationToken, "Invalid verification token")
-	errorEmailVerificationFailed           = precomputeBasicResponse(http.StatusInternalServerError, "err_email_verification_failed", "Email verification process failed")
-	errorInvalidOAuth2Provider             = precomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
-	errorOAuth2TokenExchangeFailed         = precomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
-	errorOAuth2UserInfoFailed              = precomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
-	errorOAuth2UserInfoProcessingFailed    = precomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
-	errorOAuth2DatabaseError               = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorOAuth2DatabaseError, "Database error during OAuth2 authentication")
-	errorAuthDatabaseError                 = precomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
-	errorInvalidContentType                = precomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type")
-	errorUnverifiedEmail                   = precomputeBasicResponse(http.StatusForbidden, CodeErrorUnverifiedEmail, "Email must be verified before changing it")
+	errorTokenGeneration                   = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
+	errorClaimsNotFound                    = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorClaimsNotFound, "Failed to generate token: Claims not found")
+	errorInvalidRequest                    = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidRequest, "The request contains invalid data")
+	errorInvalidCredentials                = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidCredentials, "Invalid credentials provided")
+	errorPasswordMismatch                  = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordMismatch, "Password and confirmation do not match")
+	errorMissingFields                     = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorMissingFields, "Required fields are missing")
+	errorPasswordComplexity                = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordComplexity, "Password must be at least 8 characters")
+	errorEmailConflict                     = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
+	errorNotFound                          = PrecomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
+	errorEmailVerificationAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationAlreadyRequested, "Email verification already requested.")
+	errorPasswordResetAlreadyRequested     = PrecomputeBasicResponse(http.StatusConflict, CodeErrorPasswordResetAlreadyRequested, "Password reset already requested")
+	errorEmailChangeAlreadyRequested       = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailChangeAlreadyRequested, "Email change already requested")
+	errorPasswordResetFailed               = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordResetFailed, "Password reset process failed")
+	errorRegistrationFailed                = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorRegistrationFailed, "Registration failed due to invalid data")
+	errorTooManyRequests                   = PrecomputeBasicResponse(http.StatusTooManyRequests, CodeErrorTooManyRequests, "Too many requests, please try again later")
+	errorServiceUnavailable                = PrecomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
+	errorNoAuthHeader                      = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")
+	errorInvalidTokenFormat                = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidTokenFormat, "Invalid authorization token format")
+	errorJwtInvalidSignMethod              = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidSignMethod, "Invalid JWT signing method")
+	errorJwtTokenExpired                   = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
+	errorJwtInvalidToken                   = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidToken, "Invalid authentication token")
+	errorJwtInvalidVerificationToken       = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidVerificationToken, "Invalid verification token")
+	errorEmailVerificationFailed           = PrecomputeBasicResponse(http.StatusInternalServerError, "err_email_verification_failed", "Email verification process failed")
+	errorInvalidOAuth2Provider             = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
+	errorOAuth2TokenExchangeFailed         = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
+	errorOAuth2UserInfoFailed              = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
+	errorOAuth2UserInfoProcessingFailed    = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
+	errorOAuth2DatabaseError               = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorOAuth2DatabaseError, "Database error during OAuth2 authentication")
+	errorAuthDatabaseError                 = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
+	errorInvalidContentType                = PrecomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type")
+	errorUnverifiedEmail                   = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorUnverifiedEmail, "Email must be verified before changing it")
 
 	// oks
-	okAlreadyVerified        = precomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
-	okEmailVerified          = precomputeBasicResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
-	okVerificationRequested  = precomputeBasicResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
-	okPasswordResetRequested = precomputeBasicResponse(http.StatusAccepted, CodeOkPasswordResetRequested, "Password reset instructions will be sent to your email if it exists in our system")
-	okEmailChangeRequested   = precomputeBasicResponse(http.StatusAccepted, CodeOkEmailChangeRequested, "Email change instructions will be sent to your new email address")
-	okEmailChange            = precomputeBasicResponse(http.StatusOK, CodeOkEmailChange, "Email change was completed")
-	okPasswordResetNotNeeded = precomputeBasicResponse(http.StatusOK, CodeOkPasswordResetNotNeeded, "Password reset is not needed")
-	okPasswordNotRequired    = precomputeBasicResponse(http.StatusOK, CodeOkPasswordNotRequired, "Current authentication does not require password")
+	okPasswordReset                        = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")
+	okAlreadyVerified        = PrecomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
+	okEmailVerified          = PrecomputeBasicResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
+	okVerificationRequested  = PrecomputeBasicResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
+	okPasswordResetRequested = PrecomputeBasicResponse(http.StatusAccepted, CodeOkPasswordResetRequested, "Password reset instructions will be sent to your email if it exists in our system")
+	okEmailChangeRequested   = PrecomputeBasicResponse(http.StatusAccepted, CodeOkEmailChangeRequested, "Email change instructions will be sent to your new email address")
+	okEmailChange            = PrecomputeBasicResponse(http.StatusOK, CodeOkEmailChange, "Email change was completed")
+	okPasswordResetNotNeeded = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordResetNotNeeded, "Password reset is not needed")
+	okPasswordNotRequired    = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordNotRequired, "Current authentication does not require password")
 )
 
 // For successful precomputed responses
