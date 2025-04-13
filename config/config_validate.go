@@ -14,6 +14,15 @@ func Validate(cfg *Config) error {
 	return nil
 }
 
+// validateServer checks the Server configuration section.
+// It ensures the Addr field is not empty and contains a valid host:port or :port format.
+// If only a port is provided (e.g., ":8080"), it defaults the host to "localhost".
+//
+// Allowed formats:
+//   - "host:port" (e.g., "example.com:8080", "127.0.0.1:8080", "[::1]:8080")
+//   - ":port"     (e.g., ":8080" becomes "localhost:8080")
+//
+// The port part is mandatory.
 func validateServer(server *Server) error {
 	if server.Addr == "" {
 		return fmt.Errorf("server address (Addr) cannot be empty")
