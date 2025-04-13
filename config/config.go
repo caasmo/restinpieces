@@ -155,23 +155,16 @@ func (s *Server) BaseURL() string {
 // Returns an empty string if RedirectPort is not set, indicating no redirect server.
 // Relies on s.Addr having been previously validated to be in host:port format.
 func (s *Server) RedirectAddr() string {
-	// No redirect server if RedirectPort is not configured.
 	if s.RedirectPort == "" {
 		return ""
 	}
 
-	// Extract the host from the validated s.Addr (host:port format).
-	// Find the last colon, which separates host and port.
 	lastColon := strings.LastIndex(s.Addr, ":")
 	if lastColon == -1 {
-		// This should not happen if validation passed.
-		// Return empty string to prevent starting server with invalid address.
-		// Consider logging this unexpected state.
 		return ""
 	}
 	host := s.Addr[:lastColon]
 
-	// Construct the redirect address using the extracted host and the RedirectPort.
 	// net.JoinHostPort handles IPv6 addresses correctly (e.g., "[::1]:80").
 	return net.JoinHostPort(host, s.RedirectPort)
 }
