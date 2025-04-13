@@ -151,9 +151,6 @@ func (s *Server) BaseURL() string {
 }
 
 // RedirectAddr constructs the listen address for the HTTP-to-HTTPS redirect server.
-// It uses the host part from the main server Addr and the port from RedirectPort.
-// Returns an empty string if RedirectPort is not set, indicating no redirect server.
-// Relies on s.Addr having been previously validated to be in host:port format.
 func (s *Server) RedirectAddr() string {
 	if s.RedirectPort == "" {
 		return ""
