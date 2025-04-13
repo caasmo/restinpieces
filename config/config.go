@@ -143,7 +143,7 @@ type Server struct {
 // If Addr cannot be parsed, returns Addr as-is.
 func (s *Server) BaseURL() string {
 	host, port, err := net.SplitHostPort(s.Addr)
-	// TODO overkill
+	// TODO overkill remove this 
 	if err != nil {
 		// Handle cases like just ":8080" or even just "example.com" (no port)
 		// net.SplitHostPort might fail if only host or only port is given in certain ways.
