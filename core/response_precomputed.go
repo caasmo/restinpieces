@@ -72,21 +72,6 @@ func precomputeBasicResponse(status int, code, message string) jsonResponse {
 	return jsonResponse{status: status, body: body}
 }
 
-// precomputeWithDataResponse creates a precomputed response with data that includes
-// both basic response fields and additional payload data
-func precomputeWithDataResponse(status int, code, message string, data interface{}) jsonResponse {
-	response := JsonWithData{
-		JsonBasic: JsonBasic{
-			Status:  status,
-			Code:    code,
-			Message: message,
-		},
-		Data: data,
-	}
-	body, _ := json.Marshal(response)
-	return jsonResponse{status: status, body: body}
-}
-
 // Precomputed error and ok responses with status codes
 var (
 
