@@ -76,5 +76,5 @@ func writeAuthResponse(w http.ResponseWriter, token string, user *db.User) {
 		},
 		Data: authData,
 	}
-	writeJsonWithData(w, response)
+	WriteJsonWithData(w, response)
 }

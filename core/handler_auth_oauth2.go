@@ -285,5 +285,5 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 		},
 		Data: OAuth2ProviderListData{Providers: providers},
 	}
-	writeJsonWithData(w, response)
+	WriteJsonWithData(w, response)
 }

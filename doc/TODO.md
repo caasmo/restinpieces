@@ -1,12 +1,16 @@
 ### TODOs
 
-
 - disable standard routes
+- NewWithConfig(restinpieces.Config{
 - if tls, handle automatic redirection to https
 	- redirect server
 - prepareConn explicite
 	- busy timeout and sync normal, for Performance
 - is a framework, clear workflow  -> examples repo. od use of the features
+- nocache? what about BlockIp.
+- router: create router.Chains type
+- core. Capitalize for export, response, request and some middleware and 
+    - auth middleware and handlers, are lowercase
 - litestream
 	- in binary, can be configured.
 	- only file or s3/b2

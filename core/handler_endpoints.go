@@ -5,7 +5,7 @@ import (
 )
 
 func (a *App) ListEndpointsHandler(w http.ResponseWriter, r *http.Request) {
-	writeJsonWithData(w, JsonWithData{
+	WriteJsonWithData(w, JsonWithData{
 		JsonBasic: JsonBasic{
 			Status:  http.StatusOK,
 			Code:    CodeOkEndpoints,

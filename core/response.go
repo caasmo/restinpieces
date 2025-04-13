@@ -29,8 +29,8 @@ type JsonWithData struct {
 	Data interface{} `json:"data,omitempty"`
 }
 
-// writeJsonWithData writes a structured JSON response with the provided data
-func writeJsonWithData(w http.ResponseWriter, resp JsonWithData) {
+// WriteJsonWithData writes a structured JSON response with the provided data
+func WriteJsonWithData(w http.ResponseWriter, resp JsonWithData) {
 	SetHeaders(w, HeadersJson)
 	w.WriteHeader(resp.Status)
 	json.NewEncoder(w).Encode(resp)
