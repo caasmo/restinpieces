@@ -17,7 +17,7 @@ import (
 
 type Server struct {
 	configProvider *config.Provider
-	handler        http.Handler 
+	handler        http.Handler
 	scheduler      *scheduler.Scheduler
 	logger         *slog.Logger
 }

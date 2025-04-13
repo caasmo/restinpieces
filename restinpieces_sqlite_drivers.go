@@ -102,4 +102,3 @@ var explicitBusyTimeout = 5 * time.Second // Or whatever value you prefer
 //	PoolSize:        10, // Example pool size
 //	ConnPrepareFunc: prepareConnExplicit,
 //})
-

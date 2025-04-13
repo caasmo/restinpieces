@@ -165,6 +165,3 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
 }
-
-
-

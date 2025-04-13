@@ -109,7 +109,7 @@ var (
 	errorUnverifiedEmail                   = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorUnverifiedEmail, "Email must be verified before changing it")
 
 	// oks
-	okPasswordReset                        = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")
+	okPasswordReset          = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")
 	okAlreadyVerified        = PrecomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
 	okEmailVerified          = PrecomputeBasicResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
 	okVerificationRequested  = PrecomputeBasicResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
