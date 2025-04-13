@@ -153,26 +153,26 @@ func (s *Server) BaseURL() string {
 // RedirectAddr constructs the listen address for the HTTP-to-HTTPS redirect server.
 // It uses the host part from the main server Addr and the port from RedirectPort.
 // Returns an empty string if RedirectPort is not set, indicating no redirect server.
+// Relies on s.Addr having been previously validated to be in host:port format.
 func (s *Server) RedirectAddr() string {
 	// No redirect server if RedirectPort is not configured.
 	if s.RedirectPort == "" {
 		return ""
 	}
 
-	// Extract the host from the main server address.
-	// Validation ensures Addr is in a valid host:port format (host might be "localhost").
-	host, _, err := net.SplitHostPort(s.Addr)
-	if err != nil {
-		// This should ideally not happen due to prior validation, but handle defensively.
-		// If Addr somehow became invalid after validation, we cannot determine the host.
-		// Returning "" prevents starting a redirect server with an invalid address.
-		// Consider logging this unexpected error in a real application.
-		// fmt.Printf("Warning: Could not parse Server.Addr '%s' in RedirectAddr: %v\n", s.Addr, err)
+	// Extract the host from the validated s.Addr (host:port format).
+	// Find the last colon, which separates host and port.
+	lastColon := strings.LastIndex(s.Addr, ":")
+	if lastColon == -1 {
+		// This should not happen if validation passed.
+		// Return empty string to prevent starting server with invalid address.
+		// Consider logging this unexpected state.
 		return ""
 	}
+	host := s.Addr[:lastColon]
 
 	// Construct the redirect address using the extracted host and the RedirectPort.
-	// net.JoinHostPort handles IPv6 addresses correctly (e.g., "[::]:80").
+	// net.JoinHostPort handles IPv6 addresses correctly (e.g., "[::1]:80").
 	return net.JoinHostPort(host, s.RedirectPort)
 }
 
