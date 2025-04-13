@@ -16,19 +16,19 @@ import (
 // Allowed Mimetype: application/json
 func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 
 	// Authenticate the user using the token from the request
 	user, err, authResp := a.Authenticate(r)
 	if err != nil {
-		writeJsonError(w, authResp)
+		WriteJsonError(w, authResp)
 		return
 	}
 
 	if !user.Verified {
-		writeJsonError(w, errorUnverifiedEmail)
+		WriteJsonError(w, errorUnverifiedEmail)
 		return
 	}
 
@@ -37,25 +37,25 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	// Validate new email
 	if req.NewEmail == "" {
-		writeJsonError(w, errorMissingFields)
+		WriteJsonError(w, errorMissingFields)
 		return
 	}
 
 	// Check if new email is same as current
 	if req.NewEmail == user.Email {
-		writeJsonError(w, errorEmailConflict)
+		WriteJsonError(w, errorEmailConflict)
 		return
 	}
 
 	// Validate email format
 	if err := ValidateEmail(req.NewEmail); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -74,13 +74,13 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 
 	payloadBytes, err := json.Marshal(payload)
 	if err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	payloadExtraBytes, err := json.Marshal(payloadExtra)
 	if err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -94,10 +94,10 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	})
 	if err != nil {
 		if err == db.ErrConstraintUnique {
-			writeJsonError(w, errorEmailChangeAlreadyRequested)
+			WriteJsonError(w, errorEmailChangeAlreadyRequested)
 			return
 		}
-		writeJsonError(w, errorAuthDatabaseError)
+		WriteJsonError(w, errorAuthDatabaseError)
 		return
 	}
 
@@ -106,7 +106,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 
 func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 
@@ -117,38 +117,38 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 
 	var req request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	// Validate required fields
 	if req.Token == "" || req.Password == "" {
-		writeJsonError(w, errorMissingFields)
+		WriteJsonError(w, errorMissingFields)
 		return
 	}
 
 	// Parse unverified claims to discard fast
 	claims, err := crypto.ParseJwtUnverified(req.Token)
 	if err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
+		WriteJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
 	// Validate all required claims exist and have correct values
 	if err := crypto.ValidateEmailChangeClaims(claims); err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
+		WriteJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
 	user, err := a.DbAuth().GetUserById(claims[crypto.ClaimUserID].(string))
 	if err != nil || user == nil {
-		writeJsonError(w, errorNotFound)
+		WriteJsonError(w, errorNotFound)
 		return
 	}
 
 	// Verify password matches current password
 	if !crypto.CheckPassword(req.Password, user.Password) {
-		writeJsonError(w, errorInvalidCredentials)
+		WriteJsonError(w, errorInvalidCredentials)
 		return
 	}
 
@@ -160,14 +160,14 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		cfg.Jwt.EmailChangeSecret,
 	)
 	if err != nil {
-		writeJsonError(w, errorTokenGeneration)
+		WriteJsonError(w, errorTokenGeneration)
 		return
 	}
 
 	// Fully verify token signature and claims
 	_, err = crypto.ParseJwt(req.Token, signingKey)
 	if err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
+		WriteJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
@@ -176,13 +176,13 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 
 	// Validate new email format (even though claims were validated, this is an extra check)
 	if err := ValidateEmail(newEmail); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	err = a.DbAuth().UpdateEmail(user.ID, newEmail)
 	if err != nil {
-		writeJsonError(w, errorServiceUnavailable)
+		WriteJsonError(w, errorServiceUnavailable)
 		return
 	}
 

@@ -23,7 +23,7 @@ import (
 // - Email verification check prevents password reset on unverified accounts
 func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 
@@ -32,17 +32,17 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	req.Email = strings.TrimSpace(req.Email)
 	if req.Email == "" {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 	if err := ValidateEmail(req.Email); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -51,7 +51,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	// TODO
 	user, err := a.DbAuth().GetUserByEmail(req.Email)
 	if err != nil {
-		writeJsonError(w, errorNotFound)
+		WriteJsonError(w, errorNotFound)
 		return
 	}
 
@@ -64,7 +64,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 
 	// Check if email is verified before allowing password reset
 	if !user.Verified {
-		writeJsonError(w, errorUnverifiedEmail)
+		WriteJsonError(w, errorUnverifiedEmail)
 		return
 	}
 
@@ -97,10 +97,10 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	err = a.DbQueue().InsertJob(job)
 	if err != nil {
 		if err == db.ErrConstraintUnique {
-			writeJsonError(w, errorPasswordResetAlreadyRequested)
+			WriteJsonError(w, errorPasswordResetAlreadyRequested)
 			return
 		}
-		writeJsonError(w, errorServiceUnavailable)
+		WriteJsonError(w, errorServiceUnavailable)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 // Allowed Mimetype: application/json
 func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 
@@ -125,46 +125,46 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 
 	var req request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	// Validate required fields
 	if req.Token == "" || req.Password == "" || req.PasswordConfirm == "" {
-		writeJsonError(w, errorMissingFields)
+		WriteJsonError(w, errorMissingFields)
 		return
 	}
 
 	// Validate password match
 	if req.Password != req.PasswordConfirm {
-		writeJsonError(w, errorPasswordMismatch)
+		WriteJsonError(w, errorPasswordMismatch)
 		return
 	}
 
 	// Validate password complexity
 	if len(req.Password) < 8 {
-		writeJsonError(w, errorPasswordComplexity)
+		WriteJsonError(w, errorPasswordComplexity)
 		return
 	}
 
 	// Parse unverified claims to discard fast
 	claims, err := crypto.ParseJwtUnverified(req.Token)
 	if err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
+		WriteJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
 	// Validate all required claims exist and have correct values
 	// TODO Validate methods more to request Jwt. no crypto
 	if err := crypto.ValidatePasswordResetClaims(claims); err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
+		WriteJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
 	// Get user from database to get password hash for signing key
 	user, err := a.DbAuth().GetUserById(claims[crypto.ClaimUserID].(string))
 	if err != nil || user == nil {
-		writeJsonError(w, errorNotFound)
+		WriteJsonError(w, errorNotFound)
 		return
 	}
 
@@ -176,21 +176,21 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 		cfg.Jwt.PasswordResetSecret,
 	)
 	if err != nil {
-		writeJsonError(w, errorPasswordResetFailed)
+		WriteJsonError(w, errorPasswordResetFailed)
 		return
 	}
 
 	// Fully verify token signature and claims
 	_, err = crypto.ParseJwt(req.Token, signingKey)
 	if err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
+		WriteJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
 	// Hash new password before storage
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
-		writeJsonError(w, errorTokenGeneration)
+		WriteJsonError(w, errorTokenGeneration)
 		return
 	}
 
@@ -203,7 +203,7 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	// Update user password
 	err = a.DbAuth().UpdatePassword(user.ID, string(hashedPassword))
 	if err != nil {
-		writeJsonError(w, errorServiceUnavailable)
+		WriteJsonError(w, errorServiceUnavailable)
 		return
 	}
 	WriteJsonOk(w, okPasswordReset)

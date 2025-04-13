@@ -16,13 +16,13 @@ import (
 // Allowed Mimetype: application/json
 func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 	// Authenticate the user using the token from the request
 	user, err, authResp := a.Authenticate(r)
 	if err != nil {
-		writeJsonError(w, authResp)
+		WriteJsonError(w, authResp)
 		return
 	}
 
@@ -34,7 +34,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	newToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration)
 	if err != nil {
 		a.Logger().Error("Failed to generate new token", "error", err)
-		writeJsonError(w, errorTokenGeneration)
+		WriteJsonError(w, errorTokenGeneration)
 		return
 	}
 	a.Logger().Debug("New token generated", "token_length", len(newToken))
@@ -50,7 +50,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 // Allowed Mimetype: application/json
 func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 
@@ -60,30 +60,30 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	if req.Identity == "" || req.Password == "" {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	// Validate email format
 	if err := ValidateEmail(req.Identity); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	user, err := a.DbAuth().GetUserByEmail(req.Identity)
 	if err != nil || user == nil {
-		writeJsonError(w, errorInvalidCredentials)
+		WriteJsonError(w, errorInvalidCredentials)
 		return
 	}
 
 	// Verify password hash
 	if !crypto.CheckPassword(req.Password, user.Password) {
-		writeJsonError(w, errorInvalidCredentials)
+		WriteJsonError(w, errorInvalidCredentials)
 		return
 	}
 
@@ -91,7 +91,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	cfg := a.Config() // Get the current config
 	token, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration)
 	if err != nil {
-		writeJsonError(w, errorTokenGeneration)
+		WriteJsonError(w, errorTokenGeneration)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 // if password exist CreateUserWithPassword will succeed but the password will be not updated.
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 
@@ -120,7 +120,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -128,26 +128,26 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	req.Identity = strings.TrimSpace(req.Identity)
 	req.Password = strings.TrimSpace(req.Password)
 	if req.Identity == "" || req.Password == "" || req.PasswordConfirm == "" {
-		writeJsonError(w, errorMissingFields)
+		WriteJsonError(w, errorMissingFields)
 		return
 	}
 
 	// Validate password match
 	if req.Password != req.PasswordConfirm {
-		writeJsonError(w, errorPasswordMismatch)
+		WriteJsonError(w, errorPasswordMismatch)
 		return
 	}
 
 	// Validate password complexity TODO
 	if len(req.Password) < 8 {
-		writeJsonError(w, errorPasswordComplexity)
+		WriteJsonError(w, errorPasswordComplexity)
 		return
 	}
 
 	// Hash password before storage
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
-		writeJsonError(w, errorTokenGeneration)
+		WriteJsonError(w, errorTokenGeneration)
 		return
 	}
 
@@ -163,14 +163,14 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 	retrievedUser, err := a.DbAuth().CreateUserWithPassword(newUser)
 	if err != nil {
-		writeJsonError(w, errorAuthDatabaseError)
+		WriteJsonError(w, errorAuthDatabaseError)
 		return
 	}
 
 	// If passwords are different CreateUserWithPassword did not write the new
 	// password on conflict because the user had already a password.
 	if retrievedUser.Password != newUser.Password {
-		writeJsonError(w, errorEmailConflict)
+		WriteJsonError(w, errorEmailConflict)
 		return
 	}
 
@@ -185,7 +185,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		err = a.DbQueue().InsertJob(job)
 		if err != nil {
 			a.Logger().Error("Failed to insert verification job", "error", err, "job", job)
-			writeJsonError(w, errorServiceUnavailable)
+			WriteJsonError(w, errorServiceUnavailable)
 			return
 		}
 	}
@@ -194,7 +194,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	cfg := a.Config() // Get the current config
 	token, err := crypto.NewJwtSessionToken(retrievedUser.ID, retrievedUser.Email, retrievedUser.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration)
 	if err != nil {
-		writeJsonError(w, errorTokenGeneration)
+		WriteJsonError(w, errorTokenGeneration)
 		return
 	}
 

@@ -46,12 +46,12 @@ type oauth2Request struct {
 // Allowed Mimetype: application/json
 func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 	var req oauth2Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		"redirectURI", req.RedirectURI)
 	// Validate required fields
 	if req.Provider == "" || req.Code == "" || req.CodeVerifier == "" || req.RedirectURI == "" {
-		writeJsonError(w, errorMissingFields)
+		WriteJsonError(w, errorMissingFields)
 		return
 	}
 
@@ -70,7 +70,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	cfg := a.Config() // Get the current config
 	provider, ok := cfg.OAuth2Providers[req.Provider]
 	if !ok {
-		writeJsonError(w, errorInvalidOAuth2Provider)
+		WriteJsonError(w, errorInvalidOAuth2Provider)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	)
 	a.Logger().Debug("OAuth2 token exchange completed", "provider", req.Provider, "token", token != nil)
 	if err != nil {
-		writeJsonError(w, errorOAuth2TokenExchangeFailed)
+		WriteJsonError(w, errorOAuth2TokenExchangeFailed)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	client := oauth2Config.Client(ctx, token)
 	resp, err := client.Get(provider.UserInfoURL)
 	if err != nil {
-		writeJsonError(w, errorOAuth2UserInfoFailed)
+		WriteJsonError(w, errorOAuth2UserInfoFailed)
 		return
 	}
 	defer resp.Body.Close()
@@ -117,16 +117,16 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	oauthUser, err := oauth2provider.UserFromUserInfoURL(resp, provider.Name)
 	if err != nil {
 		a.Logger().Debug("Failed to map provider user info", "error", err)
-		writeJsonError(w, errorOAuth2UserInfoProcessingFailed)
+		WriteJsonError(w, errorOAuth2UserInfoProcessingFailed)
 		return
 	}
 
 	if oauthUser.Email == "" {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 	if err := ValidateEmail(oauthUser.Email); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
@@ -168,7 +168,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// also inform the user of existing user.
 	user, err := a.DbAuth().GetUserByEmail(oauthUser.Email)
 	if err != nil {
-		writeJsonError(w, errorOAuth2DatabaseError)
+		WriteJsonError(w, errorOAuth2DatabaseError)
 		return
 	}
 
@@ -176,7 +176,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	if user == nil || !user.Oauth2 {
 		user, err = a.DbAuth().CreateUserWithOauth2(*oauthUser)
 		if err != nil {
-			writeJsonError(w, errorOAuth2DatabaseError)
+			WriteJsonError(w, errorOAuth2DatabaseError)
 			return
 		}
 	}
@@ -188,7 +188,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	a.Logger().Debug("Generating JWT for user", "userID", user.ID)
 	jwtToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration)
 	if err != nil {
-		writeJsonError(w, errorTokenGeneration)
+		WriteJsonError(w, errorTokenGeneration)
 		return
 	}
 
@@ -221,7 +221,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 // Endpoint: GET /list-oauth2-providers
 func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 	var providers []OAuth2ProviderInfo
@@ -273,7 +273,7 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	if len(providers) == 0 {
-		writeJsonError(w, errorInvalidOAuth2Provider)
+		WriteJsonError(w, errorInvalidOAuth2Provider)
 		return
 	}
 

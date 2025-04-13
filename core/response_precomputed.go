@@ -128,7 +128,7 @@ func WriteJsonOk(w http.ResponseWriter, resp jsonResponse) {
 }
 
 // writeJsonError writes a precomputed JSON error response
-func writeJsonError(w http.ResponseWriter, resp jsonResponse) {
+func WriteJsonError(w http.ResponseWriter, resp jsonResponse) {
 	SetHeaders(w, HeadersJson)
 	w.WriteHeader(resp.status)
 	w.Write(resp.body)

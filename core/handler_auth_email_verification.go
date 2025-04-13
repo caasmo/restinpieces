@@ -17,14 +17,14 @@ import (
 // Allowed Mimetype: application/json
 func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 
 	// Require authentication
 	user, _, resp := a.Authenticate(r)
 	if user == nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 
@@ -39,23 +39,23 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	req.Email = strings.TrimSpace(req.Email)
 	if req.Email == "" {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 	if err := ValidateEmail(req.Email); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	// Verify the authenticated user matches the requested email
 	if user.Email != req.Email {
-		writeJsonError(w, errorEmailConflict)
+		WriteJsonError(w, errorEmailConflict)
 		return
 	}
 
@@ -76,10 +76,10 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	err := a.DbQueue().InsertJob(job)
 	if err != nil {
 		if err == db.ErrConstraintUnique {
-			writeJsonError(w, errorEmailVerificationAlreadyRequested)
+			WriteJsonError(w, errorEmailVerificationAlreadyRequested)
 			return
 		}
-		writeJsonError(w, errorServiceUnavailable)
+		WriteJsonError(w, errorServiceUnavailable)
 		return
 	}
 
@@ -88,7 +88,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 
 func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
-		writeJsonError(w, resp)
+		WriteJsonError(w, resp)
 		return
 	}
 	type request struct {
@@ -97,26 +97,26 @@ func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 
 	var req request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJsonError(w, errorInvalidRequest)
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
 	// Parse unverified claims to discrd fast
 	claims, err := crypto.ParseJwtUnverified(req.Token)
 	if err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
+		WriteJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
 	// Validate all required claims exist and have correct values
 	if err := crypto.ValidateEmailVerificationClaims(claims); err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
+		WriteJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
 	user, err := a.DbAuth().GetUserById(claims[crypto.ClaimUserID].(string))
 	if err != nil || user == nil {
-		writeJsonError(w, errorNotFound)
+		WriteJsonError(w, errorNotFound)
 		return
 	}
 
@@ -128,14 +128,14 @@ func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		cfg.Jwt.VerificationEmailSecret,
 	)
 	if err != nil {
-		writeJsonError(w, errorEmailVerificationFailed)
+		WriteJsonError(w, errorEmailVerificationFailed)
 		return
 	}
 
 	// Fully verify token signature and claims
 	_, err = crypto.ParseJwt(req.Token, signingKey)
 	if err != nil {
-		writeJsonError(w, errorJwtInvalidVerificationToken)
+		WriteJsonError(w, errorJwtInvalidVerificationToken)
 		return
 	}
 
@@ -147,7 +147,7 @@ func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 
 	err = a.DbAuth().VerifyEmail(user.ID)
 	if err != nil {
-		writeJsonError(w, errorServiceUnavailable)
+		WriteJsonError(w, errorServiceUnavailable)
 		return
 	}
 
