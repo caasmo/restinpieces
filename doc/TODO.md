@@ -2,6 +2,8 @@
 
 
 - disable standard routes
+- prepareConn explicite
+	- busy timeout and sync normal, for Performance
 -  config on init all secrets are loading in memory
     - handler: write in the db istead of file mangling
 	- if tls set reader
@@ -14,7 +16,6 @@
 	- get set in db
 	- Test your setup with tools like ssllabs.com or testssl.sh
 - redirect server
-- busy timeout and sync normal, for Performance
 - 10% reduction in req/sec from htttp, to https refresh auth, with block ip
 - assests log 
 - config reload
@@ -69,7 +70,7 @@
     - try to be consistent
     - 'static' form html, js, css ... and api for dinamic 
     - gzip header moev to response_headers
-- document magix numbers of sketch. move it to new package, configuration
+- document magic numbers of sketch. move it to new package, configuration
 - verify addresses paths shoudl be random or pseudo random?
 - revamp shell tests.
 - CORS 
