@@ -35,6 +35,12 @@ func LoadFromToml(path string, logger *slog.Logger) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
 
+	// Validate the loaded configuration
+	if err := Validate(cfg); err != nil {
+		logger.Error("configuration validation failed", "path", path, "error", err)
+		return nil, fmt.Errorf("configuration validation failed: %w", err)
+	}
+
 	// Load secrets after initial config load
 	if err := loadSecrets(cfg, logger); err != nil {
 		// Error already logged within loadSecrets
@@ -67,6 +73,12 @@ func LoadFromDb(db db.DbConfig, dbAcme db.DbAcme, logger *slog.Logger) (*Config,
 	if _, err := toml.Decode(configToml, cfg); err != nil {
 		logger.Error("failed to decode configuration from database", "error", err)
 		return nil, fmt.Errorf("config: failed to decode: %w", err)
+	}
+
+	// Validate the loaded configuration
+	if err := Validate(cfg); err != nil {
+		logger.Error("configuration validation failed after loading from DB", "error", err)
+		return nil, fmt.Errorf("configuration validation failed: %w", err)
 	}
 
 	// Load certificates if TLS is enabled
