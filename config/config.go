@@ -2,14 +2,11 @@ package config
 
 import (
 	"fmt"
-	"net"
-	// "os" // No longer needed here
 	"strings"
-	"sync/atomic" // Added for atomic value
+	"sync/atomic"
 	"time"
 
 	_ "embed"
-	// "github.com/BurntSushi/toml" // No longer needed here
 )
 
 // variables used only by create-app

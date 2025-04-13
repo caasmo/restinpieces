@@ -1,5 +1,6 @@
 ### TODOs
 
+- config validate BaseURL basic things of the config on Load
 - disable standard routes
 - NewWithConfig(restinpieces.Config{
 - if tls, handle automatic redirection to https
