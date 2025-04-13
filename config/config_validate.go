@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 )
 
@@ -24,6 +25,26 @@ func Validate(cfg *Config) error {
 //
 // The port part is mandatory.
 func validateServer(server *Server) error {
+	if err := validateServerAddr(server); err != nil {
+		return err // Error already includes context
+	}
+
+	// Only validate HTTPRedirectPort if TLS is enabled
+	if server.EnableTLS {
+		if err := validateServerHTTPRedirectPort(server); err != nil {
+			return err // Error already includes context
+		}
+	}
+
+	// Add calls to validate other Server fields here if needed
+
+	return nil
+}
+
+// validateServerAddr checks the Server.Addr field.
+// It ensures the format is host:port or :port, defaulting host to localhost if needed.
+// It modifies server.Addr in place if defaulting occurs.
+func validateServerAddr(server *Server) error {
 	if server.Addr == "" {
 		return fmt.Errorf("server address (Addr) cannot be empty")
 	}
@@ -53,6 +74,36 @@ func validateServer(server *Server) error {
 
 	// Note: Host validation (is it a valid domain/IP?) is complex and often
 	// better left to the net.Listen call during server startup.
+	return nil
+}
+
+// validateServerHTTPRedirectPort checks the Server.HTTPRedirectPort field value.
+// It assumes the field *should* be validated (e.g., because TLS is enabled).
+// It allows an empty string "" (meaning no redirect server).
+// If non-empty, it ensures the value is a valid port number (1-65535)
+// and does not contain ":". Port "0" is invalid.
+func validateServerHTTPRedirectPort(server *Server) error {
+	portStr := server.HTTPRedirectPort
+
+	// Empty means no redirect server, which is valid configuration.
+	if portStr == "" {
+		return nil
+	}
+
+	// If set, it must not contain ":" (we only want the port number)
+	if strings.Contains(portStr, ":") {
+		return fmt.Errorf("invalid HTTPRedirectPort '%s': must be a port number, not an address", portStr)
+	}
+
+	// If set, it must be a valid port number
+	portNum, err := strconv.Atoi(portStr)
+	if err != nil {
+		return fmt.Errorf("invalid HTTPRedirectPort '%s': must be a number: %w", portStr, err)
+	}
+
+	if portNum < 1 || portNum > 65535 {
+		return fmt.Errorf("invalid HTTPRedirectPort '%d': port number must be between 1 and 65535", portNum)
+	}
 
 	return nil
 }
