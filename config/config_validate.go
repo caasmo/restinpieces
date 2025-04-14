@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 )
@@ -50,6 +51,26 @@ func sanitizeAddrEmptyHost(addr string) string {
 // It ensures the format is host:port or :port, defaulting host to localhost if needed.
 // It modifies server.Addr in place if defaulting occurs.
 func validateServerAddr(server *Server) error {
+	if server.Addr == "" {
+		return fmt.Errorf("server address cannot be empty")
+	}
+
+	// Split into host and port components
+	host, port, err := net.SplitHostPort(server.Addr)
+	if err != nil {
+		return fmt.Errorf("invalid server address format '%s': %w", server.Addr, err)
+	}
+
+	// Validate the port component
+	if err := validateServerPort(port); err != nil {
+		return fmt.Errorf("invalid server port in address '%s': %w", server.Addr, err)
+	}
+
+	// If host is empty (":port" format), default to localhost
+	if host == "" {
+		server.Addr = "localhost" + ":" + port
+	}
+
 	return nil
 }
 
