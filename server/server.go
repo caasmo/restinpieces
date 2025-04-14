@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/caasmo/restinpieces/backup"
 	"github.com/caasmo/restinpieces/config"
 	// "github.com/caasmo/restinpieces/core/proxy" // Removed proxy import
 	"github.com/caasmo/restinpieces/queue/scheduler"
@@ -20,6 +21,7 @@ type Server struct {
 	configProvider *config.Provider
 	handler        http.Handler
 	scheduler      *scheduler.Scheduler
+	litestream     *backup.Litestream
 	logger         *slog.Logger
 }
 
@@ -28,11 +30,12 @@ func (s *Server) handleSIGHUP() {
 }
 
 // NewServer now accepts any http.Handler.
-func NewServer(provider *config.Provider, handler http.Handler, scheduler *scheduler.Scheduler, logger *slog.Logger) *Server {
+func NewServer(provider *config.Provider, handler http.Handler, scheduler *scheduler.Scheduler, litestream *backup.Litestream, logger *slog.Logger) *Server {
 	return &Server{
 		configProvider: provider,
 		handler:        handler, // Store the provided handler
 		scheduler:      scheduler,
+		litestream:     litestream,
 		logger:         logger,
 	}
 }
