@@ -31,7 +31,7 @@ func validateServer(server *Server) error {
 
 	// Always validate RedirectPort if it's set, regardless of EnableTLS.
 	// validateServerRedirectPort handles the empty case correctly.
-	if err := validateServerRedirectPort(server); err != nil {
+	if err := validateServerPort(server.RedirectPort); err != nil {
 		return err // Error already includes context
 	}
 
