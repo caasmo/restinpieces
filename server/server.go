@@ -100,6 +100,7 @@ func (s *Server) Run() {
 			s.logger.Info("Starting HTTP server", "addr", serverCfg.Addr)
 			err = srv.ListenAndServe()
 		}
+
 		if err != http.ErrServerClosed {
 			s.logger.Error("Server error", "err", err)
 			serverError <- err
