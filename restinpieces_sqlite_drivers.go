@@ -102,3 +102,7 @@ var explicitBusyTimeout = 5 * time.Second // Or whatever value you prefer
 //	PoolSize:        10, // Example pool size
 //	ConnPrepareFunc: prepareConnExplicit,
 //})
+
+// dsn := fmt.Sprintf("file:%s?_journal=WAL&_synchronous=NORMAL&_timeout=%d&_foreign_keys=on&_cache_size=-4000",
+//        dbPath,
+//                explicitBusyTimeout.Milliseconds(), // Timeout parameter expects milliseconds
