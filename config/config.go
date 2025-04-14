@@ -55,7 +55,7 @@ const (
 )
 
 type Config struct {
-	DBFile          string
+	DBPath          string // Path to the main SQLite database file
 	PublicDir       string // Directory to serve static files from TODO
 	Source          string `toml:"-"` // [READONLY] Tracks config source - "file:<path>" or "db" (set internally, not loaded from config)
 	Jwt             Jwt

@@ -2,7 +2,10 @@ package backup
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 
 	"github.com/benbjohnson/litestream"
 	"github.com/benbjohnson/litestream/file"
@@ -27,32 +30,34 @@ type Litestream struct {
 }
 
 func NewLitestream(configProvider *config.Provider, logger *slog.Logger) (*Litestream, error) {
-	cfg := configProvider.Get().Litestream
+	mainCfg := configProvider.Get()
+	litestreamCfg := mainCfg.Litestream
 	ctx, cancel := context.WithCancel(context.Background())
 
-	// Create and configure the database object
-	db := litestream.NewDB(cfg.DBPath)
-	db.Logger = logger.With("db", cfg.DBPath)
+	// --- Database Object ---
+	// Use the main DBPath from the overall config
+	db := litestream.NewDB(mainCfg.DBPath)
+	db.Logger = logger.With("db", mainCfg.DBPath)
 
-	// Create replica client based on config
-	var replicaClient litestream.ReplicaClient
-	switch cfg.ReplicaType {
-	case "file":
-		if err := os.MkdirAll(cfg.ReplicaPath, 0750); err != nil && !os.IsExist(err) {
-			return nil, fmt.Errorf("failed to create replica directory: %w", err)
-		}
-		absPath, err := filepath.Abs(cfg.ReplicaPath)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get absolute replica path: %w", err)
-		}
-		replicaClient = file.NewReplicaClient(absPath)
-	default:
-		return nil, fmt.Errorf("unsupported replica type: %s", cfg.ReplicaType)
+	// --- Replica Client (Assuming File Type) ---
+	// Ensure the replica directory exists
+	if err := os.MkdirAll(litestreamCfg.ReplicaPath, 0750); err != nil && !os.IsExist(err) {
+		cancel() // Cancel context if setup fails
+		return nil, fmt.Errorf("litestream: failed to create replica directory '%s': %w", litestreamCfg.ReplicaPath, err)
 	}
+	// Get absolute path for the replica client
+	absReplicaPath, err := filepath.Abs(litestreamCfg.ReplicaPath)
+	if err != nil {
+		cancel() // Cancel context if setup fails
+		return nil, fmt.Errorf("litestream: failed to get absolute replica path for '%s': %w", litestreamCfg.ReplicaPath, err)
+	}
+	replicaClient := file.NewReplicaClient(absReplicaPath)
 
-	// Create and configure replica
-	replica := litestream.NewReplica(db, cfg.ReplicaName)
+	// --- Replica Object ---
+	// Use the ReplicaName from the Litestream config section
+	replica := litestream.NewReplica(db, litestreamCfg.ReplicaName)
 	replica.Client = replicaClient
+	db.Replicas = append(db.Replicas, replica) // Link replica to DB
 
 	return &Litestream{
 		configProvider: configProvider,
