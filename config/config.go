@@ -143,7 +143,7 @@ func (s *Server) BaseURL() string {
 	if s.EnableTLS {
 		scheme = "https"
 	}
-	return fmt.Sprintf("%s://%s", scheme, s.Addr)
+	return fmt.Sprintf("%s://%s", scheme, sanitizeAddrEmptyHost(s.Addr))
 }
 
 type RateLimits struct {
