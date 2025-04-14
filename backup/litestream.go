@@ -66,11 +66,39 @@ func NewLitestream(configProvider *config.Provider, logger *slog.Logger) (*Lites
 }
 
 // Start begins the continuous backup process in a goroutine
+// Start begins the continuous backup process in a goroutine
 func (l *Litestream) Start() {
 	go func() {
 		l.logger.Info("💾 litestream: starting continuous backup")
-		l.run()
+
+		// Open database and start monitoring
+		if err := l.db.Open(); err != nil {
+			l.logger.Error("💾 litestream: failed to open database", "error", err)
+			// Signal shutdown immediately on critical error to prevent hanging
+			close(l.shutdownDone)
+			return
+		}
+		defer l.db.Close()
+
+		// Start replication
+		if err := l.replica.Start(l.ctx); err != nil {
+			l.logger.Error("💾 litestream: failed to start replica", "error", err)
+			// Signal shutdown immediately on critical error
+			close(l.shutdownDone)
+			return
+		}
+
+		l.logger.Info("💾 litestream: replication started")
+
+		// Wait for shutdown signal
+		<-l.ctx.Done()
 		l.logger.Info("💾 litestream: received shutdown signal")
+
+		// Stop replica gracefully
+		if err := l.replica.Stop(false); err != nil {
+			l.logger.Error("💾 litestream: error stopping replica", "error", err)
+		}
+		close(l.shutdownDone)
 	}()
 }
 
@@ -87,29 +115,4 @@ func (l *Litestream) Stop(ctx context.Context) error {
 		l.logger.Info("💾 litestream: shutdown timed out")
 		return ctx.Err()
 	}
-}
-
-// run implements the continuous litestream backup process
-func (l *Litestream) run() {
-	// Open database and start monitoring
-	if err := l.db.Open(); err != nil {
-		l.logger.Error("💾 litestream: failed to open database", "error", err)
-		return
-	}
-	defer l.db.Close()
-
-	// Start replication
-	if err := l.replica.Start(l.ctx); err != nil {
-		l.logger.Error("💾 litestream: failed to start replica", "error", err)
-		return
-	}
-
-	// Wait for shutdown signal
-	<-l.ctx.Done()
-
-	// Stop replica gracefully
-	if err := l.replica.Stop(false); err != nil {
-		l.logger.Error("💾 litestream: error stopping replica", "error", err)
-	}
-	close(l.shutdownDone)
 }
