@@ -77,10 +77,12 @@ func (s *Server) Run() {
 			if serverCfg.RedirectAddr != "" {
 				go func() {
 					redirect := &http.Server{
-						Addr:    serverCfg.RedirectAddr,
-						Handler: http.HandlerFunc(redirectToHTTPS),
-						ReadTimeout:  serverCfg.ReadTimeout,
-						WriteTimeout: serverCfg.WriteTimeout,
+						Addr:           serverCfg.RedirectAddr,
+						Handler:        http.HandlerFunc(redirectToHTTPS),
+						ReadTimeout:    1 * time.Second,
+						ReadHeaderTimeout: 1 * time.Second, 
+						WriteTimeout:   1 * time.Second,
+						IdleTimeout:    1 * time.Second,
 					}
 					s.logger.Info("Starting HTTP redirect server", "addr", serverCfg.RedirectAddr)
 					if err := redirect.ListenAndServe(); err != http.ErrServerClosed {
