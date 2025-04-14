@@ -77,15 +77,9 @@ func validateServerRedirectAddr(server *Server) error {
 		return fmt.Errorf("failed to parse host from server address '%s': %w", server.Addr, err)
 	}
 
-	// If host was empty (":port" format), use localhost
-	if host == "" {
-		host = "localhost"
-	}
-
-	redirectAddr := net.JoinHostPort(host, server.RedirectPort)
-	_, _, err = net.SplitHostPort(redirectAddr)
-	if err != nil {
-		return fmt.Errorf("invalid redirect address '%s': %w", redirectAddr, err)
+	// Validate the port component
+	if err := validateServerPort(port); err != nil {
+		return fmt.Errorf("invalid server port in address '%s': %w", server.Addr, err)
 	}
 
 	return nil
