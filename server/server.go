@@ -120,6 +120,7 @@ func (s *Server) Run() {
 	}()
 
 	// Start the job scheduler
+	// TODO error
 	s.scheduler.Start()
 
 	// Channel for all signals we want to handle
