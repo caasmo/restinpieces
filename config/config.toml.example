@@ -68,6 +68,10 @@ PublicDir = "static/dist"
   # Path to TLS private key file (PEM format)
   KeyFile = ""
 
+  # Address for HTTP->HTTPS redirect server (e.g. ":80")
+  # Only used when EnableTLS is true
+  RedirectAddr = ""
+
 
 # --- IP Blocking Settings ---
 # Settings related to automatic IP address blocking based on request frequency.
