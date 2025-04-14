@@ -146,8 +146,6 @@ func (s *Server) BaseURL() string {
 	if s.EnableTLS {
 		scheme = "https"
 	}
-	// s.Addr is validated by validateServer to be in host:port format
-	// (where host might be "localhost" if originally omitted)
 	return fmt.Sprintf("%s://%s", scheme, s.Addr)
 }
 
