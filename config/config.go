@@ -134,11 +134,9 @@ type Server struct {
 	CertData  string `toml:"-"` // TLS certificate data (preferred)
 	KeyData   string `toml:"-"` // TLS private key data (preferred)
 
-	// RedirectPort specifies the port (e.g., "80") for the HTTP server
 	// that redirects requests to the main HTTPS server (if EnableTLS is true).
 	// If empty, no redirect server is started.
-	// Must be a valid port number (1-65535). Binding address (like ":80") is not allowed here.
-	RedirectPort string
+	RedirectAddr string
 }
 
 func (s *Server) BaseURL() string {
