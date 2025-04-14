@@ -39,6 +39,13 @@ func validateServer(server *Server) error {
 	return nil
 }
 
+func sanitizeAddrEmptyHost(addr string) string {
+	if strings.HasPrefix(addr, ":") {
+		return "localhost" + addr
+	}
+	return addr
+}
+
 // validateServerAddr checks the Server.Addr field.
 // It ensures the format is host:port or :port, defaulting host to localhost if needed.
 // It modifies server.Addr in place if defaulting occurs.
