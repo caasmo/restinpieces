@@ -4,7 +4,10 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/caasmo/restinpieces/config"
+
+    "github.com/benbjohnson/litestream"
+    "github.com/benbjohnson/litestream/file"
+    "github.com/caasmo/restinpieces/config"
 )
 
 // Litestream handles continuous database backups
@@ -39,9 +42,9 @@ func (l *Litestream) Start() {
 		l.logger.Info("💾 litestream: starting continuous backup")
 		defer close(l.shutdownDone)
 
-		// TODO: Implement continuous backup using litestream
-		// This will block until ctx is canceled
-		<-l.ctx.Done()
+		if err := l.run(); err != nil {
+			l.logger.Error("💾 litestream: failed to run", "error", err)
+		}
 		l.logger.Info("💾 litestream: received shutdown signal")
 	}()
 }
@@ -59,4 +62,54 @@ func (l *Litestream) Stop(ctx context.Context) error {
 		l.logger.Info("💾 litestream: shutdown timed out")
 		return ctx.Err()
 	}
+}
+
+// run implements the continuous litestream backup process
+func (l *Litestream) run() error {
+    cfg := l.configProvider.Get().Litestream
+
+    // Create and configure the database object
+    db := litestream.NewDB(cfg.DBPath)
+    db.Logger = l.logger.With("db", cfg.DBPath)
+
+    // Create replica client based on config
+    var replicaClient litestream.ReplicaClient
+    switch cfg.ReplicaType {
+    case "file":
+        if err := os.MkdirAll(cfg.ReplicaPath, 0750); err != nil && !os.IsExist(err) {
+            return fmt.Errorf("failed to create replica directory: %w", err)
+        }
+        absPath, err := filepath.Abs(cfg.ReplicaPath)
+        if err != nil {
+            return fmt.Errorf("failed to get absolute replica path: %w", err)
+        }
+        replicaClient = file.NewReplicaClient(absPath)
+    default:
+        return fmt.Errorf("unsupported replica type: %s", cfg.ReplicaType)
+    }
+
+    // Create and configure replica
+    replica := litestream.NewReplica(db, cfg.ReplicaName)
+    replica.Client = replicaClient
+
+    // Open database and start monitoring
+    if err := db.Open(); err != nil {
+        return fmt.Errorf("failed to open database: %w", err)
+    }
+    defer db.Close()
+
+    // Start replication
+    if err := replica.Start(l.ctx); err != nil {
+        return fmt.Errorf("failed to start replica: %w", err)
+    }
+
+    // Wait for shutdown signal
+    <-l.ctx.Done()
+
+    // Stop replica gracefully
+    if err := replica.Stop(false); err != nil {
+        return fmt.Errorf("error stopping replica: %w", err)
+    }
+
+    return nil
 }
