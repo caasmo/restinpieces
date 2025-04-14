@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"fmt"
 
 	"github.com/caasmo/restinpieces/backup"
 	"github.com/caasmo/restinpieces/config"

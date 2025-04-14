@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/caasmo/restinpieces/backup"
 	"github.com/caasmo/restinpieces/config"
-	// "github.com/caasmo/restinpieces/core/proxy" // Removed proxy import
 	"github.com/caasmo/restinpieces/queue/scheduler"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
