@@ -261,9 +261,6 @@ type BlockIp struct {
 type Maintenance struct {
 	Enabled   bool `toml:"enabled"`   // Is the maintenance mode feature available?
 	Activated bool `toml:"activated"` // Is maintenance mode currently active?
-	// AllowedIPs  []string `toml:"allowed_ips"`  // Optional: IPs/CIDRs that bypass maintenance mode (Removed for now)
-	// PageTitle string `toml:"page_title"` // Example: Future enhancement
-	// Message   string `toml:"message"`    // Example: Future enhancement
 }
 
 // Litestream holds configuration for database backup using Litestream.
@@ -289,7 +286,5 @@ type Litestream struct {
 	// Required if Enabled is true.
 	ReplicaName string
 
-	// Note: DBPath is taken from the main Config.DBFile setting.
-	// Note: ReplicaType is implicitly "file" in this minimal setup.
 	// Note: SyncInterval, SnapshotInterval, Retention, etc., use Litestream defaults.
 }
