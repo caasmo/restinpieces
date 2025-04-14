@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
-	"net"
 
 	_ "embed"
 )
@@ -145,22 +144,6 @@ func (s *Server) BaseURL() string {
 		scheme = "https"
 	}
 	return fmt.Sprintf("%s://%s", scheme, s.Addr)
-}
-
-// RedirectAddr constructs the listen address for the HTTP-to-HTTPS redirect server.
-func (s *Server) RedirectAddr() string {
-	if s.RedirectPort == "" {
-		return ""
-	}
-
-	lastColon := strings.LastIndex(s.Addr, ":")
-	if lastColon == -1 {
-		return ""
-	}
-	host := s.Addr[:lastColon]
-
-	// net.JoinHostPort handles IPv6 addresses correctly (e.g., "[::1]:80").
-	return net.JoinHostPort(host, s.RedirectPort)
 }
 
 type RateLimits struct {

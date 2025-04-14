@@ -65,19 +65,11 @@ func validateServerAddr(server *Server) error {
 	return nil
 }
 
-// It allows an empty string "" (meaning no redirect server).
-// If non-empty, it ensures the value is a valid port number (1-65535)
-// and does not contain ":". Port "0" is invalid.
 func validateServerPort(portStr string) error {
 
 	// Empty means no redirect server, which is valid configuration.
 	if portStr == "" {
 		return nil
-	}
-
-	// If set, it must not contain ":" (we only want the port number)
-	if strings.Contains(portStr, ":") {
-		return fmt.Errorf("invalid RedirectPort '%s': must be a port number, not an address", portStr)
 	}
 
 	// If set, it must be a valid port number
