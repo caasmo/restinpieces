@@ -29,16 +29,9 @@ func validateServer(server *Server) error {
 		return err // Error already includes context
 	}
 
-	// Always validate RedirectPort if it's set, regardless of EnableTLS.
-	// validateServerRedirectPort handles the empty case correctly.
 	if err := validateServerPort(server.RedirectPort); err != nil {
 		return err // Error already includes context
 	}
-
-	// Sanitize the address (this should be done after validation)
-	server.Addr = sanitizeServerAddr(server.Addr)
-
-	// Add calls to validate other Server fields here if needed
 
 	return nil
 }
@@ -70,21 +63,6 @@ func validateServerAddr(server *Server) error {
 	}
 
 	return nil
-}
-
-// sanitizeServerAddr ensures the address has a host component.
-// If host is empty (":port" format), it defaults to "localhost".
-func sanitizeServerAddr(addr string) string {
-	if addr == "" {
-		return addr
-	}
-
-	host, port, err := net.SplitHostPort(addr)
-	if err != nil || host != "" {
-		return addr
-	}
-
-	return "localhost" + ":" + port
 }
 
 // validateServerRedirectPort checks the Server.RedirectPort field value.
