@@ -39,11 +39,20 @@ func NewServer(provider *config.Provider, handler http.Handler, scheduler *sched
 
 func (s *Server) redirectToHTTPS() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Get current server config
 		serverCfg := s.configProvider.Get().Server
-		u := *r.URL
-		u.Scheme = "https"
-		u.Host = sanitizeAddrEmptyHost(serverCfg.Addr)
-		http.Redirect(w, r, u.String(), http.StatusMovedPermanently)
+		
+		// Construct target URL by combining:
+		// - BaseURL() provides the scheme://host:port (always correct format)
+		// - RequestURI() provides the path and query (always starts with /, includes ? if query exists)
+		// This handles all cases correctly:
+		// - Empty path becomes "/" 
+		// - Query strings are preserved
+		// - Special characters remain properly encoded
+		target := serverCfg.BaseURL() + r.URL.RequestURI()
+		
+		// Perform the redirect with HTTP 301 (Moved Permanently)
+		http.Redirect(w, r, target, http.StatusMovedPermanently)
 	}
 }
 
