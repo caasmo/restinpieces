@@ -84,7 +84,7 @@ func (l *Litestream) Start() error {
 			startupErrChan <- err // Report error
 			return
 		}
-		defer l.db.Close()
+		// defer l.db.Close() // Removed defer
 
 		// Start replication
 		if err := l.replica.Start(l.ctx); err != nil {
@@ -106,7 +106,13 @@ func (l *Litestream) Start() error {
 		if err := l.replica.Stop(false); err != nil {
 			l.logger.Error("💾 litestream: error stopping replica", "error", err)
 		}
-		close(l.shutdownDone)
+
+		// Explicitly close the database *before* signaling shutdown completion
+		if err := l.db.Close(); err != nil {
+			l.logger.Error("💾 litestream: error closing database", "error", err)
+		}
+
+		close(l.shutdownDone) // Now signal that shutdown is fully complete
 	}()
 
 	// Wait for the goroutine to signal startup completion or error
