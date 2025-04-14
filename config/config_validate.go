@@ -65,7 +65,6 @@ func validateServerAddr(server *Server) error {
 	return nil
 }
 
-// validateServerRedirectPort checks the Server.RedirectPort field value.
 // It allows an empty string "" (meaning no redirect server).
 // If non-empty, it ensures the value is a valid port number (1-65535)
 // and does not contain ":". Port "0" is invalid.
