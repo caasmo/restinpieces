@@ -3,12 +3,11 @@ package backup
 import (
 	"context"
 	"log/slog"
-	"time"
 
 	"github.com/caasmo/restinpieces/config"
 )
 
-// Litestream handles database backups
+// Litestream handles continuous database backups
 type Litestream struct {
 	configProvider *config.Provider
 	logger         *slog.Logger
@@ -34,24 +33,16 @@ func NewLitestream(configProvider *config.Provider, logger *slog.Logger) *Litest
 	}
 }
 
-// Start begins the backup process in a goroutine
+// Start begins the continuous backup process in a goroutine
 func (l *Litestream) Start() {
 	go func() {
-		interval := l.configProvider.Get().Litestream.Interval
-		l.logger.Info("💾 litestream: starting", "interval", interval)
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
+		l.logger.Info("💾 litestream: starting continuous backup")
+		defer close(l.shutdownDone)
 
-		for {
-			select {
-			case <-l.ctx.Done():
-				l.logger.Info("💾 litestream: received shutdown signal")
-				close(l.shutdownDone)
-				return
-			case <-ticker.C:
-				l.runBackup()
-			}
-		}
+		// TODO: Implement continuous backup using litestream
+		// This will block until ctx is canceled
+		<-l.ctx.Done()
+		l.logger.Info("💾 litestream: received shutdown signal")
 	}()
 }
 
@@ -68,11 +59,4 @@ func (l *Litestream) Stop(ctx context.Context) error {
 		l.logger.Info("💾 litestream: shutdown timed out")
 		return ctx.Err()
 	}
-}
-
-// runBackup performs a single backup operation
-func (l *Litestream) runBackup() {
-	// TODO: Implement actual backup logic using litestream
-	// For now just log that we would run a backup
-	l.logger.Info("💾 litestream: would perform backup now")
 }
