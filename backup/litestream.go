@@ -65,9 +65,14 @@ func NewLitestream(configProvider *config.Provider, logger *slog.Logger) (*Lites
 	}, nil
 }
 
-// Start begins the continuous backup process in a goroutine
-// Start begins the continuous backup process in a goroutine
-func (l *Litestream) Start() {
+// Start begins the continuous backup process in a goroutine.
+// It returns an error immediately if the initial setup (opening the database
+// or starting the replica) fails. Otherwise, it returns nil and the backup
+// process continues in the background.
+func (l *Litestream) Start() error {
+	// Channel to signal startup completion or error
+	startupErrChan := make(chan error, 1)
+
 	go func() {
 		l.logger.Info("💾 litestream: starting continuous backup")
 
@@ -76,6 +81,7 @@ func (l *Litestream) Start() {
 			l.logger.Error("💾 litestream: failed to open database", "error", err)
 			// Signal shutdown immediately on critical error to prevent hanging
 			close(l.shutdownDone)
+			startupErrChan <- err // Report error
 			return
 		}
 		defer l.db.Close()
@@ -85,10 +91,12 @@ func (l *Litestream) Start() {
 			l.logger.Error("💾 litestream: failed to start replica", "error", err)
 			// Signal shutdown immediately on critical error
 			close(l.shutdownDone)
+			startupErrChan <- err // Report error
 			return
 		}
 
 		l.logger.Info("💾 litestream: replication started")
+		startupErrChan <- nil // Signal successful startup
 
 		// Wait for shutdown signal
 		<-l.ctx.Done()
@@ -100,6 +108,10 @@ func (l *Litestream) Start() {
 		}
 		close(l.shutdownDone)
 	}()
+
+	// Wait for the goroutine to signal startup completion or error
+	err := <-startupErrChan
+	return err
 }
 
 // Stop gracefully shuts down the backup process
