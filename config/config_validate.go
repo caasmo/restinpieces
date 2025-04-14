@@ -35,6 +35,9 @@ func validateServer(server *Server) error {
 		return err // Error already includes context
 	}
 
+	// Sanitize the address (this should be done after validation)
+	server.Addr = sanitizeServerAddr(server.Addr)
+
 	// Add calls to validate other Server fields here if needed
 
 	return nil
@@ -48,8 +51,8 @@ func sanitizeAddrEmptyHost(addr string) string {
 }
 
 // validateServerAddr checks the Server.Addr field.
-// It ensures the format is host:port or :port, defaulting host to localhost if needed.
-// It modifies server.Addr in place if defaulting occurs.
+// It ensures the format is host:port or :port.
+// Returns an error if the address is invalid.
 func validateServerAddr(server *Server) error {
 	if server.Addr == "" {
 		return fmt.Errorf("server address cannot be empty")
@@ -66,12 +69,22 @@ func validateServerAddr(server *Server) error {
 		return fmt.Errorf("invalid server port in address '%s': %w", server.Addr, err)
 	}
 
-	// If host is empty (":port" format), default to localhost
-	if host == "" {
-		server.Addr = "localhost" + ":" + port
+	return nil
+}
+
+// sanitizeServerAddr ensures the address has a host component.
+// If host is empty (":port" format), it defaults to "localhost".
+func sanitizeServerAddr(addr string) string {
+	if addr == "" {
+		return addr
 	}
 
-	return nil
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil || host != "" {
+		return addr
+	}
+
+	return "localhost" + ":" + port
 }
 
 // validateServerRedirectPort checks the Server.RedirectPort field value.
