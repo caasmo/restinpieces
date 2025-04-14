@@ -11,9 +11,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 type Server struct {
@@ -41,16 +41,16 @@ func (s *Server) redirectToHTTPS() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get current server config
 		serverCfg := s.configProvider.Get().Server
-		
+
 		// Construct target URL by combining:
 		// - BaseURL() provides the scheme://host:port (always correct format)
 		// - RequestURI() provides the path and query (always starts with /, includes ? if query exists)
 		// This handles all cases correctly:
-		// - Empty path becomes "/" 
+		// - Empty path becomes "/"
 		// - Query strings are preserved
 		// - Special characters remain properly encoded
 		target := serverCfg.BaseURL() + r.URL.RequestURI()
-		
+
 		// Perform the redirect with HTTP 301 (Moved Permanently)
 		http.Redirect(w, r, target, http.StatusMovedPermanently)
 	}
@@ -87,7 +87,7 @@ func (s *Server) Run() {
 			}
 			srv.TLSConfig = tlsConfig
 			s.logger.Info("Starting HTTPS server", "addr", serverCfg.Addr)
-			
+
 			// Start HTTP->HTTPS redirect server if configured
 			if serverCfg.RedirectAddr != "" {
 				redirectServer = &http.Server{
@@ -106,7 +106,7 @@ func (s *Server) Run() {
 					}
 				}()
 			}
-			
+
 			err = srv.ListenAndServeTLS("", "")
 		} else {
 			s.logger.Info("Starting HTTP server", "addr", serverCfg.Addr)

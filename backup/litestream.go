@@ -4,10 +4,9 @@ import (
 	"context"
 	"log/slog"
 
-
-    "github.com/benbjohnson/litestream"
-    "github.com/benbjohnson/litestream/file"
-    "github.com/caasmo/restinpieces/config"
+	"github.com/benbjohnson/litestream"
+	"github.com/benbjohnson/litestream/file"
+	"github.com/caasmo/restinpieces/config"
 )
 
 // Litestream handles continuous database backups
