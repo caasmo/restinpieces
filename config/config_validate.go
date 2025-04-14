@@ -33,6 +33,10 @@ func validateServer(server *Server) error {
 		return err // Error already includes context
 	}
 
+	if err := validateServerRedirectAddr(server); err != nil {
+		return err // Error already includes context
+	}
+
 	return nil
 }
 
@@ -60,6 +64,32 @@ func validateServerAddr(server *Server) error {
 	// Validate the port component
 	if err := validateServerPort(port); err != nil {
 		return fmt.Errorf("invalid server port in address '%s': %w", server.Addr, err)
+	}
+
+	return nil
+}
+
+func validateServerRedirectAddr(server *Server) error {
+	// If RedirectPort is empty, no redirect server is configured (valid case)
+	if server.RedirectPort == "" {
+		return nil
+	}
+
+	// Construct the redirect address from the main server's host and redirect port
+	host, _, err := net.SplitHostPort(server.Addr)
+	if err != nil {
+		return fmt.Errorf("failed to parse host from server address '%s': %w", server.Addr, err)
+	}
+
+	// If host was empty (":port" format), use localhost
+	if host == "" {
+		host = "localhost"
+	}
+
+	redirectAddr := net.JoinHostPort(host, server.RedirectPort)
+	_, _, err = net.SplitHostPort(redirectAddr)
+	if err != nil {
+		return fmt.Errorf("invalid redirect address '%s': %w", redirectAddr, err)
 	}
 
 	return nil
