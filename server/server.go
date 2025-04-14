@@ -36,6 +36,13 @@ func NewServer(provider *config.Provider, handler http.Handler, scheduler *sched
 	}
 }
 
+func redirectToHTTPS(w http.ResponseWriter, r *http.Request) {
+	u := *r.URL
+	u.Scheme = "https"
+	u.Host = r.Host
+	http.Redirect(w, r, u.String(), http.StatusMovedPermanently)
+}
+
 func (s *Server) Run() {
 	// Get initial server config
 	serverCfg := s.configProvider.Get().Server
@@ -51,12 +58,12 @@ func (s *Server) Run() {
 		IdleTimeout:       serverCfg.IdleTimeout,
 	}
 
-	// Start HTTP server
+	// Start servers
 	serverError := make(chan error, 1)
 	go func() {
-		// Use the Addr from the initial config used to create the server
 		var err error
 		if serverCfg.EnableTLS {
+			// Start HTTPS server
 			tlsConfig, err := createTLSConfig(&serverCfg)
 			if err != nil {
 				s.logger.Error("Failed to create TLS config", "error", err)
@@ -64,14 +71,31 @@ func (s *Server) Run() {
 				return
 			}
 			srv.TLSConfig = tlsConfig
-			s.logger.Info("Starting server", "protocol", "HTTPS", "addr", serverCfg.Addr)
-			err = srv.ListenAndServeTLS("", "") // Empty strings since certs are in config
+			s.logger.Info("Starting HTTPS server", "addr", serverCfg.Addr)
+			
+			// Start HTTP->HTTPS redirect server if configured
+			if serverCfg.RedirectAddr != "" {
+				go func() {
+					redirect := &http.Server{
+						Addr:    serverCfg.RedirectAddr,
+						Handler: http.HandlerFunc(redirectToHTTPS),
+						ReadTimeout:  serverCfg.ReadTimeout,
+						WriteTimeout: serverCfg.WriteTimeout,
+					}
+					s.logger.Info("Starting HTTP redirect server", "addr", serverCfg.RedirectAddr)
+					if err := redirect.ListenAndServe(); err != http.ErrServerClosed {
+						s.logger.Error("Redirect server error", "err", err)
+					}
+				}()
+			}
+			
+			err = srv.ListenAndServeTLS("", "")
 		} else {
-			s.logger.Info("Starting server", "protocol", "HTTP", "addr", serverCfg.Addr)
+			s.logger.Info("Starting HTTP server", "addr", serverCfg.Addr)
 			err = srv.ListenAndServe()
 		}
 		if err != http.ErrServerClosed {
-			s.logger.Error("ListenAndServe error", "err", err)
+			s.logger.Error("Server error", "err", err)
 			serverError <- err
 		}
 	}()
