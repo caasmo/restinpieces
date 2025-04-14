@@ -95,7 +95,7 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 
 	var user *db.User // Will remain nil if no rows found
 	err := sqlitex.Exec(conn,
-		`SELECT id, name, password, verified, externalAuth, avatar, email, emailVisibility, created, updated
+		`SELECT id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated
 		FROM users WHERE id = ? LIMIT 1`,
 		func(stmt *sqlite.Stmt) error {
 
