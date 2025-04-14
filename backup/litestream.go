@@ -79,26 +79,45 @@ func (l *Litestream) Start() error {
 	startupErrChan := make(chan error, 1)
 
 	go func() {
+
+		defer close(l.shutdownDone) // LIFO last defer
 		l.logger.Info("💾 litestream: starting continuous backup")
 
 		// Open database and start monitoring
 		if err := l.db.Open(); err != nil {
 			l.logger.Error("💾 litestream: failed to open database", "error", err)
 			// Signal shutdown immediately on critical error to prevent hanging
-			close(l.shutdownDone)
 			startupErrChan <- err // Report error
 			return
 		}
-		// defer l.db.Close() // Removed defer
+
+		defer func() {
+			if err := l.db.Close(); err != nil {
+				l.logger.Error("Error closing database during shutdown", "error", err)
+			} else {
+				l.logger.Debug("Database closed")
+			}
+		}()
 
 		// Start replication
 		if err := l.replica.Start(l.ctx); err != nil {
 			l.logger.Error("💾 litestream: failed to start replica", "error", err)
 			// Signal shutdown immediately on critical error
-			close(l.shutdownDone)
 			startupErrChan <- err // Report error
 			return
 		}
+
+		// first defer to execute
+		defer func() {
+			if err := l.replica.Stop(false); err != nil { // Use false for soft stop
+				l.logger.Error("Error stopping replica during shutdown", "error", err)
+			} else {
+				l.logger.Debug("Replica stopped")
+			}
+		}()
+
+		l.logger.Info("Replication started successfully")
+		startupErrChan <- nil // Signal success
 
 		l.logger.Info("💾 litestream: replication started")
 		startupErrChan <- nil // Signal successful startup
@@ -106,18 +125,6 @@ func (l *Litestream) Start() error {
 		// Wait for shutdown signal
 		<-l.ctx.Done()
 		l.logger.Info("💾 litestream: received shutdown signal")
-
-		// Stop replica gracefully
-		if err := l.replica.Stop(false); err != nil {
-			l.logger.Error("💾 litestream: error stopping replica", "error", err)
-		}
-
-		// Explicitly close the database *before* signaling shutdown completion
-		if err := l.db.Close(); err != nil {
-			l.logger.Error("💾 litestream: error closing database", "error", err)
-		}
-
-		close(l.shutdownDone) // Now signal that shutdown is fully complete
 	}()
 
 	// Wait for the goroutine to signal startup completion or error
