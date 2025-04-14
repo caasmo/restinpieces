@@ -29,10 +29,6 @@ func validateServer(server *Server) error {
 		return err // Error already includes context
 	}
 
-	if err := validateServerPort(server.RedirectPort); err != nil {
-		return err // Error already includes context
-	}
-
 	if err := validateServerRedirectAddr(server); err != nil {
 		return err // Error already includes context
 	}
