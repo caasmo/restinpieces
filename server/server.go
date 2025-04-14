@@ -74,19 +74,21 @@ func (s *Server) Run() {
 			s.logger.Info("Starting HTTPS server", "addr", serverCfg.Addr)
 			
 			// Start HTTP->HTTPS redirect server if configured
+			var redirectServer *http.Server
 			if serverCfg.RedirectAddr != "" {
+				redirectServer = &http.Server{
+					Addr:              serverCfg.RedirectAddr,
+					Handler:           http.HandlerFunc(redirectToHTTPS),
+					ReadTimeout:       1 * time.Second,
+					ReadHeaderTimeout: 1 * time.Second,
+					WriteTimeout:      1 * time.Second,
+					IdleTimeout:       1 * time.Second,
+				}
+
 				go func() {
-					redirect := &http.Server{
-						Addr:           serverCfg.RedirectAddr,
-						Handler:        http.HandlerFunc(redirectToHTTPS),
-						ReadTimeout:    1 * time.Second,
-						ReadHeaderTimeout: 1 * time.Second, 
-						WriteTimeout:   1 * time.Second,
-						IdleTimeout:    1 * time.Second,
-					}
 					s.logger.Info("Starting HTTP redirect server", "addr", serverCfg.RedirectAddr)
-					if err := redirect.ListenAndServe(); err != http.ErrServerClosed {
-						s.logger.Error("Redirect server error", "err", err)
+					if err := redirectServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+						serverError <- fmt.Errorf("redirect server error: %w", err)
 					}
 				}()
 			}
@@ -143,16 +145,29 @@ func (s *Server) Run() {
 	// Create a wait group for shutdown tasks
 	shutdownGroup, _ := errgroup.WithContext(gracefulCtx)
 
-	// Shutdown HTTP server in a goroutine
+	// Shutdown main HTTP server in a goroutine
 	shutdownGroup.Go(func() error {
-		s.logger.Info("Shutting down HTTP server")
+		s.logger.Info("Shutting down main HTTP server")
 		if err := srv.Shutdown(gracefulCtx); err != nil {
-			s.logger.Error("HTTP server shutdown error", "err", err)
+			s.logger.Error("Main HTTP server shutdown error", "err", err)
 			return err
 		}
-		s.logger.Info("HTTP server stopped gracefully")
+		s.logger.Info("Main HTTP server stopped gracefully")
 		return nil
 	})
+
+	// Shutdown redirect server if it exists
+	if redirectServer != nil {
+		shutdownGroup.Go(func() error {
+			s.logger.Info("Shutting down redirect HTTP server")
+			if err := redirectServer.Shutdown(gracefulCtx); err != nil {
+				s.logger.Error("Redirect HTTP server shutdown error", "err", err)
+				return err
+			}
+			s.logger.Info("Redirect HTTP server stopped gracefully")
+			return nil
+		})
+	}
 
 	// Shutdown scheduler in a goroutine, passing the graceful context
 	shutdownGroup.Go(func() error {
