@@ -65,8 +65,23 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	// Initialize the PreRouter chain with internal middleware
 	preRouterHandler := initPreRouter(app)
 
+	// Create Litestream if enabled in config
+	var ls *backup.Litestream
+	if cfg.Litestream.Enabled {
+		ls, err = backup.NewLitestream(configProvider, app.Logger())
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to initialize litestream: %w", err)
+		}
+	}
+
 	// Create the server instance, passing the composed preRouterHandler
-	srv := server.NewServer(configProvider, preRouterHandler, scheduler, app.Logger())
+	srv := server.NewServer(
+		configProvider,
+		preRouterHandler,
+		scheduler,
+		ls,
+		app.Logger(),
+	)
 
 	// Return the initialized app and server
 	return app, srv, nil
