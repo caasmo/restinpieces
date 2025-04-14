@@ -67,12 +67,12 @@ func validateServerAddr(server *Server) error {
 
 func validateServerRedirectAddr(server *Server) error {
 	// If RedirectPort is empty, no redirect server is configured (valid case)
-	if server.RedirectPort == "" {
+	if server.RedirectAddr == "" {
 		return nil
 	}
 
 	// Construct the redirect address from the main server's host and redirect port
-	host, _, err := net.SplitHostPort(server.Addr)
+	_, port, err := net.SplitHostPort(server.RedirectAddr)
 	if err != nil {
 		return fmt.Errorf("failed to parse host from server address '%s': %w", server.Addr, err)
 	}
