@@ -101,7 +101,7 @@ func (s *Server) Run() {
 			err = srv.ListenAndServe()
 		}
 
-		if err != http.ErrServerClosed {
+		if err != nil && err != http.ErrServerClosed {
 			s.logger.Error("Server error", "err", err)
 			serverError <- err
 		}
