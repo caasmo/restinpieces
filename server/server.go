@@ -59,6 +59,8 @@ func (s *Server) Run() {
 		IdleTimeout:       serverCfg.IdleTimeout,
 	}
 
+	var redirectServer *http.Server
+
 	// Start servers
 	serverError := make(chan error, 1)
 	go func() {
@@ -75,7 +77,6 @@ func (s *Server) Run() {
 			s.logger.Info("Starting HTTPS server", "addr", serverCfg.Addr)
 			
 			// Start HTTP->HTTPS redirect server if configured
-			var redirectServer *http.Server
 			if serverCfg.RedirectAddr != "" {
 				redirectServer = &http.Server{
 					Addr:              serverCfg.RedirectAddr,
