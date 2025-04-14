@@ -70,8 +70,6 @@ func NewLitestream(configProvider *config.Provider, logger *slog.Logger) (*Lites
 func (l *Litestream) Start() {
 	go func() {
 		l.logger.Info("💾 litestream: starting continuous backup")
-		defer close(l.shutdownDone)
-
 		l.run()
 		l.logger.Info("💾 litestream: received shutdown signal")
 	}()
@@ -114,4 +112,5 @@ func (l *Litestream) run() {
 	if err := l.replica.Stop(false); err != nil {
 		l.logger.Error("💾 litestream: error stopping replica", "error", err)
 	}
+	close(l.shutdownDone)
 }
