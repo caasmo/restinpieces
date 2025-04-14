@@ -120,9 +120,7 @@ func (s *Server) Run() {
 	}()
 
 	// Start services
-	if s.scheduler != nil {
-		s.scheduler.Start()
-	}
+	s.scheduler.Start()
 
 	if s.litestream != nil {
 		if err := s.litestream.Start(); err != nil {
@@ -194,7 +192,6 @@ func (s *Server) Run() {
 	}
 
 	// Shutdown services in parallel
-	if s.scheduler != nil {
 		shutdownGroup.Go(func() error {
 			s.logger.Info("Shutting down scheduler...")
 			if err := s.scheduler.Stop(gracefulCtx); err != nil {
@@ -204,7 +201,6 @@ func (s *Server) Run() {
 			s.logger.Info("Scheduler stopped gracefully")
 			return nil
 		})
-	}
 
 	if s.litestream != nil {
 		shutdownGroup.Go(func() error {
