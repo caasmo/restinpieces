@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/caasmo/restinpieces/backup"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
