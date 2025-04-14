@@ -37,11 +37,14 @@ func NewServer(provider *config.Provider, handler http.Handler, scheduler *sched
 	}
 }
 
-func redirectToHTTPS(w http.ResponseWriter, r *http.Request) {
-	u := *r.URL
-	u.Scheme = "https"
-	u.Host = r.Host
-	http.Redirect(w, r, u.String(), http.StatusMovedPermanently)
+func (s *Server) redirectToHTTPS() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		serverCfg := s.configProvider.Get().Server
+		u := *r.URL
+		u.Scheme = "https"
+		u.Host = sanitizeAddrEmptyHost(serverCfg.Addr)
+		http.Redirect(w, r, u.String(), http.StatusMovedPermanently)
+	}
 }
 
 func (s *Server) Run() {
@@ -80,7 +83,7 @@ func (s *Server) Run() {
 			if serverCfg.RedirectAddr != "" {
 				redirectServer = &http.Server{
 					Addr:              serverCfg.RedirectAddr,
-					Handler:           http.HandlerFunc(redirectToHTTPS),
+					Handler:           s.redirectToHTTPS(),
 					ReadTimeout:       1 * time.Second,
 					ReadHeaderTimeout: 1 * time.Second,
 					WriteTimeout:      1 * time.Second,
