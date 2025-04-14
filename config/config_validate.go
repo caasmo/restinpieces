@@ -52,7 +52,7 @@ func validateServerAddr(server *Server) error {
 	}
 
 	// Split into host and port components
-	host, port, err := net.SplitHostPort(server.Addr)
+	_, port, err := net.SplitHostPort(server.Addr)
 	if err != nil {
 		return fmt.Errorf("invalid server address format '%s': %w", server.Addr, err)
 	}
