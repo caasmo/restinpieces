@@ -119,9 +119,17 @@ func (s *Server) Run() {
 		}
 	}()
 
-	// Start the job scheduler
-	// TODO error
-	s.scheduler.Start()
+	// Start services
+	if s.scheduler != nil {
+		s.scheduler.Start()
+	}
+
+	if s.litestream != nil {
+		if err := s.litestream.Start(); err != nil {
+			s.logger.Error("Failed to start Litestream", "error", err)
+			serverError <- err
+		}
+	}
 
 	// Channel for all signals we want to handle
 	sigChan := make(chan os.Signal, 1)
@@ -185,16 +193,30 @@ func (s *Server) Run() {
 		})
 	}
 
-	// Shutdown scheduler in a goroutine, passing the graceful context
-	shutdownGroup.Go(func() error {
-		s.logger.Info("Shutting down scheduler...")
-		if err := s.scheduler.Stop(gracefulCtx); err != nil {
-			s.logger.Error("Scheduler shutdown error", "err", err)
-			return err
-		}
-		s.logger.Info("Scheduler stopped gracefully")
-		return nil
-	})
+	// Shutdown services in parallel
+	if s.scheduler != nil {
+		shutdownGroup.Go(func() error {
+			s.logger.Info("Shutting down scheduler...")
+			if err := s.scheduler.Stop(gracefulCtx); err != nil {
+				s.logger.Error("Scheduler shutdown error", "err", err)
+				return err
+			}
+			s.logger.Info("Scheduler stopped gracefully")
+			return nil
+		})
+	}
+
+	if s.litestream != nil {
+		shutdownGroup.Go(func() error {
+			s.logger.Info("Shutting down Litestream...")
+			if err := s.litestream.Stop(gracefulCtx); err != nil {
+				s.logger.Error("Litestream shutdown error", "err", err)
+				return err
+			}
+			s.logger.Info("Litestream stopped gracefully")
+			return nil
+		})
+	}
 
 	// Wait for all shutdown tasks to complete
 	if err := shutdownGroup.Wait(); err != nil {
