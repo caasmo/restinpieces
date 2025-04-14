@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"net"
 	"strconv"
 	"strings"
 )
@@ -51,8 +50,7 @@ func validateServerAddr(server *Server) error {
 // It allows an empty string "" (meaning no redirect server).
 // If non-empty, it ensures the value is a valid port number (1-65535)
 // and does not contain ":". Port "0" is invalid.
-func validateServerPort(server *Server) error {
-	portStr := server.RedirectPort
+func validateServerPort(portStr string) error {
 
 	// Empty means no redirect server, which is valid configuration.
 	if portStr == "" {
