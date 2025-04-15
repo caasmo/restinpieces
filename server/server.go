@@ -4,9 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/caasmo/restinpieces/backup"
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/queue/scheduler"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"
@@ -16,27 +14,43 @@ import (
 	"time"
 )
 
+// Daemon defines the contract for background components managed
+// by the server's lifecycle (Start/Stop).
+type Daemon interface {
+	Name() string // For logging/identification
+	Start() error
+	Stop(ctx context.Context) error
+}
+
 type Server struct {
 	configProvider *config.Provider
-	handler        http.Handler
-	scheduler      *scheduler.Scheduler
-	litestream     *backup.Litestream
+	handler        http.Handler // The main HTTP handler
 	logger         *slog.Logger
+	daemons        []Daemon // Collection of managed daemons
 }
 
 func (s *Server) handleSIGHUP() {
 	s.logger.Info("Received SIGHUP signal - attempting to reload configuration")
 }
 
-// NewServer now accepts any http.Handler.
-func NewServer(provider *config.Provider, handler http.Handler, scheduler *scheduler.Scheduler, litestream *backup.Litestream, logger *slog.Logger) *Server {
+// NewServer constructor - daemons are added via AddDaemon.
+func NewServer(provider *config.Provider, handler http.Handler, logger *slog.Logger) *Server {
 	return &Server{
 		configProvider: provider,
-		handler:        handler, // Store the provided handler
-		scheduler:      scheduler,
-		litestream:     litestream,
+		handler:        handler,
 		logger:         logger,
+		daemons:        make([]Daemon, 0), // Initialize empty slice
 	}
+}
+
+// AddDaemon adds a daemon whose lifecycle will be managed by the server.
+func (s *Server) AddDaemon(daemon Daemon) {
+	if daemon == nil {
+		s.logger.Warn("Attempted to add a nil daemon")
+		return
+	}
+	s.logger.Info("Adding daemon", "daemon_name", daemon.Name())
+	s.daemons = append(s.daemons, daemon)
 }
 
 func (s *Server) redirectToHTTPS() http.HandlerFunc {
@@ -121,14 +135,30 @@ func (s *Server) Run() {
 		}
 	}()
 
-	// Start services
-	s.scheduler.Start()
+	// --- Start Daemons Concurrently ---
+	startupGroup, startupCtx := errgroup.WithContext(context.Background()) // Use background context for startup
+	s.logger.Info("Starting daemons...")
+	for _, d := range s.daemons {
+		daemon := d // Capture loop variable for goroutine
+		startupGroup.Go(func() error {
+			s.logger.Info("Starting daemon", "daemon_name", daemon.Name())
+			// Use startupCtx for potential future cancellation during startup phase if needed
+			err := daemon.Start()
+			if err != nil {
+				s.logger.Error("Failed to start daemon", "daemon_name", daemon.Name(), "error", err)
+				return fmt.Errorf("daemon %q failed to start: %w", daemon.Name(), err)
+			}
+			s.logger.Info("Daemon started successfully", "daemon_name", daemon.Name())
+			return nil
+		})
+	}
 
-	if s.litestream != nil {
-		if err := s.litestream.Start(); err != nil {
-			s.logger.Error("Failed to start Litestream", "error", err)
-			serverError <- err
-		}
+	// Wait for all daemons to start, handle potential errors
+	if err := startupGroup.Wait(); err != nil {
+		s.logger.Error("One or more daemons failed to start, initiating shutdown", "error", err)
+		serverError <- err // Signal fatal startup error
+	} else {
+		s.logger.Info("All daemons started successfully.")
 	}
 
 	// Channel for all signals we want to handle
@@ -193,30 +223,25 @@ func (s *Server) Run() {
 		})
 	}
 
-	// Shutdown services in parallel
+	// --- Stop Daemons Concurrently ---
+	s.logger.Info("Stopping daemons...")
+	for _, d := range s.daemons {
+		daemon := d // Capture loop variable
 		shutdownGroup.Go(func() error {
-			s.logger.Info("Shutting down scheduler...")
-			if err := s.scheduler.Stop(gracefulCtx); err != nil {
-				s.logger.Error("Scheduler shutdown error", "err", err)
-				return err
+			s.logger.Info("Stopping daemon", "daemon_name", daemon.Name())
+			err := daemon.Stop(gracefulCtx) // Pass the shutdown context
+			if err != nil {
+				// Log error but allow other daemons to attempt shutdown
+				s.logger.Error("Error stopping daemon", "daemon_name", daemon.Name(), "error", err)
+				// Return the error so errgroup knows about it
+				return fmt.Errorf("daemon %q failed to stop gracefully: %w", daemon.Name(), err)
 			}
-			s.logger.Info("Scheduler stopped gracefully")
-			return nil
-		})
-
-	if s.litestream != nil {
-		shutdownGroup.Go(func() error {
-			s.logger.Info("Shutting down Litestream...")
-			if err := s.litestream.Stop(gracefulCtx); err != nil {
-				s.logger.Error("Litestream shutdown error", "err", err)
-				return err
-			}
-			s.logger.Info("Litestream stopped gracefully")
+			s.logger.Info("Daemon stopped gracefully", "daemon_name", daemon.Name())
 			return nil
 		})
 	}
 
-	// Wait for all shutdown tasks to complete
+	// Wait for all shutdown tasks (HTTP servers + daemons)
 	if err := shutdownGroup.Wait(); err != nil {
 		s.logger.Error("Error during shutdown", "err", err)
 		os.Exit(1)
