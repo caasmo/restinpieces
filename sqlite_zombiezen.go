@@ -1,5 +1,3 @@
-//go:build !sqlite_crawshaw && !sqlite_mattn
-
 package restinpieces
 
 // This file provides helper functions to create SQLite connection pools
