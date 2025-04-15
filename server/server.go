@@ -135,31 +135,27 @@ func (s *Server) Run() {
 		}
 	}()
 
-	// --- Start Daemons Concurrently ---
-	startupGroup, _ := errgroup.WithContext(context.Background()) // Use background context for startup
-	s.logger.Info("Starting daemons...")
-	for _, d := range s.daemons {
-		daemon := d // Capture loop variable for goroutine
-		startupGroup.Go(func() error {
-			s.logger.Info("Starting daemon", "daemon_name", daemon.Name())
-			// Use startupCtx for potential future cancellation during startup phase if needed
-			err := daemon.Start()
-			if err != nil {
-				s.logger.Error("Failed to start daemon", "daemon_name", daemon.Name(), "error", err)
-				return fmt.Errorf("daemon %q failed to start: %w", daemon.Name(), err)
-			}
-			s.logger.Info("Daemon started successfully", "daemon_name", daemon.Name())
-			return nil
-		})
+	// --- Start Daemons Sequentially ---
+	s.logger.Info("Starting daemons sequentially...")
+	var startupFailed bool
+	for _, daemon := range s.daemons {
+		s.logger.Info("Starting daemon", "daemon_name", daemon.Name())
+		if err := daemon.Start(); err != nil {
+			s.logger.Error("Failed to start daemon, initiating shutdown",
+				"daemon_name", daemon.Name(),
+				"error", err)
+			// Send the specific error that caused the failure
+			serverError <- fmt.Errorf("daemon %q failed to start: %w", daemon.Name(), err)
+			startupFailed = true
+			break // Stop starting other daemons if one fails
+		}
+		s.logger.Info("Daemon started successfully", "daemon_name", daemon.Name())
 	}
 
-	// Wait for all daemons to start, handle potential errors
-	if err := startupGroup.Wait(); err != nil {
-		s.logger.Error("One or more daemons failed to start, initiating shutdown", "error", err)
-		serverError <- err // Signal fatal startup error
-	} else {
+	if !startupFailed {
 		s.logger.Info("All daemons started successfully.")
 	}
+	// If startupFailed is true, an error was already sent to serverError
 
 	// Channel for all signals we want to handle
 	sigChan := make(chan os.Signal, 1)
