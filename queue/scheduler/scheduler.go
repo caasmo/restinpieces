@@ -57,9 +57,15 @@ func NewScheduler(configProvider *config.Provider, db db.DbQueue, executor execu
 	}
 }
 
-// Start begins the job scheduler operation by creting a long runnig goroutine
-// that will create gorotines to handle backend jobs
-func (s *Scheduler) Start() {
+// Name returns the name of the daemon for logging/identification.
+func (s *Scheduler) Name() string {
+	return "Scheduler"
+}
+
+// Start begins the job scheduler operation by creating a long running goroutine
+// that will create goroutines to handle backend jobs.
+// It returns nil immediately as the main work happens in the background goroutine.
+func (s *Scheduler) Start() error {
 	go func() {
 		// Get initial interval from provider
 		interval := s.configProvider.Get().Scheduler.Interval
