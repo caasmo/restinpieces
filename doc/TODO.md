@@ -1,5 +1,6 @@
 ### TODOs
 
+- sdk visibility, own route
 - start server dbfile consistence
 - disable standard routes
 - is a framework, clear workflow  -> examples repo. od use of the features
@@ -18,13 +19,9 @@
 	- code review
 	- workflow for recovery, 
 	- basic framework use examples repo, with examples of features.
-- control new features, they can go in other projects/packages
 - robots.txt
 - script insert-job. --type 
 - config reload
-- sdk endpoint
-	- move to own repo?
-	- rename just to show the sdk
 - race detection
 - scheduler recurrent jobs
 	- has tick
@@ -116,6 +113,10 @@
 
 ### done
 
+- sdk endpoint
+	- move to own repo?
+	- rename just to show the sdk
+- control new features, they can go in other projects/packages
 - tls: 80 redirect
 - move cwashaw to repo
 - litestream
