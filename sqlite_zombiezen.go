@@ -13,7 +13,6 @@ package restinpieces
 
 import (
 	"fmt"
-	"fmt"
 	"runtime"
 	"time"
 
