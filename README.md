@@ -64,7 +64,11 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 
 ### Build
 
+    // default pure go zombiezen
     go build -ldflags="-s -w" -trimpath ./cmd/restinpieces/...
+
+    // crawshaw CGO
+    go build -tags sqlite_crawshaw -ldflags="-s -w" -trimpath ./cmd/restinpieces/...
 
 
 ## TODO

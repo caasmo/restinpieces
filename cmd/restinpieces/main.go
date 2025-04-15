@@ -29,8 +29,8 @@ func main() {
 
 	// --- Create the Database Pool ---
 	// Use the helper from the library to create a pool with suitable defaults.
-	dbPool, err := restinpieces.NewCrawshawPool(*dbfile)
-	// dbPool, err := restinpieces.NewZombiezenPool(*dbfile)
+	//dbPool, err := restinpieces.NewCrawshawPool(*dbfile)
+	dbPool, err := restinpieces.NewZombiezenPool(*dbfile)
 	if err != nil {
 		slog.Error("failed to create database pool", "error", err)
 		os.Exit(1) // Exit if pool creation fails
@@ -47,8 +47,8 @@ func main() {
 	// --- Initialize the Application ---
 	_, srv, err := restinpieces.New(
 		*configFile,
-		restinpieces.WithDbCrawshaw(dbPool),
-		//restinpieces.WithDbZombiezen(dbPool),
+		//restinpieces.WithDbCrawshaw(dbPool),
+		restinpieces.WithDbZombiezen(dbPool),
 		restinpieces.WithRouterServeMux(),
 		restinpieces.WithCacheRistretto(),
 		restinpieces.WithTextLogger(nil),
