@@ -70,7 +70,13 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	// Create Litestream if enabled in config
 	var ls *backup.Litestream
 	if cfg.Litestream.Enabled {
-		ls, err = backup.NewLitestream(configProvider, app.Logger())
+		// Create the specific config struct for Litestream
+		lsCfg := backup.Config{
+			DBPath:      cfg.DBPath, // Get DBPath from main config
+			ReplicaPath: cfg.Litestream.ReplicaPath,
+			ReplicaName: cfg.Litestream.ReplicaName,
+		}
+		ls, err = backup.NewLitestream(lsCfg, app.Logger())
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to initialize litestream: %w", err)
 		}
