@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"fmt"
+	//"fmt"
 
-	"github.com/caasmo/restinpieces/backup"
+	//"github.com/caasmo/restinpieces/backup"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
