@@ -59,6 +59,11 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - Minimal external dependencies
 - Production-ready builds with size optimization
 
+### Backups
+- Built-in Litestream integration for continuous SQLite backups
+- Supports incremental backups with minimal overhead
+- See [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) for implementation details
+
 
 ## Building the Project
 
