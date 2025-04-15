@@ -1,7 +1,7 @@
 # Configuration for the RestInPieces application
 
 # Path to the SQLite database file.
-DBFile = "bench.db"
+DBPath = "app.db"
 
 # Directory containing static web assets (relative to application root).
 # These assets can be embedded in the binary or served from the filesystem.
