@@ -1,12 +1,12 @@
 package restinpieces
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
-	//"fmt"
 
-	//"github.com/caasmo/restinpieces/backup"
+	"github.com/caasmo/restinpieces/backup"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
@@ -67,20 +67,27 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	// Initialize the PreRouter chain with internal middleware
 	preRouterHandler := initPreRouter(app)
 
-	// // Create Litestream if enabled in config
-	// var ls *backup.Litestream
-	// if cfg.Litestream.Enabled {
-	// 	// Create the specific config struct for Litestream
-	// 	lsCfg := backup.Config{
-	// 		DBPath:      cfg.DBPath, // Get DBPath from main config
-	// 		ReplicaPath: cfg.Litestream.ReplicaPath,
-	// 		ReplicaName: cfg.Litestream.ReplicaName,
-	// 	}
-	// 	ls, err = backup.NewLitestream(lsCfg, app.Logger())
-	// 	if err != nil {
-	// 		return nil, nil, fmt.Errorf("failed to initialize litestream: %w", err)
-	// 	}
-	// }
+	// Create Litestream with ad-hoc configuration
+	var ls *backup.Litestream
+	// Example ad-hoc configuration (replace with actual desired values)
+	lsEnabled := true // Set to true to enable Litestream
+	if lsEnabled {
+		lsCfg := backup.Config{
+			DBPath:      cfg.DBPath, // Still use DBPath from main config
+			ReplicaPath: "./litestream_replicas", // Ad-hoc path
+			ReplicaName: "main-db-backup",        // Ad-hoc name
+		}
+		ls, err = backup.NewLitestream(lsCfg, app.Logger())
+		if err != nil {
+			// Log the error and decide if it's fatal
+			app.Logger().Error("failed to initialize litestream", "error", err)
+			// Depending on requirements, you might return the error or continue without backup
+			return nil, nil, fmt.Errorf("failed to initialize litestream: %w", err)
+		}
+		app.Logger().Info("Litestream backup daemon configured", "replica_path", lsCfg.ReplicaPath, "replica_name", lsCfg.ReplicaName)
+	} else {
+		app.Logger().Info("Litestream backup daemon is disabled")
+	}
 
 	// Create the server instance (without daemons initially)
 	srv := server.NewServer(
@@ -91,9 +98,9 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 
 	// Register the framework's core daemons
 	srv.AddDaemon(scheduler)
-	// if ls != nil {
-	// 	srv.AddDaemon(ls)
-	// }
+	if ls != nil { // Only add if Litestream was successfully initialized
+		srv.AddDaemon(ls)
+	}
 
 	// --- Extensibility Point ---
 	// Here, the user of the framework could potentially register
