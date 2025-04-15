@@ -53,22 +53,22 @@ func NewZombiezenPool(dbPath string) (*sqlitex.Pool, error) {
 	return pool, nil
 }
 
-var explicitBusyTimeout = 5 * time.Second // Or whatever value you prefer
+var explicitBusyTimeout = 5 * time.Second 
 
 func prepareConnPerformance(conn *sqlite.Conn) error {
 	script := fmt.Sprintf(`
 	PRAGMA journal_mode = WAL;
 	PRAGMA synchronous = NORMAL;
 	PRAGMA busy_timeout = %d;
-	PRAGMA foreign_keys = ON;
-	PRAGMA cache_size = -4000; -- Set cache to 4MB
+	PRAGMA foreign_keys = OFF;
+	--PRAGMA cache_size = -4000; -- Set cache to 4MB
 	`, explicitBusyTimeout.Milliseconds()) // busy_timeout pragma uses milliseconds
 
 	err := sqlitex.ExecuteScript(conn, script, nil)
 	if err != nil {
 		return fmt.Errorf("failed to apply performance PRAGMAs: %w", err)
 	}
-	return nil // Indicate success
+	return nil
 }
 
 // NewZombiezenPerformancePool creates a new Zombiezen SQLite connection pool optimized
@@ -78,23 +78,16 @@ func NewZombiezenPerformancePool(dbPath string) (*sqlitex.Pool, error) {
 	// Use the base file path, PRAGMAs are set in prepareConnPerformance
 	initString := fmt.Sprintf("file:%s", dbPath)
 
+	// Default OpenFlags (ReadWrite | Create | WAL | URI) are generally fine
 	pool, err := sqlitex.NewPool(initString, sqlitex.PoolOptions{
 		PoolSize:        poolSize,
-		ConnPrepareFunc: prepareConnPerformance,
-		// Default OpenFlags (ReadWrite | Create | WAL | URI) are generally fine
+		PrepareConn: prepareConnPerformance,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create performance zombiezen pool at %s: %w", dbPath, err)
 	}
 	return pool, nil
 }
-
-// --- Example usage of the performance pool ---
-// pool, err := NewZombiezenPerformancePool(dbPath)
-// if err != nil { ... handle error ... }
-// defer pool.Close()
-// app := New(WithDbZombiezen(pool), ...)
-
 
 // --- Create the pool with the explicit prepare function ---
 // pool, err := sqlitex.NewPool(dbPath, sqlitex.PoolOptions{
