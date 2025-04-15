@@ -76,14 +76,25 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 		}
 	}
 
-	// Create the server instance, passing the composed preRouterHandler
+	// Create the server instance (without daemons initially)
 	srv := server.NewServer(
 		configProvider,
-		preRouterHandler,
-		scheduler,
-		ls,
+		preRouterHandler, // The main HTTP handler chain
 		app.Logger(),
 	)
+
+	// Register the framework's core daemons
+	srv.AddDaemon(scheduler)
+	if ls != nil {
+		srv.AddDaemon(ls)
+	}
+
+	// --- Extensibility Point ---
+	// Here, the user of the framework could potentially register
+	// their own custom Daemon implementations:
+	// if userProvidedDaemon != nil {
+	//     srv.AddDaemon(userProvidedDaemon)
+	// }
 
 	// Return the initialized app and server
 	return app, srv, nil
