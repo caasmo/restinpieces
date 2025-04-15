@@ -39,7 +39,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 ### Core Infrastructure
 - Embedded file server with gzip compression
 - Discoverable API endpoints (/api/refresh-auth, /api/auth-with-oauth2, etc.)
-- SQLite database interface supporting multiple drivers ([Zombiezen](https://github.com/zombiezen/go-sqlite), [Crawshaw](https://github.com/crawshaw/sqlite))
+- SQLite database interface supporting multiple drivers ([Zombiezen](https://github.com/zombiezen/go-sqlite), [Crawshaw](https://github.com/caasmo/restinpieces-sqlite-crawshaw))
 - Cache interface with [Ristretto](https://github.com/dgraph-io/ristretto) implementation
 - Router abstraction supporting standard Mux and [httprouter](https://github.com/julienschmidt/httprouter)
 - Middleware-compatible handlers
