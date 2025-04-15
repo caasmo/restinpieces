@@ -67,20 +67,20 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 	// Initialize the PreRouter chain with internal middleware
 	preRouterHandler := initPreRouter(app)
 
-	// Create Litestream if enabled in config
-	var ls *backup.Litestream
-	if cfg.Litestream.Enabled {
-		// Create the specific config struct for Litestream
-		lsCfg := backup.Config{
-			DBPath:      cfg.DBPath, // Get DBPath from main config
-			ReplicaPath: cfg.Litestream.ReplicaPath,
-			ReplicaName: cfg.Litestream.ReplicaName,
-		}
-		ls, err = backup.NewLitestream(lsCfg, app.Logger())
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to initialize litestream: %w", err)
-		}
-	}
+	// // Create Litestream if enabled in config
+	// var ls *backup.Litestream
+	// if cfg.Litestream.Enabled {
+	// 	// Create the specific config struct for Litestream
+	// 	lsCfg := backup.Config{
+	// 		DBPath:      cfg.DBPath, // Get DBPath from main config
+	// 		ReplicaPath: cfg.Litestream.ReplicaPath,
+	// 		ReplicaName: cfg.Litestream.ReplicaName,
+	// 	}
+	// 	ls, err = backup.NewLitestream(lsCfg, app.Logger())
+	// 	if err != nil {
+	// 		return nil, nil, fmt.Errorf("failed to initialize litestream: %w", err)
+	// 	}
+	// }
 
 	// Create the server instance (without daemons initially)
 	srv := server.NewServer(
@@ -91,9 +91,9 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 
 	// Register the framework's core daemons
 	srv.AddDaemon(scheduler)
-	if ls != nil {
-		srv.AddDaemon(ls)
-	}
+	// if ls != nil {
+	// 	srv.AddDaemon(ls)
+	// }
 
 	// --- Extensibility Point ---
 	// Here, the user of the framework could potentially register
