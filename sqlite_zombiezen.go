@@ -16,7 +16,6 @@ import (
 	"runtime"
 	"time"
 
-	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 
 	"github.com/caasmo/restinpieces/core"
