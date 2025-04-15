@@ -53,48 +53,39 @@ func NewZombiezenPool(dbPath string) (*sqlitex.Pool, error) {
 	return pool, nil
 }
 
-var explicitBusyTimeout = 5 * time.Second 
-
-func prepareConnPerformance(conn *sqlite.Conn) error {
-	script := fmt.Sprintf(`
-	PRAGMA journal_mode = WAL;
-	PRAGMA synchronous = NORMAL;
-	PRAGMA busy_timeout = %d;
-	PRAGMA foreign_keys = OFF;
-	--PRAGMA cache_size = -4000; -- Set cache to 4MB
-	`, explicitBusyTimeout.Milliseconds()) // busy_timeout pragma uses milliseconds
-
-	err := sqlitex.ExecuteScript(conn, script, nil)
-	if err != nil {
-		return fmt.Errorf("failed to apply performance PRAGMAs: %w", err)
-	}
-	return nil
-}
+var explicitBusyTimeout = 5 * time.Second
 
 // NewZombiezenPerformancePool creates a new Zombiezen SQLite connection pool optimized
-// for performance using explicit PRAGMA settings via ConnPrepareFunc.
+// for performance using explicit PRAGMA settings via the DSN string.
 func NewZombiezenPerformancePool(dbPath string) (*sqlitex.Pool, error) {
 	poolSize := runtime.NumCPU()
-	// Use the base file path, PRAGMAs are set in prepareConnPerformance
-	initString := fmt.Sprintf("file:%s", dbPath)
 
-	// Default OpenFlags (ReadWrite | Create | WAL | URI) are generally fine
-	pool, err := sqlitex.NewPool(initString, sqlitex.PoolOptions{
-		PoolSize:        poolSize,
-		PrepareConn: prepareConnPerformance,
+	// Construct the DSN string with performance PRAGMAs
+	// Use DSN parameters: _journal_mode, _synchronous, _busy_timeout, _foreign_keys, _cache_size
+	// busy_timeout in DSN is in milliseconds.
+	// Set foreign_keys=on for better data integrity.
+	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_synchronous=NORMAL&_busy_timeout=%d&_foreign_keys=on&_cache_size=-4000",
+		dbPath,
+		explicitBusyTimeout.Milliseconds(), // Use milliseconds for _busy_timeout DSN parameter
+	)
+
+	// Default OpenFlags (ReadWrite | Create | WAL | URI) are used by NewPool.
+	// The URI flag is necessary for the DSN parameters to be parsed.
+	pool, err := sqlitex.NewPool(dsn, sqlitex.PoolOptions{
+		PoolSize: poolSize,
+		// No PrepareConn needed as PRAGMAs are in DSN
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create performance zombiezen pool at %s: %w", dbPath, err)
+		// Include the DSN in the error message for easier debugging
+		return nil, fmt.Errorf("failed to create performance zombiezen pool at %s using DSN '%s': %w", dbPath, dsn, err)
 	}
 	return pool, nil
 }
 
-// --- Create the pool with the explicit prepare function ---
-// pool, err := sqlitex.NewPool(dbPath, sqlitex.PoolOptions{
-//	PoolSize:        10, // Example pool size
-//	ConnPrepareFunc: prepareConnExplicit,
-//})
+// --- Create the pool with the explicit prepare function (Removed as PrepareConn caused issues) ---
 
-// dsn := fmt.Sprintf("file:%s?_journal=WAL&_synchronous=NORMAL&_timeout=%d&_foreign_keys=on&_cache_size=-4000",
-//        dbPath,
-//                explicitBusyTimeout.Milliseconds(), // Timeout parameter expects milliseconds
+// Example DSN string format used above:
+// dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_synchronous=NORMAL&_busy_timeout=%d&_foreign_keys=on&_cache_size=-4000",
+//     dbPath,
+//     explicitBusyTimeout.Milliseconds(),
+// )
