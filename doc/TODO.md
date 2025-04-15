@@ -1,19 +1,11 @@
 ### TODOs
 
+- start server dbfile consistence
 - disable standard routes
 - is a framework, clear workflow  -> examples repo. od use of the features
 - nocache? what about BlockIp.
 - router: create router.Chains type
-- move cwashaw to repo
-- litestream
-    - new repo. server service. server handles stop and start.
-    - server.AddService()
-	- in binary, can be configured.
-	- only file or s3/b2
-	- ssh client scp in intervals. flag ssh address + directory
-	- with age.
 - good enough release
-	- tls: 80 redirect
     - litestream file or/and s3 
     - basic metrics 
 		- https://github.com/prometheus/client_golang
@@ -27,6 +19,7 @@
 	- workflow for recovery, 
 	- basic framework use examples repo, with examples of features.
 - control new features, they can go in other projects/packages
+- robots.txt
 - script insert-job. --type 
 - config reload
 - sdk endpoint
@@ -123,6 +116,15 @@
 
 ### done
 
+- tls: 80 redirect
+- move cwashaw to repo
+- litestream
+    - new repo. server service. server handles stop and start.
+    - server.AddService()
+	- in binary, can be configured.
+	- only file or s3/b2
+	- ssh client scp in intervals. flag ssh address + directory
+	- with age.
 - if tls, handle automatic redirection to https
 	- redirect server
 - prepareConn explicite
