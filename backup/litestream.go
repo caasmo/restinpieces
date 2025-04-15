@@ -73,6 +73,11 @@ func NewLitestream(cfg Config, logger *slog.Logger) (*Litestream, error) {
 	}, nil
 }
 
+// Name returns the name of the service for logging and identification.
+func (l *Litestream) Name() string {
+	return "LitestreamBackup"
+}
+
 // Start begins the continuous backup process in a goroutine.
 // It returns an error immediately if the initial setup (opening the database
 // or starting the replica) fails. Otherwise, it returns nil and the backup
