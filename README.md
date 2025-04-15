@@ -74,11 +74,6 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
     # Default build with pure Go Zombiezen SQLite driver
     go build -ldflags="-s -w" -trimpath ./cmd/restinpieces/...
 
-    # Alternative builds (require separate repos):
-    # Crawshaw CGO driver:
-    # go build -tags sqlite_crawshaw -ldflags="-s -w" -trimpath ./cmd/restinpieces/...
-
-
 ## TODO
 
 [Todos](doc/TODO.md).
