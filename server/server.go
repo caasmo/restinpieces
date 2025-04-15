@@ -136,7 +136,7 @@ func (s *Server) Run() {
 	}()
 
 	// --- Start Daemons Concurrently ---
-	startupGroup, startupCtx := errgroup.WithContext(context.Background()) // Use background context for startup
+	startupGroup, _ := errgroup.WithContext(context.Background()) // Use background context for startup
 	s.logger.Info("Starting daemons...")
 	for _, d := range s.daemons {
 		daemon := d // Capture loop variable for goroutine
