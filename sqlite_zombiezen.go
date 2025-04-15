@@ -13,9 +13,11 @@ package restinpieces
 
 import (
 	"fmt"
+	"fmt"
 	"runtime"
 	"time"
 
+	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 
 	"github.com/caasmo/restinpieces/core"
@@ -54,48 +56,49 @@ func NewZombiezenPool(dbPath string) (*sqlitex.Pool, error) {
 
 var explicitBusyTimeout = 5 * time.Second // Or whatever value you prefer
 
-//func prepareConnExplicit (conn *sqlite.Conn) error {
-//	//log.Printf("Preparing connection %p explicitly...", conn)
-//
-//	// --- Define the explicit PRAGMA settings ---
-//
-//	// Note 1: OpenFlags like OpenWAL, OpenCreate, OpenURI are applied *before*
-//	// this function runs, when sqlitex.Pool calls sqlite.OpenConn internally.
-//	// We replicate the *result* of those flags here where possible via PRAGMA.
-//
-//	// Note 2: Disabling double-quoted strings is done via sqlite3_db_config
-//	// by default in OpenConn and cannot be set via PRAGMA. It's already set.
-//
-//	script := fmt.Sprintf(`
-//	-- Replicate effect of default OpenWAL flag
-//	PRAGMA journal_mode = WAL;
-//
-//	-- Set synchronous mode explicitly (NORMAL is common/default for WAL)
-//	PRAGMA synchronous = NORMAL;
-//
-//	-- Set busy timeout explicitly (overrides library's default SetBlockOnBusy handler)
-//	PRAGMA busy_timeout = %d;
-//
-//	-- Explicitly set foreign key constraint handling (SQLite default is OFF)
-//	PRAGMA foreign_keys = OFF;
-//	-- For most applications, you likely *want* foreign keys ON:
-//	-- PRAGMA foreign_keys = ON;
-//
-//	-- Add any other PRAGMAs you want explicitly set for every connection
-//	-- e.g., PRAGMA cache_size = -4000; -- Set cache to 4MB
-//	`, explicitBusyTimeout.Milliseconds()) // busy_timeout pragma uses milliseconds
-//
-//	err := sqlitex.ExecuteScript(conn, script, nil)
-//	if err != nil {
-//		return fmt.Errorf("failed to apply explicit PRAGMAs: %w", err)
-//	}
-//
-//	//log.Printf("Explicit PRAGMAs applied successfully for connection %p", conn)
-//	return nil // Indicate success
-//}
+func prepareConnPerformance(conn *sqlite.Conn) error {
+	script := fmt.Sprintf(`
+	PRAGMA journal_mode = WAL;
+	PRAGMA synchronous = NORMAL;
+	PRAGMA busy_timeout = %d;
+	PRAGMA foreign_keys = ON;
+	PRAGMA cache_size = -4000; -- Set cache to 4MB
+	`, explicitBusyTimeout.Milliseconds()) // busy_timeout pragma uses milliseconds
+
+	err := sqlitex.ExecuteScript(conn, script, nil)
+	if err != nil {
+		return fmt.Errorf("failed to apply performance PRAGMAs: %w", err)
+	}
+	return nil // Indicate success
+}
+
+// NewZombiezenPerformancePool creates a new Zombiezen SQLite connection pool optimized
+// for performance using explicit PRAGMA settings via ConnPrepareFunc.
+func NewZombiezenPerformancePool(dbPath string) (*sqlitex.Pool, error) {
+	poolSize := runtime.NumCPU()
+	// Use the base file path, PRAGMAs are set in prepareConnPerformance
+	initString := fmt.Sprintf("file:%s", dbPath)
+
+	pool, err := sqlitex.NewPool(initString, sqlitex.PoolOptions{
+		PoolSize:        poolSize,
+		ConnPrepareFunc: prepareConnPerformance,
+		// Default OpenFlags (ReadWrite | Create | WAL | URI) are generally fine
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create performance zombiezen pool at %s: %w", dbPath, err)
+	}
+	return pool, nil
+}
+
+// --- Example usage of the performance pool ---
+// pool, err := NewZombiezenPerformancePool(dbPath)
+// if err != nil { ... handle error ... }
+// defer pool.Close()
+// app := New(WithDbZombiezen(pool), ...)
+
 
 // --- Create the pool with the explicit prepare function ---
-//pool, err := sqlitex.NewPool(dbPath, sqlitex.PoolOptions{
+// pool, err := sqlitex.NewPool(dbPath, sqlitex.PoolOptions{
 //	PoolSize:        10, // Example pool size
 //	ConnPrepareFunc: prepareConnExplicit,
 //})
