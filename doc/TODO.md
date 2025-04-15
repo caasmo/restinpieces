@@ -1,18 +1,13 @@
 ### TODOs
 
-- config validate BaseURL basic things of the config on Load
 - disable standard routes
-- NewWithConfig(restinpieces.Config{
-- if tls, handle automatic redirection to https
-	- redirect server
-- prepareConn explicite
-	- busy timeout and sync normal, for Performance
 - is a framework, clear workflow  -> examples repo. od use of the features
 - nocache? what about BlockIp.
 - router: create router.Chains type
-- core. Capitalize for export, response, request and some middleware and 
-    - auth middleware and handlers, are lowercase
+- move cwashaw to repo
 - litestream
+    - new repo. server service. server handles stop and start.
+    - server.AddService()
 	- in binary, can be configured.
 	- only file or s3/b2
 	- ssh client scp in intervals. flag ssh address + directory
@@ -108,6 +103,7 @@
     - https://github.com/privatenumber/minification-benchmarks?tab=readme-ov-file#%EF%B8%8F-minifier-showdown
 
 ### Maybe
+- NewWithConfig(restinpieces.Config{
 - updatebenchmark: to own paclkage resuse modernc and 
 - modernc?
 - add prometheus.
@@ -127,6 +123,13 @@
 
 ### done
 
+- if tls, handle automatic redirection to https
+	- redirect server
+- prepareConn explicite
+	- busy timeout and sync normal, for Performance
+- config validate BaseURL basic things of the config on Load
+- core. Capitalize for export, response, request and some middleware and 
+    - auth middleware and handlers, are lowercase
 -  config on init all secrets are loading in memory
     - handler: write in the db istead of file mangling
 	- if tls set reader
