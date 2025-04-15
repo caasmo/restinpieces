@@ -95,7 +95,11 @@ func (s *Scheduler) Start() error {
 				s.processJobs()
 			}
 		}
+		// Although unreachable due to the infinite loop exiting via ctx.Done(),
+		// a return statement is needed to satisfy the compiler for the anonymous func.
+		return
 	}()
+	return nil // Start returns immediately, background goroutine handles work/errors
 }
 
 // Stop signals the scheduler to stop and waits for all jobs to complete
