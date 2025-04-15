@@ -69,7 +69,6 @@ type Config struct {
 	Acme        Acme        // ACME/Let's Encrypt settings
 	BlockIp     BlockIp     // Moved BlockIp config here
 	Maintenance Maintenance // Maintenance mode settings
-	Litestream  Litestream  // Litestream backup settings
 }
 
 type Jwt struct {
@@ -261,30 +260,4 @@ type BlockIp struct {
 type Maintenance struct {
 	Enabled   bool `toml:"enabled"`   // Is the maintenance mode feature available?
 	Activated bool `toml:"activated"` // Is maintenance mode currently active?
-}
-
-// Litestream holds configuration for database backup using Litestream.
-// This initial version focuses on the minimal settings required for
-// local file-based replication.
-type Litestream struct {
-	// Enabled controls whether Litestream backup functionality should be activated.
-	// If set to `false`, the Litestream service will not be initialized or started.
-	// Default: false
-	Enabled bool
-
-	// ReplicaPath specifies the directory path where Litestream will store the
-	// backup replicas (Write-Ahead Log segments and periodic snapshots).
-	// Assumed to be a local filesystem path. Litestream needs write permissions
-	// to this directory. If it doesn't exist, it will attempt to create it.
-	// Example: "./litestream_replicas" or "/mnt/backups/myapp"
-	// Required if Enabled is true.
-	ReplicaPath string
-
-	// ReplicaName provides a unique identifier for this specific replica instance.
-	// Litestream uses this name internally. It's also useful for logging.
-	// Example: "main-db-file-backup"
-	// Required if Enabled is true.
-	ReplicaName string
-
-	// Note: SyncInterval, SnapshotInterval, Retention, etc., use Litestream defaults.
 }
