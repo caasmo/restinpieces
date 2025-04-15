@@ -7,37 +7,12 @@ import (
 	"log/slog"
 	"os"
 
-	crawshawPool "crawshaw.io/sqlite/sqlitex" // Alias for crawshaw pool type
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/core"
-	"github.com/caasmo/restinpieces/db/crawshaw"
-	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/caasmo/restinpieces/router/servemux"
 	phuslog "github.com/phuslu/log"
-	zombiezenPool "zombiezen.com/go/sqlite/sqlitex" // Alias for zombiezen pool type
 )
-
-// WithDbCrawshaw configures the App to use the Crawshaw SQLite implementation with an existing pool.
-func WithDbCrawshaw(pool *crawshawPool.Pool) core.Option {
-	dbInstance, err := crawshaw.New(pool) // Use the renamed New function
-	if err != nil {
-		// Panic is reasonable here as it indicates a fundamental setup error.
-		panic(fmt.Sprintf("failed to initialize crawshaw DB with existing pool: %v", err))
-	}
-	// Use the renamed app database option
-	return core.WithDbApp(dbInstance)
-}
-
-// WithDbZombiezen configures the App to use the Zombiezen SQLite implementation with an existing pool.
-func WithDbZombiezen(pool *zombiezenPool.Pool) core.Option {
-	dbInstance, err := zombiezen.New(pool) // Use the renamed New function
-	if err != nil {
-		panic(fmt.Sprintf("failed to initialize zombiezen DB with existing pool: %v", err))
-	}
-	// Use the renamed app database option
-	return core.WithDbApp(dbInstance)
-}
 
 func WithRouterServeMux() core.Option {
 	r := servemux.New()

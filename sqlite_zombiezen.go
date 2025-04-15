@@ -1,3 +1,5 @@
+//go:build !sqlite_crawshaw && !sqlite_mattn
+
 package restinpieces
 
 // This file provides helper functions to create SQLite connection pools
@@ -14,31 +16,26 @@ import (
 	"runtime"
 	"time"
 
-	crawshawPool "crawshaw.io/sqlite/sqlitex"
-	zombiezenPool "zombiezen.com/go/sqlite/sqlitex"
+	"zombiezen.com/go/sqlite/sqlitex"
+
+	"github.com/caasmo/restinpieces/core"
+	"github.com/caasmo/restinpieces/db/zombiezen"
 )
 
-// NewCrawshawPool creates a new Crawshaw SQLite connection pool with reasonable defaults
-// compatible with restinpieces (e.g., WAL mode enabled).
-// Use this if your application needs to share the pool with restinpieces.
-func NewCrawshawPool(dbPath string) (*crawshawPool.Pool, error) {
-	poolSize := runtime.NumCPU()
-	initString := fmt.Sprintf("file:%s", dbPath)
-
-	// sqlitex.Open with flags=0 defaults to:
-	// SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_WAL |
-	// SQLITE_OPEN_URI | SQLITE_OPEN_NOMUTEX
-	pool, err := crawshawPool.Open(initString, 0, poolSize)
+// WithDbZombiezen configures the App to use the Zombiezen SQLite implementation with an existing pool.
+func WithDbZombiezen(pool *sqlitex.Pool) core.Option {
+	dbInstance, err := zombiezen.New(pool) // Use the renamed New function
 	if err != nil {
-		return nil, fmt.Errorf("failed to create default crawshaw pool at %s: %w", dbPath, err)
+		panic(fmt.Sprintf("failed to initialize zombiezen DB with existing pool: %v", err))
 	}
-	return pool, nil
+	// Use the renamed app database option
+	return core.WithDbApp(dbInstance)
 }
 
 // NewZombiezenPool creates a new Zombiezen SQLite connection pool with reasonable defaults
 // compatible with restinpieces (e.g., WAL mode enabled, busy_timeout set).
 // Use this if your application needs to share the pool with restinpieces.
-func NewZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
+func NewZombiezenPool(dbPath string) (*sqlitex.Pool, error) {
 	poolSize := runtime.NumCPU()
 	// Re-add busy_timeout pragma as part of reasonable defaults for Zombiezen.
 	//initString := fmt.Sprintf("file:%s?_pragma=busy_timeout(5000)", dbPath)
@@ -46,7 +43,7 @@ func NewZombiezenPool(dbPath string) (*zombiezenPool.Pool, error) {
 
 	// zombiezen/sqlitex.NewPool with default options uses flags:
 	// sqlite.OpenReadWrite | sqlite.OpenCreate | sqlite.OpenWAL | sqlite.OpenURI
-	pool, err := zombiezenPool.NewPool(initString, zombiezenPool.PoolOptions{
+	pool, err := sqlitex.NewPool(initString, sqlitex.PoolOptions{
 		PoolSize: poolSize,
 	})
 	if err != nil {
