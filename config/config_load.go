@@ -1,12 +1,15 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 
-	"github.com/BurntSushi/toml"
+	"filippo.io/age"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/pelletier/go-toml/v2" // TOML v2 parser
 )
 
 const (
