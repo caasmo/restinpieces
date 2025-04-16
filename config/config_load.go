@@ -68,6 +68,12 @@ func LoadFromDb(db db.DbConfig, dbAcme db.DbAcme, logger *slog.Logger) (*Config,
 		return nil, fmt.Errorf("config: no configuration found in database")
 	}
 
+
+
+
+
+
+
 	// Decode TOML into Config struct
 	cfg := &Config{}
 	if _, err := toml.Decode(configToml, cfg); err != nil {
