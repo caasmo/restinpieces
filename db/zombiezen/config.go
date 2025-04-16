@@ -29,11 +29,11 @@ func (d *Db) GetConfig() ([]byte, error) {
 				length := stmt.ColumnLen(0)
 				// Allocate a buffer with the exact size needed
 				encryptedData = make([]byte, length)
-				// Read the blob content directly into the buffer using ColumnBytes
-				n := stmt.ColumnBytes(0, encryptedData)
+				// Read the blob content directly into the buffer using GetBytes with column name
+				n := stmt.GetBytes("content", encryptedData)
 				// Check if the number of bytes read matches the expected length
 				if n != length {
-					return fmt.Errorf("ColumnBytes read %d bytes, expected %d", n, length)
+					return fmt.Errorf("GetBytes read %d bytes, expected %d", n, length)
 				}
 				return nil // Success
 			},
