@@ -13,8 +13,8 @@ import (
 
 func main() {
 	// Define flags directly in main
-	dbfile := flag.String("dbfile", "bench.db", "SQLite database file path")
-	configFile := flag.String("config", "config.toml", "Path to configuration file")
+	dbfile := flag.String("dbfile", "app.db", "SQLite database file path")
+	configFile := flag.String("config", "", "Path to configuration file")
 
 	// Set custom usage message for the application
 	flag.Usage = func() {

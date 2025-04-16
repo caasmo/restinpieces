@@ -1,6 +1,42 @@
 ### TODOs
 
 - sdk visibility, own route
+- age toml encript?    
+    - changes is, 
+        - we do not allow env vars.
+            - just db and age key file
+        - say hwo to paste certs etc 
+        - no env file
+        - no example toml file
+    - we start we want only a db and a age key file.
+    - remove the example toml,
+    - migrate to pelletier 
+        - https://pkg.go.dev/github.com/pelletier/go-toml/v2#example-Marshal-Commented Comments in Marshall!!!
+    - create-app app.db
+        - generates default based on config struct with comments
+        - generates public key pair,
+            - where to save the public?
+        - encript the toml payload 
+        - generates app.db structure 
+        - writes encripted toml in BLOB field 
+        - dump-conf command decript toml and present file
+            - edit with favorite editor
+        - update-conf config.toml
+        - add-cert is decrypt decode, in go load file, encode to toml encrupt with with, db. 
+        - add-oauth2
+        - add-acme
+        - certificates go in the config struct, no files allowed
+    - in db encrypted.
+    - we have to get rid of toml file example, only db and age key. 
+    - scafold:on first run. default are written smtp disabled, no aouth2, no acme.
+        - it creates age key pair, 
+        - and a dump of config struct in toml
+    - workflow config is in db encrypted.
+        - we do not allow config in the command line, if user want they make demselves
+    
+- litestream is a addon, it has own config structs.
+    - it shoudl bea ble to use age key and load in db.
+    - db config has types.
 - start server dbfile consistence
 - disable standard routes
 - is a framework, clear workflow  -> examples repo. od use of the features

@@ -2,7 +2,7 @@
 -- All time fields are UTC, RFC3339
 CREATE TABLE IF NOT EXISTS app_config (
     -- id: Unique identifier for this specific version of the config
-    id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     -- content: The actual configuration data (e.g., TOML string)
     content BLOB NOT NULL,
