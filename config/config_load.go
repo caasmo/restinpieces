@@ -71,17 +71,45 @@ func LoadFromDb(db db.DbConfig, dbAcme db.DbAcme, logger *slog.Logger) (*Config,
 		return nil, fmt.Errorf("config: no configuration found in database")
 	}
 
+	// --- Decrypt Config ---
+	keyFile := "age_key.txt" // TODO: Make this configurable
+	keyContent, err := os.ReadFile(keyFile)
+	if err != nil {
+		logger.Error("failed to read age key file", "path", keyFile, "error", err)
+		return nil, fmt.Errorf("failed to read age key file '%s': %w", keyFile, err)
+	}
 
+	identities, err := age.ParseIdentities(bytes.NewReader(keyContent))
+	if err != nil {
+		logger.Error("failed to parse age identities", "path", keyFile, "error", err)
+		return nil, fmt.Errorf("failed to parse age identities from key file '%s': %w", keyFile, err)
+	}
+	if len(identities) == 0 {
+		logger.Error("no age identities found in key file", "path", keyFile)
+		return nil, fmt.Errorf("no age identities found in key file '%s'", keyFile)
+	}
 
+	encryptedDataReader := bytes.NewReader([]byte(configToml)) // Convert string to reader
+	decryptedDataReader, err := age.Decrypt(encryptedDataReader, identities...)
+	if err != nil {
+		logger.Error("failed to decrypt configuration data", "error", err)
+		return nil, fmt.Errorf("failed to decrypt configuration data: %w", err)
+	}
 
+	decryptedBytes, err := io.ReadAll(decryptedDataReader)
+	if err != nil {
+		logger.Error("failed to read decrypted data stream", "error", err)
+		return nil, fmt.Errorf("failed to read decrypted data stream: %w", err)
+	}
 
-
-
-	// Decode TOML into Config struct
+	// --- Unmarshal TOML ---
 	cfg := &Config{}
-	if _, err := toml.Decode(configToml, cfg); err != nil {
-		logger.Error("failed to decode configuration from database", "error", err)
-		return nil, fmt.Errorf("config: failed to decode: %w", err)
+	err = toml.Unmarshal(decryptedBytes, cfg)
+	if err != nil {
+		logger.Error("failed to unmarshal TOML from database", "error", err)
+		// Log the decrypted content only if unmarshalling fails, for debugging
+		logger.Debug("decrypted content on unmarshal failure", "content", string(decryptedBytes))
+		return nil, fmt.Errorf("config: failed to unmarshal TOML: %w", err)
 	}
 
 	// Validate the loaded configuration
