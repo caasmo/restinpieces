@@ -5,6 +5,7 @@ package zombiezen
 import (
 	"context"
 	"fmt"
+	"io" // Add io import
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
@@ -24,18 +25,12 @@ func (d *Db) GetConfig() ([]byte, error) {
 		ORDER BY created_at DESC
 		LIMIT 1;`,
 		&sqlitex.ExecOptions{
-			ResultFunc: func(stmt *sqlite.Stmt) error {
-				// Get the length of the blob column (index 0)
-				length := stmt.ColumnLen(0)
-				// Allocate a buffer with the exact size needed
-				encryptedData = make([]byte, length)
-				// Read the blob content directly into the buffer using GetBytes with column name
-				n := stmt.GetBytes("content", encryptedData)
-				// Check if the number of bytes read matches the expected length
-				if n != length {
-					return fmt.Errorf("GetBytes read %d bytes, expected %d", n, length)
-				}
-				return nil // Success
+			ResultFunc: func(stmt *sqlite.Stmt) (err error) {
+				// Get a reader for the blob column (index 0)
+				reader := stmt.ColumnReader(0)
+				// Read all data from the reader
+				encryptedData, err = io.ReadAll(reader)
+				return err // Return any error from io.ReadAll
 			},
 		})
 
