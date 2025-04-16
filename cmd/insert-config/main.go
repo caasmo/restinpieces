@@ -1,8 +1,10 @@
 package main
 
 import (
+	// Keep other imports the same
 	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -10,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	// No need for "bufio" or "strings" for key extraction anymore
 	"time"
 
 	"filippo.io/age"
@@ -17,6 +20,7 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
+// ConfigInserter struct and NewConfigInserter function remain the same
 type ConfigInserter struct {
 	dbfile string
 	logger *slog.Logger
@@ -32,9 +36,10 @@ func NewConfigInserter(dbfile string) *ConfigInserter {
 	}
 }
 
+// OpenDatabase function remains the same
 func (ci *ConfigInserter) OpenDatabase() error {
 	pool, err := sqlitex.NewPool(ci.dbfile, sqlitex.PoolOptions{
-		Flags:    sqlite.OpenReadWrite,
+		Flags:    sqlite.OpenReadWrite | sqlite.OpenCreate,
 		PoolSize: runtime.NumCPU(),
 	})
 	if err != nil {
@@ -45,7 +50,9 @@ func (ci *ConfigInserter) OpenDatabase() error {
 	return nil
 }
 
-func (ci *ConfigInserter) InsertConfig(tomlPath, ageKeyPath string) error {
+// --- Remove extractPublicKeyFromIdentity function ---
+
+func (ci *ConfigInserter) InsertConfig(tomlPath, ageIdentityPath string) error {
 	// Read config file
 	configData, err := os.ReadFile(tomlPath)
 	if err != nil {
@@ -53,27 +60,41 @@ func (ci *ConfigInserter) InsertConfig(tomlPath, ageKeyPath string) error {
 		return err
 	}
 
-	// Read age public key file
-	ageKeyData, err := os.ReadFile(ageKeyPath)
+	// Read age identity file
+	ageIdentityData, err := os.ReadFile(ageIdentityPath)
 	if err != nil {
-		ci.logger.Error("failed to read age key file", "path", ageKeyPath, "error", err)
-		return fmt.Errorf("failed to read age key file '%s': %w", ageKeyPath, err)
+		ci.logger.Error("failed to read age identity file", "path", ageIdentityPath, "error", err)
+		return fmt.Errorf("failed to read age identity file '%s': %w", ageIdentityPath, err)
 	}
 
-	// Parse age recipient (public key)
-	recipients, err := age.ParseRecipients(bytes.NewReader(ageKeyData))
+	// --- Start Modification (Use ParseIdentities) ---
+
+	// Parse the identity file content
+	identities, err := age.ParseIdentities(bytes.NewReader(ageIdentityData))
 	if err != nil {
-		ci.logger.Error("failed to parse age recipients", "path", ageKeyPath, "error", err)
-		return fmt.Errorf("failed to parse age recipients from key file '%s': %w", ageKeyPath, err)
-	}
-	if len(recipients) == 0 {
-		ci.logger.Error("no age recipients found in key file", "path", ageKeyPath)
-		return fmt.Errorf("no age recipients found in key file '%s'", ageKeyPath)
+		return fmt.Errorf("failed to parse age identity file '%s': %w", ageIdentityPath, err)
 	}
 
-	// Encrypt the config data
+	if len(identities) == 0 {
+		// This case should theoretically be caught by the error above, but check defensively
+		ci.logger.Error("no age identities found in file", "path", ageIdentityPath)
+		return fmt.Errorf("no age identities found in file '%s'", ageIdentityPath)
+	}
+
+	// For this script's purpose, we only need one identity to get the public key.
+	// Use the first identity found.
+	identity := identities[0]
+
+	// Get the corresponding Recipient (public key) from the Identity
+	// The age.Identity interface requires implementers to provide a Recipient() method.
+	recipient := identity.Recipient()
+
+	// --- End Modification ---
+
+	// Encrypt the config data using the derived recipient
 	encryptedOutput := &bytes.Buffer{}
-	encryptWriter, err := age.Encrypt(encryptedOutput, recipients...)
+	// Note: Pass the single recipient directly, no need for recipients... syntax here
+	encryptWriter, err := age.Encrypt(encryptedOutput, recipient)
 	if err != nil {
 		ci.logger.Error("failed to create age encryption writer", "error", err)
 		return fmt.Errorf("failed to create age encryption writer: %w", err)
@@ -88,8 +109,10 @@ func (ci *ConfigInserter) InsertConfig(tomlPath, ageKeyPath string) error {
 	}
 	encryptedData := encryptedOutput.Bytes()
 
+	// --- Database insertion logic remains the same ---
 	conn, err := ci.pool.Take(context.Background())
 	if err != nil {
+		ci.logger.Error("failed to get database connection", "error", err)
 		return err
 	}
 	defer ci.pool.Put(conn)
@@ -99,58 +122,57 @@ func (ci *ConfigInserter) InsertConfig(tomlPath, ageKeyPath string) error {
 
 	err = sqlitex.Execute(conn,
 		`INSERT INTO app_config (
-			content, 
+			content,
 			format,
 			description,
 			created_at
 		) VALUES (?, ?, ?, ?)`,
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
-				encryptedData, // content (now encrypted blob)
-				"toml",        // format (still TOML before encryption)
-				description,   // description
-				now,           // created_at
+				encryptedData,
+				"toml",
+				description,
+				now,
 			},
 		})
 
 	if err != nil {
 		ci.logger.Error("failed to insert config", "error", err)
-		return err
+		return fmt.Errorf("database insert failed: %w", err)
 	}
 
-	ci.logger.Info("successfully inserted config")
+	ci.logger.Info("Successfully inserted encrypted config", "toml_file", tomlPath, "identity_file", ageIdentityPath)
 	return nil
 }
 
+// main function remains the same
 func main() {
-	// Define flags
-	ageKeyPathFlag := flag.String("age-key", "", "Path to the age public key file (required)")
+	ageIdentityPathFlag := flag.String("age-key", "", "Path to the age identity file (containing private key 'AGE-SECRET-KEY-1...') (required)")
 	dbPathFlag := flag.String("db", "", "Path to the SQLite database file (required)")
 	tomlPathFlag := flag.String("toml", "", "Path to the TOML config file to insert (required)")
 
-	// Set custom usage message
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s -age-key <key-file> -db <db-file> -toml <toml-file>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s -age-key <identity-file> -db <db-file> -toml <toml-file>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Encrypts a TOML file using the public key derived from an age identity file and inserts it into a SQLite DB.\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
 	}
 
-	// Parse flags
 	flag.Parse()
 
-	// Validate required flags
-	if *ageKeyPathFlag == "" || *dbPathFlag == "" || *tomlPathFlag == "" {
+	if *ageIdentityPathFlag == "" || *dbPathFlag == "" || *tomlPathFlag == "" {
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	inserter := NewConfigInserter(*dbPathFlag)
 	if err := inserter.OpenDatabase(); err != nil {
-		os.Exit(1) // Error already logged
+		os.Exit(1)
 	}
 	defer inserter.pool.Close()
 
-	if err := inserter.InsertConfig(*tomlPathFlag, *ageKeyPathFlag); err != nil {
-		os.Exit(1) // Error already logged
+	if err := inserter.InsertConfig(*tomlPathFlag, *ageIdentityPathFlag); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 }
