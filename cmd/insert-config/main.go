@@ -1,13 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"flag"
+	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"runtime"
 	"time"
 
+	"filippo.io/age"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
@@ -40,13 +45,48 @@ func (ci *ConfigInserter) OpenDatabase() error {
 	return nil
 }
 
-func (ci *ConfigInserter) InsertConfig(tomlPath string) error {
+func (ci *ConfigInserter) InsertConfig(tomlPath, ageKeyPath string) error {
 	// Read config file
 	configData, err := os.ReadFile(tomlPath)
 	if err != nil {
 		ci.logger.Error("failed to read config file", "path", tomlPath, "error", err)
 		return err
 	}
+
+	// Read age public key file
+	ageKeyData, err := os.ReadFile(ageKeyPath)
+	if err != nil {
+		ci.logger.Error("failed to read age key file", "path", ageKeyPath, "error", err)
+		return fmt.Errorf("failed to read age key file '%s': %w", ageKeyPath, err)
+	}
+
+	// Parse age recipient (public key)
+	recipients, err := age.ParseRecipients(bytes.NewReader(ageKeyData))
+	if err != nil {
+		ci.logger.Error("failed to parse age recipients", "path", ageKeyPath, "error", err)
+		return fmt.Errorf("failed to parse age recipients from key file '%s': %w", ageKeyPath, err)
+	}
+	if len(recipients) == 0 {
+		ci.logger.Error("no age recipients found in key file", "path", ageKeyPath)
+		return fmt.Errorf("no age recipients found in key file '%s'", ageKeyPath)
+	}
+
+	// Encrypt the config data
+	encryptedOutput := &bytes.Buffer{}
+	encryptWriter, err := age.Encrypt(encryptedOutput, recipients...)
+	if err != nil {
+		ci.logger.Error("failed to create age encryption writer", "error", err)
+		return fmt.Errorf("failed to create age encryption writer: %w", err)
+	}
+	if _, err := io.Copy(encryptWriter, bytes.NewReader(configData)); err != nil {
+		ci.logger.Error("failed to write data to age encryption writer", "error", err)
+		return fmt.Errorf("failed to write data to age encryption writer: %w", err)
+	}
+	if err := encryptWriter.Close(); err != nil {
+		ci.logger.Error("failed to close age encryption writer", "error", err)
+		return fmt.Errorf("failed to close age encryption writer: %w", err)
+	}
+	encryptedData := encryptedOutput.Bytes()
 
 	conn, err := ci.pool.Take(context.Background())
 	if err != nil {
@@ -66,10 +106,10 @@ func (ci *ConfigInserter) InsertConfig(tomlPath string) error {
 		) VALUES (?, ?, ?, ?)`,
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
-				string(configData), // content
-				"toml",             // format
-				description,        // description
-				now,                // created_at
+				encryptedData, // content (now encrypted blob)
+				"toml",        // format (still TOML before encryption)
+				description,   // description
+				now,           // created_at
 			},
 		})
 
@@ -83,21 +123,34 @@ func (ci *ConfigInserter) InsertConfig(tomlPath string) error {
 }
 
 func main() {
-	if len(os.Args) != 3 {
-		slog.Error("usage: insert-config <toml-file> <db-file>")
+	// Define flags
+	ageKeyPathFlag := flag.String("age-key", "", "Path to the age public key file (required)")
+	dbPathFlag := flag.String("db", "", "Path to the SQLite database file (required)")
+	tomlPathFlag := flag.String("toml", "", "Path to the TOML config file to insert (required)")
+
+	// Set custom usage message
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s -age-key <key-file> -db <db-file> -toml <toml-file>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Options:\n")
+		flag.PrintDefaults()
+	}
+
+	// Parse flags
+	flag.Parse()
+
+	// Validate required flags
+	if *ageKeyPathFlag == "" || *dbPathFlag == "" || *tomlPathFlag == "" {
+		flag.Usage()
 		os.Exit(1)
 	}
 
-	tomlPath := os.Args[1]
-	dbPath := os.Args[2]
-
-	inserter := NewConfigInserter(dbPath)
+	inserter := NewConfigInserter(*dbPathFlag)
 	if err := inserter.OpenDatabase(); err != nil {
-		os.Exit(1)
+		os.Exit(1) // Error already logged
 	}
 	defer inserter.pool.Close()
 
-	if err := inserter.InsertConfig(tomlPath); err != nil {
-		os.Exit(1)
+	if err := inserter.InsertConfig(*tomlPathFlag, *ageKeyPathFlag); err != nil {
+		os.Exit(1) // Error already logged
 	}
 }
