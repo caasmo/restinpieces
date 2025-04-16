@@ -73,13 +73,14 @@ type Config struct {
 
 type Jwt struct {
 	AuthSecret                     string
-	AuthTokenDuration              time.Duration
+	AuthTokenDuration              time.Duration `toml:"string"`
 	VerificationEmailSecret        string
-	VerificationEmailTokenDuration time.Duration
+	VerificationEmailTokenDuration time.Duration `toml:"string"`
 	PasswordResetSecret            string
-	PasswordResetTokenDuration     time.Duration
+	PasswordResetTokenDuration     time.Duration `toml:"string"`
 	EmailChangeSecret              string
-	EmailChangeTokenDuration       time.Duration
+	EmailChangeTokenDuration       time.Duration `toml:"string"`
+
 }
 
 type Scheduler struct {
@@ -87,7 +88,7 @@ type Scheduler struct {
 	// Should be set based on your job processing latency requirements - shorter
 	// intervals provide faster job processing but increase database load.
 	// Typical values range from 5 seconds to several minutes.
-	Interval time.Duration
+	Interval time.Duration `toml:"string"`
 
 	// MaxJobsPerTick limits how many jobs are fetched from the database per schedule
 	// interval. This prevents overwhelming the system when there are many pending jobs.
@@ -107,19 +108,19 @@ type Server struct {
 	Addr string
 
 	// ShutdownGracefulTimeout is the maximum time to wait for graceful shutdown
-	ShutdownGracefulTimeout time.Duration
+	ShutdownGracefulTimeout time.Duration `toml:"string"`
 
 	// ReadTimeout is the maximum duration for reading the entire request
-	ReadTimeout time.Duration
+	ReadTimeout time.Duration `toml:"string"`
 
 	// ReadHeaderTimeout is the maximum duration for reading request headers
-	ReadHeaderTimeout time.Duration
+	ReadHeaderTimeout time.Duration `toml:"string"`
 
 	// WriteTimeout is the maximum duration before timing out writes of the response
-	WriteTimeout time.Duration
+	WriteTimeout time.Duration `toml:"string"`
 
 	// IdleTimeout is the maximum amount of time to wait for the next request
-	IdleTimeout time.Duration
+	IdleTimeout time.Duration `toml:"string"`
 
 	// ClientIpProxyHeader specifies which HTTP header to trust for client IP addresses
 	// when behind a proxy (e.g. "X-Forwarded-For", "X-Real-IP"). Empty means use
@@ -149,15 +150,15 @@ func (s *Server) BaseURL() string {
 type RateLimits struct {
 	// PasswordResetCooldown specifies how long a user must wait between
 	// password reset requests to prevent abuse and email spam
-	PasswordResetCooldown time.Duration
+	PasswordResetCooldown time.Duration `toml:"string"`
 
 	// EmailVerificationCooldown specifies how long a user must wait between
 	// email verification requests to prevent abuse and email spam
-	EmailVerificationCooldown time.Duration
+	EmailVerificationCooldown time.Duration `toml:"string"`
 
 	// EmailChangeCooldown specifies how long a user must wait between
 	// email change requests to prevent abuse and email spam
-	EmailChangeCooldown time.Duration
+	EmailChangeCooldown time.Duration `toml:"string"`
 }
 
 type OAuth2Provider struct {

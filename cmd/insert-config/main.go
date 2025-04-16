@@ -4,7 +4,6 @@ import (
 	// Keep other imports the same
 	"bytes"
 	"context"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -86,8 +85,17 @@ func (ci *ConfigInserter) InsertConfig(tomlPath, ageIdentityPath string) error {
 	identity := identities[0]
 
 	// Get the corresponding Recipient (public key) from the Identity
-	// The age.Identity interface requires implementers to provide a Recipient() method.
-	recipient := identity.Recipient()
+	var recipient age.Recipient
+	switch id := identity.(type) {
+	case *age.X25519Identity:
+		recipient = id.Recipient()
+	default:
+		// For SSH identities, we can't directly get a recipient
+		ci.logger.Error("unsupported age identity type - must be X25519", 
+			"path", ageIdentityPath,
+			"type", fmt.Sprintf("%T", identity))
+		return fmt.Errorf("unsupported age identity type '%T' - must be X25519", identity)
+	}
 
 	// --- End Modification ---
 

@@ -132,7 +132,7 @@ func LoadFromDb(db db.DbConfig, dbAcme db.DbAcme, logger *slog.Logger) (*Config,
 		return nil, fmt.Errorf("failed to load secrets: %w", err)
 	}
 
-	logger.Info("successfully loaded configuration from database")
+	logger.Info("successfully loaded configuration from database", "cfg", cfg)
 	return cfg, nil
 }
 
