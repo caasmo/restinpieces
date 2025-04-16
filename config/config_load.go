@@ -30,28 +30,28 @@ const (
 // LoadFromToml loads configuration from a TOML file at the given path.
 // Returns error if file doesn't exist or can't be decoded.
 func LoadFromToml(path string, logger *slog.Logger) (*Config, error) {
-	logger.Info("loading configuration from TOML file", "path", path)
-	cfg := &Config{}
-
-	if _, err := toml.DecodeFile(path, cfg); err != nil {
-		logger.Error("failed to decode config file", "path", path, "error", err)
-		return nil, fmt.Errorf("failed to decode config file: %w", err)
-	}
-
-	// Validate the loaded configuration
-	if err := Validate(cfg); err != nil {
-		logger.Error("configuration validation failed", "path", path, "error", err)
-		return nil, fmt.Errorf("configuration validation failed: %w", err)
-	}
-
-	// Load secrets after initial config load
-	if err := loadSecrets(cfg, logger); err != nil {
-		// Error already logged within loadSecrets
-		return nil, fmt.Errorf("failed to load secrets: %w", err)
-	}
-
-	logger.Info("successfully loaded configuration from TOML file", "path", path)
-	return cfg, nil
+//	logger.Info("loading configuration from TOML file", "path", path)
+//	cfg := &Config{}
+//
+//	if _, err := toml.DecodeFile(path, cfg); err != nil {
+//		logger.Error("failed to decode config file", "path", path, "error", err)
+//		return nil, fmt.Errorf("failed to decode config file: %w", err)
+//	}
+//
+//	// Validate the loaded configuration
+//	if err := Validate(cfg); err != nil {
+//		logger.Error("configuration validation failed", "path", path, "error", err)
+//		return nil, fmt.Errorf("configuration validation failed: %w", err)
+//	}
+//
+//	// Load secrets after initial config load
+//	if err := loadSecrets(cfg, logger); err != nil {
+//		// Error already logged within loadSecrets
+//		return nil, fmt.Errorf("failed to load secrets: %w", err)
+//	}
+//
+//	logger.Info("successfully loaded configuration from TOML file", "path", path)
+	return nil, nil
 }
 
 // LoadFromDb loads configuration from the database using the provided DbConfig.
