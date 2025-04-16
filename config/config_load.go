@@ -59,14 +59,14 @@ func LoadFromToml(path string, logger *slog.Logger) (*Config, error) {
 func LoadFromDb(db db.DbConfig, dbAcme db.DbAcme, logger *slog.Logger) (*Config, error) {
 	logger.Info("loading configuration from database")
 
-	// Get config TOML from database
-	configToml, err := db.GetConfig()
+	// Get encrypted config blob from database
+	encryptedData, err := db.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("config: failed to get from db: %w", err)
 	}
 
 	// Check if config is empty
-	if configToml == "" {
+	if len(encryptedData) == 0 {
 		logger.Warn("no configuration found in database")
 		return nil, fmt.Errorf("config: no configuration found in database")
 	}

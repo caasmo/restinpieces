@@ -28,8 +28,8 @@ type DbQueue interface {
 
 // DbConfig defines database operations related to configuration.
 type DbConfig interface {
-	// GetConfig returns the TOML serialized configuration from the database
-	GetConfig() (string, error)
+	// GetConfig returns the encrypted configuration blob from the database
+	GetConfig() ([]byte, error)
 }
 
 type DbAcme interface {

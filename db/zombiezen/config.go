@@ -9,30 +9,34 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-// GetConfig retrieves the latest TOML serialized configuration from the database.
-// Returns empty string if no config exists (no error).
-func (d *Db) GetConfig() (string, error) {
+// GetConfig retrieves the latest encrypted configuration blob from the database.
+// Returns nil slice if no config exists (no error).
+func (d *Db) GetConfig() ([]byte, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
-		return "", fmt.Errorf("failed to get db connection: %w", err)
+		return nil, fmt.Errorf("failed to get db connection: %w", err)
 	}
 	defer d.pool.Put(conn)
 
-	var configToml string
+	var encryptedData []byte
 	err = sqlitex.Execute(conn,
-		`SELECT content FROM app_config 
-		ORDER BY created_at DESC 
+		`SELECT content FROM app_config
+		ORDER BY created_at DESC
 		LIMIT 1;`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
-				configToml = stmt.GetText("content")
-				return nil
+				// Allocate a buffer with the exact size needed
+				encryptedData = make([]byte, stmt.ColumnLen("content"))
+				// Read the blob content directly into the buffer
+				_, err := stmt.ColumnReader("content").Read(encryptedData)
+				return err // Return any error from reading the blob
 			},
 		})
 
 	if err != nil {
-		return "", fmt.Errorf("failed to get config: %w", err)
+		return nil, fmt.Errorf("failed to get config: %w", err)
 	}
 
-	return configToml, nil
+	// encryptedData will be nil if no row was found, which is the desired behavior
+	return encryptedData, nil
 }

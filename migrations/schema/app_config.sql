@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS app_config (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
     -- content: The actual configuration data (e.g., TOML string)
-    content TEXT NOT NULL,
+    content BLOB NOT NULL,
 
     -- format: The format of the content (e.g., 'toml', 'json')
     format TEXT NOT NULL DEFAULT 'toml',
