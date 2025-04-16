@@ -26,9 +26,9 @@ func (d *Db) GetConfig() ([]byte, error) {
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
 				// Allocate a buffer with the exact size needed
-				encryptedData = make([]byte, stmt.ColumnLen("content"))
+				encryptedData = make([]byte, stmt.ColumnLen(0)) // Use column index 0
 				// Read the blob content directly into the buffer
-				_, err := stmt.ColumnReader("content").Read(encryptedData)
+				_, err := stmt.ColumnReader(0).Read(encryptedData) // Use column index 0
 				return err // Return any error from reading the blob
 			},
 		})
