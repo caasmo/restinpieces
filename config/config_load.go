@@ -89,7 +89,7 @@ func LoadFromDb(db db.DbConfig, dbAcme db.DbAcme, logger *slog.Logger) (*Config,
 		return nil, fmt.Errorf("no age identities found in key file '%s'", keyFile)
 	}
 
-	encryptedDataReader := bytes.NewReader([]byte(configToml)) // Convert string to reader
+	encryptedDataReader := bytes.NewReader(encryptedData) // Use the byte slice directly
 	decryptedDataReader, err := age.Decrypt(encryptedDataReader, identities...)
 	if err != nil {
 		logger.Error("failed to decrypt configuration data", "error", err)
