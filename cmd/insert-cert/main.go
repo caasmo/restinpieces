@@ -59,9 +59,19 @@ func (ci *CertInserter) getLatestEncryptedConfig(ctx context.Context) ([]byte, e
 
 	var encryptedData []byte
 	err = sqlitex.Execute(conn, `SELECT content FROM app_config ORDER BY id DESC LIMIT 1`, &sqlitex.ExecOptions{
-		ResultFunc: func(stmt *sqlite.Stmt) error {
-			encryptedData = stmt.ColumnBytes(0)
-			return nil
+		ResultFunc: func(stmt *sqlite.Stmt) (err error) {
+			// Get a reader for the blob column (index 0)
+			reader := stmt.ColumnReader(0)
+			if reader == nil {
+				// Handle case where the column might be NULL or not a blob,
+				// though SELECT content should guarantee it's a blob if the row exists.
+				// If no rows are returned, ResultFunc isn't called.
+				// If content is NULL, ReadAll should handle it gracefully (returning nil, nil).
+				return fmt.Errorf("failed to get reader for content column")
+			}
+			// Read all data from the reader
+			encryptedData, err = io.ReadAll(reader)
+			return err // Return any error from io.ReadAll
 		},
 	})
 	if err != nil {
