@@ -81,10 +81,10 @@ func (s *Server) Run() {
 	srv := &http.Server{
 		Addr:              serverCfg.Addr,
 		Handler:           s.handler, // Use the handler field here
-		ReadTimeout:       serverCfg.ReadTimeout,
-		ReadHeaderTimeout: serverCfg.ReadHeaderTimeout,
-		WriteTimeout:      serverCfg.WriteTimeout,
-		IdleTimeout:       serverCfg.IdleTimeout,
+		ReadTimeout:       serverCfg.ReadTimeout.Duration,
+		ReadHeaderTimeout: serverCfg.ReadHeaderTimeout.Duration,
+		WriteTimeout:      serverCfg.WriteTimeout.Duration,
+		IdleTimeout:       serverCfg.IdleTimeout.Duration,
 	}
 
 	var redirectServer *http.Server
@@ -109,10 +109,10 @@ func (s *Server) Run() {
 				redirectServer = &http.Server{
 					Addr:              serverCfg.RedirectAddr,
 					Handler:           s.redirectToHTTPS(),
-					ReadTimeout:       1 * time.Second,
-					ReadHeaderTimeout: 1 * time.Second,
-					WriteTimeout:      1 * time.Second,
-					IdleTimeout:       1 * time.Second,
+					ReadTimeout:       time.Second,
+					ReadHeaderTimeout: time.Second,
+					WriteTimeout:      time.Second,
+					IdleTimeout:       time.Second,
 				}
 
 				go func() {
@@ -271,10 +271,10 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 	}
 
 	s.logger.Info("Server:",
-		"readTimeout", cfg.ReadTimeout,
-		"readHeaderTimeout", cfg.ReadHeaderTimeout,
-		"writeTimeout", cfg.WriteTimeout,
-		"idleTimeout", cfg.IdleTimeout)
+		"readTimeout", cfg.ReadTimeout.Duration,
+		"readHeaderTimeout", cfg.ReadHeaderTimeout.Duration,
+		"writeTimeout", cfg.WriteTimeout.Duration,
+		"idleTimeout", cfg.IdleTimeout.Duration)
 
 	s.logger.Info("Server:", "ShutdownGracefulTimeout", cfg.ShutdownGracefulTimeout)
 
