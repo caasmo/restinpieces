@@ -8,8 +8,9 @@ import (
 	"os"
 
 	"filippo.io/age"
-	"github.com/caasmo/restinpieces/db"
 	"github.com/pelletier/go-toml/v2" // TOML v2 parser
+
+	"github.com/caasmo/restinpieces/db" // Adjust import path if necessary
 )
 
 const (
@@ -26,13 +27,9 @@ const (
 	EnvAcmeCloudflareApiToken     = "ACME_CLOUDFLARE_API_TOKEN"
 	EnvAcmeLetsencryptPrivateKey  = "ACME_LETSENCRYPT_PRIVATE_KEY" // ACME account private key (PEM format)
 )
-
 // LoadFromDb loads configuration from the database using the provided DbConfig.
-// Falls back to embedded defaults if no config exists in database.
-func LoadFromDb(db db.DbConfig, dbAcme db.DbAcme, logger *slog.Logger) (*Config, error) {
+func LoadFromDb(db db.DbConfig, logger *slog.Logger) (*Config, error) {
 	logger.Info("loading configuration from database")
-
-	// Get encrypted config blob from database
 	encryptedData, err := db.GetConfig()
 	if err != nil {
 		return nil, fmt.Errorf("config: failed to get from db: %w", err)
@@ -91,14 +88,6 @@ func LoadFromDb(db db.DbConfig, dbAcme db.DbAcme, logger *slog.Logger) (*Config,
 		return nil, fmt.Errorf("configuration validation failed: %w", err)
 	}
 
-	// Load certificates if TLS is enabled
-	if cfg.Server.EnableTLS {
-		if err := loadCerts(cfg, dbAcme, logger); err != nil {
-			logger.Error("failed to load TLS certificates", "error", err)
-			return nil, fmt.Errorf("failed to load TLS certificates: %w", err)
-		}
-	}
-
 	// Load secrets after initial config load
 	if err := loadSecrets(cfg, logger); err != nil {
 		// Error already logged within loadSecrets
@@ -107,21 +96,6 @@ func LoadFromDb(db db.DbConfig, dbAcme db.DbAcme, logger *slog.Logger) (*Config,
 
 	logger.Info("successfully loaded configuration from database", "cfg", cfg)
 	return cfg, nil
-}
-
-// loadCerts loads TLS certificates from the database into the config
-func loadCerts(cfg *Config, dbAcme db.DbAcme, logger *slog.Logger) error {
-	cert, err := dbAcme.Get()
-	if err != nil {
-		return fmt.Errorf("failed to get ACME certificate: %w", err)
-	}
-
-	// Store the certificate data directly in the config
-	cfg.Server.CertData = cert.CertificateChain
-	cfg.Server.KeyData = cert.PrivateKey
-
-	logger.Info("successfully loaded TLS certificates from database")
-	return nil
 }
 
 // loadSecrets handles loading all secrets from environment variables

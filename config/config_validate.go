@@ -26,11 +26,15 @@ func Validate(cfg *Config) error {
 // The port part is mandatory.
 func validateServer(server *Server) error {
 	if err := validateServerAddr(server); err != nil {
-		return err // Error already includes context
+		return err
 	}
 
 	if err := validateServerRedirectAddr(server); err != nil {
-		return err // Error already includes context
+		return err
+	}
+
+	if err := validateServerTLS(server); err != nil {
+		return err
 	}
 
 	return nil
@@ -85,8 +89,25 @@ func validateServerRedirectAddr(server *Server) error {
 	return nil
 }
 
-func validateServerPort(portStr string) error {
+// validateServerTLS checks that CertData and KeyData are present if TLS is enabled.
+func validateServerTLS(server *Server) error {
+	if !server.EnableTLS {
+		return nil // No validation needed if TLS is disabled
+	}
 
+	// If TLS is enabled, CertData and KeyData must not be empty.
+	// CertFile and KeyFile are ignored if CertData/KeyData are present.
+	if server.CertData == "" {
+		return fmt.Errorf("server.cert_data cannot be empty when TLS is enabled")
+	}
+	if server.KeyData == "" {
+		return fmt.Errorf("server.key_data cannot be empty when TLS is enabled")
+	}
+
+	return nil
+}
+
+func validateServerPort(portStr string) error {
 	// Empty means no redirect server, which is valid configuration.
 	if portStr == "" {
 		return nil
