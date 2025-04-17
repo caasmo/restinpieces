@@ -192,7 +192,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 	// Generate JWT session token for immediate authentication
 	cfg := a.Config() // Get the current config
-	token, err := crypto.NewJwtSessionToken(retrievedUser.ID, retrievedUser.Email, retrievedUser.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration)
+	token, err := crypto.NewJwtSessionToken(retrievedUser.ID, retrievedUser.Email, retrievedUser.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration.Duration)
 	if err != nil {
 		WriteJsonError(w, errorTokenGeneration)
 		return
