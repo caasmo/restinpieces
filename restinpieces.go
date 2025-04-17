@@ -43,6 +43,7 @@ func New(ageKeyPath string, opts ...core.Option) (*core.App, *server.Server, err
 
 	configProvider := config.NewProvider(cfg)
 	app.SetConfigProvider(configProvider)
+	app.Logger().Info("config", "config", cfg)
 
 	// Setup custom application logic and routes
 	route(cfg, app) // Assuming route function exists and is correctly defined elsewhere
