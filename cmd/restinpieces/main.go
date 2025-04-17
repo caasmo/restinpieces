@@ -14,7 +14,6 @@ import (
 func main() {
 	// Define flags directly in main
 	dbfile := flag.String("dbfile", "app.db", "SQLite database file path")
-	configFile := flag.String("config", "", "Path to configuration file")
 
 	// Set custom usage message for the application
 	flag.Usage = func() {
@@ -46,7 +45,6 @@ func main() {
 
 	// --- Initialize the Application ---
 	_, srv, err := restinpieces.New(
-		*configFile,
 		restinpieces.WithDbZombiezen(dbPool),
 		//restinpieces.WithDbCrawshaw(dbPool),
 		restinpieces.WithRouterServeMux(),
