@@ -145,6 +145,17 @@ type OAuth2Provider struct {
 	PKCE         bool     `toml:"pkce" comment:"Enable PKCE flow"`
 }
 
+// RedirectURL returns the complete redirect URL to use for this provider.
+// If RedirectURLPath is set, it combines with the server's base URL.
+// Otherwise falls back to RedirectURL if set.
+// Returns empty string if neither is configured.
+func (p *OAuth2Provider) RedirectURL(server *Server) string {
+	if p.RedirectURLPath != "" {
+		return server.BaseURL() + p.RedirectURLPath
+	}
+	return p.RedirectURL
+}
+
 type Smtp struct {
 	Enabled     bool   `toml:"enabled" comment:"Enable SMTP email sending"`
 	Host        string `toml:"host" comment:"SMTP server hostname"`
