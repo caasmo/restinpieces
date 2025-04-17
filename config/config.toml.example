@@ -1,153 +1,153 @@
 # Configuration for the RestInPieces application
 
 # Path to the SQLite database file.
-DBPath = "app.db"
+db_path = "app.db"
 
 # Directory containing static web assets (relative to application root).
 # These assets can be embedded in the binary or served from the filesystem.
-PublicDir = "static/dist"
+public_dir = "static/dist"
 
 
 # --- JWT Settings ---
-[Jwt]
+[jwt]
   # Duration for which standard authentication tokens are valid.
-  AuthTokenDuration = "45m"
+  auth_token_duration = "45m"
 
   # Duration for which email verification tokens are valid.
-  VerificationEmailTokenDuration = "24h"
+  verification_email_token_duration = "24h"
 
   # Duration for which password reset tokens are valid.
-  PasswordResetTokenDuration = "1h"
+  password_reset_token_duration = "1h"
 
   # Duration for which email change confirmation tokens are valid.
-  EmailChangeTokenDuration = "1h"
+  email_change_token_duration = "1h"
 
   # AuthSecret: Set via JWT_AUTH_SECRET environment variable. DO NOT STORE HERE unless absolutely necessary for local dev.
-  AuthSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+  auth_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
   # VerificationEmailSecret: Set via JWT_VERIFICATION_EMAIL_SECRET environment variable. DO NOT STORE HERE.
-  VerificationEmailSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+  verification_email_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
   # PasswordResetSecret: Set via JWT_PASSWORD_RESET_SECRET environment variable. DO NOT STORE HERE.
-  PasswordResetSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+  password_reset_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
   # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable. DO NOT STORE HERE.
-  EmailChangeSecret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+  email_change_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
 # --- Server Settings ---
-[Server]
+[server]
   # Network address and port the HTTP server listens on.
   # Examples: ":8080" (all interfaces, port 8080), "localhost:9000"
-  Addr = ":8080"
+  addr = ":8080"
 
   # Maximum duration the server waits for ongoing requests to complete before shutting down.
-  ShutdownGracefulTimeout = "15s"
+  shutdown_graceful_timeout = "15s"
 
   # Maximum duration for reading the entire request, including the body.
-  ReadTimeout = "2s"
+  read_timeout = "2s"
 
   # Maximum duration for reading only the request headers.
-  ReadHeaderTimeout = "2s"
+  read_header_timeout = "2s"
 
   # Maximum duration before timing out writes of the response.
-  WriteTimeout = "3s"
+  write_timeout = "3s"
 
   # Maximum duration for waiting for the next request on a keep-alive connection.
-  IdleTimeout = "1m"
+  idle_timeout = "1m"
 
   # If behind a trusted proxy, specify the header containing the real client IP.
   # Common values: "X-Forwarded-For", "X-Real-IP". Leave empty if not behind a proxy.
-  ClientIpProxyHeader = ""
+  client_ip_proxy_header = ""
 
   # Enable HTTPS/TLS for secure connections
-  EnableTLS = false
+  enable_tls = false
 
   # Path to TLS certificate file (PEM format)
-  CertFile = ""
+  cert_file = ""
 
   # Path to TLS private key file (PEM format)
-  KeyFile = ""
+  key_file = ""
 
   # Address for HTTP->HTTPS redirect server (e.g. ":80")
-  # Only used when EnableTLS is true
-  RedirectAddr = ""
+  # Only used when enable_tls is true
+  redirect_addr = ""
 
 
 # --- IP Blocking Settings ---
 # Settings related to automatic IP address blocking based on request frequency.
-[BlockIp]
+[block_ip]
   # Enable or disable automatic IP blocking.
-  Enabled = true
+  enabled = true
 
 
 # --- Maintenance Mode Settings ---
-[Maintenance]
+[maintenance]
   # Enable or disable the maintenance mode feature entirely.
   # If false, the middleware won't even run, regardless of 'activated'.
-  Enabled = true
+  enabled = true
 
   # Activate or deactivate the maintenance mode.
-  # If true (and Enabled=true), the maintenance page/message will be shown.
-  Activated = false
+  # If true (and enabled=true), the maintenance page/message will be shown.
+  activated = false
 
 
 # --- ACME / Let's Encrypt Settings ---
-[Acme]
+[acme]
   # Enable automatic TLS certificate management using ACME (e.g., Let's Encrypt).
-  # Requires Server.EnableTLS = true and Server.CertFile/KeyFile to be set.
-  Enabled = false
+  # Requires server.enable_tls = true and server.cert_file/key_file to be set.
+  enabled = false
 
   # Email address for ACME account registration and important notifications (e.g., expiry warnings).
-  Email = "your-email@example.com"
+  email = "your-email@example.com"
 
   # List of domain names to include in the certificate. The first domain is the primary common name (CN).
-  Domains = ["yourdomain.com", "www.yourdomain.com"]
+  domains = ["yourdomain.com", "www.yourdomain.com"]
 
   # DNS provider used for the DNS-01 challenge. Currently, only "cloudflare" is supported by the handler.
-  DNSProvider = "cloudflare" # e.g., "cloudflare"
+  dns_provider = "cloudflare" # e.g., "cloudflare"
 
   # Renew the certificate if it expires within this many days. Let's Encrypt recommends 30 days.
-  RenewalDaysBeforeExpiry = 30
+  renewal_days_before_expiry = 30
 
   # ACME directory URL. Use Let's Encrypt staging for testing, production for live certs.
   # Staging: "https://acme-staging-v02.api.letsencrypt.org/directory"
   # Production: "https://acme-v02.api.letsencrypt.org/directory"
-  CADirectoryURL = "https://acme-staging-v02.api.letsencrypt.org/directory"
+  ca_directory_url = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
   # Cloudflare API Token for DNS-01 challenge validation.
   # Set via ACME_CLOUDFLARE_API_TOKEN environment variable. DO NOT STORE HERE.
-  CloudflareApiToken = "" # Example placeholder - set via environment variable in production
+  cloudflare_api_token = "" # Example placeholder - set via environment variable in production
 
   # ACME account private key (ECDSA P-256 in PEM format).
   # Set via ACME_LETSENCRYPT_PRIVATE_KEY environment variable. DO NOT STORE HERE.
   # Generate with: openssl ecparam -name prime256v1 -genkey -noout -outform PEM
-  AcmePrivateKey = "" # Example placeholder - set via environment variable in production
+  acme_private_key = "" # Example placeholder - set via environment variable in production
 
 
 # --- Background Job Scheduler Settings ---
-[Scheduler]
+[scheduler]
   # How often the scheduler checks the database for pending jobs.
-  Interval = "60s"
+  interval = "60s"
 
   # Maximum number of jobs fetched from the database in each interval.
   # Prevents overwhelming workers if the queue is large.
-  MaxJobsPerTick = 10
+  max_jobs_per_tick = 10
 
   # Number of concurrent job processing workers per available CPU core.
   # Increase for I/O-bound jobs, decrease for CPU-bound jobs.
-  ConcurrencyMultiplier = 2
+  concurrency_multiplier = 2
 
 
 # --- Rate Limiting Settings ---
-[RateLimits]
+[rate_limits]
   # Minimum time a user must wait between requesting password resets for the same account.
-  PasswordResetCooldown = "2h"
+  password_reset_cooldown = "2h"
 
   # Minimum time a user must wait between requesting email verifications for the same email.
-  EmailVerificationCooldown = "1h"
+  email_verification_cooldown = "1h"
 
   # Minimum time a user must wait between requesting email address changes.
-  EmailChangeCooldown = "1h"
+  email_change_cooldown = "1h"
 
 
 
