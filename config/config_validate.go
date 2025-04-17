@@ -20,13 +20,13 @@ func Validate(cfg *Config) error {
 	if err := validateAcme(&cfg.Acme); err != nil {
 		return fmt.Errorf("acme config validation failed: %w", err)
 	}
-	if err := validateOAuth2Providers(cfg.OAuth2Providers, &cfg.Server); err != nil {
+	if err := validateOAuth2Providers(cfg.OAuth2Providers); err != nil {
 		return fmt.Errorf("oauth2 providers validation failed: %w", err)
 	}
 	return nil
 }
 
-func validateOAuth2Providers(providers map[string]OAuth2Provider, server *Server) error {
+func validateOAuth2Providers(providers map[string]OAuth2Provider) error {
 	for name, provider := range providers {
 		if provider.RedirectURL == "" && provider.RedirectURLPath == "" {
 			return fmt.Errorf("oauth2 provider '%s' must have either redirect_url or redirect_url_path configured", name)
