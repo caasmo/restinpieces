@@ -5,8 +5,6 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
-
-	_ "embed"
 )
 
 // Provider holds the application configuration and allows for atomic updates.
