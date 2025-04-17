@@ -17,7 +17,7 @@ import (
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 
-	"github.com/your-repo/your-project/config" // Adjust this import path
+	"github.com/caasmo/restinpieces/config"
 )
 
 type CertInserter struct {
