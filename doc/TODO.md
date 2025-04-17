@@ -4,6 +4,7 @@
 - move router httprouter to repo
 - renew-jtw-secrets like create-app, creates a new config
 - rollback config 
+- start logs: emojify, insightful
 - create-app shoudl create age key.
 - user can add jobs, we want to get rid of acme dependencies
     - acme renewal does not belong in main repo 
