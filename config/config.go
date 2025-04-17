@@ -71,15 +71,41 @@ type Config struct {
 	Maintenance Maintenance // Maintenance mode settings
 }
 
+// Duration is a wrapper around time.Duration that supports TOML unmarshalling
+// from a string value (e.g., "3h", "15m", "1h30m").
+type Duration struct {
+	time.Duration
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface.
+// This allows TOML libraries like pelletier/go-toml/v2 to unmarshal
+// TOML string values directly into a Duration field.
+func (d *Duration) UnmarshalText(text []byte) error {
+	var err error
+	d.Duration, err = time.ParseDuration(string(text))
+	if err != nil {
+		// Provide more context in the error message
+		return fmt.Errorf("failed to parse duration '%s': %w", string(text), err)
+	}
+	return nil
+}
+
+// MarshalText implements the encoding.TextMarshaler interface.
+// This is useful if you ever need to marshal the config back to TOML,
+// ensuring durations are written as strings.
+func (d Duration) MarshalText() ([]byte, error) {
+	return []byte(d.Duration.String()), nil
+}
+
 type Jwt struct {
 	AuthSecret                     string
-	AuthTokenDuration              time.Duration `toml:"string"`
+	AuthTokenDuration              Duration
 	VerificationEmailSecret        string
-	VerificationEmailTokenDuration time.Duration `toml:"string"`
+	VerificationEmailTokenDuration Duration
 	PasswordResetSecret            string
-	PasswordResetTokenDuration     time.Duration `toml:"string"`
+	PasswordResetTokenDuration     Duration
 	EmailChangeSecret              string
-	EmailChangeTokenDuration       time.Duration `toml:"string"`
+	EmailChangeTokenDuration       Duration 
 
 }
 
@@ -88,7 +114,7 @@ type Scheduler struct {
 	// Should be set based on your job processing latency requirements - shorter
 	// intervals provide faster job processing but increase database load.
 	// Typical values range from 5 seconds to several minutes.
-	Interval time.Duration `toml:"string"`
+	Interval Duration
 
 	// MaxJobsPerTick limits how many jobs are fetched from the database per schedule
 	// interval. This prevents overwhelming the system when there are many pending jobs.
@@ -108,19 +134,19 @@ type Server struct {
 	Addr string
 
 	// ShutdownGracefulTimeout is the maximum time to wait for graceful shutdown
-	ShutdownGracefulTimeout time.Duration `toml:"string"`
+	ShutdownGracefulTimeout Duration
 
 	// ReadTimeout is the maximum duration for reading the entire request
-	ReadTimeout time.Duration `toml:"string"`
+	ReadTimeout Duration
 
 	// ReadHeaderTimeout is the maximum duration for reading request headers
-	ReadHeaderTimeout time.Duration `toml:"string"`
+	ReadHeaderTimeout Duration
 
 	// WriteTimeout is the maximum duration before timing out writes of the response
-	WriteTimeout time.Duration `toml:"string"`
+	WriteTimeout Duration
 
 	// IdleTimeout is the maximum amount of time to wait for the next request
-	IdleTimeout time.Duration `toml:"string"`
+	IdleTimeout Duration
 
 	// ClientIpProxyHeader specifies which HTTP header to trust for client IP addresses
 	// when behind a proxy (e.g. "X-Forwarded-For", "X-Real-IP"). Empty means use
@@ -129,10 +155,10 @@ type Server struct {
 
 	// --- New TLS Fields ---
 	EnableTLS bool   // Default to false if not present
-	CertFile  string // Path to TLS certificate file (legacy)
+	CertFile  string // Path to TLS certificate file (legacy) TODO remove
 	KeyFile   string // Path to TLS private key file (legacy)
-	CertData  string `toml:"-"` // TLS certificate data (preferred)
-	KeyData   string `toml:"-"` // TLS private key data (preferred)
+	CertData  string 
+	KeyData   string 
 
 	// that redirects requests to the main HTTPS server (if EnableTLS is true).
 	// If empty, no redirect server is started.
@@ -150,15 +176,15 @@ func (s *Server) BaseURL() string {
 type RateLimits struct {
 	// PasswordResetCooldown specifies how long a user must wait between
 	// password reset requests to prevent abuse and email spam
-	PasswordResetCooldown time.Duration `toml:"string"`
+	PasswordResetCooldown Duration
 
 	// EmailVerificationCooldown specifies how long a user must wait between
 	// email verification requests to prevent abuse and email spam
-	EmailVerificationCooldown time.Duration `toml:"string"`
+	EmailVerificationCooldown Duration
 
 	// EmailChangeCooldown specifies how long a user must wait between
 	// email change requests to prevent abuse and email spam
-	EmailChangeCooldown time.Duration `toml:"string"`
+	EmailChangeCooldown Duration
 }
 
 type OAuth2Provider struct {
@@ -189,18 +215,18 @@ type Smtp struct {
 }
 
 type Endpoints struct {
-	RefreshAuth              string `json:"refresh_auth"`
-	RequestEmailVerification string `json:"request_email_verification"`
-	ConfirmEmailVerification string `json:"confirm_email_verification"`
-	ListEndpoints            string `json:"list_endpoints"`
-	AuthWithPassword         string `json:"auth_with_password"`
-	AuthWithOAuth2           string `json:"auth_with_oauth2"`
-	RegisterWithPassword     string `json:"register_with_password"`
-	ListOAuth2Providers      string `json:"list_oauth2_providers"`
-	RequestPasswordReset     string `json:"request_password_reset"`
-	ConfirmPasswordReset     string `json:"confirm_password_reset"`
-	RequestEmailChange       string `json:"request_email_change"`
-	ConfirmEmailChange       string `json:"confirm_email_change"`
+	RefreshAuth              string
+	RequestEmailVerification string
+	ConfirmEmailVerification string
+	ListEndpoints            string
+	AuthWithPassword         string
+	AuthWithOAuth2           string
+	RegisterWithPassword     string
+	ListOAuth2Providers      string
+	RequestPasswordReset     string
+	ConfirmPasswordReset     string
+	RequestEmailChange       string
+	ConfirmEmailChange       string
 }
 
 // Path extracts just the path portion from an endpoint string (removes method prefix)
