@@ -31,9 +31,6 @@ func validateOAuth2Providers(providers map[string]OAuth2Provider) error {
 		if provider.RedirectURL == "" && provider.RedirectURLPath == "" {
 			return fmt.Errorf("oauth2 provider '%s' must have either redirect_url or redirect_url_path configured", name)
 		}
-		if provider.RedirectURLPath != "" && !strings.HasPrefix(provider.RedirectURLPath, "/") {
-			return fmt.Errorf("oauth2 provider '%s' redirect_url_path must start with '/'", name)
-		}
 	}
 	return nil
 }
