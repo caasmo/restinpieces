@@ -31,7 +31,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Generate new token with fresh expiration using NewJwtSession
 	cfg := a.Config() // Get the current config
-	newToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration)
+	newToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration.Duration)
 	if err != nil {
 		a.Logger().Error("Failed to generate new token", "error", err)
 		WriteJsonError(w, errorTokenGeneration)
@@ -89,7 +89,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Generate JWT session token
 	cfg := a.Config() // Get the current config
-	token, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration)
+	token, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration.Duration)
 	if err != nil {
 		WriteJsonError(w, errorTokenGeneration)
 		return
