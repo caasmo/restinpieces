@@ -12,8 +12,9 @@ import (
 
 	"github.com/caasmo/restinpieces/db" // Adjust import path if necessary
 )
-// LoadFromDb loads configuration from the database using the provided DbConfig.
-func LoadFromDb(db db.DbConfig, logger *slog.Logger) (*Config, error) {
+
+// LoadFromDb loads configuration from the database using the provided DbConfig and age key file.
+func LoadFromDb(db db.DbConfig, logger *slog.Logger, ageKeyPath string) (*Config, error) {
 	logger.Info("loading configuration from database")
 	encryptedData, err := db.GetConfig()
 	if err != nil {
@@ -27,21 +28,21 @@ func LoadFromDb(db db.DbConfig, logger *slog.Logger) (*Config, error) {
 	}
 
 	// --- Decrypt Config ---
-	keyFile := "age_key.txt" // TODO: Make this configurable
-	keyContent, err := os.ReadFile(keyFile)
+	// Use the provided ageKeyPath
+	keyContent, err := os.ReadFile(ageKeyPath)
 	if err != nil {
-		logger.Error("failed to read age key file", "path", keyFile, "error", err)
-		return nil, fmt.Errorf("failed to read age key file '%s': %w", keyFile, err)
+		logger.Error("failed to read age key file", "path", ageKeyPath, "error", err)
+		return nil, fmt.Errorf("failed to read age key file '%s': %w", ageKeyPath, err)
 	}
 
 	identities, err := age.ParseIdentities(bytes.NewReader(keyContent))
 	if err != nil {
-		logger.Error("failed to parse age identities", "path", keyFile, "error", err)
-		return nil, fmt.Errorf("failed to parse age identities from key file '%s': %w", keyFile, err)
+		logger.Error("failed to parse age identities", "path", ageKeyPath, "error", err)
+		return nil, fmt.Errorf("failed to parse age identities from key file '%s': %w", ageKeyPath, err)
 	}
 	if len(identities) == 0 {
-		logger.Error("no age identities found in key file", "path", keyFile)
-		return nil, fmt.Errorf("no age identities found in key file '%s'", keyFile)
+		logger.Error("no age identities found in key file", "path", ageKeyPath)
+		return nil, fmt.Errorf("no age identities found in key file '%s'", ageKeyPath)
 	}
 
 	encryptedDataReader := bytes.NewReader(encryptedData) // Use the byte slice directly

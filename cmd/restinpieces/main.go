@@ -51,13 +51,14 @@ func main() {
 	}()
 
 	// --- Initialize the Application ---
+	// Pass ageKeyPath as the first argument
 	_, srv, err := restinpieces.New(
+		*ageKeyPath, // Pass the age key file path
 		restinpieces.WithDbZombiezen(dbPool),
 		//restinpieces.WithDbCrawshaw(dbPool),
 		restinpieces.WithRouterServeMux(),
 		restinpieces.WithCacheRistretto(),
 		restinpieces.WithTextLogger(nil),
-		restinpieces.WithAgeKeyFile(*ageKeyPath), // Pass the age key file path
 	)
 	if err != nil {
 		slog.Error("failed to initialize application", "error", err)

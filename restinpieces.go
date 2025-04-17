@@ -18,10 +18,10 @@ import (
 	"github.com/caasmo/restinpieces/server"
 )
 
-// New creates a new App instance and Server with the provided options.
+// New creates a new App instance and Server with the provided options and age key file path.
 // It initializes the core application components like database, router, cache first,
-// then loads configuration from the database.
-func New(opts ...core.Option) (*core.App, *server.Server, error) {
+// then loads configuration from the database using the provided age key.
+func New(ageKeyPath string, opts ...core.Option) (*core.App, *server.Server, error) {
 	// First create app without config
 	app, err := core.NewApp(opts...)
 	if err != nil {
@@ -30,7 +30,8 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	}
 
 	appLogger := app.Logger() // Get logger once
-	cfg, err := config.LoadFromDb(app.DbConfig(), appLogger)
+	// Pass ageKeyPath to LoadFromDb
+	cfg, err := config.LoadFromDb(app.DbConfig(), appLogger, ageKeyPath)
 	if err == nil { // Only set source on success
 		cfg.Source = "" // empty for db
 	}
