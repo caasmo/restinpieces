@@ -18,14 +18,14 @@ const oauth2TokenExchangeTimeout = 10 * time.Second
 
 // OAuth2ProviderInfo contains the provider details needed for client-side OAuth2 flow
 type OAuth2ProviderInfo struct {
-	Name                string 
-	DisplayName         string 
-	State               string 
-	AuthURL             string 
-	RedirectURL         string 
-	CodeVerifier        string 
-	CodeChallenge       string 
-	CodeChallengeMethod string 
+	Name                string `json:"name"`
+	DisplayName         string `json:"displayName"`
+	State               string `json:"state"`
+	AuthURL             string `json:"authURL"`
+	RedirectURL         string `json:"redirectURL"`
+	CodeVerifier        string `json:"codeVerifier,omitempty"`
+	CodeChallenge       string `json:"codeChallenge,omitempty"`
+	CodeChallengeMethod string `json:"codeChallengeMethod,omitempty"`
 }
 
 // OAuth2ProviderListData wraps the list of providers for standardized response
