@@ -30,7 +30,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	}
 
 	appLogger := app.Logger() // Get logger once
-	cfg, err := config.LoadFromDb(app.DbConfig(), app.DbAcme(), appLogger)
+	cfg, err := config.LoadFromDb(app.DbConfig(), appLogger)
 	if err == nil { // Only set source on success
 		cfg.Source = "" // empty for db
 	}
