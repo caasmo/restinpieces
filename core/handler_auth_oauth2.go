@@ -230,15 +230,16 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 	cfg := a.Config() // Get the current config
 	for name, provider := range cfg.OAuth2Providers {
 
+        rUrl := redirectUrl(cfg.Server, provider)
 		a.Logger().Debug("OAuth2 fields",
 			"provider", name,
-			"redirectURI", provider.RedirectUrl())
+			"redirectURI", rUrl)
 
 		state := crypto.Oauth2State()
 		oauth2Config := oauth2.Config{
 			ClientID:     provider.ClientID,
 			ClientSecret: provider.ClientSecret,
-			RedirectURL:  provider.RedirectUrl(),
+			RedirectURL:  rUrl,
 			Scopes:       provider.Scopes,
 			Endpoint: oauth2.Endpoint{
 				AuthURL:  provider.AuthURL,
@@ -251,7 +252,7 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 			Name:        name,
 			DisplayName: provider.DisplayName,
 			State:       state,
-			RedirectURL: provider.RedirectUrl(),
+			RedirectURL: rUrl,
 		}
 
 		// Handle PKCE if enabled
@@ -294,7 +295,7 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 // Returns empty string if neither is configured.
 func redirectUrl(srvConf *config.Server, provider *config.OAuth2Provider) string {
 	if p.RedirectURLPath != "" {
-		return server.BaseURL() + p.RedirectURLPath
+		return server.BaseURL() + provider.RedirectURLPath
 	}
 	return p.RedirectURL
 }
