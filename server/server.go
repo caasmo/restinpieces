@@ -188,7 +188,7 @@ func (s *Server) Run() {
 	close(sigChan)
 
 	// Get shutdown timeout from the *current* config
-	shutdownTimeout := serverCfg.ShutdownGracefulTimeout
+	shutdownTimeout := serverCfg.ShutdownGracefulTimeout.Duration
 	gracefulCtx, cancelShutdown := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancelShutdown()
 

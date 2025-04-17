@@ -68,7 +68,7 @@ func (s *Scheduler) Name() string {
 func (s *Scheduler) Start() error {
 	go func() {
 		// Get initial interval from provider
-		interval := s.configProvider.Get().Scheduler.Interval
+		interval := s.configProvider.Get().Scheduler.Interval.Duration
 		s.logger.Info("⏰scheduler: starting", "interval", interval)
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
