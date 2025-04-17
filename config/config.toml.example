@@ -152,95 +152,95 @@ public_dir = "static/dist"
 
 
 # --- SMTP Settings for Sending Emails ---
-[Smtp]
+[smtp]
   # Enable or disable SMTP functionality. Set to true to allow sending emails.
-  Enabled = false
+  enabled = false
 
   # SMTP server hostname or IP address.
-  Host = "smtp.gmail.com" # Example: Gmail
+  host = "smtp.gmail.com" # Example: Gmail
 
   # SMTP server port (e.g., 587 for TLS/STARTTLS, 465 for SSL, 25 for unencrypted).
-  Port = 587 # Example: Gmail STARTTLS
+  port = 587 # Example: Gmail STARTTLS
 
   # Display name for the sender (e.g., "My Application").
-  FromName = "My App"
+  from_name = "My App"
 
   # Email address emails will be sent from (e.g., "noreply@example.com").
   # For Gmail, this might need to be the same as Username or a configured alias.
   # Load from ENV recommended: e.g., SMTP_FROM_ADDRESS
-  FromAddress = "" # Set via environment variable SMTP_FROM_ADDRESS
+  from_address = "" # Set via environment variable SMTP_FROM_ADDRESS
 
   # Domain name sent during HELO/EHLO handshake. Defaults to "localhost".
   # Set to your application's domain name for better deliverability.
-  LocalName = ""
+  local_name = ""
 
   # Authentication method: "plain", "login", "cram-md5", or "none".
-  AuthMethod = "plain" # Example: Gmail requires PLAIN
+  auth_method = "plain" # Example: Gmail requires PLAIN
 
   # Use explicit TLS (connects directly using TLS, usually port 465).
-  UseTLS = false
+  use_tls = false
 
   # Use STARTTLS (connects unencrypted, then upgrades to TLS, usually port 587).
-  UseStartTLS = true # Example: Gmail requires STARTTLS on port 587
+  use_start_tls = true # Example: Gmail requires STARTTLS on port 587
 
   # Username: SMTP account username. Set via SMTP_USERNAME environment variable. DO NOT STORE HERE.
-  Username = "" # Example placeholder - set via environment variable in production
+  username = "" # Example placeholder - set via environment variable in production
 
   # Password: SMTP account password or app-specific password. Set via SMTP_PASSWORD environment variable. DO NOT STORE HERE.
-  Password = "" # Example placeholder - set via environment variable in production
+  password = "" # Example placeholder - set via environment variable in production
 
 
 # --- API Endpoint Paths ---
-[Endpoints]
-  RefreshAuth              = "POST /api/refresh-auth"
-  RequestEmailVerification = "POST /api/request-email-verification"
-  ConfirmEmailVerification = "POST /api/confirm-email-verification"
-  ListEndpoints            = "GET /api/list-endpoints"
-  AuthWithPassword         = "POST /api/auth-with-password"
-  AuthWithOAuth2           = "POST /api/auth-with-oauth2"
-  RegisterWithPassword     = "POST /api/register-with-password"
-  ListOAuth2Providers      = "GET /api/list-oauth2-providers"
-  RequestPasswordReset     = "POST /api/request-password-reset"
-  ConfirmPasswordReset     = "POST /api/confirm-password-reset"
-  RequestEmailChange       = "POST /api/request-email-change"
-  ConfirmEmailChange       = "POST /api/confirm-email-change"
+[endpoints]
+  refresh_auth              = "POST /api/refresh-auth"
+  request_email_verification = "POST /api/request-email-verification"
+  confirm_email_verification = "POST /api/confirm-email-verification"
+  list_endpoints            = "GET /api/list-endpoints"
+  auth_with_password         = "POST /api/auth-with-password"
+  auth_with_oauth2           = "POST /api/auth-with-oauth2"
+  register_with_password     = "POST /api/register-with-password"
+  list_oauth2_providers      = "GET /api/list-oauth2-providers"
+  request_password_reset     = "POST /api/request-password-reset"
+  confirm_password_reset     = "POST /api/confirm-password-reset"
+  request_email_change       = "POST /api/request-email-change"
+  confirm_email_change       = "POST /api/confirm-email-change"
 
 
 # --- OAuth2 Provider Settings ---
 # Define configurations for supported OAuth2 providers (e.g., Google, GitHub).
 # Client IDs and Secrets MUST be loaded from environment variables.
-[OAuth2Providers]
+[oauth2_providers]
 
   # Example configuration for Google OAuth2
-  [OAuth2Providers.google]
-    Name         = "google"
-    DisplayName  = "Google"
-    # RedirectURL is the callback URL registered with the provider.
+  [oauth2_providers.google]
+    name         = "google"
+    display_name  = "Google"
+    # redirect_url is the callback URL registered with the provider.
     # It's often constructed dynamically (e.g., BaseURL + "/oauth2/callback/google").
     # If set here, ensure it matches your provider configuration. Leave empty "" if dynamically set.
-    RedirectURL  = ""
-    AuthURL      = "https://accounts.google.com/o/oauth2/v2/auth"
-    TokenURL     = "https://oauth2.googleapis.com/token"
-    UserInfoURL  = "https://www.googleapis.com/oauth2/v3/userinfo"
-    Scopes       = ["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"]
-    PKCE         = true
-    ClientID = "" #Set via OAUTH2_GOOGLE_CLIENT_ID environment variable. DO NOT STORE HERE.
-    ClientSecret= "" #Set via OAUTH2_GOOGLE_CLIENT_SECRET environment variable. DO NOT STORE HERE.
+    redirect_url  = ""
+    auth_url      = "https://accounts.google.com/o/oauth2/v2/auth"
+    token_url     = "https://oauth2.googleapis.com/token"
+    user_info_url  = "https://www.googleapis.com/oauth2/v3/userinfo"
+    scopes       = ["https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"]
+    pkce         = true
+    client_id = "" #Set via OAUTH2_GOOGLE_CLIENT_ID environment variable. DO NOT STORE HERE.
+    client_secret= "" #Set via OAUTH2_GOOGLE_CLIENT_SECRET environment variable. DO NOT STORE HERE.
 
   # Example configuration for GitHub OAuth2
-  [OAuth2Providers.github]
-    Name         = "github"
-    DisplayName  = "GitHub"
-    # RedirectURL is the callback URL registered with the provider.
+  [oauth2_providers.github]
+    name         = "github"
+    display_name  = "GitHub"
+    # redirect_url is the callback URL registered with the provider.
     # It's often constructed dynamically (e.g., BaseURL + "/oauth2/callback/github").
     # If set here, ensure it matches your provider configuration. Leave empty "" if dynamically set.
-    RedirectURL  = ""
-    AuthURL      = "https://github.com/login/oauth/authorize"
-    TokenURL     = "https://github.com/login/oauth/access_token"
-    UserInfoURL  = "https://api.github.com/user"
-    Scopes       = ["read:user", "user:email"]
-    PKCE         = true
-    ClientID= "" # Set via OAUTH2_GITHUB_CLIENT_ID environment variable. DO NOT STORE HERE.
-    ClientSecret= "" # Set via OAUTH2_GITHUB_CLIENT_SECRET environment variable. DO NOT STORE HERE.
+    redirect_url  = ""
+    auth_url      = "https://github.com/login/oauth/authorize"
+    token_url     = "https://github.com/login/oauth/access_token"
+    user_info_url  = "https://api.github.com/user"
+    scopes       = ["read:user", "user:email"]
+    pkce         = true
+    client_id= "" # Set via OAUTH2_GITHUB_CLIENT_ID environment variable. DO NOT STORE HERE.
+    client_secret= "" # Set via OAUTH2_GITHUB_CLIENT_SECRET environment variable. DO NOT STORE HERE.
 
 # Add other providers (e.g., Facebook, Microsoft) here following the same pattern.
