@@ -45,8 +45,17 @@ func LoadFromDb(db db.DbConfig, logger *slog.Logger, ageKeyPath string) (*Config
 		return nil, fmt.Errorf("no age identities found in key file '%s'", ageKeyPath)
 	}
 
+	// Zero out the raw key material as soon as identities are parsed
+	for i := range keyContent {
+		keyContent[i] = 0
+	}
+
 	encryptedDataReader := bytes.NewReader(encryptedData) // Use the byte slice directly
 	decryptedDataReader, err := age.Decrypt(encryptedDataReader, identities...)
+
+	// Make identities eligible for GC immediately after use
+	identities = nil // Remove reference to the slice and underlying identity objects
+
 	if err != nil {
 		logger.Error("failed to decrypt configuration data", "error", err)
 		return nil, fmt.Errorf("failed to decrypt configuration data: %w", err)
