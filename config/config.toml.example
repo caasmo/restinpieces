@@ -41,6 +41,12 @@ public_dir = "static/dist"
   # Path to TLS private key file (PEM format)
   key_file = ""
 
+  # PEM-encoded TLS certificate data (alternative to cert_file)
+  cert_data = ""
+
+  # PEM-encoded TLS private key data (alternative to key_file)
+  key_data = ""
+
   # Address for HTTP->HTTPS redirect server (e.g. ":80")
   # Only used when enable_tls is true
   redirect_addr = ""
