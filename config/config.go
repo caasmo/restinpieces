@@ -137,6 +137,7 @@ type OAuth2Provider struct {
 	ClientSecret string   `toml:"client_secret" comment:"OAuth2 client secret (set via env)"`
 	DisplayName  string   `toml:"display_name" comment:"User-facing provider name"`
 	RedirectURL  string   `toml:"redirect_url" comment:"Callback URL (leave empty for dynamic)"`
+	RedirectURLPath string `toml:"redirect_url_path" comment:"Callback URL path (e.g. '/oauth2/callback') - uses server host/port"`
 	AuthURL      string   `toml:"auth_url" comment:"OAuth2 authorization endpoint"`
 	TokenURL     string   `toml:"token_url" comment:"OAuth2 token endpoint"`
 	UserInfoURL  string   `toml:"user_info_url" comment:"User info API endpoint"`
