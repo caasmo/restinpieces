@@ -60,7 +60,7 @@ func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) er
 		user.Email,
 		user.Password,
 		cfg.Jwt.VerificationEmailSecret,
-		cfg.Jwt.VerificationEmailTokenDuration,
+		cfg.Jwt.VerificationEmailTokenDuration.Duration,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create verification token: %w", err)

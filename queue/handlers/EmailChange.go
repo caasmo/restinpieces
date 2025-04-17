@@ -61,7 +61,7 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
 		payloadExtra.NewEmail,
 		user.Password,
 		cfg.Jwt.EmailChangeSecret,
-		cfg.Jwt.EmailChangeTokenDuration,
+		cfg.Jwt.EmailChangeTokenDuration.Duration,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create email change token: %w", err)

@@ -60,7 +60,7 @@ func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error 
 		user.Email,
 		user.Password,
 		cfg.Jwt.PasswordResetSecret,
-		cfg.Jwt.PasswordResetTokenDuration,
+		cfg.Jwt.PasswordResetTokenDuration.Duration,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create password reset token: %w", err)
