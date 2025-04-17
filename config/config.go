@@ -55,20 +55,19 @@ const (
 )
 
 type Config struct {
-	DBPath          string // Path to the main SQLite database file
-	PublicDir       string // Directory to serve static files from TODO
-	Source          string `toml:"-"` // [READONLY] Tracks config source - "file:<path>" or "db" (set internally, not loaded from config)
-	Jwt             Jwt
-	Scheduler       Scheduler
-	Server          Server
-	RateLimits      RateLimits
-	OAuth2Providers map[string]OAuth2Provider
-	Smtp            Smtp
-	Endpoints       Endpoints
-	// Proxy           Proxy // Removed Proxy config section
-	Acme        Acme        // ACME/Let's Encrypt settings
-	BlockIp     BlockIp     // Moved BlockIp config here
-	Maintenance Maintenance // Maintenance mode settings
+	DBPath          string            `toml:"db_path"`
+	PublicDir       string            `toml:"public_dir"`
+	Source          string            `toml:"-"` // [READONLY] Tracks config source - "file:<path>" or "db" (set internally, not loaded from config)
+	Jwt             Jwt               `toml:"jwt"`
+	Scheduler       Scheduler         `toml:"scheduler"`
+	Server          Server            `toml:"server"`
+	RateLimits      RateLimits        `toml:"rate_limits"`
+	OAuth2Providers map[string]OAuth2Provider `toml:"oauth2_providers"`
+	Smtp            Smtp              `toml:"smtp"`
+	Endpoints       Endpoints         `toml:"endpoints"`
+	Acme            Acme              `toml:"acme"`
+	BlockIp         BlockIp           `toml:"block_ip"`
+	Maintenance     Maintenance       `toml:"maintenance"`
 }
 
 // Duration is a wrapper around time.Duration that supports TOML unmarshalling
@@ -110,59 +109,25 @@ type Jwt struct {
 }
 
 type Scheduler struct {
-	// Interval controls how often the scheduler checks for new jobs.
-	// Should be set based on your job processing latency requirements - shorter
-	// intervals provide faster job processing but increase database load.
-	// Typical values range from 5 seconds to several minutes.
-	Interval Duration
-
-	// MaxJobsPerTick limits how many jobs are fetched from the database per schedule
-	// interval. This prevents overwhelming the system when there are many pending jobs.
-	// Set this based on your workers' processing capacity and job execution time.
-	// For example, if jobs average 500ms to process and you have 10 workers, a value
-	// of 20 would give a 2x buffer.
-	MaxJobsPerTick int
-
-	// ConcurrencyMultiplier determines how many concurrent workers are spawned per CPU core.
-	// For CPU-bound jobs, keep this low (1-2). For I/O-bound jobs, higher values (2-8)
-	// may improve throughput. Automatically scales with hardware resources.
-	ConcurrencyMultiplier int
+	Interval              Duration `toml:"interval"`
+	MaxJobsPerTick        int      `toml:"max_jobs_per_tick"`
+	ConcurrencyMultiplier int      `toml:"concurrency_multiplier"`
 }
 
 type Server struct {
-	// Addr is the HTTP server address to listen on (e.g. ":8080" or "app.example.com:8080")
-	Addr string
-
-	// ShutdownGracefulTimeout is the maximum time to wait for graceful shutdown
-	ShutdownGracefulTimeout Duration
-
-	// ReadTimeout is the maximum duration for reading the entire request
-	ReadTimeout Duration
-
-	// ReadHeaderTimeout is the maximum duration for reading request headers
-	ReadHeaderTimeout Duration
-
-	// WriteTimeout is the maximum duration before timing out writes of the response
-	WriteTimeout Duration
-
-	// IdleTimeout is the maximum amount of time to wait for the next request
-	IdleTimeout Duration
-
-	// ClientIpProxyHeader specifies which HTTP header to trust for client IP addresses
-	// when behind a proxy (e.g. "X-Forwarded-For", "X-Real-IP"). Empty means use
-	// the direct connection IP (r.RemoteAddr).
-	ClientIpProxyHeader string
-
-	// --- New TLS Fields ---
-	EnableTLS bool   // Default to false if not present
-	CertFile  string // Path to TLS certificate file (legacy) TODO remove
-	KeyFile   string // Path to TLS private key file (legacy)
-	CertData  string 
-	KeyData   string 
-
-	// that redirects requests to the main HTTPS server (if EnableTLS is true).
-	// If empty, no redirect server is started.
-	RedirectAddr string
+	Addr                   string   `toml:"addr"`
+	ShutdownGracefulTimeout Duration `toml:"shutdown_graceful_timeout"`
+	ReadTimeout            Duration `toml:"read_timeout"`
+	ReadHeaderTimeout      Duration `toml:"read_header_timeout"`
+	WriteTimeout           Duration `toml:"write_timeout"`
+	IdleTimeout            Duration `toml:"idle_timeout"`
+	ClientIpProxyHeader    string   `toml:"client_ip_proxy_header"`
+	EnableTLS              bool     `toml:"enable_tls"`
+	CertFile               string   `toml:"cert_file"`
+	KeyFile                string   `toml:"key_file"`
+	CertData               string   `toml:"cert_data"`
+	KeyData                string   `toml:"key_data"`
+	RedirectAddr           string   `toml:"redirect_addr"`
 }
 
 func (s *Server) BaseURL() string {
@@ -174,59 +139,51 @@ func (s *Server) BaseURL() string {
 }
 
 type RateLimits struct {
-	// PasswordResetCooldown specifies how long a user must wait between
-	// password reset requests to prevent abuse and email spam
-	PasswordResetCooldown Duration
-
-	// EmailVerificationCooldown specifies how long a user must wait between
-	// email verification requests to prevent abuse and email spam
-	EmailVerificationCooldown Duration
-
-	// EmailChangeCooldown specifies how long a user must wait between
-	// email change requests to prevent abuse and email spam
-	EmailChangeCooldown Duration
+	PasswordResetCooldown      Duration `toml:"password_reset_cooldown"`
+	EmailVerificationCooldown Duration `toml:"email_verification_cooldown"`
+	EmailChangeCooldown       Duration `toml:"email_change_cooldown"`
 }
 
 type OAuth2Provider struct {
-	Name         string
-	ClientID     string
-	ClientSecret string
-	DisplayName  string
-	RedirectURL  string
-	AuthURL      string
-	TokenURL     string
-	UserInfoURL  string
-	Scopes       []string
-	PKCE         bool
+	Name         string   `toml:"name"`
+	ClientID     string   `toml:"client_id"`
+	ClientSecret string   `toml:"client_secret"`
+	DisplayName  string   `toml:"display_name"`
+	RedirectURL  string   `toml:"redirect_url"`
+	AuthURL      string   `toml:"auth_url"`
+	TokenURL     string   `toml:"token_url"`
+	UserInfoURL  string   `toml:"user_info_url"`
+	Scopes       []string `toml:"scopes"`
+	PKCE         bool     `toml:"pkce"`
 }
 
 type Smtp struct {
-	Enabled     bool // Whether SMTP functionality is enabled
-	Host        string
-	Port        int
-	Username    string
-	Password    string
-	FromName    string // Sender name (e.g. "My App")
-	FromAddress string // Sender email address (e.g. "noreply@example.com")
-	LocalName   string // HELO/EHLO domain (empty defaults to "localhost")
-	AuthMethod  string // "plain", "login", "cram-md5", or "none"
-	UseTLS      bool   // Use explicit TLS
-	UseStartTLS bool   // Use STARTTLS
+	Enabled     bool   `toml:"enabled"`
+	Host        string `toml:"host"`
+	Port        int    `toml:"port"`
+	Username    string `toml:"username"`
+	Password    string `toml:"password"`
+	FromName    string `toml:"from_name"`
+	FromAddress string `toml:"from_address"`
+	LocalName   string `toml:"local_name"`
+	AuthMethod  string `toml:"auth_method"`
+	UseTLS      bool   `toml:"use_tls"`
+	UseStartTLS bool   `toml:"use_start_tls"`
 }
 
 type Endpoints struct {
-	RefreshAuth              string
-	RequestEmailVerification string
-	ConfirmEmailVerification string
-	ListEndpoints            string
-	AuthWithPassword         string
-	AuthWithOAuth2           string
-	RegisterWithPassword     string
-	ListOAuth2Providers      string
-	RequestPasswordReset     string
-	ConfirmPasswordReset     string
-	RequestEmailChange       string
-	ConfirmEmailChange       string
+	RefreshAuth              string `toml:"refresh_auth"`
+	RequestEmailVerification string `toml:"request_email_verification"`
+	ConfirmEmailVerification string `toml:"confirm_email_verification"`
+	ListEndpoints            string `toml:"list_endpoints"`
+	AuthWithPassword         string `toml:"auth_with_password"`
+	AuthWithOAuth2           string `toml:"auth_with_oauth2"`
+	RegisterWithPassword     string `toml:"register_with_password"`
+	ListOAuth2Providers      string `toml:"list_oauth2_providers"`
+	RequestPasswordReset     string `toml:"request_password_reset"`
+	ConfirmPasswordReset     string `toml:"confirm_password_reset"`
+	RequestEmailChange       string `toml:"request_email_change"`
+	ConfirmEmailChange       string `toml:"confirm_email_change"`
 }
 
 // Path extracts just the path portion from an endpoint string (removes method prefix)
@@ -253,34 +210,19 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 
 // Acme holds configuration for ACME (Let's Encrypt) certificate management.
 type Acme struct {
-	Enabled                 bool     // Set to true to enable automatic certificate management
-	Email                   string   // Email address for ACME account registration and notifications
-	Domains                 []string // List of domains to include in the certificate
-	DNSProvider             string   // DNS provider name (e.g., "cloudflare")
-	RenewalDaysBeforeExpiry int      // Renew certificate if it expires within this many days
-	CloudflareApiToken      string   // Cloudflare API Token (loaded from env)
-	CADirectoryURL          string   // ACME directory URL (e.g., Let's Encrypt staging or production)
-
-	// AcmePrivateKey is Primary: The private key is the fundamental identifier of the
-	// Acme account. The email is just contact information associated with it. You
-	// can even have multiple ACME accounts (each with its own unique private
-	// key) registered under the same email address.
-	//
-	// Treat the acmePrivateKey as a vital, long-lived secret. Generate it
-	// once, back it up securely, and provide it to your application via the
-	// environment variable. Losing it means you'll need to start the ACME
-	// registration process over with a new key. Generating a new key
-	// frequently will likely break the renewal process due to rate limiting.
-	//
-	// MUST be an ECDSA P-256 private key in PEM format.
-	// Generate using: openssl ecparam -name prime256v1 -genkey -noout -outform PEM
-	AcmePrivateKey string // ACME account private key PEM (ECDSA P-256, loaded from env)
+	Enabled                 bool     `toml:"enabled"`
+	Email                   string   `toml:"email"`
+	Domains                 []string `toml:"domains"`
+	DNSProvider             string   `toml:"dns_provider"`
+	RenewalDaysBeforeExpiry int      `toml:"renewal_days_before_expiry"`
+	CloudflareApiToken      string   `toml:"cloudflare_api_token"`
+	CADirectoryURL          string   `toml:"ca_directory_url"`
+	AcmePrivateKey          string   `toml:"acme_private_key"`
 }
 
 // BlockIp holds configuration specific to IP blocking.
 type BlockIp struct {
-	Enabled bool // Whether IP blocking is active
-	// Add other blocking-related settings here (e.g., duration, thresholds)
+	Enabled bool `toml:"enabled"`
 }
 
 // Maintenance holds configuration for the maintenance mode feature.
