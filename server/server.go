@@ -261,12 +261,9 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 			s.logger.Info("Server:", "tls_cert_source", "in-memory_data",
 				"cert_data_length", len(cfg.CertData),
 				"key_data_length", len(cfg.KeyData))
-		} else if cfg.CertFile != "" && cfg.KeyFile != "" {
-			s.logger.Info("Server:", "tls_cert_source", "files",
-				"cert_file", cfg.CertFile,
-				"key_file", cfg.KeyFile)
 		} else {
-			s.logger.Warn("Server:", "tls_source", "none_configured")
+			// This case should ideally be caught by validation if TLS is enabled
+			s.logger.Warn("Server:", "tls_source", "none_configured_or_invalid")
 		}
 	}
 
@@ -294,13 +291,9 @@ func createTLSConfig(cfg *config.Server) (*tls.Config, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to load TLS key pair from config data: %w", err)
 		}
-	} else if cfg.CertFile != "" && cfg.KeyFile != "" {
-		cert, err = tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load TLS key pair from files: %w", err)
-		}
 	} else {
-		return nil, fmt.Errorf("no valid TLS certificate configuration found")
+		// Validation should ensure CertData/KeyData are present if EnableTLS is true
+		return nil, fmt.Errorf("no valid TLS certificate data found in configuration")
 	}
 
 	// Create and return the TLS config with the loaded certificate
