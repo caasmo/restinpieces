@@ -72,7 +72,8 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 	}
 
 	if cfg.Acme.CloudflareApiToken == "" {
-		err := fmt.Errorf("cloudflare API token is missing. Set %s environment variable", config.EnvAcmeCloudflareApiToken)
+		// Validation should prevent this if acme.enabled and dns_provider="cloudflare"
+		err := fmt.Errorf("cloudflare API token is missing in the configuration (acme.cloudflare_api_token)")
 		h.logger.Error(err.Error())
 		return err // Configuration error
 	}
@@ -103,11 +104,8 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 	// --- Load and Parse ACME Account Private Key ---
 	acmePrivateKeyPEM := cfg.Acme.AcmePrivateKey
 	if acmePrivateKeyPEM == "" {
-		// Use the renamed environment variable constant
-		err := fmt.Errorf("ACME account private key is missing. Set %s environment variable", config.EnvAcmeLetsencryptPrivateKey)
-		h.logger.Error(err.Error())
-		// Use the renamed environment variable constant
-		err = fmt.Errorf("ACME account private key is missing. Set %s environment variable", config.EnvAcmeLetsencryptPrivateKey)
+		// Validation should prevent this if acme.enabled=true
+		err := fmt.Errorf("ACME account private key is missing in the configuration (acme.acme_private_key)")
 		h.logger.Error(err.Error())
 		return err // Configuration error
 	}
@@ -115,7 +113,7 @@ func (h *TLSCertRenewalHandler) Handle(ctx context.Context, job queue.Job) error
 	// Parse the PEM encoded key. We enforce ECDSA P-256.
 	acmePrivateKey, err := certcrypto.ParsePEMPrivateKey([]byte(acmePrivateKeyPEM))
 	if err != nil {
-		h.logger.Error("Failed to parse ACME account private key. Ensure it is a valid ECDSA P-256 key in PEM format.", "env_var", config.EnvAcmeLetsencryptPrivateKey, "error", err)
+		h.logger.Error("Failed to parse ACME account private key from config (acme.acme_private_key). Ensure it is a valid ECDSA P-256 key in PEM format.", "error", err)
 		return fmt.Errorf("failed to parse ACME account private key (expecting ECDSA P-256 PEM): %w", err)
 	}
 	// We don't need to check the type here anymore, but Lego might internally.
