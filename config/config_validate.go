@@ -11,7 +11,16 @@ func Validate(cfg *Config) error {
 	if err := validateServer(&cfg.Server); err != nil {
 		return fmt.Errorf("server config validation failed: %w", err)
 	}
-	// Add calls to other validation functions here later
+	if err := validateJwt(&cfg.Jwt); err != nil {
+		return fmt.Errorf("jwt config validation failed: %w", err)
+	}
+	if err := validateSmtp(&cfg.Smtp); err != nil {
+		return fmt.Errorf("smtp config validation failed: %w", err)
+	}
+	if err := validateAcme(&cfg.Acme); err != nil {
+		return fmt.Errorf("acme config validation failed: %w", err)
+	}
+	// Add more validation calls here as needed
 	return nil
 }
 
@@ -104,6 +113,66 @@ func validateServerTLS(server *Server) error {
 		return fmt.Errorf("server.key_data cannot be empty when TLS is enabled")
 	}
 
+	return nil
+}
+
+func validateJwt(jwt *Jwt) error {
+	if jwt.AuthSecret == "" {
+		return fmt.Errorf("jwt.auth_secret cannot be empty")
+	}
+	if jwt.VerificationEmailSecret == "" {
+		return fmt.Errorf("jwt.verification_email_secret cannot be empty")
+	}
+	if jwt.PasswordResetSecret == "" {
+		return fmt.Errorf("jwt.password_reset_secret cannot be empty")
+	}
+	if jwt.EmailChangeSecret == "" {
+		return fmt.Errorf("jwt.email_change_secret cannot be empty")
+	}
+	return nil
+}
+
+func validateSmtp(smtp *Smtp) error {
+	if !smtp.Enabled {
+		return nil // No validation needed if SMTP is disabled
+	}
+	if smtp.Host == "" {
+		return fmt.Errorf("smtp.host cannot be empty when enabled")
+	}
+	if smtp.Port == 0 {
+		return fmt.Errorf("smtp.port cannot be 0 when enabled")
+	}
+	if smtp.FromAddress == "" {
+		return fmt.Errorf("smtp.from_address cannot be empty when enabled")
+	}
+	if smtp.Username == "" {
+		return fmt.Errorf("smtp.username cannot be empty when enabled")
+	}
+	if smtp.Password == "" {
+		return fmt.Errorf("smtp.password cannot be empty when enabled")
+	}
+	return nil
+}
+
+func validateAcme(acme *Acme) error {
+	if !acme.Enabled {
+		return nil // No validation needed if ACME is disabled
+	}
+	if acme.Email == "" {
+		return fmt.Errorf("acme.email cannot be empty when enabled")
+	}
+	if len(acme.Domains) == 0 {
+		return fmt.Errorf("acme.domains cannot be empty when enabled")
+	}
+	if acme.DNSProvider == "" {
+		return fmt.Errorf("acme.dns_provider cannot be empty when enabled")
+	}
+	if acme.DNSProvider == "cloudflare" && acme.CloudflareApiToken == "" {
+		return fmt.Errorf("acme.cloudflare_api_token cannot be empty when dns_provider is 'cloudflare'")
+	}
+	if acme.AcmePrivateKey == "" {
+		return fmt.Errorf("acme.acme_private_key cannot be empty when enabled")
+	}
 	return nil
 }
 
