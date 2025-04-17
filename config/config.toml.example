@@ -7,33 +7,6 @@ db_path = "app.db"
 # These assets can be embedded in the binary or served from the filesystem.
 public_dir = "static/dist"
 
-
-# --- JWT Settings ---
-[jwt]
-  # Duration for which standard authentication tokens are valid.
-  auth_token_duration = "45m"
-
-  # Duration for which email verification tokens are valid.
-  verification_email_token_duration = "24h"
-
-  # Duration for which password reset tokens are valid.
-  password_reset_token_duration = "1h"
-
-  # Duration for which email change confirmation tokens are valid.
-  email_change_token_duration = "1h"
-
-  # AuthSecret: Set via JWT_AUTH_SECRET environment variable. DO NOT STORE HERE unless absolutely necessary for local dev.
-  auth_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
-
-  # VerificationEmailSecret: Set via JWT_VERIFICATION_EMAIL_SECRET environment variable. DO NOT STORE HERE.
-  verification_email_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
-
-  # PasswordResetSecret: Set via JWT_PASSWORD_RESET_SECRET environment variable. DO NOT STORE HERE.
-  password_reset_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
-
-  # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable. DO NOT STORE HERE.
-  email_change_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
-
 # --- Server Settings ---
 [server]
   # Network address and port the HTTP server listens on.
@@ -72,6 +45,31 @@ public_dir = "static/dist"
   # Only used when enable_tls is true
   redirect_addr = ""
 
+# --- JWT Settings ---
+[jwt]
+  # Duration for which standard authentication tokens are valid.
+  auth_token_duration = "45m"
+
+  # Duration for which email verification tokens are valid.
+  verification_email_token_duration = "24h"
+
+  # Duration for which password reset tokens are valid.
+  password_reset_token_duration = "1h"
+
+  # Duration for which email change confirmation tokens are valid.
+  email_change_token_duration = "1h"
+
+  # AuthSecret: Set via JWT_AUTH_SECRET environment variable. DO NOT STORE HERE unless absolutely necessary for local dev.
+  auth_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+
+  # VerificationEmailSecret: Set via JWT_VERIFICATION_EMAIL_SECRET environment variable. DO NOT STORE HERE.
+  verification_email_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+
+  # PasswordResetSecret: Set via JWT_PASSWORD_RESET_SECRET environment variable. DO NOT STORE HERE.
+  password_reset_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+
+  # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable. DO NOT STORE HERE.
+  email_change_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
 # --- IP Blocking Settings ---
 # Settings related to automatic IP address blocking based on request frequency.
