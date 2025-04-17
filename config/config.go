@@ -149,7 +149,7 @@ type OAuth2Provider struct {
 // If RedirectURLPath is set, it combines with the server's base URL.
 // Otherwise falls back to RedirectURL if set.
 // Returns empty string if neither is configured.
-func (p *OAuth2Provider) RedirectURL(server *Server) string {
+func (p *OAuth2Provider) RedirectUrl(server *Server) string {
 	if p.RedirectURLPath != "" {
 		return server.BaseURL() + p.RedirectURLPath
 	}
