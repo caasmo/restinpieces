@@ -131,7 +131,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// At this point we can say the user has registered from the point of the provider adn the user.
+	// At this point we can say the user has registered from the point of the provider and the user.
 	// - if the user exists and have ExternalAuth oauth2, we do not need to
 	//   create: the user registered before with this or another auth provider
 	// - if the user exists and have ExternalAuth "", the user has already register with another method, like password.
