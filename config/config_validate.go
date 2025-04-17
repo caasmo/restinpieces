@@ -29,7 +29,7 @@ func Validate(cfg *Config) error {
 func validateOAuth2Providers(providers map[string]OAuth2Provider) error {
 	for name, provider := range providers {
 		if provider.RedirectURL == "" && provider.RedirectURLPath == "" {
-			return fmt.Errorf("oauth2 provider '%s' must have either redirect_url or redirect_url_path configured", name)
+			return fmt.Errorf("oauth2 provider '%s' must have either RedirectURL or RedirectURLPath configured", name)
 		}
 	}
 	return nil
