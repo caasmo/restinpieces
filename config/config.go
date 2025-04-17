@@ -112,8 +112,6 @@ type Server struct {
 	IdleTimeout            Duration `toml:"idle_timeout" comment:"Max time for idle keep-alive connections"`
 	ClientIpProxyHeader    string   `toml:"client_ip_proxy_header" comment:"Header to trust for client IP (e.g. 'X-Forwarded-For')"`
 	EnableTLS              bool     `toml:"enable_tls" comment:"Enable HTTPS/TLS"`
-	CertFile               string   `toml:"cert_file" comment:"Path to TLS certificate file"`
-	KeyFile                string   `toml:"key_file" comment:"Path to TLS private key file"`
 	CertData               string   `toml:"cert_data" comment:"PEM-encoded TLS certificate (alternative to file)"`
 	KeyData                string   `toml:"key_data" comment:"PEM-encoded TLS private key (alternative to file)"`
 	RedirectAddr           string   `toml:"redirect_addr" comment:"HTTP->HTTPS redirect address (e.g. ':80')"`

@@ -35,12 +35,6 @@ public_dir = "static/dist"
   # Enable HTTPS/TLS for secure connections
   enable_tls = false
 
-  # Path to TLS certificate file (PEM format)
-  cert_file = ""
-
-  # Path to TLS private key file (PEM format)
-  key_file = ""
-
   # PEM-encoded TLS certificate data (alternative to cert_file)
   cert_data = ""
 
