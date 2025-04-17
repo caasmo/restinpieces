@@ -1,6 +1,5 @@
 ### TODOs
 
-- bug oauth2 redirect
 - sdk visibility, own route
 - move router httprouter to repo
 - renew-jtw-secrets like create-app, creates a new config
@@ -15,14 +14,12 @@
     - or better AddJobHandler()
         - server has executor
             - executor has a Register()
-- litestream is a addon, it has own config structs.
-    - it shoudl bea ble to use age key and load in db.
-    - db config has types.
 - start server dbfile consistence
 - acme is a scheduler job. remove to own repo
 - disable standard routes
 - is a framework, clear workflow  -> examples repo. od use of the features
 - nocache? what about BlockIp.
+- test litestream
 - router: create router.Chains type
 - good enough release
     - litestream file or/and s3 
@@ -131,6 +128,10 @@
 
 ### done
 
+- litestream is a addon, it has own config structs.
+    - it shoudl bea ble to use age key and load in db.
+    - db config has types.
+- bug oauth2 redirect
 - unset age key file contents 
 - age toml encript?    
     - changes is, 
