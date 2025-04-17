@@ -17,14 +17,14 @@ const oauth2TokenExchangeTimeout = 10 * time.Second
 
 // OAuth2ProviderInfo contains the provider details needed for client-side OAuth2 flow
 type OAuth2ProviderInfo struct {
-	Name                string `json:"name"`
-	DisplayName         string `json:"displayName"`
-	State               string `json:"state"`
-	AuthURL             string `json:"authURL"`
-	RedirectURL         string `json:"redirectURL"`
-	CodeVerifier        string `json:"codeVerifier,omitempty"`
-	CodeChallenge       string `json:"codeChallenge,omitempty"`
-	CodeChallengeMethod string `json:"codeChallengeMethod,omitempty"`
+	Name                string 
+	DisplayName         string 
+	State               string 
+	AuthURL             string 
+	RedirectURL         string 
+	CodeVerifier        string 
+	CodeChallenge       string 
+	CodeChallengeMethod string 
 }
 
 // OAuth2ProviderListData wraps the list of providers for standardized response
@@ -232,13 +232,13 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 
 		a.Logger().Debug("OAuth2 fields",
 			"provider", name,
-			"redirectURI", provider.RedirectURL)
+			"redirectURI", provider.RedirectUrl())
 
 		state := crypto.Oauth2State()
 		oauth2Config := oauth2.Config{
 			ClientID:     provider.ClientID,
 			ClientSecret: provider.ClientSecret,
-			RedirectURL:  provider.RedirectURL,
+			RedirectURL:  provider.RedirectUrl(),
 			Scopes:       provider.Scopes,
 			Endpoint: oauth2.Endpoint{
 				AuthURL:  provider.AuthURL,
@@ -251,7 +251,7 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 			Name:        name,
 			DisplayName: provider.DisplayName,
 			State:       state,
-			RedirectURL: provider.RedirectURL,
+			RedirectURL: provider.RedirectUrl(),
 		}
 
 		// Handle PKCE if enabled
@@ -286,4 +286,15 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 		Data: OAuth2ProviderListData{Providers: providers},
 	}
 	WriteJsonWithData(w, response)
+}
+
+// RedirectURL returns the complete redirect URL to use for this provider.
+// If RedirectURLPath is set, it combines with the server's base URL.
+// Otherwise falls back to RedirectURL if set.
+// Returns empty string if neither is configured.
+func redirectUrl(conf *Config) string {
+	if p.RedirectURLPath != "" {
+		return server.BaseURL() + p.RedirectURLPath
+	}
+	return p.RedirectURL
 }
