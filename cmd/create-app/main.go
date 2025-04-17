@@ -84,81 +84,113 @@ func (ac *AppCreator) RunMigrations() error {
 }
 
 func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
+	// Values based on config.toml.example
 	cfg := &config.Config{
-		DBPath:    "app.db", // Default, but will be overridden by flag in main app
-		PublicDir: "public",
+		DBPath:    "app.db",
+		PublicDir: "static/dist",
 		Jwt: config.Jwt{
-			AuthSecret:                     crypto.RandomString(32, crypto.AlphanumericAlphabet),
-			AuthTokenDuration:              config.Duration{Duration: 24 * time.Hour},
-			VerificationEmailSecret:        crypto.RandomString(32, crypto.AlphanumericAlphabet),
-			VerificationEmailTokenDuration: config.Duration{Duration: 1 * time.Hour},
-			PasswordResetSecret:            crypto.RandomString(32, crypto.AlphanumericAlphabet),
+			AuthSecret:                     crypto.RandomString(32, crypto.AlphanumericAlphabet), // Generated
+			AuthTokenDuration:              config.Duration{Duration: 45 * time.Minute},
+			VerificationEmailSecret:        crypto.RandomString(32, crypto.AlphanumericAlphabet), // Generated
+			VerificationEmailTokenDuration: config.Duration{Duration: 24 * time.Hour},
+			PasswordResetSecret:            crypto.RandomString(32, crypto.AlphanumericAlphabet), // Generated
 			PasswordResetTokenDuration:     config.Duration{Duration: 1 * time.Hour},
-			EmailChangeSecret:              crypto.RandomString(32, crypto.AlphanumericAlphabet),
+			EmailChangeSecret:              crypto.RandomString(32, crypto.AlphanumericAlphabet), // Generated
 			EmailChangeTokenDuration:       config.Duration{Duration: 1 * time.Hour},
 		},
 		Scheduler: config.Scheduler{
-			Interval:              config.Duration{Duration: 10 * time.Second},
+			Interval:              config.Duration{Duration: 60 * time.Second},
 			MaxJobsPerTick:        10,
-			ConcurrencyMultiplier: 4,
+			ConcurrencyMultiplier: 2,
 		},
 		Server: config.Server{
 			Addr:                    ":8080",
-			ShutdownGracefulTimeout: config.Duration{Duration: 30 * time.Second},
-			ReadTimeout:             config.Duration{Duration: 10 * time.Second},
-			ReadHeaderTimeout:       config.Duration{Duration: 5 * time.Second},
-			WriteTimeout:            config.Duration{Duration: 10 * time.Second},
-			IdleTimeout:             config.Duration{Duration: 120 * time.Second},
-			ClientIpProxyHeader:     "", // Default: trust direct connection IP
+			ShutdownGracefulTimeout: config.Duration{Duration: 15 * time.Second},
+			ReadTimeout:             config.Duration{Duration: 2 * time.Second},
+			ReadHeaderTimeout:       config.Duration{Duration: 2 * time.Second},
+			WriteTimeout:            config.Duration{Duration: 3 * time.Second},
+			IdleTimeout:             config.Duration{Duration: 1 * time.Minute},
+			ClientIpProxyHeader:     "",
 			EnableTLS:               false,
-			RedirectAddr:            "", // No redirect by default
+			CertFile:                "",
+			KeyFile:                 "",
+			CertData:                "",
+			KeyData:                 "",
+			RedirectAddr:            "",
 		},
 		RateLimits: config.RateLimits{
-			PasswordResetCooldown:      config.Duration{Duration: 5 * time.Minute},
-			EmailVerificationCooldown: config.Duration{Duration: 5 * time.Minute},
-			EmailChangeCooldown:       config.Duration{Duration: 5 * time.Minute},
+			PasswordResetCooldown:      config.Duration{Duration: 2 * time.Hour},
+			EmailVerificationCooldown: config.Duration{Duration: 1 * time.Hour},
+			EmailChangeCooldown:       config.Duration{Duration: 1 * time.Hour},
 		},
 		OAuth2Providers: map[string]config.OAuth2Provider{
-			// Add default provider structures if needed, secrets will be loaded later
+			"google": {
+				Name:         "google",
+				DisplayName:  "Google",
+				RedirectURL:  "", // Dynamic
+				AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
+				TokenURL:     "https://oauth2.googleapis.com/token",
+				UserInfoURL:  "https://www.googleapis.com/oauth2/v3/userinfo",
+				Scopes:       []string{"https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"},
+				PKCE:         true,
+				ClientID:     "", // Must be set via env
+				ClientSecret: "", // Must be set via env
+			},
+			"github": {
+				Name:         "github",
+				DisplayName:  "GitHub",
+				RedirectURL:  "", // Dynamic
+				AuthURL:      "https://github.com/login/oauth/authorize",
+				TokenURL:     "https://github.com/login/oauth/access_token",
+				UserInfoURL:  "https://api.github.com/user",
+				Scopes:       []string{"read:user", "user:email"},
+				PKCE:         true,
+				ClientID:     "", // Must be set via env
+				ClientSecret: "", // Must be set via env
+			},
 		},
 		Smtp: config.Smtp{
-			Enabled:     false, // Disabled by default
-			Host:        "smtp.example.com",
-			Port:        587,
+			Enabled:     false,
+			Host:        "smtp.gmail.com", // Example
+			Port:        587,              // Example
 			FromName:    "My App",
-			FromAddress: "noreply@example.com",
-			LocalName:   "localhost",
+			FromAddress: "", // Must be set via env
+			LocalName:   "", // Default to localhost if empty
 			AuthMethod:  "plain",
+			UseTLS:      false,
 			UseStartTLS: true,
+			Username:    "", // Must be set via env
+			Password:    "", // Must be set via env
 		},
 		Endpoints: config.Endpoints{
-			RefreshAuth:              "POST /api/auth/refresh",
-			RequestEmailVerification: "POST /api/auth/request-verification",
-			ConfirmEmailVerification: "GET /api/auth/confirm-verification",
-			ListEndpoints:            "GET /api/endpoints",
-			AuthWithPassword:         "POST /api/auth/password",
-			AuthWithOAuth2:           "GET /api/auth/oauth2/:provider", // Note: :provider is handled by router
-			RegisterWithPassword:     "POST /api/auth/register",
-			ListOAuth2Providers:      "GET /api/auth/oauth2/providers",
-			RequestPasswordReset:     "POST /api/auth/request-reset",
-			ConfirmPasswordReset:     "POST /api/auth/confirm-reset",
-			RequestEmailChange:       "POST /api/auth/request-email-change",
-			ConfirmEmailChange:       "POST /api/auth/confirm-email-change",
+			RefreshAuth:              "POST /api/refresh-auth",
+			RequestEmailVerification: "POST /api/request-email-verification",
+			ConfirmEmailVerification: "POST /api/confirm-email-verification", // Corrected based on example
+			ListEndpoints:            "GET /api/list-endpoints",
+			AuthWithPassword:         "POST /api/auth-with-password",
+			AuthWithOAuth2:           "POST /api/auth-with-oauth2", // Corrected based on example
+			RegisterWithPassword:     "POST /api/register-with-password",
+			ListOAuth2Providers:      "GET /api/list-oauth2-providers",
+			RequestPasswordReset:     "POST /api/request-password-reset",
+			ConfirmPasswordReset:     "POST /api/confirm-password-reset",
+			RequestEmailChange:       "POST /api/request-email-change",
+			ConfirmEmailChange:       "POST /api/confirm-email-change",
 		},
 		Acme: config.Acme{
-			Enabled:                 false, // Disabled by default
-			Email:                   "admin@example.com",
-			Domains:                 []string{"example.com"},
-			DNSProvider:             "cloudflare",
+			Enabled:                 false,
+			Email:                   "your-email@example.com", // Example
+			Domains:                 []string{"yourdomain.com", "www.yourdomain.com"}, // Example
+			DNSProvider:             "cloudflare", // Example
 			RenewalDaysBeforeExpiry: 30,
-			CADirectoryURL:          "https://acme-v02.api.letsencrypt.org/directory", // Production LE
-			// CADirectoryURL: "https://acme-staging-v02.api.letsencrypt.org/directory", // Staging LE
+			CADirectoryURL:          "https://acme-staging-v02.api.letsencrypt.org/directory", // Staging default
+			CloudflareApiToken:      "", // Must be set via env
+			AcmePrivateKey:          "", // Must be set via env
 		},
 		BlockIp: config.BlockIp{
-			Enabled: false, // Disabled by default
+			Enabled: true, // Default from example
 		},
 		Maintenance: config.Maintenance{
-			Enabled:   false,
+			Enabled:   true, // Default from example
 			Activated: false,
 		},
 	}
