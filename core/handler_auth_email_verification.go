@@ -61,7 +61,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 
 	// Calculate cooldown bucket for rate limiting
 	cfg := a.Config() // Get the current config
-	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.EmailVerificationCooldown, time.Now())
+	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.EmailVerificationCooldown.Duration, time.Now())
 
 	// Create queue job with cooldown bucket
 	payload, _ := json.Marshal(queue.PayloadEmailVerification{

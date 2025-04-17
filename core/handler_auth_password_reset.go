@@ -76,7 +76,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 
 	// Calculate cooldown bucket for rate limiting
 	cfg := a.Config() // Get the current config
-	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.PasswordResetCooldown, time.Now())
+	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.PasswordResetCooldown.Duration, time.Now())
 
 	// Create queue job with cooldown bucket. Second insertion in same bucket
 	// will fail because unique
