@@ -119,7 +119,7 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 			RedirectAddr:            "",
 		},
 		RateLimits: config.RateLimits{
-			PasswordResetCooldown:      config.Duration{Duration: 2 * time.Hour},
+			PasswordResetCooldown:     config.Duration{Duration: 2 * time.Hour},
 			EmailVerificationCooldown: config.Duration{Duration: 1 * time.Hour},
 			EmailChangeCooldown:       config.Duration{Duration: 1 * time.Hour},
 		},
@@ -178,13 +178,13 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 		},
 		Acme: config.Acme{
 			Enabled:                 false,
-			Email:                   "your-email@example.com", // Example
+			Email:                   "your-email@example.com",                         // Example
 			Domains:                 []string{"yourdomain.com", "www.yourdomain.com"}, // Example
-			DNSProvider:             "cloudflare", // Example
+			DNSProvider:             "cloudflare",                                     // Example
 			RenewalDaysBeforeExpiry: 30,
 			CADirectoryURL:          "https://acme-staging-v02.api.letsencrypt.org/directory", // Staging default
-			CloudflareApiToken:      "", // Must be set via env
-			AcmePrivateKey:          "", // Must be set via env
+			CloudflareApiToken:      "",                                                       // Must be set via env
+			AcmePrivateKey:          "",                                                       // Must be set via env
 		},
 		BlockIp: config.BlockIp{
 			Enabled: true, // Default from example

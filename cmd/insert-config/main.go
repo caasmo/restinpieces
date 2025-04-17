@@ -91,7 +91,7 @@ func (ci *ConfigInserter) InsertConfig(tomlPath, ageIdentityPath string) error {
 		recipient = id.Recipient()
 	default:
 		// For SSH identities, we can't directly get a recipient
-		ci.logger.Error("unsupported age identity type - must be X25519", 
+		ci.logger.Error("unsupported age identity type - must be X25519",
 			"path", ageIdentityPath,
 			"type", fmt.Sprintf("%T", identity))
 		return fmt.Errorf("unsupported age identity type '%T' - must be X25519", identity)

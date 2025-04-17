@@ -45,21 +45,20 @@ const (
 )
 
 type Config struct {
-	DBPath          string            `toml:"db_path" comment:"Path to SQLite database file"`
-	PublicDir       string            `toml:"public_dir" comment:"Directory containing static web assets"`
-	Source          string            `toml:"-" comment:"[READONLY] Source of config - 'file:<path>' or 'db'"`
-	Jwt             Jwt               `toml:"jwt" comment:"JSON Web Token settings"`
-	Scheduler       Scheduler         `toml:"scheduler" comment:"Background job scheduler settings"`
-	Server          Server            `toml:"server" comment:"HTTP server configuration"`
-	RateLimits      RateLimits        `toml:"rate_limits" comment:"Rate limiting settings"`
+	DBPath          string                    `toml:"db_path" comment:"Path to SQLite database file"`
+	PublicDir       string                    `toml:"public_dir" comment:"Directory containing static web assets"`
+	Source          string                    `toml:"-" comment:"[READONLY] Source of config - 'file:<path>' or 'db'"`
+	Jwt             Jwt                       `toml:"jwt" comment:"JSON Web Token settings"`
+	Scheduler       Scheduler                 `toml:"scheduler" comment:"Background job scheduler settings"`
+	Server          Server                    `toml:"server" comment:"HTTP server configuration"`
+	RateLimits      RateLimits                `toml:"rate_limits" comment:"Rate limiting settings"`
 	OAuth2Providers map[string]OAuth2Provider `toml:"oauth2_providers" comment:"OAuth2 provider configurations"`
-	Smtp            Smtp              `toml:"smtp" comment:"SMTP email settings"`
-	Endpoints       Endpoints         `toml:"endpoints" comment:"API endpoint paths"`
-	Acme            Acme              `toml:"acme" comment:"ACME/Let's Encrypt certificate settings"`
-	BlockIp         BlockIp           `toml:"block_ip" comment:"IP blocking settings"`
-	Maintenance     Maintenance       `toml:"maintenance" comment:"Maintenance mode settings"`
+	Smtp            Smtp                      `toml:"smtp" comment:"SMTP email settings"`
+	Endpoints       Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
+	Acme            Acme                      `toml:"acme" comment:"ACME/Let's Encrypt certificate settings"`
+	BlockIp         BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
+	Maintenance     Maintenance               `toml:"maintenance" comment:"Maintenance mode settings"`
 }
-
 
 // Duration is a wrapper around time.Duration that supports TOML unmarshalling
 // from a string value (e.g., "3h", "15m", "1h30m").
@@ -105,17 +104,17 @@ type Scheduler struct {
 }
 
 type Server struct {
-	Addr                   string   `toml:"addr" comment:"HTTP listen address (e.g. ':8080')"`
+	Addr                    string   `toml:"addr" comment:"HTTP listen address (e.g. ':8080')"`
 	ShutdownGracefulTimeout Duration `toml:"shutdown_graceful_timeout" comment:"Max time to wait for graceful shutdown"`
-	ReadTimeout            Duration `toml:"read_timeout" comment:"Max time to read full request"`
-	ReadHeaderTimeout      Duration `toml:"read_header_timeout" comment:"Max time to read request headers"`
-	WriteTimeout           Duration `toml:"write_timeout" comment:"Max time to write response"`
-	IdleTimeout            Duration `toml:"idle_timeout" comment:"Max time for idle keep-alive connections"`
-	ClientIpProxyHeader    string   `toml:"client_ip_proxy_header" comment:"Header to trust for client IP (e.g. 'X-Forwarded-For')"`
-	EnableTLS              bool     `toml:"enable_tls" comment:"Enable HTTPS/TLS"`
-	CertData               string   `toml:"cert_data" comment:"PEM-encoded TLS certificate (alternative to file)"`
-	KeyData                string   `toml:"key_data" comment:"PEM-encoded TLS private key (alternative to file)"`
-	RedirectAddr           string   `toml:"redirect_addr" comment:"HTTP->HTTPS redirect address (e.g. ':80')"`
+	ReadTimeout             Duration `toml:"read_timeout" comment:"Max time to read full request"`
+	ReadHeaderTimeout       Duration `toml:"read_header_timeout" comment:"Max time to read request headers"`
+	WriteTimeout            Duration `toml:"write_timeout" comment:"Max time to write response"`
+	IdleTimeout             Duration `toml:"idle_timeout" comment:"Max time for idle keep-alive connections"`
+	ClientIpProxyHeader     string   `toml:"client_ip_proxy_header" comment:"Header to trust for client IP (e.g. 'X-Forwarded-For')"`
+	EnableTLS               bool     `toml:"enable_tls" comment:"Enable HTTPS/TLS"`
+	CertData                string   `toml:"cert_data" comment:"PEM-encoded TLS certificate (alternative to file)"`
+	KeyData                 string   `toml:"key_data" comment:"PEM-encoded TLS private key (alternative to file)"`
+	RedirectAddr            string   `toml:"redirect_addr" comment:"HTTP->HTTPS redirect address (e.g. ':80')"`
 }
 
 func (s *Server) BaseURL() string {
@@ -127,23 +126,23 @@ func (s *Server) BaseURL() string {
 }
 
 type RateLimits struct {
-	PasswordResetCooldown      Duration `toml:"password_reset_cooldown" comment:"Min time between password reset requests"`
+	PasswordResetCooldown     Duration `toml:"password_reset_cooldown" comment:"Min time between password reset requests"`
 	EmailVerificationCooldown Duration `toml:"email_verification_cooldown" comment:"Min time between email verification requests"`
 	EmailChangeCooldown       Duration `toml:"email_change_cooldown" comment:"Min time between email change requests"`
 }
 
 type OAuth2Provider struct {
-	Name         string   `toml:"name" comment:"Provider identifier (e.g. 'google')"`
-	ClientID     string   `toml:"client_id" comment:"OAuth2 client ID (set via env)"`
-	ClientSecret string   `toml:"client_secret" comment:"OAuth2 client secret (set via env)"`
-	DisplayName  string   `toml:"display_name" comment:"User-facing provider name"`
-	RedirectURL  string   `toml:"redirect_url" comment:"Callback URL (leave empty for dynamic)"`
-	RedirectURLPath string `toml:"redirect_url_path" comment:"Callback URL path (e.g. '/oauth2/callback') - uses server host/port"`
-	AuthURL      string   `toml:"auth_url" comment:"OAuth2 authorization endpoint"`
-	TokenURL     string   `toml:"token_url" comment:"OAuth2 token endpoint"`
-	UserInfoURL  string   `toml:"user_info_url" comment:"User info API endpoint"`
-	Scopes       []string `toml:"scopes" comment:"Requested OAuth2 scopes"`
-	PKCE         bool     `toml:"pkce" comment:"Enable PKCE flow"`
+	Name            string   `toml:"name" comment:"Provider identifier (e.g. 'google')"`
+	ClientID        string   `toml:"client_id" comment:"OAuth2 client ID (set via env)"`
+	ClientSecret    string   `toml:"client_secret" comment:"OAuth2 client secret (set via env)"`
+	DisplayName     string   `toml:"display_name" comment:"User-facing provider name"`
+	RedirectURL     string   `toml:"redirect_url" comment:"Callback URL (leave empty for dynamic)"`
+	RedirectURLPath string   `toml:"redirect_url_path" comment:"Callback URL path (e.g. '/oauth2/callback') - uses server host/port"`
+	AuthURL         string   `toml:"auth_url" comment:"OAuth2 authorization endpoint"`
+	TokenURL        string   `toml:"token_url" comment:"OAuth2 token endpoint"`
+	UserInfoURL     string   `toml:"user_info_url" comment:"User info API endpoint"`
+	Scopes          []string `toml:"scopes" comment:"Requested OAuth2 scopes"`
+	PKCE            bool     `toml:"pkce" comment:"Enable PKCE flow"`
 }
 
 type Smtp struct {

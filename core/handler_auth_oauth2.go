@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/crypto"
 	oauth2provider "github.com/caasmo/restinpieces/oauth2"
 	"golang.org/x/oauth2"
 )
@@ -231,7 +231,7 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 	cfg := a.Config() // Get the current config
 	for name, provider := range cfg.OAuth2Providers {
 
-        rUrl := redirectUrl(cfg.Server, provider)
+		rUrl := redirectUrl(cfg.Server, provider)
 		a.Logger().Debug("OAuth2 fields",
 			"provider", name,
 			"redirectURI", rUrl)

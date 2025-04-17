@@ -108,8 +108,8 @@ func (cd *ConfigDumper) GetLatestEncryptedConfig() ([]byte, error) {
 
 func main() {
 	var (
-		outputFile   string
-		ageKeyPath   string
+		outputFile string
+		ageKeyPath string
 	)
 
 	flag.StringVar(&outputFile, "output", "", "output TOML file path")
