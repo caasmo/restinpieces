@@ -97,15 +97,14 @@ func (d Duration) MarshalText() ([]byte, error) {
 }
 
 type Jwt struct {
-	AuthSecret                     string
-	AuthTokenDuration              Duration
-	VerificationEmailSecret        string
-	VerificationEmailTokenDuration Duration
-	PasswordResetSecret            string
-	PasswordResetTokenDuration     Duration
-	EmailChangeSecret              string
-	EmailChangeTokenDuration       Duration 
-
+	AuthSecret                     string   `toml:"auth_secret"`
+	AuthTokenDuration              Duration `toml:"auth_token_duration"`
+	VerificationEmailSecret        string   `toml:"verification_email_secret"`
+	VerificationEmailTokenDuration Duration `toml:"verification_email_token_duration"`
+	PasswordResetSecret            string   `toml:"password_reset_secret"`
+	PasswordResetTokenDuration     Duration `toml:"password_reset_token_duration"`
+	EmailChangeSecret              string   `toml:"email_change_secret"`
+	EmailChangeTokenDuration       Duration `toml:"email_change_token_duration"`
 }
 
 type Scheduler struct {
