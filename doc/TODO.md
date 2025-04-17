@@ -1,6 +1,13 @@
 ### TODOs
 
 - sdk visibility, own route
+- move router httprouter to repo
+- create-app shoudl create age key.
+- user can add jobs, we want to get rid of acme dependencies
+    - acme renewal does not belong in main repo 
+    - we can return the scheduler
+    - remember the handler of the user may use app db or other things
+    - a property of the server
 - litestream is a addon, it has own config structs.
     - it shoudl bea ble to use age key and load in db.
     - db config has types.

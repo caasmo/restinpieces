@@ -8,6 +8,7 @@ import (
 )
 
 // JobExecutor defines the interface for executing jobs
+// TODO overkill
 type JobExecutor interface {
 	Execute(ctx context.Context, job queue.Job) error
 }
