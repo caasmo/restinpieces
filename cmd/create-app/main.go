@@ -252,10 +252,10 @@ func (ac *AppCreator) InsertConfig(encryptedConfig []byte) error {
 
 func main() {
 	dbPathFlag := flag.String("db", "", "Path to the SQLite database file to create (required)")
-	ageKeyPathFlag := flag.String("age-key", "", "Path to the age public key file (recipient) for encryption (required)")
+	ageKeyPathFlag := flag.String("age-key", "", "Path to the age identity (private key) file for encryption (required)") // Updated description
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s -db <database-path> -age-key <public-key-path>\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s -db <database-path> -age-key <identity-file-path>\n", os.Args[0]) // Updated usage
 		fmt.Fprintf(os.Stderr, "Creates a new SQLite database with an initial, encrypted configuration.\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
