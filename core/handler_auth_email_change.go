@@ -65,7 +65,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	cfg := a.Config() // Get the current config
 	payload := queue.PayloadEmailChange{
 		UserID:         user.ID,
-		CooldownBucket: queue.CoolDownBucket(cfg.RateLimits.EmailChangeCooldown, time.Now()),
+		CooldownBucket: queue.CoolDownBucket(cfg.RateLimits.EmailChangeCooldown.Duration, time.Now()),
 	}
 
 	payloadExtra := queue.PayloadEmailChangeExtra{
