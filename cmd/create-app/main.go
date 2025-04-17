@@ -197,24 +197,41 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 	return cfg, nil
 }
 
-func (ac *AppCreator) encryptData(data []byte, agePublicKeyPath string) ([]byte, error) {
-	keyContent, err := os.ReadFile(agePublicKeyPath)
+// encryptData encrypts data using the public key derived from the provided age identity file.
+func (ac *AppCreator) encryptData(data []byte, ageIdentityPath string) ([]byte, error) {
+	// 1. Read the identity file
+	keyContent, err := os.ReadFile(ageIdentityPath)
 	if err != nil {
-		ac.logger.Error("failed to read age public key file", "path", agePublicKeyPath, "error", err)
-		return nil, fmt.Errorf("failed to read age public key file '%s': %w", agePublicKeyPath, err)
+		ac.logger.Error("failed to read age identity file", "path", ageIdentityPath, "error", err)
+		return nil, fmt.Errorf("failed to read age identity file '%s': %w", ageIdentityPath, err)
 	}
 
-	recipients, err := age.ParseRecipients(bytes.NewReader(keyContent))
+	// 2. Parse identities (private keys)
+	identities, err := age.ParseIdentities(bytes.NewReader(keyContent))
 	if err != nil {
-		ac.logger.Error("failed to parse age recipients (public key)", "path", agePublicKeyPath, "error", err)
-		return nil, fmt.Errorf("failed to parse age recipients from '%s': %w", agePublicKeyPath, err)
+		ac.logger.Error("failed to parse age identities", "path", ageIdentityPath, "error", err)
+		return nil, fmt.Errorf("failed to parse age identities from '%s': %w", ageIdentityPath, err)
 	}
-	if len(recipients) == 0 {
-		return nil, fmt.Errorf("no age recipients found in file '%s'", agePublicKeyPath)
+	if len(identities) == 0 {
+		return nil, fmt.Errorf("no age identities found in file '%s'", ageIdentityPath)
 	}
 
+	// 3. Find the first X25519 identity to get its recipient (public key)
+	var recipient age.Recipient
+	for _, id := range identities {
+		if x25519ID, ok := id.(*age.X25519Identity); ok {
+			recipient = x25519ID.Recipient()
+			break
+		}
+	}
+	if recipient == nil {
+		ac.logger.Error("no X25519 age identity found in file - needed for encryption", "path", ageIdentityPath)
+		return nil, fmt.Errorf("no X25519 age identity found in file '%s'", ageIdentityPath)
+	}
+
+	// 4. Encrypt using the derived recipient (public key)
 	encryptedOutput := &bytes.Buffer{}
-	encryptWriter, err := age.Encrypt(encryptedOutput, recipients...)
+	encryptWriter, err := age.Encrypt(encryptedOutput, recipient)
 	if err != nil {
 		ac.logger.Error("failed to create age encryption writer", "error", err)
 		return nil, fmt.Errorf("failed to create age encryption writer: %w", err)
