@@ -20,8 +20,8 @@ import (
 
 // New creates a new App instance and Server with the provided options.
 // It initializes the core application components like database, router, cache first,
-// then loads configuration either from TOML file (if path provided) or DB file.
-func New(configPath string, opts ...core.Option) (*core.App, *server.Server, error) {
+// then loads configuration from the database.
+func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	// First create app without config
 	app, err := core.NewApp(opts...)
 	if err != nil {
@@ -29,18 +29,10 @@ func New(configPath string, opts ...core.Option) (*core.App, *server.Server, err
 		return nil, nil, err
 	}
 
-	var cfg *config.Config
 	appLogger := app.Logger() // Get logger once
-	if configPath != "" {
-		cfg, err = config.LoadFromToml(configPath, appLogger)
-		if err == nil { // Only set source on success
-			cfg.Source = configPath
-		}
-	} else {
-		cfg, err = config.LoadFromDb(app.DbConfig(), app.DbAcme(), appLogger)
-		if err == nil { // Only set source on success
-			cfg.Source = "" // empty for db
-		}
+	cfg, err := config.LoadFromDb(app.DbConfig(), app.DbAcme(), appLogger)
+	if err == nil { // Only set source on success
+		cfg.Source = "" // empty for db
 	}
 
 	if err != nil {
