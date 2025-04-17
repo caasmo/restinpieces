@@ -9,14 +9,6 @@ import (
 	_ "embed"
 )
 
-// variables used only by create-app
-//
-//go:embed config.toml.example
-var TomlExample []byte
-
-//go:embed .env.tmpl.example
-var EnvTemplate []byte
-
 // Provider holds the application configuration and allows for atomic updates.
 type Provider struct {
 	value atomic.Value // Holds the current *Config
