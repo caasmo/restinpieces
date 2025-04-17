@@ -292,7 +292,7 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 // If RedirectURLPath is set, it combines with the server's base URL.
 // Otherwise falls back to RedirectURL if set.
 // Returns empty string if neither is configured.
-func redirectUrl(conf *Config) string {
+func redirectUrl(srvConf *config.Server, provider *config.OAuth2Provider) string {
 	if p.RedirectURLPath != "" {
 		return server.BaseURL() + p.RedirectURLPath
 	}
