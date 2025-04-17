@@ -84,8 +84,12 @@ func (cd *ConfigDumper) GetLatestEncryptedConfig() ([]byte, error) {
 		LIMIT 1;`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
-				encryptedData = stmt.GetBytes("content")
-				return nil
+				// Get a reader for the blob column (index 0)
+				reader := stmt.ColumnReader(0)
+				// Read all data from the reader
+				var err error
+				encryptedData, err = io.ReadAll(reader)
+				return err // Return any error from io.ReadAll
 			},
 		})
 
