@@ -69,9 +69,15 @@ func (s *Server) AddJobHandler(jobType string, handler executor.JobHandler) erro
 			if !ok {
 				return fmt.Errorf("found daemon named 'Scheduler', but it has an unexpected type %T", d)
 			}
-			// Delegate registration to the scheduler
-			s.logger.Info("Server: delegating job handler registration to scheduler", "job_type", jobType)
-			return scheduler.RegisterHandler(jobType, handler)
+			// Get the executor via the getter and register the handler directly
+			jobExecutor := scheduler.Executor()
+			if jobExecutor == nil {
+				// This should ideally not happen if scheduler is initialized correctly
+				return fmt.Errorf("scheduler daemon found, but its executor is nil")
+			}
+			s.logger.Info("Server: registering job handler with scheduler's executor", "job_type", jobType)
+			jobExecutor.Register(jobType, handler) // Call Register on the interface
+			return nil // Registration successful
 		}
 	}
 	return fmt.Errorf("scheduler daemon not found, cannot register job handler")

@@ -7,10 +7,10 @@ import (
 	"github.com/caasmo/restinpieces/queue"
 )
 
-// JobExecutor defines the interface for executing jobs
-// TODO overkill
+// JobExecutor defines the interface for executing jobs and registering handlers.
 type JobExecutor interface {
 	Execute(ctx context.Context, job queue.Job) error
+	Register(jobType string, handler JobHandler)
 }
 
 // DefaultExecutor is our concrete implementation of JobExecutor
