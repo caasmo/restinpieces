@@ -27,7 +27,6 @@ func WithDbApp(dbApp db.DbApp) Option {
 		a.dbAuth = dbApp
 		a.dbQueue = dbApp
 		a.dbConfig = dbApp
-		a.dbAcme = dbApp
 	}
 }
 
@@ -45,10 +44,3 @@ func WithLogger(l *slog.Logger) Option {
 	}
 }
 
-// TODO
-// WithProxy sets the proxy implementation
-//func WithProxy(p *proxy.Proxy) Option {
-//	return func(a *App) {
-//		a.proxy = p
-//	}
-//}
