@@ -12,7 +12,7 @@ import (
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
-	"github.com/caasmo/restinpieces/queue/handlers"
+	"github.com/caasmo/restinpieces/queue/handlers" // Keep for other handlers
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/router"
 	"github.com/caasmo/restinpieces/server"
@@ -48,8 +48,8 @@ func New(ageKeyPath string, opts ...core.Option) (*core.App, *server.Server, err
 	// Setup custom application logic and routes
 	route(cfg, app) // Assuming route function exists and is correctly defined elsewhere
 
-	// Pass DbAcme to SetupScheduler
-	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.DbAcme(), app.Logger())
+	// SetupScheduler no longer needs DbAcme
+	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.Logger())
 	if err != nil {
 		app.Logger().Error("failed to setup scheduler", "error", err)
 		return nil, nil, err
@@ -124,8 +124,8 @@ func initPreRouter(app *core.App) http.Handler {
 }
 
 // SetupScheduler initializes the job scheduler and its handlers.
-// It now requires db.DbAcme to pass to the ACME renewal handler.
-func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, dbAcme db.DbAcme, logger *slog.Logger) (*scl.Scheduler, error) {
+// dbAcme parameter removed.
+func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, logger *slog.Logger) (*scl.Scheduler, error) {
 
 	hdls := make(map[string]executor.JobHandler)
 
@@ -152,17 +152,7 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
 	}
 
-	// Instantiate and register the TLS Cert Renewal Handler if ACME is enabled in config
-	// Note: We check cfg.Acme.Enabled here to avoid unnecessary instantiation if not used.
-	// The handler itself also checks this, but this prevents adding it to the map if globally disabled.
-	if cfg.Acme.Enabled {
-		// Pass dbAcme to the handler constructor
-		tlsCertRenewalHandler := handlers.NewTLSCertRenewalHandler(configProvider, dbAcme, logger)
-		hdls[queue.JobTypeTLSCertRenewal] = tlsCertRenewalHandler
-		logger.Info("Registered TLSCertRenewalHandler")
-	} else {
-		logger.Info("ACME is disabled, skipping registration of TLSCertRenewalHandler")
-	}
+	// ACME handler registration removed.
 
 	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
 }
