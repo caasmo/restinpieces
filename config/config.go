@@ -55,9 +55,9 @@ type Config struct {
 	OAuth2Providers map[string]OAuth2Provider `toml:"oauth2_providers" comment:"OAuth2 provider configurations"`
 	Smtp            Smtp                      `toml:"smtp" comment:"SMTP email settings"`
 	Endpoints       Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
-	Acme            Acme                      `toml:"acme" comment:"ACME/Let's Encrypt certificate settings"`
-	BlockIp         BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
-	Maintenance     Maintenance               `toml:"maintenance" comment:"Maintenance mode settings"`
+	// Acme removed
+	BlockIp     BlockIp     `toml:"block_ip" comment:"IP blocking settings"`
+	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
 }
 
 // Duration is a wrapper around time.Duration that supports TOML unmarshalling
@@ -196,17 +196,7 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 	return path + ".html"
 }
 
-// Acme holds configuration for ACME (Let's Encrypt) certificate management.
-type Acme struct {
-	Enabled                 bool     `toml:"enabled" comment:"Enable ACME certificate management"`
-	Email                   string   `toml:"email" comment:"ACME account email"`
-	Domains                 []string `toml:"domains" comment:"Domains for certificate"`
-	DNSProvider             string   `toml:"dns_provider" comment:"DNS provider for challenges (e.g. 'cloudflare')"`
-	RenewalDaysBeforeExpiry int      `toml:"renewal_days_before_expiry" comment:"Days before expiry to renew"`
-	CloudflareApiToken      string   `toml:"cloudflare_api_token" comment:"Cloudflare API token (set via env)"`
-	CADirectoryURL          string   `toml:"ca_directory_url" comment:"ACME directory URL"`
-	AcmePrivateKey          string   `toml:"acme_private_key" comment:"ACME account private key (set via env)"`
-}
+// Acme struct removed.
 
 // BlockIp holds configuration specific to IP blocking.
 type BlockIp struct {

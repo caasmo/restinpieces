@@ -17,9 +17,7 @@ func Validate(cfg *Config) error {
 	if err := validateSmtp(&cfg.Smtp); err != nil {
 		return fmt.Errorf("smtp config validation failed: %w", err)
 	}
-	if err := validateAcme(&cfg.Acme); err != nil {
-		return fmt.Errorf("acme config validation failed: %w", err)
-	}
+	// validateAcme call removed
 	if err := validateOAuth2Providers(cfg.OAuth2Providers); err != nil {
 		return fmt.Errorf("oauth2 providers validation failed: %w", err)
 	}
@@ -165,27 +163,7 @@ func validateSmtp(smtp *Smtp) error {
 	return nil
 }
 
-func validateAcme(acme *Acme) error {
-	if !acme.Enabled {
-		return nil // No validation needed if ACME is disabled
-	}
-	if acme.Email == "" {
-		return fmt.Errorf("acme.email cannot be empty when enabled")
-	}
-	if len(acme.Domains) == 0 {
-		return fmt.Errorf("acme.domains cannot be empty when enabled")
-	}
-	if acme.DNSProvider == "" {
-		return fmt.Errorf("acme.dns_provider cannot be empty when enabled")
-	}
-	if acme.DNSProvider == "cloudflare" && acme.CloudflareApiToken == "" {
-		return fmt.Errorf("acme.cloudflare_api_token cannot be empty when dns_provider is 'cloudflare'")
-	}
-	if acme.AcmePrivateKey == "" {
-		return fmt.Errorf("acme.acme_private_key cannot be empty when enabled")
-	}
-	return nil
-}
+// validateAcme function removed.
 
 func validateServerPort(portStr string) error {
 	// Empty means no redirect server, which is valid configuration.

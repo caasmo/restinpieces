@@ -32,18 +32,13 @@ type DbConfig interface {
 	GetConfig() ([]byte, error)
 }
 
-type DbAcme interface {
-	// Get retrieves the latest ACME certificate based on issued_at timestamp.
-	Get() (*AcmeCert, error)
-	// Save inserts or updates an ACME certificate record based on the Identifier.
-	Save(cert AcmeCert) error
-}
+// DbAcme interface removed.
 
 type DbApp interface {
 	DbAuth
 	DbQueue
 	DbConfig
-	DbAcme
+	// DbAcme removed
 }
 
 // DbLifecycle interface removed.
