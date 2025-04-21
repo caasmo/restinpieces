@@ -30,6 +30,14 @@ func NewExecutor(handlers map[string]JobHandler) *DefaultExecutor {
 	}
 }
 
+// Register adds a new handler for a specific job type.
+// It overwrites any existing handler for the same job type.
+func (e *DefaultExecutor) Register(jobType string, handler JobHandler) {
+	// TODO: Add logging? Potentially return an error if overwriting?
+	// For now, simple replacement.
+	e.registry[jobType] = handler
+}
+
 // Execute implements the JobExecutor interface
 func (e *DefaultExecutor) Execute(ctx context.Context, job queue.Job) error {
 

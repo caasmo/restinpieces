@@ -230,5 +230,22 @@ func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) er
 	return s.executor.Execute(ctx, job)
 }
 
+// RegisterHandler allows adding custom job handlers to the scheduler's executor.
+// This should be called after the scheduler is created but before the server is started.
+func (s *Scheduler) RegisterHandler(jobType string, handler executor.JobHandler) error {
+	// We need the concrete executor type to register handlers.
+	// If s.executor is ever not a *DefaultExecutor, this will fail.
+	defaultExecutor, ok := s.executor.(*executor.DefaultExecutor)
+	if !ok {
+		err := fmt.Errorf("scheduler executor is not the expected type (*executor.DefaultExecutor), cannot register handler")
+		s.logger.Error(err.Error())
+		return err
+	}
+
+	s.logger.Info("⏰scheduler: registering custom handler", "job_type", jobType)
+	defaultExecutor.Register(jobType, handler)
+	return nil
+}
+
 // the key is to use context aware packages for db, etc. and periodically check
 // (in for loops or multi stage executors) for  <-ctx.Done()

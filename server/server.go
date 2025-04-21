@@ -2,9 +2,12 @@ package server
 
 import (
 	"context"
+	"context" // Added context import
 	"crypto/tls"
 	"fmt"
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/queue/executor" // Added executor import
+	scl "github.com/caasmo/restinpieces/queue/scheduler" // Added scheduler import with alias
 	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"
@@ -51,6 +54,27 @@ func (s *Server) AddDaemon(daemon Daemon) {
 	}
 	s.logger.Info("Adding daemon", "daemon_name", daemon.Name())
 	s.daemons = append(s.daemons, daemon)
+}
+
+// AddJobHandler registers a custom job handler for the scheduler daemon.
+// It finds the scheduler daemon by name and delegates registration to it.
+// Returns an error if the scheduler daemon is not found, is not the expected
+// type, or if registration within the scheduler fails.
+// This method should be called after New() and before Run().
+func (s *Server) AddJobHandler(jobType string, handler executor.JobHandler) error {
+	for _, d := range s.daemons {
+		if d.Name() == "Scheduler" {
+			// Found the scheduler daemon, now assert its type
+			scheduler, ok := d.(*scl.Scheduler) // Use alias scl for scheduler package
+			if !ok {
+				return fmt.Errorf("found daemon named 'Scheduler', but it has an unexpected type %T", d)
+			}
+			// Delegate registration to the scheduler
+			s.logger.Info("Server: delegating job handler registration to scheduler", "job_type", jobType)
+			return scheduler.RegisterHandler(jobType, handler)
+		}
+	}
+	return fmt.Errorf("scheduler daemon not found, cannot register job handler")
 }
 
 func (s *Server) redirectToHTTPS() http.HandlerFunc {
