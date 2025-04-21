@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"context" // Added context import
 	"crypto/tls"
 	"fmt"
 	"github.com/caasmo/restinpieces/config"
