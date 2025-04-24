@@ -1,12 +1,6 @@
 ### TODOs
 
 - remove Config() collides with secureConfig
-- pseudo secrets manager 
-    - how extension can use the table, avoid collisions
-    - they register type, framweork validates type 
-    - they offer GetLatest, write, never update
-    - rename to history?
-    - content can be what they want. just use 'secret manager' aka age.
 - mailer default local
     - no external smtp server
 - sdk visibility, own route
@@ -138,6 +132,12 @@
 
 ### done
 
+- pseudo secrets manager 
+    - how extension can use the table, avoid collisions
+    - they register type, framweork validates type 
+    - they offer GetLatest, write, never update
+    - rename to history?
+    - content can be what they want. just use 'secret manager' aka age.
 - litestream is a addon, it has own config structs.
     - it shoudl bea ble to use age key and load in db.
     - db config has types.
