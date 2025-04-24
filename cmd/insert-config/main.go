@@ -17,6 +17,8 @@ import (
 	"filippo.io/age"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
+
+	"github.com/caasmo/restinpieces/db" // Import db package for scope constant
 )
 
 // ConfigInserter struct and NewConfigInserter function remain the same
@@ -51,7 +53,7 @@ func (ci *ConfigInserter) OpenDatabase() error {
 
 // --- Remove extractPublicKeyFromIdentity function ---
 
-func (ci *ConfigInserter) InsertConfig(tomlPath, ageIdentityPath string) error {
+func (ci *ConfigInserter) InsertConfig(tomlPath, ageIdentityPath, scope string) error {
 	// Read config file
 	configData, err := os.ReadFile(tomlPath)
 	if err != nil {
@@ -130,13 +132,15 @@ func (ci *ConfigInserter) InsertConfig(tomlPath, ageIdentityPath string) error {
 
 	err = sqlitex.Execute(conn,
 		`INSERT INTO app_config (
+			scope, -- Add scope column
 			content,
 			format,
 			description,
 			created_at
-		) VALUES (?, ?, ?, ?)`,
+		) VALUES (?, ?, ?, ?, ?)`, // Add placeholder for scope
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
+				scope, // Bind the scope value
 				encryptedData,
 				"toml",
 				description,
@@ -149,7 +153,7 @@ func (ci *ConfigInserter) InsertConfig(tomlPath, ageIdentityPath string) error {
 		return fmt.Errorf("database insert failed: %w", err)
 	}
 
-	ci.logger.Info("Successfully inserted encrypted config", "toml_file", tomlPath, "identity_file", ageIdentityPath)
+	ci.logger.Info("Successfully inserted encrypted config", "scope", scope, "toml_file", tomlPath, "identity_file", ageIdentityPath)
 	return nil
 }
 
@@ -158,10 +162,11 @@ func main() {
 	ageIdentityPathFlag := flag.String("age-key", "", "Path to the age identity file (containing private key 'AGE-SECRET-KEY-1...') (required)")
 	dbPathFlag := flag.String("db", "", "Path to the SQLite database file (required)")
 	tomlPathFlag := flag.String("toml", "", "Path to the TOML config file to insert (required)")
+	scopeFlag := flag.String("scope", db.ConfigScopeApplication, "Scope for the configuration (e.g., 'application', 'plugin_x')") // Add scope flag
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s -age-key <identity-file> -db <db-file> -toml <toml-file>\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Encrypts a TOML file using the public key derived from an age identity file and inserts it into a SQLite DB.\n")
+		fmt.Fprintf(os.Stderr, "Usage: %s -age-key <identity-file> -db <db-file> -toml <toml-file> [-scope <scope>]\n", os.Args[0]) // Update usage
+		fmt.Fprintf(os.Stderr, "Encrypts a TOML file using the public key derived from an age identity file and inserts it into a SQLite DB under a specific scope.\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
 	}
