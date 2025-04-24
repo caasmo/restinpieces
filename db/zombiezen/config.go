@@ -10,9 +10,9 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-// GetConfig retrieves the latest encrypted configuration blob for the specified scope.
+// LatestConfig retrieves the latest encrypted configuration blob for the specified scope.
 // Returns nil slice if no config exists for the given scope (no error).
-func (d *Db) GetConfig(scope string) ([]byte, error) {
+func (d *Db) LatestConfig(scope string) ([]byte, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db connection for scope '%s': %w", scope, err)
@@ -37,7 +37,7 @@ func (d *Db) GetConfig(scope string) ([]byte, error) {
 		})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get config for scope '%s': %w", scope, err)
+		return nil, fmt.Errorf("failed to get latest config for scope '%s': %w", scope, err)
 	}
 
 	// encryptedData will be nil if no row was found, which is the desired behavior

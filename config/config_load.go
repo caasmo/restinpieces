@@ -16,9 +16,9 @@ import (
 // LoadFromDb loads the main application configuration from the database using the provided DbConfig and age key file.
 func LoadFromDb(dbCfg db.DbConfig, logger *slog.Logger, ageKeyPath string) (*Config, error) {
 	logger.Info("loading application configuration from database", "scope", db.ConfigScopeApplication)
-	encryptedData, err := dbCfg.GetConfig(db.ConfigScopeApplication) // Pass the application scope
+	encryptedData, err := dbCfg.LatestConfig(db.ConfigScopeApplication) // Pass the application scope
 	if err != nil {
-		return nil, fmt.Errorf("config: failed to get application config from db: %w", err)
+		return nil, fmt.Errorf("config: failed to get latest application config from db: %w", err)
 	}
 
 	// Check if config for the application scope is empty
