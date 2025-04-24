@@ -30,6 +30,8 @@ type DbQueue interface {
 type DbConfig interface {
 	// LatestConfig returns the latest encrypted configuration blob for the specified scope.
 	LatestConfig(scope string) ([]byte, error)
+	// InsertConfig inserts a new encrypted configuration blob for a given scope.
+	InsertConfig(scope string, encryptedData []byte, format string, description string) error
 }
 
 // DbAcme interface removed.

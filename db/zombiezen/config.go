@@ -1,11 +1,12 @@
 package zombiezen
 
-// TODO not code reviewed. Machine generated R1
-
 import (
 	"context"
 	"fmt"
-	"io" // Add io import
+	"io"
+	"time" // Add time import
+
+	"github.com/caasmo/restinpieces/db" // Import db for TimeFormat
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
@@ -42,4 +43,40 @@ func (d *Db) LatestConfig(scope string) ([]byte, error) {
 
 	// encryptedData will be nil if no row was found, which is the desired behavior
 	return encryptedData, nil
+}
+
+// InsertConfig inserts a new encrypted configuration blob into the database.
+func (d *Db) InsertConfig(scope string, encryptedData []byte, format string, description string) error {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to get db connection for insert: %w", err)
+	}
+	defer d.pool.Put(conn)
+
+	now := db.TimeFormat(time.Now()) // Use db.TimeFormat for consistency
+
+	err = sqlitex.Execute(conn,
+		`INSERT INTO app_config (
+			scope,
+			content,
+			format,
+			description,
+			created_at
+		) VALUES (?, ?, ?, ?, ?)`,
+		&sqlitex.ExecOptions{
+			Args: []interface{}{
+				scope,
+				encryptedData,
+				format,
+				description,
+				now,
+			},
+		})
+
+	if err != nil {
+		// Check for unique constraint violation if needed, otherwise return generic error
+		return fmt.Errorf("failed to insert config for scope '%s': %w", scope, err)
+	}
+
+	return nil
 }
