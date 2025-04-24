@@ -58,12 +58,17 @@ func NewApp(opts ...Option) (*App, error) {
 		return nil, fmt.Errorf("logger is required but was not provided")
 	}
 
-    sc, err := config.NewSecureConfigAge(a.dbConfig, a.ageKeyPath, a.logger)
-    if err != nil {
-        return nil, fmt.Errorf("failed to initialize secure config: %w", err)
-    }
+	// Check if ageKeyPath is set before initializing SecureConfig
+	if a.ageKeyPath == "" {
+		return nil, fmt.Errorf("ageKeyPath is required but was not provided (use WithAgeKeyPath)")
+	}
 
-    a.secureConfig = sc
+	sc, err := config.NewSecureConfigAge(a.dbConfig, a.ageKeyPath, a.logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize secure config: %w", err)
+	}
+
+	a.secureConfig = sc
 
 	return a, nil
 }
