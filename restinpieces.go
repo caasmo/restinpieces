@@ -55,7 +55,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 
 	configProvider := config.NewProvider(cfg)
 	app.SetConfigProvider(configProvider)
-	app.Logger().Info("config", "config", cfg)
+	//app.Logger().Info("config", "config", cfg)
 
 	// Setup custom application logic and routes
 	route(cfg, app) 
