@@ -1,5 +1,6 @@
 ### TODOs
 
+- remove Config() collides with secureConfig
 - pseudo secrets manager 
     - how extension can use the table, avoid collisions
     - they register type, framweork validates type 
