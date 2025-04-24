@@ -22,18 +22,16 @@ import (
 // It initializes the core application components like database, router, cache first,
 // then loads configuration from the database using the provided age key.
 func New(ageKeyPath string, opts ...core.Option) (*core.App, *server.Server, error) {
-	// First create app without config
 	app, err := core.NewApp(opts...)
 	if err != nil {
 		slog.Error("failed to initialize core app", "error", err)
 		return nil, nil, err
 	}
 
-	appLogger := app.Logger() // Get logger once
-	// Pass ageKeyPath to LoadFromDb
+	appLogger := app.Logger() 
 	cfg, err := config.LoadFromDb(app.DbConfig(), appLogger, ageKeyPath)
-	if err == nil { // Only set source on success
-		cfg.Source = "" // empty for db
+	if err == nil { 
+		cfg.Source = "" 
 	}
 
 	if err != nil {
@@ -46,30 +44,26 @@ func New(ageKeyPath string, opts ...core.Option) (*core.App, *server.Server, err
 	app.Logger().Info("config", "config", cfg)
 
 	// Setup custom application logic and routes
-	route(cfg, app) // Assuming route function exists and is correctly defined elsewhere
+	route(cfg, app) 
 
-	// SetupScheduler no longer needs DbAcme
 	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.Logger())
 	if err != nil {
 		app.Logger().Error("failed to setup scheduler", "error", err)
 		return nil, nil, err
 	}
 
-	// Create the server instance, passing 'app' as the http.Handler
 	// Initialize the PreRouter chain with internal middleware
 	preRouterHandler := initPreRouter(app)
 
-	// Create the server instance (without daemons initially)
 	srv := server.NewServer(
 		configProvider,
-		preRouterHandler, // The main HTTP handler chain
+		preRouterHandler, 
 		app.Logger(),
 	)
 
 	// Register the framework's core daemons
 	srv.AddDaemon(scheduler)
 
-	// Return the initialized app and server
 	return app, srv, nil
 }
 
