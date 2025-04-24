@@ -1,71 +1,38 @@
 package config
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"log/slog"
-	"os"
+	// Removed io, os, bytes, filippo.io/age imports as they are handled by SecureConfig
 
-	"filippo.io/age"
 	"github.com/pelletier/go-toml/v2" // TOML v2 parser
 
 	"github.com/caasmo/restinpieces/db" // Adjust import path if necessary
 )
 
-// LoadFromDb loads the main application configuration from the database using the provided DbConfig and age key file.
+// LoadFromDb loads the main application configuration from the database.
+// It uses a SecureConfig implementation (created internally using age) to handle decryption.
 func LoadFromDb(dbCfg db.DbConfig, logger *slog.Logger, ageKeyPath string) (*Config, error) {
-	logger.Info("loading application configuration from database", "scope", db.ConfigScopeApplication)
-	encryptedData, err := dbCfg.LatestConfig(db.ConfigScopeApplication) // Pass the application scope
+	logger.Info("initializing secure config loader (age)", "key_path", ageKeyPath)
+	secureLoader, err := NewSecureConfigAge(dbCfg, ageKeyPath, logger)
 	if err != nil {
-		return nil, fmt.Errorf("config: failed to get latest application config from db: %w", err)
+		// Error already logged by NewSecureConfigAge
+		return nil, fmt.Errorf("config: failed to initialize secure config loader: %w", err)
 	}
 
-	// Check if config for the application scope is empty
-	if len(encryptedData) == 0 {
-		logger.Warn("no application configuration found in database", "scope", db.ConfigScopeApplication)
-		return nil, fmt.Errorf("config: no application configuration found in database (scope: %s)", db.ConfigScopeApplication)
-	}
+	scope := db.ConfigScopeApplication
+	logger.Info("loading application configuration via secure loader", "scope", scope)
 
-	// --- Decrypt Config ---
-	// Use the provided ageKeyPath
-	keyContent, err := os.ReadFile(ageKeyPath)
+	// --- Use SecureConfig Loader to get decrypted bytes ---
+	decryptedBytes, err := secureLoader.Latest(scope)
 	if err != nil {
-		logger.Error("failed to read age key file", "path", ageKeyPath, "error", err)
-		return nil, fmt.Errorf("failed to read age key file '%s': %w", ageKeyPath, err)
+		// Error should be logged by secureLoader.Latest
+		// Wrap error for context
+		return nil, fmt.Errorf("config: failed to load/decrypt config for scope '%s': %w", scope, err)
 	}
+	// Note: The check for empty data is now handled within secureLoader.Latest
 
-	identities, err := age.ParseIdentities(bytes.NewReader(keyContent))
-	if err != nil {
-		logger.Error("failed to parse age identities", "path", ageKeyPath, "error", err)
-		return nil, fmt.Errorf("failed to parse age identities from key file '%s': %w", ageKeyPath, err)
-	}
-	if len(identities) == 0 {
-		logger.Error("no age identities found in key file", "path", ageKeyPath)
-		return nil, fmt.Errorf("no age identities found in key file '%s'", ageKeyPath)
-	}
-
-	// Zero out the raw key material as soon as identities are parsed
-	for i := range keyContent {
-		keyContent[i] = 0
-	}
-
-	encryptedDataReader := bytes.NewReader(encryptedData) // Use the byte slice directly
-	decryptedDataReader, err := age.Decrypt(encryptedDataReader, identities...)
-
-	// Make identities eligible for GC immediately after use
-	identities = nil // Remove reference to the slice and underlying identity objects
-
-	if err != nil {
-		logger.Error("failed to decrypt configuration data", "error", err)
-		return nil, fmt.Errorf("failed to decrypt configuration data: %w", err)
-	}
-
-	decryptedBytes, err := io.ReadAll(decryptedDataReader)
-	if err != nil {
-		logger.Error("failed to read decrypted data stream", "error", err)
-		return nil, fmt.Errorf("failed to read decrypted data stream: %w", err)
-	}
+	// --- Decryption is done, proceed with Unmarshal and Validate ---
 
 	// --- Unmarshal TOML ---
 	cfg := &Config{}
