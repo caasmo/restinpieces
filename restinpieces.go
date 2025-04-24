@@ -28,7 +28,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
-	cfg, err := config.LoadFromDb(app.SecureConfig())
+	cfg, err := config.LoadFromDb(app.SecureConfigStore())
 	if err != nil {
 		app.Logger().Error("failed to load config", "error", err)
 		return nil, nil, err
