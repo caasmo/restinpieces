@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"log/slog"
-	//"sync/atomic" // No longer needed here, moved to config.Provider
 
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
@@ -23,9 +22,7 @@ type App struct {
 	dbAuth   db.DbAuth
 	dbQueue  db.DbQueue
 	dbConfig db.DbConfig
-	// dbAcme field removed
 	router router.Router
-	// PreRouter field removed
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
 	logger         *slog.Logger
@@ -46,20 +43,14 @@ func NewApp(opts ...Option) (*App, error) {
 	if a.dbQueue == nil {
 		return nil, fmt.Errorf("dbQueue is required but was not provided (use WithDbApp)")
 	}
-	// dbAcme check removed
-	// dbLifecycle check removed
-	// Check other required dependencies
+
 	if a.router == nil {
 		return nil, fmt.Errorf("router is required but was not provided")
 	}
 
 	if a.logger == nil {
-		// Default to slog.Default() if no logger is provided? Or require it?
-		// Let's require it for now for explicitness.
 		return nil, fmt.Errorf("logger is required but was not provided")
 	}
-
-	// PreRouter initialization logic removed from NewApp
 
 	return a, nil
 }
@@ -68,8 +59,6 @@ func NewApp(opts ...Option) (*App, error) {
 func (a *App) Router() router.Router {
 	return a.router
 }
-
-// Close method removed as DB lifecycle is managed externally.
 
 // AuthDb returns the DbAuth interface implementation for authentication operations.
 func (a *App) DbAuth() db.DbAuth {
@@ -85,7 +74,6 @@ func (a *App) DbConfig() db.DbConfig {
 	return a.dbConfig
 }
 
-// DbAcme method removed.
 
 // Logger returns the application's logger instance
 func (a *App) Logger() *slog.Logger {
