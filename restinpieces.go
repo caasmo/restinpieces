@@ -21,9 +21,7 @@ import (
 // New creates a new App instance and Server with the provided options and age key file path.
 // It initializes the core application components like database, router, cache first,
 // then loads configuration from the database using the provided age key.
-func New(ageKeyPath string, opts ...core.Option) (*core.App, *server.Server, error) {
-	// Add the age key path as an option first
-	opts = append([]core.Option{core.WithAgeKeyPath(ageKeyPath)}, opts...)
+func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	app, err := core.NewApp(opts...)
 	if err != nil {
 		slog.Error("failed to initialize core app", "error", err)

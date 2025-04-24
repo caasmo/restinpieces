@@ -86,11 +86,6 @@ func (a *App) Cache() cache.Cache[string, interface{}] {
 	return a.cache
 }
 
-// AgeKeyPath returns the path to the age identity file
-func (a *App) AgeKeyPath() string {
-	return a.ageKeyPath
-}
-
 // Config returns the currently active application config instance
 // by retrieving it from the config provider.
 func (a *App) Config() *config.Config {
