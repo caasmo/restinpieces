@@ -27,6 +27,7 @@ type App struct {
 	configProvider *config.Provider                 // Holds the config provider
 	logger         *slog.Logger
 	ageKeyPath     string                           // Path to age identity file
+	secureConfig   config.SecureConfig              // Secure configuration handler
 }
 
 // ServeHTTP method removed as App no longer acts as the primary handler
@@ -51,6 +52,15 @@ func NewApp(opts ...Option) (*App, error) {
 
 	if a.logger == nil {
 		return nil, fmt.Errorf("logger is required but was not provided")
+	}
+
+	// Initialize SecureConfig if ageKeyPath is set
+	if a.ageKeyPath != "" {
+		var err error
+		a.secureConfig, err = config.NewSecureConfigAge(a.dbConfig, a.ageKeyPath, a.logger)
+		if err != nil {
+			return nil, fmt.Errorf("failed to initialize secure config: %w", err)
+		}
 	}
 
 	return a, nil
@@ -91,6 +101,11 @@ func (a *App) Cache() cache.Cache[string, interface{}] {
 func (a *App) Config() *config.Config {
 	// Delegate fetching the config to the provider
 	return a.configProvider.Get()
+}
+
+// SecureConfig returns the application's secure configuration handler
+func (a *App) SecureConfig() config.SecureConfig {
+	return a.secureConfig
 }
 
 // SetConfigProvider allows setting the config provider after App initialization.
