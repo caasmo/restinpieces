@@ -27,7 +27,11 @@ type App struct {
 	configProvider *config.Provider                 // Holds the config provider
 	logger         *slog.Logger
 	ageKeyPath     string                           // Path to age identity file
-	secureConfig   config.SecureConfig              // Secure configuration handler
+	// SecureConfigStore provides encrypted configuration storage/retrieval capabilities.
+	// It acts as a secrets manager for securely storing sensitive configuration in the database.
+	// Primarily used during application initialization to load encrypted configs on startup.
+	// The implementation uses age encryption with keys from ageKeyPath.
+	secureConfig   config.SecureConfig
 }
 
 // ServeHTTP method removed as App no longer acts as the primary handler
