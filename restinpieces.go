@@ -1,11 +1,14 @@
 package restinpieces
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/db"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
 	"github.com/caasmo/restinpieces/db"
@@ -28,11 +31,27 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
-	cfg, err := config.LoadFromDb(app.SecureConfigStore())
+	// Load config from database
+	scope := db.ConfigScopeApplication
+	decryptedBytes, err := app.SecureConfigStore().Latest(scope)
 	if err != nil {
-		app.Logger().Error("failed to load config", "error", err)
-		return nil, nil, err
+		app.Logger().Error("failed to load/decrypt config", "error", err)
+		return nil, nil, fmt.Errorf("failed to load config: %w", err)
 	}
+
+	// Unmarshal TOML
+	cfg := &config.Config{}
+	if err := toml.Unmarshal(decryptedBytes, cfg); err != nil {
+		app.Logger().Error("failed to unmarshal config", "error", err)
+		return nil, nil, fmt.Errorf("failed to parse config: %w", err)
+	}
+
+	// Validate config
+	if err := config.Validate(cfg); err != nil {
+		app.Logger().Error("config validation failed", "error", err)
+		return nil, nil, fmt.Errorf("invalid config: %w", err)
+	}
+
 	cfg.Source = "" // Clear source field
 
 	configProvider := config.NewProvider(cfg)
