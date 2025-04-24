@@ -29,8 +29,7 @@ type SecureConfig interface {
 // to minimize the time sensitive key material is held in memory.
 type secureConfigAge struct {
 	dbCfg      db.DbConfig
-	ageKeyPath string        // Path to the age private key file
-	recipient  age.Recipient // For encryption (derived once at creation)
+	ageKeyPath string // Path to the age private key file
 	logger     *slog.Logger
 }
 
@@ -154,11 +153,54 @@ func (s *secureConfigAge) Latest(scope string) ([]byte, error) {
 }
 
 // Save implements the SecureConfig interface for age.
+// It reads the key file, derives the recipient, and encrypts on demand.
 func (s *secureConfigAge) Save(scope string, plaintextData []byte, format string, description string) error {
 	s.logger.Debug("encrypting config content for saving", "scope", scope, "plaintext_size", len(plaintextData))
-	// 1. Encrypt using stored recipient
+
+	// 1. Read key file and derive recipient on demand
+	s.logger.Debug("reading age key file for encryption", "path", s.ageKeyPath)
+	keyContent, err := os.ReadFile(s.ageKeyPath)
+	if err != nil {
+		s.logger.Error("failed to read age key file for encryption", "path", s.ageKeyPath, "error", err)
+		return fmt.Errorf("secureconfig: failed to read age key file '%s' for encryption: %w", s.ageKeyPath, err)
+	}
+
+	identities, err := age.ParseIdentities(bytes.NewReader(keyContent))
+
+	// Zero out the raw key material immediately after parsing
+	for i := range keyContent {
+		keyContent[i] = 0
+	}
+	keyContent = nil // Help GC
+
+	// Check for parsing errors *after* zeroing
+	if err != nil {
+		s.logger.Error("failed to parse age identities for encryption", "path", s.ageKeyPath, "error", err)
+		return fmt.Errorf("secureconfig: failed to parse age identities from key file '%s' for encryption: %w", s.ageKeyPath, err)
+	}
+	if len(identities) == 0 {
+		// Should not happen if NewSecureConfigAge succeeded, but check defensively
+		s.logger.Error("no age identities found in key file for encryption", "path", s.ageKeyPath)
+		return fmt.Errorf("secureconfig: no age identities found in key file '%s' for encryption", s.ageKeyPath)
+	}
+
+	// Derive recipient from the first identity (assuming X25519)
+	var recipient age.Recipient
+	switch id := identities[0].(type) {
+	case *age.X25519Identity:
+		recipient = id.Recipient()
+	default:
+		// This case should have been caught by NewSecureConfigAge, but check defensively
+		s.logger.Error("unsupported age identity type for deriving recipient - must be X25519",
+			"path", s.ageKeyPath,
+			"type", fmt.Sprintf("%T", identities[0]))
+		return fmt.Errorf("secureconfig: unsupported age identity type '%T' for deriving recipient - must be X25519", identities[0])
+	}
+	// Identities are not needed further and go out of scope
+
+	// 2. Encrypt using the just-derived recipient
 	encryptedOutput := &bytes.Buffer{}
-	encryptWriter, err := age.Encrypt(encryptedOutput, s.recipient)
+	encryptWriter, err := age.Encrypt(encryptedOutput, recipient) // Use derived recipient
 	if err != nil {
 		s.logger.Error("failed to create age encryption writer", "scope", scope, "error", err)
 		return fmt.Errorf("secureconfig: failed to create age encryption writer for scope '%s': %w", scope, err)
@@ -174,7 +216,7 @@ func (s *secureConfigAge) Save(scope string, plaintextData []byte, format string
 	encryptedData := encryptedOutput.Bytes()
 	s.logger.Debug("successfully encrypted config content", "scope", scope, "encrypted_size", len(encryptedData))
 
-	// 2. Insert encrypted data into DB
+	// 3. Insert encrypted data into DB
 	s.logger.Debug("inserting encrypted config content into db", "scope", scope, "format", format, "description", description)
 	err = s.dbCfg.InsertConfig(scope, encryptedData, format, description)
 	if err != nil {
