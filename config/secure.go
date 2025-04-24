@@ -34,54 +34,50 @@ type secureConfigAge struct {
 }
 
 // NewSecureConfigAge creates a new SecureConfig implementation using age.
-// It reads the age private key from ageKeyPath to derive the encryption recipient
-// (assuming X25519) and stores the path for on-demand decryption identity parsing.
+// It validates the age key file path and stores it for on-demand use.
+// It reads the key file once during creation to ensure it's valid but discards the content.
 func NewSecureConfigAge(dbCfg db.DbConfig, ageKeyPath string, logger *slog.Logger) (SecureConfig, error) {
-	// Read key file content temporarily to derive the recipient
+	// Validate key file readability and format once during initialization
 	keyContent, err := os.ReadFile(ageKeyPath)
 	if err != nil {
-		logger.Error("failed to read age key file for recipient derivation", "path", ageKeyPath, "error", err)
+		logger.Error("failed to read age key file during initialization", "path", ageKeyPath, "error", err)
 		return nil, fmt.Errorf("secureconfig: failed to read age key file '%s': %w", ageKeyPath, err)
 	}
 
-	// Parse identities temporarily
+	// Parse identities temporarily to validate format
 	identities, err := age.ParseIdentities(bytes.NewReader(keyContent))
 
-	// Zero out the raw key material immediately after parsing, regardless of errors
+	// Zero out the raw key material immediately after parsing attempt, regardless of errors
 	for i := range keyContent {
 		keyContent[i] = 0
 	}
+	keyContent = nil // Help GC
 
 	// Check for parsing errors *after* zeroing out key material
 	if err != nil {
-		logger.Error("failed to parse age identities for recipient derivation", "path", ageKeyPath, "error", err)
+		logger.Error("failed to parse age identities during initialization", "path", ageKeyPath, "error", err)
 		return nil, fmt.Errorf("secureconfig: failed to parse age identities from key file '%s': %w", ageKeyPath, err)
 	}
 	if len(identities) == 0 {
-		logger.Error("no age identities found in key file for recipient derivation", "path", ageKeyPath)
+		logger.Error("no age identities found in key file during initialization", "path", ageKeyPath)
 		return nil, fmt.Errorf("secureconfig: no age identities found in key file '%s'", ageKeyPath)
 	}
-
-	// Derive recipient from the first identity (assuming X25519 for encryption)
-	var recipient age.Recipient
-	switch id := identities[0].(type) {
+	// Check identity type compatibility (needed for deriving recipient in Save)
+	switch identities[0].(type) {
 	case *age.X25519Identity:
-		recipient = id.Recipient()
+		// This type is compatible for deriving a recipient later in Save()
 	default:
-		// Don't store the parsed identities if the type is wrong
-		logger.Error("unsupported age identity type for deriving recipient - must be X25519",
+		logger.Error("unsupported age identity type - must be X25519 for encryption",
 			"path", ageKeyPath,
 			"type", fmt.Sprintf("%T", identities[0]))
-		return nil, fmt.Errorf("secureconfig: unsupported age identity type '%T' for deriving recipient - must be X25519", identities[0])
+		return nil, fmt.Errorf("secureconfig: unsupported age identity type '%T' - must be X25519 for encryption", identities[0])
 	}
 
-	// Identities are intentionally not stored in the struct here.
-	// They will be re-parsed in Latest().
+	// Identities and recipient are not stored. Key file is validated.
 
 	return &secureConfigAge{
 		dbCfg:      dbCfg,
-		ageKeyPath: ageKeyPath, // Store the path
-		recipient:  recipient,  // Store the derived recipient
+		ageKeyPath: ageKeyPath, // Store the path only
 		logger:     logger.With("secure_config_type", "age"),
 	}, nil
 }
