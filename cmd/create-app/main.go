@@ -1,29 +1,30 @@
 package main
 
 import (
-	"bytes"
+	"context"
 	"flag"
 	"fmt"
-	"io"
 	"io/fs"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
 
-	"filippo.io/age"
 	"github.com/pelletier/go-toml/v2"
 
+	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
+	"github.com/caasmo/restinpieces/db"
+	zdb "github.com/caasmo/restinpieces/db/zombiezen" // Alias for zombiezen db implementation
 	"github.com/caasmo/restinpieces/migrations"
-	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 type AppCreator struct {
-	logger *slog.Logger
-	conn   *sqlite.Conn
+	logger       *slog.Logger
+	pool         *sqlitex.Pool
+	secureConfig config.SecureConfig
 }
 
 func NewAppCreator() *AppCreator {
@@ -31,38 +32,49 @@ func NewAppCreator() *AppCreator {
 		logger: slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		})),
+		// pool and secureConfig will be set later
 	}
 }
 
-func (ac *AppCreator) CreateDatabase(dbPath string) error {
+// CreateDatabasePool initializes the database pool.
+// It checks if the file exists first.
+func (ac *AppCreator) CreateDatabasePool(dbPath string) error {
 	if _, err := os.Stat(dbPath); err == nil {
 		ac.logger.Error("database file already exists", "file", dbPath)
 		return os.ErrExist
 	}
 
-	conn, err := sqlite.OpenConn(dbPath, sqlite.OpenReadWrite|sqlite.OpenCreate)
+	// Use the library helper to create the pool, ensuring consistency
+	pool, err := restinpieces.NewZombiezenPool(dbPath)
 	if err != nil {
-		ac.logger.Error("failed to open database", "error", err)
+		ac.logger.Error("failed to create database pool", "error", err)
 		return err
 	}
-	ac.conn = conn
+	ac.pool = pool
 	return nil
 }
 
 func (ac *AppCreator) RunMigrations() error {
+	conn, err := ac.pool.Take(context.Background())
+	if err != nil {
+		ac.logger.Error("failed to get connection from pool for migrations", "error", err)
+		return err
+	}
+	defer ac.pool.Put(conn)
+
 	schemaFS := migrations.Schema()
-	migrations, err := fs.ReadDir(schemaFS, ".")
+	migrationFiles, err := fs.ReadDir(schemaFS, ".")
 	if err != nil {
 		ac.logger.Error("failed to read embedded migrations", "error", err)
 		return err
 	}
 
-	for _, migration := range migrations {
+	for _, migration := range migrationFiles {
 		if filepath.Ext(migration.Name()) != ".sql" {
 			continue
 		}
 
-		sql, err := fs.ReadFile(schemaFS, migration.Name())
+		sqlBytes, err := fs.ReadFile(schemaFS, migration.Name())
 		if err != nil {
 			ac.logger.Error("failed to read embedded migration",
 				"file", migration.Name(),
@@ -71,9 +83,7 @@ func (ac *AppCreator) RunMigrations() error {
 		}
 
 		ac.logger.Info("applying migration", "file", migration.Name())
-		if err := sqlitex.ExecuteScript(ac.conn, string(sql), &sqlitex.ExecOptions{
-			Args: nil,
-		}); err != nil {
+		if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
 			ac.logger.Error("failed to execute migration",
 				"file", migration.Name(),
 				"error", err)
@@ -197,82 +207,29 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 	return cfg, nil
 }
 
-// encryptData encrypts data using the public key derived from the provided age identity file.
-func (ac *AppCreator) encryptData(data []byte, ageIdentityPath string) ([]byte, error) {
-	// 1. Read the identity file
-	keyContent, err := os.ReadFile(ageIdentityPath)
+// SaveConfig uses the configured SecureConfig implementation to save the config.
+func (ac *AppCreator) SaveConfig(configData []byte) error {
+	ac.logger.Info("saving initial configuration using SecureConfig")
+	err := ac.secureConfig.Save(
+		db.ConfigScopeApplication,
+		configData,
+		"toml",
+		"Initial default configuration",
+	)
 	if err != nil {
-		ac.logger.Error("failed to read age identity file", "path", ageIdentityPath, "error", err)
-		return nil, fmt.Errorf("failed to read age identity file '%s': %w", ageIdentityPath, err)
-	}
-
-	// 2. Parse identities (private keys)
-	identities, err := age.ParseIdentities(bytes.NewReader(keyContent))
-	if err != nil {
-		ac.logger.Error("failed to parse age identities", "path", ageIdentityPath, "error", err)
-		return nil, fmt.Errorf("failed to parse age identities from '%s': %w", ageIdentityPath, err)
-	}
-	if len(identities) == 0 {
-		return nil, fmt.Errorf("no age identities found in file '%s'", ageIdentityPath)
-	}
-
-	// 3. Find the first X25519 identity to get its recipient (public key)
-	var recipient age.Recipient
-	for _, id := range identities {
-		if x25519ID, ok := id.(*age.X25519Identity); ok {
-			recipient = x25519ID.Recipient()
-			break
-		}
-	}
-	if recipient == nil {
-		ac.logger.Error("no X25519 age identity found in file - needed for encryption", "path", ageIdentityPath)
-		return nil, fmt.Errorf("no X25519 age identity found in file '%s'", ageIdentityPath)
-	}
-
-	// 4. Encrypt using the derived recipient (public key)
-	encryptedOutput := &bytes.Buffer{}
-	encryptWriter, err := age.Encrypt(encryptedOutput, recipient)
-	if err != nil {
-		ac.logger.Error("failed to create age encryption writer", "error", err)
-		return nil, fmt.Errorf("failed to create age encryption writer: %w", err)
-	}
-	if _, err := io.Copy(encryptWriter, bytes.NewReader(data)); err != nil {
-		ac.logger.Error("failed to write data to age encryption writer", "error", err)
-		return nil, fmt.Errorf("failed to write data to age encryption writer: %w", err)
-	}
-	if err := encryptWriter.Close(); err != nil {
-		ac.logger.Error("failed to close age encryption writer", "error", err)
-		return nil, fmt.Errorf("failed to close age encryption writer: %w", err)
-	}
-	return encryptedOutput.Bytes(), nil
-}
-
-func (ac *AppCreator) InsertConfig(encryptedConfig []byte) error {
-	ac.logger.Info("inserting initial encrypted configuration")
-	err := sqlitex.Execute(ac.conn,
-		`INSERT INTO app_config (content, format, description, created_at)
-		VALUES (?, ?, ?, ?)`,
-		&sqlitex.ExecOptions{
-			Args: []interface{}{
-				encryptedConfig,
-				"toml",
-				"Initial default configuration",
-				time.Now().UTC().Format(time.RFC3339),
-			},
-		})
-	if err != nil {
-		ac.logger.Error("failed to insert initial config", "error", err)
-		return fmt.Errorf("failed to insert initial config: %w", err)
+		// SecureConfig.Save should log specifics, just log the failure here
+		ac.logger.Error("failed to save initial config via SecureConfig", "error", err)
+		return fmt.Errorf("failed to save initial config: %w", err)
 	}
 	return nil
 }
 
 func main() {
 	dbPathFlag := flag.String("db", "", "Path to the SQLite database file to create (required)")
-	ageKeyPathFlag := flag.String("age-key", "", "Path to the age identity (private key) file for encryption (required)") // Updated description
+	ageKeyPathFlag := flag.String("age-key", "", "Path to the age identity (private key) file for encryption (required)")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s -db <database-path> -age-key <identity-file-path>\n", os.Args[0]) // Updated usage
+		fmt.Fprintf(os.Stderr, "Usage: %s -db <database-path> -age-key <identity-file-path>\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Creates a new SQLite database with an initial, encrypted configuration.\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
@@ -286,49 +243,60 @@ func main() {
 	}
 
 	creator := NewAppCreator()
+
+	// 1. Create Database Pool
+	creator.logger.Info("creating sqlite database pool", "path", *dbPathFlag)
+	if err := creator.CreateDatabasePool(*dbPathFlag); err != nil {
+		os.Exit(1) // Error logged in CreateDatabasePool
+	}
 	defer func() {
-		if creator.conn != nil {
-			creator.conn.Close()
+		if creator.pool != nil {
+			creator.logger.Info("closing database pool")
+			if err := creator.pool.Close(); err != nil {
+				creator.logger.Error("error closing database pool", "error", err)
+			}
 		}
 	}()
 
-	// 1. Create Database File
-	creator.logger.Info("creating sqlite file", "path", *dbPathFlag)
-	if err := creator.CreateDatabase(*dbPathFlag); err != nil {
-		os.Exit(1) // Error logged in CreateDatabase
+	// 2. Instantiate DB implementation
+	dbImpl, err := zdb.New(creator.pool)
+	if err != nil {
+		creator.logger.Error("failed to instantiate zombiezen db", "error", err)
+		os.Exit(1)
 	}
 
-	// 2. Run Migrations (Apply Schema)
+	// 3. Instantiate SecureConfig
+	secureCfg, err := config.NewSecureConfigAge(dbImpl, *ageKeyPathFlag, creator.logger)
+	if err != nil {
+		creator.logger.Error("failed to instantiate secure config (age)", "error", err)
+		os.Exit(1)
+	}
+	creator.secureConfig = secureCfg // Assign to creator
+
+	// 4. Run Migrations (Apply Schema)
 	if err := creator.RunMigrations(); err != nil {
 		os.Exit(1) // Error logged in RunMigrations
 	}
 
-	// 3. Generate Default Config Struct
+	// 5. Generate Default Config Struct
 	defaultCfg, err := creator.generateDefaultConfig()
 	if err != nil {
 		creator.logger.Error("failed to generate default config struct", "error", err)
 		os.Exit(1)
 	}
 
-	// 4. Marshal Config to TOML
+	// 6. Marshal Config to TOML
 	tomlBytes, err := toml.Marshal(defaultCfg)
 	if err != nil {
 		creator.logger.Error("failed to marshal default config to TOML", "error", err)
 		os.Exit(1)
 	}
 
-	// 5. Encrypt TOML Data
-	encryptedConfig, err := creator.encryptData(tomlBytes, *ageKeyPathFlag)
-	if err != nil {
-		// Error logged in encryptData
+	// 7. Save Encrypted Config into DB via SecureConfig
+	if err := creator.SaveConfig(tomlBytes); err != nil {
+		// Error logged in SaveConfig
 		os.Exit(1)
 	}
 
-	// 6. Insert Encrypted Config into DB
-	if err := creator.InsertConfig(encryptedConfig); err != nil {
-		// Error logged in InsertConfig
-		os.Exit(1)
-	}
-
-	creator.logger.Info("application database created successfully", "db_file", *dbPathFlag)
+	creator.logger.Info("application database created and configured successfully", "db_file", *dbPathFlag)
 }
