@@ -13,18 +13,18 @@ import (
 	"github.com/caasmo/restinpieces/db" // Adjust import path if necessary
 )
 
-// LoadFromDb loads configuration from the database using the provided DbConfig and age key file.
-func LoadFromDb(db db.DbConfig, logger *slog.Logger, ageKeyPath string) (*Config, error) {
-	logger.Info("loading configuration from database")
-	encryptedData, err := db.GetConfig()
+// LoadFromDb loads the main application configuration from the database using the provided DbConfig and age key file.
+func LoadFromDb(dbCfg db.DbConfig, logger *slog.Logger, ageKeyPath string) (*Config, error) {
+	logger.Info("loading application configuration from database", "scope", db.ConfigScopeApplication)
+	encryptedData, err := dbCfg.GetConfig(db.ConfigScopeApplication) // Pass the application scope
 	if err != nil {
-		return nil, fmt.Errorf("config: failed to get from db: %w", err)
+		return nil, fmt.Errorf("config: failed to get application config from db: %w", err)
 	}
 
-	// Check if config is empty
+	// Check if config for the application scope is empty
 	if len(encryptedData) == 0 {
-		logger.Warn("no configuration found in database")
-		return nil, fmt.Errorf("config: no configuration found in database")
+		logger.Warn("no application configuration found in database", "scope", db.ConfigScopeApplication)
+		return nil, fmt.Errorf("config: no application configuration found in database (scope: %s)", db.ConfigScopeApplication)
 	}
 
 	// --- Decrypt Config ---

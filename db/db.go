@@ -28,8 +28,8 @@ type DbQueue interface {
 
 // DbConfig defines database operations related to configuration.
 type DbConfig interface {
-	// GetConfig returns the encrypted configuration blob from the database
-	GetConfig() ([]byte, error)
+	// GetConfig returns the latest encrypted configuration blob for the specified scope.
+	GetConfig(scope string) ([]byte, error)
 }
 
 // DbAcme interface removed.
@@ -69,3 +69,6 @@ var (
 	ErrConstraintUnique = errors.New("unique constraint violation")
 	ErrUserNotFound     = errors.New("user not found") // Added for clarity
 )
+
+// ConfigScopeApplication defines the scope for the main application configuration.
+const ConfigScopeApplication = "application"
