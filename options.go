@@ -59,6 +59,12 @@ func WithPhusLogger(opts *slog.HandlerOptions) core.Option {
 }
 
 // WithTextHandler configures slog with the standard library's text handler.
+func WithAgeKeyPath(path string) core.Option {
+	return func(a *core.App) {
+		a.ageKeyPath = path
+	}
+}
+
 func WithTextLogger(opts *slog.HandlerOptions) core.Option {
 	// Ensure opts is not nil to avoid panic
 	if opts == nil {

@@ -26,6 +26,7 @@ type App struct {
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
 	logger         *slog.Logger
+	ageKeyPath     string                           // Path to age identity file
 }
 
 // ServeHTTP method removed as App no longer acts as the primary handler
@@ -83,6 +84,11 @@ func (a *App) Logger() *slog.Logger {
 // Cache returns the application's cache instance
 func (a *App) Cache() cache.Cache[string, interface{}] {
 	return a.cache
+}
+
+// AgeKeyPath returns the path to the age identity file
+func (a *App) AgeKeyPath() string {
+	return a.ageKeyPath
 }
 
 // Config returns the currently active application config instance
