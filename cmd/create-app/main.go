@@ -122,8 +122,6 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 			IdleTimeout:             config.Duration{Duration: 1 * time.Minute},
 			ClientIpProxyHeader:     "",
 			EnableTLS:               false,
-			CertFile:                "",
-			KeyFile:                 "",
 			CertData:                "",
 			KeyData:                 "",
 			RedirectAddr:            "",
@@ -185,16 +183,6 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 			ConfirmPasswordReset:     "POST /api/confirm-password-reset",
 			RequestEmailChange:       "POST /api/request-email-change",
 			ConfirmEmailChange:       "POST /api/confirm-email-change",
-		},
-		Acme: config.Acme{
-			Enabled:                 false,
-			Email:                   "your-email@example.com",                         // Example
-			Domains:                 []string{"yourdomain.com", "www.yourdomain.com"}, // Example
-			DNSProvider:             "cloudflare",                                     // Example
-			RenewalDaysBeforeExpiry: 30,
-			CADirectoryURL:          "https://acme-staging-v02.api.letsencrypt.org/directory", // Staging default
-			CloudflareApiToken:      "",                                                       // Must be set via env
-			AcmePrivateKey:          "",                                                       // Must be set via env
 		},
 		BlockIp: config.BlockIp{
 			Enabled: true, // Default from example
