@@ -89,6 +89,14 @@ func (a *App) Cache() cache.Cache[string, interface{}] {
 	return a.cache
 }
 
+// Config returns the currently active application config instance
+// by retrieving it from the config provider.
+// TODO remove? 
+func (a *App) Config() *config.Config {
+	// Delegate fetching the config to the provider
+	return a.configProvider.Get()
+}
+
 // SecureConfig returns the application's secure configuration handler
 func (a *App) SecureConfigStore() config.SecureConfig {
 	return a.secureConfig
