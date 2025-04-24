@@ -25,34 +25,41 @@ type SecureConfig interface {
 }
 
 // secureConfigAge implements SecureConfig using the age encryption library.
+// It stores the path to the key file and re-parses identities on demand for decryption
+// to minimize the time sensitive key material is held in memory.
 type secureConfigAge struct {
 	dbCfg      db.DbConfig
-	identities []age.Identity // For decryption
-	recipient  age.Recipient  // For encryption
+	ageKeyPath string        // Path to the age private key file
+	recipient  age.Recipient // For encryption (derived once at creation)
 	logger     *slog.Logger
 }
 
 // NewSecureConfigAge creates a new SecureConfig implementation using age.
-// It reads the age private key from ageKeyPath to initialize decryption identities
-// and derives the encryption recipient (assuming X25519).
+// It reads the age private key from ageKeyPath to derive the encryption recipient
+// (assuming X25519) and stores the path for on-demand decryption identity parsing.
 func NewSecureConfigAge(dbCfg db.DbConfig, ageKeyPath string, logger *slog.Logger) (SecureConfig, error) {
+	// Read key file content temporarily to derive the recipient
 	keyContent, err := os.ReadFile(ageKeyPath)
 	if err != nil {
-		logger.Error("failed to read age key file", "path", ageKeyPath, "error", err)
+		logger.Error("failed to read age key file for recipient derivation", "path", ageKeyPath, "error", err)
 		return nil, fmt.Errorf("secureconfig: failed to read age key file '%s': %w", ageKeyPath, err)
 	}
 
+	// Parse identities temporarily
 	identities, err := age.ParseIdentities(bytes.NewReader(keyContent))
-	// Zero out the raw key material immediately after parsing
+
+	// Zero out the raw key material immediately after parsing, regardless of errors
 	for i := range keyContent {
 		keyContent[i] = 0
 	}
+
+	// Check for parsing errors *after* zeroing out key material
 	if err != nil {
-		logger.Error("failed to parse age identities", "path", ageKeyPath, "error", err)
+		logger.Error("failed to parse age identities for recipient derivation", "path", ageKeyPath, "error", err)
 		return nil, fmt.Errorf("secureconfig: failed to parse age identities from key file '%s': %w", ageKeyPath, err)
 	}
 	if len(identities) == 0 {
-		logger.Error("no age identities found in key file", "path", ageKeyPath)
+		logger.Error("no age identities found in key file for recipient derivation", "path", ageKeyPath)
 		return nil, fmt.Errorf("secureconfig: no age identities found in key file '%s'", ageKeyPath)
 	}
 
@@ -62,24 +69,29 @@ func NewSecureConfigAge(dbCfg db.DbConfig, ageKeyPath string, logger *slog.Logge
 	case *age.X25519Identity:
 		recipient = id.Recipient()
 	default:
+		// Don't store the parsed identities if the type is wrong
 		logger.Error("unsupported age identity type for deriving recipient - must be X25519",
 			"path", ageKeyPath,
 			"type", fmt.Sprintf("%T", identities[0]))
 		return nil, fmt.Errorf("secureconfig: unsupported age identity type '%T' for deriving recipient - must be X25519", identities[0])
 	}
 
+	// Identities are intentionally not stored in the struct here.
+	// They will be re-parsed in Latest().
+
 	return &secureConfigAge{
 		dbCfg:      dbCfg,
-		identities: identities,
-		recipient:  recipient,
+		ageKeyPath: ageKeyPath, // Store the path
+		recipient:  recipient,  // Store the derived recipient
 		logger:     logger.With("secure_config_type", "age"),
 	}, nil
 }
 
 // Latest implements the SecureConfig interface for age.
+// It reads the key file and parses identities on demand for decryption.
 func (s *secureConfigAge) Latest(scope string) ([]byte, error) {
 	s.logger.Debug("fetching latest config content from db", "scope", scope)
-	// 1. Get raw (encrypted) data from DB
+	// 1. Get raw (presumably encrypted) data from DB
 	contentData, err := s.dbCfg.LatestConfig(scope)
 	if err != nil {
 		// Propagate DB error
@@ -91,15 +103,46 @@ func (s *secureConfigAge) Latest(scope string) ([]byte, error) {
 		return nil, fmt.Errorf("secureconfig: no configuration content found for scope '%s'", scope)
 	}
 
-	s.logger.Debug("decrypting config content", "scope", scope, "encrypted_size", len(contentData))
-	// 2. Decrypt using stored identities
-	encryptedDataReader := bytes.NewReader(contentData)
-	decryptedDataReader, err := age.Decrypt(encryptedDataReader, s.identities...)
+	s.logger.Debug("decrypting config content", "scope", scope, "content_size", len(contentData))
+
+	// 2. Read key file and parse identities on demand for decryption
+	s.logger.Debug("reading age key file for decryption", "path", s.ageKeyPath)
+	keyContent, err := os.ReadFile(s.ageKeyPath)
+	if err != nil {
+		s.logger.Error("failed to read age key file for decryption", "path", s.ageKeyPath, "error", err)
+		return nil, fmt.Errorf("secureconfig: failed to read age key file '%s' for decryption: %w", s.ageKeyPath, err)
+	}
+
+	identities, err := age.ParseIdentities(bytes.NewReader(keyContent))
+
+	// Zero out the raw key material immediately after parsing
+	for i := range keyContent {
+		keyContent[i] = 0
+	}
+
+	// Check for parsing errors *after* zeroing
+	if err != nil {
+		s.logger.Error("failed to parse age identities for decryption", "path", s.ageKeyPath, "error", err)
+		return nil, fmt.Errorf("secureconfig: failed to parse age identities from key file '%s' for decryption: %w", s.ageKeyPath, err)
+	}
+	if len(identities) == 0 {
+		// Should not happen if NewSecureConfigAge succeeded, but check defensively
+		s.logger.Error("no age identities found in key file for decryption", "path", s.ageKeyPath)
+		return nil, fmt.Errorf("secureconfig: no age identities found in key file '%s' for decryption", s.ageKeyPath)
+	}
+
+	// 3. Decrypt using the just-parsed identities
+	contentDataReader := bytes.NewReader(contentData)
+	decryptedDataReader, err := age.Decrypt(contentDataReader, identities...)
+	// Identities go out of scope here and are eligible for GC
+
 	if err != nil {
 		s.logger.Error("failed to decrypt configuration data", "scope", scope, "error", err)
+		// Avoid logging contentData here as it might be sensitive if decryption failed unexpectedly
 		return nil, fmt.Errorf("secureconfig: failed to decrypt configuration data for scope '%s': %w", scope, err)
 	}
 
+	// 4. Read the decrypted result
 	decryptedBytes, err := io.ReadAll(decryptedDataReader)
 	if err != nil {
 		s.logger.Error("failed to read decrypted data stream", "scope", scope, "error", err)
