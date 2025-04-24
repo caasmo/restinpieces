@@ -4,6 +4,10 @@ CREATE TABLE IF NOT EXISTS app_config (
     -- id: Unique identifier for this specific version of the config
     id INTEGER PRIMARY KEY AUTOINCREMENT,
 
+    -- scope: Defines the category or area this configuration applies to (e.g., 'application', 'plugin_x')
+    -- Must be explicitly provided on insert.
+    scope TEXT NOT NULL,
+
     -- content: The actual configuration data (e.g., TOML string)
     content BLOB NOT NULL,
 
@@ -19,5 +23,8 @@ CREATE TABLE IF NOT EXISTS app_config (
 );
 
 -- Create index separately to avoid trailing bytes in table creation
-CREATE INDEX IF NOT EXISTS idx_app_config_created ON app_config(created_at DESC)
+CREATE INDEX IF NOT EXISTS idx_app_config_created ON app_config(created_at DESC);
+
+-- Index to efficiently find the latest configuration for a specific scope
+CREATE INDEX IF NOT EXISTS idx_app_config_scope_created ON app_config(scope, created_at DESC);
 
