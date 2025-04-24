@@ -11,7 +11,7 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-// LatestConfig retrieves the latest encrypted configuration blob for the specified scope.
+// LatestConfig retrieves the latest configuration content blob for the specified scope.
 // Returns nil slice if no config exists for the given scope (no error).
 func (d *Db) LatestConfig(scope string) ([]byte, error) {
 	conn, err := d.pool.Take(context.TODO())
@@ -20,7 +20,7 @@ func (d *Db) LatestConfig(scope string) ([]byte, error) {
 	}
 	defer d.pool.Put(conn)
 
-	var encryptedData []byte
+	var contentData []byte // Renamed from encryptedData
 	err = sqlitex.Execute(conn,
 		`SELECT content FROM app_config
 		 WHERE scope = ?
@@ -32,24 +32,24 @@ func (d *Db) LatestConfig(scope string) ([]byte, error) {
 				// Get a reader for the blob column (index 0) - content
 				reader := stmt.ColumnReader(0)
 				// Read all data from the reader
-				encryptedData, err = io.ReadAll(reader)
+				contentData, err = io.ReadAll(reader) // Read into renamed variable
 				return err // Return any error from io.ReadAll
 			},
 		})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get latest config for scope '%s': %w", scope, err)
+		return nil, fmt.Errorf("failed to get latest config content for scope '%s': %w", scope, err)
 	}
 
-	// encryptedData will be nil if no row was found, which is the desired behavior
-	return encryptedData, nil
+	// contentData will be nil if no row was found, which is the desired behavior
+	return contentData, nil
 }
 
-// InsertConfig inserts a new encrypted configuration blob into the database.
-func (d *Db) InsertConfig(scope string, encryptedData []byte, format string, description string) error {
+// InsertConfig inserts a new configuration content blob into the database.
+func (d *Db) InsertConfig(scope string, contentData []byte, format string, description string) error {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
-		return fmt.Errorf("failed to get db connection for insert: %w", err)
+		return fmt.Errorf("failed to get db connection for config insert: %w", err)
 	}
 	defer d.pool.Put(conn)
 
@@ -66,7 +66,7 @@ func (d *Db) InsertConfig(scope string, encryptedData []byte, format string, des
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
 				scope,
-				encryptedData,
+				contentData, // Use renamed parameter
 				format,
 				description,
 				now,

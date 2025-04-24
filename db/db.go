@@ -28,10 +28,10 @@ type DbQueue interface {
 
 // DbConfig defines database operations related to configuration.
 type DbConfig interface {
-	// LatestConfig returns the latest encrypted configuration blob for the specified scope.
+	// LatestConfig returns the latest configuration content blob for the specified scope.
 	LatestConfig(scope string) ([]byte, error)
-	// InsertConfig inserts a new encrypted configuration blob for a given scope.
-	InsertConfig(scope string, encryptedData []byte, format string, description string) error
+	// InsertConfig inserts a new configuration content blob for a given scope.
+	InsertConfig(scope string, contentData []byte, format string, description string) error
 }
 
 // DbAcme interface removed.
