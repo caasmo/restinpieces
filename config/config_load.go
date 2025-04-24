@@ -2,11 +2,7 @@ package config
 
 import (
 	"fmt"
-	"log/slog"
-	// Removed io, os, bytes, filippo.io/age imports as they are handled by SecureConfig
-
 	"github.com/pelletier/go-toml/v2" // TOML v2 parser
-
 	"github.com/caasmo/restinpieces/db" // Adjust import path if necessary
 )
 

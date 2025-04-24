@@ -54,14 +54,12 @@ func NewApp(opts ...Option) (*App, error) {
 		return nil, fmt.Errorf("logger is required but was not provided")
 	}
 
-	// Initialize SecureConfig if ageKeyPath is set
-	if a.ageKeyPath != "" {
-		var err error
-		a.secureConfig, err = config.NewSecureConfigAge(a.dbConfig, a.ageKeyPath, a.logger)
-		if err != nil {
-			return nil, fmt.Errorf("failed to initialize secure config: %w", err)
-		}
-	}
+    sc, err := config.NewSecureConfigAge(a.dbConfig, a.ageKeyPath, a.logger)
+    if err != nil {
+        return nil, fmt.Errorf("failed to initialize secure config: %w", err)
+    }
+
+    a.secureConfig = sc
 
 	return a, nil
 }
@@ -81,11 +79,6 @@ func (a *App) DbQueue() db.DbQueue {
 	return a.dbQueue
 }
 
-func (a *App) DbConfig() db.DbConfig {
-	return a.dbConfig
-}
-
-
 // Logger returns the application's logger instance
 func (a *App) Logger() *slog.Logger {
 	return a.logger
@@ -98,6 +91,7 @@ func (a *App) Cache() cache.Cache[string, interface{}] {
 
 // Config returns the currently active application config instance
 // by retrieving it from the config provider.
+// TODO remove? 
 func (a *App) Config() *config.Config {
 	// Delegate fetching the config to the provider
 	return a.configProvider.Get()
