@@ -59,6 +59,12 @@ func WithPhusLogger(opts *slog.HandlerOptions) core.Option {
 }
 
 
+func WithAgeKeyPath(path string) core.Option {
+	return func(a *core.App) {
+		a.ageKeyPath = path
+	}
+}
+
 func WithTextLogger(opts *slog.HandlerOptions) core.Option {
 	// Ensure opts is not nil to avoid panic
 	if opts == nil {

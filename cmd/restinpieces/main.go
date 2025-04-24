@@ -43,10 +43,9 @@ func main() {
 	}()
 
 	// --- Initialize the Application ---
-	// Pass ageKeyPath as the first argument
 	_, srv, err := restinpieces.New(
-		*ageKeyPath, // Pass the age key file path
 		restinpieces.WithDbZombiezen(dbPool),
+		restinpieces.WithAgeKeyPath(*ageKeyPath),
 		restinpieces.WithRouterServeMux(),
 		restinpieces.WithCacheRistretto(),
 		restinpieces.WithTextLogger(nil),

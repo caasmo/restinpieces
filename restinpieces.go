@@ -28,16 +28,12 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
-	appLogger := app.Logger() 
-	cfg, err := config.LoadFromDb(app.DbConfig(), appLogger, ageKeyPath)
-	if err == nil { 
-		cfg.Source = "" 
-	}
-
+	cfg, err := config.LoadFromDb(app.SecureConfig())
 	if err != nil {
 		app.Logger().Error("failed to load config", "error", err)
 		return nil, nil, err
 	}
+	cfg.Source = "" // Clear source field
 
 	configProvider := config.NewProvider(cfg)
 	app.SetConfigProvider(configProvider)
