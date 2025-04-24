@@ -1,5 +1,13 @@
 ### TODOs
 
+- pseudo secrets manager 
+    - how extension can use the table, avoid collisions
+    - they register type, framweork validates type 
+    - they offer GetLatest, write, never update
+    - rename to history?
+    - content can be what they want. just use 'secret manager' aka age.
+- mailer default local
+    - no external smtp server
 - sdk visibility, own route
 - move router httprouter to repo
 - renew-jtw-secrets like create-app, creates a new config
