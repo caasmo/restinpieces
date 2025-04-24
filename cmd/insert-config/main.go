@@ -184,7 +184,8 @@ func main() {
 	}
 	defer inserter.pool.Close()
 
-	if err := inserter.InsertConfig(*tomlPathFlag, *ageIdentityPathFlag); err != nil {
+	// Pass the scope flag value to InsertConfig
+	if err := inserter.InsertConfig(*tomlPathFlag, *ageIdentityPathFlag, *scopeFlag); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
