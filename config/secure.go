@@ -76,6 +76,13 @@ func loadAndParseIdentities(keyPath string, logger *slog.Logger, operation strin
 		return nil, fmt.Errorf("secureconfig: no age identities found in key file '%s' for %s", keyPath, operation)
 	}
 
+	// Ensure the first identity is the supported X25519 type
+	if _, ok := identities[0].(*age.X25519Identity); !ok {
+		err := fmt.Errorf("unsupported age identity type '%T' - must be X25519", identities[0])
+		logger.Error("unsupported age identity type found", "path", keyPath, "operation", operation, "type", fmt.Sprintf("%T", identities[0]), "error", err)
+		return nil, fmt.Errorf("secureconfig: %w", err)
+	}
+
 	return identities, nil
 }
 
@@ -138,23 +145,14 @@ func (s *secureConfigAge) Save(scope string, plaintextData []byte, format string
 		return err // Return error directly
 	}
 
-	// Derive recipient from the first loaded identity (assuming X25519)
-	var recipient age.Recipient
-	switch id := identities[0].(type) { // Use the loaded identities
-	case *age.X25519Identity:
-		recipient = id.Recipient()
-	default:
-		// This case should have been caught by NewSecureConfigAge, but check defensively
-		s.logger.Error("unsupported age identity type for deriving recipient - must be X25519",
-			"path", s.ageKeyPath,
-			"type", fmt.Sprintf("%T", identities[0]))
-		return fmt.Errorf("secureconfig: unsupported age identity type '%T' for deriving recipient - must be X25519", identities[0])
-	}
-	// Identities are not needed further and go out of scope
+	// Derive recipient from the first loaded identity.
+	// The type check is already done in loadAndParseIdentities.
+	recipient := identities[0].(*age.X25519Identity).Recipient()
+	// identities slice goes out of scope here
 
 	// 2. Encrypt using the just-derived recipient
 	encryptedOutput := &bytes.Buffer{}
-	encryptWriter, err := age.Encrypt(encryptedOutput, recipient) // Use derived recipient
+	encryptWriter, err := age.Encrypt(encryptedOutput, recipient)
 	if err != nil {
 		s.logger.Error("failed to create age encryption writer", "scope", scope, "error", err)
 		return fmt.Errorf("secureconfig: failed to create age encryption writer for scope '%s': %w", scope, err)
