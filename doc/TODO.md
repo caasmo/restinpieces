@@ -1,6 +1,5 @@
 ### TODOs
 
-- remove Config() collides with secureConfig
 - mailer default local
     - no external smtp server
 - sdk visibility, own route
@@ -9,15 +8,6 @@
 - rollback config 
 - start logs: emojify, insightful
 - create-app shoudl create age key.
-- user can add jobs, we want to get rid of acme dependencies
-    - acme renewal does not belong in main repo 
-    - we can return the scheduler
-    - remember the handler of the user may use app db or other things
-    - a property of the server
-    - server has GetJobExecutor().Register(myHandler)
-    - or better AddJobHandler()
-        - server has executor
-            - executor has a Register()
 - start server dbfile consistence
 - acme is a scheduler job. remove to own repo
 - disable standard routes
@@ -132,6 +122,15 @@
 
 ### done
 
+- user can add jobs, we want to get rid of acme dependencies
+    - acme renewal does not belong in main repo 
+    - we can return the scheduler
+    - remember the handler of the user may use app db or other things
+    - a property of the server
+    - server has GetJobExecutor().Register(myHandler)
+    - or better AddJobHandler()
+        - server has executor
+            - executor has a Register()
 - pseudo secrets manager 
     - how extension can use the table, avoid collisions
     - they register type, framweork validates type 
