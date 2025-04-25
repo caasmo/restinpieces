@@ -7,9 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/caasmo/restinpieces"                  
-	"github.com/caasmo/restinpieces/config"           
-	dbz "github.com/caasmo/restinpieces/db/zombiezen" 
+	"github.com/caasmo/restinpieces"
+	"github.com/caasmo/restinpieces/config"
+	dbz "github.com/caasmo/restinpieces/db/zombiezen"
 )
 
 func main() {

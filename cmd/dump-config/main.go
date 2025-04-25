@@ -6,11 +6,10 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/caasmo/restinpieces"                  
-	"github.com/caasmo/restinpieces/config"           
-	dbz "github.com/caasmo/restinpieces/db/zombiezen" 
+	"github.com/caasmo/restinpieces"
+	"github.com/caasmo/restinpieces/config"
+	dbz "github.com/caasmo/restinpieces/db/zombiezen"
 )
-
 
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{

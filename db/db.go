@@ -34,7 +34,6 @@ type DbConfig interface {
 	InsertConfig(scope string, contentData []byte, format string, description string) error
 }
 
-
 type DbApp interface {
 	DbAuth
 	DbQueue
@@ -67,4 +66,3 @@ var (
 	ErrConstraintUnique = errors.New("unique constraint violation")
 	ErrUserNotFound     = errors.New("user not found") // Added for clarity
 )
-
