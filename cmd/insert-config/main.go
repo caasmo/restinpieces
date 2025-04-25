@@ -7,12 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	// No longer need context, bytes, io, runtime, time, age, sqlite, sqlitex directly here
-	// Keep db and dbz
-	"github.com/caasmo/restinpieces"                  // Import restinpieces for pool creation
-	"github.com/caasmo/restinpieces/config"           // Import config package
-	"github.com/caasmo/restinpieces/db"               // Import db package for scope constant
-	dbz "github.com/caasmo/restinpieces/db/zombiezen" // Import zombiezen implementation
+	"github.com/caasmo/restinpieces"                  
+	"github.com/caasmo/restinpieces/config"           
+	dbz "github.com/caasmo/restinpieces/db/zombiezen" 
 )
 
 // --- insertConfig function removed ---
