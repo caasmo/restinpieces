@@ -56,7 +56,6 @@ func main() {
 		os.Exit(1) // Exit if app initialization fails
 	}
 
-
 	// Start the server
 	// The Run method likely blocks until the server stops (e.g., via signal)
 	srv.Run()

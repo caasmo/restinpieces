@@ -7,10 +7,9 @@ import (
 	"os"
 
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/db"
-	"github.com/pelletier/go-toml/v2"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
+	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
@@ -18,6 +17,7 @@ import (
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/router"
 	"github.com/caasmo/restinpieces/server"
+	"github.com/pelletier/go-toml/v2"
 )
 
 // New creates a new App instance and Server with the provided options and age key file path.
@@ -58,7 +58,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	//app.Logger().Info("config", "config", cfg)
 
 	// Setup custom application logic and routes
-	route(cfg, app) 
+	route(cfg, app)
 
 	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.Logger())
 	if err != nil {
@@ -71,7 +71,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 
 	srv := server.NewServer(
 		configProvider,
-		preRouterHandler, 
+		preRouterHandler,
 		app.Logger(),
 	)
 

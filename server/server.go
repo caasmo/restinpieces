@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/queue/executor" // Added executor import
+	"github.com/caasmo/restinpieces/queue/executor"      // Added executor import
 	scl "github.com/caasmo/restinpieces/queue/scheduler" // Added scheduler import with alias
 	"golang.org/x/sync/errgroup"
 	"log/slog"
@@ -76,7 +76,7 @@ func (s *Server) AddJobHandler(jobType string, handler executor.JobHandler) erro
 			}
 			s.logger.Info("Server: registering job handler with scheduler's executor", "job_type", jobType)
 			jobExecutor.Register(jobType, handler) // Call Register on the interface
-			return nil // Registration successful
+			return nil                             // Registration successful
 		}
 	}
 	return fmt.Errorf("scheduler daemon not found, cannot register job handler")

@@ -33,7 +33,7 @@ func (d *Db) LatestConfig(scope string) ([]byte, error) {
 				reader := stmt.ColumnReader(0)
 				// Read all data from the reader
 				contentData, err = io.ReadAll(reader) // Read into renamed variable
-				return err // Return any error from io.ReadAll
+				return err                            // Return any error from io.ReadAll
 			},
 		})
 

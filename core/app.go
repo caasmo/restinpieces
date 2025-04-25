@@ -19,19 +19,19 @@ import (
 // app is a service with heavy objects for the handlers.
 // and also a out the box coded endpoints handlers. (methods)
 type App struct {
-	dbAuth   db.DbAuth
-	dbQueue  db.DbQueue
-	dbConfig db.DbConfig
-	router router.Router
+	dbAuth         db.DbAuth
+	dbQueue        db.DbQueue
+	dbConfig       db.DbConfig
+	router         router.Router
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
 	logger         *slog.Logger
-	ageKeyPath     string                           // Path to age identity file
+	ageKeyPath     string // Path to age identity file
 	// SecureConfigStore provides encrypted configuration storage/retrieval capabilities.
 	// It acts as a secrets manager for securely storing sensitive configuration in the database.
 	// Primarily used during application initialization to load encrypted configs on startup.
 	// The implementation uses age encryption with keys from ageKeyPath.
-	secureConfig   config.SecureConfig
+	secureConfig config.SecureConfig
 }
 
 // ServeHTTP method removed as App no longer acts as the primary handler
@@ -100,7 +100,7 @@ func (a *App) Cache() cache.Cache[string, interface{}] {
 
 // Config returns the currently active application config instance
 // by retrieving it from the config provider.
-// TODO remove? 
+// TODO remove?
 func (a *App) Config() *config.Config {
 	// Delegate fetching the config to the provider
 	return a.configProvider.Get()

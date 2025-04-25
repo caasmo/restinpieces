@@ -130,7 +130,7 @@ func (s *secureConfigAge) Save(scope string, plaintextData []byte, format string
 
 	identities, err := loadAndParseIdentities(s.ageKeyPath, s.logger, "encryption")
 	if err != nil {
-		return err 
+		return err
 	}
 
 	// Derive recipient from the first loaded identity.

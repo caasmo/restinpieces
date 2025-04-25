@@ -50,4 +50,3 @@ func WithAgeKeyPath(path string) Option {
 		a.ageKeyPath = path
 	}
 }
-
