@@ -34,16 +34,12 @@ type DbConfig interface {
 	InsertConfig(scope string, contentData []byte, format string, description string) error
 }
 
-// DbAcme interface removed.
 
 type DbApp interface {
 	DbAuth
 	DbQueue
 	DbConfig
-	// DbAcme removed
 }
-
-// DbLifecycle interface removed.
 
 // TimeFormat converts a time.Time to RFC3339 string in UTC.
 // This should be used when sending time values to SQLite since it doesn't have
