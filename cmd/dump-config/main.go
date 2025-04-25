@@ -107,53 +107,88 @@ func (cd *ConfigDumper) GetLatestEncryptedConfig() ([]byte, error) {
 }
 
 func main() {
-	var (
-		outputFile string
-		ageKeyPath string
-	)
+	// --- Setup Logger ---
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
-	flag.StringVar(&outputFile, "output", "", "output TOML file path")
-	flag.StringVar(&outputFile, "o", "", "output TOML file path (shorthand)")
-	flag.StringVar(&ageKeyPath, "age-key", "", "path to age identity file (required)")
+	// --- Flag Parsing ---
+	outputFileFlag := flag.String("output", "", "Output file path (writes to stdout if empty)")
+	flag.StringVar(outputFileFlag, "o", "", "Output file path (shorthand)") // Link shorthand to the same variable
+	ageKeyPathFlag := flag.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...') (required)")
+	scopeFlag := flag.String("scope", config.ScopeApplication, "Scope for the configuration (e.g., 'application', 'plugin_x')")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s -age-key <identity-file> <db-file> [options]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Retrieves the latest configuration for a scope, decrypts it using an age identity, and writes it to output.\n")
+		fmt.Fprintf(os.Stderr, "Arguments:\n")
+		fmt.Fprintf(os.Stderr, "  <db-file>          Path to the SQLite database file (required)\n")
+		fmt.Fprintf(os.Stderr, "Options:\n")
+		flag.PrintDefaults()
+	}
+
 	flag.Parse()
 
-	args := flag.Args()
-	if len(args) != 1 || ageKeyPath == "" {
-		slog.Error("usage: dump-config -age-key <key-file> [-o|--output <file>] <db-file>")
+	// --- Validate Arguments and Flags ---
+	if *ageKeyPathFlag == "" {
+		logger.Error("missing required flag: -age-key")
+		flag.Usage()
 		os.Exit(1)
 	}
-
-	dbPath := args[0]
-	dumper := NewConfigDumper(dbPath)
-	if err := dumper.OpenDatabase(); err != nil {
+	if flag.NArg() != 1 {
+		logger.Error("missing required argument: <db-file>")
+		flag.Usage()
 		os.Exit(1)
 	}
-	defer dumper.pool.Close()
+	dbPath := flag.Arg(0)
 
-	encryptedData, err := dumper.GetLatestEncryptedConfig()
+	// --- Database Setup ---
+	dbImpl, err := dbz.New(dbPath)
 	if err != nil {
+		logger.Error("failed to instantiate zombiezen db", "db_path", dbPath, "error", err)
 		os.Exit(1)
 	}
+	defer func() {
+		logger.Info("closing database connection")
+		if err := dbImpl.Close(); err != nil {
+			logger.Error("error closing database connection", "error", err)
+		}
+	}()
 
-	decryptedData, err := dumper.DecryptConfig(encryptedData, ageKeyPath)
+	// --- Instantiate SecureConfig ---
+	secureCfg, err := config.NewSecureConfigAge(dbImpl, *ageKeyPathFlag, logger)
 	if err != nil {
+		logger.Error("failed to instantiate secure config (age)", "age_key_path", *ageKeyPathFlag, "error", err)
 		os.Exit(1)
 	}
 
-	// Write to file if output specified, otherwise stdout
-	if outputFile != "" {
-		err := os.WriteFile(outputFile, decryptedData, 0644)
+	// --- Get Latest Config using SecureConfig ---
+	logger.Info("retrieving latest configuration", "scope", *scopeFlag)
+	decryptedData, err := secureCfg.Latest(*scopeFlag)
+	if err != nil {
+		// SecureConfig.Latest logs specifics, just log the failure here
+		logger.Error("failed to retrieve latest config via SecureConfig", "scope", *scopeFlag, "error", err)
+		// fmt.Fprintf(os.Stderr, "Error: %v\n", err) // Keep stderr for script compatibility if needed
+		os.Exit(1)
+	}
+
+	// --- Write Output ---
+	if *outputFileFlag != "" {
+		err := os.WriteFile(*outputFileFlag, decryptedData, 0644)
 		if err != nil {
-			dumper.logger.Error("failed to write config file",
-				"path", outputFile,
+			logger.Error("failed to write config file",
+				"path", *outputFileFlag,
 				"error", err)
 			os.Exit(1)
 		}
-		dumper.logger.Info("config written to file", "path", outputFile)
+		logger.Info("config written to file", "path", *outputFileFlag, "scope", *scopeFlag)
 	} else {
+		// Write to stdout
 		if _, err := os.Stdout.Write(decryptedData); err != nil {
-			dumper.logger.Error("failed to write config", "error", err)
+			logger.Error("failed to write config to stdout", "scope", *scopeFlag, "error", err)
 			os.Exit(1)
 		}
+		// Optionally log success to stderr if writing to stdout
+		logger.Info("config written to stdout", "scope", *scopeFlag)
 	}
 }
