@@ -72,5 +72,3 @@ var (
 	ErrUserNotFound     = errors.New("user not found") // Added for clarity
 )
 
-// ConfigScopeApplication defines the scope for the main application configuration.
-const ConfigScopeApplication = "application"

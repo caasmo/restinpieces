@@ -12,6 +12,9 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
+// ScopeApplication defines the scope for the main application configuration.
+const ScopeApplication = "application"
+
 // SecureConfig defines an interface for securely storing and retrieving configuration data.
 // Implementations handle the encryption/decryption details.
 type SecureConfig interface {

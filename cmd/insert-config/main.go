@@ -26,7 +26,7 @@ func main() {
 	ageIdentityPathFlag := flag.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...') (required)")
 	dbPathFlag := flag.String("db", "", "Path to the SQLite database file (required)")
 	filePathFlag := flag.String("file", "", "Path to the config file to insert (required)")
-	scopeFlag := flag.String("scope", db.ConfigScopeApplication, "Scope for the configuration (e.g., 'application', 'plugin_x')")
+	scopeFlag := flag.String("scope", config.ScopeApplication, "Scope for the configuration (e.g., 'application', 'plugin_x')")
 	formatFlag := flag.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
 	descFlag := flag.String("desc", "", "Optional description for this configuration version")
 
