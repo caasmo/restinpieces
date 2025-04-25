@@ -11,15 +11,12 @@ import (
 	dbz "github.com/caasmo/restinpieces/db/zombiezen" // Import zombiezen implementation
 )
 
-// --- ConfigDumper struct and methods removed ---
 
 func main() {
-	// --- Setup Logger ---
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
 
-	// --- Flag Parsing ---
 	outputFileFlag := flag.String("output", "", "Output file path (writes to stdout if empty)")
 	flag.StringVar(outputFileFlag, "o", "", "Output file path (shorthand)") // Link shorthand to the same variable
 	ageKeyPathFlag := flag.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...') (required)")
@@ -36,7 +33,6 @@ func main() {
 
 	flag.Parse()
 
-	// --- Validate Arguments and Flags ---
 	if *ageKeyPathFlag == "" {
 		logger.Error("missing required flag: -age-key")
 		flag.Usage()
@@ -69,17 +65,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	// --- Get Latest Config using SecureConfig ---
 	logger.Info("retrieving latest configuration", "scope", *scopeFlag)
 	decryptedData, err := secureCfg.Latest(*scopeFlag)
 	if err != nil {
-		// SecureConfig.Latest logs specifics, just log the failure here
 		logger.Error("failed to retrieve latest config via SecureConfig", "scope", *scopeFlag, "error", err)
-		// fmt.Fprintf(os.Stderr, "Error: %v\n", err) // Keep stderr for script compatibility if needed
 		os.Exit(1)
 	}
 
-	// --- Write Output ---
 	if *outputFileFlag != "" {
 		err := os.WriteFile(*outputFileFlag, decryptedData, 0644)
 		if err != nil {
@@ -90,7 +82,6 @@ func main() {
 		}
 		logger.Info("config written to file", "path", *outputFileFlag, "scope", *scopeFlag)
 	} else {
-		// Write to stdout
 		if _, err := os.Stdout.Write(decryptedData); err != nil {
 			logger.Error("failed to write config to stdout", "scope", *scopeFlag, "error", err)
 			os.Exit(1)
