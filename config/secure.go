@@ -37,9 +37,6 @@ type secureConfigAge struct {
 // It stores the necessary dependencies (db config, key path, logger) for later use.
 // Key file validation happens on the first call to Latest() or Save().
 func NewSecureConfigAge(dbCfg db.DbConfig, ageKeyPath string, logger *slog.Logger) (SecureConfig, error) {
-	// No validation here. Store dependencies directly.
-	// Potential errors (invalid path, bad key format) will be caught
-	// during the first call to Latest() or Save().
 	return &secureConfigAge{
 		dbCfg:      dbCfg,
 		ageKeyPath: ageKeyPath,
@@ -66,7 +63,6 @@ func loadAndParseIdentities(keyPath string, logger *slog.Logger, operation strin
 	}
 	keyContent = nil // Help GC
 
-	// Check for parsing errors *after* zeroing
 	if err != nil {
 		logger.Error("failed to parse age identities", "path", keyPath, "operation", operation, "error", err)
 		return nil, fmt.Errorf("secureconfig: failed to parse age identities from key file '%s' for %s: %w", keyPath, operation, err)
@@ -90,39 +86,33 @@ func loadAndParseIdentities(keyPath string, logger *slog.Logger, operation strin
 // It reads the key file and parses identities on demand for decryption.
 func (s *secureConfigAge) Latest(scope string) ([]byte, error) {
 	s.logger.Debug("fetching latest config content from db", "scope", scope)
-	// 1. Get raw (presumably encrypted) data from DB
 	contentData, err := s.dbCfg.LatestConfig(scope)
 	if err != nil {
-		// Propagate DB error
 		return nil, fmt.Errorf("secureconfig: failed to get latest config content for scope '%s' from db: %w", scope, err)
 	}
 	if len(contentData) == 0 {
-		// Return specific error or nil? Let's return an error for clarity.
 		s.logger.Warn("no configuration content found in database for scope", "scope", scope)
 		return nil, fmt.Errorf("secureconfig: no configuration content found for scope '%s'", scope)
 	}
 
 	s.logger.Debug("decrypting config content", "scope", scope, "content_size", len(contentData))
 
-	// 2. Load identities for decryption
 	identities, err := loadAndParseIdentities(s.ageKeyPath, s.logger, "decryption")
 	if err != nil {
 		// Error already logged by helper function
 		return nil, err // Return error directly
 	}
 
-	// 3. Decrypt using the loaded identities
+	// Decrypt using the loaded identities
 	contentDataReader := bytes.NewReader(contentData)
 	decryptedDataReader, err := age.Decrypt(contentDataReader, identities...)
-	// identities slice goes out of scope here
 
 	if err != nil {
 		s.logger.Error("failed to decrypt configuration data", "scope", scope, "error", err)
-		// Avoid logging contentData here as it might be sensitive if decryption failed unexpectedly
 		return nil, fmt.Errorf("secureconfig: failed to decrypt configuration data for scope '%s': %w", scope, err)
 	}
 
-	// 4. Read the decrypted result
+	// Read the decrypted result
 	decryptedBytes, err := io.ReadAll(decryptedDataReader)
 	if err != nil {
 		s.logger.Error("failed to read decrypted data stream", "scope", scope, "error", err)
@@ -138,19 +128,14 @@ func (s *secureConfigAge) Latest(scope string) ([]byte, error) {
 func (s *secureConfigAge) Save(scope string, plaintextData []byte, format string, description string) error {
 	s.logger.Debug("encrypting config content for saving", "scope", scope, "plaintext_size", len(plaintextData))
 
-	// 1. Load identities and derive recipient
 	identities, err := loadAndParseIdentities(s.ageKeyPath, s.logger, "encryption")
 	if err != nil {
-		// Error already logged by helper function
-		return err // Return error directly
+		return err 
 	}
 
 	// Derive recipient from the first loaded identity.
-	// The type check is already done in loadAndParseIdentities.
 	recipient := identities[0].(*age.X25519Identity).Recipient()
-	// identities slice goes out of scope here
 
-	// 2. Encrypt using the just-derived recipient
 	encryptedOutput := &bytes.Buffer{}
 	encryptWriter, err := age.Encrypt(encryptedOutput, recipient)
 	if err != nil {
@@ -168,11 +153,10 @@ func (s *secureConfigAge) Save(scope string, plaintextData []byte, format string
 	encryptedData := encryptedOutput.Bytes()
 	s.logger.Debug("successfully encrypted config content", "scope", scope, "encrypted_size", len(encryptedData))
 
-	// 3. Insert encrypted data into DB
+	// Insert encrypted data into DB
 	s.logger.Debug("inserting encrypted config content into db", "scope", scope, "format", format, "description", description)
 	err = s.dbCfg.InsertConfig(scope, encryptedData, format, description)
 	if err != nil {
-		// dbCfg.InsertConfig should provide context, just wrap slightly
 		s.logger.Error("failed to insert config content into db", "scope", scope, "error", err)
 		return fmt.Errorf("secureconfig: failed to insert config for scope '%s': %w", scope, err)
 	}
@@ -181,7 +165,6 @@ func (s *secureConfigAge) Save(scope string, plaintextData []byte, format string
 	return nil
 }
 
-// Helper function (similar to insert-config) to create a default description
 func descriptionFromFile(filePath string) string {
 	return "Inserted from file: " + filepath.Base(filePath)
 }
