@@ -31,7 +31,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	}
 
 	// Load config from database
-	scope := db.ConfigScopeApplication
+	scope := config.ScopeApplication
 	decryptedBytes, err := app.SecureConfigStore().Latest(scope)
 	if err != nil {
 		app.Logger().Error("failed to load/decrypt config", "error", err)

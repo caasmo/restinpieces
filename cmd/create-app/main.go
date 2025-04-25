@@ -16,7 +16,7 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
-	zdb "github.com/caasmo/restinpieces/db/zombiezen" // Alias for zombiezen db implementation
+	zdb "github.com/caasmo/restinpieces/db/zombiezen" 
 	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
@@ -32,12 +32,10 @@ func NewAppCreator() *AppCreator {
 		logger: slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
 		})),
-		// pool and secureConfig will be set later
 	}
 }
 
 // CreateDatabasePool initializes the database pool.
-// It checks if the file exists first.
 func (ac *AppCreator) CreateDatabasePool(dbPath string) error {
 	if _, err := os.Stat(dbPath); err == nil {
 		ac.logger.Error("database file already exists", "file", dbPath)
@@ -199,13 +197,12 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 func (ac *AppCreator) SaveConfig(configData []byte) error {
 	ac.logger.Info("saving initial configuration using SecureConfig")
 	err := ac.secureConfig.Save(
-		db.ConfigScopeApplication,
+		config.ScopeApplication,
 		configData,
 		"toml",
 		"Initial default configuration",
 	)
 	if err != nil {
-		// SecureConfig.Save should log specifics, just log the failure here
 		ac.logger.Error("failed to save initial config via SecureConfig", "error", err)
 		return fmt.Errorf("failed to save initial config: %w", err)
 	}
