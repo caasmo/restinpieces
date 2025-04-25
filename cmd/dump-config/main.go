@@ -1,110 +1,17 @@
 package main
 
 import (
-	"bytes"
-	"context"
 	"flag"
 	"fmt"
-	"io"
 	"log/slog"
 	"os"
-	"runtime"
 
-	"filippo.io/age"
-	"zombiezen.com/go/sqlite"
-	"zombiezen.com/go/sqlite/sqlitex"
+	// Keep db and dbz
+	"github.com/caasmo/restinpieces/config"           // Import config package
+	dbz "github.com/caasmo/restinpieces/db/zombiezen" // Import zombiezen implementation
 )
 
-type ConfigDumper struct {
-	dbfile string
-	logger *slog.Logger
-	pool   *sqlitex.Pool
-}
-
-func NewConfigDumper(dbfile string) *ConfigDumper {
-	return &ConfigDumper{
-		dbfile: dbfile,
-		logger: slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelInfo,
-		})),
-	}
-}
-
-func (cd *ConfigDumper) OpenDatabase() error {
-	pool, err := sqlitex.NewPool(cd.dbfile, sqlitex.PoolOptions{
-		Flags:    sqlite.OpenReadWrite,
-		PoolSize: runtime.NumCPU(),
-	})
-	if err != nil {
-		cd.logger.Error("failed to open database", "error", err)
-		return err
-	}
-	cd.pool = pool
-	return nil
-}
-
-func (cd *ConfigDumper) DecryptConfig(encryptedData []byte, ageKeyPath string) ([]byte, error) {
-	keyContent, err := os.ReadFile(ageKeyPath)
-	if err != nil {
-		cd.logger.Error("failed to read age key file", "path", ageKeyPath, "error", err)
-		return nil, fmt.Errorf("failed to read age key file '%s': %w", ageKeyPath, err)
-	}
-
-	identities, err := age.ParseIdentities(bytes.NewReader(keyContent))
-	if err != nil {
-		cd.logger.Error("failed to parse age identities", "path", ageKeyPath, "error", err)
-		return nil, fmt.Errorf("failed to parse age identities from key file '%s': %w", ageKeyPath, err)
-	}
-	if len(identities) == 0 {
-		cd.logger.Error("no age identities found in key file", "path", ageKeyPath)
-		return nil, fmt.Errorf("no age identities found in key file '%s'", ageKeyPath)
-	}
-
-	encryptedDataReader := bytes.NewReader(encryptedData)
-	decryptedDataReader, err := age.Decrypt(encryptedDataReader, identities...)
-	if err != nil {
-		cd.logger.Error("failed to decrypt configuration data", "error", err)
-		return nil, fmt.Errorf("failed to decrypt configuration data: %w", err)
-	}
-
-	return io.ReadAll(decryptedDataReader)
-}
-
-func (cd *ConfigDumper) GetLatestEncryptedConfig() ([]byte, error) {
-	conn, err := cd.pool.Take(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	defer cd.pool.Put(conn)
-
-	var encryptedData []byte
-	err = sqlitex.Execute(conn,
-		`SELECT content FROM app_config 
-		ORDER BY created_at DESC 
-		LIMIT 1;`,
-		&sqlitex.ExecOptions{
-			ResultFunc: func(stmt *sqlite.Stmt) error {
-				// Get a reader for the blob column (index 0)
-				reader := stmt.ColumnReader(0)
-				// Read all data from the reader
-				var err error
-				encryptedData, err = io.ReadAll(reader)
-				return err // Return any error from io.ReadAll
-			},
-		})
-
-	if err != nil {
-		cd.logger.Error("failed to query config", "error", err)
-		return nil, err
-	}
-
-	if len(encryptedData) == 0 {
-		cd.logger.Error("no config found in database")
-		return nil, os.ErrNotExist
-	}
-
-	return encryptedData, nil
-}
+// --- ConfigDumper struct and methods removed ---
 
 func main() {
 	// --- Setup Logger ---
