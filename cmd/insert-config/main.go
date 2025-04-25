@@ -9,6 +9,7 @@ import (
 
 	// No longer need context, bytes, io, runtime, time, age, sqlite, sqlitex directly here
 	// Keep db and dbz
+	"github.com/caasmo/restinpieces"                  // Import restinpieces for pool creation
 	"github.com/caasmo/restinpieces/config"           // Import config package
 	"github.com/caasmo/restinpieces/db"               // Import db package for scope constant
 	dbz "github.com/caasmo/restinpieces/db/zombiezen" // Import zombiezen implementation
@@ -45,18 +46,27 @@ func main() {
 	}
 
 	// --- Database Setup ---
-	// Instantiate DB implementation (pool creation is handled inside New)
-	dbImpl, err := dbz.New(*dbPathFlag)
+	// Create the pool explicitly
+	logger.Info("creating sqlite database pool", "path", *dbPathFlag)
+	pool, err := restinpieces.NewZombiezenPool(*dbPathFlag)
 	if err != nil {
-		logger.Error("failed to instantiate zombiezen db", "db_path", *dbPathFlag, "error", err)
+		logger.Error("failed to create database pool", "db_path", *dbPathFlag, "error", err)
 		os.Exit(1)
 	}
 	defer func() {
-		logger.Info("closing database connection")
-		if err := dbImpl.Close(); err != nil { // Use the Close method from the implementation
-			logger.Error("error closing database connection", "error", err)
+		logger.Info("closing database pool")
+		if err := pool.Close(); err != nil { // Close the pool
+			logger.Error("error closing database pool", "error", err)
 		}
 	}()
+
+	// Instantiate DB implementation using the pool
+	dbImpl, err := dbz.New(pool) // Pass the pool to New
+	if err != nil {
+		logger.Error("failed to instantiate zombiezen db from pool", "error", err)
+		os.Exit(1)
+	}
+	// Note: dbImpl.Close() is now a no-op or might not exist, pool closing is handled above.
 
 	// --- Instantiate SecureConfig ---
 	secureCfg, err := config.NewSecureConfigAge(dbImpl, *ageIdentityPathFlag, logger)
