@@ -12,15 +12,11 @@ import (
 	dbz "github.com/caasmo/restinpieces/db/zombiezen" 
 )
 
-// --- insertConfig function removed ---
-
 func main() {
-	// --- Setup Logger ---
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
 
-	// --- Flag Parsing ---
 	ageIdentityPathFlag := flag.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...') (required)")
 	dbPathFlag := flag.String("db", "", "Path to the SQLite database file (required)")
 	filePathFlag := flag.String("file", "", "Path to the config file to insert (required)")
@@ -43,7 +39,6 @@ func main() {
 	}
 
 	// --- Database Setup ---
-	// Create the pool explicitly
 	logger.Info("creating sqlite database pool", "path", *dbPathFlag)
 	pool, err := restinpieces.NewZombiezenPool(*dbPathFlag)
 	if err != nil {
@@ -57,13 +52,11 @@ func main() {
 		}
 	}()
 
-	// Instantiate DB implementation using the pool
 	dbImpl, err := dbz.New(pool) // Pass the pool to New
 	if err != nil {
 		logger.Error("failed to instantiate zombiezen db from pool", "error", err)
 		os.Exit(1)
 	}
-	// Note: dbImpl.Close() is now a no-op or might not exist, pool closing is handled above.
 
 	// --- Instantiate SecureConfig ---
 	secureCfg, err := config.NewSecureConfigAge(dbImpl, *ageIdentityPathFlag, logger)
@@ -89,9 +82,7 @@ func main() {
 	logger.Info("saving configuration", "scope", *scopeFlag, "format", *formatFlag, "file", *filePathFlag)
 	err = secureCfg.Save(*scopeFlag, configData, *formatFlag, description)
 	if err != nil {
-		// SecureConfig.Save logs specifics, just log the failure here
 		logger.Error("failed to save config via SecureConfig", "error", err)
-		// fmt.Fprintf(os.Stderr, "Error: %v\n", err) // Keep stderr for script compatibility if needed
 		os.Exit(1)
 	}
 
