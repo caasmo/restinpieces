@@ -6,10 +6,9 @@ import (
 	"log/slog"
 	"os"
 
-	// Keep db and dbz
-	"github.com/caasmo/restinpieces"                  // Import restinpieces for pool creation
-	"github.com/caasmo/restinpieces/config"           // Import config package
-	dbz "github.com/caasmo/restinpieces/db/zombiezen" // Import zombiezen implementation
+	"github.com/caasmo/restinpieces"                  
+	"github.com/caasmo/restinpieces/config"           
+	dbz "github.com/caasmo/restinpieces/db/zombiezen" 
 )
 
 
@@ -47,7 +46,6 @@ func main() {
 	dbPath := flag.Arg(0)
 
 	// --- Database Setup ---
-	// Create the pool explicitly
 	logger.Info("creating sqlite database pool", "path", dbPath)
 	pool, err := restinpieces.NewZombiezenPool(dbPath)
 	if err != nil {
@@ -61,13 +59,11 @@ func main() {
 		}
 	}()
 
-	// Instantiate DB implementation using the pool
 	dbImpl, err := dbz.New(pool) // Pass the pool to New
 	if err != nil {
 		logger.Error("failed to instantiate zombiezen db from pool", "error", err)
 		os.Exit(1)
 	}
-	// Note: dbImpl.Close() is now a no-op or might not exist, pool closing is handled above.
 
 	// --- Instantiate SecureConfig ---
 	secureCfg, err := config.NewSecureConfigAge(dbImpl, *ageKeyPathFlag, logger)
