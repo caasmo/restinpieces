@@ -15,7 +15,7 @@ import (
 func route(cfg *config.Config, ap *core.App) {
 
 	// --- api core routes ---
-	ap.Router().Register(map[string]*router.Chain{
+	ap.Router().Register(router.Chains{
 		// Favicon
 		"/favicon.ico": router.NewChain(http.HandlerFunc(core.FaviconHandler)),
 

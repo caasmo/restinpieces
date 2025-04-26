@@ -59,9 +59,9 @@ func (r *Router) Param(req *http.Request, key string) string {
 	return ""
 }
 
-// Register registers multiple handler chains provided in a map.
+// Register registers multiple handler chains provided in a Chains map.
 // It delegates to the Handle method for each pattern and chain.
-func (r *Router) Register(chains map[string]*router.Chain) {
+func (r *Router) Register(chains router.Chains) {
 	for pattern, chain := range chains {
 		// Call Handle, which internally calls splitMethodPath and rt.Handler
 		// It also calls chain.Handler() to get the final http.Handler
