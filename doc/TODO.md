@@ -8,24 +8,21 @@
 - rollback config 
 - start logs: emojify, insightful
 - create-app shoudl create age key.
-- acme is a scheduler job. remove to own repo
 - disable standard routes
 - is a framework, clear workflow  -> examples repo. od use of the features
 - nocache? what about BlockIp.
-- test litestream
 - router: create router.Chains type
 - good enough release
-    - litestream file or/and s3 
     - basic metrics 
 		- https://github.com/prometheus/client_golang
 		- just requets/second. 
     - notification basic
     - superuser workflows
 		- scripts
+	    - workflow for recovery, 
 	- all shell test 
 	- unit test
 	- code review
-	- workflow for recovery, 
 	- basic framework use examples repo, with examples of features.
 - robots.txt
 - script insert-job. --type 
@@ -73,7 +70,6 @@
 - document magic numbers of sketch. move it to new package, configuration
 - verify addresses paths shoudl be random or pseudo random?
 - revamp shell tests.
-- CORS 
 - in process litestream 
 - document middleware politic, if you have to write in the context, you shoudl not be a middleware.
 	- the first middleare post serverHttp code is the last observer.
@@ -90,7 +86,6 @@
 - test requestverification: test also insertion in queue, now only mock nil.
 - more bash test all endpoints
 - code review jwt tests
-- zombiezen, impl pool with timeout, split in files. 
 - httprouter params to servemux $ 
 - hardening: add headers CORS, etc
 - document design in doc. why all decision.
@@ -121,6 +116,10 @@
 
 ### done
 
+- CORS 
+- test litestream
+- acme is a scheduler job. remove to own repo
+- litestream file or/and s3 
 - start server dbfile consistence
 - user can add jobs, we want to get rid of acme dependencies
     - acme renewal does not belong in main repo 
