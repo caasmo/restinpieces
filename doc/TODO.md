@@ -8,7 +8,6 @@
 - rollback config 
 - start logs: emojify, insightful
 - create-app shoudl create age key.
-- start server dbfile consistence
 - acme is a scheduler job. remove to own repo
 - disable standard routes
 - is a framework, clear workflow  -> examples repo. od use of the features
@@ -122,6 +121,7 @@
 
 ### done
 
+- start server dbfile consistence
 - user can add jobs, we want to get rid of acme dependencies
     - acme renewal does not belong in main repo 
     - we can return the scheduler

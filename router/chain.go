@@ -23,17 +23,6 @@ func NewChain(h http.Handler) *Chain {
 	}
 }
 
-// WithHandler sets the final handler for the route
-//func (r *Route) WithHandler(h http.Handler) *Route {
-//	r.handler = h
-//	return r
-//}
-
-// WithHandlerFunc sets the final handler function for the route
-//func (r *Route) WithHandlerFunc(h http.HandlerFunc) *Route {
-//	return r.WithHandler(h)
-//}
-
 // WithMiddleware adds one or more middlewares to the chain.
 // Middlewares execute in the order they are defined, from left to right.
 // For example:
