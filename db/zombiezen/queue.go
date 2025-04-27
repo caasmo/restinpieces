@@ -97,7 +97,7 @@ func (d *Db) InsertJob(job queue.Job) error {
 }
 
 // Claim locks and returns up to limit jobs for processing.
-// The jobs are marked as 'processing'.
+// The jobs are marked as 'processing' and must be due according to their scheduled_for time.
 func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
@@ -106,8 +106,12 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 	defer d.pool.Put(conn)
 
 	var jobs []*queue.Job
-	err = sqlitex.Execute(conn,
-		`UPDATE job_queue
+	// Note on scheduled_for comparison:
+	// We compare scheduled_for with the current time using SQLite's string comparison.
+	// This works because RFC3339 timestamps ('YYYY-MM-DDTHH:MM:SSZ') are lexicographically sortable.
+	// An empty scheduled_for string (meaning schedule immediately) will correctly compare as less than
+	// the current time string, ensuring these jobs are picked up.
+	sql := `UPDATE job_queue
 		SET status = 'processing',
 			locked_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
 			attempts = attempts + 1
@@ -115,11 +119,15 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 			SELECT id
 			FROM job_queue
 			WHERE status IN ('pending', 'failed')
-			ORDER BY id ASC
+			  -- Only claim jobs scheduled for now or in the past.
+			  AND scheduled_for <= strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+			ORDER BY id ASC -- Maintain FIFO for due jobs
 			LIMIT ?
 		)
 		RETURNING id, job_type, payload, payload_extra, status, attempts, max_attempts, created_at, updated_at,
-			scheduled_for, locked_by, locked_at, completed_at, last_error`,
+			scheduled_for, locked_by, locked_at, completed_at, last_error`
+
+	err = sqlitex.Execute(conn, sql, // Use the updated SQL string
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
 				job, err := newJobFromStmt(stmt)
