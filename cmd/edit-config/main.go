@@ -111,8 +111,11 @@ func main() {
 		valueToSet = rawValue
 	}
 
+    keyExists := tree.Has(configPath)
+    logger.Info("Checking key existence", "path", configPath, "exists", keyExists) // Use Debug or Info level
+
 	// Check if the path exists before setting
-	if !tree.Has(configPath) {
+	if !keyExists {
 		logger.Error("configuration path does not exist in the TOML structure", "path", configPath)
 		os.Exit(1)
 	}
