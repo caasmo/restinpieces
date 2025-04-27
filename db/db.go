@@ -20,7 +20,6 @@ type DbAuth interface {
 // DbQueue defines database operations related to the job queue.
 type DbQueue interface {
 	InsertJob(job queue.Job) error
-	// GetJobs(limit int) ([]*queue.Job, error) // Removed as Claim is usually preferred
 	Claim(limit int) ([]*queue.Job, error)
 	MarkCompleted(jobID int64) error
 	MarkFailed(jobID int64, errMsg string) error
