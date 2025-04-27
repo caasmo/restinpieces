@@ -112,11 +112,7 @@ func main() {
 	}
 
 	logger.Info("setting configuration value", "path", configPath)
-	err = tree.Set(configPath, valueToSet)
-	if err != nil {
-		logger.Error("failed to set value in TOML tree", "path", configPath, "error", err)
-		os.Exit(1)
-	}
+	tree.Set(configPath, valueToSet) // Set does not return an error
 
 	// Marshal the tree back to TOML string using v0/v1 API
 	updatedTomlString, err := tree.ToTomlString()
