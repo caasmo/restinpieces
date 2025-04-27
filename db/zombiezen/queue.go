@@ -97,7 +97,6 @@ func (d *Db) InsertJob(job queue.Job) error {
 }
 
 // Claim locks and returns up to limit jobs for processing.
-// The jobs are marked as 'processing' and must be due according to their scheduled_for time.
 func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {

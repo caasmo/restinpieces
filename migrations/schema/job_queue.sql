@@ -29,7 +29,6 @@ CREATE TABLE job_queue (
 	-- NEW fields for recurrence
 	recurrent BOOLEAN NOT NULL DEFAULT FALSE,
 	frequency TEXT NOT NULL DEFAULT '', -- go duration
-	enabled BOOLEAN NOT NULL DEFAULT TRUE, -- To pause recurrent jobs
     
     -- Indexes for efficient querying (using CREATE INDEX instead of inline INDEX)
     UNIQUE (payload, job_type)
@@ -37,7 +36,7 @@ CREATE TABLE job_queue (
 
 -- This means the combination of payload and job_type must be unique among all rows where status is either 'pending' or 'processing'.
 -- This differs from a traditional table constraint defined with ALTER TABLE or in the table definition, but it functions as a constraint nonetheless. SQLite will prevent inserts or updates that would violate this uniqueness rule within the specified subset of rows.
-CREATE UNIQUE INDEX idx_job_unique_active ON job_queue (payload, job_type) WHERE status NOT IN ('completed');
+-- CREATE UNIQUE INDEX idx_job_unique_active ON job_queue (payload, job_type) WHERE status NOT IN ('completed');
 -- Create separate index statements
 --CREATE INDEX idx_job_status ON job_queue (status, scheduled_for);
 --CREATE INDEX idx_job_type ON job_queue (job_type, status);
