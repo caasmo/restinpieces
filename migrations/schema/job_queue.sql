@@ -28,7 +28,7 @@ CREATE TABLE job_queue (
 
 	-- NEW fields for recurrence
 	recurrent BOOLEAN NOT NULL DEFAULT FALSE,
-	frequency TEXT NOT NULL DEFAULT '', -- go duration
+	interval TEXT NOT NULL DEFAULT '', -- go duration
     
     -- Indexes for efficient querying (using CREATE INDEX instead of inline INDEX)
     UNIQUE (payload, job_type)
