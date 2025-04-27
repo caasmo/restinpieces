@@ -111,6 +111,12 @@ func main() {
 		valueToSet = rawValue
 	}
 
+	// Check if the path exists before setting
+	if !tree.Has(configPath) {
+		logger.Error("configuration path does not exist in the TOML structure", "path", configPath)
+		os.Exit(1)
+	}
+
 	logger.Info("setting configuration value", "path", configPath)
 	tree.Set(configPath, valueToSet) // Set does not return an error
 
