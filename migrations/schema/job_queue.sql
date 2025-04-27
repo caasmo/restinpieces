@@ -26,7 +26,7 @@ CREATE TABLE job_queue (
     completed_at TEXT NOT NULL DEFAULT '',  -- When the job was completed
     last_error TEXT NOT NULL DEFAULT '',          -- Last error message if failed
 
-	-- NEW fields for recurrence
+	-- fields for recurrence
 	recurrent BOOLEAN NOT NULL DEFAULT FALSE,
 	interval TEXT NOT NULL DEFAULT '', -- go duration
     
