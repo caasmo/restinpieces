@@ -11,7 +11,7 @@ import (
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	dbz "github.com/caasmo/restinpieces/db/zombiezen"
-	toml "github.com/pelletier/go-toml/v2"
+	toml "github.com/pelletier/go-toml" // Use v0/v1 import path
 )
 
 func main() {
@@ -119,14 +119,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	var updatedConfigData bytes.Buffer
-	encoder := toml.NewEncoder(&updatedConfigData)
-	encoder.SetIndentTables(true) // Optional: Keep indentation for readability
-	err = encoder.Encode(tree)
+	// Marshal the tree back to TOML string using v0/v1 API
+	updatedTomlString, err := tree.ToTomlString()
 	if err != nil {
-		logger.Error("failed to marshal updated TOML tree", "error", err)
+		logger.Error("failed to marshal updated TOML tree to string", "error", err)
 		os.Exit(1)
 	}
+	updatedConfigData := []byte(updatedTomlString) // Convert string to byte slice
 
 	description := *descFlag
 	if description == "" {
@@ -134,7 +133,7 @@ func main() {
 	}
 
 	logger.Info("saving updated configuration", "scope", *scopeFlag, "format", *formatFlag)
-	err = secureCfg.Save(*scopeFlag, updatedConfigData.Bytes(), *formatFlag, description)
+	err = secureCfg.Save(*scopeFlag, updatedConfigData, *formatFlag, description) // Pass byte slice directly
 	if err != nil {
 		logger.Error("failed to save updated config via SecureConfig", "error", err)
 		os.Exit(1)
