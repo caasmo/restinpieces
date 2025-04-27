@@ -10,7 +10,7 @@ import (
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	dbz "github.com/caasmo/restinpieces/db/zombiezen"
-	toml "github.com/pelletier/go-toml" // Using v1 of TOML package (v2 has different API)
+	toml "github.com/pelletier/go-toml" // Using v1 of TOML package (v2 removed Tree struct)
 )
 
 func main() {
