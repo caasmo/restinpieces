@@ -1,3 +1,7 @@
+// Note: Using the Tree approach (github.com/pelletier/go-toml) will remove all TOML comments
+// from the original file when loading and saving. If preserving comments is required, consider
+// using a different TOML library that supports comment preservation.
+
 package main
 
 import (
