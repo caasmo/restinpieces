@@ -9,6 +9,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/keilerkonzept/topk v1.1.4
+	github.com/pelletier/go-toml v1.9.5
 	github.com/pelletier/go-toml/v2 v2.1.0
 	github.com/phuslu/log v1.0.115
 	golang.org/x/crypto v0.36.0
