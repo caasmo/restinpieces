@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 	"errors"
-	"fmt" // Needed for prepareNextRecurrentJob error formatting
 	"log/slog"
 	"runtime"
 	"time"
