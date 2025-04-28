@@ -29,7 +29,7 @@ func NewEmailChangeHandler(dbAuth db.DbAuth, provider *config.Provider, mailer *
 }
 
 // Handle implements the JobHandler interface for email change requests
-func (h *EmailChangeHandler) Handle(ctx context.Context, job queue.Job) error {
+func (h *EmailChangeHandler) Handle(ctx context.Context, job db.Job) error {
 	// Get current config snapshot
 	cfg := h.configProvider.Get()
 

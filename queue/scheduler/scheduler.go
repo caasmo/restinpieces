@@ -11,6 +11,7 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue/executor"
+	"github.com/caasmo/restinpieces/queue"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -250,7 +251,7 @@ func nextRecurrentJob(completedJob db.Job) db.Job {
 	nextScheduledFor := completedJob.ScheduledFor.Add(completedJob.Interval)
 
 	// Create the unique payload for this recurrent run
-	recurrentPayload := db.PayloadRecurrent{ScheduledFor: nextScheduledFor}
+	recurrentPayload := queue.PayloadRecurrent{ScheduledFor: nextScheduledFor}
 	payloadJSON, _ := json.Marshal(recurrentPayload) // Ignore error, assume it won't fail
 
 	// Create the new job instance for the next run.

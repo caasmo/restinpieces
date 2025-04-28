@@ -30,7 +30,7 @@ func NewPasswordResetHandler(dbAuth db.DbAuth, provider *config.Provider, mailer
 }
 
 // Handle implements the JobHandler interface for password reset requests
-func (h *PasswordResetHandler) Handle(ctx context.Context, job queue.Job) error {
+func (h *PasswordResetHandler) Handle(ctx context.Context, job db.Job) error {
 	cfg := h.configProvider.Get()
 
 	var payload queue.PayloadPasswordReset

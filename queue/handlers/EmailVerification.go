@@ -30,7 +30,7 @@ func NewEmailVerificationHandler(dbAuth db.DbAuth, provider *config.Provider, ma
 }
 
 // Handle implements the JobHandler interface for email verification
-func (h *EmailVerificationHandler) Handle(ctx context.Context, job queue.Job) error {
+func (h *EmailVerificationHandler) Handle(ctx context.Context, job db.Job) error {
 	cfg := h.configProvider.Get()
 
 	var payload queue.PayloadEmailVerification
