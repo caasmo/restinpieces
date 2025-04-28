@@ -252,14 +252,7 @@ func nextRecurrentJob(completedJob queue.Job) queue.Job {
 
 	// Create the unique payload for this recurrent run
 	recurrentPayload := PayloadRecurrent{ScheduledFor: nextScheduledFor}
-	payloadJSON, err := json.Marshal(recurrentPayload)
-	if err != nil {
-		// This should realistically never happen for this simple struct
-		// Log the error and potentially return a job that will fail insertion?
-		// For now, log and continue with an empty payload, which might violate constraints.
-		slog.Error("⏰scheduler: failed to marshal recurrent payload", "error", err, "jobID", completedJob.ID)
-		payloadJSON = []byte("{}") // Use empty JSON as fallback
-	}
+	payloadJSON, _ := json.Marshal(recurrentPayload) // Ignore error, assume it won't fail
 
 	// Create the new job instance for the next run.
 	newJob := queue.Job{
