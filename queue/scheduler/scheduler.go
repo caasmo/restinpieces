@@ -10,7 +10,6 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
 	"golang.org/x/sync/errgroup"
 )
@@ -229,7 +228,7 @@ func (s *Scheduler) processJobs() {
 	}
 }
 
-func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) error {
+func (s *Scheduler) executeJobWithContext(ctx context.Context, job db.Job) error {
 	// Initial context check
 	if ctx.Err() != nil {
 		return ctx.Err()
@@ -245,17 +244,17 @@ func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) er
 // nextRecurrentJob creates a new Job instance for the next run of a recurrent job.
 // It calculates the next scheduled time based on the previous schedule and interval,
 // and resets necessary fields. Assumes the completedJob is valid and recurrent.
-func nextRecurrentJob(completedJob queue.Job) queue.Job {
+func nextRecurrentJob(completedJob db.Job) db.Job {
 
 	// Calculate the next schedule based on the *previous* scheduled time and interval.
 	nextScheduledFor := completedJob.ScheduledFor.Add(completedJob.Interval)
 
 	// Create the unique payload for this recurrent run
-	recurrentPayload := queue.PayloadRecurrent{ScheduledFor: nextScheduledFor}
+	recurrentPayload := db.PayloadRecurrent{ScheduledFor: nextScheduledFor}
 	payloadJSON, _ := json.Marshal(recurrentPayload) // Ignore error, assume it won't fail
 
 	// Create the new job instance for the next run.
-	newJob := queue.Job{
+	newJob := db.Job{
 		JobType:      completedJob.JobType,
 		Payload:      payloadJSON, // Use the unique marshaled payload
 		PayloadExtra: completedJob.PayloadExtra,

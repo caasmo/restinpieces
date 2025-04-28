@@ -2,17 +2,17 @@ package zombiezen
 
 import (
 	"context"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
 	"time"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 // newJobFromStmt creates a Job struct from a SQLite statement row.
-func newJobFromStmt(stmt *sqlite.Stmt) (*queue.Job, error) {
+func newJobFromStmt(stmt *sqlite.Stmt) (*db.Job, error) {
 	createdAt, err := db.TimeParse(stmt.GetText("created_at"))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing created_at time: %w", err)
@@ -58,7 +58,7 @@ func newJobFromStmt(stmt *sqlite.Stmt) (*queue.Job, error) {
 		}
 	}
 
-	job := &queue.Job{
+	job := &db.Job{
 		ID:           stmt.GetInt64("id"),
 		JobType:      stmt.GetText("job_type"),
 		Payload:      json.RawMessage(stmt.GetText("payload")),
@@ -80,7 +80,7 @@ func newJobFromStmt(stmt *sqlite.Stmt) (*queue.Job, error) {
 }
 
 // insertJob performs the actual database insertion for a job using a provided connection.
-func (d *Db) insertJob(conn *sqlite.Conn, job queue.Job) error {
+func (d *Db) insertJob(conn *sqlite.Conn, job db.Job) error {
 	// Format ScheduledFor time if it's not zero
 	var scheduledForStr string
 	if !job.ScheduledFor.IsZero() {
@@ -110,7 +110,7 @@ func (d *Db) insertJob(conn *sqlite.Conn, job queue.Job) error {
 }
 
 // InsertJob adds a new job to the queue, acquiring its own connection.
-func (d *Db) InsertJob(job queue.Job) error {
+func (d *Db) InsertJob(job db.Job) error {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
 		return fmt.Errorf("queue insert failed to get connection: %w", err)
@@ -121,14 +121,14 @@ func (d *Db) InsertJob(job queue.Job) error {
 }
 
 // Claim locks and returns up to limit jobs for processing.
-func (d *Db) Claim(limit int) ([]*queue.Job, error) {
+func (d *Db) Claim(limit int) ([]*db.Job, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get connection for claim: %w", err)
 	}
 	defer d.pool.Put(conn)
 
-	var jobs []*queue.Job
+	var jobs []*db.Job
 	// Note on scheduled_for comparison:
 	// We compare scheduled_for with the current time using SQLite's string comparison.
 	// This works because RFC3339 timestamps ('YYYY-MM-DDTHH:MM:SSZ') are lexicographically sortable.
@@ -168,7 +168,7 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 	}
 	// Return empty slice if no jobs were claimed, consistent with crawshaw
 	if jobs == nil {
-		jobs = []*queue.Job{}
+		jobs = []*db.Job{}
 	}
 	return jobs, nil
 }
@@ -236,7 +236,7 @@ func (d *Db) MarkFailed(jobID int64, errMsg string) error {
 
 // MarkRecurrentCompleted marks a job specified by completedJobID as completed
 // and inserts the provided newJob within a single transaction.
-func (d *Db) MarkRecurrentCompleted(completedJobID int64, newJob queue.Job) error {
+func (d *Db) MarkRecurrentCompleted(completedJobID int64, newJob db.Job) error {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
 		return fmt.Errorf("failed to get connection for mark recurrent completed: %w", err)

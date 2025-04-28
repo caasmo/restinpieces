@@ -1,6 +1,9 @@
 package db
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // User represents a user from the database.
 // Timestamps (Created and Updated) use RFC3339 format in UTC timezone.
@@ -33,3 +36,56 @@ type User struct {
 
 // DbApp is an interface combining the required DB roles for the application.
 // The concrete DB implementation (e.g., *crawshaw.Db or *zombiezen.Db) must satisfy this interface.
+
+// Job represents a job in the processing queue
+type Job struct {
+	ID           int64           `json:"id"`
+	JobType      string          `json:"job_type"`
+	Payload      json.RawMessage `json:"payload"`       // Unique payload part
+	PayloadExtra json.RawMessage `json:"payload_extra"` // Non-unique payload part
+	Status       string          `json:"status"`
+	Attempts     int             `json:"attempts"`
+	MaxAttempts  int             `json:"max_attempts"`
+	CreatedAt    time.Time       `json:"created_at"`
+	UpdatedAt    time.Time       `json:"updated_at"`
+	ScheduledFor time.Time       `json:"scheduled_for"`
+	LockedBy     string          `json:"-"` // deprecated, marked as ignored in JSON
+	LockedAt     time.Time       `json:"locked_at,omitempty"`
+	CompletedAt  time.Time       `json:"completed_at,omitempty"`
+	LastError    string          `json:"last_error,omitempty"`
+	Recurrent    bool            `json:"recurrent"`
+	Interval     time.Duration   `json:"interval"` // Go duration
+}
+
+// PayloadEmailVerification contains the email verification details
+type PayloadEmailVerification struct {
+	Email string `json:"email"`
+	// CooldownBucket is the time bucket number calculated from the current time divided by the cooldown duration.
+	// This provides a basic rate limiting mechanism where only one email verification request is allowed per time bucket.
+	// The bucket number is calculated as: floor(current Unix time / cooldown duration in seconds)
+	CooldownBucket int `json:"cooldown_bucket"`
+}
+
+// PayloadRecurrent is used as the unique payload for recurrent jobs.
+// The ScheduledFor field makes each instance unique.
+type PayloadRecurrent struct {
+	ScheduledFor time.Time `json:"scheduled_for"`
+}
+
+type PayloadEmailChange struct {
+	UserID         string `json:"user_id"`
+	CooldownBucket int    `json:"cooldown_bucket"`
+}
+
+type PayloadEmailChangeExtra struct {
+	NewEmail string `json:"new_email"`
+}
+
+type PayloadPasswordReset struct {
+	UserID         string `json:"user_id"`
+	CooldownBucket int    `json:"cooldown_bucket"`
+}
+
+type PayloadPasswordResetExtra struct {
+	Email string `json:"email"`
+}

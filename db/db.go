@@ -2,7 +2,6 @@ package db
 
 import (
 	"errors"
-	"github.com/caasmo/restinpieces/queue"
 	"time"
 )
 
@@ -19,11 +18,11 @@ type DbAuth interface {
 
 // DbQueue defines database operations related to the job queue.
 type DbQueue interface {
-	InsertJob(job queue.Job) error
-	Claim(limit int) ([]*queue.Job, error)
+	InsertJob(job Job) error
+	Claim(limit int) ([]*Job, error)
 	MarkCompleted(jobID int64) error
 	MarkFailed(jobID int64, errMsg string) error
-	MarkRecurrentCompleted(completedJobID int64, newJob queue.Job) error
+	MarkRecurrentCompleted(completedJobID int64, newJob Job) error
 }
 
 // DbConfig defines database operations related to configuration.
