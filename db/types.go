@@ -66,26 +66,3 @@ type PayloadEmailVerification struct {
 	CooldownBucket int `json:"cooldown_bucket"`
 }
 
-// PayloadRecurrent is used as the unique payload for recurrent jobs.
-// The ScheduledFor field makes each instance unique.
-type PayloadRecurrent struct {
-	ScheduledFor time.Time `json:"scheduled_for"`
-}
-
-type PayloadEmailChange struct {
-	UserID         string `json:"user_id"`
-	CooldownBucket int    `json:"cooldown_bucket"`
-}
-
-type PayloadEmailChangeExtra struct {
-	NewEmail string `json:"new_email"`
-}
-
-type PayloadPasswordReset struct {
-	UserID         string `json:"user_id"`
-	CooldownBucket int    `json:"cooldown_bucket"`
-}
-
-type PayloadPasswordResetExtra struct {
-	Email string `json:"email"`
-}
