@@ -155,32 +155,24 @@ func (s *Scheduler) processJobs() {
 			case err == nil:
 				s.logger.Info("⏰scheduler: job execution successful", "jobID", jobCopy.ID, "jobType", jobCopy.JobType)
 
-				// Handle non-recurrent jobs first and break early
 				if !jobCopy.Recurrent {
 					if updateErr := s.db.MarkCompleted(jobCopy.ID); updateErr != nil {
-						s.logger.Error("⏰scheduler: failed to mark job as completed",
-							"jobID", jobCopy.ID,
-							"error", updateErr)
+						s.logger.Error("⏰scheduler: failed to mark job as completed", "jobID", jobCopy.ID, "error", updateErr)
 					} else {
 						s.logger.Info("⏰scheduler: non-recurrent job marked completed", "jobID", jobCopy.ID)
-						processed++
 					}
+					processed++
 					break // Exit the switch case for this job
 				}
 
 				// Handle recurrent jobs
 				newJob := prepareNextRecurrentJob(*jobCopy)
 				if updateErr := s.db.MarkRecurrentCompleted(jobCopy.ID, newJob); updateErr != nil {
-					s.logger.Error("⏰scheduler: failed to mark recurrent job completed and schedule next",
-						"jobID", jobCopy.ID,
-						"error", updateErr)
-					// Note: The current job did succeed, but the next one wasn't scheduled.
+					s.logger.Error("⏰scheduler: failed to mark recurrent job completed and schedule next", "jobID", jobCopy.ID, "error", updateErr)
 				} else {
-					s.logger.Info("⏰scheduler: recurrent job completed and next job scheduled",
-						"completedJobID", jobCopy.ID,
-						"nextScheduledFor", newJob.ScheduledFor.Format(time.RFC3339))
-					processed++
+					s.logger.Info("⏰scheduler: recurrent job completed and next job scheduled", "completedJobID", jobCopy.ID, "nextScheduledFor", newJob.ScheduledFor.Format(time.RFC3339))
 				}
+				processed++
 
 			case errors.Is(err, context.DeadlineExceeded):
 				msg := "job execution timed out"
