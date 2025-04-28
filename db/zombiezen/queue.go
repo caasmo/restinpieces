@@ -63,15 +63,23 @@ func newJobFromStmt(stmt *sqlite.Stmt) (*queue.Job, error) {
 		LockedAt:     lockedAt,
 		CompletedAt:  completedAt,
 		LastError:    stmt.GetText("last_error"),
+		Recurrent:    stmt.GetInt64("recurrent") != 0, // Convert SQLite INTEGER (0/1) to bool
+		Interval:     stmt.GetText("interval"),
 	}
 	return job, nil
 }
 
 // insertJob performs the actual database insertion for a job using a provided connection.
 func (d *Db) insertJob(conn *sqlite.Conn, job queue.Job) error {
+	// Format ScheduledFor time if it's not zero
+	var scheduledForStr string
+	if !job.ScheduledFor.IsZero() {
+		scheduledForStr = db.TimeFormat(job.ScheduledFor)
+	}
+
 	err := sqlitex.Execute(conn, `INSERT INTO job_queue
-		(job_type, payload, payload_extra, attempts, max_attempts)
-		VALUES (?, ?, ?, ?, ?)`,
+		(job_type, payload, payload_extra, attempts, max_attempts, recurrent, interval, scheduled_for)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
 				job.JobType,              // 1. job_type
@@ -79,6 +87,9 @@ func (d *Db) insertJob(conn *sqlite.Conn, job queue.Job) error {
 				string(job.PayloadExtra), // 3. payload_extra
 				job.Attempts,             // 4. attempts
 				job.MaxAttempts,          // 5. max_attempts
+				job.Recurrent,            // 6. recurrent
+				job.Interval,             // 7. interval
+				scheduledForStr,          // 8. scheduled_for
 			},
 		})
 
@@ -127,7 +138,7 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 			LIMIT ?
 		)
 		RETURNING id, job_type, payload, payload_extra, status, attempts, max_attempts, created_at, updated_at,
-			scheduled_for, locked_by, locked_at, completed_at, last_error`
+			scheduled_for, locked_by, locked_at, completed_at, last_error, recurrent, interval` // Added recurrent, interval
 
 	err = sqlitex.Execute(conn, sql, // Use the updated SQL string
 		&sqlitex.ExecOptions{
@@ -242,7 +253,26 @@ func (d *Db) MarkRecurrentCompleted(job queue.Job) error {
 		return fmt.Errorf("failed to mark job completed in transaction: %w", err)
 	}
 
-	// Re-insert the job
+	// Prepare the job for re-insertion
+	intervalDuration, err := time.ParseDuration(job.Interval)
+	if err != nil {
+		// Rollback and return error if interval is invalid
+		_ = sqlitex.Execute(conn, "ROLLBACK;", nil)
+		return fmt.Errorf("invalid interval format '%s' for recurrent job %d: %w", job.Interval, job.ID, err)
+	}
+
+	// Reset fields for the next run
+	job.ScheduledFor = time.Now().Add(intervalDuration)
+	job.Status = queue.StatusPending
+	job.Attempts = 0
+	job.LockedAt = time.Time{} // Zero time
+	job.CompletedAt = time.Time{} // Zero time
+	job.LastError = ""
+	// ID is not set as it's auto-incremented on insert
+	// CreatedAt remains the original creation time
+	// UpdatedAt will be set by the insert trigger/default
+
+	// Re-insert the job with updated schedule and reset fields
 	err = d.insertJob(conn, job)
 	if err != nil {
 		// Attempt to rollback
