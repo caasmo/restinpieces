@@ -84,7 +84,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = a.DbQueue().InsertJob(queue.Job{
+	err = a.DbQueue().InsertJob(db.Job{
 		JobType:      queue.JobTypeEmailChange,
 		Payload:      payloadBytes,
 		PayloadExtra: payloadExtraBytes,

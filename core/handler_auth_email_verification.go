@@ -68,7 +68,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		Email:          req.Email,
 		CooldownBucket: cooldownBucket,
 	})
-	job := queue.Job{
+	job := db.Job{
 		JobType: queue.JobTypeEmailVerification,
 		Payload: payload,
 	}

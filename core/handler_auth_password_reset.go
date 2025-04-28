@@ -87,7 +87,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	payloadExtra, _ := json.Marshal(queue.PayloadPasswordResetExtra{
 		Email: req.Email,
 	})
-	job := queue.Job{
+	job := db.Job{
 		JobType:      queue.JobTypePasswordReset,
 		Payload:      payload,
 		PayloadExtra: payloadExtra,
