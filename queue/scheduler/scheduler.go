@@ -251,7 +251,7 @@ func nextRecurrentJob(completedJob queue.Job) queue.Job {
 	nextScheduledFor := completedJob.ScheduledFor.Add(completedJob.Interval)
 
 	// Create the unique payload for this recurrent run
-	recurrentPayload := PayloadRecurrent{ScheduledFor: nextScheduledFor}
+	recurrentPayload := queue.PayloadRecurrent{ScheduledFor: nextScheduledFor}
 	payloadJSON, _ := json.Marshal(recurrentPayload) // Ignore error, assume it won't fail
 
 	// Create the new job instance for the next run.
