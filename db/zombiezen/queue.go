@@ -262,6 +262,7 @@ func (d *Db) MarkRecurrentCompleted(job queue.Job) error {
 	}
 
 	// Reset fields for the next run
+    // TODO move to scheduler
 	job.ScheduledFor = time.Now().Add(intervalDuration)
 	job.Status = queue.StatusPending
 	job.Attempts = 0
