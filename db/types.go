@@ -65,4 +65,3 @@ type PayloadEmailVerification struct {
 	// The bucket number is calculated as: floor(current Unix time / cooldown duration in seconds)
 	CooldownBucket int `json:"cooldown_bucket"`
 }
-
