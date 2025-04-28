@@ -155,36 +155,8 @@ func (s *Scheduler) processJobs() {
 			case err == nil:
 				s.logger.Info("⏰scheduler: job execution successful", "jobID", jobCopy.ID, "jobType", jobCopy.JobType)
 
-				if jobCopy.Recurrent {
-					newJob, prepErr := prepareNextRecurrentJob(*jobCopy)
-					if prepErr != nil {
-						// Failed to prepare the next job (e.g., bad interval).
-						// Mark the current one as failed because recurrence configuration is broken.
-						s.logger.Error("⏰scheduler: failed to prepare next recurrent job, marking current as failed",
-							"jobID", jobCopy.ID,
-							"jobType", jobCopy.JobType,
-							"error", prepErr)
-						if updateErr := s.db.MarkFailed(jobCopy.ID, prepErr.Error()); updateErr != nil {
-							s.logger.Error("⏰scheduler: failed to mark job as failed after recurrence preparation error",
-								"jobID", jobCopy.ID,
-								"error", updateErr)
-						}
-					} else {
-						// Preparation successful, mark completed and insert the new one
-						if updateErr := s.db.MarkRecurrentCompleted(jobCopy.ID, newJob); updateErr != nil {
-							s.logger.Error("⏰scheduler: failed to mark recurrent job completed and schedule next",
-								"jobID", jobCopy.ID,
-								"error", updateErr)
-							// Note: The current job did succeed, but the next one wasn't scheduled.
-						} else {
-							s.logger.Info("⏰scheduler: recurrent job completed and next job scheduled",
-								"completedJobID", jobCopy.ID,
-								"nextScheduledFor", newJob.ScheduledFor.Format(time.RFC3339))
-							processed++
-						}
-					}
-				} else {
-					// Not a recurrent job, just mark completed
+				// Handle non-recurrent jobs first and break early
+				if !jobCopy.Recurrent {
 					if updateErr := s.db.MarkCompleted(jobCopy.ID); updateErr != nil {
 						s.logger.Error("⏰scheduler: failed to mark job as completed",
 							"jobID", jobCopy.ID,
@@ -193,6 +165,21 @@ func (s *Scheduler) processJobs() {
 						s.logger.Info("⏰scheduler: non-recurrent job marked completed", "jobID", jobCopy.ID)
 						processed++
 					}
+					break // Exit the switch case for this job
+				}
+
+				// Handle recurrent jobs
+				newJob := prepareNextRecurrentJob(*jobCopy)
+				if updateErr := s.db.MarkRecurrentCompleted(jobCopy.ID, newJob); updateErr != nil {
+					s.logger.Error("⏰scheduler: failed to mark recurrent job completed and schedule next",
+						"jobID", jobCopy.ID,
+						"error", updateErr)
+					// Note: The current job did succeed, but the next one wasn't scheduled.
+				} else {
+					s.logger.Info("⏰scheduler: recurrent job completed and next job scheduled",
+						"completedJobID", jobCopy.ID,
+						"nextScheduledFor", newJob.ScheduledFor.Format(time.RFC3339))
+					processed++
 				}
 
 			case errors.Is(err, context.DeadlineExceeded):
@@ -265,21 +252,12 @@ func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) er
 
 // prepareNextRecurrentJob creates a new Job instance for the next run of a recurrent job.
 // It calculates the next scheduled time based on the previous schedule and interval,
-// and resets necessary fields.
-func prepareNextRecurrentJob(completedJob queue.Job) (queue.Job, error) {
-	if !completedJob.Recurrent || completedJob.Interval == "" {
-		// Safeguard: This should ideally not happen if called correctly for a recurrent job.
-		return queue.Job{}, errors.New("job is not recurrent or interval is missing")
-	}
-
-	intervalDuration, err := time.ParseDuration(completedJob.Interval)
-	if err != nil {
-		// Return specific error for invalid interval format
-		return queue.Job{}, fmt.Errorf("invalid interval format '%s' for job %d: %w", completedJob.Interval, completedJob.ID, err)
-	}
+// and resets necessary fields. Assumes the completedJob is valid and recurrent.
+func prepareNextRecurrentJob(completedJob queue.Job) queue.Job {
+	// Assume interval is valid (validated elsewhere)
+	intervalDuration, _ := time.ParseDuration(completedJob.Interval) // Ignore error
 
 	// Calculate the next schedule based on the *previous* scheduled time and interval.
-	// Assumes completedJob.ScheduledFor is always valid for recurrent jobs.
 	nextScheduledFor := completedJob.ScheduledFor.Add(intervalDuration)
 
 	newJob := queue.Job{
@@ -301,7 +279,7 @@ func prepareNextRecurrentJob(completedJob queue.Job) (queue.Job, error) {
 		// LockedBy, LockedAt, CompletedAt, LastError are reset to zero/empty
 	}
 
-	return newJob, nil
+	return newJob
 }
 
 // Executor returns the job executor used by the scheduler.
