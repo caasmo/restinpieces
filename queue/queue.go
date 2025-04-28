@@ -1,9 +1,8 @@
 package queue
 
 import (
+	"encoding/json"
 	"time"
-
-	"github.com/caasmo/restinpieces/db"
 )
 
 // PayloadEmailVerification contains the email verification details
@@ -12,6 +11,32 @@ type PayloadEmailVerification struct {
 	// CooldownBucket is the time bucket number calculated from the current time divided by the cooldown duration.
 	// This provides a basic rate limiting mechanism where only one email verification request is allowed per time bucket.
 	// The bucket number is calculated as: floor(current Unix time / cooldown duration in seconds)
+	CooldownBucket int `json:"cooldown_bucket"`
+}
+
+// PayloadRecurrent is used as the unique payload for recurrent jobs.
+// The ScheduledFor field makes each instance unique.
+type PayloadRecurrent struct {
+	ScheduledFor time.Time `json:"scheduled_for"`
+}
+
+type PayloadEmailChange struct {
+	UserID         string `json:"user_id"`
+	CooldownBucket int    `json:"cooldown_bucket"`
+}
+
+type PayloadEmailChangeExtra struct {
+	NewEmail string `json:"new_email"`
+}
+
+type PayloadPasswordReset struct {
+	UserID         string `json:"user_id"`
+	CooldownBucket int    `json:"cooldown_bucket"`
+}
+
+type PayloadPasswordResetExtra struct {
+	Email string `json:"email"`
+}
 
 // Job types
 const (
