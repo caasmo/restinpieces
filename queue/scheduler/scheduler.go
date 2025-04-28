@@ -251,23 +251,18 @@ func nextRecurrentJob(completedJob queue.Job) queue.Job {
 	// Calculate the next schedule based on the *previous* scheduled time and interval.
 	nextScheduledFor := completedJob.ScheduledFor.Add(intervalDuration)
 
+	// Create the new job instance for the next run.
+	// Only set fields required for insertion. Other fields like Status, Attempts,
+	// LockedAt, CompletedAt, LastError will get default values or are zero-value.
 	newJob := queue.Job{
-		// Copy essential fields
 		JobType:      completedJob.JobType,
 		Payload:      completedJob.Payload,
 		PayloadExtra: completedJob.PayloadExtra,
-		MaxAttempts:  completedJob.MaxAttempts,
-		Recurrent:    completedJob.Recurrent,
-		Interval:     completedJob.Interval,
-		CreatedAt:    completedJob.CreatedAt, // Preserve original creation time
-
-		// Reset/Update fields for the next run
-		Status:       queue.StatusPending,
-		Attempts:     0,
-		ScheduledFor: nextScheduledFor,
-		// ID will be assigned by DB on insert
-		// UpdatedAt will be set by DB trigger/default
-		// LockedBy, LockedAt, CompletedAt, LastError are reset to zero/empty
+		MaxAttempts:  completedJob.MaxAttempts, // MaxAttempts is copied
+		Recurrent:    true,                     // It's a recurrent job
+		Interval:     completedJob.Interval,    // Interval is copied
+		CreatedAt:    completedJob.CreatedAt,   // Preserve original creation time
+		ScheduledFor: nextScheduledFor,         // Set the calculated next schedule
 	}
 
 	return newJob
