@@ -212,3 +212,45 @@ func (d *Db) MarkFailed(jobID int64, errMsg string) error {
 
 	return d.markFailed(conn, jobID, errMsg)
 }
+
+// MarkRecurrentCompleted marks a job as completed and immediately re-inserts it
+// with the same details within a single transaction.
+func (d *Db) MarkRecurrentCompleted(job queue.Job) error {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to get connection for mark recurrent completed: %w", err)
+	}
+	defer d.pool.Put(conn)
+
+	// Execute both operations within a transaction
+	err = sqlitex.Execute(conn, "BEGIN IMMEDIATE;", nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction for mark recurrent completed: %w", err)
+	}
+
+	// Mark the current job as completed
+	err = d.markCompleted(conn, job.ID)
+	if err != nil {
+		// Attempt to rollback
+		_ = sqlitex.Execute(conn, "ROLLBACK;", nil)
+		return fmt.Errorf("failed to mark job completed in transaction: %w", err)
+	}
+
+	// Re-insert the job
+	err = d.insertJob(conn, job)
+	if err != nil {
+		// Attempt to rollback
+		_ = sqlitex.Execute(conn, "ROLLBACK;", nil)
+		return fmt.Errorf("failed to re-insert job in transaction: %w", err)
+	}
+
+	// Commit the transaction
+	err = sqlitex.Execute(conn, "COMMIT;", nil)
+	if err != nil {
+		// Although the operations likely succeeded, the commit failed.
+		// This is a problematic state, but we report the commit error.
+		return fmt.Errorf("failed to commit transaction for mark recurrent completed: %w", err)
+	}
+
+	return nil
+}

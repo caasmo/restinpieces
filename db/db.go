@@ -23,6 +23,7 @@ type DbQueue interface {
 	Claim(limit int) ([]*queue.Job, error)
 	MarkCompleted(jobID int64) error
 	MarkFailed(jobID int64, errMsg string) error
+	MarkRecurrentCompleted(job queue.Job) error
 }
 
 // DbConfig defines database operations related to configuration.
