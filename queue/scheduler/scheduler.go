@@ -252,8 +252,6 @@ func nextRecurrentJob(completedJob queue.Job) queue.Job {
 	nextScheduledFor := completedJob.ScheduledFor.Add(intervalDuration)
 
 	// Create the new job instance for the next run.
-	// Only set fields required for insertion. Other fields like Status, Attempts,
-	// LockedAt, CompletedAt, LastError will get default values or are zero-value.
 	newJob := queue.Job{
 		JobType:      completedJob.JobType,
 		Payload:      completedJob.Payload,
