@@ -245,11 +245,9 @@ func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) er
 // It calculates the next scheduled time based on the previous schedule and interval,
 // and resets necessary fields. Assumes the completedJob is valid and recurrent.
 func nextRecurrentJob(completedJob queue.Job) queue.Job {
-	// Assume interval is valid (validated elsewhere)
-	intervalDuration, _ := time.ParseDuration(completedJob.Interval) // Ignore error
-
 	// Calculate the next schedule based on the *previous* scheduled time and interval.
-	nextScheduledFor := completedJob.ScheduledFor.Add(intervalDuration)
+	// completedJob.Interval is already time.Duration.
+	nextScheduledFor := completedJob.ScheduledFor.Add(completedJob.Interval)
 
 	// Create the new job instance for the next run.
 	newJob := queue.Job{

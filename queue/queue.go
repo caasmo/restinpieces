@@ -22,7 +22,7 @@ type Job struct {
 	CompletedAt  time.Time       `json:"completed_at,omitempty"`
 	LastError    string          `json:"last_error,omitempty"`
 	Recurrent    bool            `json:"recurrent"`
-	Interval     string          `json:"interval"` // Go duration string format
+	Interval     time.Duration   `json:"interval"` // Go duration
 }
 
 // PayloadEmailVerification contains the email verification details

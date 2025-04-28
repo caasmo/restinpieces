@@ -48,6 +48,16 @@ func newJobFromStmt(stmt *sqlite.Stmt) (*queue.Job, error) {
 		}
 	}
 
+	var interval time.Duration
+	if intervalStr := stmt.GetText("interval"); intervalStr != "" {
+		interval, err = time.ParseDuration(intervalStr)
+		if err != nil {
+			// Consider how to handle invalid duration strings from DB. Log? Error?
+			// For now, return error to signal data inconsistency.
+			return nil, fmt.Errorf("error parsing interval duration '%s': %w", intervalStr, err)
+		}
+	}
+
 	job := &queue.Job{
 		ID:           stmt.GetInt64("id"),
 		JobType:      stmt.GetText("job_type"),
@@ -64,7 +74,7 @@ func newJobFromStmt(stmt *sqlite.Stmt) (*queue.Job, error) {
 		CompletedAt:  completedAt,
 		LastError:    stmt.GetText("last_error"),
 		Recurrent:    stmt.GetInt64("recurrent") != 0, // Convert SQLite INTEGER (0/1) to bool
-		Interval:     stmt.GetText("interval"),
+		Interval:     interval,
 	}
 	return job, nil
 }
@@ -88,7 +98,7 @@ func (d *Db) insertJob(conn *sqlite.Conn, job queue.Job) error {
 				job.Attempts,             // 4. attempts
 				job.MaxAttempts,          // 5. max_attempts
 				job.Recurrent,            // 6. recurrent
-				job.Interval,             // 7. interval
+				job.Interval.String(),    // 7. interval (convert duration to string)
 				scheduledForStr,          // 8. scheduled_for
 			},
 		})
