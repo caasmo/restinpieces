@@ -14,7 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// TODOremove
+// TODO remove
 const (
 	DefaultConcurrencyMultiplier = 2
 )
@@ -245,8 +245,8 @@ func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) er
 // It calculates the next scheduled time based on the previous schedule and interval,
 // and resets necessary fields. Assumes the completedJob is valid and recurrent.
 func nextRecurrentJob(completedJob queue.Job) queue.Job {
+
 	// Calculate the next schedule based on the *previous* scheduled time and interval.
-	// completedJob.Interval is already time.Duration.
 	nextScheduledFor := completedJob.ScheduledFor.Add(completedJob.Interval)
 
 	// Create the new job instance for the next run.
