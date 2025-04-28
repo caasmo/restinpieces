@@ -1,7 +1,6 @@
 package queue
 
 import (
-	"encoding/json"
 	"time"
 )
 

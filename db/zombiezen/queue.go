@@ -2,7 +2,6 @@ package zombiezen
 
 import (
 	"context"
-	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
