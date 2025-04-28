@@ -67,19 +67,12 @@ func newJobFromStmt(stmt *sqlite.Stmt) (*queue.Job, error) {
 	return job, nil
 }
 
-// InsertJob adds a new job to the queue.
-func (d *Db) InsertJob(job queue.Job) error {
-
-	conn, err := d.pool.Take(context.TODO())
-	if err != nil {
-		return fmt.Errorf("queue insert failed to get connection: %w", err)
-	}
-	defer d.pool.Put(conn)
-
-	err = sqlitex.Execute(conn, `INSERT INTO job_queue
+// insertJob performs the actual database insertion for a job using a provided connection.
+func (d *Db) insertJob(conn *sqlite.Conn, job queue.Job) error {
+	err := sqlitex.Execute(conn, `INSERT INTO job_queue
 		(job_type, payload, payload_extra, attempts, max_attempts)
 		VALUES (?, ?, ?, ?, ?)`,
-		&sqlitex.ExecOptions{ // Use ExecOptions even for INSERT without results
+		&sqlitex.ExecOptions{
 			Args: []interface{}{
 				job.JobType,              // 1. job_type
 				string(job.Payload),      // 2. payload
@@ -90,10 +83,20 @@ func (d *Db) InsertJob(job queue.Job) error {
 		})
 
 	if err != nil {
-		// Removed specific unique constraint check
 		return fmt.Errorf("queue insert failed: %w", err)
 	}
 	return nil
+}
+
+// InsertJob adds a new job to the queue, acquiring its own connection.
+func (d *Db) InsertJob(job queue.Job) error {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return fmt.Errorf("queue insert failed to get connection: %w", err)
+	}
+	defer d.pool.Put(conn)
+
+	return d.insertJob(conn, job)
 }
 
 // Claim locks and returns up to limit jobs for processing.
@@ -149,15 +152,9 @@ func (d *Db) Claim(limit int) ([]*queue.Job, error) {
 	return jobs, nil
 }
 
-// MarkCompleted marks a job as completed successfully.
-func (d *Db) MarkCompleted(jobID int64) error {
-	conn, err := d.pool.Take(context.TODO())
-	if err != nil {
-		return fmt.Errorf("failed to get connection for mark completed: %w", err)
-	}
-	defer d.pool.Put(conn)
-
-	err = sqlitex.Execute(conn,
+// markCompleted performs the actual database update for marking a job completed using a provided connection.
+func (d *Db) markCompleted(conn *sqlite.Conn, jobID int64) error {
+	err := sqlitex.Execute(conn,
 		`UPDATE job_queue
 		SET status = 'completed',
 			completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
@@ -175,15 +172,20 @@ func (d *Db) MarkCompleted(jobID int64) error {
 	return nil
 }
 
-// MarkFailed marks a job as failed.
-func (d *Db) MarkFailed(jobID int64, errMsg string) error {
+// MarkCompleted marks a job as completed successfully, acquiring its own connection.
+func (d *Db) MarkCompleted(jobID int64) error {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
-		return fmt.Errorf("failed to get connection for mark failed: %w", err)
+		return fmt.Errorf("failed to get connection for mark completed: %w", err)
 	}
 	defer d.pool.Put(conn)
 
-	err = sqlitex.Execute(conn,
+	return d.markCompleted(conn, jobID)
+}
+
+// markFailed performs the actual database update for marking a job failed using a provided connection.
+func (d *Db) markFailed(conn *sqlite.Conn, jobID int64, errMsg string) error {
+	err := sqlitex.Execute(conn,
 		`UPDATE job_queue
 		SET status = 'failed',
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
@@ -198,4 +200,15 @@ func (d *Db) MarkFailed(jobID int64, errMsg string) error {
 		return fmt.Errorf("failed to mark job as failed: %w", err)
 	}
 	return nil
+}
+
+// MarkFailed marks a job as failed, acquiring its own connection.
+func (d *Db) MarkFailed(jobID int64, errMsg string) error {
+	conn, err := d.pool.Take(context.TODO())
+	if err != nil {
+		return fmt.Errorf("failed to get connection for mark failed: %w", err)
+	}
+	defer d.pool.Put(conn)
+
+	return d.markFailed(conn, jobID, errMsg)
 }
