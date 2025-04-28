@@ -224,9 +224,9 @@ func (d *Db) MarkFailed(jobID int64, errMsg string) error {
 	return d.markFailed(conn, jobID, errMsg)
 }
 
-// MarkRecurrentCompleted marks a job as completed and immediately re-inserts it
-// with the same details within a single transaction.
-func (d *Db) MarkRecurrentCompleted(job queue.Job) error {
+// MarkRecurrentCompleted marks a job specified by completedJobID as completed
+// and inserts the provided newJob within a single transaction.
+func (d *Db) MarkRecurrentCompleted(completedJobID int64, newJob queue.Job) error {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
 		return fmt.Errorf("failed to get connection for mark recurrent completed: %w", err)
@@ -245,36 +245,16 @@ func (d *Db) MarkRecurrentCompleted(job queue.Job) error {
 		return fmt.Errorf("failed to begin transaction for mark recurrent completed: %w", err)
 	}
 
-	// Mark the current job as completed
-	err = d.markCompleted(conn, job.ID)
+	// Mark the specified job as completed
+	err = d.markCompleted(conn, completedJobID)
 	if err != nil {
 		// Attempt to rollback
 		_ = sqlitex.Execute(conn, "ROLLBACK;", nil)
-		return fmt.Errorf("failed to mark job completed in transaction: %w", err)
+		return fmt.Errorf("failed to mark job %d completed in transaction: %w", completedJobID, err)
 	}
 
-	// Prepare the job for re-insertion
-	intervalDuration, err := time.ParseDuration(job.Interval)
-	if err != nil {
-		// Rollback and return error if interval is invalid
-		_ = sqlitex.Execute(conn, "ROLLBACK;", nil)
-		return fmt.Errorf("invalid interval format '%s' for recurrent job %d: %w", job.Interval, job.ID, err)
-	}
-
-	// Reset fields for the next run
-    // TODO move to scheduler
-	job.ScheduledFor = time.Now().Add(intervalDuration)
-	job.Status = queue.StatusPending
-	job.Attempts = 0
-	job.LockedAt = time.Time{} // Zero time
-	job.CompletedAt = time.Time{} // Zero time
-	job.LastError = ""
-	// ID is not set as it's auto-incremented on insert
-	// CreatedAt remains the original creation time
-	// UpdatedAt will be set by the insert trigger/default
-
-	// Re-insert the job with updated schedule and reset fields
-	err = d.insertJob(conn, job)
+	// Insert the new job provided by the caller
+	err = d.insertJob(conn, newJob)
 	if err != nil {
 		// Attempt to rollback
 		_ = sqlitex.Execute(conn, "ROLLBACK;", nil)
