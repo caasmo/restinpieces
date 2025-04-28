@@ -14,7 +14,7 @@ import (
 )
 
 // Note: Using the Tree approach (github.com/pelletier/go-toml) will remove all
-// TOML comments from the original file when loading and saving. 
+// TOML comments from the original file when loading and saving.
 func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
@@ -113,8 +113,8 @@ func main() {
 		valueToSet = rawValue
 	}
 
-    keyExists := tree.Has(configPath)
-    logger.Info("Checking key existence", "path", configPath, "exists", keyExists) // Use Debug or Info level
+	keyExists := tree.Has(configPath)
+	logger.Info("Checking key existence", "path", configPath, "exists", keyExists) // Use Debug or Info level
 
 	// Check if the path exists before setting
 	if !keyExists {

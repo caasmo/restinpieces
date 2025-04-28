@@ -244,12 +244,12 @@ func (d *Db) MarkRecurrentCompleted(completedJobID int64, newJob queue.Job) erro
 	defer d.pool.Put(conn)
 
 	// Execute both operations within a transaction
-    // IMMEDIATE Starts a transaction and immediately attempts to acquire a
-    // RESERVED lock on the database. A RESERVED lock allows other connections
-    // to continue reading from the database, but it prevents any other
-    // connection from acquiring a RESERVED or EXCLUSIVE lock. This means no
-    // other connection can write to the database once the BEGIN IMMEDIATE
-    // succeeds.
+	// IMMEDIATE Starts a transaction and immediately attempts to acquire a
+	// RESERVED lock on the database. A RESERVED lock allows other connections
+	// to continue reading from the database, but it prevents any other
+	// connection from acquiring a RESERVED or EXCLUSIVE lock. This means no
+	// other connection can write to the database once the BEGIN IMMEDIATE
+	// succeeds.
 	err = sqlitex.Execute(conn, "BEGIN IMMEDIATE;", nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction for mark recurrent completed: %w", err)
