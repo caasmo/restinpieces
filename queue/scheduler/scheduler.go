@@ -166,7 +166,7 @@ func (s *Scheduler) processJobs() {
 				}
 
 				// Handle recurrent jobs
-				newJob := prepareNextRecurrentJob(*jobCopy)
+				newJob := nextRecurrentJob(*jobCopy)
 				if updateErr := s.db.MarkRecurrentCompleted(jobCopy.ID, newJob); updateErr != nil {
 					s.logger.Error("⏰scheduler: failed to mark recurrent job completed and schedule next", "jobID", jobCopy.ID, "error", updateErr)
 				} else {
@@ -242,10 +242,10 @@ func (s *Scheduler) executeJobWithContext(ctx context.Context, job queue.Job) er
 	return s.executor.Execute(ctx, job)
 }
 
-// prepareNextRecurrentJob creates a new Job instance for the next run of a recurrent job.
+// nextRecurrentJob creates a new Job instance for the next run of a recurrent job.
 // It calculates the next scheduled time based on the previous schedule and interval,
 // and resets necessary fields. Assumes the completedJob is valid and recurrent.
-func prepareNextRecurrentJob(completedJob queue.Job) queue.Job {
+func nextRecurrentJob(completedJob queue.Job) queue.Job {
 	// Assume interval is valid (validated elsewhere)
 	intervalDuration, _ := time.ParseDuration(completedJob.Interval) // Ignore error
 
