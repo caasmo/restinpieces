@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/db" // Changed import
 )
 
 // JobExecutor defines the interface for executing jobs and registering handlers.
 type JobExecutor interface {
-	Execute(ctx context.Context, job queue.Job) error
+	Execute(ctx context.Context, job db.Job) error // Changed to db.Job
 	Register(jobType string, handler JobHandler)
 }
 
@@ -20,7 +20,7 @@ type DefaultExecutor struct {
 
 // JobHandler processes a specific type of job
 type JobHandler interface {
-	Handle(ctx context.Context, job queue.Job) error
+	Handle(ctx context.Context, job db.Job) error // Changed to db.Job
 }
 
 // NewExecutor creates an executor with the given handlers
@@ -39,7 +39,7 @@ func (e *DefaultExecutor) Register(jobType string, handler JobHandler) {
 }
 
 // Execute implements the JobExecutor interface
-func (e *DefaultExecutor) Execute(ctx context.Context, job queue.Job) error {
+func (e *DefaultExecutor) Execute(ctx context.Context, job db.Job) error { // Changed to db.Job
 
 	handler, exists := e.registry[job.JobType]
 	if !exists {
