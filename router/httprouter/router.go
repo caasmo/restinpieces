@@ -4,10 +4,12 @@ import (
 	"net/http"
 
 	"github.com/caasmo/restinpieces/router"
+	"strings"
+
+	"github.com/caasmo/restinpieces/router"
 	jshttprouter "github.com/julienschmidt/httprouter"
 )
 
-// Implementation of the router interface
 type Router struct {
 	rt *jshttprouter.Router
 }
@@ -16,36 +18,13 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	r.rt.ServeHTTP(w, req)
 }
 
-// splitMethodPath extracts HTTP method from path pattern of form "METHOD /path"
-// Returns method and cleaned path
-// TODO code review and refactor, seems ugly
-func splitMethodPath(fullPath string) (string, string) {
-	if len(fullPath) == 0 || fullPath[0] == '/' {
-		return "GET", fullPath // Default to GET if no method specified
-	}
-
-	// Split into method and path components
-	for i, c := range fullPath {
-		if c == ' ' || c == '/' {
-			if i == 0 {
-				return "GET", fullPath // Invalid empty method, default to GET
-			}
-			method := fullPath[:i]
-			path := fullPath[i+1:]
-			return method, "/" + path
-		}
-	}
-
-	return "GET", fullPath // No separator found, treat entire string as path
-}
-
-func (r *Router) Handle(path string, handler http.Handler) {
-	method, path := splitMethodPath(path)
+func (r *Router) Handle(pattern string, handler http.Handler) {
+	method, path := splitMethodPathPattern(pattern)
 	r.rt.Handler(method, path, handler)
 }
 
-func (r *Router) HandleFunc(path string, handleFunc func(http.ResponseWriter, *http.Request)) {
-	method, path := splitMethodPath(path)
+func (r *Router) HandleFunc(pattern string, handleFunc func(http.ResponseWriter, *http.Request)) {
+	method, path := splitMethodPathPattern(pattern)
 	r.rt.HandlerFunc(method, path, handleFunc)
 }
 
@@ -59,14 +38,22 @@ func (r *Router) Param(req *http.Request, key string) string {
 	return ""
 }
 
-// Register registers multiple handler chains provided in a Chains map.
-// It delegates to the Handle method for each pattern and chain.
 func (r *Router) Register(chains router.Chains) {
 	for pattern, chain := range chains {
-		// Call Handle, which internally calls splitMethodPath and rt.Handler
-		// It also calls chain.Handler() to get the final http.Handler
 		r.Handle(pattern, chain.Handler())
 	}
+}
+
+// splitMethodPathPattern splits "METHOD /path" into method and path.
+// It defaults to "GET" if the method is missing.
+func splitMethodPathPattern(pattern string) (method, path string) {
+	parts := strings.SplitN(pattern, " ", 2)
+	if len(parts) == 1 {
+		// No method specified, assume GET and the whole string is the path
+		return http.MethodGet, parts[0]
+	}
+	// Standard "METHOD /path" format
+	return parts[0], parts[1]
 }
 
 func New() router.Router {
