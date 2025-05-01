@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/caasmo/restinpieces/router"
+	rtr "github.com/caasmo/restinpieces/router"
 )
 
 func TestChainBasicHandler(t *testing.T) {
