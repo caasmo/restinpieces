@@ -15,7 +15,6 @@ import (
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
-	"github.com/caasmo/restinpieces/db"
 	zdb "github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite/sqlitex"

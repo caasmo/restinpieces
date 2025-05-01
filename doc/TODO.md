@@ -11,7 +11,6 @@
 - disable standard routes
 - is a framework, clear workflow  -> examples repo. od use of the features
 - nocache? what about BlockIp.
-- router: create router.Chains type
 - good enough release
     - basic metrics 
 		- https://github.com/prometheus/client_golang
@@ -116,6 +115,7 @@
 
 ### done
 
+- router: create router.Chains type
 - CORS 
 - test litestream
 - acme is a scheduler job. remove to own repo
