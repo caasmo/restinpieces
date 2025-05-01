@@ -7,7 +7,6 @@ require (
 	github.com/dgraph-io/ristretto/v2 v2.2.0
 	github.com/domodwyer/mailyak/v3 v3.6.2
 	github.com/golang-jwt/jwt/v5 v5.2.1
-	github.com/julienschmidt/httprouter v1.3.0
 	github.com/keilerkonzept/topk v1.1.4
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pelletier/go-toml/v2 v2.1.0
