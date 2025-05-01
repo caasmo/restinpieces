@@ -3,7 +3,6 @@ package httprouter
 import (
 	"net/http"
 
-	"github.com/caasmo/restinpieces/router"
 	"strings"
 
 	"github.com/caasmo/restinpieces/router"
