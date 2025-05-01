@@ -11,6 +11,9 @@ type Chain struct {
 	observers   []http.Handler
 }
 
+// Chains represents a collection of route paths mapped to their handler Chains.
+type Chains map[string]*Chain
+
 // NewChain creates a new Chain instance with the base handler and initialized middlewares slice.
 func NewChain(h http.Handler) *Chain {
 	if h == nil {
