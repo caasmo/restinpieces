@@ -10,8 +10,8 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/queue/executor"
 	"golang.org/x/sync/errgroup"
 )
 
