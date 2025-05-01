@@ -9,18 +9,12 @@ import (
 
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/core"
-	"github.com/caasmo/restinpieces/router/httprouter"
 	"github.com/caasmo/restinpieces/router/servemux"
 	phuslog "github.com/phuslu/log"
 )
 
 func WithRouterServeMux() core.Option {
 	r := servemux.New()
-	return core.WithRouter(r)
-}
-
-func WithRouterHttprouter() core.Option {
-	r := httprouter.New()
 	return core.WithRouter(r)
 }
 
