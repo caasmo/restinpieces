@@ -3,7 +3,18 @@
 - mailer default local
     - no external smtp server
 - sdk visibility, own route
-- move router httprouter to repo
+- make configstore from edit 
+	- configstore list <type>
+		- we shoudlhave number
+	- configstore update-uablocklist
+	- configstore update-cert
+	- configstore renew-jwt
+	- configstore add-oauth2
+	- configstore dump <type>
+	- configstore cat <type>
+	- configstore types
+	- configstore rm <config>
+	- configstore rollback <type> it never rm just creates a copy
 - renew-jtw-secrets like create-app, creates a new config
 - rollback config 
 - start logs: emojify, insightful
@@ -11,6 +22,8 @@
 - disable standard routes
 - is a framework, clear workflow  -> examples repo. od use of the features
 - nocache? what about BlockIp.
+- notifications
+    - slog? https://github.com/betrayy/slog-discord
 - good enough release
     - basic metrics 
 		- https://github.com/prometheus/client_golang
@@ -23,19 +36,22 @@
 	- unit test
 	- code review
 	- basic framework use examples repo, with examples of features.
-- robots.txt
+- robots.txt blocking
+	- see poc-regexp-aibots.go
+		- we have the nginx list make sure is RE2, check mustcomplile before insert
+		- we textuynmarshal to pointert o regexp. config type is config.Regexp and contain the pointer to the complied Regexp
+		- prerouter
+	- part of standard package
+	- In the restinpieces ualist can be sesactivated, prerouter
+	- saved in toml as string.
+	- no need to job, similar letsencript, enough with amanual trigger and notification 
+	- so handler, but can be used from script at the start, 
+	- we write thus the string patterns in separate config 
+		- we have edit-config update-ualist
+	
 - script insert-job. --type 
 - config reload
 - race detection
-- scheduler recurrent jobs
-	- has tick
-		-  config based 
-            - not only check entries, but check config? Nee 
-		- scheduler writes new after completion of last
-            - on startup scheduler creates recurrent jobs entries based start time.
-		    - has start and duration and recurrent
-			    - recurrent if recurernt scheduler markSuccesful and creates next
-	- notification executor handler 
 - basic metrics 
 	- https://pkg.go.dev/runtime/metrics
     - go ones
@@ -43,12 +59,6 @@
         - or not jsut notification
     - some made in preRouter, conunters etc
     - no prometheus page
-- script modify-config, ??
-	- read from db, decode toml, build config struct?
-- superuser
-	- basic idea is superuser has simple scripts, to activate disable things. add jobs. etc
-	- hourly X ok telegram message
-	- more detailed report 
 - 10% reduction in req/sec from htttp, to https refresh auth, with block ip
 - password reset if no password ie oauth2 user => no only register with email
 - verify email for oauth -> yes verifed
@@ -111,10 +121,25 @@
 - block jwt: cache db,  
 - block referrer
 - rand source in app. performacen rand
-- zombiezen, crawshaw, use stmp.step, handling of conn with setinterrupt and timeout
 
 ### done
 
+- superuser
+	- basic idea is superuser has simple scripts, to activate disable things. add jobs. etc
+	- hourly X ok telegram message
+	- more detailed report 
+- script modify-config, ??
+	- read from db, decode toml, build config struct?
+- scheduler recurrent jobs
+	- has tick
+		-  config based 
+            - not only check entries, but check config? Nee 
+		- scheduler writes new after completion of last
+            - on startup scheduler creates recurrent jobs entries based start time.
+		    - has start and duration and recurrent
+			    - recurrent if recurernt scheduler markSuccesful and creates next
+	- notification executor handler 
+- move router httprouter to repo
 - router: create router.Chains type
 - CORS 
 - test litestream
