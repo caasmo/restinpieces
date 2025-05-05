@@ -30,7 +30,8 @@
 
     		userAgent := r.UserAgent()
     		if blockUaCfg.List.MatchString(userAgent) {
-    			w.WriteHeader(http.StatusServiceUnavailable)
+    			// 403 Forbidden is more appropriate for actively blocking a client
+    			w.WriteHeader(http.StatusForbidden)
     			return
     		}
 
