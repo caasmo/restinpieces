@@ -22,25 +22,17 @@
     // Execute wraps the next handler with User-Agent blocking logic.
     func (b *BlockUa) Execute(next http.Handler) http.Handler {
     	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    		cfg := b.app.Config() // Get current config snapshot via App
+    		cfg := b.app.Config()
     		blockUaCfg := cfg.BlockUa
 
-    		// Check if UA blocking is activated and the regex is compiled
     		if blockUaCfg.Activated && blockUaCfg.List.Regexp != nil {
     			userAgent := r.UserAgent()
-    			// Check if the User-Agent matches the blocklist regex
     			if blockUaCfg.List.MatchString(userAgent) {
-    				// Log the blocked UA? Maybe too verbose.
-    				// b.app.Logger().Debug("blocking user agent", "user_agent", userAgent)
-
-    				// Return 503 Service Unavailable, similar to Maintenance mode
-    				// We don't need specific headers like Retry-After here.
     				w.WriteHeader(http.StatusServiceUnavailable)
-    				return // Stop processing the request
+    				return
     			}
     		}
 
-    		// If not blocked, proceed to the next handler
     		next.ServeHTTP(w, r)
     	})
     }
