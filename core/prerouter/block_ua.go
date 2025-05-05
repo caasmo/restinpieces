@@ -25,20 +25,17 @@
     		cfg := b.app.Config()
     		blockUaCfg := cfg.BlockUa
 
-    		// If not activated or regex is invalid, proceed to next handler immediately
     		if !blockUaCfg.Activated || blockUaCfg.List.Regexp == nil {
     			next.ServeHTTP(w, r)
     			return
     		}
 
-    		// Blocking is activated and regex is valid, check the User-Agent
     		userAgent := r.UserAgent()
     		if blockUaCfg.List.MatchString(userAgent) {
     			w.WriteHeader(http.StatusServiceUnavailable)
-    			return // Block the request
+    			return
     		}
 
-    		// User-Agent did not match, proceed to next handler
     		next.ServeHTTP(w, r)
     	})
     }
