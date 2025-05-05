@@ -104,14 +104,6 @@ func (r *Regexp) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// MarshalText implements the encoding.TextMarshaler interface.
-func (r Regexp) MarshalText() ([]byte, error) {
-	if r.Regexp != nil {
-		return []byte(r.Regexp.String()), nil
-	}
-	return []byte(""), nil
-}
-
 type Jwt struct {
 	AuthSecret                     string   `toml:"auth_secret" comment:"Secret key for auth tokens (set via JWT_AUTH_SECRET)"`
 	AuthTokenDuration              Duration `toml:"auth_token_duration" comment:"Duration auth tokens remain valid"`
