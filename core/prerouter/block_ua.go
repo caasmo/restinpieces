@@ -12,14 +12,12 @@
     }
 
     // NewBlockUa creates a new User-Agent blocking middleware instance.
-    // It requires the core App instance to access configuration.
     func NewBlockUa(app *core.App) *BlockUa {
     	return &BlockUa{
     		app: app,
     	}
     }
 
-    // Execute wraps the next handler with User-Agent blocking logic.
     func (b *BlockUa) Execute(next http.Handler) http.Handler {
     	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     		cfg := b.app.Config()
