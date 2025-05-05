@@ -21,6 +21,9 @@ func Validate(cfg *Config) error {
 	if err := validateOAuth2Providers(cfg.OAuth2Providers); err != nil {
 		return fmt.Errorf("oauth2 providers validation failed: %w", err)
 	}
+	if err := validateBlockUa(&cfg.BlockUa); err != nil {
+		return fmt.Errorf("block_ua config validation failed: %w", err)
+	}
 	return nil
 }
 
@@ -164,6 +167,22 @@ func validateSmtp(smtp *Smtp) error {
 }
 
 // validateAcme function removed.
+
+// validateBlockUa checks the BlockUa configuration section.
+func validateBlockUa(blockUa *BlockUa) error {
+	if !blockUa.Activated {
+		return nil // No validation needed if UA blocking is disabled
+	}
+
+	// If activated, the regex must have been compiled successfully.
+	// The Regexp field in our custom type will be nil if compilation failed
+	// during UnmarshalText or if the input string was empty.
+	if blockUa.List.Regexp == nil {
+		return fmt.Errorf("block_ua.list regex is invalid or empty, but blocking is activated")
+	}
+
+	return nil
+}
 
 func validateServerPort(portStr string) error {
 	// Empty means no redirect server, which is valid configuration.

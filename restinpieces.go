@@ -96,7 +96,7 @@ func initPreRouter(app *core.App) http.Handler {
 	preRouterChain := router.NewChain(app.Router())
 
 	// --- Add Internal Middleware Conditionally (Order Matters!) ---
-	// Execution order will be: BlockIp -> TLSHeaderSTS -> Maintenance -> app.Router()
+	// Execution order will be: BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> app.Router()
 
 	// 1. BlockIp Middleware (Added first, runs first)
 	if cfg.BlockIp.Enabled {
@@ -108,13 +108,23 @@ func initPreRouter(app *core.App) http.Handler {
 		logger.Info("Prerouter Middleware BlockIp disabled")
 	}
 
-	// 2. TLSHeaderSTS Middleware (Added second, runs second)
-	// This should run early to ensure HSTS is set for TLS requests, but after IP blocking.
+	// 2. BlockUa Middleware (Added second, runs second)
+	if cfg.BlockUa.Activated {
+		// Instantiate using app instance
+		blockUa := prerouter.NewBlockUa(app)
+		preRouterChain.WithMiddleware(blockUa.Execute)
+		logger.Info("Prerouter Middleware BlockUa enabled")
+	} else {
+		logger.Info("Prerouter Middleware BlockUa disabled")
+	}
+
+	// 3. TLSHeaderSTS Middleware (Added third, runs third)
+	// This should run early to ensure HSTS is set for TLS requests, but after IP/UA blocking.
 	tlsHeaderSTS := prerouter.NewTLSHeaderSTS()
 	preRouterChain.WithMiddleware(tlsHeaderSTS.Execute)
 	// No specific log for TLSHeaderSTS as it always runs
 
-	// 3. Maintenance Middleware (Added third, runs third)
+	// 4. Maintenance Middleware (Added fourth, runs fourth)
 	if cfg.Maintenance.Enabled {
 		// Instantiate using app instance (no logger needed)
 		maintenance := prerouter.NewMaintenance(app)
