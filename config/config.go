@@ -59,7 +59,18 @@ type Config struct {
 	// Acme removed
 	BlockIp     BlockIp     `toml:"block_ip" comment:"IP blocking settings"`
 	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
-	UaList      Regexp      `toml:"ua_list" comment:"Regex for matching User-Agents (e.g., for blocking bots)"`
+
+	// UaList holds a compiled regular expression for matching User-Agent strings.
+	// RE2 Syntax Notes: Go uses the RE2 regex engine. For literal matching:
+	// - Metacharacters like '.' MUST be escaped (e.g., `\.`).
+	// - Characters like '-' or ' ' outside character classes `[]` are literal
+	//   and do NOT require escaping, though RE2 tolerates unnecessary escapes (e.g., `\-`).
+	// TOML Marshaling: When marshaling to TOML, the `go-toml` library might use
+	// double quotes (`"..."`) with escaped backslashes (`\\`) or single quotes (`'...'`)
+	// for literal strings. Both forms are correctly unmarshaled back into the
+	// intended regex pattern string by the TOML parser before being compiled.
+	// For manual TOML editing, use single quotes (`'...'`) for easier pasting of patterns.
+	UaList Regexp `toml:"ua_list" comment:"Regex for matching User-Agents (e.g., for blocking bots)"`
 }
 
 // Duration is a wrapper around time.Duration that supports TOML unmarshalling
