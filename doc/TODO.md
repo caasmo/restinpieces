@@ -15,8 +15,6 @@
 	- configstore types
 	- configstore rm <config>
 	- configstore rollback <type> it never rm just creates a copy
-- renew-jtw-secrets like create-app, creates a new config
-- rollback config 
 - start logs: emojify, insightful
 - create-app shoudl create age key.
 - disable standard routes
@@ -48,7 +46,6 @@
 	- so handler, but can be used from script at the start, 
 	- we write thus the string patterns in separate config 
 		- we have edit-config update-ualist
-	
 - script insert-job. --type 
 - config reload
 - race detection
