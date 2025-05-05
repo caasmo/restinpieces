@@ -59,18 +59,7 @@ type Config struct {
 	// Acme removed
 	BlockIp     BlockIp     `toml:"block_ip" comment:"IP blocking settings"`
 	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
-
-	// UaList holds a compiled regular expression for matching User-Agent strings.
-	// RE2 Syntax Notes: Go uses the RE2 regex engine. For literal matching:
-	// - Metacharacters like '.' MUST be escaped (e.g., `\.`).
-	// - Characters like '-' or ' ' outside character classes `[]` are literal
-	//   and do NOT require escaping, though RE2 tolerates unnecessary escapes (e.g., `\-`).
-	// TOML Marshaling: When marshaling to TOML, the `go-toml` library might use
-	// double quotes (`"..."`) with escaped backslashes (`\\`) or single quotes (`'...'`)
-	// for literal strings. Both forms are correctly unmarshaled back into the
-	// intended regex pattern string by the TOML parser before being compiled.
-	// For manual TOML editing, use single quotes (`'...'`) for easier pasting of patterns.
-	UaList Regexp `toml:"ua_list" comment:"Regex for matching User-Agents (e.g., for blocking bots)"`
+	BlockUa     BlockUa     `toml:"block_ua" comment:"User-Agent blocking settings"`
 }
 
 // Duration is a wrapper around time.Duration that supports TOML unmarshalling
@@ -236,4 +225,20 @@ type BlockIp struct {
 type Maintenance struct {
 	Enabled   bool `toml:"enabled" comment:"Enable maintenance mode feature"`
 	Activated bool `toml:"activated" comment:"Currently in maintenance mode"`
+}
+
+// BlockUa holds configuration for blocking requests based on User-Agent.
+type BlockUa struct {
+	Activated bool `toml:"activated" comment:"Activate User-Agent blocking"`
+	// List holds a compiled regular expression for matching User-Agent strings.
+	// RE2 Syntax Notes: Go uses the RE2 regex engine. For literal matching:
+	// - Metacharacters like '.' MUST be escaped (e.g., `\.`).
+	// - Characters like '-' or ' ' outside character classes `[]` are literal
+	//   and do NOT require escaping, though RE2 tolerates unnecessary escapes (e.g., `\-`).
+	// TOML Marshaling: When marshaling to TOML, the `go-toml` library might use
+	// double quotes (`"..."`) with escaped backslashes (`\\`) or single quotes (`'...'`)
+	// for literal strings. Both forms are correctly unmarshaled back into the
+	// intended regex pattern string by the TOML parser before being compiled.
+	// For manual TOML editing, use single quotes (`'...'`) for easier pasting of patterns.
+	List Regexp `toml:"list" comment:"Regex for matching User-Agents to block"`
 }
