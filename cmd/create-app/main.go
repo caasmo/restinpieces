@@ -186,7 +186,6 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 			Enabled: true, // Default from example
 		},
 		Maintenance: config.Maintenance{
-			Enabled:   true, // Default from example
 			Activated: false,
 		},
 		BlockUa: config.BlockUa{

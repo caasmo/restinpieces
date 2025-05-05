@@ -223,7 +223,6 @@ type BlockIp struct {
 
 // Maintenance holds configuration for the maintenance mode feature.
 type Maintenance struct {
-	Enabled   bool `toml:"enabled" comment:"Enable maintenance mode feature"`
 	Activated bool `toml:"activated" comment:"Currently in maintenance mode"`
 }
 

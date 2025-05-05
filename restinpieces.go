@@ -125,14 +125,10 @@ func initPreRouter(app *core.App) http.Handler {
 	// No specific log for TLSHeaderSTS as it always runs
 
 	// 4. Maintenance Middleware (Added fourth, runs fourth)
-	if cfg.Maintenance.Enabled {
-		// Instantiate using app instance (no logger needed)
-		maintenance := prerouter.NewMaintenance(app)
-		preRouterChain.WithMiddleware(maintenance.Execute)
-		logger.Info("Prerouter Middleware Maintenance enabled")
-	} else {
-		logger.Info("Prerouter Middleware Maintenance disabled")
-	}
+	// Always added; behavior controlled by cfg.Maintenance.Activated
+	maintenance := prerouter.NewMaintenance(app)
+	preRouterChain.WithMiddleware(maintenance.Execute)
+	logger.Info("Prerouter Middleware Maintenance added (activation depends on config)")
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
