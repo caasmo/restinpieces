@@ -192,8 +192,11 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 		BlockUa: config.BlockUa{
 			Activated: true, // Default to activated
 			List: config.Regexp{
-				// Example list, replace with your desired blocklist
-				Regexp: regexp.MustCompile(`(BadBot|ExampleBot|AnotherBot)`),
+				// Example list demonstrating escaping:
+				// - \. is required to match a literal dot.
+				// - \- and \  are tolerated but unnecessary escapes for hyphen and space.
+				// Replace with your actual blocklist.
+				Regexp: regexp.MustCompile(`(BotName\.v1|Super\-Bot|My\ Bot|AnotherBot)`),
 			},
 		},
 	}
