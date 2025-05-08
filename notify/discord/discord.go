@@ -18,7 +18,7 @@ import (
 // Options configures the Notifier.
 type Options struct {
 	WebhookURL   string
-	MinLevel     slog.Level
+	// MinLevel     slog.Level // Removed
 	APIRateLimit rate.Limit
 	APIBurst     int
 	SendTimeout  time.Duration
@@ -120,9 +120,10 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 		return nil
 	}
 
-	// n.Level has been removed from notifier.Notification, so this check is removed.
-	// MinLevel filtering would need to be re-evaluated if still desired,
-	// possibly by adding a Level field back to Notification or handling it in the caller.
+	// The MinLevel field and associated logic have been removed.
+	// If level-based filtering is needed in the future,
+	// it would require re-adding a level concept to the Notification
+	// or handling it in the calling code.
 
 	if !dn.apiRateLimiter.Allow() {
 		dn.logger.Warn("discord: API rate limit reached or burst active, dropping notification",
