@@ -2,22 +2,22 @@ package notify
 
 import (
 	"context"
-	"log/slog"
+	// "log/slog" // No longer needed here
 	"time"
 )
 
 type Type int
 
 const (
-	AlarmNotification Type = iota
-	MetricNotification
+	Alarm Type = iota // Renamed from AlarmNotification
+	Metric      // Renamed from MetricNotification
 )
 
 func (nt Type) String() string {
 	switch nt {
-	case AlarmNotification:
+	case Alarm: // Updated case
 		return "Alarm"
-	case MetricNotification:
+	case Metric: // Updated case
 		return "Metric"
 	default:
 		return "Unknown"
@@ -27,13 +27,9 @@ func (nt Type) String() string {
 type Notification struct {
 	Timestamp time.Time
 	Type      Type
-	Level     slog.Level
 	Source    string
 	Message   string
-	Name      string
-	Value     float64
-	Unit      string
-	Tags      map[string]string
+	Fields    map[string]interface{} // Replaces Name, Value, Unit, Tags; Level is removed
 }
 
 // Notifier defines the contract for sending alarms and metrics.

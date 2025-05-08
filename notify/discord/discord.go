@@ -72,24 +72,35 @@ func NewDiscordNotifier(opts DiscordNotifierOptions, appLogger *slog.Logger) (*D
 func (dn *DiscordNotifier) formatDiscordMessage(n notifier.Notification) string {
 	var msgBuffer bytes.Buffer
 
-	msgBuffer.WriteString(fmt.Sprintf("**%s** [%s] from *%s*:\n> %s\n",
-		n.Level.String(),
+	// Removed n.Level.String() from the main message
+	msgBuffer.WriteString(fmt.Sprintf("[%s] from *%s*:\n> %s\n",
 		n.Type.String(),
 		n.Source,
 		n.Message))
 
-	if len(n.Tags) > 0 {
-		msgBuffer.WriteString("\n**Details**:\n")
-		hasDetails := false
-		for k, v := range n.Tags {
-			if k != "" && v != "" {
-				msgBuffer.WriteString(fmt.Sprintf("> %s: `%s`\n", k, v))
-				hasDetails = true
+	// Changed from n.Tags to n.Fields
+	if len(n.Fields) > 0 {
+		detailsAdded := false
+		// Use a temporary buffer for fields to ensure the "**Fields**" header is only added if there's content.
+		tempFieldsBuffer := new(bytes.Buffer)
+		for k, v := range n.Fields {
+			var valStr string
+			if v == nil {
+				valStr = "<nil>" // Represent nil explicitly
+			} else {
+				valStr = fmt.Sprintf("%v", v) // Use %v for interface{}
+			}
+
+			// Add field if key and its string representation of value are non-empty
+			if k != "" && valStr != "" {
+				tempFieldsBuffer.WriteString(fmt.Sprintf("> %s: `%s`\n", k, valStr))
+				detailsAdded = true
 			}
 		}
-		if !hasDetails {
-			finalLen := msgBuffer.Len() - len("\n**Details**:\n")
-			msgBuffer.Truncate(finalLen)
+
+		if detailsAdded {
+			msgBuffer.WriteString("\n**Fields**:\n")
+			msgBuffer.Write(tempFieldsBuffer.Bytes())
 		}
 	}
 
@@ -106,13 +117,13 @@ func (dn *DiscordNotifier) formatDiscordMessage(n notifier.Notification) string 
 // Errors returned by Send are for immediate processing issues (e.g., invalid type, level too low).
 // Errors during the actual HTTP send are logged via the appLogger.
 func (dn *DiscordNotifier) Send(_ context.Context, n notifier.Notification) error {
-	if n.Type != notifier.AlarmNotification {
+	if n.Type != notifier.Alarm { // Updated to use notifier.Alarm
 		return nil
 	}
 
-	if n.Level < dn.opts.MinLevel {
-		return nil
-	}
+	// n.Level has been removed from notifier.Notification, so this check is removed.
+	// MinLevel filtering would need to be re-evaluated if still desired,
+	// possibly by adding a Level field back to Notification or handling it in the caller.
 
 	if !dn.apiRateLimiter.Allow() {
 		dn.appLogger.Warn("DiscordNotifier: API rate limit reached or burst active, dropping notification",
