@@ -163,14 +163,13 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 			if resp.StatusCode == http.StatusTooManyRequests {
 				dn.logger.Warn("discord: goroutine Received 429 Too Many Requests. Rate limit settings may need adjustment.")
 			}
-			// Potentially read and log resp.Body here for more details
 			return
 		}
 
 		dn.logger.Log(sendCtx, slog.LevelDebug, "Successfully sent alarm notification to Discord via goroutine",
 			"source", notif.Source, "message", notif.Message)
 
-	}(n) // Pass 'n' by value to the goroutine to avoid data races if 'n' was a pointer to shared mutable data.
+	}(n) 
 
-	return nil // Notification successfully enqueued/processed for sending.
+	return nil 
 }
