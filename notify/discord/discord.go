@@ -33,18 +33,18 @@ type payload struct {
 // The Send method is non-blocking and launches a goroutine for actual HTTP dispatch.
 type Notifier struct {
 	opts           Options
-	appLogger      *slog.Logger
+	logger         *slog.Logger // Renamed from appLogger
 	httpClient     *http.Client
 	apiRateLimiter *rate.Limiter
 }
 
 // New creates a new Notifier.
-func New(opts Options, appLogger *slog.Logger) (*Notifier, error) {
+func New(opts Options, logger *slog.Logger) (*Notifier, error) { // Renamed appLogger to logger
 	if opts.WebhookURL == "" {
 		return nil, fmt.Errorf("discord: WebhookURL is required")
 	}
-	if appLogger == nil {
-		return nil, fmt.Errorf("discord: appLogger is required")
+	if logger == nil { // Renamed appLogger to logger
+		return nil, fmt.Errorf("discord: logger is required") // Updated error message
 	}
 
 	if opts.APIRateLimit == 0 {
@@ -59,7 +59,7 @@ func New(opts Options, appLogger *slog.Logger) (*Notifier, error) {
 
 	return &Notifier{
 		opts:           opts,
-		appLogger:      appLogger,
+		logger:         logger, // Renamed from appLogger
 		apiRateLimiter: rate.NewLimiter(opts.APIRateLimit, opts.APIBurst),
 		httpClient:     &http.Client{
 			// Timeout on httpClient is for the entire attempt including connection, redirects, reading body.
@@ -125,7 +125,7 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 	// possibly by adding a Level field back to Notification or handling it in the caller.
 
 	if !dn.apiRateLimiter.Allow() {
-		dn.appLogger.Warn("discord: API rate limit reached or burst active, dropping notification",
+		dn.logger.Warn("discord: API rate limit reached or burst active, dropping notification", // Renamed appLogger to logger
 			"source", n.Source, "message", n.Message)
 		return nil // Indicate successful processing (by dropping it as per rate limit policy)
 	}
@@ -142,14 +142,14 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 		payload := payload{Content: formattedMessage}
 		jsonBody, err := json.Marshal(payload)
 		if err != nil {
-			dn.appLogger.Error("discord: goroutine failed to marshal payload",
+			dn.logger.Error("discord: goroutine failed to marshal payload", // Renamed appLogger to logger
 				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
 			return
 		}
 
 		req, err := http.NewRequestWithContext(sendCtx, http.MethodPost, dn.opts.WebhookURL, bytes.NewBuffer(jsonBody))
 		if err != nil {
-			dn.appLogger.Error("discord: goroutine failed to create request",
+			dn.logger.Error("discord: goroutine failed to create request", // Renamed appLogger to logger
 				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
 			return
 		}
@@ -157,23 +157,23 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 
 		resp, err := dn.httpClient.Do(req)
 		if err != nil {
-			dn.appLogger.Error("discord: goroutine failed to send to discord",
+			dn.logger.Error("discord: goroutine failed to send to discord", // Renamed appLogger to logger
 				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
 			return
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode >= 300 {
-			dn.appLogger.Error("discord: goroutine received non-2xx status from Discord",
+			dn.logger.Error("discord: goroutine received non-2xx status from Discord", // Renamed appLogger to logger
 				"status_code", resp.StatusCode, "source", notificationToSend.Source, "message", notificationToSend.Message)
 			if resp.StatusCode == http.StatusTooManyRequests {
-				dn.appLogger.Warn("discord: goroutine Received 429 Too Many Requests. Rate limit settings may need adjustment.")
+				dn.logger.Warn("discord: goroutine Received 429 Too Many Requests. Rate limit settings may need adjustment.") // Renamed appLogger to logger
 			}
 			// Potentially read and log resp.Body here for more details
 			return
 		}
 
-		dn.appLogger.Log(sendCtx, slog.LevelDebug, "Successfully sent alarm notification to Discord via goroutine",
+		dn.logger.Log(sendCtx, slog.LevelDebug, "Successfully sent alarm notification to Discord via goroutine", // Renamed appLogger to logger
 			"source", notificationToSend.Source, "message", notificationToSend.Message)
 
 	}(n) // Pass 'n' by value to the goroutine to avoid data races if 'n' was a pointer to shared mutable data.
