@@ -1,4 +1,4 @@
-package notifier // Or your framework's package name
+package notify 
 
 import (
 	"context"
