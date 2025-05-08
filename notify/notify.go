@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-type NotificationType int
+type Type int
 
 const (
-	AlarmNotification NotificationType = iota
+	AlarmNotification Type = iota
 	MetricNotification
 )
 
-func (nt NotificationType) String() string {
+func (nt Type) String() string {
 	switch nt {
 	case AlarmNotification:
 		return "Alarm"
@@ -26,7 +26,7 @@ func (nt NotificationType) String() string {
 
 type Notification struct {
 	Timestamp time.Time
-	Type      NotificationType
+	Type      Type
 	Level     slog.Level
 	Source    string
 	Message   string
