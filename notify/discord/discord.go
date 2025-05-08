@@ -44,7 +44,7 @@ func New(opts Options, appLogger *slog.Logger) (*Notifier, error) {
 		return nil, fmt.Errorf("discord: WebhookURL is required")
 	}
 	if appLogger == nil {
-		return nil, fmt.Errorf("discord: appLogger is required") // Updated error prefix
+		return nil, fmt.Errorf("discord: appLogger is required")
 	}
 
 	if opts.APIRateLimit == 0 {
