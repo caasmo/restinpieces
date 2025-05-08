@@ -9,15 +9,15 @@ import (
 type Type int
 
 const (
-	Alarm Type = iota // Renamed from AlarmNotification
-	Metric      // Renamed from MetricNotification
+	Alarm Type = iota
+	Metric
 )
 
 func (nt Type) String() string {
 	switch nt {
-	case Alarm: // Updated case
+	case Alarm:
 		return "Alarm"
-	case Metric: // Updated case
+	case Metric:
 		return "Metric"
 	default:
 		return "Unknown"
@@ -29,7 +29,7 @@ type Notification struct {
 	Type      Type
 	Source    string
 	Message   string
-	Fields    map[string]interface{} // Replaces Name, Value, Unit, Tags; Level is removed
+	Fields    map[string]interface{}
 }
 
 // Notifier defines the contract for sending alarms and metrics.
