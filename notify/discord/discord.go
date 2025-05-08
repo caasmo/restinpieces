@@ -31,20 +31,20 @@ type payload struct { // Renamed from discordPayload
 // It is safe for concurrent use as its fields are either immutable after creation or are
 // concurrency-safe types (like *slog.Logger, *http.Client, *rate.Limiter).
 // The Send method is non-blocking and launches a goroutine for actual HTTP dispatch.
-type DiscordNotifier struct {
-	opts           DiscordNotifierOptions
+type Notifier struct { // Renamed from DiscordNotifier
+	opts           Options // Renamed from DiscordNotifierOptions
 	appLogger      *slog.Logger
 	httpClient     *http.Client
 	apiRateLimiter *rate.Limiter
 }
 
-// NewDiscordNotifier creates a new DiscordNotifier.
-func NewDiscordNotifier(opts DiscordNotifierOptions, appLogger *slog.Logger) (*DiscordNotifier, error) {
+// New creates a new Notifier. // Renamed from NewDiscordNotifier
+func New(opts Options, appLogger *slog.Logger) (*Notifier, error) { // Renamed from NewDiscordNotifier, DiscordNotifierOptions
 	if opts.WebhookURL == "" {
-		return nil, fmt.Errorf("discordnotifier: WebhookURL is required")
+		return nil, fmt.Errorf("discord: WebhookURL is required") // Updated error prefix
 	}
 	if appLogger == nil {
-		return nil, fmt.Errorf("discordnotifier: appLogger is required")
+		return nil, fmt.Errorf("discord: appLogger is required") // Updated error prefix
 	}
 
 	if opts.APIRateLimit == 0 {
