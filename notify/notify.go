@@ -38,3 +38,13 @@ type Notification struct {
 type Notifier interface {
 	Send(ctx context.Context, n Notification) error
 }
+
+type NilNotifier struct{}
+
+func NewNilNotifier() *NilNotifier {
+	return &NilNotifier{}
+}
+
+func (nn *NilNotifier) Send(ctx context.Context, n Notification) error {
+	return nil
+}
