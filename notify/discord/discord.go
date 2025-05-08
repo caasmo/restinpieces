@@ -15,7 +15,7 @@ import (
 )
 
 // Options configures the Notifier.
-type Options struct { // Renamed from DiscordNotifierOptions
+type Options struct {
 	WebhookURL   string
 	MinLevel     slog.Level
 	APIRateLimit rate.Limit
@@ -23,7 +23,7 @@ type Options struct { // Renamed from DiscordNotifierOptions
 	SendTimeout  time.Duration
 }
 
-type payload struct { // Renamed from discordPayload
+type payload struct {
 	Content string `json:"content"`
 }
 
@@ -31,17 +31,17 @@ type payload struct { // Renamed from discordPayload
 // It is safe for concurrent use as its fields are either immutable after creation or are
 // concurrency-safe types (like *slog.Logger, *http.Client, *rate.Limiter).
 // The Send method is non-blocking and launches a goroutine for actual HTTP dispatch.
-type Notifier struct { // Renamed from DiscordNotifier
-	opts           Options // Renamed from DiscordNotifierOptions
+type Notifier struct {
+	opts           Options
 	appLogger      *slog.Logger
 	httpClient     *http.Client
 	apiRateLimiter *rate.Limiter
 }
 
-// New creates a new Notifier. // Renamed from NewDiscordNotifier
-func New(opts Options, appLogger *slog.Logger) (*Notifier, error) { // Renamed from NewDiscordNotifier, DiscordNotifierOptions
+// New creates a new Notifier.
+func New(opts Options, appLogger *slog.Logger) (*Notifier, error) {
 	if opts.WebhookURL == "" {
-		return nil, fmt.Errorf("discord: WebhookURL is required") // Updated error prefix
+		return nil, fmt.Errorf("discord: WebhookURL is required")
 	}
 	if appLogger == nil {
 		return nil, fmt.Errorf("discord: appLogger is required") // Updated error prefix
@@ -57,7 +57,7 @@ func New(opts Options, appLogger *slog.Logger) (*Notifier, error) { // Renamed f
 		opts.SendTimeout = 10 * time.Second
 	}
 
-	return &Notifier{ // Renamed from DiscordNotifier
+	return &Notifier{
 		opts:           opts,
 		appLogger:      appLogger,
 		apiRateLimiter: rate.NewLimiter(opts.APIRateLimit, opts.APIBurst),
@@ -68,7 +68,7 @@ func New(opts Options, appLogger *slog.Logger) (*Notifier, error) { // Renamed f
 	}, nil
 }
 
-func (dn *Notifier) formatMessage(n notify.Notification) string { // Renamed, receiver and param type updated
+func (dn *Notifier) formatMessage(n notify.Notification) string {
 	var msgBuffer bytes.Buffer
 
 	// Removed n.Level.String() from the main message
@@ -115,8 +115,8 @@ func (dn *Notifier) formatMessage(n notify.Notification) string { // Renamed, re
 // launches a goroutine to send the notification to Discord.
 // Errors returned by Send are for immediate processing issues (e.g., invalid type, level too low).
 // Errors during the actual HTTP send are logged via the appLogger.
-func (dn *Notifier) Send(_ context.Context, n notify.Notification) error { // Receiver and param type updated
-	if n.Type != notify.Alarm { // Updated to use notify.Alarm
+func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
+	if n.Type != notify.Alarm {
 		return nil
 	}
 
@@ -125,31 +125,31 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error { // Re
 	// possibly by adding a Level field back to Notification or handling it in the caller.
 
 	if !dn.apiRateLimiter.Allow() {
-		dn.appLogger.Warn("discord: API rate limit reached or burst active, dropping notification", // Updated log prefix
+		dn.appLogger.Warn("discord: API rate limit reached or burst active, dropping notification",
 			"source", n.Source, "message", n.Message)
 		return nil // Indicate successful processing (by dropping it as per rate limit policy)
 	}
 
 	// Launch a goroutine to handle the actual sending.
-	go func(notificationToSend notify.Notification) { // Param type updated
+	go func(notificationToSend notify.Notification) {
 		// Create a new context with timeout for this specific send operation.
 		// The original context from Send() is not used in the goroutine to avoid cancellation
 		// if the calling request finishes before the notification is sent.
 		sendCtx, cancel := context.WithTimeout(context.Background(), dn.opts.SendTimeout)
 		defer cancel()
 
-		formattedMessage := dn.formatMessage(notificationToSend) // Renamed from formatDiscordMessage
-		payload := payload{Content: formattedMessage}            // Renamed from discordPayload
+		formattedMessage := dn.formatMessage(notificationToSend)
+		payload := payload{Content: formattedMessage}
 		jsonBody, err := json.Marshal(payload)
 		if err != nil {
-			dn.appLogger.Error("discord: goroutine failed to marshal payload", // Updated log prefix
+			dn.appLogger.Error("discord: goroutine failed to marshal payload",
 				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
 			return
 		}
 
 		req, err := http.NewRequestWithContext(sendCtx, http.MethodPost, dn.opts.WebhookURL, bytes.NewBuffer(jsonBody))
 		if err != nil {
-			dn.appLogger.Error("discord: goroutine failed to create request", // Updated log prefix
+			dn.appLogger.Error("discord: goroutine failed to create request",
 				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
 			return
 		}
@@ -157,17 +157,17 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error { // Re
 
 		resp, err := dn.httpClient.Do(req)
 		if err != nil {
-			dn.appLogger.Error("discord: goroutine failed to send to discord", // Updated log prefix
+			dn.appLogger.Error("discord: goroutine failed to send to discord",
 				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
 			return
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode >= 300 {
-			dn.appLogger.Error("discord: goroutine received non-2xx status from Discord", // Updated log prefix
+			dn.appLogger.Error("discord: goroutine received non-2xx status from Discord",
 				"status_code", resp.StatusCode, "source", notificationToSend.Source, "message", notificationToSend.Message)
 			if resp.StatusCode == http.StatusTooManyRequests {
-				dn.appLogger.Warn("discord: goroutine Received 429 Too Many Requests. Rate limit settings may need adjustment.") // Updated log prefix
+				dn.appLogger.Warn("discord: goroutine Received 429 Too Many Requests. Rate limit settings may need adjustment.")
 			}
 			// Potentially read and log resp.Body here for more details
 			return
