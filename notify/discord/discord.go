@@ -1,0 +1,172 @@
+package discordnotifier
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"time"
+
+	"golang.org/x/time/rate"
+	// Assuming 'notifier' is the package where the Notifier interface is defined.
+	// Adjust the import path according to your project structure.
+	"your_framework_module_path/notifier"
+)
+
+// DiscordNotifierOptions configures the DiscordNotifier.
+type DiscordNotifierOptions struct {
+	WebhookURL   string
+	MinLevel     slog.Level
+	APIRateLimit rate.Limit
+	APIBurst     int
+	SendTimeout  time.Duration
+}
+
+type discordPayload struct {
+	Content string `json:"content"`
+}
+
+// DiscordNotifier implements the notifier.Notifier interface for sending notifications to Discord.
+// It is safe for concurrent use as its fields are either immutable after creation or are
+// concurrency-safe types (like *slog.Logger, *http.Client, *rate.Limiter).
+// The Send method is non-blocking and launches a goroutine for actual HTTP dispatch.
+type DiscordNotifier struct {
+	opts           DiscordNotifierOptions
+	appLogger      *slog.Logger
+	httpClient     *http.Client
+	apiRateLimiter *rate.Limiter
+}
+
+// NewDiscordNotifier creates a new DiscordNotifier.
+func NewDiscordNotifier(opts DiscordNotifierOptions, appLogger *slog.Logger) (*DiscordNotifier, error) {
+	if opts.WebhookURL == "" {
+		return nil, fmt.Errorf("discordnotifier: WebhookURL is required")
+	}
+	if appLogger == nil {
+		return nil, fmt.Errorf("discordnotifier: appLogger is required")
+	}
+
+	if opts.APIRateLimit == 0 {
+		opts.APIRateLimit = rate.Every(2 * time.Second)
+	}
+	if opts.APIBurst <= 0 {
+		opts.APIBurst = 5
+	}
+	if opts.SendTimeout <= 0 {
+		opts.SendTimeout = 10 * time.Second
+	}
+
+	return &DiscordNotifier{
+		opts:           opts,
+		appLogger:      appLogger,
+		apiRateLimiter: rate.NewLimiter(opts.APIRateLimit, opts.APIBurst),
+		httpClient: &http.Client{
+			// Timeout on httpClient is for the entire attempt including connection, redirects, reading body.
+			// We'll use a separate context with timeout for the request in the goroutine.
+		},
+	}, nil
+}
+
+func (dn *DiscordNotifier) formatDiscordMessage(n notifier.Notification) string {
+	var msgBuffer bytes.Buffer
+
+	msgBuffer.WriteString(fmt.Sprintf("**%s** [%s] from *%s*:\n> %s\n",
+		n.Level.String(),
+		n.Type.String(),
+		n.Source,
+		n.Message))
+
+	if len(n.Tags) > 0 {
+		msgBuffer.WriteString("\n**Details**:\n")
+		hasDetails := false
+		for k, v := range n.Tags {
+			if k != "" && v != "" {
+				msgBuffer.WriteString(fmt.Sprintf("> %s: `%s`\n", k, v))
+				hasDetails = true
+			}
+		}
+		if !hasDetails {
+			finalLen := msgBuffer.Len() - len("\n**Details**:\n")
+			msgBuffer.Truncate(finalLen)
+		}
+	}
+
+	content := msgBuffer.String()
+	if len(content) > 2000 {
+		return content[:1997] + "..."
+	}
+	return content
+}
+
+// Send implements the notifier.Notifier interface.
+// It is non-blocking. It attempts to acquire a rate limit token and, if successful,
+// launches a goroutine to send the notification to Discord.
+// Errors returned by Send are for immediate processing issues (e.g., invalid type, level too low).
+// Errors during the actual HTTP send are logged via the appLogger.
+func (dn *DiscordNotifier) Send(_ context.Context, n notifier.Notification) error {
+	if n.Type != notifier.AlarmNotification {
+		return nil
+	}
+
+	if n.Level < dn.opts.MinLevel {
+		return nil
+	}
+
+	if !dn.apiRateLimiter.Allow() {
+		dn.appLogger.Warn("DiscordNotifier: API rate limit reached or burst active, dropping notification",
+			"source", n.Source, "message", n.Message)
+		return nil // Indicate successful processing (by dropping it as per rate limit policy)
+	}
+
+	// Launch a goroutine to handle the actual sending.
+	go func(notificationToSend notifier.Notification) {
+		// Create a new context with timeout for this specific send operation.
+		// The original context from Send() is not used in the goroutine to avoid cancellation
+		// if the calling request finishes before the notification is sent.
+		sendCtx, cancel := context.WithTimeout(context.Background(), dn.opts.SendTimeout)
+		defer cancel()
+
+		formattedMessage := dn.formatDiscordMessage(notificationToSend)
+		payload := discordPayload{Content: formattedMessage}
+		jsonBody, err := json.Marshal(payload)
+		if err != nil {
+			dn.appLogger.Error("DiscordNotifier: goroutine failed to marshal payload",
+				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
+			return
+		}
+
+		req, err := http.NewRequestWithContext(sendCtx, http.MethodPost, dn.opts.WebhookURL, bytes.NewBuffer(jsonBody))
+		if err != nil {
+			dn.appLogger.Error("DiscordNotifier: goroutine failed to create request",
+				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
+			return
+		}
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := dn.httpClient.Do(req)
+		if err != nil {
+			dn.appLogger.Error("DiscordNotifier: goroutine failed to send to discord",
+				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode >= 300 {
+			dn.appLogger.Error("DiscordNotifier: goroutine received non-2xx status from Discord",
+				"status_code", resp.StatusCode, "source", notificationToSend.Source, "message", notificationToSend.Message)
+			if resp.StatusCode == http.StatusTooManyRequests {
+				dn.appLogger.Warn("DiscordNotifier: goroutine Received 429 Too Many Requests. Rate limit settings may need adjustment.")
+			}
+			// Potentially read and log resp.Body here for more details
+			return
+		}
+
+		dn.appLogger.Log(sendCtx, slog.LevelDebug, "Successfully sent alarm notification to Discord via goroutine",
+			"source", notificationToSend.Source, "message", notificationToSend.Message)
+
+	}(n) // Pass 'n' by value to the goroutine to avoid data races if 'n' was a pointer to shared mutable data.
+
+	return nil // Notification successfully enqueued/processed for sending.
+}
