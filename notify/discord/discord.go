@@ -116,14 +116,8 @@ func (dn *Notifier) formatMessage(n notify.Notification) string {
 // Errors returned by Send are for immediate processing issues (e.g., invalid type, level too low).
 // Errors during the actual HTTP send are logged via the appLogger.
 func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
-	if n.Type != notify.Alarm {
-		return nil
-	}
-
-	// The MinLevel field and associated logic have been removed.
-	// If level-based filtering is needed in the future,
-	// it would require re-adding a level concept to the Notification
-	// or handling it in the calling code.
+	// Removed the check that restricted sending to only notify.Alarm type.
+	// Now all notification types will be processed.
 
 	if !dn.apiRateLimiter.Allow() {
 		dn.logger.Warn("discord: API rate limit reached or burst active, dropping notification",
