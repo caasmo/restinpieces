@@ -131,26 +131,26 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 	}
 
 	// Launch a goroutine to handle the actual sending.
-	go func(notificationToSend notify.Notification) {
+	go func(notif notify.Notification) { // Renamed notificationToSend to notif
 		// Create a new context with timeout for this specific send operation.
 		// The original context from Send() is not used in the goroutine to avoid cancellation
 		// if the calling request finishes before the notification is sent.
 		sendCtx, cancel := context.WithTimeout(context.Background(), dn.opts.SendTimeout)
 		defer cancel()
 
-		formattedMessage := dn.formatMessage(notificationToSend)
+		formattedMessage := dn.formatMessage(notif) // Renamed notificationToSend to notif
 		payload := payload{Content: formattedMessage}
 		jsonBody, err := json.Marshal(payload)
 		if err != nil {
 			dn.logger.Error("discord: goroutine failed to marshal payload",
-				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
+				"source", notif.Source, "message", notif.Message, "error", err) // Renamed notificationToSend to notif
 			return
 		}
 
 		req, err := http.NewRequestWithContext(sendCtx, http.MethodPost, dn.opts.WebhookURL, bytes.NewBuffer(jsonBody))
 		if err != nil {
 			dn.logger.Error("discord: goroutine failed to create request",
-				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
+				"source", notif.Source, "message", notif.Message, "error", err) // Renamed notificationToSend to notif
 			return
 		}
 		req.Header.Set("Content-Type", "application/json")
@@ -158,14 +158,14 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 		resp, err := dn.httpClient.Do(req)
 		if err != nil {
 			dn.logger.Error("discord: goroutine failed to send to discord",
-				"source", notificationToSend.Source, "message", notificationToSend.Message, "error", err)
+				"source", notif.Source, "message", notif.Message, "error", err) // Renamed notificationToSend to notif
 			return
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode >= 300 {
 			dn.logger.Error("discord: goroutine received non-2xx status from Discord",
-				"status_code", resp.StatusCode, "source", notificationToSend.Source, "message", notificationToSend.Message)
+				"status_code", resp.StatusCode, "source", notif.Source, "message", notif.Message) // Renamed notificationToSend to notif
 			if resp.StatusCode == http.StatusTooManyRequests {
 				dn.logger.Warn("discord: goroutine Received 429 Too Many Requests. Rate limit settings may need adjustment.")
 			}
@@ -174,7 +174,7 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 		}
 
 		dn.logger.Log(sendCtx, slog.LevelDebug, "Successfully sent alarm notification to Discord via goroutine",
-			"source", notificationToSend.Source, "message", notificationToSend.Message)
+			"source", notif.Source, "message", notif.Message) // Renamed notificationToSend to notif
 
 	}(n) // Pass 'n' by value to the goroutine to avoid data races if 'n' was a pointer to shared mutable data.
 
