@@ -61,7 +61,7 @@ func New(opts Options, appLogger *slog.Logger) (*Notifier, error) { // Renamed f
 		opts:           opts,
 		appLogger:      appLogger,
 		apiRateLimiter: rate.NewLimiter(opts.APIRateLimit, opts.APIBurst),
-		httpClient: &http.Client{
+		httpClient:     &http.Client{
 			// Timeout on httpClient is for the entire attempt including connection, redirects, reading body.
 			// We'll use a separate context with timeout for the request in the goroutine.
 		},
@@ -139,7 +139,7 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error { // Re
 		defer cancel()
 
 		formattedMessage := dn.formatMessage(notificationToSend) // Renamed from formatDiscordMessage
-		payload := payload{Content: formattedMessage} // Renamed from discordPayload
+		payload := payload{Content: formattedMessage}            // Renamed from discordPayload
 		jsonBody, err := json.Marshal(payload)
 		if err != nil {
 			dn.appLogger.Error("discord: goroutine failed to marshal payload", // Updated log prefix
