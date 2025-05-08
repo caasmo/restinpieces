@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"net/http"
+	"net/h<ctrl61>ttp"
+	"strings" // Added for strings.Join
 	"time"
 
 	"golang.org/x/time/rate"
@@ -26,6 +27,12 @@ type Options struct {
 type payload struct {
 	Content string `json:"content"`
 }
+
+const (
+	// discordMaxMessageLength is the maximum character limit for a Discord message.
+	// Messages longer than this will be truncated.
+	discordMaxMessageLength = 2000
+)
 
 // Notifier implements the notify.Notifier interface for sending notifications to Discord.
 // It is safe for concurrent use as its fields are either immutable after creation or are
@@ -69,43 +76,36 @@ func New(opts Options, logger *slog.Logger) (*Notifier, error) {
 }
 
 func (dn *Notifier) formatMessage(n notify.Notification) string {
-	var msgBuffer bytes.Buffer
-
-	// Removed n.Level.String() from the main message
-	msgBuffer.WriteString(fmt.Sprintf("[%s] from *%s*:\n> %s\n",
+	mainMessage := fmt.Sprintf("[%s] from *%s*:\n> %s\n",
 		n.Type.String(),
 		n.Source,
-		n.Message))
+		n.Message)
 
-	// Changed from n.Tags to n.Fields
+	var fieldsFormatted []string
 	if len(n.Fields) > 0 {
-		detailsAdded := false
-		// Use a temporary buffer for fields to ensure the "**Fields**" header is only added if there's content.
-		tempFieldsBuffer := new(bytes.Buffer)
 		for k, v := range n.Fields {
-			var valStr string
-			if v == nil {
-				valStr = "<nil>" // Represent nil explicitly
-			} else {
-				valStr = fmt.Sprintf("%v", v) // Use %v for interface{}
+			if v == nil { // Skip fields with nil values
+				continue
 			}
-
+			valStr := fmt.Sprintf("%v", v)
 			// Add field if key and its string representation of value are non-empty
 			if k != "" && valStr != "" {
-				tempFieldsBuffer.WriteString(fmt.Sprintf("> %s: `%s`\n", k, valStr))
-				detailsAdded = true
+				// Each field line includes its own newline
+				fieldsFormatted = append(fieldsFormatted, fmt.Sprintf("> %s: `%s`\n", k, valStr))
 			}
-		}
-
-		if detailsAdded {
-			msgBuffer.WriteString("\n**Fields**:\n")
-			msgBuffer.Write(tempFieldsBuffer.Bytes())
 		}
 	}
 
-	content := msgBuffer.String()
-	if len(content) > 2000 {
-		return content[:1997] + "..."
+	var fieldsSection string
+	if len(fieldsFormatted) > 0 {
+		// Join with an empty separator as each part in fieldsFormatted already ends with \n
+		fieldsSection = "\n**Fields**:\n" + strings.Join(fieldsFormatted, "")
+	}
+
+	content := mainMessage + fieldsSection
+	if len(content) > discordMaxMessageLength {
+		// Truncate and add ellipsis, ensuring space for "..."
+		return content[:discordMaxMessageLength-3] + "..."
 	}
 	return content
 }
