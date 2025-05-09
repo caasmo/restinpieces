@@ -32,7 +32,10 @@ const (
 // concurrency-safe types (like *slog.Logger, *http.Client, *rate.Limiter).
 // The Send method is non-blocking and launches a goroutine for actual HTTP dispatch.
 type Notifier struct {
-	opts           Options
+	webhookURL     string
+	apiRateLimit   rate.Limit
+	apiBurst       int
+	sendTimeout    time.Duration
 	logger         *slog.Logger
 	httpClient     *http.Client
 	apiRateLimiter *rate.Limiter
@@ -61,17 +64,10 @@ func New(discordCfg config.Discord, logger *slog.Logger) (*Notifier, error) {
 	}
 
 	return &Notifier{
-		opts: struct {
-			WebhookURL   string
-			APIRateLimit rate.Limit
-			APIBurst     int
-			SendTimeout  time.Duration
-		}{
-			WebhookURL:   discordCfg.WebhookURL,
-			APIRateLimit: apiRateLimit,
-			APIBurst:     apiBurst,
-			SendTimeout:  sendTimeout,
-		},
+		webhookURL:     discordCfg.WebhookURL,
+		apiRateLimit:   apiRateLimit,
+		apiBurst:       apiBurst,
+		sendTimeout:    sendTimeout,
 		logger:         logger,
 		apiRateLimiter: rate.NewLimiter(apiRateLimit, apiBurst),
 		httpClient:     &http.Client{
@@ -136,7 +132,7 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 		// Create a new context with timeout for this specific send operation.
 		// The original context from Send() is not used in the goroutine to avoid cancellation
 		// if the calling request finishes before the notification is sent.
-		sendCtx, cancel := context.WithTimeout(context.Background(), dn.opts.SendTimeout)
+		sendCtx, cancel := context.WithTimeout(context.Background(), dn.sendTimeout)
 		defer cancel()
 
 		formattedMessage := dn.formatMessage(notif)
@@ -148,7 +144,7 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 			return
 		}
 
-		req, err := http.NewRequestWithContext(sendCtx, http.MethodPost, dn.opts.WebhookURL, bytes.NewBuffer(jsonBody))
+		req, err := http.NewRequestWithContext(sendCtx, http.MethodPost, dn.webhookURL, bytes.NewBuffer(jsonBody))
 		if err != nil {
 			dn.logger.Error("discord: goroutine failed to create request",
 				"source", notif.Source, "message", notif.Message, "error", err)
