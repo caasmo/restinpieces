@@ -247,7 +247,7 @@ type Discord struct {
 	Activated    bool     `toml:"activated" comment:"Activate the default Discord notifier"`
 	WebhookURL   string   `toml:"webhook_url" comment:"Discord webhook URL"`
 	APIRateLimit Duration `toml:"api_rate_limit" comment:"API call rate limit (e.g., '2s'). Discord webhooks generally allow ~30 requests/minute."`
-	APIBurst     int      `toml:"api_burst" comment:"API call burst allowance (e.g., 1, 5). Use with caution respecting overall rate limits."`
+	APIBurst     int      `toml:"api_burst" comment:"API call burst allowance (e.g., 1, 5)"`
 	SendTimeout  Duration `toml:"send_timeout" comment:"Timeout for sending a single notification via Discord (e.g., '10s')"`
 }
 
