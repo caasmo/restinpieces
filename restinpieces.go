@@ -157,7 +157,7 @@ func setupPrerouter(app *core.App) http.Handler {
 // SetupScheduler initializes the job scheduler and its handlers.
 // dbAcme parameter removed.
 func SetupDefaultRouter(app *core.App) error {
-	r := servemux.NewServeMuxRouter()
+	r := servemux.New()
 	app.SetRouter(r)
 	return nil
 }
