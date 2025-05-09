@@ -87,13 +87,13 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	return app, srv, nil
 }
 
-// initPreRouter sets up the internal pre-router middleware chain based on configuration
+// setupPrerouter sets up the internal pre-router middleware chain based on configuration
 // and returns the final http.Handler.
 // No User Pre-Router Customization:
 // we allow disable in config, we do not allow adding, the user can put in normal middleware.
 // configure the framework's pre-router features; add your own logic at the route level.
 // Framework handles everything before routing; user handles everything after routing
-func initPreRouter(app *core.App) http.Handler {
+func setupPrerouter(app *core.App) http.Handler {
 	logger := app.Logger()
 	cfg := app.Config()
 
