@@ -73,7 +73,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	}
 
 	// Initialize the PreRouter chain with internal middleware
-	preRouterHandler := initPreRouter(app)
+	preRouterHandler := setupPrerouter(app)
 
 	srv := server.NewServer(
 		configProvider,
