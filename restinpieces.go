@@ -68,9 +68,11 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
-	// Setup notifier based on config
-	if err := setupNotifier(cfg, app); err != nil {
-		return nil, nil, err
+	// Setup default notifier if none was set via options
+	if app.Notifier() == nil {
+		if err := setupNotifier(cfg, app); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	// Initialize the PreRouter chain with internal middleware
@@ -178,7 +180,7 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
 }
 
-// setupNotifier initializes the default notifier based on configuration
+// setupNotifier initializes the notifier based on configuration
 func setupNotifier(cfg *config.Config, app *core.App) error {
 	if cfg.Notifier.Discord.Activated {
 		discordNotifier, err := discord.New(cfg.Notifier.Discord, app.Logger())
@@ -186,9 +188,9 @@ func setupNotifier(cfg *config.Config, app *core.App) error {
 			app.Logger().Error("failed to initialize Discord notifier", "error", err)
 			return fmt.Errorf("failed to initialize Discord notifier: %w", err)
 		}
-		app.SetDefaultNotifier(discordNotifier)
+		app.SetNotifier(discordNotifier)
 	} else {
-		app.SetDefaultNotifier(notify.NewNilNotifier())
+		app.SetNotifier(notify.NewNilNotifier())
 	}
 	return nil
 }
