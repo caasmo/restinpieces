@@ -242,3 +242,15 @@ type BlockUa struct {
 	// For manual TOML editing, use single quotes (`'...'`) for easier pasting of patterns.
 	List Regexp `toml:"list" comment:"Regex for matching User-Agents to block"`
 }
+
+type Discord struct {
+	Enabled      bool     `toml:"enabled"`
+	WebhookURL   string   `toml:"webhook_url"`
+	APIRateLimit Duration `toml:"api_rate_limit"`
+	APIBurst     int      `toml:"api_burst"`
+	SendTimeout  Duration `toml:"send_timeout"`
+}
+
+type Notifier struct {
+	Discord Discord `toml:"discord"`
+}
