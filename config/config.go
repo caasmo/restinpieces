@@ -244,13 +244,13 @@ type BlockUa struct {
 }
 
 type Discord struct {
-	Activated    bool     `toml:"activated"`
-	WebhookURL   string   `toml:"webhook_url"`
-	APIRateLimit Duration `toml:"api_rate_limit"`
-	APIBurst     int      `toml:"api_burst"`
-	SendTimeout  Duration `toml:"send_timeout"`
+	Activated    bool     `toml:"activated" comment:"Activate the default Discord notifier"`
+	WebhookURL   string   `toml:"webhook_url" comment:"Discord webhook URL (e.g., set via NOTIFIER_DISCORD_WEBHOOK_URL environment variable)"`
+	APIRateLimit Duration `toml:"api_rate_limit" comment:"API call rate limit for the Discord notifier (e.g., '2s', '500ms')"`
+	APIBurst     int      `toml:"api_burst" comment:"API call burst allowance for the Discord notifier (e.g., 1, 5)"`
+	SendTimeout  Duration `toml:"send_timeout" comment:"Timeout for sending a single notification via Discord (e.g., '10s')"`
 }
 
 type Notifier struct {
-	Discord Discord `toml:"discord"`
+	Discord Discord `toml:"discord" comment:"Default Discord notifier configuration"`
 }
