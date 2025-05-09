@@ -2,9 +2,21 @@
 
 - 
 - mailer default local
-- test functional uablock
-ptions remove, full repo example.
     - no external smtp server
+- test functional uablock
+- options.go: remove, full repo example.
+	- config get logger options, like level 
+		slog.HandlerOPtions. created in resinpieces from the config ones. just a few
+	- default Logger is text
+	- default cache is ristretto.
+	- example no defaults repo.
+		- use phus
+		- use crawshaw
+		- othe mailer  
+		- 
+
+- mailer interface for app
+
 - sdk visibility, own route
 - make configstore from edit 
 	- configstore list <type>
