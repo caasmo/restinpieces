@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"net/h<ctrl61>ttp"
+	"net/http"
 	"strings"
 	"time"
 
