@@ -67,21 +67,9 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
-	// Initialize notifier if configured
-	if cfg.Notifier.Discord.Activated {
-		discordNotifier, err := discord.New(discord.Options{
-			WebhookURL:   cfg.Notifier.Discord.WebhookURL,
-			APIRateLimit: cfg.Notifier.Discord.APIRateLimit.Duration,
-			APIBurst:     cfg.Notifier.Discord.APIBurst,
-			SendTimeout:  cfg.Notifier.Discord.SendTimeout.Duration,
-		}, app.Logger())
-		if err != nil {
-			app.Logger().Error("failed to initialize Discord notifier", "error", err)
-			return nil, nil, fmt.Errorf("failed to initialize Discord notifier: %w", err)
-		}
-		app.WithNotifier(discordNotifier)
-	} else {
-		app.WithNotifier(notify.NewNilNotifier())
+	// Setup notifier based on config
+	if err := setupNotifier(cfg, app); err != nil {
+		return nil, nil, err
 	}
 
 	// Initialize the PreRouter chain with internal middleware
@@ -187,4 +175,24 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 	// ACME handler registration removed.
 
 	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
+}
+
+// setupNotifier initializes the notifier based on configuration
+func setupNotifier(cfg *config.Config, app *core.App) error {
+	if cfg.Notifier.Discord.Activated {
+		discordNotifier, err := discord.New(discord.Options{
+			WebhookURL:   cfg.Notifier.Discord.WebhookURL,
+			APIRateLimit: cfg.Notifier.Discord.APIRateLimit.Duration,
+			APIBurst:     cfg.Notifier.Discord.APIBurst,
+			SendTimeout:  cfg.Notifier.Discord.SendTimeout.Duration,
+		}, app.Logger())
+		if err != nil {
+			app.Logger().Error("failed to initialize Discord notifier", "error", err)
+			return fmt.Errorf("failed to initialize Discord notifier: %w", err)
+		}
+		app.WithNotifier(discordNotifier)
+	} else {
+		app.WithNotifier(notify.NewNilNotifier())
+	}
+	return nil
 }
