@@ -46,7 +46,6 @@ func main() {
 	_, srv, err := restinpieces.New(
 		restinpieces.WithDbZombiezen(dbPool),
 		restinpieces.WithAgeKeyPath(*ageKeyPath),
-		restinpieces.WithRouterServeMux(),
 		restinpieces.WithCacheRistretto(),
 		restinpieces.WithTextLogger(nil),
 	)
