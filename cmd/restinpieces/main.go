@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/caasmo/restinpieces"
+	"github.com/caasmo/restinpieces/core"
 )
 
 func main() {
@@ -45,7 +46,7 @@ func main() {
 	// --- Initialize the Application ---
 	_, srv, err := restinpieces.New(
 		restinpieces.WithDbZombiezen(dbPool),
-		restinpieces.WithAgeKeyPath(*ageKeyPath),
+		core.WithAgeKeyPath(*ageKeyPath),
 		restinpieces.WithCacheRistretto(),
 		restinpieces.WithTextLogger(nil),
 	)
