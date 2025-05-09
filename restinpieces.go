@@ -178,22 +178,17 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
 }
 
-// setupNotifier initializes the notifier based on configuration if not already set via options
+// setupNotifier initializes the default notifier based on configuration
 func setupNotifier(cfg *config.Config, app *core.App) error {
-	// Skip if notifier was already set via options
-	if app.Notifier() != nil {
-		return nil
-	}
-
 	if cfg.Notifier.Discord.Activated {
 		discordNotifier, err := discord.New(cfg.Notifier.Discord, app.Logger())
 		if err != nil {
 			app.Logger().Error("failed to initialize Discord notifier", "error", err)
 			return fmt.Errorf("failed to initialize Discord notifier: %w", err)
 		}
-		app.SetNotifier(discordNotifier)
+		app.SetDefaultNotifier(discordNotifier)
 	} else {
-		app.SetNotifier(notify.NewNilNotifier())
+		app.SetDefaultNotifier(notify.NewNilNotifier())
 	}
 	return nil
 }

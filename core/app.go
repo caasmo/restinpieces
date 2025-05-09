@@ -118,9 +118,12 @@ func (a *App) Notifier() notify.Notifier {
 	return a.notifier
 }
 
-// SetNotifier sets the application's notifier instance
-func (a *App) SetNotifier(n notify.Notifier) {
-	a.notifier = n
+// SetDefaultNotifier sets the application's default notifier instance
+// if one wasn't already provided via options
+func (a *App) SetDefaultNotifier(n notify.Notifier) {
+	if a.notifier == nil {
+		a.notifier = n
+	}
 }
 
 // SetConfigProvider allows setting the config provider after App initialization.
