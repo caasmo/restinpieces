@@ -24,6 +24,9 @@ func Validate(cfg *Config) error {
 	if err := validateBlockUa(&cfg.BlockUa); err != nil {
 		return fmt.Errorf("block_ua config validation failed: %w", err)
 	}
+	if err := validateNotifier(&cfg.Notifier); err != nil {
+		return fmt.Errorf("notifier config validation failed: %w", err)
+	}
 	return nil
 }
 
@@ -179,6 +182,24 @@ func validateBlockUa(blockUa *BlockUa) error {
 	// during UnmarshalText or if the input string was empty.
 	if blockUa.List.Regexp == nil {
 		return fmt.Errorf("block_ua.list regex is invalid or empty, but blocking is activated")
+	}
+
+	return nil
+}
+
+func validateNotifier(notifier *Notifier) error {
+	if !notifier.Discord.Activated {
+		return nil
+	}
+
+	if notifier.Discord.WebhookURL == "" {
+		return fmt.Errorf("discord webhook_url cannot be empty when activated")
+	}
+
+	// Basic check for discord webhook domain
+	if !strings.Contains(notifier.Discord.WebhookURL, "discord.com/api/webhooks/") &&
+		!strings.Contains(notifier.Discord.WebhookURL, "discordapp.com/api/webhooks/") {
+		return fmt.Errorf("discord webhook_url must contain discord.com/api/webhooks/ or discordapp.com/api/webhooks/")
 	}
 
 	return nil
