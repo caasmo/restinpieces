@@ -32,6 +32,7 @@ type App struct {
 	// Primarily used during application initialization to load encrypted configs on startup.
 	// The implementation uses age encryption with keys from ageKeyPath.
 	secureConfig config.SecureConfig
+	notifier    notify.Notifier
 }
 
 // ServeHTTP method removed as App no longer acts as the primary handler
@@ -109,6 +110,11 @@ func (a *App) Config() *config.Config {
 // SecureConfig returns the application's secure configuration handler
 func (a *App) SecureConfigStore() config.SecureConfig {
 	return a.secureConfig
+}
+
+// Notifier returns the application's notifier instance
+func (a *App) Notifier() notify.Notifier {
+	return a.notifier
 }
 
 // SetConfigProvider allows setting the config provider after App initialization.

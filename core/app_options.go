@@ -50,3 +50,10 @@ func WithAgeKeyPath(path string) Option {
 		a.ageKeyPath = path
 	}
 }
+
+// WithNotifier sets the notifier implementation
+func WithNotifier(n notify.Notifier) Option {
+	return func(a *App) {
+		a.notifier = n
+	}
+}
