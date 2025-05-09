@@ -70,7 +70,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 
 	// Setup default notifier if none was set via options
 	if app.Notifier() == nil {
-		if err := setupNotifier(cfg, app); err != nil {
+		if err := SetupDefaultNotifier(cfg, app); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -180,8 +180,8 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
 }
 
-// setupNotifier initializes the notifier based on configuration
-func setupNotifier(cfg *config.Config, app *core.App) error {
+// SetupDefaultNotifier initializes the default notifier based on configuration
+func SetupDefaultNotifier(cfg *config.Config, app *core.App) error {
 	if cfg.Notifier.Discord.Activated {
 		discordNotifier, err := discord.New(cfg.Notifier.Discord, app.Logger())
 		if err != nil {
