@@ -11,17 +11,11 @@ import (
 	"time"
 
 	"golang.org/x/time/rate"
+	"github.com/caasmo/restinpieces/config"
 
 	"github.com/caasmo/restinpieces/notify"
 )
 
-// Options configures the Notifier.
-type Options struct {
-	WebhookURL   string
-	APIRateLimit rate.Limit
-	APIBurst     int
-	SendTimeout  time.Duration
-}
 
 type payload struct {
 	Content string `json:"content"`
@@ -45,26 +39,39 @@ type Notifier struct {
 }
 
 // New creates a new Notifier.
-func New(opts Options, logger *slog.Logger) (*Notifier, error) {
-	if opts.WebhookURL == "" {
+func New(discordCfg config.Discord, logger *slog.Logger) (*Notifier, error) {
+	if discordCfg.WebhookURL == "" {
 		return nil, fmt.Errorf("discord: WebhookURL is required")
 	}
 	if logger == nil {
 		return nil, fmt.Errorf("discord: logger is required")
 	}
 
-	if opts.APIRateLimit == 0 {
-		opts.APIRateLimit = rate.Every(2 * time.Second)
+	apiRateLimit := rate.Every(discordCfg.APIRateLimit.Duration)
+	if apiRateLimit == 0 {
+		apiRateLimit = rate.Every(2 * time.Second)
 	}
-	if opts.APIBurst <= 0 {
-		opts.APIBurst = 5
+	apiBurst := discordCfg.APIBurst
+	if apiBurst <= 0 {
+		apiBurst = 5
 	}
-	if opts.SendTimeout <= 0 {
-		opts.SendTimeout = 10 * time.Second
+	sendTimeout := discordCfg.SendTimeout.Duration
+	if sendTimeout <= 0 {
+		sendTimeout = 10 * time.Second
 	}
 
 	return &Notifier{
-		opts:           opts,
+		opts: struct {
+			WebhookURL   string
+			APIRateLimit rate.Limit
+			APIBurst     int
+			SendTimeout  time.Duration
+		}{
+			WebhookURL:   discordCfg.WebhookURL,
+			APIRateLimit: apiRateLimit,
+			APIBurst:     apiBurst,
+			SendTimeout:  sendTimeout,
+		},
 		logger:         logger,
 		apiRateLimiter: rate.NewLimiter(opts.APIRateLimit, opts.APIBurst),
 		httpClient:     &http.Client{
