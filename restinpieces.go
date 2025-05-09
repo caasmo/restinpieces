@@ -32,6 +32,13 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
+	// Setup default router if none was set via options
+	if app.Router() == nil {
+		if err := SetupDefaultRouter(app); err != nil {
+			return nil, nil, err
+		}
+	}
+
 	// Load config from database
 	scope := config.ScopeApplication
 	decryptedBytes, err := app.SecureConfigStore().Latest(scope)
@@ -148,6 +155,12 @@ func setupPrerouter(app *core.App) http.Handler {
 
 // SetupScheduler initializes the job scheduler and its handlers.
 // dbAcme parameter removed.
+func SetupDefaultRouter(app *core.App) error {
+	r := servemux.New()
+	app.SetRouter(r)
+	return nil
+}
+
 func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, logger *slog.Logger) (*scl.Scheduler, error) {
 
 	hdls := make(map[string]executor.JobHandler)

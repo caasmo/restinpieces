@@ -80,6 +80,11 @@ func (a *App) Router() router.Router {
 	return a.router
 }
 
+// SetRouter sets the application's router instance
+func (a *App) SetRouter(r router.Router) {
+	a.router = r
+}
+
 // AuthDb returns the DbAuth interface implementation for authentication operations.
 func (a *App) DbAuth() db.DbAuth {
 	return a.dbAuth

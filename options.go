@@ -13,10 +13,6 @@ import (
 	phuslog "github.com/phuslu/log"
 )
 
-func WithRouterServeMux() core.Option {
-	r := servemux.New()
-	return core.WithRouter(r)
-}
 
 func WithCacheRistretto() core.Option {
 	cacheInstance, err := ristretto.New[any]() // Explicit string keys and interface{} values
