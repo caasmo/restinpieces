@@ -34,18 +34,6 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 	},
 }
 
-// WithPhusLog configures slog with phuslu/log's JSON handler.
-// Uses DefaultLoggerOptions if opts is nil.
-func WithPhusLogger(opts *slog.HandlerOptions) core.Option {
-	if opts == nil {
-		opts = DefaultLoggerOptions // Use package-level defaults
-	}
-	logger := slog.New(phuslog.SlogNewJSONHandler(os.Stderr, opts))
-
-	// TODO remove slog.SetDefault call? It affects global state.
-	slog.SetDefault(logger)
-	return core.WithLogger(logger)
-}
 
 
 func WithTextLogger(opts *slog.HandlerOptions) core.Option {
