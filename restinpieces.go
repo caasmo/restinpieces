@@ -18,6 +18,7 @@ import (
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/router"
+	"github.com/caasmo/restinpieces/router/servemux"
 	"github.com/caasmo/restinpieces/server"
 	"github.com/pelletier/go-toml/v2"
 )
@@ -156,7 +157,7 @@ func setupPrerouter(app *core.App) http.Handler {
 // SetupScheduler initializes the job scheduler and its handlers.
 // dbAcme parameter removed.
 func SetupDefaultRouter(app *core.App) error {
-	r := servemux.New()
+	r := servemux.NewServeMuxRouter()
 	app.SetRouter(r)
 	return nil
 }
