@@ -244,7 +244,7 @@ type BlockUa struct {
 }
 
 type Discord struct {
-	Enabled      bool     `toml:"enabled"`
+	Activated    bool     `toml:"activated"`
 	WebhookURL   string   `toml:"webhook_url"`
 	APIRateLimit Duration `toml:"api_rate_limit"`
 	APIBurst     int      `toml:"api_burst"`
