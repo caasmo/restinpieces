@@ -60,6 +60,7 @@ type Config struct {
 	BlockIp     BlockIp     `toml:"block_ip" comment:"IP blocking settings"`
 	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
 	BlockUa     BlockUa     `toml:"block_ua" comment:"User-Agent blocking settings"`
+	Notifier    Notifier    `toml:"notifier"`
 }
 
 // Duration is a wrapper around time.Duration that supports TOML unmarshalling
