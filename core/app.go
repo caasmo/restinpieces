@@ -118,6 +118,11 @@ func (a *App) Notifier() notify.Notifier {
 	return a.notifier
 }
 
+// SetNotifier sets the application's notifier instance
+func (a *App) SetNotifier(n notify.Notifier) {
+	a.notifier = n
+}
+
 // SetConfigProvider allows setting the config provider after App initialization.
 func (a *App) SetConfigProvider(provider *config.Provider) {
 	a.configProvider = provider
