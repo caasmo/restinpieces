@@ -9,7 +9,6 @@ import (
 
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/core"
-	"github.com/caasmo/restinpieces/router/servemux"
 	phuslog "github.com/phuslu/log"
 )
 
