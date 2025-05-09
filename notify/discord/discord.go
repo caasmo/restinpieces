@@ -73,7 +73,7 @@ func New(discordCfg config.Discord, logger *slog.Logger) (*Notifier, error) {
 			SendTimeout:  sendTimeout,
 		},
 		logger:         logger,
-		apiRateLimiter: rate.NewLimiter(opts.APIRateLimit, opts.APIBurst),
+		apiRateLimiter: rate.NewLimiter(apiRateLimit, apiBurst),
 		httpClient:     &http.Client{
 			// Timeout on httpClient is for the entire attempt including connection, redirects, reading body.
 			// We'll use a separate context with timeout for the request in the goroutine.
