@@ -14,6 +14,7 @@ import (
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
 	"github.com/caasmo/restinpieces/notify/discord"
+	"github.com/caasmo/restinpieces/notify"
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/router"
@@ -180,19 +181,16 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 // setupNotifier initializes the notifier based on configuration
 func setupNotifier(cfg *config.Config, app *core.App) error {
 	if cfg.Notifier.Discord.Activated {
-		discordNotifier, err := discord.New(discord.Options{
-			WebhookURL:   cfg.Notifier.Discord.WebhookURL,
-			APIRateLimit: cfg.Notifier.Discord.APIRateLimit.Duration,
-			APIBurst:     cfg.Notifier.Discord.APIBurst,
-			SendTimeout:  cfg.Notifier.Discord.SendTimeout.Duration,
-		}, app.Logger())
+		discordNotifier, err := discord.New(cfg.Notifier.Discord, app.Logger())
 		if err != nil {
 			app.Logger().Error("failed to initialize Discord notifier", "error", err)
 			return fmt.Errorf("failed to initialize Discord notifier: %w", err)
 		}
-		app.WithNotifier(discordNotifier)
+		opts := []core.Option{core.WithNotifier(discordNotifier)}
+		app, err = core.NewApp(opts...)
 	} else {
-		app.WithNotifier(notify.NewNilNotifier())
+		opts := []core.Option{core.WithNotifier(notify.NewNilNotifier())}
+		app, err = core.NewApp(opts...)
 	}
 	return nil
 }
