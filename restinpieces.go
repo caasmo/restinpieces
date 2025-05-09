@@ -13,6 +13,7 @@ import (
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
+	"github.com/caasmo/restinpieces/notify/discord"
 	"github.com/caasmo/restinpieces/queue/handlers"
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/router"
@@ -64,6 +65,23 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	if err != nil {
 		app.Logger().Error("failed to setup scheduler", "error", err)
 		return nil, nil, err
+	}
+
+	// Initialize notifier if configured
+	if cfg.Notifier.Discord.Activated {
+		discordNotifier, err := discord.New(discord.Options{
+			WebhookURL:   cfg.Notifier.Discord.WebhookURL,
+			APIRateLimit: cfg.Notifier.Discord.APIRateLimit.Duration,
+			APIBurst:     cfg.Notifier.Discord.APIBurst,
+			SendTimeout:  cfg.Notifier.Discord.SendTimeout.Duration,
+		}, app.Logger())
+		if err != nil {
+			app.Logger().Error("failed to initialize Discord notifier", "error", err)
+			return nil, nil, fmt.Errorf("failed to initialize Discord notifier: %w", err)
+		}
+		app.WithNotifier(discordNotifier)
+	} else {
+		app.WithNotifier(notify.NewNilNotifier())
 	}
 
 	// Initialize the PreRouter chain with internal middleware
