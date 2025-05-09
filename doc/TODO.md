@@ -1,6 +1,9 @@
 ### TODOs
 
+- 
 - mailer default local
+- test functional uablock
+ptions remove, full repo example.
     - no external smtp server
 - sdk visibility, own route
 - make configstore from edit 
