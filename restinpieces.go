@@ -37,8 +37,6 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	// Setup default logger if none was set via options
 	if app.Logger() == nil {
 		if err := SetupDefaultLogger(app); err != nil {
-			// If logger setup fails, we might not have a logger to use, so panic or use a basic log.
-			slog.New(slog.NewTextHandler(os.Stderr, nil)).Error("failed to setup default logger", "error", err)
 			return nil, nil, err
 		}
 	}
