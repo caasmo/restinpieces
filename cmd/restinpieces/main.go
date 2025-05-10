@@ -45,7 +45,7 @@ func main() {
 
 	// --- Initialize the Application ---
 	_, srv, err := restinpieces.New(
-		restinpieces.WithDbZombiezen(dbPool),
+		restinpieces.WithZombiezenPool(dbPool),
 		core.WithAgeKeyPath(*ageKeyPath),
 		restinpieces.WithCacheRistretto(),
 	)
