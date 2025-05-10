@@ -4,6 +4,7 @@
 - mailer default local
     - no external smtp server
 - test functional uablock
+- LevelVar dinamically?
 - options.go: remove, full repo example.
 	- config get logger options, like level 
 		slog.HandlerOPtions. created in resinpieces from the config ones. just a few

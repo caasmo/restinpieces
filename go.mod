@@ -10,7 +10,6 @@ require (
 	github.com/keilerkonzept/topk v1.1.4
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pelletier/go-toml/v2 v2.1.0
-	github.com/phuslu/log v1.0.115
 	golang.org/x/crypto v0.36.0
 	golang.org/x/oauth2 v0.28.0
 	golang.org/x/sync v0.12.0
