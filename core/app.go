@@ -55,14 +55,6 @@ func NewApp(opts ...Option) (*App, error) {
 		return nil, fmt.Errorf("dbConfig is required but was not provided (use WithDbApp)")
 	}
 
-	if a.router == nil {
-		return nil, fmt.Errorf("router is required but was not provided")
-	}
-
-	if a.logger == nil {
-		return nil, fmt.Errorf("logger is required but was not provided")
-	}
-
 	// Check if ageKeyPath is set before initializing SecureConfig
 	if a.ageKeyPath == "" {
 		return nil, fmt.Errorf("ageKeyPath is required but was not provided (use WithAgeKeyPath)")
