@@ -48,7 +48,6 @@ func main() {
 		restinpieces.WithDbZombiezen(dbPool),
 		core.WithAgeKeyPath(*ageKeyPath),
 		restinpieces.WithCacheRistretto(),
-		restinpieces.WithTextLogger(nil),
 	)
 	if err != nil {
 		slog.Error("failed to initialize application", "error", err)
