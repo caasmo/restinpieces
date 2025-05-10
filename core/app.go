@@ -51,6 +51,9 @@ func NewApp(opts ...Option) (*App, error) {
 	if a.dbQueue == nil {
 		return nil, fmt.Errorf("dbQueue is required but was not provided (use WithDbApp)")
 	}
+	if a.dbConfig == nil {
+		return nil, fmt.Errorf("dbConfig is required but was not provided (use WithDbApp)")
+	}
 
 	if a.router == nil {
 		return nil, fmt.Errorf("router is required but was not provided")
