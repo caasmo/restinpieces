@@ -29,8 +29,18 @@ import (
 func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	app, err := core.NewApp(opts...)
 	if err != nil {
-		slog.Error("failed to initialize core app", "error", err)
+		// Use a temporary logger for this initial error, as the app's logger might not be set yet.
+		slog.New(slog.NewTextHandler(os.Stderr, nil)).Error("failed to initialize core app", "error", err)
 		return nil, nil, err
+	}
+
+	// Setup default logger if none was set via options
+	if app.Logger() == nil {
+		if err := SetupDefaultLogger(app); err != nil {
+			// If logger setup fails, we might not have a logger to use, so panic or use a basic log.
+			slog.New(slog.NewTextHandler(os.Stderr, nil)).Error("failed to setup default logger", "error", err)
+			return nil, nil, err
+		}
 	}
 
 	// Setup default router if none was set via options
@@ -192,6 +202,22 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 	// ACME handler registration removed.
 
 	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
+}
+
+var DefaultLoggerOptions = &slog.HandlerOptions{
+	Level: slog.LevelDebug,
+	ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+		if a.Key == slog.TimeKey {
+			return slog.Attr{}
+		}
+		return a
+	},
+}
+
+func SetupDefaultLogger(app *core.App) error {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, DefaultLoggerOptions))
+	app.SetLogger(logger)
+	return nil
 }
 
 // SetupDefaultNotifier initializes the default notifier based on configuration
