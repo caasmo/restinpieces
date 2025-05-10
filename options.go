@@ -4,8 +4,6 @@ package restinpieces
 // just initilizes the custom packges that implments the app
 import (
 	"fmt"
-	"log/slog"
-	"os"
 
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/core"
