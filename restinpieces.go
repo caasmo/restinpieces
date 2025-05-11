@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
@@ -44,6 +45,13 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	// Setup default router if none was set via options
 	if app.Router() == nil {
 		if err := SetupDefaultRouter(app); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	// Setup default cache if none was set via options
+	if app.Cache() == nil {
+		if err := SetupDefaultCache(app); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -215,6 +223,17 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 func SetupDefaultLogger(app *core.App) error {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, DefaultLoggerOptions))
 	app.SetLogger(logger)
+	return nil
+}
+
+func SetupDefaultCache(app *core.App) error {
+	cacheInstance, err := ristretto.New[any]() // Explicit string keys and interface{} values
+	if err != nil {
+		// If cache setup fails, we might not have a logger to use, so panic or use a basic log.
+		slog.New(slog.NewTextHandler(os.Stderr, nil)).Error("failed to setup default cache", "error", err)
+		return fmt.Errorf("failed to initialize default cache: %w", err)
+	}
+	app.SetCache(cacheInstance)
 	return nil
 }
 

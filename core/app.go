@@ -100,6 +100,11 @@ func (a *App) SetLogger(l *slog.Logger) {
 	a.logger = l
 }
 
+// SetCache sets the application's cache instance
+func (a *App) SetCache(c cache.Cache[string, interface{}]) {
+	a.cache = c
+}
+
 // Cache returns the application's cache instance
 func (a *App) Cache() cache.Cache[string, interface{}] {
 	return a.cache
