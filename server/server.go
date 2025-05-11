@@ -7,6 +7,7 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/queue/executor"      // Added executor import
 	scl "github.com/caasmo/restinpieces/queue/scheduler" // Added scheduler import with alias
+	"github.com/pelletier/go-toml/v2"
 	"golang.org/x/sync/errgroup"
 	"log/slog"
 	"net/http"
@@ -26,19 +27,98 @@ type Daemon interface {
 
 type Server struct {
 	configProvider *config.Provider
-	handler        http.Handler // The main HTTP handler
+	secureConfig   config.SecureConfig // For reloading configuration
+	handler        http.Handler      // The main HTTP handler
 	logger         *slog.Logger
 	daemons        []Daemon // Collection of managed daemons
 }
 
 func (s *Server) handleSIGHUP() {
-	s.logger.Info("Received SIGHUP signal - attempting to reload configuration")
+	s.logger.Info("SIGHUP received: Attempting to reload configuration...")
+
+	// Store the current server-specific configuration for comparison later
+	oldServerCfg := s.configProvider.Get().Server
+
+	// 1. Load new configuration using SecureConfig
+	s.logger.Debug("Reload: Fetching latest configuration from secure store", "scope", config.ScopeApplication)
+	decryptedBytes, err := s.secureConfig.Latest(config.ScopeApplication)
+	if err != nil {
+		s.logger.Error("Reload: Failed to fetch latest configuration", "scope", config.ScopeApplication, "error", err)
+		s.logger.Warn("Reload: Continuing with existing configuration.")
+		return
+	}
+	if len(decryptedBytes) == 0 {
+		s.logger.Error("Reload: Fetched configuration is empty", "scope", config.ScopeApplication)
+		s.logger.Warn("Reload: Continuing with existing configuration.")
+		return
+	}
+	s.logger.Debug("Reload: Successfully fetched new raw configuration", "size", len(decryptedBytes))
+
+	// 2. Unmarshal TOML
+	newCfg := &config.Config{}
+	s.logger.Debug("Reload: Unmarshalling new configuration")
+	if err := toml.Unmarshal(decryptedBytes, newCfg); err != nil {
+		s.logger.Error("Reload: Failed to unmarshal new configuration", "error", err)
+		s.logger.Warn("Reload: Continuing with existing configuration.")
+		return
+	}
+	s.logger.Debug("Reload: Successfully unmarshalled new configuration")
+
+	// 3. Validate config
+	s.logger.Debug("Reload: Validating new configuration")
+	if err := config.Validate(newCfg); err != nil {
+		s.logger.Error("Reload: New configuration validation failed", "error", err)
+		s.logger.Warn("Reload: Continuing with existing configuration.")
+		return
+	}
+	s.logger.Debug("Reload: New configuration validated successfully")
+
+	newCfg.Source = "" // Clear source field, as it's now loaded from DB via secure store
+
+	// 4. Update the provider
+	s.configProvider.Update(newCfg)
+	s.logger.Info("Reload: Configuration successfully reloaded and updated.")
+
+	// 5. Check for server-critical changes and warn if restart is needed
+	newServerCfg := newCfg.Server
+	restartNeeded := false
+	if oldServerCfg.Addr != newServerCfg.Addr {
+		s.logger.Warn("Reload: Server address changed", "old", oldServerCfg.Addr, "new", newServerCfg.Addr)
+		restartNeeded = true
+	}
+	if oldServerCfg.EnableTLS != newServerCfg.EnableTLS {
+		s.logger.Warn("Reload: Server TLS enablement changed", "old", oldServerCfg.EnableTLS, "new", newServerCfg.EnableTLS)
+		restartNeeded = true
+	}
+	// For CertData and KeyData, any change implies a need to re-evaluate.
+	// Direct string comparison is sufficient as they are stored as strings.
+	if oldServerCfg.CertData != newServerCfg.CertData {
+		s.logger.Warn("Reload: Server TLS certificate data changed.")
+		restartNeeded = true
+	}
+	if oldServerCfg.KeyData != newServerCfg.KeyData {
+		s.logger.Warn("Reload: Server TLS key data changed.")
+		restartNeeded = true
+	}
+	if oldServerCfg.RedirectAddr != newServerCfg.RedirectAddr {
+		s.logger.Warn("Reload: Server redirect address changed", "old", oldServerCfg.RedirectAddr, "new", newServerCfg.RedirectAddr)
+		restartNeeded = true
+	}
+
+	if restartNeeded {
+		s.logger.Warn("Reload: One or more critical server settings have changed. A manual server restart is required for these changes to take full effect.")
+	} else {
+		s.logger.Info("Reload: No critical server settings changed that require a manual restart.")
+	}
+	// Log the new server config details for visibility
+	s.logServerConfig(&newServerCfg)
 }
 
 // NewServer constructor - daemons are added via AddDaemon.
-func NewServer(provider *config.Provider, handler http.Handler, logger *slog.Logger) *Server {
+func NewServer(provider *config.Provider, secureCfg config.SecureConfig, handler http.Handler, logger *slog.Logger) *Server {
 	return &Server{
 		configProvider: provider,
+		secureConfig:   secureCfg,
 		handler:        handler,
 		logger:         logger,
 		daemons:        make([]Daemon, 0), // Initialize empty slice

@@ -104,6 +104,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 
 	srv := server.NewServer(
 		configProvider,
+		app.SecureConfigStore(), // Pass the secure config store for reloading
 		preRouterHandler,
 		app.Logger(),
 	)
