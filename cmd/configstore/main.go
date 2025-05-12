@@ -93,7 +93,7 @@ func main() {
 			flag.Usage()
 			os.Exit(1)
 		}
-		handleScopesCommand(logger, pool)
+		handleScopesCommand(pool)
 	default:
 		logger.Error("unknown command", "command", command)
 		flag.Usage()
