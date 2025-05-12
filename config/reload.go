@@ -9,11 +9,11 @@ import (
 
 // Reload returns a function that, when called, attempts to reload the application configuration.
 // This allows the reload logic to be prepared once and executed later, typically on SIGHUP.
-func Reload(secureStore SecureStore, provider *Provider, logger *slog.Logger) func() error {
-	// Return a closure that captures the necessary dependencies (secureStore, provider, logger)
+func Reload(configStore SecureStore, provider *Provider, logger *slog.Logger) func() error {
+	// Return a closure that captures the necessary dependencies (configStore, provider, logger)
 	return func() error {
 		logger.Debug("Reload func: Attempting to fetch latest application configuration")
-		decryptedBytes, err := secureStore.Latest(ScopeApplication)
+		decryptedBytes, err := configStore.Latest(ScopeApplication)
 		if err != nil {
 			logger.Error("Reload func: Failed to fetch latest application configuration", "error", err)
 			return fmt.Errorf("failed to fetch latest application configuration: %w", err)
