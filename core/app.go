@@ -55,12 +55,11 @@ func NewApp(opts ...Option) (*App, error) {
 		return nil, fmt.Errorf("dbConfig is required but was not provided (use WithDbApp)")
 	}
 
-	// Check if ageKeyPath is set before initializing SecureConfig
 	if a.ageKeyPath == "" {
 		return nil, fmt.Errorf("ageKeyPath is required but was not provided (use WithAgeKeyPath)")
 	}
 
-	sc, err := config.NewSecureConfigAge(a.dbConfig, a.ageKeyPath, a.logger)
+	sc, err := config.NewSecureConfigAge(a.dbConfig, a.ageKeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize secure config: %w", err)
 	}
@@ -75,65 +74,50 @@ func (a *App) Router() router.Router {
 	return a.router
 }
 
-// SetRouter sets the application's router instance
 func (a *App) SetRouter(r router.Router) {
 	a.router = r
 }
 
-// AuthDb returns the DbAuth interface implementation for authentication operations.
 func (a *App) DbAuth() db.DbAuth {
 	return a.dbAuth
 }
 
-// QueueDb returns the DbQueue interface implementation for job queue operations.
 func (a *App) DbQueue() db.DbQueue {
 	return a.dbQueue
 }
 
-// Logger returns the application's logger instance
 func (a *App) Logger() *slog.Logger {
 	return a.logger
 }
 
-// SetLogger sets the application's logger instance
 func (a *App) SetLogger(l *slog.Logger) {
 	a.logger = l
 }
 
-// SetCache sets the application's cache instance
 func (a *App) SetCache(c cache.Cache[string, interface{}]) {
 	a.cache = c
 }
 
-// Cache returns the application's cache instance
 func (a *App) Cache() cache.Cache[string, interface{}] {
 	return a.cache
 }
 
-// Config returns the currently active application config instance
-// by retrieving it from the config provider.
-// TODO remove?
 func (a *App) Config() *config.Config {
-	// Delegate fetching the config to the provider
 	return a.configProvider.Get()
 }
 
-// SecureConfig returns the application's secure configuration handler
 func (a *App) SecureConfigStore() config.SecureConfig {
 	return a.secureConfig
 }
 
-// Notifier returns the application's notifier instance
 func (a *App) Notifier() notify.Notifier {
 	return a.notifier
 }
 
-// SetNotifier sets the application's notifier instance
 func (a *App) SetNotifier(n notify.Notifier) {
 	a.notifier = n
 }
 
-// SetConfigProvider allows setting the config provider after App initialization.
 func (a *App) SetConfigProvider(provider *config.Provider) {
 	a.configProvider = provider
 }
