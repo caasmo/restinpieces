@@ -78,10 +78,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Note: The user's file uses NewSecureConfigAge, which expects a logger.
-	// If this was meant to be NewSecureStoreAge (which doesn't take a logger),
-	// this line would need adjustment. Sticking to the provided file's usage.
-	secureStore, err := config.NewSecureConfigAge(dbImpl, *ageIdentityPathFlag, logger)
+	secureStore, err := config.NewSecureStoreAge(dbImpl, *ageIdentityPathFlag)
 	if err != nil {
 		logger.Error("failed to instantiate secure store (age)", "age_key_path", *ageIdentityPathFlag, "error", err)
 		os.Exit(1)
