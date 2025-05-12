@@ -17,11 +17,8 @@ func handleListCommand(pool *sqlitex.Pool, scopeFilter string) {
 	defer pool.Put(conn)
 
 	var query string
-	var args []interface{}
-
 	if scopeFilter != "" {
 		query = "SELECT id, scope, created_at, format, description FROM app_config WHERE scope = ? ORDER BY created_at DESC;"
-		args = append(args, scopeFilter)
 	} else {
 		query = "SELECT id, scope, created_at, format, description FROM app_config ORDER BY created_at DESC;"
 	}
@@ -33,13 +30,8 @@ func handleListCommand(pool *sqlitex.Pool, scopeFilter string) {
 	}
 	defer stmt.Finalize()
 
-	// Bind arguments if any
-	for i, arg := range args {
-		// Assuming all args are text for simplicity with scope filter
-		if err := stmt.BindText(i+1, arg.(string)); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to bind argument for list command: %v\n", err)
-			os.Exit(1)
-		}
+	if scopeFilter != "" {
+		stmt.BindText(1, scopeFilter)
 	}
 
 	fmt.Println("ID | Scope | Created At | Format | Description")
