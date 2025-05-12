@@ -29,6 +29,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  set <path> <value>   Set a configuration value. Prefix value with '@' to load from file.\n")
 		fmt.Fprintf(os.Stderr, "  scopes               List all unique configuration scopes found in the database.\n")
 		fmt.Fprintf(os.Stderr, "  list [scope]         List configuration versions. If scope is omitted, lists for all scopes.\n")
+		fmt.Fprintf(os.Stderr, "  paths <id>           List all TOML paths for a given configuration ID (if format is toml).\n")
 		// Add other commands here in the future
 	}
 
@@ -99,6 +100,19 @@ func main() {
 			}
 		}
 		handleListCommand(pool, scopeToList)
+	case "paths":
+		if len(commandArgs) < 1 {
+			fmt.Fprintf(os.Stderr, "Error: 'paths' command requires a configuration ID argument\n")
+			flag.Usage()
+			os.Exit(1)
+		}
+		if len(commandArgs) > 1 {
+			fmt.Fprintf(os.Stderr, "Error: 'paths' command takes only one ID argument\n")
+			flag.Usage()
+			os.Exit(1)
+		}
+		configIDStr := commandArgs[0]
+		handlePathsCommand(pool, secureStore, configIDStr)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
 		flag.Usage()
