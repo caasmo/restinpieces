@@ -26,22 +26,36 @@ type Daemon interface {
 
 type Server struct {
 	configProvider *config.Provider
-	handler        http.Handler // The main HTTP handler
+	handler        http.Handler    // The main HTTP handler
 	logger         *slog.Logger
-	daemons        []Daemon // Collection of managed daemons
+	daemons        []Daemon        // Collection of managed daemons
+	reloadFunc     func() error    // Function to execute for configuration reload
 }
 
 func (s *Server) handleSIGHUP() {
 	s.logger.Info("Received SIGHUP signal - attempting to reload configuration")
+	if s.reloadFunc != nil {
+		if err := s.reloadFunc(); err != nil {
+			s.logger.Error("Configuration reload failed", "error", err)
+		} else {
+			s.logger.Info("Configuration reload successful")
+			// Optionally: Re-log the server config if it might have changed relevant parts
+			// currentCfg := s.configProvider.Get().Server
+			// s.logServerConfig(&currentCfg)
+		}
+	} else {
+		s.logger.Warn("Received SIGHUP, but no reload function is configured")
+	}
 }
 
 // NewServer constructor - daemons are added via AddDaemon.
-func NewServer(provider *config.Provider, handler http.Handler, logger *slog.Logger) *Server {
+func NewServer(provider *config.Provider, handler http.Handler, logger *slog.Logger, reloadFunc func() error) *Server {
 	return &Server{
 		configProvider: provider,
 		handler:        handler,
 		logger:         logger,
 		daemons:        make([]Daemon, 0), // Initialize empty slice
+		reloadFunc:     reloadFunc,
 	}
 }
 

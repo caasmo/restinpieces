@@ -99,6 +99,9 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		}
 	}
 
+	// Prepare the configuration reload function
+	reloadFn := config.Reload(app.SecureConfigStore(), configProvider, app.Logger())
+
 	// Initialize the PreRouter chain with internal middleware
 	preRouterHandler := setupPrerouter(app)
 
@@ -106,6 +109,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		configProvider,
 		preRouterHandler,
 		app.Logger(),
+		reloadFn, // Pass the reload function
 	)
 
 	// Register the framework's core daemons
