@@ -32,6 +32,7 @@ func main() {
 		originalUsage() // Prints the global flags
 		fmt.Fprintf(os.Stderr, "\nAvailable Commands:\n")
 		fmt.Fprintf(os.Stderr, "  set <path> <value>   Set a configuration value. Prefix value with '@' to load from file.\n")
+		fmt.Fprintf(os.Stderr, "  scopes               List all unique configuration scopes found in the database.\n")
 		// Add other commands here in the future
 	}
 
@@ -89,6 +90,13 @@ func main() {
 	switch command {
 	case "set":
 		handleSetCommand(logger, secureStore, *scopeFlag, *formatFlag, *descFlag, commandArgs)
+	case "scopes":
+		if len(commandArgs) > 0 {
+			logger.Error("'scopes' command does not take any arguments")
+			flag.Usage()
+			os.Exit(1)
+		}
+		handleScopesCommand(logger, pool)
 	default:
 		logger.Error("unknown command", "command", command)
 		flag.Usage()
