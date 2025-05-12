@@ -34,17 +34,14 @@ type Server struct {
 
 func (s *Server) handleSIGHUP() {
 	s.logger.Info("Received SIGHUP signal - attempting to reload configuration")
-	if s.reloadFunc != nil {
-		if err := s.reloadFunc(); err != nil {
-			s.logger.Error("Configuration reload failed", "error", err)
-		} else {
-			s.logger.Info("Configuration reload successful")
-			// Optionally: Re-log the server config if it might have changed relevant parts
-			// currentCfg := s.configProvider.Get().Server
-			// s.logServerConfig(&currentCfg)
-		}
+	// Assume reloadFunc is always non-nil as per design requirement
+	if err := s.reloadFunc(); err != nil {
+		s.logger.Error("Configuration reload failed", "error", err)
 	} else {
-		s.logger.Warn("Received SIGHUP, but no reload function is configured")
+		s.logger.Info("Configuration reload successful")
+		// Optionally: Re-log the server config if it might have changed relevant parts
+		// currentCfg := s.configProvider.Get().Server
+		// s.logServerConfig(&currentCfg)
 	}
 }
 
