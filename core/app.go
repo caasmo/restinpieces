@@ -28,11 +28,11 @@ type App struct {
 	configProvider *config.Provider                 // Holds the config provider
 	logger         *slog.Logger
 	ageKeyPath     string // Path to age identity file
-	// SecureConfigStore provides encrypted configuration storage/retrieval capabilities.
+	// SecureStore provides encrypted configuration storage/retrieval capabilities.
 	// It acts as a secrets manager for securely storing sensitive configuration in the database.
 	// Primarily used during application initialization to load encrypted configs on startup.
 	// The implementation uses age encryption with keys from ageKeyPath.
-	secureConfig config.SecureConfig
+	secureStore config.SecureStore
 	notifier    notify.Notifier
 }
 
@@ -59,12 +59,12 @@ func NewApp(opts ...Option) (*App, error) {
 		return nil, fmt.Errorf("ageKeyPath is required but was not provided (use WithAgeKeyPath)")
 	}
 
-	sc, err := config.NewSecureConfigAge(a.dbConfig, a.ageKeyPath)
+	ss, err := config.NewSecureStoreAge(a.dbConfig, a.ageKeyPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize secure config: %w", err)
+		return nil, fmt.Errorf("failed to initialize secure store: %w", err)
 	}
 
-	a.secureConfig = sc
+	a.secureStore = ss
 
 	return a, nil
 }
@@ -106,8 +106,8 @@ func (a *App) Config() *config.Config {
 	return a.configProvider.Get()
 }
 
-func (a *App) SecureConfigStore() config.SecureConfig {
-	return a.secureConfig
+func (a *App) SecureStore() config.SecureStore {
+	return a.secureStore
 }
 
 func (a *App) Notifier() notify.Notifier {

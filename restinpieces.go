@@ -58,7 +58,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 
 	// Load config from database
 	scope := config.ScopeApplication
-	decryptedBytes, err := app.SecureConfigStore().Latest(scope)
+	decryptedBytes, err := app.SecureStore().Latest(scope)
 	if err != nil {
 		app.Logger().Error("failed to load/decrypt config", "error", err)
 		return nil, nil, fmt.Errorf("failed to load config: %w", err)
@@ -100,7 +100,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	}
 
 	// Prepare the configuration reload function
-	reloadFn := config.Reload(app.SecureConfigStore(), configProvider, app.Logger())
+	reloadFn := config.Reload(app.SecureStore(), configProvider, app.Logger())
 
 	// Initialize the PreRouter chain with internal middleware
 	preRouterHandler := setupPrerouter(app)
