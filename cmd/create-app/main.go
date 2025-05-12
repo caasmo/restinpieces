@@ -22,9 +22,9 @@ import (
 )
 
 type AppCreator struct {
-	logger       *slog.Logger
-	pool         *sqlitex.Pool
-	secureConfig config.SecureConfig
+	logger      *slog.Logger
+	pool        *sqlitex.Pool
+	secureStore config.SecureStore
 }
 
 func NewAppCreator() *AppCreator {
@@ -211,17 +211,17 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 	return cfg, nil
 }
 
-// SaveConfig uses the configured SecureConfig implementation to save the config.
+// SaveConfig uses the configured SecureStore implementation to save the config.
 func (ac *AppCreator) SaveConfig(configData []byte) error {
-	ac.logger.Info("saving initial configuration using SecureConfig")
-	err := ac.secureConfig.Save(
+	ac.logger.Info("saving initial configuration using SecureStore")
+	err := ac.secureStore.Save(
 		config.ScopeApplication,
 		configData,
 		"toml",
 		"Initial default configuration",
 	)
 	if err != nil {
-		ac.logger.Error("failed to save initial config via SecureConfig", "error", err)
+		ac.logger.Error("failed to save initial config via SecureStore", "error", err)
 		return fmt.Errorf("failed to save initial config: %w", err)
 	}
 	return nil
@@ -268,13 +268,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 3. Instantiate SecureConfig
-	secureCfg, err := config.NewSecureConfigAge(dbImpl, *ageKeyPathFlag, creator.logger)
+	// 3. Instantiate SecureStore
+	secureStore, err := config.NewSecureStoreAge(dbImpl, *ageKeyPathFlag)
 	if err != nil {
-		creator.logger.Error("failed to instantiate secure config (age)", "error", err)
+		creator.logger.Error("failed to instantiate secure store (age)", "error", err)
 		os.Exit(1)
 	}
-	creator.secureConfig = secureCfg // Assign to creator
+	creator.secureStore = secureStore // Assign to creator
 
 	// 4. Run Migrations (Apply Schema)
 	if err := creator.RunMigrations(); err != nil {
