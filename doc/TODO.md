@@ -1,6 +1,24 @@
 ### TODOs
 
 - 
+- SEcureConfigSote is in app just to let users of the framework use the config table with a age key and a dbpath 
+    - worth it? users can create a instance itself.
+        - app provides agekey and we can add the dbpath- 
+        - there is nothing stateful in secureConfig, we just document use of secure store.
+        - we do not even need the app to provide age and dbpath. that is normally in the entry point
+    - and the server needs one for reloading, not the app. 
+        - if the app has it the server has also to receive it
+        - the server could provide the  object  instead
+    - polluting server or app with securestore is overkill
+    - agekeypath in app. Why?
+        - initalization in app of secureconfig?
+    - consider put agepath and dbpath in config.
+        - remove crap from app
+        - server has the conf provider, it can call Reload with dbPath and agePath
+        - users of secureConfig: create the secure config?
+            -  we still need dbconfig
+        - dbConfig
+
 - mailer default local
     - no external smtp server
 - test functional uablock
