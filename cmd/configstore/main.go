@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log/slog"
 	"os"
 
 	"github.com/caasmo/restinpieces"
@@ -13,10 +12,6 @@ import (
 )
 
 func main() {
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-
 	// Global flags
 	ageIdentityPathFlag := flag.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
 	dbPathFlag := flag.String("db", "", "Path to the SQLite database file")
@@ -39,19 +34,19 @@ func main() {
 	flag.Parse()
 
 	if *ageIdentityPathFlag == "" {
-		logger.Error("missing required global flag: -age-key")
+		fmt.Fprintf(os.Stderr, "Error: missing required global flag: -age-key\n")
 		flag.Usage()
 		os.Exit(1)
 	}
 	if *dbPathFlag == "" {
-		logger.Error("missing required global flag: -db")
+		fmt.Fprintf(os.Stderr, "Error: missing required global flag: -db\n")
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	args := flag.Args()
 	if len(args) < 1 {
-		logger.Error("missing command")
+		fmt.Fprintf(os.Stderr, "Error: missing command\n")
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -59,43 +54,41 @@ func main() {
 	command := args[0]
 	commandArgs := args[1:]
 
-	logger.Info("creating sqlite database pool", "path", *dbPathFlag)
 	pool, err := restinpieces.NewZombiezenPool(*dbPathFlag)
 	if err != nil {
-		logger.Error("failed to create database pool", "db_path", *dbPathFlag, "error", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to create database pool (db_path: %s): %v\n", *dbPathFlag, err)
 		os.Exit(1)
 	}
 	defer func() {
-		logger.Info("closing database pool")
 		if err := pool.Close(); err != nil {
-			logger.Error("error closing database pool", "error", err)
+			fmt.Fprintf(os.Stderr, "Error: error closing database pool: %v\n", err)
 		}
 	}()
 
 	dbImpl, err := dbz.New(pool)
 	if err != nil {
-		logger.Error("failed to instantiate zombiezen db from pool", "error", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to instantiate zombiezen db from pool: %v\n", err)
 		os.Exit(1)
 	}
 
 	secureStore, err := config.NewSecureStoreAge(dbImpl, *ageIdentityPathFlag)
 	if err != nil {
-		logger.Error("failed to instantiate secure store (age)", "age_key_path", *ageIdentityPathFlag, "error", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to instantiate secure store (age, age_key_path: %s): %v\n", *ageIdentityPathFlag, err)
 		os.Exit(1)
 	}
 
 	switch command {
 	case "set":
-		handleSetCommand(logger, secureStore, *scopeFlag, *formatFlag, *descFlag, commandArgs)
+		handleSetCommand(secureStore, *scopeFlag, *formatFlag, *descFlag, commandArgs)
 	case "scopes":
 		if len(commandArgs) > 0 {
-			logger.Error("'scopes' command does not take any arguments")
+			fmt.Fprintf(os.Stderr, "Error: 'scopes' command does not take any arguments\n")
 			flag.Usage()
 			os.Exit(1)
 		}
 		handleScopesCommand(pool)
 	default:
-		logger.Error("unknown command", "command", command)
+		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
 		flag.Usage()
 		os.Exit(1)
 	}
