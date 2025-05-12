@@ -198,6 +198,15 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 				Regexp: regexp.MustCompile(`(BotName\.v1|Super\-Bot|My\ Bot|AnotherBot)`),
 			},
 		},
+		Notifier: config.Notifier{
+			Discord: config.Discord{
+				Activated:    false,
+				WebhookURL:   "",
+				APIRateLimit: config.Duration{Duration: 2 * time.Second},
+				APIBurst:     1,
+				SendTimeout:  config.Duration{Duration: 10 * time.Second},
+			},
+		},
 	}
 	return cfg, nil
 }
