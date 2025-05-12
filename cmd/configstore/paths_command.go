@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	// "strconv" // No longer needed
 
 	"github.com/caasmo/restinpieces/config"
@@ -31,7 +32,7 @@ func listTomlPathsRecursive(tree *toml.Tree, prefix string, paths *[]string) {
 	}
 }
 
-func handlePathsCommand(secureStore config.SecureStore, scopeName string) {
+func handlePathsCommand(secureStore config.SecureStore, scopeName string, filter string) {
 	decryptedData, err := secureStore.Latest(scopeName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to retrieve/decrypt latest config for scope '%s': %v\n", scopeName, err)
@@ -49,10 +50,26 @@ func handlePathsCommand(secureStore config.SecureStore, scopeName string) {
 
 	if len(allPaths) == 0 {
 		fmt.Printf("No TOML paths found in configuration for scope '%s'.\n", scopeName)
-	} else {
-		fmt.Printf("Available TOML paths for latest configuration in scope '%s':\n", scopeName)
+		return
+	}
+
+	var filteredPaths []string
+	if filter != "" {
 		for _, p := range allPaths {
-			fmt.Println(p)
+			if strings.Contains(p, filter) {
+				filteredPaths = append(filteredPaths, p)
+			}
 		}
+		allPaths = filteredPaths
+	}
+
+	if len(allPaths) == 0 {
+		fmt.Printf("No TOML paths matching '%s' found in scope '%s'.\n", filter, scopeName)
+		return
+	}
+
+	fmt.Printf("Available TOML paths for latest configuration in scope '%s':\n", scopeName)
+	for _, p := range allPaths {
+		fmt.Println(p)
 	}
 }
