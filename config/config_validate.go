@@ -1,10 +1,13 @@
 package config
 
 import (
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func Validate(cfg *Config) error {
@@ -127,6 +130,32 @@ func validateServerTLS(server *Server) error {
 	if server.KeyData == "" {
 		return fmt.Errorf("server.key_data cannot be empty when TLS is enabled")
 	}
+
+	// Decode PEM block for the certificate
+	block, _ := pem.Decode([]byte(server.CertData))
+	if block == nil {
+		return fmt.Errorf("server.cert_data: failed to decode PEM block containing the certificate")
+	}
+	if block.Type != "CERTIFICATE" {
+		return fmt.Errorf("server.cert_data: PEM block type is '%s', expected 'CERTIFICATE'", block.Type)
+	}
+
+	// Parse the certificate
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return fmt.Errorf("server.cert_data: failed to parse certificate: %w", err)
+	}
+
+	// Check certificate validity period
+	now := time.Now()
+	if now.Before(cert.NotBefore) {
+		return fmt.Errorf("server.cert_data: certificate is not yet valid (valid from %s)", cert.NotBefore.Format(time.RFC3339))
+	}
+	if now.After(cert.NotAfter) {
+		return fmt.Errorf("server.cert_data: certificate has expired (expired on %s)", cert.NotAfter.Format(time.RFC3339))
+	}
+
+	// Optionally: Add more checks here, e.g., KeyUsage, BasicConstraints, etc.
 
 	return nil
 }
