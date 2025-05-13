@@ -16,13 +16,6 @@ type BatchHandler struct {
 }
 
 // NewBatchHandler creates a new BatchHandler.
-//
-// provider: An instance of your application's configuration provider.
-//           It's expected to have a Get() method returning a config object
-//           (like *AppConfig) containing LoggerLevel and BatchSize.
-//           If provider is nil, or if provider.Get() initially returns a nil config,
-//           this function will panic.
-//           The BatchSize from the initial config is used to set the channel buffer size.
 func NewBatchHandler(provider *AppProvider) *BatchHandler {
 
 	initialConfig := provider.Get()
