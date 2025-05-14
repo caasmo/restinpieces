@@ -10,36 +10,35 @@ import (
 // The log level is dynamically determined by the AppProvider.
 // If the channel is full, records are dropped.
 type BatchHandler struct {
-	provider   *AppProvider       // For dynamic log levels
-	recordChan chan<- slog.Record // Write-end of the channel, provided by LoggerDaemon
+	configProvider *AppProvider       // For dynamic log levels
+	recordChan     chan<- slog.Record // Write-end of the channel, provided by LoggerDaemon
 }
 
 // NewBatchHandler creates a new BatchHandler.
 //
-// provider: An instance of your application's configuration provider for dynamic log levels.
+// configProvider: An instance of your application's configuration provider for dynamic log levels.
 // recordChan: The write-end of a buffered channel where slog.Records will be sent.
 //             This channel is created and managed by LoggerDaemon.
-// If provider or recordChan is nil, this function will panic.
-func NewBatchHandler(provider *AppProvider, recordChan chan<- slog.Record) *BatchHandler {
-	if provider == nil {
-		panic("batchhandler: provider cannot be nil")
+// If configProvider or recordChan is nil, this function will panic.
+func NewBatchHandler(configProvider *AppProvider, recordChan chan<- slog.Record) *BatchHandler {
+	if configProvider == nil {
+		panic("batchhandler: configProvider cannot be nil")
 	}
 	if recordChan == nil {
 		panic("batchhandler: recordChan cannot be nil")
 	}
 
 	return &BatchHandler{
-		provider:   provider,
-		recordChan: recordChan,
+		configProvider: configProvider,
+		recordChan:     recordChan,
 	}
 }
 
 // Enabled implements the slog.Handler interface.
 // It consults the AppProvider to get the current logging level.
 func (h *BatchHandler) Enabled(_ context.Context, level slog.Level) bool {
-	conf := h.provider.Get()
+	conf := h.configProvider.Get()
 	return level >= conf.LoggerLevel
-}
 
 // Handle implements the slog.Handler interface.
 // It attempts to send the log record to the buffered channel in a non-blocking way.
@@ -57,16 +56,16 @@ func (h *BatchHandler) Handle(_ context.Context, r slog.Record) error {
 // WithAttrs implements the slog.Handler interface.
 func (h *BatchHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return &BatchHandler{
-		provider:   h.provider,
-		recordChan: h.recordChan,
+		configProvider: h.configProvider,
+		recordChan:     h.recordChan,
 	}
 }
 
 // WithGroup implements the slog.Handler interface.
 func (h *BatchHandler) WithGroup(name string) slog.Handler {
 	return &BatchHandler{
-		provider:   h.provider,
-		recordChan: h.recordChan,
+		configProvider: h.configProvider,
+		recordChan:     h.recordChan,
 	}
 }
 
