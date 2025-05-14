@@ -2,8 +2,8 @@ package logger
 
 import (
 	"context"
-	"log/slog"
 	"github.com/caasmo/restinpieces/config"
+	"log/slog"
 )
 
 // BatchHandler is a slog.Handler that attempts to send records to an externally provided channel.
@@ -18,7 +18,9 @@ type BatchHandler struct {
 //
 // configProvider: An instance of your application's configuration provider for dynamic log levels.
 // recordChan: The write-end of a buffered channel where slog.Records will be sent.
-//             This channel is created and managed by LoggerDaemon.
+//
+//	This channel is created and managed by LoggerDaemon.
+//
 // If configProvider or recordChan is nil, this function will panic.
 func NewBatchHandler(configProvider *AppProvider, recordChan chan<- slog.Record) *BatchHandler {
 	if configProvider == nil {
@@ -69,4 +71,3 @@ func (h *BatchHandler) WithGroup(name string) slog.Handler {
 		recordChan:     h.recordChan,
 	}
 }
-
