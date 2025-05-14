@@ -71,6 +71,7 @@ type LoggerBatch struct {
 	ChanSize     int      `toml:"chan_size" comment:"Size of the log record channel buffer"`
 	FlushInterval Duration `toml:"flush_interval" comment:"Maximum time between log flushes"`
 	Level        LogLevel `toml:"level" comment:"Minimum log level (debug, info, warn, error)"`
+	DbPath       string   `toml:"db_path" comment:"Path to SQLite database file for log storage"`
 }
 
 // LogLevel is a wrapper around slog.Level that supports TOML unmarshalling
