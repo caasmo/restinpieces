@@ -60,20 +60,17 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	scope := config.ScopeApplication
 	decryptedBytes, err := app.ConfigStore().Latest(scope)
 	if err != nil {
-		app.Logger().Error("failed to load/decrypt config", "error", err)
 		return nil, nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
 	// Unmarshal TOML
 	cfg := &config.Config{}
 	if err := toml.Unmarshal(decryptedBytes, cfg); err != nil {
-		app.Logger().Error("failed to unmarshal config", "error", err)
 		return nil, nil, fmt.Errorf("failed to parse config: %w", err)
 	}
 
 	// Validate config
 	if err := config.Validate(cfg); err != nil {
-		app.Logger().Error("config validation failed", "error", err)
 		return nil, nil, fmt.Errorf("invalid config: %w", err)
 	}
 
@@ -81,14 +78,12 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 
 	configProvider := config.NewProvider(cfg)
 	app.SetConfigProvider(configProvider)
-	//app.Logger().Info("config", "config", cfg)
 
 	// Setup custom application logic and routes
 	route(cfg, app)
 
 	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.Logger())
 	if err != nil {
-		app.Logger().Error("failed to setup scheduler", "error", err)
 		return nil, nil, err
 	}
 
