@@ -28,7 +28,7 @@ type LoggerDaemon struct {
 	internalRecordChan chan slog.Record
 	dbWriter           DBWriter
 	opLogger           *slog.Logger
-	configProvider     *config.Provider // For batch sizes
+	configProvider     *config.Provider 
 
 	// dbBatchSize is for flushing to DB, derived from AppProvider.Get().BatchSize
 	dbBatchSize int
@@ -47,20 +47,10 @@ func NewLoggerDaemon(
 	dbWriter DBWriter,
 	opLogger *slog.Logger,
 ) (*LoggerDaemon, error) {
-	if configProvider == nil {
-		return nil, fmt.Errorf("loggerdaemon: configProvider cannot be nil")
-	}
-	if dbWriter == nil {
-		return nil, fmt.Errorf("loggerdaemon: dbWriter cannot be nil")
-	}
 	if opLogger == nil {
 		opLogger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	}
 
-	config := configProvider.Get()
-	if config == nil {
-		return nil, fmt.Errorf("loggerdaemon: initial config from appProvider unexpectedly nil")
-	}
 
 	channelBufferSize := config.BatchSize
 	if channelBufferSize < 1 {
