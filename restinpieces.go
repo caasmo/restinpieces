@@ -33,13 +33,6 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
-	// Setup default logger if none was set via options
-	if app.Logger() == nil {
-		if err := SetupDefaultLogger(app); err != nil {
-			return nil, nil, err
-		}
-	}
-
 	// Setup default router if none was set via options
 	if app.Router() == nil {
 		if err := SetupDefaultRouter(app); err != nil {
@@ -77,6 +70,12 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	configProvider := config.NewProvider(cfg)
 	app.SetConfigProvider(configProvider)
 
+	// Setup logger daemon after config is loaded
+	logDaemon, err := SetupDefaultLogger(app, configProvider)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
+	}
+
 	// Setup custom application logic and routes
 	route(cfg, app)
 
@@ -106,6 +105,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	)
 
 	// Register the framework's core daemons
+	srv.AddDaemon(logDaemon)
 	srv.AddDaemon(scheduler)
 
 	return app, srv, nil
@@ -217,10 +217,34 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 	},
 }
 
-func SetupDefaultLogger(app *core.App) error {
-	logger := slog.New(slog.NewTextHandler(os.Stdout, DefaultLoggerOptions))
+func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*logger.Daemon, error) {
+	// Create logger daemon first
+	logDaemon, err := logger.NewDaemon(
+		"LoggerDaemon",
+		configProvider,
+		app.DbQueue(), // Assuming DbQueue implements DBWriter interface
+		app.Logger(),  // May be nil initially
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create logger daemon: %w", err)
+	}
+
+	// Create batch handler with daemon's channel
+	batchHandler := logger.NewBatchHandler(
+		configProvider,
+		logDaemon.RecordChan(),
+	)
+
+	// Create the logger with our batch handler
+	logger := slog.New(batchHandler)
 	app.SetLogger(logger)
-	return nil
+
+	// Start the daemon
+	if err := logDaemon.Start(); err != nil {
+		return nil, fmt.Errorf("failed to start logger daemon: %w", err)
+	}
+
+	return logDaemon, nil
 }
 
 func SetupDefaultCache(app *core.App) error {
