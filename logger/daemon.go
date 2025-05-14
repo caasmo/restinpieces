@@ -41,6 +41,7 @@ func NewDaemon(
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	cfg := configProvider.Get()
 	daemon := &Daemon{
 		name:           name,
 		recordChan:     make(chan slog.Record, cfg.LoggerBatch.ChanSize),
@@ -122,7 +123,7 @@ func (ld *Daemon) processLogs() {
 
 	for {
 		select {
-		case record, ok := <-ld.internalRecordChan:
+		case record, ok := <-ld.recordChan:
 			if !ok {
 				// This occurs when ld.recordChan is closed by ld.Stop().
 				// This is the expected way for this loop to terminate after ctx.Done()
@@ -145,7 +146,7 @@ func (ld *Daemon) processLogs() {
 		drainLoop: // Drain the channel after ctx is cancelled but before channel is closed by Stop().
 			for {
 				select {
-				case record, ok := <-ld.internalRecordChan:
+				case record, ok := <-ld.recordChan:
 					if !ok {
 						// Channel was closed (likely by Stop() if shutdown was very fast, or an error occurred)
 						ld.opLogger.Info("Record channel closed during drain.")
