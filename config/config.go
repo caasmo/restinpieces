@@ -74,11 +74,19 @@ type LoggerBatch struct {
 }
 
 // LogLevel is a wrapper around slog.Level that supports TOML unmarshalling
+// Valid TOML values:
+//   - String values (case insensitive): "debug", "info", "warn", "error"
+//   - Numeric values: -4 (debug), 0 (info), 4 (warn), 8 (error)
+// Example:
+//   level = "debug"  # string name
+//   level = "DEBUG"  # any case
+//   level = -4       # numeric value
 type LogLevel struct {
 	slog.Level
 }
 
 // UnmarshalText implements the encoding.TextUnmarshaler interface
+// Supports both string names and numeric values for log levels
 func (l *LogLevel) UnmarshalText(text []byte) error {
 	var level slog.Level
 	if err := level.UnmarshalText(text); err != nil {
@@ -89,6 +97,7 @@ func (l *LogLevel) UnmarshalText(text []byte) error {
 }
 
 // MarshalText implements the encoding.TextMarshaler interface
+// Always marshals to the string name (e.g. "debug", "info")
 func (l LogLevel) MarshalText() ([]byte, error) {
 	return l.Level.MarshalText()
 }
