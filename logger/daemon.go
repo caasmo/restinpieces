@@ -1,60 +1,12 @@
-package batchsloghandler
+package logger
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
 	"os"
-	"sync/atomic" // Used for the example AppProvider
 	"time"
 )
-
-// AppConfig is an EXAMPLE struct representing what the BatchHandler expects
-// from the configuration object returned by AppProvider.Get().
-// In your project, this would be your actual Config struct.
-type AppConfig struct {
-	LoggerLevel slog.Level
-	BatchSize   int // Used to determine the slog record channel buffer size for LoggerDaemon
-	// Other application configuration fields might go here.
-}
-
-// AppProvider is an EXAMPLE struct representing what the BatchHandler expects
-// for a configuration provider.
-// In your project, this would be your actual Provider struct.
-// It must have a Get() method that returns an *AppConfig (or your equivalent).
-type AppProvider struct {
-	value atomic.Value // Holds the current *AppConfig
-}
-
-// NewAppProvider_Example creates a new AppProvider (example implementation).
-// In your project, you'd use your own Provider's constructor.
-func NewAppProvider_Example(c *AppConfig) *AppProvider {
-	if c == nil {
-		panic("initial AppConfig cannot be nil for AppProvider")
-	}
-	p := &AppProvider{}
-	p.value.Store(c)
-	return p
-}
-
-// Get returns the current AppConfig snapshot (example implementation).
-// Your Provider's Get method should return your actual Config struct.
-func (p *AppProvider) Get() *AppConfig {
-	val := p.value.Load()
-	if val == nil {
-		// Fallback, though provider should ensure non-nil.
-		return &AppConfig{LoggerLevel: slog.LevelInfo, BatchSize: 1}
-	}
-	return val.(*AppConfig)
-}
-
-// Update_Example allows updating the config (example implementation).
-func (p *AppProvider) Update_Example(c *AppConfig) {
-	if c == nil {
-		panic("cannot update AppProvider to a nil AppConfig")
-	}
-	p.value.Store(c)
-}
 
 // --- BatchHandler ---
 // BatchHandler is a slog.Handler that attempts to send records to an externally provided channel.
