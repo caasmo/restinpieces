@@ -30,6 +30,22 @@ func Validate(cfg *Config) error {
 	if err := validateNotifier(&cfg.Notifier); err != nil {
 		return fmt.Errorf("notifier config validation failed: %w", err)
 	}
+	if err := validateLoggerBatch(&cfg.LoggerBatch); err != nil {
+		return fmt.Errorf("logger_batch config validation failed: %w", err)
+	}
+	return nil
+}
+
+func validateLoggerBatch(loggerBatch *LoggerBatch) error {
+	if loggerBatch.ChanSize < 1 {
+		return fmt.Errorf("chan_size must be >= 1")
+	}
+	if loggerBatch.FlushSize < 1 {
+		return fmt.Errorf("flush_size must be >= 1")
+	}
+	if loggerBatch.FlushInterval.Duration <= 0 {
+		return fmt.Errorf("flush_interval must be positive")
+	}
 	return nil
 }
 

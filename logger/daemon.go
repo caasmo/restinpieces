@@ -39,14 +39,6 @@ func NewDaemon(
 ) (*Daemon, error) {
 
 
-	cfg := configProvider.Get()
-	if cfg.LoggerBatch.ChanSize < 1 {
-		return nil, fmt.Errorf("invalid LoggerBatch.ChanSize: must be >= 1")
-	}
-	if cfg.LoggerBatch.FlushSize < 1 {
-		return nil, fmt.Errorf("invalid LoggerBatch.FlushSize: must be >= 1")
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 
 	daemon := &Daemon{
