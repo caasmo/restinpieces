@@ -6,37 +6,32 @@ import (
 	"github.com/caasmo/restinpieces/config"
 )
 
-// BatchHandler is a slog.Handler that attempts to send records to a buffered channel.
+// BatchHandler is a slog.Handler that attempts to send records to an externally provided channel.
 // The log level is dynamically determined by the AppProvider.
-// The channel buffer size is determined by AppProvider.Get().BatchSize at creation time.
 // If the channel is full, records are dropped.
 type BatchHandler struct {
-	provider   *config.Provider 
-	recordChan chan slog.Record
+	provider   *AppProvider       // For dynamic log levels
+	recordChan chan<- slog.Record // Write-end of the channel, provided by LoggerDaemon
 }
 
 // NewBatchHandler creates a new BatchHandler.
-func NewBatchHandler(provider *AppProvider) *BatchHandler {
-
-	initialConfig := provider.Get()
-
-	batchSize := initialConfig.BatchSize
-	// validation to config validate
-	//if batchSize < 1 {
-	//	batchSize = 1
-	//}
-
-	ch := make(chan slog.Record, batchSize)
+//
+// provider: An instance of your application's configuration provider for dynamic log levels.
+// recordChan: The write-end of a buffered channel where slog.Records will be sent.
+//             This channel is created and managed by LoggerDaemon.
+// If provider or recordChan is nil, this function will panic.
+func NewBatchHandler(provider *AppProvider, recordChan chan<- slog.Record) *BatchHandler {
+	if provider == nil {
+		panic("batchhandler: provider cannot be nil")
+	}
+	if recordChan == nil {
+		panic("batchhandler: recordChan cannot be nil")
+	}
 
 	return &BatchHandler{
 		provider:   provider,
-		recordChan: ch,
+		recordChan: recordChan,
 	}
-}
-
-// RecordChan returns the underlying channel used by the handler.
-func (h *BatchHandler) RecordChan() <-chan slog.Record {
-	return h.recordChan
 }
 
 // Enabled implements the slog.Handler interface.
@@ -75,9 +70,7 @@ func (h *BatchHandler) WithGroup(name string) slog.Handler {
 	}
 }
 
-// Close closes the underlying record channel.
+// Close for BatchHandler is a no-op regarding the channel, as it doesn't own it.
 func (h *BatchHandler) Close() {
-	if h.recordChan != nil {
-		close(h.recordChan)
-	}
+	// No-op. Channel is managed by LoggerDaemon.
 }
