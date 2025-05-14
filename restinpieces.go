@@ -30,8 +30,6 @@ import (
 func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	app, err := core.NewApp(opts...)
 	if err != nil {
-		// Use a temporary logger for this initial error, as the app's logger might not be set yet.
-		slog.New(slog.NewTextHandler(os.Stderr, nil)).Error("failed to initialize core app", "error", err)
 		return nil, nil, err
 	}
 
@@ -228,8 +226,6 @@ func SetupDefaultLogger(app *core.App) error {
 func SetupDefaultCache(app *core.App) error {
 	cacheInstance, err := ristretto.New[any]() // Explicit string keys and interface{} values
 	if err != nil {
-		// If cache setup fails, we might not have a logger to use, so panic or use a basic log.
-		slog.New(slog.NewTextHandler(os.Stderr, nil)).Error("failed to setup default cache", "error", err)
 		return fmt.Errorf("failed to initialize default cache: %w", err)
 	}
 	app.SetCache(cacheInstance)
@@ -241,7 +237,6 @@ func SetupDefaultNotifier(cfg *config.Config, app *core.App) error {
 	if cfg.Notifier.Discord.Activated {
 		discordNotifier, err := discord.New(cfg.Notifier.Discord, app.Logger())
 		if err != nil {
-			app.Logger().Error("failed to initialize Discord notifier", "error", err)
 			return fmt.Errorf("failed to initialize Discord notifier: %w", err)
 		}
 		app.SetNotifier(discordNotifier)
