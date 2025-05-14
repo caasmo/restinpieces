@@ -224,7 +224,7 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*logger
 		"LoggerDaemon",
 		configProvider,
 		app.DbQueue(), // Assuming DbQueue implements DBWriter interface
-		app.Logger(),  // May be nil initially
+		app.Logger(),  // May be nil initially TODO
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create logger daemon: %w", err)
