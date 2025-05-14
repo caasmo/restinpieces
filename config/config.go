@@ -61,6 +61,14 @@ type Config struct {
 	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
 	BlockUa     BlockUa     `toml:"block_ua" comment:"User-Agent blocking settings"`
 	Notifier    Notifier    `toml:"notifier"`
+	LoggerBatch LoggerBatch `toml:"logger_batch" comment:"Batch logger configuration"`
+}
+
+// LoggerBatch contains configuration for the batch logger
+type LoggerBatch struct {
+	FlushSize    int      `toml:"flush_size" comment:"Number of log records to batch before writing to DB"`
+	ChanSize     int      `toml:"chan_size" comment:"Size of the log record channel buffer"`
+	FlushInterval Duration `toml:"flush_interval" comment:"Maximum time between log flushes"`
 }
 
 // Duration is a wrapper around time.Duration that supports TOML unmarshalling
