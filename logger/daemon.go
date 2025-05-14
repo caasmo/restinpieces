@@ -19,16 +19,16 @@ type DBWriter interface {
 	WriteLogBatch(ctx context.Context, logs []map[string]any) error
 }
 
-// LoggerDaemon consumes slog.Records from an internal channel and writes them to a DB.
-// It owns the internal channel.
-type LoggerDaemon struct {
+// Daemon consumes slog.Records from a channel and writes them to a DB.
+// It owns the channel.
+type Daemon struct {
 	daemonName string
-	// internalRecordChan is owned and managed entirely within LoggerDaemon.
+	// recordChan is owned and managed entirely within Daemon.
 	// BatchHandler sends to this channel via the write-end provided by RecordInputChan().
-	internalRecordChan chan slog.Record
-	dbWriter           DBWriter
-	opLogger           *slog.Logger
-	configProvider     *config.Provider 
+	recordChan     chan slog.Record
+	dbWriter       DBWriter
+	opLogger       *slog.Logger
+	configProvider *config.Provider 
 
 	// dbBatchSize is for flushing to DB, derived from AppProvider.Get().BatchSize
 	dbBatchSize int
@@ -38,10 +38,10 @@ type LoggerDaemon struct {
 	shutdownDone chan struct{}
 }
 
-// NewLoggerDaemon creates a new LoggerDaemon.
-// It creates an internal channel for slog.Records.
+// NewDaemon creates a new Daemon.
+// It creates a channel for slog.Records.
 // The write-end of this channel can be retrieved via RecordInputChan().
-func NewLoggerDaemon(
+func NewDaemon(
 	daemonName string,
 	configProvider *config.Provider,
 	dbWriter DBWriter,
@@ -63,50 +63,50 @@ func NewLoggerDaemon(
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	daemon := &LoggerDaemon{
-		daemonName:         daemonName,
-		internalRecordChan: make(chan slog.Record, channelBufferSize), // Creates and owns this channel
-		dbWriter:           dbWriter,
-		opLogger:           opLogger.With("daemon_component", "LoggerDaemon", "instance_name", daemonName),
-		configProvider:     configProvider,
-		dbBatchSize:        dbBatchSize,
-		ctx:                ctx,
-		cancel:             cancel,
-		shutdownDone:       make(chan struct{}),
+	daemon := &Daemon{
+		daemonName:     daemonName,
+		recordChan:     make(chan slog.Record, channelBufferSize), // Creates and owns this channel
+		dbWriter:       dbWriter,
+		opLogger:       opLogger.With("daemon_component", "Daemon", "instance_name", daemonName),
+		configProvider: configProvider,
+		dbBatchSize:    dbBatchSize,
+		ctx:            ctx,
+		cancel:         cancel,
+		shutdownDone:   make(chan struct{}),
 	}
 	return daemon, nil
 }
 
-// RecordInputChan returns the write-end of the internal channel.
+// RecordInputChan returns the write-end of the channel.
 // This is intended to be used by BatchHandler to send records to this daemon.
-func (ld *LoggerDaemon) RecordInputChan() chan<- slog.Record {
-	return ld.internalRecordChan
+func (ld *Daemon) RecordInputChan() chan<- slog.Record {
+	return ld.recordChan
 }
 
 // Name returns the name of the daemon.
-func (ld *LoggerDaemon) Name() string {
+func (ld *Daemon) Name() string {
 	return ld.daemonName
 }
 
 // Start begins the daemon's log processing goroutine.
-func (ld *LoggerDaemon) Start() error {
-	ld.opLogger.Info("Starting LoggerDaemon's processing goroutine")
+func (ld *Daemon) Start() error {
+	ld.opLogger.Info("Starting Daemon's processing goroutine")
 	go ld.processLogs()
 	return nil
 }
 
 // Stop gracefully shuts down the daemon.
 // It signals the processing goroutine, waits for it to drain and finish,
-// and then closes the internal record channel.
-func (ld *LoggerDaemon) Stop(ctx context.Context) error {
-	ld.opLogger.Info("Stopping LoggerDaemon")
+// and then closes the record channel.
+func (ld *Daemon) Stop(ctx context.Context) error {
+	ld.opLogger.Info("Stopping Daemon")
 	ld.cancel() // Signal the processLogs goroutine to stop
 
 	select {
 	case <-ld.shutdownDone:
-		ld.opLogger.Info("LoggerDaemon processing goroutine confirmed shutdown.")
+		ld.opLogger.Info("Daemon processing goroutine confirmed shutdown.")
 	case <-ctx.Done():
-		ld.opLogger.Error("LoggerDaemon shutdown timed out waiting for processing goroutine", "error", ctx.Err())
+		ld.opLogger.Error("Daemon shutdown timed out waiting for processing goroutine", "error", ctx.Err())
 		// Even if timed out, the channel closure attempt is important.
 		// However, processLogs might still be running, leading to a panic if it reads after close.
 		// The shutdownDone signal is crucial. If timeout happens, it implies a problem in processLogs' exit.
@@ -115,15 +115,15 @@ func (ld *LoggerDaemon) Stop(ctx context.Context) error {
 
 	// At this point, shutdownDone is closed, meaning processLogs has exited.
 	// It is now safe for the owner (LoggerDaemon) to close its internal channel.
-	ld.opLogger.Info("Closing owned internal record channel.")
-	close(ld.internalRecordChan)
+	ld.opLogger.Info("Closing owned record channel.")
+	close(ld.recordChan)
 
-	ld.opLogger.Info("LoggerDaemon stopped gracefully.")
+	ld.opLogger.Info("Daemon stopped gracefully.")
 	return nil
 }
 
 // processLogs is the internal goroutine that reads from the channel and writes to the DB.
-func (ld *LoggerDaemon) processLogs() {
+func (ld *Daemon) processLogs() {
 	defer close(ld.shutdownDone) // Signal that this goroutine has finished
 
 	ticker := time.NewTicker(LoggerDaemonFlushInterval)
@@ -146,10 +146,10 @@ func (ld *LoggerDaemon) processLogs() {
 		select {
 		case record, ok := <-ld.internalRecordChan:
 			if !ok {
-				// This occurs when ld.internalRecordChan is closed by ld.Stop().
+				// This occurs when ld.recordChan is closed by ld.Stop().
 				// This is the expected way for this loop to terminate after ctx.Done()
 				// has caused the drain and Stop() proceeds to close the channel.
-				ld.opLogger.Info("Internal record channel closed by owner, exiting processLogs.")
+				ld.opLogger.Info("Record channel closed by owner, exiting processLogs.")
 				flushBatch("channel_closed_by_owner") // Final flush
 				return
 			}
@@ -170,7 +170,7 @@ func (ld *LoggerDaemon) processLogs() {
 				case record, ok := <-ld.internalRecordChan:
 					if !ok {
 						// Channel was closed (likely by Stop() if shutdown was very fast, or an error occurred)
-						ld.opLogger.Info("Internal record channel closed during drain.")
+						ld.opLogger.Info("Record channel closed during drain.")
 						break drainLoop
 					}
 					convertedRecord := convertSlogRecordToMap(record)
@@ -179,13 +179,13 @@ func (ld *LoggerDaemon) processLogs() {
 						flushBatch("shutdown_drain_db_batch_full")
 					}
 				default: // Channel is empty at this moment
-					ld.opLogger.Debug("Internal record channel empty during drain.")
+					ld.opLogger.Debug("Record channel empty during drain.")
 					break drainLoop
 				}
 			}
 			flushBatch("shutdown_final_flush") // Flush any remaining items in the batch
-			ld.opLogger.Info("LoggerDaemon processing goroutine finished draining, awaiting channel close by Stop().")
-			// This goroutine will now block on `<-ld.internalRecordChan` until Stop() closes it,
+			ld.opLogger.Info("Daemon processing goroutine finished draining, awaiting channel close by Stop().")
+			// This goroutine will now block on `<-ld.recordChan` until Stop() closes it,
 			// at which point `ok` will be `false` and it will exit.
 			// Or, if already empty and Stop() closes it immediately, it will exit directly.
 			// The `return` is handled by the `!ok` case of the main channel read.
