@@ -7,22 +7,20 @@ import (
 )
 
 // BatchHandler is a slog.Handler that attempts to send records to an externally provided channel.
-// The log level is dynamically determined by the AppProvider.
+// The log level is dynamically determined by the config provider.
 // If the channel is full, records are dropped.
 type BatchHandler struct {
-	configProvider *AppProvider       // For dynamic log levels
-	recordChan     chan<- slog.Record // Write-end of the channel, provided by LoggerDaemon
+	configProvider *config.Provider   // For dynamic log levels
+	recordChan     chan<- slog.Record // Write-end of the channel, provided by Daemon
 }
 
 // NewBatchHandler creates a new BatchHandler.
 //
-// configProvider: An instance of your application's configuration provider for dynamic log levels.
+// configProvider: An instance of the configuration provider for dynamic log levels.
 // recordChan: The write-end of a buffered channel where slog.Records will be sent.
-//
-//	This channel is created and managed by LoggerDaemon.
-//
+//             This channel is created and managed by Daemon.
 // If configProvider or recordChan is nil, this function will panic.
-func NewBatchHandler(configProvider *AppProvider, recordChan chan<- slog.Record) *BatchHandler {
+func NewBatchHandler(configProvider *config.Provider, recordChan chan<- slog.Record) *BatchHandler {
 	if configProvider == nil {
 		panic("batchhandler: configProvider cannot be nil")
 	}
@@ -37,10 +35,10 @@ func NewBatchHandler(configProvider *AppProvider, recordChan chan<- slog.Record)
 }
 
 // Enabled implements the slog.Handler interface.
-// It consults the AppProvider to get the current logging level.
+// It consults the config provider to get the current logging level.
 func (h *BatchHandler) Enabled(_ context.Context, level slog.Level) bool {
 	conf := h.configProvider.Get()
-	return level >= conf.LoggerLevel
+	return level >= conf.Logger.Level
 }
 
 // Handle implements the slog.Handler interface.
