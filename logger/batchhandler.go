@@ -70,7 +70,3 @@ func (h *BatchHandler) WithGroup(name string) slog.Handler {
 	}
 }
 
-// Close for BatchHandler is a no-op regarding the channel, as it doesn't own it.
-func (h *BatchHandler) Close() {
-	// No-op. Channel is managed by LoggerDaemon.
-}
