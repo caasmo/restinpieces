@@ -223,7 +223,6 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*logger
 	logDaemon, err := logger.NewDaemon(
 		"LoggerDaemon",
 		configProvider,
-		app.DbQueue(), // Assuming DbQueue implements DBWriter interface
 		app.Logger(),  // May be nil initially TODO
 	)
 	if err != nil {
