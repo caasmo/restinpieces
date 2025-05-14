@@ -38,7 +38,7 @@ func NewBatchHandler(configProvider *config.Provider, recordChan chan<- slog.Rec
 // It consults the config provider to get the current logging level.
 func (h *BatchHandler) Enabled(_ context.Context, level slog.Level) bool {
 	conf := h.configProvider.Get()
-	return level >= conf.LoggerBatch.Level
+	return level >= conf.LoggerBatch.Level.Level
 }
 
 // Handle implements the slog.Handler interface.

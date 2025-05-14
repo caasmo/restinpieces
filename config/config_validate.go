@@ -46,6 +46,7 @@ func validateLoggerBatch(loggerBatch *LoggerBatch) error {
 	if loggerBatch.FlushInterval.Duration <= 0 {
 		return fmt.Errorf("flush_interval must be positive")
 	}
+	// LogLevel validation is handled by UnmarshalText
 	return nil
 }
 

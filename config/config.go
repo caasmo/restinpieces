@@ -69,6 +69,45 @@ type LoggerBatch struct {
 	FlushSize    int      `toml:"flush_size" comment:"Number of log records to batch before writing to DB"`
 	ChanSize     int      `toml:"chan_size" comment:"Size of the log record channel buffer"`
 	FlushInterval Duration `toml:"flush_interval" comment:"Maximum time between log flushes"`
+	Level        LogLevel `toml:"level" comment:"Minimum log level (debug, info, warn, error)"`
+}
+
+// LogLevel is a wrapper around slog.Level that supports TOML unmarshalling
+type LogLevel struct {
+	slog.Level
+}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface
+func (l *LogLevel) UnmarshalText(text []byte) error {
+	switch strings.ToLower(string(text)) {
+	case "debug":
+		l.Level = slog.LevelDebug
+	case "info":
+		l.Level = slog.LevelInfo
+	case "warn":
+		l.Level = slog.LevelWarn
+	case "error":
+		l.Level = slog.LevelError
+	default:
+		return fmt.Errorf("invalid log level '%s' - must be one of: debug, info, warn, error", string(text))
+	}
+	return nil
+}
+
+// MarshalText implements the encoding.TextMarshaler interface
+func (l LogLevel) MarshalText() ([]byte, error) {
+	switch l.Level {
+	case slog.LevelDebug:
+		return []byte("debug"), nil
+	case slog.LevelInfo:
+		return []byte("info"), nil
+	case slog.LevelWarn:
+		return []byte("warn"), nil
+	case slog.LevelError:
+		return []byte("error"), nil
+	default:
+		return nil, fmt.Errorf("unknown log level %v", l.Level)
+	}
 }
 
 // Duration is a wrapper around time.Duration that supports TOML unmarshalling
