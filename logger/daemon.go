@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"strings" // For message snippet
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
@@ -153,7 +152,7 @@ func (ld *Daemon) processLogs() {
 	ticker := time.NewTicker(cfg.LoggerBatch.FlushInterval.Duration)
 	defer ticker.Stop()
 
-	batch := make([]dbLogEntry, 0, cfg.LoggerBatch.FlushSize) // Batch of pre-processed entries
+	batch := make([]dbLogEntry, 0, cfg.LoggerBatch.FlushSize)
 
 	flushBatch := func(reason string) {
 		if len(batch) == 0 {
@@ -162,7 +161,7 @@ func (ld *Daemon) processLogs() {
 		if err := ld.WriteLogBatch(context.Background(), batch); err != nil {
 			ld.opLogger.Error("Failed to write log batch to DB", "error", err, "batch_size", len(batch), "reason", reason)
 		}
-		batch = batch[:0] // Reset batch
+		batch = batch[:0]
 	}
 
 	for {
@@ -174,16 +173,13 @@ func (ld *Daemon) processLogs() {
 				return
 			}
 
-			// Prepare the record for DB insertion (conversions, JSON marshalling)
 			dbEntry, err := ld.prepareRecordForDB(record)
 			if err != nil {
-				msgLen := len(record.Message)
-				if msgLen > 100 {
-					msgLen = 100
-				}
+				// Log the error with relevant details from the original record.
+				// The full record.Message is now passed.
 				ld.opLogger.Error("Failed to prepare record for DB, skipping",
-					"error", err, "record_time", record.Time, "record_msg_snippet", record.Message[:msgLen])
-				continue // Skip this problematic record
+					"error", err, "record_time", record.Time, "record_msg", record.Message)
+				continue
 			}
 
 			batch = append(batch, dbEntry)
@@ -206,12 +202,8 @@ func (ld *Daemon) processLogs() {
 					}
 					dbEntry, err := ld.prepareRecordForDB(record)
 					if err != nil {
-						msgLen := len(record.Message)
-						if msgLen > 100 {
-							msgLen = 100
-						}
 						ld.opLogger.Error("Failed to prepare record during drain, skipping",
-							"error", err, "record_time", record.Time, "record_msg_snippet", record.Message[:msgLen])
+							"error", err, "record_time", record.Time, "record_msg", record.Message)
 						continue
 					}
 					batch = append(batch, dbEntry)
@@ -230,7 +222,6 @@ func (ld *Daemon) processLogs() {
 }
 
 // WriteLogBatch writes a batch of pre-processed dbLogEntry items to the SQLite database.
-// It wraps all insertions for the batch in a single transaction.
 func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []dbLogEntry) error {
 	if len(batch) == 0 {
 		return nil
@@ -246,11 +237,12 @@ func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []dbLogEntry) error {
 		for _, entry := range batch {
 			stmt.SetInt64("$level", entry.level)
 			stmt.SetText("$message", entry.message)
-			stmt.SetText("$data", entry.jsonData) // Already a JSON string
-			stmt.SetText("$created", entry.created) // Already formatted
+			stmt.SetText("$data", entry.jsonData)
+			stmt.SetText("$created", entry.created)
 
 			if _, err := stmt.Step(); err != nil {
 				stmt.Reset()
+				// The error message now includes the full original message of the entry that failed.
 				return fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.message, err)
 			}
 			stmt.Reset()
@@ -264,9 +256,7 @@ func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []dbLogEntry) error {
 	return nil
 }
 
-// convertSlogRecordToMap is no longer directly used in the DB writing path but kept for
-// its utility in resolveAndInsertAttr for group attributes or potential other uses.
-// If it were only for DB, prepareRecordForDB is the more specialized function.
+// convertSlogRecordToMap is primarily used by resolveAndInsertAttr for group attributes.
 func convertSlogRecordToMap(r slog.Record) map[string]any {
 	data := make(map[string]any)
 	data["time"] = r.Time.UTC().Format(time.RFC3339Nano)
@@ -281,7 +271,6 @@ func convertSlogRecordToMap(r slog.Record) map[string]any {
 }
 
 // resolveAndInsertAttr recursively resolves attributes and adds them to the map.
-// This is used by prepareRecordForDB to build the attributes map for JSON marshalling.
 func resolveAndInsertAttr(m map[string]any, a slog.Attr) {
 	key := a.Key
 	if key == "" {
