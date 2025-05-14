@@ -1,5 +1,15 @@
 package logger
 
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"os"
+	"time"
+
+	"github.com/caasmo/restinpieces/config"
+)
+
 const (
 	LoggerDaemonFlushInterval = 1 * time.Second
 )
@@ -18,7 +28,7 @@ type LoggerDaemon struct {
 	internalRecordChan chan slog.Record
 	dbWriter           DBWriter
 	opLogger           *slog.Logger
-	appProvider        *AppProvider // For batch sizes
+	configProvider     *config.Provider // For batch sizes
 
 	// dbBatchSize is for flushing to DB, derived from AppProvider.Get().BatchSize
 	dbBatchSize int
@@ -33,12 +43,12 @@ type LoggerDaemon struct {
 // The write-end of this channel can be retrieved via RecordInputChan().
 func NewLoggerDaemon(
 	daemonName string,
-	appProvider *AppProvider,
+	configProvider *config.Provider,
 	dbWriter DBWriter,
 	opLogger *slog.Logger,
 ) (*LoggerDaemon, error) {
-	if appProvider == nil {
-		return nil, fmt.Errorf("loggerdaemon: appProvider cannot be nil")
+	if configProvider == nil {
+		return nil, fmt.Errorf("loggerdaemon: configProvider cannot be nil")
 	}
 	if dbWriter == nil {
 		return nil, fmt.Errorf("loggerdaemon: dbWriter cannot be nil")
@@ -47,7 +57,7 @@ func NewLoggerDaemon(
 		opLogger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	}
 
-	config := appProvider.Get()
+	config := configProvider.Get()
 	if config == nil {
 		return nil, fmt.Errorf("loggerdaemon: initial config from appProvider unexpectedly nil")
 	}
@@ -68,7 +78,7 @@ func NewLoggerDaemon(
 		internalRecordChan: make(chan slog.Record, channelBufferSize), // Creates and owns this channel
 		dbWriter:           dbWriter,
 		opLogger:           opLogger.With("daemon_component", "LoggerDaemon", "instance_name", daemonName),
-		appProvider:        appProvider,
+		configProvider:     configProvider,
 		dbBatchSize:        dbBatchSize,
 		ctx:                ctx,
 		cancel:             cancel,
