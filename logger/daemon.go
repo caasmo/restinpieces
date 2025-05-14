@@ -1,11 +1,10 @@
-package batchsloghandler
+>package batchsloghandler
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os" // Required for the AppProvider example fallback if we want to keep it similar or for opLogger default.
-	"sync"
+	"os"
 	"time"
 )
 
@@ -27,7 +26,8 @@ type LoggerDaemon struct {
 
 	ctx    context.Context
 	cancel context.CancelFunc
-	wg     sync.WaitGroup
+	// shutdownDone signals when the processing goroutine has completely stopped
+	shutdownDone chan struct{}
 }
 
 func NewLoggerDaemon(
@@ -47,14 +47,11 @@ func NewLoggerDaemon(
 		return nil, fmt.Errorf("loggerdaemon: dbWriter cannot be nil")
 	}
 	if opLogger == nil {
-		// Fallback to a minimal operational logger if none is provided.
-		// In a real application, opLogger should always be provided and configured.
 		opLogger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
 	}
 
-	config := appProvider.Get() // AppProvider's Get() has a fallback, so config shouldn't be nil.
+	config := appProvider.Get()
 	if config == nil {
-		// Defensive check, should not happen with the example AppProvider.
 		return nil, fmt.Errorf("loggerdaemon: initial config from appProvider unexpectedly nil")
 	}
 
@@ -66,13 +63,14 @@ func NewLoggerDaemon(
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &LoggerDaemon{
-		daemonName:  daemonName,
-		handler:     handler,
-		dbWriter:    dbWriter,
-		opLogger:    opLogger.With("daemon_component", "LoggerDaemon", "instance_name", daemonName),
-		batchSize:   batchSize,
-		ctx:         ctx,
-		cancel:      cancel,
+		daemonName:   daemonName,
+		handler:      handler,
+		dbWriter:     dbWriter,
+		opLogger:     opLogger.With("daemon_component", "LoggerDaemon", "instance_name", daemonName),
+		batchSize:    batchSize,
+		ctx:          ctx,
+		cancel:       cancel,
+		shutdownDone: make(chan struct{}),
 	}, nil
 }
 
@@ -82,7 +80,6 @@ func (ld *LoggerDaemon) Name() string {
 
 func (ld *LoggerDaemon) Start() error {
 	ld.opLogger.Info("Starting LoggerDaemon")
-	ld.wg.Add(1)
 	go ld.processLogs()
 	return nil
 }
@@ -91,14 +88,8 @@ func (ld *LoggerDaemon) Stop(ctx context.Context) error {
 	ld.opLogger.Info("Stopping LoggerDaemon")
 	ld.cancel()
 
-	doneCh := make(chan struct{})
-	go func() {
-		ld.wg.Wait()
-		close(doneCh)
-	}()
-
 	select {
-	case <-doneCh:
+	case <-ld.shutdownDone:
 		ld.opLogger.Info("LoggerDaemon stopped gracefully")
 		return nil
 	case <-ctx.Done():
@@ -108,7 +99,7 @@ func (ld *LoggerDaemon) Stop(ctx context.Context) error {
 }
 
 func (ld *LoggerDaemon) processLogs() {
-	defer ld.wg.Done()
+	defer close(ld.shutdownDone)
 
 	ticker := time.NewTicker(LoggerDaemonFlushInterval)
 	defer ticker.Stop()
@@ -119,7 +110,6 @@ func (ld *LoggerDaemon) processLogs() {
 		if len(batch) == 0 {
 			return
 		}
-		// ld.opLogger.Debug("Flushing log batch", "reason", reason, "count", len(batch)) // Optional: for verbose logging
 		if err := ld.dbWriter.WriteLogBatch(context.Background(), batch); err != nil {
 			ld.opLogger.Error("Failed to write log batch to DB", "error", err, "batch_size", len(batch))
 		}
@@ -152,7 +142,6 @@ func (ld *LoggerDaemon) processLogs() {
 				select {
 				case record, ok := <-ld.handler.RecordChan():
 					if !ok {
-						// ld.opLogger.Info("RecordChan closed during drain.") // Optional
 						break drainLoop
 					}
 					convertedRecord := convertSlogRecordToMap(record)
@@ -160,8 +149,7 @@ func (ld *LoggerDaemon) processLogs() {
 					if len(batch) >= ld.batchSize {
 						flushBatch("shutdown_drain_batch_full")
 					}
-				default: // Channel is empty at this moment
-					// ld.opLogger.Info("RecordChan appears empty during drain.") // Optional
+				default:
 					break drainLoop
 				}
 			}
@@ -176,7 +164,7 @@ func convertSlogRecordToMap(r slog.Record) map[string]any {
 	data := make(map[string]any)
 	data["time"] = r.Time.UTC().Format(time.RFC3339Nano)
 	data["level"] = r.Level.String()
-	data["msg"] = r.Message // Using "msg" for consistency with slog.JSONHandler default
+	data["msg"] = r.Message
 
 	r.Attrs(func(a slog.Attr) bool {
 		resolveAndInsertAttr(data, a)
@@ -217,7 +205,7 @@ func resolveAndInsertAttr(m map[string]any, a slog.Attr) {
 		if len(groupMap) > 0 {
 			m[key] = groupMap
 		}
-	default: // slog.KindAny, slog.KindLogValuer (after Resolve)
+	default:
 		m[key] = val.Any()
 	}
 }
