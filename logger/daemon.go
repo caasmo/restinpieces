@@ -2,21 +2,34 @@ package logger
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings" // For message snippet
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
+	"zombiezen.dev/go/sqlite"
+	"zombiezen.dev/go/sqlitefile"
+	"zombiezen.dev/go/sqlite/sqlitex"
 )
 
+// dbLogEntry holds pre-processed log data ready for DB insertion.
+type dbLogEntry struct {
+	level    int64
+	message  string
+	jsonData string // Pre-marshalled JSON for the 'data' field
+	created  string // Pre-formatted time string for 'created'
+}
+
 // Daemon consumes slog.Records from a channel and writes them to a DB.
-// It owns the channel.
+// It owns the channel and the database connection.
 type Daemon struct {
 	name string
 	// recordChan is owned and managed entirely within Daemon.
 	// BatchHandler sends to this channel via the write-end provided by RecordChan().
 	recordChan     chan slog.Record
-	dbWriter       DBWriter
+	db             *sqlite.Conn
 	opLogger       *slog.Logger
 	configProvider *config.Provider
 
@@ -26,23 +39,31 @@ type Daemon struct {
 }
 
 // NewDaemon creates a new Daemon.
-// It creates a channel for slog.Records.
-// The write-end of this channel can be retrieved via RecordChan().
+// It creates a channel for slog.Records and establishes a database connection.
 func NewDaemon(
 	name string,
 	configProvider *config.Provider,
-	dbWriter DBWriter,
 	opLogger *slog.Logger,
 ) (*Daemon, error) {
-
-
 	ctx, cancel := context.WithCancel(context.Background())
-
 	cfg := configProvider.Get()
+
+	dbPath := cfg.Logger.DbPath
+	if dbPath == "" {
+		cancel()
+		return nil, fmt.Errorf("logger daemon: database path (Logger.DbPath) is not configured")
+	}
+
+	db, err := sqlitefile.Open(dbPath, sqlitefile.OpenFlags(sqlite.OpenReadWrite|sqlite.OpenCreate))
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", dbPath, err)
+	}
+
 	daemon := &Daemon{
 		name:           name,
 		recordChan:     make(chan slog.Record, cfg.LoggerBatch.ChanSize),
-		dbWriter:       dbWriter,
+		db:             db,
 		opLogger:       opLogger.With("daemon_component", "Daemon", "instance_name", name),
 		configProvider: configProvider,
 		ctx:            ctx,
@@ -53,7 +74,6 @@ func NewDaemon(
 }
 
 // RecordChan returns the write-end of the channel.
-// This is intended to be used by BatchHandler to send records to this daemon.
 func (ld *Daemon) RecordChan() chan<- slog.Record {
 	return ld.recordChan
 }
@@ -71,47 +91,75 @@ func (ld *Daemon) Start() error {
 }
 
 // Stop gracefully shuts down the daemon.
-// It signals the processing goroutine, waits for it to drain and finish,
-// and then closes the record channel.
 func (ld *Daemon) Stop(ctx context.Context) error {
 	ld.opLogger.Info("Stopping Daemon")
-	ld.cancel() // Signal the processLogs goroutine to stop
+	ld.cancel()
 
 	select {
 	case <-ld.shutdownDone:
 		ld.opLogger.Info("Daemon processing goroutine confirmed shutdown.")
 	case <-ctx.Done():
 		ld.opLogger.Error("Daemon shutdown timed out waiting for processing goroutine", "error", ctx.Err())
-		// Even if timed out, the channel closure attempt is important.
-		// However, processLogs might still be running, leading to a panic if it reads after close.
-		// The shutdownDone signal is crucial. If timeout happens, it implies a problem in processLogs' exit.
 		return ctx.Err()
 	}
 
-	// At this point, shutdownDone is closed, meaning processLogs has exited.
-	// It is now safe for the owner (LoggerDaemon) to close its internal channel.
 	ld.opLogger.Info("Closing owned record channel.")
 	close(ld.recordChan)
+
+	ld.opLogger.Info("Closing database connection.")
+	if ld.db != nil {
+		if err := ld.db.Close(); err != nil {
+			ld.opLogger.Error("Failed to close database connection", "error", err)
+		}
+	}
 
 	ld.opLogger.Info("Daemon stopped gracefully.")
 	return nil
 }
 
-// processLogs is the internal goroutine that reads from the channel and writes to the DB.
-func (ld *Daemon) processLogs() {
-	defer close(ld.shutdownDone) // Signal that this goroutine has finished
+// prepareRecordForDB converts an slog.Record into a dbLogEntry, ready for insertion.
+// This includes marshalling attributes to JSON.
+func (ld *Daemon) prepareRecordForDB(record slog.Record) (dbLogEntry, error) {
+	attrsMap := make(map[string]any)
+	record.Attrs(func(a slog.Attr) bool {
+		resolveAndInsertAttr(attrsMap, a)
+		return true
+	})
 
-	ticker := time.NewTicker(ld.configProvider.Get().LoggerBatch.FlushInterval.Duration)
+	var jsonDataBytes []byte
+	var err error
+	if len(attrsMap) > 0 {
+		jsonDataBytes, err = json.Marshal(attrsMap)
+		if err != nil {
+			return dbLogEntry{}, fmt.Errorf("failed to marshal log attributes to JSON: %w", err)
+		}
+	} else {
+		jsonDataBytes = []byte("{}") // Default JSON for empty attributes
+	}
+
+	return dbLogEntry{
+		level:    int64(record.Level.Level()),
+		message:  record.Message,
+		jsonData: string(jsonDataBytes),
+		created:  record.Time.UTC().Format("2006-01-02 15:04:05.000Z"),
+	}, nil
+}
+
+// processLogs is the internal goroutine that reads from the channel, prepares, and writes to the DB.
+func (ld *Daemon) processLogs() {
+	defer close(ld.shutdownDone)
+
+	cfg := ld.configProvider.Get()
+	ticker := time.NewTicker(cfg.LoggerBatch.FlushInterval.Duration)
 	defer ticker.Stop()
 
-	batch := make([]map[string]any, 0, ld.configProvider.Get().LoggerBatch.FlushSize)
+	batch := make([]dbLogEntry, 0, cfg.LoggerBatch.FlushSize) // Batch of pre-processed entries
 
 	flushBatch := func(reason string) {
 		if len(batch) == 0 {
 			return
 		}
-		// Using a background context for DB write.
-		if err := ld.dbWriter.WriteLogBatch(context.Background(), batch); err != nil {
+		if err := ld.WriteLogBatch(context.Background(), batch); err != nil {
 			ld.opLogger.Error("Failed to write log batch to DB", "error", err, "batch_size", len(batch), "reason", reason)
 		}
 		batch = batch[:0] // Reset batch
@@ -121,54 +169,104 @@ func (ld *Daemon) processLogs() {
 		select {
 		case record, ok := <-ld.recordChan:
 			if !ok {
-				// This occurs when ld.recordChan is closed by ld.Stop().
-				// This is the expected way for this loop to terminate after ctx.Done()
-				// has caused the drain and Stop() proceeds to close the channel.
 				ld.opLogger.Info("Record channel closed by owner, exiting processLogs.")
-				flushBatch("channel_closed_by_owner") // Final flush
+				flushBatch("channel_closed_by_owner")
 				return
 			}
-			convertedRecord := convertSlogRecordToMap(record)
-			batch = append(batch, convertedRecord)
-			if len(batch) >= ld.configProvider.Get().LoggerBatch.FlushSize {
+
+			// Prepare the record for DB insertion (conversions, JSON marshalling)
+			dbEntry, err := ld.prepareRecordForDB(record)
+			if err != nil {
+				msgLen := len(record.Message)
+				if msgLen > 100 {
+					msgLen = 100
+				}
+				ld.opLogger.Error("Failed to prepare record for DB, skipping",
+					"error", err, "record_time", record.Time, "record_msg_snippet", record.Message[:msgLen])
+				continue // Skip this problematic record
+			}
+
+			batch = append(batch, dbEntry)
+			if len(batch) >= cfg.LoggerBatch.FlushSize {
 				flushBatch("db_batch_full")
 			}
 
 		case <-ticker.C:
 			flushBatch("ticker_flush")
 
-		case <-ld.ctx.Done(): // Primary shutdown signal
+		case <-ld.ctx.Done():
 			ld.opLogger.Info("Shutdown signal (ctx.Done) received, draining remaining logs from channel.")
-		drainLoop: // Drain the channel after ctx is cancelled but before channel is closed by Stop().
+		drainLoop:
 			for {
 				select {
 				case record, ok := <-ld.recordChan:
 					if !ok {
-						// Channel was closed (likely by Stop() if shutdown was very fast, or an error occurred)
 						ld.opLogger.Info("Record channel closed during drain.")
 						break drainLoop
 					}
-					convertedRecord := convertSlogRecordToMap(record)
-					batch = append(batch, convertedRecord)
-					if len(batch) >= ld.configProvider.Get().LoggerBatch.FlushSize {
+					dbEntry, err := ld.prepareRecordForDB(record)
+					if err != nil {
+						msgLen := len(record.Message)
+						if msgLen > 100 {
+							msgLen = 100
+						}
+						ld.opLogger.Error("Failed to prepare record during drain, skipping",
+							"error", err, "record_time", record.Time, "record_msg_snippet", record.Message[:msgLen])
+						continue
+					}
+					batch = append(batch, dbEntry)
+					if len(batch) >= cfg.LoggerBatch.FlushSize {
 						flushBatch("shutdown_drain_db_batch_full")
 					}
-				default: // Channel is empty at this moment
+				default:
 					ld.opLogger.Debug("Record channel empty during drain.")
 					break drainLoop
 				}
 			}
-			flushBatch("shutdown_final_flush") // Flush any remaining items in the batch
+			flushBatch("shutdown_final_flush")
 			ld.opLogger.Info("Daemon processing goroutine finished draining, awaiting channel close by Stop().")
-			// This goroutine will now block on `<-ld.recordChan` until Stop() closes it,
-			// at which point `ok` will be `false` and it will exit.
-			// Or, if already empty and Stop() closes it immediately, it will exit directly.
-			// The `return` is handled by the `!ok` case of the main channel read.
 		}
 	}
 }
 
-// convertSlogRecordToMap converts a slog.Record to a map for DB storage.
+// WriteLogBatch writes a batch of pre-processed dbLogEntry items to the SQLite database.
+// It wraps all insertions for the batch in a single transaction.
+func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []dbLogEntry) error {
+	if len(batch) == 0 {
+		return nil
+	}
+
+	err := sqlitex.Transaction(ld.db, func(tx *sqlite.Conn) error {
+		stmt, err := tx.Prepare("INSERT INTO _logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
+		if err != nil {
+			return fmt.Errorf("failed to prepare statement: %w", err)
+		}
+		defer stmt.Close()
+
+		for _, entry := range batch {
+			stmt.SetInt64("$level", entry.level)
+			stmt.SetText("$message", entry.message)
+			stmt.SetText("$data", entry.jsonData) // Already a JSON string
+			stmt.SetText("$created", entry.created) // Already formatted
+
+			if _, err := stmt.Step(); err != nil {
+				stmt.Reset()
+				return fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.message, err)
+			}
+			stmt.Reset()
+		}
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("log batch write transaction failed: %w", err)
+	}
+	return nil
+}
+
+// convertSlogRecordToMap is no longer directly used in the DB writing path but kept for
+// its utility in resolveAndInsertAttr for group attributes or potential other uses.
+// If it were only for DB, prepareRecordForDB is the more specialized function.
 func convertSlogRecordToMap(r slog.Record) map[string]any {
 	data := make(map[string]any)
 	data["time"] = r.Time.UTC().Format(time.RFC3339Nano)
@@ -183,13 +281,14 @@ func convertSlogRecordToMap(r slog.Record) map[string]any {
 }
 
 // resolveAndInsertAttr recursively resolves attributes and adds them to the map.
+// This is used by prepareRecordForDB to build the attributes map for JSON marshalling.
 func resolveAndInsertAttr(m map[string]any, a slog.Attr) {
 	key := a.Key
-	if key == "" { // Skip empty keys
+	if key == "" {
 		return
 	}
 
-	val := a.Value.Resolve() // Resolve LogValuers
+	val := a.Value.Resolve()
 
 	switch val.Kind() {
 	case slog.KindString:
@@ -203,29 +302,28 @@ func resolveAndInsertAttr(m map[string]any, a slog.Attr) {
 	case slog.KindBool:
 		m[key] = val.Bool()
 	case slog.KindDuration:
-		m[key] = val.Duration().String() // Store as string for broad DB compatibility
+		m[key] = val.Duration().String()
 	case slog.KindTime:
 		m[key] = val.Time().UTC().Format(time.RFC3339Nano)
 	case slog.KindGroup:
 		groupAttrs := val.Group()
-		if len(groupAttrs) == 0 { // Don't add empty groups
+		if len(groupAttrs) == 0 {
 			return
 		}
 		groupMap := make(map[string]any)
 		for _, ga := range groupAttrs {
 			resolveAndInsertAttr(groupMap, ga)
 		}
-		if len(groupMap) > 0 { // Only add group if it has content
+		if len(groupMap) > 0 {
 			m[key] = groupMap
 		}
-	default: // slog.KindAny or other (after Resolve)
-		// Attempt to represent common types, otherwise stringify
+	default:
 		anyVal := val.Any()
 		switch v := anyVal.(type) {
 		case error:
-			m[key] = v.Error() // Store error as string
+			m[key] = v.Error()
 		default:
-			m[key] = fmt.Sprint(anyVal) // Fallback to string representation
+			m[key] = fmt.Sprint(anyVal)
 		}
 	}
 }
