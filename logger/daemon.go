@@ -9,7 +9,6 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"zombiezen.com/go/sqlite"
-	"zombiezen.com/go/sqlite/sqlitefile"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
@@ -47,13 +46,13 @@ func NewDaemon(
 	ctx, cancel := context.WithCancel(context.Background())
 	cfg := configProvider.Get()
 
-	dbPath := cfg.Logger.DbPath
+	dbPath := cfg.LoggerBatch.DbPath
 	if dbPath == "" {
 		cancel()
-		return nil, fmt.Errorf("logger daemon: database path (Logger.DbPath) is not configured")
+		return nil, fmt.Errorf("logger daemon: database path (LoggerBatch.DbPath) is not configured")
 	}
 
-	db, err := sqlitefile.Open(dbPath, sqlitefile.OpenFlags(sqlite.OpenReadWrite|sqlite.OpenCreate))
+	db, err := sqlite.OpenConn(dbPath, sqlite.OpenReadWrite|sqlite.OpenCreate)
 	if err != nil {
 		cancel()
 		return nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", dbPath, err)
