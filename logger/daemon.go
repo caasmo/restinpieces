@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
-	"zombiezen.dev/go/sqlite"
-	"zombiezen.dev/go/sqlitefile"
-	"zombiezen.dev/go/sqlite/sqlitex"
+	"zombiezen.com/go/sqlite"
+	"zombiezen.com/go/sqlite/sqlitefile"
+	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 // dbLogEntry holds pre-processed log data ready for DB insertion.
