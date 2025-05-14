@@ -47,9 +47,6 @@ func NewDaemon(
 	dbWriter DBWriter,
 	opLogger *slog.Logger,
 ) (*LoggerDaemon, error) {
-	if opLogger == nil {
-		opLogger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	}
 
 
 	channelBufferSize := config.BatchSize
