@@ -226,28 +226,35 @@ func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []dbLogEntry) error {
 		return nil
 	}
 
-	err := sqlitex.Transaction(ld.db, func(tx *sqlite.Conn) error {
-		stmt, err := tx.Prepare("INSERT INTO _logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
-		if err != nil {
-			return fmt.Errorf("failed to prepare statement: %w", err)
-		}
-		defer stmt.Close()
+	err := sqlitex.Execute(ld.db, "BEGIN;", nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
 
-		for _, entry := range batch {
-			stmt.SetInt64("$level", entry.level)
-			stmt.SetText("$message", entry.message)
-			stmt.SetText("$data", entry.jsonData)
-			stmt.SetText("$created", entry.created)
+	stmt, err := ld.db.Prepare("INSERT INTO _logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
+	if err != nil {
+		return fmt.Errorf("failed to prepare statement: %w", err)
+	}
+	defer stmt.Finalize()
 
-			if _, err := stmt.Step(); err != nil {
-				stmt.Reset()
-				// The error message now includes the full original message of the entry that failed.
-				return fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.message, err)
-			}
+	for _, entry := range batch {
+		stmt.SetInt64("$level", entry.level)
+		stmt.SetText("$message", entry.message)
+		stmt.SetText("$data", entry.jsonData)
+		stmt.SetText("$created", entry.created)
+
+		if _, err := stmt.Step(); err != nil {
 			stmt.Reset()
+			// The error message now includes the full original message of the entry that failed.
+			return fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.message, err)
 		}
-		return nil
-	})
+		stmt.Reset()
+	}
+
+	err = sqlitex.Execute(ld.db, "COMMIT;", nil)
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
 
 	if err != nil {
 		return fmt.Errorf("log batch write transaction failed: %w", err)
