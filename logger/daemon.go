@@ -18,10 +18,7 @@ type Daemon struct {
 	recordChan     chan slog.Record
 	dbWriter       DBWriter
 	opLogger       *slog.Logger
-	configProvider *config.Provider 
-
-	// dbBatchSize is for flushing to DB, derived from AppProvider.Get().BatchSize
-	dbBatchSize int
+	configProvider *config.Provider
 
 	ctx          context.Context
 	cancel       context.CancelFunc
@@ -48,7 +45,6 @@ func NewDaemon(
 		dbWriter:       dbWriter,
 		opLogger:       opLogger.With("daemon_component", "Daemon", "instance_name", name),
 		configProvider: configProvider,
-		dbBatchSize:    cfg.LoggerBatch.FlushSize,
 		ctx:            ctx,
 		cancel:         cancel,
 		shutdownDone:   make(chan struct{}),
@@ -108,7 +104,7 @@ func (ld *Daemon) processLogs() {
 	ticker := time.NewTicker(ld.configProvider.Get().LoggerBatch.FlushInterval.Duration)
 	defer ticker.Stop()
 
-	batch := make([]map[string]any, 0, ld.dbBatchSize)
+	batch := make([]map[string]any, 0, ld.configProvider.Get().LoggerBatch.FlushSize)
 
 	flushBatch := func(reason string) {
 		if len(batch) == 0 {
@@ -134,7 +130,7 @@ func (ld *Daemon) processLogs() {
 			}
 			convertedRecord := convertSlogRecordToMap(record)
 			batch = append(batch, convertedRecord)
-			if len(batch) >= ld.dbBatchSize {
+			if len(batch) >= ld.configProvider.Get().LoggerBatch.FlushSize {
 				flushBatch("db_batch_full")
 			}
 
@@ -154,7 +150,7 @@ func (ld *Daemon) processLogs() {
 					}
 					convertedRecord := convertSlogRecordToMap(record)
 					batch = append(batch, convertedRecord)
-					if len(batch) >= ld.dbBatchSize {
+					if len(batch) >= ld.configProvider.Get().LoggerBatch.FlushSize {
 						flushBatch("shutdown_drain_db_batch_full")
 					}
 				default: // Channel is empty at this moment
