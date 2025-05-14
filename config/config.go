@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 	"sync/atomic"
