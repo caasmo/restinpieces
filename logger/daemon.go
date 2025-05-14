@@ -1,4 +1,4 @@
->package batchsloghandler
+package batchsloghandler
 
 import (
 	"context"
@@ -18,7 +18,7 @@ type DBWriter interface {
 
 type LoggerDaemon struct {
 	daemonName string
-	handler    *BatchHandler
+	recordChan <-chan slog.Record
 	dbWriter   DBWriter
 	opLogger   *slog.Logger
 
@@ -32,13 +32,13 @@ type LoggerDaemon struct {
 
 func NewLoggerDaemon(
 	daemonName string,
-	handler *BatchHandler,
+	recordChan <-chan slog.Record, // Changed from *BatchHandler
 	appProvider *AppProvider,
 	dbWriter DBWriter,
 	opLogger *slog.Logger,
 ) (*LoggerDaemon, error) {
-	if handler == nil {
-		return nil, fmt.Errorf("loggerdaemon: handler cannot be nil")
+	if recordChan == nil { // Changed nil check
+		return nil, fmt.Errorf("loggerdaemon: recordChan cannot be nil")
 	}
 	if appProvider == nil {
 		return nil, fmt.Errorf("loggerdaemon: appProvider cannot be nil")
@@ -55,7 +55,7 @@ func NewLoggerDaemon(
 		return nil, fmt.Errorf("loggerdaemon: initial config from appProvider unexpectedly nil")
 	}
 
-	batchSize := config.BatchSize
+	batchSize := config.BatchSize // Get batchSize from AppProvider
 	if batchSize < 1 {
 		batchSize = 1
 	}
@@ -64,7 +64,7 @@ func NewLoggerDaemon(
 
 	return &LoggerDaemon{
 		daemonName:   daemonName,
-		handler:      handler,
+		recordChan:   recordChan, // Store the channel directly
 		dbWriter:     dbWriter,
 		opLogger:     opLogger.With("daemon_component", "LoggerDaemon", "instance_name", daemonName),
 		batchSize:    batchSize,
@@ -118,9 +118,9 @@ func (ld *LoggerDaemon) processLogs() {
 
 	for {
 		select {
-		case record, ok := <-ld.handler.RecordChan():
+		case record, ok := <-ld.recordChan: // Read from the stored channel
 			if !ok {
-				ld.opLogger.Info("BatchHandler's RecordChan closed, flushing final batch and exiting.")
+				ld.opLogger.Info("Record channel closed, flushing final batch and exiting.")
 				flushBatch("channel_closed")
 				return
 			}
@@ -140,7 +140,7 @@ func (ld *LoggerDaemon) processLogs() {
 		drainLoop:
 			for {
 				select {
-				case record, ok := <-ld.handler.RecordChan():
+				case record, ok := <-ld.recordChan: // Read from the stored channel
 					if !ok {
 						break drainLoop
 					}
