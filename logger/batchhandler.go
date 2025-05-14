@@ -39,6 +39,7 @@ func NewBatchHandler(configProvider *AppProvider, recordChan chan<- slog.Record)
 func (h *BatchHandler) Enabled(_ context.Context, level slog.Level) bool {
 	conf := h.configProvider.Get()
 	return level >= conf.LoggerLevel
+}
 
 // Handle implements the slog.Handler interface.
 // It attempts to send the log record to the buffered channel in a non-blocking way.
