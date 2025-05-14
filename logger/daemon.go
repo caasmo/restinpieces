@@ -10,10 +10,6 @@ import (
 	"github.com/caasmo/restinpieces/config"
 )
 
-const (
-	LoggerDaemonFlushInterval = 1 * time.Second
-)
-
 // DBWriter is an interface for writing log batches to a database.
 type DBWriter interface {
 	WriteLogBatch(ctx context.Context, logs []map[string]any) error
@@ -123,7 +119,7 @@ func (ld *Daemon) Stop(ctx context.Context) error {
 func (ld *Daemon) processLogs() {
 	defer close(ld.shutdownDone) // Signal that this goroutine has finished
 
-	ticker := time.NewTicker(LoggerDaemonFlushInterval)
+	ticker := time.NewTicker(ld.configProvider.Get().Logger.FlushInterval.Duration)
 	defer ticker.Stop()
 
 	batch := make([]map[string]any, 0, ld.dbBatchSize)
