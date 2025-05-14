@@ -11,6 +11,7 @@ import (
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/logger"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/notify"
 	"github.com/caasmo/restinpieces/notify/discord"
