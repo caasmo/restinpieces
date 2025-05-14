@@ -4,16 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"os"
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
 )
-
-// DBWriter is an interface for writing log batches to a database.
-type DBWriter interface {
-	WriteLogBatch(ctx context.Context, logs []map[string]any) error
-}
 
 // Daemon consumes slog.Records from a channel and writes them to a DB.
 // It owns the channel.
@@ -42,7 +36,7 @@ func NewDaemon(
 	configProvider *config.Provider,
 	dbWriter DBWriter,
 	opLogger *slog.Logger,
-) (*LoggerDaemon, error) {
+) (*Daemon, error) {
 
 
 	channelBufferSize := config.BatchSize
