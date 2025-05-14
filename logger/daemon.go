@@ -39,24 +39,23 @@ func NewDaemon(
 ) (*Daemon, error) {
 
 
-	channelBufferSize := config.BatchSize
-	if channelBufferSize < 1 {
-		channelBufferSize = 1
+	cfg := configProvider.Get()
+	if cfg.LoggerBatch.ChanSize < 1 {
+		return nil, fmt.Errorf("invalid LoggerBatch.ChanSize: must be >= 1")
 	}
-	dbBatchSize := config.BatchSize
-	if dbBatchSize < 1 {
-		dbBatchSize = 1
+	if cfg.LoggerBatch.FlushSize < 1 {
+		return nil, fmt.Errorf("invalid LoggerBatch.FlushSize: must be >= 1")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
 	daemon := &Daemon{
-		name:     name,
-		recordChan:     make(chan slog.Record, channelBufferSize), // Creates and owns this channel
+		name:           name,
+		recordChan:     make(chan slog.Record, cfg.LoggerBatch.ChanSize),
 		dbWriter:       dbWriter,
 		opLogger:       opLogger.With("daemon_component", "Daemon", "instance_name", name),
 		configProvider: configProvider,
-		dbBatchSize:    dbBatchSize,
+		dbBatchSize:    cfg.LoggerBatch.FlushSize,
 		ctx:            ctx,
 		cancel:         cancel,
 		shutdownDone:   make(chan struct{}),
@@ -113,7 +112,7 @@ func (ld *Daemon) Stop(ctx context.Context) error {
 func (ld *Daemon) processLogs() {
 	defer close(ld.shutdownDone) // Signal that this goroutine has finished
 
-	ticker := time.NewTicker(ld.configProvider.Get().Logger.FlushInterval.Duration)
+	ticker := time.NewTicker(ld.configProvider.Get().LoggerBatch.FlushInterval.Duration)
 	defer ticker.Stop()
 
 	batch := make([]map[string]any, 0, ld.dbBatchSize)
