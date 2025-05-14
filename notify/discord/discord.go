@@ -10,12 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/time/rate"
 	"github.com/caasmo/restinpieces/config"
+	"golang.org/x/time/rate"
 
 	"github.com/caasmo/restinpieces/notify"
 )
-
 
 type payload struct {
 	Content string `json:"content"`
@@ -172,7 +171,7 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 		dn.logger.Log(sendCtx, slog.LevelDebug, "Successfully sent alarm notification to Discord via goroutine",
 			"source", notif.Source, "message", notif.Message)
 
-	}(n) 
+	}(n)
 
-	return nil 
+	return nil
 }

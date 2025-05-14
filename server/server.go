@@ -26,10 +26,10 @@ type Daemon interface {
 
 type Server struct {
 	configProvider *config.Provider
-	handler        http.Handler    // The main HTTP handler
+	handler        http.Handler // The main HTTP handler
 	logger         *slog.Logger
-	daemons        []Daemon        // Collection of managed daemons
-	reloadFunc     func() error    // Function to execute for configuration reload
+	daemons        []Daemon     // Collection of managed daemons
+	reloadFunc     func() error // Function to execute for configuration reload
 }
 
 func (s *Server) handleSIGHUP() {
