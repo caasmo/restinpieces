@@ -22,9 +22,9 @@ type DBWriter interface {
 // Daemon consumes slog.Records from a channel and writes them to a DB.
 // It owns the channel.
 type Daemon struct {
-	daemonName string
+	name string
 	// recordChan is owned and managed entirely within Daemon.
-	// BatchHandler sends to this channel via the write-end provided by RecordInputChan().
+	// BatchHandler sends to this channel via the write-end provided by RecordChan().
 	recordChan     chan slog.Record
 	dbWriter       DBWriter
 	opLogger       *slog.Logger
@@ -40,9 +40,9 @@ type Daemon struct {
 
 // NewDaemon creates a new Daemon.
 // It creates a channel for slog.Records.
-// The write-end of this channel can be retrieved via RecordInputChan().
+// The write-end of this channel can be retrieved via RecordChan().
 func NewDaemon(
-	daemonName string,
+	name string,
 	configProvider *config.Provider,
 	dbWriter DBWriter,
 	opLogger *slog.Logger,
@@ -64,10 +64,10 @@ func NewDaemon(
 	ctx, cancel := context.WithCancel(context.Background())
 
 	daemon := &Daemon{
-		daemonName:     daemonName,
+		name:     name,
 		recordChan:     make(chan slog.Record, channelBufferSize), // Creates and owns this channel
 		dbWriter:       dbWriter,
-		opLogger:       opLogger.With("daemon_component", "Daemon", "instance_name", daemonName),
+		opLogger:       opLogger.With("daemon_component", "Daemon", "instance_name", name),
 		configProvider: configProvider,
 		dbBatchSize:    dbBatchSize,
 		ctx:            ctx,
@@ -77,15 +77,15 @@ func NewDaemon(
 	return daemon, nil
 }
 
-// RecordInputChan returns the write-end of the channel.
+// RecordChan returns the write-end of the channel.
 // This is intended to be used by BatchHandler to send records to this daemon.
-func (ld *Daemon) RecordInputChan() chan<- slog.Record {
+func (ld *Daemon) RecordChan() chan<- slog.Record {
 	return ld.recordChan
 }
 
 // Name returns the name of the daemon.
 func (ld *Daemon) Name() string {
-	return ld.daemonName
+	return ld.name
 }
 
 // Start begins the daemon's log processing goroutine.
