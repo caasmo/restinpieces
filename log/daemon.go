@@ -42,20 +42,14 @@ func NewDaemon(
 	name string,
 	configProvider *config.Provider,
 	opLogger *slog.Logger,
+	db *sqlite.Conn,
 ) (*Daemon, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cfg := configProvider.Get()
 
-	dbPath := cfg.LoggerBatch.DbPath
-	if dbPath == "" {
+	if db == nil {
 		cancel()
-		return nil, fmt.Errorf("logger daemon: database path (LoggerBatch.DbPath) is not configured")
-	}
-
-	db, err := sqlite.OpenConn(dbPath, sqlite.OpenReadWrite|sqlite.OpenCreate)
-	if err != nil {
-		cancel()
-		return nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", dbPath, err)
+		return nil, fmt.Errorf("logger daemon: database connection cannot be nil")
 	}
 
 	daemon := &Daemon{
@@ -157,7 +151,7 @@ func (ld *Daemon) processLogs() {
 		if len(batch) == 0 {
 			return
 		}
-		if err := ld.WriteLogBatch(context.Background(), batch); err != nil {
+		if err := zombiezen.WriteLogBatch(ld.db, batch); err != nil {
 			ld.opLogger.Error("Failed to write log batch to DB", "error", err, "batch_size", len(batch), "reason", reason)
 		}
 		batch = batch[:0]
@@ -222,44 +216,7 @@ func (ld *Daemon) processLogs() {
 
 // WriteLogBatch writes a batch of pre-processed dbLogEntry items to the SQLite database.
 func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []dbLogEntry) error {
-	if len(batch) == 0 {
-		return nil
-	}
-
-	err := sqlitex.Execute(ld.db, "BEGIN;", nil)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-
-	stmt, err := ld.db.Prepare("INSERT INTO _logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
-	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %w", err)
-	}
-	defer stmt.Finalize()
-
-	for _, entry := range batch {
-		stmt.SetInt64("$level", entry.level)
-		stmt.SetText("$message", entry.message)
-		stmt.SetText("$data", entry.jsonData)
-		stmt.SetText("$created", entry.created)
-
-		if _, err := stmt.Step(); err != nil {
-			stmt.Reset()
-			// The error message now includes the full original message of the entry that failed.
-			return fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.message, err)
-		}
-		stmt.Reset()
-	}
-
-	err = sqlitex.Execute(ld.db, "COMMIT;", nil)
-	if err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	if err != nil {
-		return fmt.Errorf("log batch write transaction failed: %w", err)
-	}
-	return nil
+	return zombiezen.WriteLogBatch(ld.db, batch)
 }
 
 // convertSlogRecordToMap is primarily used by resolveAndInsertAttr for group attributes.
