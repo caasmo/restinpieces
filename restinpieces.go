@@ -237,27 +237,6 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 	},
 }
 
-func SetupDefaultLogger(app *core.App, configProvider *config.Provider, db *sqlite.Conn) (*log.Daemon, error) {
-	logger := app.Logger()
-	if logger == nil {
-		logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
-	}
-	logDaemon, err := log.New(configProvider, logger, db)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create log daemon: %w", err)
-	}
-
-	// Create batch handler with daemon's channel
-	batchHandler := log.NewBatchHandler(
-		configProvider,
-		logDaemon.RecordChan(),
-	)
-
-	newLogger := slog.New(batchHandler)
-	app.SetLogger(newLogger)
-
-	return logDaemon, nil
-}
 
 func SetupDefaultCache(app *core.App) error {
 	cacheInstance, err := ristretto.New[any]() // Explicit string keys and interface{} values
