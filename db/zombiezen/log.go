@@ -6,8 +6,8 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-// dbLogEntry holds pre-processed log data ready for DB insertion.
-type dbLogEntry struct {
+// DBLogEntry holds pre-processed log data ready for DB insertion.
+type DBLogEntry struct {
 	level    int64
 	message  string
 	jsonData string // Pre-marshalled JSON for the 'data' field
@@ -20,7 +20,7 @@ func NewConn(dbPath string) (*sqlite.Conn, error) {
 }
 
 // WriteLogBatch writes a batch of log entries to the SQLite database.
-func WriteLogBatch(conn *sqlite.Conn, batch []dbLogEntry) error {
+func WriteLogBatch(conn *sqlite.Conn, batch []DBLogEntry) error {
 	if len(batch) == 0 {
 		return nil
 	}
