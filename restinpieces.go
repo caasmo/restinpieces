@@ -11,6 +11,7 @@ import (
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/log"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/notify"
@@ -22,8 +23,6 @@ import (
 	"github.com/caasmo/restinpieces/router"
 	"github.com/caasmo/restinpieces/router/servemux"
 	"github.com/caasmo/restinpieces/server"
-	"github.com/caasmo/restinpieces/db/zombiezen"
-	"zombiezen.com/go/sqlite"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -36,16 +35,16 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
-    // Set up temporary bootstrap logger if none was provided before setting the
-    // default db based one.
-    var withUserLogger = true
-    if app.Logger() == nil {
-        withUserLogger = false
+	// Set up temporary bootstrap logger if none was provided before setting the
+	// default db based one.
+	var withUserLogger = true
+	if app.Logger() == nil {
+		withUserLogger = false
 
-        app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-            Level: slog.LevelInfo,
-        })))
-    }
+		app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})))
+	}
 
 	// Setup default router if none was set via options
 	if app.Router() == nil {
@@ -86,11 +85,11 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	configProvider := config.NewProvider(cfg)
 	app.SetConfigProvider(configProvider)
 
-    // Setup logger daemon after config is loaded
-    logDaemon, err := SetupDefaultLogger(app, configProvider, withUserLogger)
-    if err != nil {
-        return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
-    }
+	// Setup default logger if non of user
+	logDaemon, err := SetupDefaultLogger(app, configProvider, withUserLogger)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
+	}
 
 	// Setup custom application logic and routes
 	route(cfg, app)
@@ -121,8 +120,10 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	)
 
 	// Register the framework's core daemons
-	srv.AddDaemon(logDaemon)
 	srv.AddDaemon(scheduler)
+	if logDaemon != nil {
+		srv.AddDaemon(logDaemon)
+	}
 
 	return app, srv, nil
 }
@@ -233,7 +234,6 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 	},
 }
 
-
 func SetupDefaultCache(app *core.App) error {
 	cacheInstance, err := ristretto.New[any]() // Explicit string keys and interface{} values
 	if err != nil {
@@ -247,9 +247,9 @@ func SetupDefaultCache(app *core.App) error {
 // withUserLogger indicates if the app already had a logger configured
 func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUserLogger bool) (*log.Daemon, error) {
 	if withUserLogger {
-		
-        return nil,nil
+		return nil, nil
 	}
+
 	cfg := configProvider.Get()
 	logDbPath := cfg.LoggerBatch.DbPath
 	if logDbPath == "" {
@@ -274,6 +274,7 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUser
 		daemonCtx,
 	)
 
+	app.SetLogger(slog.New(batchHandler))
 
 	return logDaemon, nil
 }

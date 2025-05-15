@@ -7,7 +7,6 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-
 // NewConn creates a new SQLite connection for logging purposes.
 func NewConn(dbPath string) (*sqlite.Conn, error) {
 	return sqlite.OpenConn(dbPath, sqlite.OpenReadWrite|sqlite.OpenCreate)

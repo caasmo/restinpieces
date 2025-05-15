@@ -50,24 +50,24 @@ func (h *BatchHandler) Enabled(_ context.Context, level slog.Level) bool {
 // 1. First checks if daemon is shutting down (fast path)
 // 2. Then attempts non-blocking channel send
 // 3. Returns error if either:
-//    - Daemon is shutting down (highest priority)
-//    - Channel is full (secondary)
+//   - Daemon is shutting down (highest priority)
+//   - Channel is full (secondary)
 //
 // Note: The select statement evaluates both cases simultaneously, so we must
 // check ctx.Done() first to ensure proper shutdown behavior.
 func (h *BatchHandler) Handle(_ context.Context, r slog.Record) error {
-    // Check shutdown first since select is non-sequential
-    if h.daemonCtx.Err() != nil {
-        return fmt.Errorf("daemon shutting down, dropping log record")
-    }
-    
-    // Non-blocking channel send attempt
-    select {
-    case h.recordChan <- r:
-        return nil
-    default:
-        return fmt.Errorf("log channel full, dropping record")
-    }
+	// Check shutdown first since select is non-sequential
+	if h.daemonCtx.Err() != nil {
+		return fmt.Errorf("daemon shutting down, dropping log record")
+	}
+
+	// Non-blocking channel send attempt
+	select {
+	case h.recordChan <- r:
+		return nil
+	default:
+		return fmt.Errorf("log channel full, dropping record")
+	}
 }
 
 // WithAttrs implements the slog.Handler interface.

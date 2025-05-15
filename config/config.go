@@ -67,21 +67,23 @@ type Config struct {
 
 // LoggerBatch contains configuration for the batch logger
 type LoggerBatch struct {
-	FlushSize    int      `toml:"flush_size" comment:"Number of log records to batch before writing to DB"`
-	ChanSize     int      `toml:"chan_size" comment:"Size of the log record channel buffer"`
+	FlushSize     int      `toml:"flush_size" comment:"Number of log records to batch before writing to DB"`
+	ChanSize      int      `toml:"chan_size" comment:"Size of the log record channel buffer"`
 	FlushInterval Duration `toml:"flush_interval" comment:"Maximum time between log flushes"`
-	Level        LogLevel `toml:"level" comment:"Minimum log level (debug, info, warn, error)"`
-	DbPath       string   `toml:"db_path" comment:"Path to SQLite database file for log storage"`
+	Level         LogLevel `toml:"level" comment:"Minimum log level (debug, info, warn, error)"`
+	DbPath        string   `toml:"db_path" comment:"Path to SQLite database file for log storage"`
 }
 
 // LogLevel is a wrapper around slog.Level that supports TOML unmarshalling
 // Valid TOML values:
 //   - String values (case insensitive): "debug", "info", "warn", "error"
 //   - Numeric values: -4 (debug), 0 (info), 4 (warn), 8 (error)
+//
 // Example:
-//   level = "debug"  # string name
-//   level = "DEBUG"  # any case
-//   level = -4       # numeric value
+//
+//	level = "debug"  # string name
+//	level = "DEBUG"  # any case
+//	level = -4       # numeric value
 type LogLevel struct {
 	slog.Level
 }

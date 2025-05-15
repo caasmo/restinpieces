@@ -13,7 +13,6 @@ import (
 	"zombiezen.com/go/sqlite"
 )
 
-
 // Daemon consumes slog.Records from a channel and writes them to a DB.
 // It owns the channel and the database connection.
 type Daemon struct {
@@ -84,7 +83,6 @@ func (ld *Daemon) Stop(ctx context.Context) error {
 		ld.opLogger.Error("Daemon shutdown timed out waiting for processing goroutine", "error", ctx.Err())
 		return ctx.Err()
 	}
-
 
 	ld.opLogger.Info("Daemon stopped gracefully.")
 	return nil
@@ -191,17 +189,17 @@ func (ld *Daemon) processLogs() {
 			}
 			flushBatch("shutdown_final_flush")
 			ld.opLogger.Info("Daemon processing goroutine finished draining")
-            ld.opLogger.Info("Closing owned record channel.")
-            close(ld.recordChan)
+			ld.opLogger.Info("Closing owned record channel.")
+			close(ld.recordChan)
 
-            ld.opLogger.Info("Closing database connection.")
-            if ld.db != nil {
-                if err := ld.db.Close(); err != nil {
-                    ld.opLogger.Error("Failed to close database connection", "error", err)
-                }
-            }
-            return
-        }
+			ld.opLogger.Info("Closing database connection.")
+			if ld.db != nil {
+				if err := ld.db.Close(); err != nil {
+					ld.opLogger.Error("Failed to close database connection", "error", err)
+				}
+			}
+			return
+		}
 	}
 }
 
