@@ -38,7 +38,7 @@ func WriteLogBatch(conn *sqlite.Conn, batch []db.Log) error {
 
 		if _, err := stmt.Step(); err != nil {
 			stmt.Reset()
-			return fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.message, err)
+			return fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.Message, err)
 		}
 		stmt.Reset()
 	}
