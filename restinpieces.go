@@ -245,13 +245,8 @@ func SetupDefaultCache(app *core.App) error {
 	return nil
 }
 
-// SetupDefaultNotifier initializes the default notifier based on configuration
+// SetupDefaultLogger initializes the logger daemon and batch handler
 func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*log.Daemon, error) {
-	logger := app.Logger()
-	if logger == nil {
-		logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
-	}
-
 	cfg := configProvider.Get()
 	logDbPath := cfg.LoggerBatch.DbPath
 	if logDbPath == "" {
@@ -263,7 +258,7 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*log.Da
 		return nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", logDbPath, err)
 	}
 
-	logDaemon, err := log.New(configProvider, logger, logDb)
+	logDaemon, err := log.New(configProvider, app.Logger(), logDb)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create log daemon: %w", err)
 	}
@@ -276,8 +271,7 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*log.Da
 		daemonCtx,
 	)
 
-	newLogger := slog.New(batchHandler)
-	app.SetLogger(newLogger)
+	app.SetLogger(slog.New(batchHandler))
 
 	return logDaemon, nil
 }
