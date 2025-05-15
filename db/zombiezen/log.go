@@ -1,8 +1,7 @@
 package zombiezen
 
 import (
-	"context"
-	"log/slog"
+	"fmt"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
