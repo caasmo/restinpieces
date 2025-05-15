@@ -7,9 +7,13 @@ import (
 	"log/slog"
 )
 
-// BatchHandler is a slog.Handler that attempts to send records to an externally provided channel.
-// The log level is dynamically determined by the config provider.
-// If the channel is full or the daemon is shutting down, records are dropped.
+// BatchHandler is a lightweight slog.Handler that sends records to a channel for batched processing.
+// Important implementation notes:
+// - Error handling is lightweight - failed logs are simply dropped with an error return
+// - The select statement in Handle() is not sequential - both cases are evaluated simultaneously
+// - Checking ctx.Done() first is crucial to avoid sending during shutdown
+// - Channel writes are non-blocking - full channels result in dropped logs
+// - Designed for high throughput at the cost of some reliability
 type BatchHandler struct {
 	configProvider *config.Provider   // For dynamic log levels
 	recordChan     chan<- slog.Record // Write-end of the channel, provided by Daemon
@@ -48,18 +52,28 @@ func (h *BatchHandler) Enabled(_ context.Context, level slog.Level) bool {
 }
 
 // Handle implements the slog.Handler interface.
-// It attempts to send the log record to the buffered channel.
-// Returns error if daemon is shutting down or channel is full.
+// It attempts to send the log record to the buffered channel with these behaviors:
+// 1. First checks if daemon is shutting down (fast path)
+// 2. Then attempts non-blocking channel send
+// 3. Returns error if either:
+//    - Daemon is shutting down (highest priority)
+//    - Channel is full (secondary)
+//
+// Note: The select statement evaluates both cases simultaneously, so we must
+// check ctx.Done() first to ensure proper shutdown behavior.
 func (h *BatchHandler) Handle(_ context.Context, r slog.Record) error {
+    // Check shutdown first since select is non-sequential
     if h.daemonCtx.Err() != nil {
         return fmt.Errorf("daemon shutting down, dropping log record")
     }
-	select {
-	case h.recordChan <- r:
-		return nil
-	default:
-		return fmt.Errorf("log channel full, dropping record")
-	}
+    
+    // Non-blocking channel send attempt
+    select {
+    case h.recordChan <- r:
+        return nil
+    default:
+        return fmt.Errorf("log channel full, dropping record")
+    }
 }
 
 // WithAttrs implements the slog.Handler interface.
