@@ -114,7 +114,7 @@ func (ld *Daemon) prepareRecordForDB(record slog.Record) (db.Log, error) {
 		Level:    int64(record.Level.Level()),
 		Message:  record.Message,
 		JsonData: string(jsonDataBytes),
-		Created:  record.Time.UTC().Format("2006-01-02 15:04:05.000Z"),
+		Created:  record.Time.UTC().Format(time.RFC3339Nano),
 	}, nil
 }
 

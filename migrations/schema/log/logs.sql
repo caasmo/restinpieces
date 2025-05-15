@@ -3,7 +3,7 @@ CREATE TABLE logs (
     level INTEGER DEFAULT 0 NOT NULL,
     message TEXT DEFAULT "" NOT NULL,
     data JSON DEFAULT "{}" NOT NULL,
-    created TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%fZ')) NOT NULL
+    created TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ')) NOT NULL
 );
 
 CREATE INDEX idx_logs_level ON logs (level);
