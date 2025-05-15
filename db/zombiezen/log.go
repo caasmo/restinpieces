@@ -8,10 +8,10 @@ import (
 
 // DBLogEntry holds pre-processed log data ready for DB insertion.
 type DBLogEntry struct {
-	level    int64
-	message  string
-	jsonData string // Pre-marshalled JSON for the 'data' field
-	created  string // Pre-formatted time string for 'created'
+	Level    int64  // Log level
+	Message  string // Log message
+	JsonData string // Pre-marshalled JSON for the 'data' field
+	Created  string // Pre-formatted time string for 'created'
 }
 
 // NewConn creates a new SQLite connection for logging purposes.
@@ -37,10 +37,10 @@ func WriteLogBatch(conn *sqlite.Conn, batch []DBLogEntry) error {
 	defer stmt.Finalize()
 
 	for _, entry := range batch {
-		stmt.SetInt64("$level", entry.level)
-		stmt.SetText("$message", entry.message)
-		stmt.SetText("$data", entry.jsonData)
-		stmt.SetText("$created", entry.created)
+		stmt.SetInt64("$level", entry.Level)
+		stmt.SetText("$message", entry.Message)
+		stmt.SetText("$data", entry.JsonData)
+		stmt.SetText("$created", entry.Created)
 
 		if _, err := stmt.Step(); err != nil {
 			stmt.Reset()
