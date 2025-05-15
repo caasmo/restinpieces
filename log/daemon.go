@@ -198,7 +198,8 @@ func (ld *Daemon) processLogs() {
 				}
 			}
 			flushBatch("shutdown_final_flush")
-			ld.opLogger.Info("Daemon processing goroutine finished draining, awaiting channel close by Stop().")
+			ld.opLogger.Info("Daemon processing goroutine finished draining")
+			return
 		}
 	}
 }
