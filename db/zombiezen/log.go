@@ -7,9 +7,24 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-// NewConn creates a new SQLite connection for logging purposes.
+// NewConn creates a new SQLite connection for logging purposes with performance optimizations.
 func NewConn(dbPath string) (*sqlite.Conn, error) {
-	return sqlite.OpenConn(dbPath, sqlite.OpenReadWrite|sqlite.OpenCreate)
+	// Use URI filename with performance pragmas
+	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_synchronous=NORMAL&_busy_timeout=5000&_foreign_keys=off", dbPath)
+	
+	conn, err := sqlite.OpenConn(dsn, sqlite.OpenReadWrite|sqlite.OpenCreate|sqlite.OpenURI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open logging connection: %w", err)
+	}
+	
+	// Additional performance tuning that can't be set via DSN
+	err = sqlitex.Execute(conn, "PRAGMA cache_size=-10000;", nil) // 10MB cache
+	if err != nil {
+		conn.Close()
+		return nil, fmt.Errorf("failed to set cache_size: %w", err)
+	}
+	
+	return conn, nil
 }
 
 // WriteLogBatch writes a batch of log entries to the SQLite database.
