@@ -1,8 +1,6 @@
 ### TODOs
 
-- move default config to config/default.go 
-    - pelletier can decode into it
-    - create app uses that default
+- logger, have a text logger for startup before app logger, and for shutdown.
 - SEcureConfigSote is in app just to let users of the framework use the config table with a age key and a dbpath 
     - worth it? users can create a instance itself.
         - app provides agekey and we can add the dbpath- 
@@ -157,6 +155,9 @@
 
 ### done
 
+- move default config to config/default.go 
+    - pelletier can decode into it
+    - create app uses that default
 - superuser
 	- basic idea is superuser has simple scripts, to activate disable things. add jobs. etc
 	- hourly X ok telegram message
