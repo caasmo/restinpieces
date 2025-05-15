@@ -221,7 +221,6 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*logger.Daemon, error) {
 	// Create logger daemon
 	logDaemon, err := logger.NewDaemon(
-		"LoggerDaemon",
 		configProvider,
 		app.Logger(),  // May be nil initially TODO
 	)

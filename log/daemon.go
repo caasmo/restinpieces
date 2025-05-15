@@ -23,8 +23,8 @@ type dbLogEntry struct {
 // Daemon consumes slog.Records from a channel and writes them to a DB.
 // It owns the channel and the database connection.
 type Daemon struct {
-	name string
 	// recordChan is owned and managed entirely within Daemon.
+	name string // Constant name for this daemon type
 	// BatchHandler sends to this channel via the write-end provided by RecordChan().
 	recordChan     chan slog.Record
 	db             *sqlite.Conn
@@ -38,7 +38,7 @@ type Daemon struct {
 
 // NewDaemon creates a new Daemon.
 // It creates a channel for slog.Records and establishes a database connection.
-func NewDaemon(name string, configProvider *config.Provider, opLogger *slog.Logger, db *sqlite.Conn,) (*Daemon, error) {
+func NewDaemon(configProvider *config.Provider, opLogger *slog.Logger, db *sqlite.Conn) (*Daemon, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cfg := configProvider.Get()
 
@@ -48,7 +48,7 @@ func NewDaemon(name string, configProvider *config.Provider, opLogger *slog.Logg
 	}
 
 	daemon := &Daemon{
-		name:           name,
+		name:           "LoggerDaemon", // Constant name for this daemon type
 		recordChan:     make(chan slog.Record, cfg.LoggerBatch.ChanSize),
 		db:             db,
 		opLogger:       opLogger.With("daemon_component", "Daemon", "instance_name", name),
@@ -65,9 +65,9 @@ func (ld *Daemon) RecordChan() chan<- slog.Record {
 	return ld.recordChan
 }
 
-// Name returns the name of the daemon.
+// Name returns the constant name of this daemon type.
 func (ld *Daemon) Name() string {
-	return ld.name
+	return "LoggerDaemon"
 }
 
 // Start begins the daemon's log processing goroutine.
