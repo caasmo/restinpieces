@@ -12,13 +12,6 @@ import (
 	"zombiezen.com/go/sqlite"
 )
 
-// dbLogEntry holds pre-processed log data ready for DB insertion.
-type dbLogEntry struct {
-	level    int64
-	message  string
-	jsonData string // Pre-marshalled JSON for the 'data' field
-	created  string // Pre-formatted time string for 'created'
-}
 
 // Daemon consumes slog.Records from a channel and writes them to a DB.
 // It owns the channel and the database connection.
@@ -106,7 +99,7 @@ func (ld *Daemon) Stop(ctx context.Context) error {
 
 // prepareRecordForDB converts an slog.Record into a dbLogEntry, ready for insertion.
 // This includes marshalling attributes to JSON.
-func (ld *Daemon) prepareRecordForDB(record slog.Record) (dbLogEntry, error) {
+func (ld *Daemon) prepareRecordForDB(record slog.Record) (zombiezen.dbLogEntry, error) {
 	attrsMap := make(map[string]any)
 	record.Attrs(func(a slog.Attr) bool {
 		resolveAndInsertAttr(attrsMap, a)
@@ -118,13 +111,13 @@ func (ld *Daemon) prepareRecordForDB(record slog.Record) (dbLogEntry, error) {
 	if len(attrsMap) > 0 {
 		jsonDataBytes, err = json.Marshal(attrsMap)
 		if err != nil {
-			return dbLogEntry{}, fmt.Errorf("failed to marshal log attributes to JSON: %w", err)
+			return zombiezen.dbLogEntry{}, fmt.Errorf("failed to marshal log attributes to JSON: %w", err)
 		}
 	} else {
 		jsonDataBytes = []byte("{}") // Default JSON for empty attributes
 	}
 
-	return dbLogEntry{
+	return zombiezen.dbLogEntry{
 		level:    int64(record.Level.Level()),
 		message:  record.Message,
 		jsonData: string(jsonDataBytes),
@@ -140,7 +133,7 @@ func (ld *Daemon) processLogs() {
 	ticker := time.NewTicker(cfg.LoggerBatch.FlushInterval.Duration)
 	defer ticker.Stop()
 
-	batch := make([]dbLogEntry, 0, cfg.LoggerBatch.FlushSize)
+	batch := make([]zombiezen.dbLogEntry, 0, cfg.LoggerBatch.FlushSize)
 
 	flushBatch := func(reason string) {
 		if len(batch) == 0 {
@@ -210,7 +203,7 @@ func (ld *Daemon) processLogs() {
 }
 
 // WriteLogBatch writes a batch of pre-processed dbLogEntry items to the SQLite database.
-func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []dbLogEntry) error {
+func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []zombiezen.dbLogEntry) error {
 	return zombiezen.WriteLogBatch(ld.db, batch)
 }
 

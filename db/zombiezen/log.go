@@ -6,6 +6,14 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
+// dbLogEntry holds pre-processed log data ready for DB insertion.
+type dbLogEntry struct {
+	level    int64
+	message  string
+	jsonData string // Pre-marshalled JSON for the 'data' field
+	created  string // Pre-formatted time string for 'created'
+}
+
 // NewConn creates a new SQLite connection for logging purposes.
 func NewConn(dbPath string) (*sqlite.Conn, error) {
 	return sqlite.OpenConn(dbPath, sqlite.OpenReadWrite|sqlite.OpenCreate)
