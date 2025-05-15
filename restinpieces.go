@@ -93,10 +93,11 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	}
 
 	// Create batch handler with daemon's channel and context
+	recordChan, daemonCtx := logDaemon.Chan()
 	batchHandler := log.NewBatchHandler(
 		configProvider,
-		logDaemon.RecordChan(),
-		logDaemon.ctx,
+		recordChan,
+		daemonCtx,
 	)
 
 	// Set the new logger with batch handler

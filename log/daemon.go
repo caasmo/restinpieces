@@ -54,9 +54,10 @@ func New(configProvider *config.Provider, opLogger *slog.Logger, db *sqlite.Conn
 	return daemon, nil
 }
 
-// RecordChan returns the write-end of the channel.
-func (ld *Daemon) RecordChan() chan<- slog.Record {
-	return ld.recordChan
+// Chan returns the write-end of the channel and the daemon's context.
+// The context can be used to check if the daemon is shutting down.
+func (ld *Daemon) Chan() (chan<- slog.Record, context.Context) {
+	return ld.recordChan, ld.ctx
 }
 
 // Name returns the constant name of this daemon type.
