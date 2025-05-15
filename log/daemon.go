@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/db/zombiezen"
 	"zombiezen.com/go/sqlite"
 )
