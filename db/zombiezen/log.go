@@ -6,13 +6,6 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-// DBLogEntry holds pre-processed log data ready for DB insertion.
-type DBLogEntry struct {
-	Level    int64  // Log level
-	Message  string // Log message
-	JsonData string // Pre-marshalled JSON for the 'data' field
-	Created  string // Pre-formatted time string for 'created'
-}
 
 // NewConn creates a new SQLite connection for logging purposes.
 func NewConn(dbPath string) (*sqlite.Conn, error) {
@@ -20,7 +13,7 @@ func NewConn(dbPath string) (*sqlite.Conn, error) {
 }
 
 // WriteLogBatch writes a batch of log entries to the SQLite database.
-func WriteLogBatch(conn *sqlite.Conn, batch []DBLogEntry) error {
+func WriteLogBatch(conn *sqlite.Conn, batch []db.Log) error {
 	if len(batch) == 0 {
 		return nil
 	}

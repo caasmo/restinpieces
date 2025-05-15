@@ -65,3 +65,11 @@ type PayloadEmailVerification struct {
 	// The bucket number is calculated as: floor(current Unix time / cooldown duration in seconds)
 	CooldownBucket int `json:"cooldown_bucket"`
 }
+
+// Log represents a log entry ready for database storage
+type Log struct {
+	Level    int64  `json:"level"`    // Log level
+	Message  string `json:"message"`  // Log message
+	JsonData string `json:"jsonData"` // Pre-marshalled JSON for the 'data' field
+	Created  string `json:"created"`  // Pre-formatted time string for 'created'
+}

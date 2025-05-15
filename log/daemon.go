@@ -99,7 +99,7 @@ func (ld *Daemon) Stop(ctx context.Context) error {
 
 // prepareRecordForDB converts an slog.Record into a dbLogEntry, ready for insertion.
 // This includes marshalling attributes to JSON.
-func (ld *Daemon) prepareRecordForDB(record slog.Record) (zombiezen.DBLogEntry, error) {
+func (ld *Daemon) prepareRecordForDB(record slog.Record) (db.Log, error) {
 	attrsMap := make(map[string]any)
 	record.Attrs(func(a slog.Attr) bool {
 		resolveAndInsertAttr(attrsMap, a)
@@ -111,13 +111,13 @@ func (ld *Daemon) prepareRecordForDB(record slog.Record) (zombiezen.DBLogEntry, 
 	if len(attrsMap) > 0 {
 		jsonDataBytes, err = json.Marshal(attrsMap)
 		if err != nil {
-			return zombiezen.DBLogEntry{}, fmt.Errorf("failed to marshal log attributes to JSON: %w", err)
+			return db.Log{}, fmt.Errorf("failed to marshal log attributes to JSON: %w", err)
 		}
 	} else {
 		jsonDataBytes = []byte("{}") // Default JSON for empty attributes
 	}
 
-	return zombiezen.DBLogEntry{
+	return db.Log{
 		Level:    int64(record.Level.Level()),
 		Message:  record.Message,
 		JsonData: string(jsonDataBytes),
@@ -133,7 +133,7 @@ func (ld *Daemon) processLogs() {
 	ticker := time.NewTicker(cfg.LoggerBatch.FlushInterval.Duration)
 	defer ticker.Stop()
 
-	batch := make([]zombiezen.DBLogEntry, 0, cfg.LoggerBatch.FlushSize)
+	batch := make([]db.Log, 0, cfg.LoggerBatch.FlushSize)
 
 	flushBatch := func(reason string) {
 		if len(batch) == 0 {
@@ -203,7 +203,7 @@ func (ld *Daemon) processLogs() {
 }
 
 // WriteLogBatch writes a batch of pre-processed dbLogEntry items to the SQLite database.
-func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []zombiezen.DBLogEntry) error {
+func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []db.Log) error {
 	return zombiezen.WriteLogBatch(ld.db, batch)
 }
 
