@@ -36,7 +36,8 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
-    // Set up default logger if none was provided
+    // Set up temporaru bootrap logger if none was provided before setting the
+    // default db based one.
     var withUserLogger = true
     if app.Logger() == nil {
         withUserLogger = false
@@ -85,13 +86,13 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	configProvider := config.NewProvider(cfg)
 	app.SetConfigProvider(configProvider)
 
-	// Setup logger daemon after config is loaded
-	if !withUserLogger  {
-	logDaemon, err := SetupDefaultLogger(app, configProvider)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
-	}
-	}
+    // Setup logger daemon after config is loaded
+    if !withUserLogger  {
+        logDaemon, err := SetupDefaultLogger(app, configProvider)
+        if err != nil {
+            return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
+        }
+    }
 
 	// Setup custom application logic and routes
 	route(cfg, app)
