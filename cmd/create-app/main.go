@@ -111,6 +111,13 @@ func (ac *AppCreator) generateDefaultConfig() (*config.Config, error) {
 			MaxJobsPerTick:        10,
 			ConcurrencyMultiplier: 2,
 		},
+		LoggerBatch: config.LoggerBatch{
+			FlushSize:    100,
+			ChanSize:     1000,
+			FlushInterval: config.Duration{Duration: 5 * time.Second},
+			Level: config.LogLevel{Level: slog.LevelInfo},
+			DbPath: "logs.db",
+		},
 		Server: config.Server{
 			Addr:                    ":8080",
 			ShutdownGracefulTimeout: config.Duration{Duration: 15 * time.Second},
