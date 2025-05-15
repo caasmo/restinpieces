@@ -88,7 +88,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 
 	// Ensure we have a valid logger before creating daemon
 	if app.Logger() == nil {
-		app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, nil))
+		app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, nil)))
 	}
 
 	logDaemon, err := SetupDefaultLogger(app, configProvider, logDb)
