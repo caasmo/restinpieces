@@ -23,6 +23,7 @@ import (
 	"github.com/caasmo/restinpieces/router/servemux"
 	"github.com/caasmo/restinpieces/server"
 	"github.com/caasmo/restinpieces/db/zombiezen"
+	"zombiezen.com/go/sqlite"
 	"github.com/pelletier/go-toml/v2"
 )
 
