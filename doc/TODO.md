@@ -1,6 +1,8 @@
 ### TODOs
 
 - logger, have a text logger for startup before app logger, and for shutdown. pass to the app.logger and use as default?
+    - logdb must be propely wal etc
+- shoutdown, with context in log handler, is better. But not enough. change logger to standard/ do not shoutdown log daemon concurrently
 - default logger db interface?
 - SEcureConfigSote is in app just to let users of the framework use the config table with a age key and a dbpath 
     - worth it? users can create a instance itself.

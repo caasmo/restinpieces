@@ -18,11 +18,11 @@ func NewConn(dbPath string) (*sqlite.Conn, error) {
 	}
 	
 	// Additional performance tuning that can't be set via DSN
-	err = sqlitex.Execute(conn, "PRAGMA cache_size=-10000;", nil) // 10MB cache
-	if err != nil {
-		conn.Close()
-		return nil, fmt.Errorf("failed to set cache_size: %w", err)
-	}
+	//err = sqlitex.Execute(conn, "PRAGMA cache_size=-10000;", nil) // 10MB cache
+	//if err != nil {
+	//	conn.Close()
+	//	return nil, fmt.Errorf("failed to set cache_size: %w", err)
+	//}
 	
 	return conn, nil
 }
