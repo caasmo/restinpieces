@@ -1,6 +1,8 @@
 ### TODOs
 
-- 
+- move default config to config/default.go 
+    - pelletier can decode into it
+    - create app uses that default
 - SEcureConfigSote is in app just to let users of the framework use the config table with a age key and a dbpath 
     - worth it? users can create a instance itself.
         - app provides agekey and we can add the dbpath- 
