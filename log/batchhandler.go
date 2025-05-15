@@ -51,9 +51,10 @@ func (h *BatchHandler) Enabled(_ context.Context, level slog.Level) bool {
 // It attempts to send the log record to the buffered channel.
 // Returns error if daemon is shutting down or channel is full.
 func (h *BatchHandler) Handle(_ context.Context, r slog.Record) error {
+    if h.daemonCtx.Err() != nil {
+        return fmt.Errorf("daemon shutting down, dropping log record")
+    }
 	select {
-	case <-h.daemonCtx.Done():
-		return fmt.Errorf("daemon shutting down, dropping log record")
 	case h.recordChan <- r:
 		return nil
 	default:
