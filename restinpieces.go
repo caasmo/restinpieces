@@ -86,26 +86,10 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", logDbPath, err)
 	}
 
-	// Create logger daemon first
-	logDaemon, err := log.New(configProvider, app.Logger(), logDb)
+	// Setup logger daemon after config is loaded
+	logDaemon, err := SetupDefaultLogger(app, configProvider, logDb)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create log daemon: %w", err)
-	}
-
-	// Create batch handler with daemon's channel and context
-	recordChan, daemonCtx := logDaemon.Chan()
-	batchHandler := log.NewBatchHandler(
-		configProvider,
-		recordChan,
-		daemonCtx,
-	)
-
-	// Set the new logger with batch handler
-	app.SetLogger(slog.New(batchHandler))
-
-	// Start the daemon
-	if err := logDaemon.Start(); err != nil {
-		return nil, nil, fmt.Errorf("failed to start log daemon: %w", err)
+		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
 	}
 
 	// Setup custom application logic and routes
@@ -260,6 +244,31 @@ func SetupDefaultCache(app *core.App) error {
 }
 
 // SetupDefaultNotifier initializes the default notifier based on configuration
+func SetupDefaultLogger(app *core.App, configProvider *config.Provider, db *sqlite.Conn) (*log.Daemon, error) {
+	logger := app.Logger()
+	if logger == nil {
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
+	}
+
+	logDaemon, err := log.New(configProvider, logger, db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create log daemon: %w", err)
+	}
+
+	// Create batch handler with daemon's channel and context
+	recordChan, daemonCtx := logDaemon.Chan()
+	batchHandler := log.NewBatchHandler(
+		configProvider,
+		recordChan,
+		daemonCtx,
+	)
+
+	newLogger := slog.New(batchHandler)
+	app.SetLogger(newLogger)
+
+	return logDaemon, nil
+}
+
 func SetupDefaultNotifier(cfg *config.Config, app *core.App) error {
 	if cfg.Notifier.Discord.Activated {
 		discordNotifier, err := discord.New(cfg.Notifier.Discord, app.Logger())
