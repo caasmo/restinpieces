@@ -36,16 +36,14 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
-    // Set up temporaru bootrap logger if none was provided before setting the
+    // Set up temporary bootstrap logger if none was provided before setting the
     // default db based one.
-    var withUserLogger = true
-    if app.Logger() == nil {
-        withUserLogger = false
-
+    withUserLogger := app.Logger() != nil
+    if !withUserLogger {
         app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
             Level: slog.LevelInfo,
-        })))
-    } 
+        }))
+    }
 
 	// Setup default router if none was set via options
 	if app.Router() == nil {
@@ -87,11 +85,9 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	app.SetConfigProvider(configProvider)
 
     // Setup logger daemon after config is loaded
-    if !withUserLogger  {
-        logDaemon, err := SetupDefaultLogger(app, configProvider)
-        if err != nil {
-            return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
-        }
+    logDaemon, err := SetupDefaultLogger(app, configProvider, withUserLogger)
+    if err != nil {
+        return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
     }
 
 	// Setup custom application logic and routes
@@ -246,7 +242,8 @@ func SetupDefaultCache(app *core.App) error {
 }
 
 // SetupDefaultLogger initializes the logger daemon and batch handler
-func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*log.Daemon, error) {
+// withUserLogger indicates if the app already had a logger configured
+func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUserLogger bool) (*log.Daemon, error) {
 	cfg := configProvider.Get()
 	logDbPath := cfg.LoggerBatch.DbPath
 	if logDbPath == "" {
@@ -271,7 +268,9 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*log.Da
 		daemonCtx,
 	)
 
-	app.SetLogger(slog.New(batchHandler))
+	if !withUserLogger {
+		app.SetLogger(slog.New(batchHandler))
+	}
 
 	return logDaemon, nil
 }
