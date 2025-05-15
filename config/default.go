@@ -30,11 +30,11 @@ func NewDefaultConfig() *Config {
 			ConcurrencyMultiplier: 2,
 		},
 		LoggerBatch: LoggerBatch{
-			FlushSize:     100,  # Number of log records to batch before writing to database
-			ChanSize:      1000, # Size of the log record channel buffer
-			FlushInterval: Duration{Duration: 5 * time.Second}, # Maximum time between log flushes
-			Level:         LogLevel{Level: slog.LevelInfo}, # Minimum log level (debug, info, warn, error)
-			DbPath:        "logs.db", # Path to SQLite database file for log storage
+			FlushSize:     100,  // Number of log records to batch before writing to database
+			ChanSize:      1000, // Size of the log record channel buffer
+			FlushInterval: Duration{Duration: 5 * time.Second}, // Maximum time between log flushes
+			Level:         LogLevel{Level: slog.LevelInfo}, // Minimum log level (debug, info, warn, error)
+			DbPath:        "logs.db", // Path to SQLite database file for log storage
 		},
 		Server: Server{
 			Addr:                    ":8080",
