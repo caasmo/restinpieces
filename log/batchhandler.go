@@ -8,12 +8,6 @@ import (
 )
 
 // BatchHandler is a lightweight slog.Handler that sends records to a channel for batched processing.
-// Important implementation notes:
-// - Error handling is lightweight - failed logs are simply dropped with an error return
-// - The select statement in Handle() is not sequential - both cases are evaluated simultaneously
-// - Checking ctx.Done() first is crucial to avoid sending during shutdown
-// - Channel writes are non-blocking - full channels result in dropped logs
-// - Designed for high throughput at the cost of some reliability
 type BatchHandler struct {
 	configProvider *config.Provider   // For dynamic log levels
 	recordChan     chan<- slog.Record // Write-end of the channel, provided by Daemon
