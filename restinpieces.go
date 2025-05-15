@@ -36,12 +36,15 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
-    // If no user Logger, we need a bootstrap one till we create our default db
-    // based Batch Logger
+    // Set up default logger if none was provided
     var withUserLogger = false
-	if app.Logger() != nil {
+    if app.Logger() == nil {
+        app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+            Level: slog.LevelInfo,
+        })))
+    } else {
         withUserLogger = true
-	}
+    }
 
 	// Setup default router if none was set via options
 	if app.Router() == nil {
@@ -83,11 +86,9 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	app.SetConfigProvider(configProvider)
 
 	// Setup logger daemon after config is loaded
-	if !withUserLogger  {
-        logDaemon, err := SetupDefaultLogger(app, configProvider)
-        if err != nil {
-            return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
-        }
+	logDaemon, err := SetupDefaultLogger(app, configProvider)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
 	}
 
 	// Setup custom application logic and routes
