@@ -242,7 +242,7 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider, db *sqli
 	if logger == nil {
 		logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
 	}
-	logDaemon, err := log.NewDaemon(configProvider, logger, db)
+	logDaemon, err := log.New(configProvider, logger, db)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create log daemon: %w", err)
 	}

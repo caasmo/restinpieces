@@ -30,9 +30,9 @@ type Daemon struct {
 	shutdownDone chan struct{}
 }
 
-// NewDaemon creates a new Daemon.
+// New creates a new Daemon.
 // It creates a channel for slog.Records and establishes a database connection.
-func NewDaemon(configProvider *config.Provider, opLogger *slog.Logger, db *sqlite.Conn) (*Daemon, error) {
+func New(configProvider *config.Provider, opLogger *slog.Logger, db *sqlite.Conn) (*Daemon, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cfg := configProvider.Get()
 
