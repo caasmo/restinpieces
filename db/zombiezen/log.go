@@ -14,37 +14,48 @@ func NewConn(dbPath string) (*sqlite.Conn, error) {
 }
 
 // WriteLogBatch writes a batch of log entries to the SQLite database.
+// It uses an explicit transaction that will be rolled back on any error.
 func WriteLogBatch(conn *sqlite.Conn, batch []db.Log) error {
 	if len(batch) == 0 {
 		return nil
 	}
 
-	err := sqlitex.Execute(conn, "BEGIN;", nil)
+	// Start immediate transaction for better concurrency control
+	err := sqlitex.Execute(conn, "BEGIN IMMEDIATE;", nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
+	// Defer rollback in case we exit early
+	defer func() {
+		if err != nil {
+			_ = sqlitex.Execute(conn, "ROLLBACK;", nil)
+		}
+	}()
+
+	// Prepare insert statement
 	stmt, err := conn.Prepare("INSERT INTO logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
 	defer stmt.Finalize()
 
+	// Insert each record
 	for _, entry := range batch {
 		stmt.SetInt64("$level", entry.Level)
 		stmt.SetText("$message", entry.Message)
 		stmt.SetText("$data", entry.JsonData)
 		stmt.SetText("$created", entry.Created)
 
-		if _, err := stmt.Step(); err != nil {
+		if _, err = stmt.Step(); err != nil {
 			stmt.Reset()
 			return fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.Message, err)
 		}
 		stmt.Reset()
 	}
 
-	err = sqlitex.Execute(conn, "COMMIT;", nil)
-	if err != nil {
+	// Commit transaction if all inserts succeeded
+	if err = sqlitex.Execute(conn, "COMMIT;", nil); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
