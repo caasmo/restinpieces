@@ -38,11 +38,13 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 
     // Set up temporary bootstrap logger if none was provided before setting the
     // default db based one.
-    withUserLogger := app.Logger() != nil
-    if !withUserLogger {
+    var withUserLogger = true
+    if app.Logger() == nil {
+        withUserLogger = false
+
         app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
             Level: slog.LevelInfo,
-        }))
+        })))
     }
 
 	// Setup default router if none was set via options
@@ -244,6 +246,10 @@ func SetupDefaultCache(app *core.App) error {
 // SetupDefaultLogger initializes the logger daemon and batch handler
 // withUserLogger indicates if the app already had a logger configured
 func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUserLogger bool) (*log.Daemon, error) {
+	if withUserLogger {
+		
+        return nil,nil
+	}
 	cfg := configProvider.Get()
 	logDbPath := cfg.LoggerBatch.DbPath
 	if logDbPath == "" {
@@ -268,9 +274,6 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUser
 		daemonCtx,
 	)
 
-	if !withUserLogger {
-		app.SetLogger(slog.New(batchHandler))
-	}
 
 	return logDaemon, nil
 }
