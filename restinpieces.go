@@ -253,8 +253,8 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider, db *sqli
 		logDaemon.RecordChan(),
 	)
 
-	logger := slog.New(batchHandler)
-	app.SetLogger(logger)
+	newLogger := slog.New(batchHandler)
+	app.SetLogger(newLogger)
 
 	return logDaemon, nil
 }
