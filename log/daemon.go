@@ -9,7 +9,6 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"zombiezen.com/go/sqlite"
-	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 // dbLogEntry holds pre-processed log data ready for DB insertion.
