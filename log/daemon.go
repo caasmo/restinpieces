@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/db/zombiezen"
 	"zombiezen.com/go/sqlite"
 )
 
@@ -50,7 +51,7 @@ func NewDaemon(configProvider *config.Provider, opLogger *slog.Logger, db *sqlit
 		name:           "LoggerDaemon", // Constant name for this daemon type
 		recordChan:     make(chan slog.Record, cfg.LoggerBatch.ChanSize),
 		db:             db,
-		opLogger:       opLogger.With("daemon_component", "Daemon", "instance_name", name),
+		opLogger:       opLogger.With("daemon_component", "Daemon"),
 		configProvider: configProvider,
 		ctx:            ctx,
 		cancel:         cancel,
