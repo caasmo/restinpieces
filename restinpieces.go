@@ -86,14 +86,25 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", logDbPath, err)
 	}
 
-	// Ensure we have a valid logger before creating daemon
-	if app.Logger() == nil {
-		app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, nil)))
+	// Create logger daemon first
+	logDaemon, err := log.New(configProvider, app.Logger(), logDb)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create log daemon: %w", err)
 	}
 
-	logDaemon, err := SetupDefaultLogger(app, configProvider, logDb)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
+	// Create batch handler with daemon's channel and context
+	batchHandler := log.NewBatchHandler(
+		configProvider,
+		logDaemon.RecordChan(),
+		logDaemon.ctx,
+	)
+
+	// Set the new logger with batch handler
+	app.SetLogger(slog.New(batchHandler))
+
+	// Start the daemon
+	if err := logDaemon.Start(); err != nil {
+		return nil, nil, fmt.Errorf("failed to start log daemon: %w", err)
 	}
 
 	// Setup custom application logic and routes
