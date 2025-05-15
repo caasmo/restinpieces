@@ -24,7 +24,7 @@ func WriteLogBatch(conn *sqlite.Conn, batch []db.Log) error {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
-	stmt, err := conn.Prepare("INSERT INTO _logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
+	stmt, err := conn.Prepare("INSERT INTO logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
