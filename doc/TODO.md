@@ -1,6 +1,6 @@
 ### TODOs
 
-- logger, have a text logger for startup before app logger, and for shutdown.
+- logger, have a text logger for startup before app logger, and for shutdown. pass to the app.logger and use as default?
 - SEcureConfigSote is in app just to let users of the framework use the config table with a age key and a dbpath 
     - worth it? users can create a instance itself.
         - app provides agekey and we can add the dbpath- 
