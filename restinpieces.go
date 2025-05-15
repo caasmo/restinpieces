@@ -57,8 +57,10 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
-	// Unmarshal TOML
-	cfg := &config.Config{}
+	// Start with default config
+	cfg := config.NewDefaultConfig()
+
+	// Unmarshal TOML into default config
 	if err := toml.Unmarshal(decryptedBytes, cfg); err != nil {
 		return nil, nil, fmt.Errorf("failed to parse config: %w", err)
 	}
