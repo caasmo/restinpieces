@@ -72,7 +72,17 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	app.SetConfigProvider(configProvider)
 
 	// Setup logger daemon after config is loaded
-	logDaemon, err := SetupDefaultLogger(app, configProvider)
+	logDbPath := cfg.LoggerBatch.DbPath
+	if logDbPath == "" {
+		return nil, nil, fmt.Errorf("logger daemon: database path (LoggerBatch.DbPath) is not configured")
+	}
+
+	logDb, err := zombiezen.NewConn(logDbPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", logDbPath, err)
+	}
+
+	logDaemon, err := SetupDefaultLogger(app, configProvider, logDb)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
 	}
@@ -218,8 +228,8 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 	},
 }
 
-func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*log.Daemon, error) {
-	logDaemon, err := log.NewDaemon( configProvider, app.Logger(), )
+func SetupDefaultLogger(app *core.App, configProvider *config.Provider, db *sqlite.Conn) (*log.Daemon, error) {
+	logDaemon, err := log.NewDaemon(configProvider, app.Logger(), db)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create log daemon: %w", err)
 	}
