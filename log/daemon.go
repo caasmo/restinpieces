@@ -38,12 +38,7 @@ type Daemon struct {
 
 // NewDaemon creates a new Daemon.
 // It creates a channel for slog.Records and establishes a database connection.
-func NewDaemon(
-	name string,
-	configProvider *config.Provider,
-	opLogger *slog.Logger,
-	db *sqlite.Conn,
-) (*Daemon, error) {
+func NewDaemon(name string, configProvider *config.Provider, opLogger *slog.Logger, db *sqlite.Conn,) (*Daemon, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cfg := configProvider.Get()
 
