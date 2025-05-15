@@ -64,10 +64,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	// --- Instantiate SecureConfig ---
-	secureCfg, err := config.NewSecureConfigAge(dbImpl, *ageKeyPathFlag, logger)
+	// --- Instantiate SecureConfig with early validation ---
+	secureCfg, err := config.NewSecureStoreAge(dbImpl, *ageKeyPathFlag)
 	if err != nil {
-		logger.Error("failed to instantiate secure config (age)", "age_key_path", *ageKeyPathFlag, "error", err)
+		logger.Error("failed to initialize secure config store", 
+			"age_key_path", *ageKeyPathFlag, 
+			"error", err)
 		os.Exit(1)
 	}
 

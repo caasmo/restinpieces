@@ -35,9 +35,24 @@ type secureStoreAge struct {
 }
 
 // NewSecureStoreAge creates a new SecureStore implementation using age.
-// It stores the necessary dependencies (db config, key path) for later use.
-// Key file validation happens on the first call to Latest() or Save().
+// It validates the age key file exists and is readable immediately.
 func NewSecureStoreAge(dbCfg db.DbConfig, ageKeyPath string) (SecureStore, error) {
+	// Validate key file exists and is readable
+	if _, err := os.Stat(ageKeyPath); err != nil {
+		return nil, fmt.Errorf("age key file validation failed: %w", err)
+	}
+
+	// Try parsing identities to validate the key format
+	identities, err := loadAndParseIdentities(ageKeyPath, "initialization")
+	if err != nil {
+		return nil, fmt.Errorf("age key validation failed: %w", err)
+	}
+	
+	// Ensure we have at least one X25519 identity
+	if _, ok := identities[0].(*age.X25519Identity); !ok {
+		return nil, fmt.Errorf("unsupported age identity type '%T' - must be X25519", identities[0])
+	}
+
 	return &secureStoreAge{
 		dbCfg:      dbCfg,
 		ageKeyPath: ageKeyPath,
