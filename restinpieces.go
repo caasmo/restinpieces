@@ -218,23 +218,18 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 	},
 }
 
-func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*logger.Daemon, error) {
-	// Create logger daemon
-	logDaemon, err := logger.NewDaemon(
-		configProvider,
-		app.Logger(),  // May be nil initially TODO
-	)
+func SetupDefaultLogger(app *core.App, configProvider *config.Provider) (*log.Daemon, error) {
+	logDaemon, err := log.NewDaemon( configProvider, app.Logger(), )
 	if err != nil {
-		return nil, fmt.Errorf("failed to create logger daemon: %w", err)
+		return nil, fmt.Errorf("failed to create log daemon: %w", err)
 	}
 
 	// Create batch handler with daemon's channel
-	batchHandler := logger.NewBatchHandler(
+	batchHandler := log.NewBatchHandler(
 		configProvider,
 		logDaemon.RecordChan(),
 	)
 
-	// Create the logger with our batch handler
 	logger := slog.New(batchHandler)
 	app.SetLogger(logger)
 
