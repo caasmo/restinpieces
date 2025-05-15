@@ -86,6 +86,11 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", logDbPath, err)
 	}
 
+	// Ensure we have a valid logger before creating daemon
+	if app.Logger() == nil {
+		app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, nil))
+	}
+
 	logDaemon, err := SetupDefaultLogger(app, configProvider, logDb)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
@@ -233,7 +238,11 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 }
 
 func SetupDefaultLogger(app *core.App, configProvider *config.Provider, db *sqlite.Conn) (*log.Daemon, error) {
-	logDaemon, err := log.NewDaemon(configProvider, app.Logger(), db)
+	logger := app.Logger()
+	if logger == nil {
+		logger = slog.New(slog.NewTextHandler(os.Stderr, nil))
+	}
+	logDaemon, err := log.NewDaemon(configProvider, logger, db)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create log daemon: %w", err)
 	}
