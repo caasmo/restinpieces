@@ -1,6 +1,7 @@
 ### TODOs
 
 - middleware block big bodyes
+- activated vs enabled consistency 
 - logger, have a text logger for startup before app logger, and for shutdown. pass to the app.logger and use as default?
     - logdb must be propely wal etc
 - shoutdown, with context in log handler, is better. But not enough. change logger to standard/ do not shoutdown log daemon concurrently
