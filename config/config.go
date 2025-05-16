@@ -62,16 +62,37 @@ type Config struct {
 	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
 	BlockUa     BlockUa     `toml:"block_ua" comment:"User-Agent blocking settings"`
 	Notifier    Notifier    `toml:"notifier"`
-	LoggerBatch LoggerBatch `toml:"logger_batch" comment:"Batch logger configuration"`
+	Log LogConfig `toml:"log" comment:"Logging configuration"`
 }
 
-// LoggerBatch contains configuration for the batch logger
-type LoggerBatch struct {
-	FlushSize     int      `toml:"flush_size" comment:"Number of log records to batch before writing to DB"`
-	ChanSize      int      `toml:"chan_size" comment:"Size of the log record channel buffer"`
-	FlushInterval Duration `toml:"flush_interval" comment:"Maximum time between log flushes"`
+// LogConfig contains all logging-related configuration
+type LogConfig struct {
+	Request    RequestLog `toml:"request" comment:"HTTP request logging configuration"`
+	Batch      BatchLog   `toml:"batch" comment:"Batch logging configuration"`
+}
+
+// RequestLog contains HTTP request logging configuration
+type RequestLog struct {
+	Enabled      bool            `toml:"enabled" comment:"Enable HTTP request logging"`
+	FieldLimits  RequestLimits   `toml:"field_limits" comment:"Maximum field lengths"`
+}
+
+// RequestLimits defines maximum lengths for request log fields
+type RequestLimits struct {
+	URL       int `toml:"url" comment:"Max URL/path length (0=no limit)"`
+	UserAgent int `toml:"user_agent" comment:"Max User-Agent length (0=no limit)"`
+	Referer   int `toml:"referer" comment:"Max Referer length (0=no limit)"`
+	RemoteIP  int `toml:"remote_ip" comment:"Max IP address length (0=no limit)"`
+}
+
+// BatchLog contains batch logging configuration
+type BatchLog struct {
+	Enabled       bool     `toml:"enabled" comment:"Enable batch logging"`
+	FlushSize     int      `toml:"flush_size" comment:"Records to batch before writing"`
+	ChanSize      int      `toml:"chan_size" comment:"Log record channel buffer size"`
+	FlushInterval Duration `toml:"flush_interval" comment:"Max time between flushes"`
 	Level         LogLevel `toml:"level" comment:"Minimum log level (debug, info, warn, error)"`
-	DbPath        string   `toml:"db_path" comment:"Path to SQLite database file for log storage"`
+	DbPath        string   `toml:"db_path" comment:"SQLite database path for logs"`
 }
 
 // LogLevel is a wrapper around slog.Level that supports TOML unmarshalling
