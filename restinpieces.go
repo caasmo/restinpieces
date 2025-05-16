@@ -146,13 +146,9 @@ func setupPrerouter(app *core.App) http.Handler {
 	// Execution order will be: RequestLog -> BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> app.Router()
 
 	// 0. Request Logging Middleware (Added first, runs first)
-	if cfg.Log.Request.Activated {
-		requestLog := prerouter.NewRequestLog(app)
-		preRouterChain.WithMiddleware(requestLog.Execute)
-		logger.Info("Prerouter Middleware RequestLog enabled")
-	} else {
-		logger.Info("Prerouter Middleware RequestLog disabled")
-	}
+	requestLog := prerouter.NewRequestLog(app)
+	preRouterChain.WithMiddleware(requestLog.Execute)
+	logger.Info("Prerouter Middleware RequestLog added (activation depends on config)")
 
 	// 1. BlockIp Middleware (Added first, runs first)
 	if cfg.BlockIp.Enabled {
