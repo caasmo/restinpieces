@@ -126,7 +126,17 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.Int64("content_length", req.ContentLength))
 		attrs = append(attrs, emptyAuth)
 
-		// Log request details
-		r.app.Logger().Info("", attrs...)
+		// Debug log to verify attributes before sending
+		r.app.Logger().Debug("preparing request log",
+			"attrs_count", len(attrs),
+			"sample_attr", fmt.Sprintf("%v", attrs[0]))
+
+		// Log request with explicit message
+		r.app.Logger().Info("http_request", attrs...)
+
+		// Debug log to verify the log was processed
+		r.app.Logger().Debug("request log sent to batch processor",
+			"path", req.URL.Path,
+			"status", rec.status)
 	})
 }
