@@ -241,4 +241,24 @@ public_dir = "static/dist"
     client_id= "" # Set via OAUTH2_GITHUB_CLIENT_ID environment variable. DO NOT STORE HERE.
     client_secret= "" # Set via OAUTH2_GITHUB_CLIENT_SECRET environment variable. DO NOT STORE HERE.
 
+# --- Logging Configuration ---
+[log]
+
+  [log.request]
+    enabled = true
+
+    [log.request.field_limits]
+      url = 512
+      user_agent = 256
+      referer = 512
+      remote_ip = 64
+
+  [log.batch_logger]
+    enabled = true
+    flush_size = 100
+    chan_size = 1000
+    flush_interval = "5s"
+    level = "info"
+    db_path = "logs.db"
+
 # Add other providers (e.g., Facebook, Microsoft) here following the same pattern.
