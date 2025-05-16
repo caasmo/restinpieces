@@ -85,7 +85,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs := make([]any, 0, 15)
 		attrs = append(attrs, logType)
 		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method))) // Ensure uppercase method
-		attrs = append(attrs, slog.String("url", cutStr(req.URL.String(), maxURL)))
+		attrs = append(attrs, slog.String("path", cutStr(req.URL.RequestURI(), maxURL)))
 		attrs = append(attrs, slog.Int("status", rec.status))
 		attrs = append(attrs, slog.String("duration", duration.String()))
 		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), maxRemoteIP)))
