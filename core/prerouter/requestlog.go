@@ -93,6 +93,8 @@ func (r *responseRecorder) WriteHeader(status int) {
 // Execute wraps the next handler with request logging
 func (r *RequestLog) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		r.app.Logger().Info("start")
+
 		// Limit request body size
 		req.Body = http.MaxBytesReader(w, req.Body, maxBodySize)
 
@@ -127,7 +129,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, emptyAuth)
 
 		// Debug log to verify attributes before sending
-		r.app.Logger().Debug("preparing request log",
+		r.app.Logger().Info("preparing request log",
 			"attrs_count", len(attrs),
 			"sample_attr", fmt.Sprintf("%v", attrs[0]))
 
@@ -135,7 +137,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		r.app.Logger().Info("http_request", attrs...)
 
 		// Debug log to verify the log was processed
-		r.app.Logger().Debug("request log sent to batch processor",
+		r.app.Logger().Info("request log sent to batch processor",
 			"path", req.URL.Path,
 			"status", rec.status)
 	})
