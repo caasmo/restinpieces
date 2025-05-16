@@ -65,7 +65,7 @@ type Config struct {
 	Log Log `toml:"log" comment:"Logging configuration"`
 }
 
-// LogConfig contains all logging-related configuration
+// Log contains Default (Batch) log configuration
 type Log struct {
 	Request    LogRequest   `toml:"request" comment:"HTTP request logging configuration"`
 	Batch      BatchLogger  `toml:"batch" comment:"Batch logging configuration"`
