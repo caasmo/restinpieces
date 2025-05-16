@@ -248,7 +248,7 @@ public_dir = "static/dist"
     enabled = true
 
     [log.request.field_limits]
-      url = 512
+      uri = 512  # Max URI length (path + query)
       user_agent = 256
       referer = 512
       remote_ip = 64
