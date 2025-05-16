@@ -116,7 +116,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs := make([]any, 0, 17) // Increased capacity for new fields
 		attrs = append(attrs, logType)
 		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method))) // Ensure uppercase method
-		attrs = append(attrs, slog.String("path", cutStr(req.URL.RequestURI(), maxURL)))
+		attrs = append(attrs, slog.String("uri", cutStr(req.URL.RequestURI(), maxURL)))
 		attrs = append(attrs, slog.Int("status", rec.status))
 		attrs = append(attrs, slog.String("duration", duration.String()))
 		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), maxRemoteIP)))
