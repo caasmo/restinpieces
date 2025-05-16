@@ -121,10 +121,10 @@ func (ld *Daemon) processLogs() {
 	defer close(ld.shutdownDone)
 
 	cfg := ld.configProvider.Get()
-	ticker := time.NewTicker(cfg.LoggerBatch.FlushInterval.Duration)
+	ticker := time.NewTicker(cfg.Log.Batch.FlushInterval.Duration)
 	defer ticker.Stop()
 
-	batch := make([]db.Log, 0, cfg.LoggerBatch.FlushSize)
+	batch := make([]db.Log, 0, cfg.Log.Batch.FlushSize)
 
 	flushBatch := func(reason string) {
 		if len(batch) == 0 {
@@ -155,7 +155,7 @@ func (ld *Daemon) processLogs() {
 			}
 
 			batch = append(batch, dbEntry)
-			if len(batch) >= cfg.LoggerBatch.FlushSize {
+			if len(batch) >= cfg.Log.Batch.FlushSize {
 				flushBatch("db_batch_full")
 			}
 
@@ -179,7 +179,7 @@ func (ld *Daemon) processLogs() {
 						continue
 					}
 					batch = append(batch, dbEntry)
-					if len(batch) >= cfg.LoggerBatch.FlushSize {
+					if len(batch) >= cfg.Log.Batch.FlushSize {
 						flushBatch("shutdown_drain_db_batch_full")
 					}
 				default:
