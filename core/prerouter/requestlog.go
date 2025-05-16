@@ -38,21 +38,6 @@ func runtimeNano() int64 {
 	return ts
 }
 
-// tlsVersionToString converts TLS version numbers to human-readable strings
-func tlsVersionToString(ver uint16) string {
-	switch ver {
-	case 0x0304:
-		return "TLS1.3"
-	case 0x0303:
-		return "TLS1.2"
-	case 0x0302:
-		return "TLS1.1"
-	case 0x0301:
-		return "TLS1.0"
-	default:
-		return fmt.Sprintf("0x%04x", ver)
-	}
-}
 
 // cutStr limits string length by adding ellipsis if needed
 func cutStr(str string, max int) string {
@@ -138,11 +123,6 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.String("proto", req.Proto))
 		attrs = append(attrs, slog.Int64("content_length", req.ContentLength))
 		attrs = append(attrs, emptyAuth)
-
-		// Add TLS version if available
-		if req.TLS != nil {
-			attrs = append(attrs, slog.String("tls_version", tlsVersionToString(req.TLS.Version)))
-		}
 
 		// Log request details
 		r.app.Logger().Info("", attrs...)
