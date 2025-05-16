@@ -130,8 +130,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 
 		// Debug log to verify attributes before sending
 		r.app.Logger().Info("preparing request log",
-			"attrs_count", len(attrs),
-			"sample_attr", fmt.Sprintf("%v", attrs[0]))
+			"attrs_count", len(attrs))
 
 		// Log request with explicit message
 		r.app.Logger().Info("http_request", attrs...)
