@@ -29,12 +29,24 @@ func NewDefaultConfig() *Config {
 			MaxJobsPerTick:        10,
 			ConcurrencyMultiplier: 2,
 		},
-		LoggerBatch: LoggerBatch{
-			FlushSize:     100,  // Number of log records to batch before writing to database
-			ChanSize:      1000, // Size of the log record channel buffer
-			FlushInterval: Duration{Duration: 5 * time.Second}, // Maximum time between log flushes
-			Level:         LogLevel{Level: slog.LevelInfo}, // Minimum log level (debug, info, warn, error)
-			DbPath:        "logs.db", // Path to SQLite database file for log storage
+		Log: Log{
+			Request: RequestLog{
+				Enabled: true,
+				FieldLimits: RequestLimits{
+					URL:       512,
+					UserAgent: 256,
+					Referer:   512,
+					RemoteIP:  64,
+				},
+			},
+			Batch: BatchLog{
+				Enabled:       true,
+				FlushSize:     100,
+				ChanSize:      1000,
+				FlushInterval: Duration{Duration: 5 * time.Second},
+				Level:         LogLevel{Level: slog.LevelInfo},
+				DbPath:        "logs.db",
+			},
 		},
 		Server: Server{
 			Addr:                    ":8080",
