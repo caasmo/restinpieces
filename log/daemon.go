@@ -42,7 +42,7 @@ func New(configProvider *config.Provider, opLogger *slog.Logger, db *sqlite.Conn
 
 	daemon := &Daemon{
 		name:           "LoggerDaemon", // Constant name for this daemon type
-		recordChan:     make(chan slog.Record, cfg.LoggerBatch.ChanSize),
+		recordChan:     make(chan slog.Record, cfg.Log.Batch.ChanSize),
 		db:             db,
 		opLogger:       opLogger.With("daemon_component", "Daemon"),
 		configProvider: configProvider,
