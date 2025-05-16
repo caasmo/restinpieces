@@ -51,16 +51,32 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Calculate duration in nanoseconds and convert to time.Duration
 		duration := time.Duration(time.Now().UnixNano() - start)
 		
-		// Build log attributes efficiently with cached values
+		// Define reasonable max lengths for string fields
+		const (
+			maxURL      = 512
+			maxUserAgent = 256
+			maxReferer   = 512
+			maxRemoteIP  = 64
+		)
+
+		// Helper to limit string length
+		cutStr := func(str string, max int) string {
+			if len(str) > max {
+				return str[:max] + "..."
+			}
+			return str
+		}
+
+		// Build log attributes efficiently with cached values and length limits
 		attrs := make([]any, 0, 15)
 		attrs = append(attrs, logType)
-		attrs = append(attrs, slog.String("method", req.Method))
-		attrs = append(attrs, slog.String("url", req.URL.String()))
+		attrs = append(attrs, slog.String("method", req.Method)) // Method is short, no need to cut
+		attrs = append(attrs, slog.String("url", cutStr(req.URL.String(), maxURL)))
 		attrs = append(attrs, slog.Int("status", rec.status))
 		attrs = append(attrs, slog.String("duration", duration.String()))
-		attrs = append(attrs, slog.String("remote_ip", req.RemoteAddr))
-		attrs = append(attrs, slog.String("user_agent", req.UserAgent()))
-		attrs = append(attrs, slog.String("referer", req.Referer()))
+		attrs = append(attrs, slog.String("remote_ip", cutStr(req.RemoteAddr, maxRemoteIP)))
+		attrs = append(attrs, slog.String("user_agent", cutStr(req.UserAgent(), maxUserAgent)))
+		attrs = append(attrs, slog.String("referer", cutStr(req.Referer(), maxReferer)))
 		attrs = append(attrs, emptyAuth)
 
 		// Log request details
