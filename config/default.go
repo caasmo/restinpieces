@@ -31,7 +31,7 @@ func NewDefaultConfig() *Config {
 		},
 		Log: Log{
 			Request: LogRequest{
-				Enabled: true,
+				Activated: true,
 				Limits: LogRequestLimits{
 					URLLength:       512,    // Minimum: 64
 					UserAgentLength: 256,    // Minimum: 32 

@@ -73,7 +73,7 @@ type Log struct {
 
 // LogRequest contains HTTP request logging configuration
 type LogRequest struct {
-	Enabled      bool             `toml:"enabled" comment:"Enable HTTP request logging"`
+	Activated    bool             `toml:"activated" comment:"Activate HTTP request logging"`
 	Limits       LogRequestLimits `toml:"limits" comment:"Maximum field lengths"`
 }
 

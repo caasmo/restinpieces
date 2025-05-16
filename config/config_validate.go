@@ -54,7 +54,7 @@ func validateLoggerBatch(loggerBatch *BatchLogger) error {
 }
 
 func validateRequestLog(requestLog *LogRequest) error {
-	if !requestLog.Enabled {
+	if !requestLog.Activated {
 		return nil
 	}
 	
