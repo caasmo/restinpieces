@@ -55,10 +55,14 @@ func NewRequestLog(app *core.App) *RequestLog {
 	}
 }
 
-// responseRecorder wraps http.ResponseWriter to capture status code
+// responseRecorder wraps http.ResponseWriter to capture status code.
+// Initialized to StatusOK (200) because handlers may:
+// 1. Write response body without calling WriteHeader (implicit 200)
+// 2. Only call WriteHeader for error cases
+// 3. Let the http package set default 200 status
 type responseRecorder struct {
 	http.ResponseWriter
-	status int
+	status int // initialized to http.StatusOK (200) to handle implicit success cases
 }
 
 func (r *responseRecorder) WriteHeader(status int) {
@@ -72,8 +76,11 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// More efficient time measurement
 		start := time.Now().UnixNano()
 		
-		// Create response recorder to capture status code
-		rec := &responseRecorder{ResponseWriter: w, status: http.StatusOK}
+		// Create response recorder initialized to StatusOK (200) to handle implicit success cases
+		rec := &responseRecorder{
+			ResponseWriter: w,
+			status:         http.StatusOK, // default success status
+		}
 		
 		// Call next handler
 		next.ServeHTTP(rec, req)
