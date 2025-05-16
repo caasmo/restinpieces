@@ -40,7 +40,6 @@ func NewDefaultConfig() *Config {
 				},
 			},
 			Batch: BatchLogger{
-				Enabled:       true,
 				FlushSize:     100,
 				ChanSize:      1000,
 				FlushInterval: Duration{Duration: 5 * time.Second},

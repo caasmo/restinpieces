@@ -87,7 +87,6 @@ type LogRequestLimits struct {
 
 // BatchLogger contains batch logging configuration
 type BatchLogger struct {
-	Enabled       bool     `toml:"enabled" comment:"Enable batch logging"`
 	FlushSize     int      `toml:"flush_size" comment:"Records to batch before writing"`
 	ChanSize      int      `toml:"chan_size" comment:"Log record channel buffer size"`
 	FlushInterval Duration `toml:"flush_interval" comment:"Max time between flushes"`

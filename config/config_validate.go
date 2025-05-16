@@ -49,6 +49,9 @@ func validateLoggerBatch(loggerBatch *BatchLogger) error {
 	if loggerBatch.FlushInterval.Duration <= 0 {
 		return fmt.Errorf("flush_interval must be positive")
 	}
+	if loggerBatch.DbPath == "" {
+		return fmt.Errorf("db_path cannot be empty")
+	}
 	// LogLevel validation is handled by UnmarshalText
 	return nil
 }
