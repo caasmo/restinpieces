@@ -6,7 +6,6 @@ import (
 	"net/netip"
 	"strings"
 	"time"
-	"runtime"
 
 	"github.com/caasmo/restinpieces/core"
 	"log/slog"
@@ -27,18 +26,6 @@ func RemoteIP(r *http.Request) string {
 	return parsed.StringExpanded()
 }
 
-// runtimeNano provides high-precision timing with better performance than time.Now()
-// TODO worth it?
-func runtimeNano() int64 {
-	var ts int64
-	if runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" {
-		// Use CPU timestamp counter for supported architectures
-		ts = time.Now().UnixNano() // Fallback for now - could use RDTSC on amd64
-	} else {
-		ts = time.Now().UnixNano()
-	}
-	return ts
-}
 
 
 // cutStr limits string length by adding ellipsis if needed
@@ -97,8 +84,8 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Limit request body size
 		req.Body = http.MaxBytesReader(w, req.Body, maxBodySize)
 
-		// High-precision, efficient time measurement
-		start := runtimeNano()
+		// Simple time measurement
+		start := time.Now()
 		
 		// Create response recorder initialized to StatusOK (200) to handle implicit success cases
 		rec := &responseRecorder{
@@ -109,8 +96,8 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Call next handler
 		next.ServeHTTP(rec, req)
 		
-		// Calculate duration in nanoseconds and convert to time.Duration
-		duration := time.Duration(time.Now().UnixNano() - start)
+		// Calculate duration
+		duration := time.Since(start)
 
 		// Build log attributes efficiently with cached values and length limits
 		attrs := make([]any, 0, 17) // Increased capacity for new fields
