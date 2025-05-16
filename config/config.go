@@ -303,9 +303,9 @@ type Maintenance struct {
 	Activated bool `toml:"activated" comment:"Currently in maintenance mode"`
 }
 
-// BlockUa holds configuration for blocking requests based on User-Agent.
-type BlockUa struct {
-	Activated bool `toml:"activated" comment:"Activate User-Agent blocking"`
+// BlockUaList holds configuration for blocking requests based on User-Agent patterns.
+type BlockUaList struct {
+	Activated bool `toml:"activated" comment:"Activate User-Agent block list"`
 	// List holds a compiled regular expression for matching User-Agent strings.
 	// RE2 Syntax Notes: Go uses the RE2 regex engine. For literal matching:
 	// - Metacharacters like '.' MUST be escaped (e.g., `\.`).
