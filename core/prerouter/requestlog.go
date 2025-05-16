@@ -92,10 +92,9 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		duration := time.Since(start)
 
 		// Build log attributes efficiently with cached values and length limits
-		attrs := make([]any, 0, 17) // Increased capacity for new fields
+		attrs := make([]any, 0, 17) 
 		attrs = append(attrs, logType)
 		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method))) // Ensure uppercase method
-		// Get limits from config
 		limits := r.app.Config().Log.Request.Limits
 		attrs = append(attrs, slog.String("uri", cutStr(req.URL.RequestURI(), limits.URILength)))
 		attrs = append(attrs, slog.Int("status", rec.status))
@@ -108,7 +107,6 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.Int64("content_length", req.ContentLength))
 		attrs = append(attrs, emptyAuth)
 
-		// Log request with explicit message
 		r.app.Logger().Info("http_request", attrs...)
 
 	})
