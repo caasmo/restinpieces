@@ -30,8 +30,11 @@ func Validate(cfg *Config) error {
 	if err := validateNotifier(&cfg.Notifier); err != nil {
 		return fmt.Errorf("notifier config validation failed: %w", err)
 	}
-	if err := validateLoggerBatch(&cfg.LoggerBatch); err != nil {
+	if err := validateLoggerBatch(&cfg.Log.Batch); err != nil {
 		return fmt.Errorf("logger_batch config validation failed: %w", err)
+	}
+	if err := validateRequestLog(&cfg.Log.Request); err != nil {
+		return fmt.Errorf("request_log config validation failed: %w", err)
 	}
 	return nil
 }
@@ -47,6 +50,34 @@ func validateLoggerBatch(loggerBatch *BatchLogger) error {
 		return fmt.Errorf("flush_interval must be positive")
 	}
 	// LogLevel validation is handled by UnmarshalText
+	return nil
+}
+
+func validateRequestLog(requestLog *RequestLog) error {
+	if !requestLog.Enabled {
+		return nil
+	}
+	
+	minLimits := map[string]int{
+		"url":        64,
+		"user_agent": 32,
+		"referer":    64,
+		"remote_ip":  15, // Minimum for IPv4 (xxx.xxx.xxx.xxx)
+	}
+
+	if requestLog.Limits.URLLength < minLimits["url"] {
+		return fmt.Errorf("url length limit must be at least %d", minLimits["url"])
+	}
+	if requestLog.Limits.UserAgentLength < minLimits["user_agent"] {
+		return fmt.Errorf("user_agent length limit must be at least %d", minLimits["user_agent"])
+	}
+	if requestLog.Limits.RefererLength < minLimits["referer"] {
+		return fmt.Errorf("referer length limit must be at least %d", minLimits["referer"])
+	}
+	if requestLog.Limits.RemoteIPLength < minLimits["remote_ip"] {
+		return fmt.Errorf("remote_ip length limit must be at least %d", minLimits["remote_ip"])
+	}
+
 	return nil
 }
 
