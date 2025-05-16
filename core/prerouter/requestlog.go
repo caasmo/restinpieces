@@ -7,6 +7,14 @@ import (
 	"github.com/caasmo/restinpieces/core"
 )
 
+// cutStr limits string length by adding ellipsis if needed
+func cutStr(str string, max int) string {
+	if len(str) > max {
+		return str[:max] + "..."
+	}
+	return str
+}
+
 // RequestLog is middleware that logs HTTP request details
 type RequestLog struct {
 	app *core.App
@@ -58,14 +66,6 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 			maxReferer   = 512
 			maxRemoteIP  = 64
 		)
-
-		// Helper to limit string length
-		cutStr := func(str string, max int) string {
-			if len(str) > max {
-				return str[:max] + "..."
-			}
-			return str
-		}
 
 		// Build log attributes efficiently with cached values and length limits
 		attrs := make([]any, 0, 15)
