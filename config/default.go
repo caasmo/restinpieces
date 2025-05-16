@@ -32,7 +32,7 @@ func NewDefaultConfig() *Config {
 		Log: Log{
 			Request: RequestLog{
 				Enabled: true,
-				FieldLimits: RequestLimits{
+				Limits: LogRequestLimits{
 					URL:       512,
 					UserAgent: 256,
 					Referer:   512,

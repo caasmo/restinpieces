@@ -73,12 +73,12 @@ type Log struct {
 
 // RequestLog contains HTTP request logging configuration
 type RequestLog struct {
-	Enabled      bool            `toml:"enabled" comment:"Enable HTTP request logging"`
-	FieldLimits  RequestLimits   `toml:"field_limits" comment:"Maximum field lengths"`
+	Enabled      bool             `toml:"enabled" comment:"Enable HTTP request logging"`
+	Limits       LogRequestLimits `toml:"limits" comment:"Maximum field lengths"`
 }
 
-// RequestLimits defines maximum lengths for request log fields
-type RequestLimits struct {
+// LogRequestLimits defines maximum lengths for request log fields
+type LogRequestLimits struct {
 	URL       int `toml:"url" comment:"Max URL/path length (0=no limit)"`
 	UserAgent int `toml:"user_agent" comment:"Max User-Agent length (0=no limit)"`
 	Referer   int `toml:"referer" comment:"Max Referer length (0=no limit)"`
