@@ -30,7 +30,7 @@ func (b *BlockUaList) Execute(next http.Handler) http.Handler {
 		}
 
 		userAgent := r.UserAgent()
-		if blockUaCfg.List.MatchString(userAgent) {
+		if blockUaListCfg.List.MatchString(userAgent) {
 			// 403 Forbidden is more appropriate for actively blocking a client
 			w.WriteHeader(http.StatusForbidden)
 			return
