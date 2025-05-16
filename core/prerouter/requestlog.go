@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	maxBodySize = 1 << 20 // 1MB
+	maxBodySize      = 1 << 20 // 1MB
+	logMessageHTTP   = "http_request"
 )
 
 // RemoteIP returns the normalized IP address from the request
@@ -107,7 +108,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.Int64("content_length", req.ContentLength))
 		attrs = append(attrs, emptyAuth)
 
-		r.app.Logger().Info("http_request", attrs...)
+		r.app.Logger().Info(logMessageHTTP, attrs...)
 
 	})
 }
