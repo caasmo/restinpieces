@@ -36,14 +36,6 @@ func cutStr(str string, max int) string {
 	return str
 }
 
-// Define reasonable max lengths for string fields
-const (
-	maxURL       = 512
-	maxUserAgent = 256
-	maxReferer   = 512
-	maxRemoteIP  = 64
-)
-
 // Cached common log attributes
 var (
 	logType   = slog.String("type", "request")
@@ -103,12 +95,31 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs := make([]any, 0, 17) // Increased capacity for new fields
 		attrs = append(attrs, logType)
 		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method))) // Ensure uppercase method
-		attrs = append(attrs, slog.String("uri", cutStr(req.URL.RequestURI(), maxURL)))
+		// Get limits from config with fallback values
+		limits := r.app.Config().Log.Request.Limits
+		uriLimit := limits.URILength
+		if uriLimit == 0 {
+			uriLimit = 512
+		}
+		uaLimit := limits.UserAgentLength
+		if uaLimit == 0 {
+			uaLimit = 256
+		}
+		refererLimit := limits.RefererLength
+		if refererLimit == 0 {
+			refererLimit = 512
+		}
+		ipLimit := limits.RemoteIPLength
+		if ipLimit == 0 {
+			ipLimit = 64
+		}
+
+		attrs = append(attrs, slog.String("uri", cutStr(req.URL.RequestURI(), uriLimit)))
 		attrs = append(attrs, slog.Int("status", rec.status))
 		attrs = append(attrs, slog.String("duration", duration.String()))
-		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), maxRemoteIP)))
-		attrs = append(attrs, slog.String("user_agent", cutStr(req.UserAgent(), maxUserAgent)))
-		attrs = append(attrs, slog.String("referer", cutStr(req.Referer(), maxReferer)))
+		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), ipLimit)))
+		attrs = append(attrs, slog.String("user_agent", cutStr(req.UserAgent(), uaLimit)))
+		attrs = append(attrs, slog.String("referer", cutStr(req.Referer(), refererLimit)))
 		attrs = append(attrs, slog.String("host", cutStr(req.Host, maxRemoteIP)))
 		attrs = append(attrs, slog.String("proto", req.Proto))
 		attrs = append(attrs, slog.Int64("content_length", req.ContentLength))
