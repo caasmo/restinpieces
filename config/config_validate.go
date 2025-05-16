@@ -68,8 +68,8 @@ func validateRequestLog(requestLog *LogRequest) error {
 		"remote_ip":  15, // Minimum for IPv4 (xxx.xxx.xxx.xxx)
 	}
 
-	if requestLog.Limits.URLLength < minLimits["url"] {
-		return fmt.Errorf("url length limit must be at least %d", minLimits["url"])
+	if requestLog.Limits.URILength < minLimits["url"] {
+		return fmt.Errorf("uri length limit must be at least %d", minLimits["url"])
 	}
 	if requestLog.Limits.UserAgentLength < minLimits["user_agent"] {
 		return fmt.Errorf("user_agent length limit must be at least %d", minLimits["user_agent"])

@@ -33,7 +33,7 @@ func NewDefaultConfig() *Config {
 			Request: LogRequest{
 				Activated: true,
 				Limits: LogRequestLimits{
-					URLLength:       512,    // Minimum: 64
+					URILength:       512,    // Minimum: 64
 					UserAgentLength: 256,    // Minimum: 32 
 					RefererLength:   512,    // Minimum: 64
 					RemoteIPLength:  64,     // Minimum: 15
