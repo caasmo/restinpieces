@@ -44,16 +44,19 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Calculate duration
 		duration := time.Since(start)
 		
+		// Build log attributes efficiently
+		attrs := make([]any, 0, 15)
+		attrs = append(attrs, slog.String("type", "request"))
+		attrs = append(attrs, slog.String("method", req.Method))
+		attrs = append(attrs, slog.String("url", req.URL.String()))
+		attrs = append(attrs, slog.Int("status", rec.status))
+		attrs = append(attrs, slog.String("duration", duration.String()))
+		attrs = append(attrs, slog.String("remote_ip", req.RemoteAddr))
+		attrs = append(attrs, slog.String("user_agent", req.UserAgent()))
+		attrs = append(attrs, slog.String("referer", req.Referer()))
+		attrs = append(attrs, slog.String("auth", "")) // Empty auth info as requested
+
 		// Log request details
-		r.app.Logger().Info("request",
-			"method", req.Method,
-			"url", req.URL.String(),
-			"status", rec.status,
-			"duration", duration.String(),
-			"remote_ip", req.RemoteAddr,
-			"user_agent", req.UserAgent(),
-			"referer", req.Referer(),
-			"auth", "", // Empty auth info as requested
-		)
+		r.app.Logger().Info("", attrs...)
 	})
 }
