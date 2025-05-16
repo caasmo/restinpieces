@@ -39,7 +39,7 @@ func NewDefaultConfig() *Config {
 					RemoteIP:  64,
 				},
 			},
-			Batch: BatchLog{
+			Batch: BatchLogger{
 				Enabled:       true,
 				FlushSize:     100,
 				ChanSize:      1000,

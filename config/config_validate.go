@@ -36,7 +36,7 @@ func Validate(cfg *Config) error {
 	return nil
 }
 
-func validateLoggerBatch(loggerBatch *LoggerBatch) error {
+func validateLoggerBatch(loggerBatch *BatchLogger) error {
 	if loggerBatch.ChanSize < 1 {
 		return fmt.Errorf("chan_size must be >= 1")
 	}
