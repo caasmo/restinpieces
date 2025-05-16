@@ -79,10 +79,10 @@ type RequestLog struct {
 
 // LogRequestLimits defines maximum lengths for request log fields
 type LogRequestLimits struct {
-	URL       int `toml:"url" comment:"Max URL/path length (0=no limit)"`
-	UserAgent int `toml:"user_agent" comment:"Max User-Agent length (0=no limit)"`
-	Referer   int `toml:"referer" comment:"Max Referer length (0=no limit)"`
-	RemoteIP  int `toml:"remote_ip" comment:"Max IP address length (0=no limit)"`
+	URLLength       int `toml:"url" comment:"Max URL/path length (0=no limit)"`
+	UserAgentLength int `toml:"user_agent" comment:"Max User-Agent length (0=no limit)"`
+	RefererLength   int `toml:"referer" comment:"Max Referer length (0=no limit)"`
+	RemoteIPLength  int `toml:"remote_ip" comment:"Max IP address length (0=no limit)"`
 }
 
 // BatchLogger contains batch logging configuration

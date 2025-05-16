@@ -33,10 +33,10 @@ func NewDefaultConfig() *Config {
 			Request: RequestLog{
 				Enabled: true,
 				Limits: LogRequestLimits{
-					URL:       512,
-					UserAgent: 256,
-					Referer:   512,
-					RemoteIP:  64,
+					URLLength:       512,
+					UserAgentLength: 256,
+					RefererLength:   512,
+					RemoteIPLength:  64,
 				},
 			},
 			Batch: BatchLogger{
