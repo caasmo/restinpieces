@@ -95,32 +95,15 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs := make([]any, 0, 17) // Increased capacity for new fields
 		attrs = append(attrs, logType)
 		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method))) // Ensure uppercase method
-		// Get limits from config with fallback values
+		// Get limits from config
 		limits := r.app.Config().Log.Request.Limits
-		uriLimit := limits.URILength
-		if uriLimit == 0 {
-			uriLimit = 512
-		}
-		uaLimit := limits.UserAgentLength
-		if uaLimit == 0 {
-			uaLimit = 256
-		}
-		refererLimit := limits.RefererLength
-		if refererLimit == 0 {
-			refererLimit = 512
-		}
-		ipLimit := limits.RemoteIPLength
-		if ipLimit == 0 {
-			ipLimit = 64
-		}
-
-		attrs = append(attrs, slog.String("uri", cutStr(req.URL.RequestURI(), uriLimit)))
+		attrs = append(attrs, slog.String("uri", cutStr(req.URL.RequestURI(), limits.URILength)))
 		attrs = append(attrs, slog.Int("status", rec.status))
 		attrs = append(attrs, slog.String("duration", duration.String()))
-		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), ipLimit)))
-		attrs = append(attrs, slog.String("user_agent", cutStr(req.UserAgent(), uaLimit)))
-		attrs = append(attrs, slog.String("referer", cutStr(req.Referer(), refererLimit)))
-		attrs = append(attrs, slog.String("host", cutStr(req.Host, maxRemoteIP)))
+		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), limits.RemoteIPLength)))
+		attrs = append(attrs, slog.String("user_agent", cutStr(req.UserAgent(), limits.UserAgentLength)))
+		attrs = append(attrs, slog.String("referer", cutStr(req.Referer(), limits.RefererLength)))
+		attrs = append(attrs, slog.String("host", cutStr(req.Host, limits.RemoteIPLength)))
 		attrs = append(attrs, slog.String("proto", req.Proto))
 		attrs = append(attrs, slog.Int64("content_length", req.ContentLength))
 		attrs = append(attrs, emptyAuth)
