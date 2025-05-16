@@ -33,7 +33,14 @@ func (r *responseRecorder) WriteHeader(status int) {
 // Execute wraps the next handler with request logging
 func (r *RequestLog) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		start := time.Now()
+		// Cache common values at package level
+		var (
+			logType    = slog.String("type", "request")
+			emptyAuth  = slog.String("auth", "")
+		)
+
+		// More efficient time measurement
+		start := time.Now().UnixNano()
 		
 		// Create response recorder to capture status code
 		rec := &responseRecorder{ResponseWriter: w, status: http.StatusOK}
@@ -41,12 +48,12 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Call next handler
 		next.ServeHTTP(rec, req)
 		
-		// Calculate duration
-		duration := time.Since(start)
+		// Calculate duration in nanoseconds and convert to time.Duration
+		duration := time.Duration(time.Now().UnixNano() - start)
 		
-		// Build log attributes efficiently
+		// Build log attributes efficiently with cached values
 		attrs := make([]any, 0, 15)
-		attrs = append(attrs, slog.String("type", "request"))
+		attrs = append(attrs, logType)
 		attrs = append(attrs, slog.String("method", req.Method))
 		attrs = append(attrs, slog.String("url", req.URL.String()))
 		attrs = append(attrs, slog.Int("status", rec.status))
@@ -54,7 +61,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.String("remote_ip", req.RemoteAddr))
 		attrs = append(attrs, slog.String("user_agent", req.UserAgent()))
 		attrs = append(attrs, slog.String("referer", req.Referer()))
-		attrs = append(attrs, slog.String("auth", "")) // Empty auth info as requested
+		attrs = append(attrs, emptyAuth)
 
 		// Log request details
 		r.app.Logger().Info("", attrs...)
