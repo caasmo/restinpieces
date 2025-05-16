@@ -17,6 +17,7 @@ const (
 )
 
 // RemoteIP returns the normalized IP address from the request
+// TODO remove
 func RemoteIP(r *http.Request) string {
 	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
 	parsed, err := netip.ParseAddr(ip)
@@ -27,6 +28,7 @@ func RemoteIP(r *http.Request) string {
 }
 
 // runtimeNano provides high-precision timing with better performance than time.Now()
+// TODO worth it?
 func runtimeNano() int64 {
 	var ts int64
 	if runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" {
