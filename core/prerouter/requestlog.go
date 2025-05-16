@@ -2,6 +2,7 @@ package prerouter
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/caasmo/restinpieces/core"
@@ -71,7 +72,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Build log attributes efficiently with cached values and length limits
 		attrs := make([]any, 0, 15)
 		attrs = append(attrs, logType)
-		attrs = append(attrs, slog.String("method", req.Method)) // Method is short, no need to cut
+		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method))) // Ensure uppercase method
 		attrs = append(attrs, slog.String("url", cutStr(req.URL.String(), maxURL)))
 		attrs = append(attrs, slog.Int("status", rec.status))
 		attrs = append(attrs, slog.String("duration", duration.String()))
