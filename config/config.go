@@ -62,11 +62,11 @@ type Config struct {
 	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
 	BlockUa     BlockUa     `toml:"block_ua" comment:"User-Agent blocking settings"`
 	Notifier    Notifier    `toml:"notifier"`
-	Log LogConfig `toml:"log" comment:"Logging configuration"`
+	Log Log `toml:"log" comment:"Logging configuration"`
 }
 
 // LogConfig contains all logging-related configuration
-type LogConfig struct {
+type Log struct {
 	Request    RequestLog `toml:"request" comment:"HTTP request logging configuration"`
 	Batch      BatchLog   `toml:"batch" comment:"Batch logging configuration"`
 }
