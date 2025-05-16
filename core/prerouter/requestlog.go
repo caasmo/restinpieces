@@ -1,13 +1,25 @@
 package prerouter
 
 import (
+	"net"
 	"net/http"
+	"net/netip"
 	"strings"
 	"time"
 
 	"github.com/caasmo/restinpieces/core"
 	"log/slog"
 )
+
+// RemoteIP returns the normalized IP address from the request
+func RemoteIP(r *http.Request) string {
+	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+	parsed, err := netip.ParseAddr(ip)
+	if err != nil {
+		return ip // fallback to original if parsing fails
+	}
+	return parsed.StringExpanded()
+}
 
 // cutStr limits string length by adding ellipsis if needed
 func cutStr(str string, max int) string {
@@ -76,7 +88,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.String("url", cutStr(req.URL.String(), maxURL)))
 		attrs = append(attrs, slog.Int("status", rec.status))
 		attrs = append(attrs, slog.String("duration", duration.String()))
-		attrs = append(attrs, slog.String("remote_ip", cutStr(req.RemoteAddr, maxRemoteIP)))
+		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), maxRemoteIP)))
 		attrs = append(attrs, slog.String("user_agent", cutStr(req.UserAgent(), maxUserAgent)))
 		attrs = append(attrs, slog.String("referer", cutStr(req.Referer(), maxReferer)))
 		attrs = append(attrs, emptyAuth)
