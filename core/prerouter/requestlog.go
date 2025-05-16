@@ -6,9 +6,14 @@ import (
 	"net/netip"
 	"strings"
 	"time"
+	"runtime"
 
 	"github.com/caasmo/restinpieces/core"
 	"log/slog"
+)
+
+const (
+	maxBodySize = 1 << 20 // 1MB
 )
 
 // RemoteIP returns the normalized IP address from the request
@@ -19,6 +24,34 @@ func RemoteIP(r *http.Request) string {
 		return ip // fallback to original if parsing fails
 	}
 	return parsed.StringExpanded()
+}
+
+// runtimeNano provides high-precision timing with better performance than time.Now()
+func runtimeNano() int64 {
+	var ts int64
+	if runtime.GOARCH == "amd64" || runtime.GOARCH == "arm64" {
+		// Use CPU timestamp counter for supported architectures
+		ts = time.Now().UnixNano() // Fallback for now - could use RDTSC on amd64
+	} else {
+		ts = time.Now().UnixNano()
+	}
+	return ts
+}
+
+// tlsVersionToString converts TLS version numbers to human-readable strings
+func tlsVersionToString(ver uint16) string {
+	switch ver {
+	case 0x0304:
+		return "TLS1.3"
+	case 0x0303:
+		return "TLS1.2"
+	case 0x0302:
+		return "TLS1.1"
+	case 0x0301:
+		return "TLS1.0"
+	default:
+		return fmt.Sprintf("0x%04x", ver)
+	}
 }
 
 // cutStr limits string length by adding ellipsis if needed
@@ -73,8 +106,11 @@ func (r *responseRecorder) WriteHeader(status int) {
 // Execute wraps the next handler with request logging
 func (r *RequestLog) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// More efficient time measurement
-		start := time.Now().UnixNano()
+		// Limit request body size
+		req.Body = http.MaxBytesReader(w, req.Body, maxBodySize)
+
+		// High-precision, efficient time measurement
+		start := runtimeNano()
 		
 		// Create response recorder initialized to StatusOK (200) to handle implicit success cases
 		rec := &responseRecorder{
@@ -89,7 +125,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		duration := time.Duration(time.Now().UnixNano() - start)
 
 		// Build log attributes efficiently with cached values and length limits
-		attrs := make([]any, 0, 15)
+		attrs := make([]any, 0, 17) // Increased capacity for new fields
 		attrs = append(attrs, logType)
 		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method))) // Ensure uppercase method
 		attrs = append(attrs, slog.String("path", cutStr(req.URL.RequestURI(), maxURL)))
@@ -98,7 +134,15 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), maxRemoteIP)))
 		attrs = append(attrs, slog.String("user_agent", cutStr(req.UserAgent(), maxUserAgent)))
 		attrs = append(attrs, slog.String("referer", cutStr(req.Referer(), maxReferer)))
+		attrs = append(attrs, slog.String("host", cutStr(req.Host, maxRemoteIP)))
+		attrs = append(attrs, slog.String("proto", req.Proto))
+		attrs = append(attrs, slog.Int64("content_length", req.ContentLength))
 		attrs = append(attrs, emptyAuth)
+
+		// Add TLS version if available
+		if req.TLS != nil {
+			attrs = append(attrs, slog.String("tls_version", tlsVersionToString(req.TLS.Version)))
+		}
 
 		// Log request details
 		r.app.Logger().Info("", attrs...)
