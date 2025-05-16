@@ -21,10 +21,10 @@ func NewBlockUaList(app *core.App) *BlockUaList {
 func (b *BlockUaList) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cfg := b.app.Config()
-		blockUaCfg := cfg.BlockUa
+		blockUaListCfg := cfg.BlockUaList
 
 		// Check if User-Agent blocking is activated and has a valid regex
-		if !blockUaCfg.Activated || blockUaCfg.List.Regexp == nil {
+		if !blockUaListCfg.Activated || blockUaListCfg.List.Regexp == nil {
 			next.ServeHTTP(w, r)
 			return
 		}
