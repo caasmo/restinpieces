@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/core"
+	"log/slog"
 )
 
 // cutStr limits string length by adding ellipsis if needed
@@ -14,6 +15,20 @@ func cutStr(str string, max int) string {
 	}
 	return str
 }
+
+// Define reasonable max lengths for string fields
+const (
+	maxURL       = 512
+	maxUserAgent = 256
+	maxReferer   = 512
+	maxRemoteIP  = 64
+)
+
+// Cached common log attributes
+var (
+	logType   = slog.String("type", "request")
+	emptyAuth = slog.String("auth", "")
+)
 
 // RequestLog is middleware that logs HTTP request details
 type RequestLog struct {
@@ -41,12 +56,6 @@ func (r *responseRecorder) WriteHeader(status int) {
 // Execute wraps the next handler with request logging
 func (r *RequestLog) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// Cache common values at package level
-		var (
-			logType    = slog.String("type", "request")
-			emptyAuth  = slog.String("auth", "")
-		)
-
 		// More efficient time measurement
 		start := time.Now().UnixNano()
 		
@@ -58,14 +67,6 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		
 		// Calculate duration in nanoseconds and convert to time.Duration
 		duration := time.Duration(time.Now().UnixNano() - start)
-		
-		// Define reasonable max lengths for string fields
-		const (
-			maxURL      = 512
-			maxUserAgent = 256
-			maxReferer   = 512
-			maxRemoteIP  = 64
-		)
 
 		// Build log attributes efficiently with cached values and length limits
 		attrs := make([]any, 0, 15)
