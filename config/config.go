@@ -46,6 +46,12 @@ const (
 	OAuth2ProviderGitHub = "github"
 )
 
+// Config holds the application configuration.
+//
+// Configuration fields use specific naming conventions for their behavior:
+// - Fields named "Activated" can be toggled dynamically via config reload
+// - Fields named "Enabled" require a server restart to take effect
+// - Other boolean fields typically require restart unless documented otherwise
 type Config struct {
 	DBPath          string                    `toml:"db_path" comment:"Path to SQLite database file"`
 	PublicDir       string                    `toml:"public_dir" comment:"Directory containing static web assets"`
