@@ -23,6 +23,7 @@ func (b *BlockUa) Execute(next http.Handler) http.Handler {
 		cfg := b.app.Config()
 		blockUaCfg := cfg.BlockUa
 
+		// Check if User-Agent blocking is activated and has a valid regex
 		if !blockUaCfg.Activated || blockUaCfg.List.Regexp == nil {
 			next.ServeHTTP(w, r)
 			return

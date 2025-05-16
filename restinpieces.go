@@ -161,14 +161,9 @@ func setupPrerouter(app *core.App) http.Handler {
 	}
 
 	// 2. BlockUa Middleware (Added second, runs second)
-	if cfg.BlockUa.Activated {
-		// Instantiate using app instance
-		blockUa := prerouter.NewBlockUa(app)
-		preRouterChain.WithMiddleware(blockUa.Execute)
-		logger.Info("Prerouter Middleware BlockUa enabled")
-	} else {
-		logger.Info("Prerouter Middleware BlockUa disabled")
-	}
+	blockUa := prerouter.NewBlockUa(app)
+	preRouterChain.WithMiddleware(blockUa.Execute)
+	logger.Info("Prerouter Middleware BlockUa added (can be dynamically activated/deactivated via config reload)")
 
 	// 3. TLSHeaderSTS Middleware (Added third, runs third)
 	// This should run early to ensure HSTS is set for TLS requests, but after IP/UA blocking.
