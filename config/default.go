@@ -126,7 +126,7 @@ func NewDefaultConfig() *Config {
 		Maintenance: Maintenance{
 			Activated: false,
 		},
-		BlockUa: BlockUa{
+		BlockUaList: BlockUaList{
 			Activated: true,
 			List: Regexp{
 				Regexp: regexp.MustCompile(`(BotName\.v1|Super\-Bot|My\ Bot|AnotherBot)`),
