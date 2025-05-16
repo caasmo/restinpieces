@@ -82,7 +82,7 @@ type LogRequestLimits struct {
 	URLLength       int `toml:"url" comment:"Max URL/path length (0=no limit)"`
 	UserAgentLength int `toml:"user_agent" comment:"Max User-Agent length (0=no limit)"`
 	RefererLength   int `toml:"referer" comment:"Max Referer length (0=no limit)"`
-	RemoteIPLength  int `toml:"remote_ip" comment:"Max IP address length (0=no limit)"`
+	RemoteIPLength  int `toml:"remote_ip" comment:"Max IP address length (0=no limit). IPv4 max=15, IPv6 max=45 chars. 64 allows for ports/proxy info while preventing log injection"`
 }
 
 // BatchLogger contains batch logging configuration
