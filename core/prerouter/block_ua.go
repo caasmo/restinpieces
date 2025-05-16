@@ -6,19 +6,19 @@ import (
 	"github.com/caasmo/restinpieces/core"
 )
 
-// BlockUa handles blocking requests based on User-Agent header matching a regex.
-type BlockUa struct {
+// BlockUaList handles blocking requests based on User-Agent header matching a regex.
+type BlockUaList struct {
 	app *core.App // Use App to access config
 }
 
-// NewBlockUa creates a new User-Agent blocking middleware instance.
-func NewBlockUa(app *core.App) *BlockUa {
-	return &BlockUa{
+// NewBlockUaList creates a new User-Agent block list middleware instance.
+func NewBlockUaList(app *core.App) *BlockUaList {
+	return &BlockUaList{
 		app: app,
 	}
 }
 
-func (b *BlockUa) Execute(next http.Handler) http.Handler {
+func (b *BlockUaList) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cfg := b.app.Config()
 		blockUaCfg := cfg.BlockUa

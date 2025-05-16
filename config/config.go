@@ -66,7 +66,7 @@ type Config struct {
 	// Acme removed
 	BlockIp     BlockIp     `toml:"block_ip" comment:"IP blocking settings"`
 	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
-	BlockUa     BlockUa     `toml:"block_ua" comment:"User-Agent blocking settings"`
+	BlockUaList BlockUaList `toml:"block_ua_list" comment:"User-Agent block list settings"`
 	Notifier    Notifier    `toml:"notifier"`
 	Log Log `toml:"log" comment:"Logging configuration"`
 }
