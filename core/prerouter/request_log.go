@@ -73,6 +73,11 @@ func (r *responseRecorder) WriteHeader(status int) {
 // Execute wraps the next handler with request logging
 func (r *RequestLog) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// Check if request logging is activated
+		if !r.app.Config().Log.Request.Activated {
+			next.ServeHTTP(w, req)
+			return
+		}
 
 		// Limit request body size TODO
 		//req.Body = http.MaxBytesReader(w, req.Body, maxBodySize)
@@ -109,6 +114,5 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, emptyAuth)
 
 		r.app.Logger().Info(logMessage, attrs...)
-
 	})
 }
