@@ -53,7 +53,7 @@ func validateLoggerBatch(loggerBatch *BatchLogger) error {
 	return nil
 }
 
-func validateRequestLog(requestLog *RequestLog) error {
+func validateRequestLog(requestLog *LogRequest) error {
 	if !requestLog.Enabled {
 		return nil
 	}

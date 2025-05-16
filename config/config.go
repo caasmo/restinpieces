@@ -67,12 +67,12 @@ type Config struct {
 
 // LogConfig contains all logging-related configuration
 type Log struct {
-	Request    RequestLog   `toml:"request" comment:"HTTP request logging configuration"`
+	Request    LogRequest   `toml:"request" comment:"HTTP request logging configuration"`
 	Batch      BatchLogger  `toml:"batch" comment:"Batch logging configuration"`
 }
 
-// RequestLog contains HTTP request logging configuration
-type RequestLog struct {
+// LogRequest contains HTTP request logging configuration
+type LogRequest struct {
 	Enabled      bool             `toml:"enabled" comment:"Enable HTTP request logging"`
 	Limits       LogRequestLimits `toml:"limits" comment:"Maximum field lengths"`
 }

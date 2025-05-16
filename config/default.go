@@ -30,7 +30,7 @@ func NewDefaultConfig() *Config {
 			ConcurrencyMultiplier: 2,
 		},
 		Log: Log{
-			Request: RequestLog{
+			Request: LogRequest{
 				Enabled: true,
 				Limits: LogRequestLimits{
 					URLLength:       512,    // Minimum: 64
