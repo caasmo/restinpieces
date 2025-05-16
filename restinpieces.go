@@ -251,7 +251,7 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUser
 	}
 
 	cfg := configProvider.Get()
-	logDbPath := cfg.LoggerBatch.DbPath
+	logDbPath := cfg.Log.Batch.DbPath
 	if logDbPath == "" {
 		return nil, fmt.Errorf("logger daemon: database path (LoggerBatch.DbPath) is not configured")
 	}
