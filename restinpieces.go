@@ -147,6 +147,7 @@ func setupPrerouter(app *core.App) http.Handler {
 
 	// Initialize prerouter logging with consistent attributes
 	prerouterLogger := logger.With("component", "prerouter_init")
+	prerouterLogger.Info("Seting up Prerouter Middleware ...")
 
 	// 0. Request Logging Middleware (Added first, runs first)
 	requestLog := prerouter.NewRequestLog(app)
