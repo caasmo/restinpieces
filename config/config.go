@@ -331,8 +331,23 @@ type Notifier struct {
 
 // BlockRequestBody holds configuration for request body size limiting
 type BlockRequestBody struct {
-	Activated     bool     `toml:"activated" comment:"Enable request body size limiting"`
-	Limit         int64    `toml:"limit" comment:"Maximum allowed request body size in bytes"`
+	// Activated enables/disables request body size limiting middleware
+	Activated bool `toml:"activated" comment:"Enable request body size limiting"`
+
+	// Limit is the maximum allowed request body size in bytes
+	// Common values:
+	// - 1MB (1048576) for typical APIs
+	// - 10MB (10485760) for file uploads
+	// - 100MB (104857600) for large media uploads
+	Limit int64 `toml:"limit" comment:"Maximum allowed request body size in bytes"`
+
+	// ExcludedPaths are URL paths that bypass size limiting
+	// Path matching rules:
+	// - Exact match required (case-sensitive)
+	// - Trailing slashes are significant ('/path' ≠ '/path/')
+	// - Query strings are ignored (matches path only)
+	// - Paths should start with '/' (e.g. '/api/upload')
+	// - No wildcards or pattern matching
 	ExcludedPaths []string `toml:"excluded_paths" comment:"Paths that bypass size limiting. Path matching rules:
 - Exact match required (case-sensitive)
 - Trailing slashes are significant ('/path' ≠ '/path/')
