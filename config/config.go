@@ -63,7 +63,6 @@ type Config struct {
 	OAuth2Providers map[string]OAuth2Provider `toml:"oauth2_providers" comment:"OAuth2 provider configurations"`
 	Smtp            Smtp                      `toml:"smtp" comment:"SMTP email settings"`
 	Endpoints       Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
-	// Acme removed
 	BlockIp     BlockIp     `toml:"block_ip" comment:"IP blocking settings"`
 	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
 	BlockUaList BlockUaList `toml:"block_ua_list" comment:"User-Agent block list settings"`
@@ -290,8 +289,6 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 	// Replace path with .html version
 	return path + ".html"
 }
-
-// Acme struct removed.
 
 // BlockIp holds configuration specific to IP blocking.
 type BlockIp struct {
