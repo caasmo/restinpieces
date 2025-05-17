@@ -63,7 +63,7 @@ func (h *BatchHandler) Handle(_ context.Context, r slog.Record) error {
 
 	// Non-blocking channel send attempt
 	select {
-	case h.recordChan <- r:
+	case h.recordChan <- r.Clone():
 		return nil
 	default:
 		return fmt.Errorf("log channel full, dropping record")
