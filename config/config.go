@@ -66,8 +66,9 @@ type Config struct {
 	BlockIp     BlockIp     `toml:"block_ip" comment:"IP blocking settings"`
 	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
 	BlockUaList BlockUaList `toml:"block_ua_list" comment:"User-Agent block list settings"`
-	Notifier    Notifier    `toml:"notifier"`
-	Log Log `toml:"log" comment:"Logging configuration"`
+	Notifier       Notifier       `toml:"notifier"`
+	Log            Log            `toml:"log" comment:"Logging configuration"`
+	BlockRequestBody BlockRequestBody `toml:"block_request_body" comment:"Request body size limiting configuration"`
 }
 
 // Log contains Default (Batch) log configuration
@@ -326,4 +327,11 @@ type Discord struct {
 
 type Notifier struct {
 	Discord Discord `toml:"discord" comment:"Default Discord notifier configuration"`
+}
+
+// BlockRequestBody holds configuration for request body size limiting
+type BlockRequestBody struct {
+	Activated     bool     `toml:"activated" comment:"Enable request body size limiting"`
+	Limit         int64    `toml:"limit" comment:"Maximum allowed request body size in bytes"`
+	ExcludedPaths []string `toml:"excluded_paths" comment:"Paths that bypass size limiting"`
 }
