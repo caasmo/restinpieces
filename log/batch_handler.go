@@ -12,6 +12,8 @@ type BatchHandler struct {
 	configProvider *config.Provider   // For dynamic log levels
 	recordChan     chan<- slog.Record // Write-end of the channel, provided by Daemon
 	daemonCtx      context.Context    // Context from daemon for shutdown detection
+    attrs          []slog.Attr 
+
 }
 
 // NewBatchHandler creates a new BatchHandler.
@@ -31,11 +33,12 @@ func NewBatchHandler(configProvider *config.Provider, recordChan chan<- slog.Rec
 		panic("batchhandler: daemonCtx cannot be nil")
 	}
 
-	return &BatchHandler{
-		configProvider: configProvider,
-		recordChan:     recordChan,
-		daemonCtx:      daemonCtx,
-	}
+    return &BatchHandler{
+        configProvider: configProvider,
+        recordChan:     recordChan,
+        daemonCtx:      daemonCtx,
+        attrs:          []slog.Attr{}, // Initialize empty slice
+    }
 }
 
 // Enabled implements the slog.Handler interface.
@@ -61,22 +64,34 @@ func (h *BatchHandler) Handle(_ context.Context, r slog.Record) error {
 		return fmt.Errorf("daemon shutting down, dropping log record")
 	}
 
+    // Create a new record that includes our stored attributes
+    if len(h.attrs) > 0 {
+        for _, attr := range h.attrs {
+            r.AddAttrs(attr)  // Add our stored attributes to the record
+        }
+    }
+
 	// Non-blocking channel send attempt
 	select {
-	case h.recordChan <- r.Clone():
+	case h.recordChan <- r:
 		return nil
 	default:
 		return fmt.Errorf("log channel full, dropping record")
 	}
 }
 
-// WithAttrs implements the slog.Handler interface.
 func (h *BatchHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &BatchHandler{
-		configProvider: h.configProvider,
-		recordChan:     h.recordChan,
-		daemonCtx:      h.daemonCtx,
-	}
+    // Create a new handler with combined attributes
+    newAttrs := make([]slog.Attr, len(h.attrs)+len(attrs))
+    copy(newAttrs, h.attrs)
+    copy(newAttrs[len(h.attrs):], attrs)
+
+    return &BatchHandler{
+        configProvider: h.configProvider,
+        recordChan:     h.recordChan,
+        daemonCtx:      h.daemonCtx,
+        attrs:          newAttrs,
+    }
 }
 
 // WithGroup implements the slog.Handler interface.
