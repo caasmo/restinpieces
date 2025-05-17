@@ -6,20 +6,20 @@ import (
 	"github.com/caasmo/restinpieces/core"
 )
 
-// LimitRequestBody handles limiting the size of request bodies.
-type LimitRequestBody struct {
+// BlockRequestBody handles limiting the size of request bodies.
+type BlockRequestBody struct {
 	app *core.App // Use App to access config
 }
 
-// NewLimitRequestBody creates a new request body size limiter middleware instance.
-func NewLimitRequestBody(app *core.App) *LimitRequestBody {
-	return &LimitRequestBody{
+// NewBlockRequestBody creates a new request body size limiter middleware instance.
+func NewBlockRequestBody(app *core.App) *BlockRequestBody {
+	return &BlockRequestBody{
 		app: app,
 	}
 }
 
 // Execute wraps the next handler with request body size limiting logic.
-func (l *LimitRequestBody) Execute(next http.Handler) http.Handler {
+func (l *BlockRequestBody) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// http.MaxBytesReader handles various cases:
 		// 1. If Content-Length header exists and is > limitBytes, it immediately rejects.
