@@ -145,25 +145,42 @@ func setupPrerouter(app *core.App) http.Handler {
 	// --- Add Internal Middleware Conditionally (Order Matters!) ---
 	// Execution order will be: RequestLog -> BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> app.Router()
 
+	// Initialize prerouter logging with consistent attributes
+	prerouterLogger := logger.With("component", "prerouter_init")
+
 	// 0. Request Logging Middleware (Added first, runs first)
 	requestLog := prerouter.NewRequestLog(app)
 	preRouterChain.WithMiddleware(requestLog.Execute)
-	logger.Info("Prerouter Middleware RequestLog added (can be dynamically activated/deactivated via config reload)")
+	prerouterLogger.Info("middleware added", 
+		"middleware", "RequestLog",
+		"dynamic", true,
+		"note", "can be activated/deactivated via config reload",
+	)
 
 	// 1. BlockIp Middleware (Added first, runs first)
 	if cfg.BlockIp.Enabled {
 		// Instantiate using app resources
 		blockIp := prerouter.NewBlockIp(app.Cache(), logger) // Keep logger for BlockIp
 		preRouterChain.WithMiddleware(blockIp.Execute)
-		logger.Info("Prerouter Middleware BlockIp enabled")
+		prerouterLogger.Info("middleware added",
+			"middleware", "BlockIp",
+			"enabled", true,
+		)
 	} else {
-		logger.Info("Prerouter Middleware BlockIp disabled")
+		prerouterLogger.Info("middleware skipped",
+			"middleware", "BlockIp",
+			"enabled", false,
+		)
 	}
 
 	// 2. BlockUaList Middleware (Added second, runs second)
 	blockUaList := prerouter.NewBlockUaList(app)
 	preRouterChain.WithMiddleware(blockUaList.Execute)
-	logger.Info("Prerouter Middleware BlockUaList added (can be dynamically activated/deactivated via config reload)")
+	prerouterLogger.Info("middleware added",
+		"middleware", "BlockUaList",
+		"dynamic", true,
+		"note", "can be activated/deactivated via config reload",
+	)
 
 	// 3. TLSHeaderSTS Middleware (Added third, runs third)
 	// This should run early to ensure HSTS is set for TLS requests, but after IP/UA blocking.
@@ -175,17 +192,28 @@ func setupPrerouter(app *core.App) http.Handler {
 	// Always added; behavior controlled by cfg.Maintenance.Activated
 	maintenance := prerouter.NewMaintenance(app)
 	preRouterChain.WithMiddleware(maintenance.Execute)
-	logger.Info("Prerouter Middleware Maintenance added (activation depends on config)")
+	prerouterLogger.Info("middleware added",
+		"middleware", "Maintenance",
+		"dynamic", true,
+		"note", "activation depends on config",
+	)
 
 	// 5. BlockRequestBody Middleware (Added fifth, runs fifth)
 	// Always added; behavior controlled by cfg.BlockRequestBody.Activated
 	blockRequestBody := prerouter.NewBlockRequestBody(app)
 	preRouterChain.WithMiddleware(blockRequestBody.Execute)
-	logger.Info("Prerouter Middleware BlockRequestBody added (activation depends on config)")
+	prerouterLogger.Info("middleware added",
+		"middleware", "BlockRequestBody",
+		"dynamic", true,
+		"note", "activation depends on config",
+	)
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
-	logger.Info("PreRouter handler chain configured")
+	prerouterLogger.Info("handler chain configured",
+		"middleware_count", 6, // Update this number if adding/removing middleware
+		"status", "ready",
+	)
 
 	return preRouterHandler
 }
