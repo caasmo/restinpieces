@@ -177,6 +177,12 @@ func setupPrerouter(app *core.App) http.Handler {
 	preRouterChain.WithMiddleware(maintenance.Execute)
 	logger.Info("Prerouter Middleware Maintenance added (activation depends on config)")
 
+	// 5. BlockRequestBody Middleware (Added fifth, runs fifth)
+	// Always added; behavior controlled by cfg.BlockRequestBody.Activated
+	blockRequestBody := prerouter.NewBlockRequestBody(app)
+	preRouterChain.WithMiddleware(blockRequestBody.Execute)
+	logger.Info("Prerouter Middleware BlockRequestBody added (activation depends on config)")
+
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
 	logger.Info("PreRouter handler chain configured")
