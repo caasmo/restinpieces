@@ -114,5 +114,6 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, emptyAuth)
 
 		r.app.Logger().Info(logMessage, attrs...)
+
 	})
 }

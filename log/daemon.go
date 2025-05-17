@@ -88,24 +88,16 @@ func (ld *Daemon) Stop(ctx context.Context) error {
 	return nil
 }
 
-// prepareRecordForDB converts an slog.Record into a dbLogEntry, ready for insertion.
-// This includes marshalling attributes to JSON.
+// prepareRecordForDB converts an slog.Record into a dbLogEntry using structured types
 func (ld *Daemon) prepareRecordForDB(record slog.Record) (db.Log, error) {
-	attrsMap := make(map[string]any)
-	record.Attrs(func(a slog.Attr) bool {
-		resolveAndInsertAttr(attrsMap, a)
-		return true
-	})
+	logObj, err := schema.FromRecord(record)
+	if err != nil {
+		return db.Log{}, fmt.Errorf("failed to convert record: %w", err)
+	}
 
-	var jsonDataBytes []byte
-	var err error
-	if len(attrsMap) > 0 {
-		jsonDataBytes, err = json.Marshal(attrsMap)
-		if err != nil {
-			return db.Log{}, fmt.Errorf("failed to marshal log attributes to JSON: %w", err)
-		}
-	} else {
-		jsonDataBytes = []byte("{}") // Default JSON for empty attributes
+	jsonDataBytes, err := json.Marshal(logObj)
+	if err != nil {
+		return db.Log{}, fmt.Errorf("failed to marshal log object: %w", err)
 	}
 
 	return db.Log{
