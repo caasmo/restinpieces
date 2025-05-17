@@ -333,5 +333,10 @@ type Notifier struct {
 type BlockRequestBody struct {
 	Activated     bool     `toml:"activated" comment:"Enable request body size limiting"`
 	Limit         int64    `toml:"limit" comment:"Maximum allowed request body size in bytes"`
-	ExcludedPaths []string `toml:"excluded_paths" comment:"Paths that bypass size limiting"`
+	ExcludedPaths []string `toml:"excluded_paths" comment:"Paths that bypass size limiting. Path matching rules:
+- Exact match required (case-sensitive)
+- Trailing slashes are significant ('/path' ≠ '/path/')
+- Query strings are ignored (matches path only)
+- Paths should start with '/' (e.g. '/api/upload')
+- No wildcards or pattern matching"`
 }
