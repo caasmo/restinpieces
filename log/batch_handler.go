@@ -95,10 +95,12 @@ func (h *BatchHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 }
 
 // WithGroup implements the slog.Handler interface.
+// TODO implement
 func (h *BatchHandler) WithGroup(name string) slog.Handler {
 	return &BatchHandler{
 		configProvider: h.configProvider,
 		recordChan:     h.recordChan,
 		daemonCtx:      h.daemonCtx,
+        attrs:          []slog.Attr{}, 
 	}
 }
