@@ -66,7 +66,7 @@ type responseRecorder struct {
 }
 
 func (r *responseRecorder) WriteHeader(status int) {
-    slog.Info("writing header")
+    slog.Error("writing header")
 	r.status = status
 	r.ResponseWriter.WriteHeader(status)
 }
