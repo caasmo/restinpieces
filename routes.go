@@ -48,6 +48,6 @@ func route(cfg *config.Config, ap *core.App) {
 		// "/api/benchmark/sqlite/ratio/{ratio}/read/{reads}": router.NewChain(http.HandlerFunc(ap.BenchmarkSqliteRWRatio)),
 		// "GET /api/benchmark/sqlite/pool/ratio/{ratio}/read/{reads}": router.NewChain(http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool)),
 		// "/api/benchmark/ristretto/read": router.NewChain(ap.BenchmarkRistrettoRead()), // Assuming this returns http.HandlerFunc
-		// "/api/teas/:id": router.NewChain(http.HandlerFunc(ap.Tea)),
+		 "/index": router.NewChain(http.HandlerFunc(ap.Index)),
 	})
 }
