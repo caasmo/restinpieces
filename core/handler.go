@@ -1,15 +1,15 @@
 package core
 
-//import (
+import (
 //	"encoding/json"
 //	"fmt"
 //	"math/rand"
-//	"net/http"
+	"net/http"
 //	"os"
 //	"strconv"
 //	"time"
 //	//"log"
-//)
+)
 //
 //// all handlers should conform to fn(w http.ResponseWriter, r *http.Request)
 ////
@@ -180,6 +180,6 @@ package core
 //// Index handler
 //// Authenticated: No
 //// Allowed Mimetype: text/plain
-//func (a *App) Index(w http.ResponseWriter, r *http.Request) {
-//	fmt.Fprintf(w, "Welcome!")
-//}
+func (a *App) Index(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(`gg`))
+}
