@@ -20,8 +20,8 @@ func (f *MessageFormatter) WithComponent(name, emoji string) *MessageFormatter {
 	return f
 }
 
-// Error formats an error message
-func (f *MessageFormatter) Error(msg string) string {
+// Fail formats a failure message
+func (f *MessageFormatter) Fail(msg string) string {
 	return fmt.Sprintf("%s  %s: ❌  %s", f.componentEmoji, f.component, msg)
 }
 
