@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"time"
 
 	"github.com/caasmo/restinpieces/core"
+	"log/slog"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -132,7 +132,7 @@ func (m *MetricsMiddleware) Execute(next http.Handler) http.Handler {
 		rec, ok := w.(*core.ResponseRecorder)
 		if !ok {
 			// Log error but continue processing
-			slog.Error("metrics middleware: expected core.ResponseRecorder but got different type",
+			core.GetLogger().Error("metrics middleware: expected core.ResponseRecorder but got different type",
 				"type", "ResponseRecorder",
 				"got", w,
 			)
