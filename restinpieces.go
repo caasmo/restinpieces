@@ -170,7 +170,7 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 3. BlockUaList Middleware
 	blockUaList := prerouter.NewBlockUaList(app)
 	preRouterChain.WithMiddleware(blockUaList.Execute)
-	logger.Info(formatter.Info("BlockUaList middleware added"))
+	logger.Info(formatter.Info("BlockUaList middleware added"), "activated", cfg.BlockUaList.Activated)
 
 	// 4. TLSHeaderSTS Middleware
 	tlsHeaderSTS := prerouter.NewTLSHeaderSTS()
@@ -179,12 +179,12 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 5. Maintenance Middleware
 	maintenance := prerouter.NewMaintenance(app)
 	preRouterChain.WithMiddleware(maintenance.Execute)
-	logger.Info(formatter.Info("Maintenance middleware added"))
+	logger.Info(formatter.Info("Maintenance middleware added"), "activated", cfg.Maintenance.Activated)
 
 	// 6. BlockRequestBody Middleware
 	blockRequestBody := prerouter.NewBlockRequestBody(app)
 	preRouterChain.WithMiddleware(blockRequestBody.Execute)
-	logger.Info(formatter.Info("BlockRequestBody middleware added"))
+	logger.Info(formatter.Info("BlockRequestBody middleware added"), "activated", cfg.BlockRequestBody.Activated)
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
