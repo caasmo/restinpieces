@@ -293,7 +293,8 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 
 // BlockIp holds configuration specific to IP blocking.
 type BlockIp struct {
-	Enabled bool `toml:"enabled" comment:"Enable automatic IP blocking"`
+	Enabled   bool `toml:"enabled" comment:"Enable automatic IP blocking (requires restart)"`
+	Activated bool `toml:"activated" comment:"Activate IP blocking (can be toggled via config reload)"`
 }
 
 // Maintenance holds configuration for the maintenance mode feature.

@@ -121,7 +121,8 @@ func NewDefaultConfig() *Config {
 			ConfirmEmailChange:       "POST /api/confirm-email-change",
 		},
 		BlockIp: BlockIp{
-			Enabled: true,
+			Enabled:   true,
+			Activated: true,
 		},
 		Maintenance: Maintenance{
 			Activated: false,
