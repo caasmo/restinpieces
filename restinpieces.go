@@ -145,7 +145,7 @@ func setupPrerouter(app *core.App) http.Handler {
 	// --- Add Internal Middleware Conditionally (Order Matters!) ---
 	// Execution order will be: RequestLog -> BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> app.Router()
 
-	formatter := NewLogMessageFormatter().WithComponent("prerouter", "🛠️")
+	formatter := log.NewMessageFormatter().WithComponent("prerouter", "🛠️")
 	logger.Info("Setting up Prerouter Middleware ...")
 
 	// 0. Response Recorder Middleware (Added first, runs first)
@@ -243,33 +243,6 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 	},
 }
 
-// LogMessageFormatter provides consistent log message formatting
-type LogMessageFormatter struct {
-	component     string
-	componentEmoji string
-}
-
-// NewLogMessageFormatter creates a new formatter instance
-func NewLogMessageFormatter() *LogMessageFormatter {
-	return &LogMessageFormatter{}
-}
-
-// WithComponent sets the component name and emoji
-func (f *LogMessageFormatter) WithComponent(name, emoji string) *LogMessageFormatter {
-	f.component = name
-	f.componentEmoji = emoji
-	return f
-}
-
-// Error formats an error message
-func (f *LogMessageFormatter) Error(msg string) string {
-	return fmt.Sprintf("%s  %s: ❌  %s", f.componentEmoji, f.component, msg)
-}
-
-// Info formats an info message
-func (f *LogMessageFormatter) Info(msg string) string {
-	return fmt.Sprintf("%s  %s: ℹ️  %s", f.componentEmoji, f.component, msg)
-}
 
 
 func SetupDefaultCache(app *core.App) error {
