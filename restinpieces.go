@@ -146,50 +146,50 @@ func setupPrerouter(app *core.App) http.Handler {
 	// --- Add Internal Middleware Conditionally (Order Matters!) ---
 	// Execution order will be: RequestLog -> BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> app.Router()
 
-	logger.Info(formatter.Info("Setting up Prerouter Middleware Chain ..."))
+	logger.Info(formatter.Start("Setting up Prerouter Middleware Chain ..."))
 
 	// 0. Response Recorder Middleware (Added first, runs first)
 	recorder := prerouter.NewRecorder(app)
 	preRouterChain.WithMiddleware(recorder.Execute)
-	logger.Info(formatter.Info("ResponseRecorder middleware added"))
+	logger.Info(formatter.Ok("ResponseRecorder middleware added"))
 
 	// 1. Request Logging Middleware (Added second, runs second)
 	requestLog := prerouter.NewRequestLog(app)
 	preRouterChain.WithMiddleware(requestLog.Execute)
-	logger.Info(formatter.Info("RequestLog middleware added"), "activated", cfg.Log.Request.Activated)
+	logger.Info(formatter.Ok("RequestLog middleware added"), "activated", cfg.Log.Request.Activated)
 
 	// 2. BlockIp Middleware 
 	if cfg.BlockIp.Enabled {
 		blockIp := prerouter.NewBlockIp(app.Cache(), logger)
 		preRouterChain.WithMiddleware(blockIp.Execute)
-		logger.Info(formatter.Info("BlockIp middleware enabled"), "activated", cfg.BlockIp.Activated)
+		logger.Info(formatter.Ok("BlockIp middleware enabled"), "activated", cfg.BlockIp.Activated)
 	} else {
-		logger.Info(formatter.Info("BlockIp middleware not enabled"))
+		logger.Info(formatter.Ok("BlockIp middleware not enabled"))
 	}
 
 	// 3. BlockUaList Middleware
 	blockUaList := prerouter.NewBlockUaList(app)
 	preRouterChain.WithMiddleware(blockUaList.Execute)
-	logger.Info(formatter.Info("BlockUaList middleware added"), "activated", cfg.BlockUaList.Activated)
+	logger.Info(formatter.Ok("BlockUaList middleware added"), "activated", cfg.BlockUaList.Activated)
 
 	// 4. TLSHeaderSTS Middleware
 	tlsHeaderSTS := prerouter.NewTLSHeaderSTS()
 	preRouterChain.WithMiddleware(tlsHeaderSTS.Execute)
-	logger.Info(formatter.Info("TLSHeaderSTS middleware added"), "tls_enabled", cfg.Server.EnableTLS)
+	logger.Info(formatter.Ok("TLSHeaderSTS middleware added"), "tls_enabled", cfg.Server.EnableTLS)
 
 	// 5. Maintenance Middleware
 	maintenance := prerouter.NewMaintenance(app)
 	preRouterChain.WithMiddleware(maintenance.Execute)
-	logger.Info(formatter.Info("Maintenance middleware added"), "activated", cfg.Maintenance.Activated)
+	logger.Info(formatter.Ok("Maintenance middleware added"), "activated", cfg.Maintenance.Activated)
 
 	// 6. BlockRequestBody Middleware
 	blockRequestBody := prerouter.NewBlockRequestBody(app)
 	preRouterChain.WithMiddleware(blockRequestBody.Execute)
-	logger.Info(formatter.Info("BlockRequestBody middleware added"), "activated", cfg.BlockRequestBody.Activated)
+	logger.Info(formatter.Ok("BlockRequestBody middleware added"), "activated", cfg.BlockRequestBody.Activated)
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
-	logger.Info(formatter.Info("Prerouter Middleware Chain Setup complete 🎉"))
+	logger.Info(formatter.Complete("Prerouter Middleware Chain Setup complete"))
 
 	return preRouterHandler
 }
@@ -204,7 +204,7 @@ func SetupDefaultRouter(app *core.App) error {
 
 func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, logger *slog.Logger) (*scl.Scheduler, error) {
 	formatter := log.NewMessageFormatter().WithComponent("scheduler", "🛠️")
-	logger.Info(formatter.Info("Setting up scheduler..."))
+	logger.Info(formatter.Start("Setting up scheduler..."))
 
 	hdls := make(map[string]executor.JobHandler)
 
@@ -214,7 +214,7 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 	if (cfg.Smtp != config.Smtp{}) {
 		mailer, err := mail.New(configProvider)
 		if err != nil {
-			logger.Error(formatter.Error("failed to create mailer"), "error", err)
+			logger.Error(formatter.Fail("failed to create mailer"), "error", err)
 			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?
 			// For now, let's treat it as fatal if configured but failing.
 			os.Exit(1) // Or return err
@@ -222,21 +222,21 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 		emailVerificationHandler := handlers.NewEmailVerificationHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
-		logger.Info(formatter.Info("registered email verification handler"))
+		logger.Info(formatter.Ok("registered email verification handler"))
 
 		passwordResetHandler := handlers.NewPasswordResetHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
-		logger.Info(formatter.Info("registered password reset handler"))
+		logger.Info(formatter.Ok("registered password reset handler"))
 
 		emailChangeHandler := handlers.NewEmailChangeHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
-		logger.Info(formatter.Info("registered email change handler"))
+		logger.Info(formatter.Ok("registered email change handler"))
 	}
 
 	// ACME handler registration removed.
 
 	scheduler := scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger)
-	logger.Info(formatter.Info("scheduler setup complete"), "handlers_registered", len(hdls))
+	logger.Info(formatter.Complete("scheduler setup complete"), "handlers_registered", len(hdls))
 	return scheduler, nil
 }
 
