@@ -280,7 +280,7 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 
 // formatMessage creates a consistent log message format
 func formatMessage(humanMsg, levelEmoji, component, componentEmoji string) string {
-	return fmt.Sprintf("%s %s %s: %s", componentEmoji, levelEmoji, component, humanMsg)
+	return fmt.Sprintf("%s %s: %s %s", componentEmoji, component, levelEmoji, humanMsg)
 }
 
 // formatErrorMessage formats error messages consistently
