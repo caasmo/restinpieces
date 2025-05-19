@@ -161,7 +161,7 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 1. Request Logging Middleware (Added second, runs second)
 	requestLog := prerouter.NewRequestLog(app)
 	preRouterChain.WithMiddleware(requestLog.Execute)
-	prerouterLogger.Info(formatInfoMessage("middleware added", "prerouter"), 
+	prerouterLogger.Info(formatInfoMessage("middleware added", "prerouter", "🛠️"), 
 		"middleware", "RequestLog",
 		"dynamic", true,
 		"note", "can be activated/deactivated via config reload",
@@ -177,7 +177,7 @@ func setupPrerouter(app *core.App) http.Handler {
 			"enabled", true,
 		)
 	} else {
-		prerouterLogger.Info(formatInfoMessage("middleware skipped", "prerouter"),
+		prerouterLogger.Info(formatInfoMessage("middleware skipped", "prerouter", "🛠️"),
 			"middleware", "BlockIp",
 			"enabled", false,
 		)
@@ -220,7 +220,7 @@ func setupPrerouter(app *core.App) http.Handler {
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
-	prerouterLogger.Info(formatInfoMessage("handler chain configured", "prerouter"),
+	prerouterLogger.Info(formatInfoMessage("handler chain configured", "prerouter", "🛠️"),
 		"middleware_count", 7, // Update this number if adding/removing middleware
 		"status", "ready",
 	)
@@ -247,7 +247,7 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 		mailer, err := mail.New(configProvider)
 		if err != nil {
-			logger.Error(formatErrorMessage("failed to create mailer", "mailer"), "error", err)
+			logger.Error(formatErrorMessage("failed to create mailer", "mailer", "📧"), "error", err)
 			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?
 			// For now, let's treat it as fatal if configured but failing.
 			os.Exit(1) // Or return err
@@ -284,13 +284,13 @@ func formatMessage(humanMsg, component, componentEmoji, levelEmoji string) strin
 }
 
 // formatErrorMessage formats error messages consistently
-func formatErrorMessage(humanMsg, component string) string {
-	return formatMessage(humanMsg, component, "🛠️", "❌")
+func formatErrorMessage(humanMsg, component, componentEmoji string) string {
+	return formatMessage(humanMsg, component, componentEmoji, "❌")
 }
 
 // formatInfoMessage formats info messages consistently
-func formatInfoMessage(humanMsg, component string) string {
-	return formatMessage(humanMsg, component, "🛠️", "ℹ️")
+func formatInfoMessage(humanMsg, component, componentEmoji string) string {
+	return formatMessage(humanMsg, component, componentEmoji, "ℹ️")
 }
 
 func SetupDefaultCache(app *core.App) error {
