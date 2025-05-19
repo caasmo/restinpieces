@@ -1,5 +1,11 @@
 ### TODOs
 
+- application  logs, 
+    - maybe trace 
+    - message is human friendly, with emoji
+        - helper formatter 
+            ⏰scheduler: <level emoji> i am doing this 
+        - <what emoji> <where>: <level emoji> <human friendly message> <attrs only for details>
 - middleware block big bodyes
 - activated vs enabled consistency 
 - logger, have a text logger for startup before app logger, and for shutdown. pass to the app.logger and use as default?
