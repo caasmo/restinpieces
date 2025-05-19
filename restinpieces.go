@@ -137,7 +137,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 func setupPrerouter(app *core.App) http.Handler {
 	logger := app.Logger()
 	cfg := app.Config()
-	formatter := log.NewMessageFormatter().WithComponent("prerouter", "🛠️")
+	formatter := log.NewMessageFormatter().WithComponent("prerouter", "🛠️ ")
 
 	// Start the chain with the application's main router as the base handler.
 	// The final handler in the chain will be app.Router().ServeHTTP
@@ -203,7 +203,7 @@ func SetupDefaultRouter(app *core.App) error {
 }
 
 func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, logger *slog.Logger) (*scl.Scheduler, error) {
-	formatter := log.NewMessageFormatter().WithComponent("scheduler", "🛠️")
+	formatter := log.NewMessageFormatter().WithComponent("scheduler", "🛠️ ")
 	logger.Info(formatter.Start("Setting up scheduler..."))
 
 	hdls := make(map[string]executor.JobHandler)
