@@ -212,7 +212,8 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 		mailer, err := mail.New(configProvider)
 		if err != nil {
-			logger.Error(formatErrorMessage("failed to create mailer", "mailer", "📧"), "error", err)
+			mailerFormatter := NewLogMessageFormatter().WithComponent("mailer", "📧")
+			logger.Error(mailerFormatter.Error("failed to create mailer"), "error", err)
 			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?
 			// For now, let's treat it as fatal if configured but failing.
 			os.Exit(1) // Or return err
@@ -271,20 +272,6 @@ func (f *LogMessageFormatter) Info(msg string) string {
 	return fmt.Sprintf("%s  %s: ℹ️  %s", f.componentEmoji, f.component, msg)
 }
 
-// formatMessage creates a consistent log message format (kept for backward compatibility)
-func formatMessage(humanMsg, component, componentEmoji, levelEmoji string) string {
-	return fmt.Sprintf("%s  %s: %s  %s", componentEmoji, component, levelEmoji, humanMsg)
-}
-
-// formatErrorMessage formats error messages consistently (kept for backward compatibility)
-func formatErrorMessage(humanMsg, component, componentEmoji string) string {
-	return NewLogMessageFormatter().WithComponent(component, componentEmoji).Error(humanMsg)
-}
-
-// formatInfoMessage formats info messages consistently (kept for backward compatibility)
-func formatInfoMessage(humanMsg, component, componentEmoji string) string {
-	return NewLogMessageFormatter().WithComponent(component, componentEmoji).Info(humanMsg)
-}
 
 func SetupDefaultCache(app *core.App) error {
 	cacheInstance, err := ristretto.New[any]() // Explicit string keys and interface{} values
