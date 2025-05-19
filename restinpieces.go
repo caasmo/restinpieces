@@ -203,7 +203,7 @@ func SetupDefaultRouter(app *core.App) error {
 }
 
 func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, logger *slog.Logger) (*scl.Scheduler, error) {
-	formatter := log.NewMessageFormatter().WithComponent("scheduler", "⏰")
+	formatter := log.NewMessageFormatter().WithComponent("scheduler", "🛠️")
 	logger.Info(formatter.Info("Setting up scheduler..."))
 
 	hdls := make(map[string]executor.JobHandler)
@@ -222,21 +222,21 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 		emailVerificationHandler := handlers.NewEmailVerificationHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
-		logger.Info(formatter.Info("registered email verification handler"))
+		logger.Info(formatter.Info("registered email verification handler"), "handler", "email_verification")
 
 		passwordResetHandler := handlers.NewPasswordResetHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
-		logger.Info(formatter.Info("registered password reset handler"))
+		logger.Info(formatter.Info("registered password reset handler"), "handler", "password_reset")
 
 		emailChangeHandler := handlers.NewEmailChangeHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
-		logger.Info(formatter.Info("registered email change handler"))
+		logger.Info(formatter.Info("registered email change handler"), "handler", "email_change")
 	}
 
 	// ACME handler registration removed.
 
 	scheduler := scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger)
-	logger.Info(formatter.Info("scheduler setup complete"))
+	logger.Info(formatter.Info("scheduler setup complete"), "handlers_registered", len(hdls))
 	return scheduler, nil
 }
 
