@@ -152,78 +152,44 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 0. Response Recorder Middleware (Added first, runs first)
 	recorder := prerouter.NewRecorder(app)
 	preRouterChain.WithMiddleware(recorder.Execute)
-	prerouterLogger.Info("middleware added",
-		"middleware", "ResponseRecorder",
-		"dynamic", false,
-		"note", "required for other middleware to work",
-	)
+	prerouterLogger.Info(formatInfoMessage("ResponseRecorder middleware added", "prerouter", "🛠️"))
 
 	// 1. Request Logging Middleware (Added second, runs second)
 	requestLog := prerouter.NewRequestLog(app)
 	preRouterChain.WithMiddleware(requestLog.Execute)
-	prerouterLogger.Info(formatInfoMessage("middleware added", "prerouter", "🛠️"), 
-		"middleware", "RequestLog",
-		"dynamic", true,
-		"note", "can be activated/deactivated via config reload",
-	)
+	prerouterLogger.Info(formatInfoMessage("RequestLog middleware added", "prerouter", "🛠️"))
 
-	// 1. BlockIp Middleware (Added first, runs first)
+	// 2. BlockIp Middleware 
 	if cfg.BlockIp.Enabled {
-		// Instantiate using app resources
-		blockIp := prerouter.NewBlockIp(app.Cache(), logger) // Keep logger for BlockIp
+		blockIp := prerouter.NewBlockIp(app.Cache(), logger)
 		preRouterChain.WithMiddleware(blockIp.Execute)
-		prerouterLogger.Info(formatInfoMessage("middleware added", "prerouter"),
-			"middleware", "BlockIp",
-			"enabled", true,
-		)
+		prerouterLogger.Info(formatInfoMessage("BlockIp middleware added", "prerouter", "🛠️"))
 	} else {
-		prerouterLogger.Info(formatInfoMessage("middleware skipped", "prerouter", "🛠️"),
-			"middleware", "BlockIp",
-			"enabled", false,
-		)
+		prerouterLogger.Info(formatInfoMessage("BlockIp middleware skipped", "prerouter", "🛠️"))
 	}
 
-	// 2. BlockUaList Middleware (Added second, runs second)
+	// 3. BlockUaList Middleware
 	blockUaList := prerouter.NewBlockUaList(app)
 	preRouterChain.WithMiddleware(blockUaList.Execute)
-	prerouterLogger.Info("middleware added",
-		"middleware", "BlockUaList",
-		"dynamic", true,
-		"note", "can be activated/deactivated via config reload",
-	)
+	prerouterLogger.Info(formatInfoMessage("BlockUaList middleware added", "prerouter", "🛠️"))
 
-	// 3. TLSHeaderSTS Middleware (Added third, runs third)
-	// This should run early to ensure HSTS is set for TLS requests, but after IP/UA blocking.
+	// 4. TLSHeaderSTS Middleware
 	tlsHeaderSTS := prerouter.NewTLSHeaderSTS()
 	preRouterChain.WithMiddleware(tlsHeaderSTS.Execute)
-	// No specific log for TLSHeaderSTS as it always runs
 
-	// 4. Maintenance Middleware (Added fourth, runs fourth)
-	// Always added; behavior controlled by cfg.Maintenance.Activated
+	// 5. Maintenance Middleware
 	maintenance := prerouter.NewMaintenance(app)
 	preRouterChain.WithMiddleware(maintenance.Execute)
-	prerouterLogger.Info("middleware added",
-		"middleware", "Maintenance",
-		"dynamic", true,
-		"note", "activation depends on config",
-	)
+	prerouterLogger.Info(formatInfoMessage("Maintenance middleware added", "prerouter", "🛠️"))
 
-	// 5. BlockRequestBody Middleware (Added fifth, runs fifth)
-	// Always added; behavior controlled by cfg.BlockRequestBody.Activated
+	// 6. BlockRequestBody Middleware
 	blockRequestBody := prerouter.NewBlockRequestBody(app)
 	preRouterChain.WithMiddleware(blockRequestBody.Execute)
-	prerouterLogger.Info("middleware added",
-		"middleware", "BlockRequestBody",
-		"dynamic", true,
-		"note", "activation depends on config",
-	)
+	prerouterLogger.Info(formatInfoMessage("BlockRequestBody middleware added", "prerouter", "🛠️"))
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
-	prerouterLogger.Info(formatInfoMessage("handler chain configured", "prerouter", "🛠️"),
-		"middleware_count", 7, // Update this number if adding/removing middleware
-		"status", "ready",
-	)
+	prerouterLogger.Info(formatInfoMessage("Handler chain configured", "prerouter", "🛠️"))
 
 	return preRouterHandler
 }
