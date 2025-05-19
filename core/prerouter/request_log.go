@@ -71,17 +71,21 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Simple time measurement
 		start := time.Now()
 		
-		// Create response recorder from core package
-		rec := &core.ResponseRecorder{
-			ResponseWriter: w,
-			Status:        http.StatusOK, // Default to 200 OK
-			StartTime:     start,
+		// Check if we already have a ResponseRecorder from the recorder middleware
+		rec, ok := w.(*core.ResponseRecorder)
+		if !ok {
+			r.app.Logger().Error("request log middleware: expected core.ResponseRecorder but got different type",
+				"type", "ResponseRecorder",
+				"got", w,
+			)
+			next.ServeHTTP(w, req)
+			return
 		}
 		
-		// Call next handler
+		// Call next handler using existing recorder
 		next.ServeHTTP(rec, req)
 		
-		// Calculate duration
+		// Calculate duration using recorder's start time
 		duration := time.Since(rec.StartTime)
 
 		// Build log attributes efficiently with cached values and length limits
