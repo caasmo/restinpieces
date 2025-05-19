@@ -6,8 +6,6 @@ import (
 	"strconv"
 
 	"github.com/caasmo/restinpieces/core"
-	"log/slog"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -48,12 +46,41 @@ type MetricsMiddleware struct {
 
 // responseRecorder is no longer needed as we use core.ResponseRecorder
 
-// NewMetricsMiddleware creates a new MetricsMiddleware.
+// MetricsMiddlewareOpts holds configuration options for the MetricsMiddleware.
+type MetricsMiddlewareOpts struct {
+	// MetricName is the name of the Prometheus counter.
+	// Default: "http_server_requests_total"
+	MetricName string
+
+	// MetricHelp is the help string for the Prometheus counter.
+	// Default: "Total number of HTTP requests handled by the server, labeled by status code."
+	MetricHelp string
+
+	// StatusCodeLabelName is the name of the label used for the HTTP status code.
+	// Default: "code"
+	StatusCodeLabelName string
+
+	// ConstLabels are static labels to be added to every metric.
+	// Keys are label names, values are label values.
+	ConstLabels map[string]string
+
+	// Registry is the Prometheus registry to register the metric with.
+	// If nil, prometheus.DefaultRegisterer is used.
+	Registry prometheus.Registerer
+}
+
+// MetricsMiddleware is a Go middleware for collecting HTTP request metrics.
+type MetricsMiddleware struct {
+	app            *core.App
+	requestsTotal  *prometheus.CounterVec
+	constLabelValues []string // Pre-ordered values for const labels
+}
+
+// NewMetricsMiddleware creates a new MetricsMiddleware instance.
 // It registers a Prometheus counter vector for tracking requests by status code and any constant labels.
 // This function will panic if metric registration fails (e.g., due to a name collision with an
-// incompatible metric type or other registration errors). The caller is responsible for ensuring
-// that metric names are unique or that registration is managed appropriately in their application.
-func NewMetricsMiddleware(opts MetricsMiddlewareOpts) *MetricsMiddleware {
+// incompatible metric type or other registration errors).
+func NewMetricsMiddleware(app *core.App, opts MetricsMiddlewareOpts) *MetricsMiddleware {
 	metricName := opts.MetricName
 	if metricName == "" {
 		metricName = defaultMetricName
@@ -118,10 +145,18 @@ func NewMetricsMiddleware(opts MetricsMiddlewareOpts) *MetricsMiddleware {
 		panic("metrics: failed to register requests_total counter vec: " + err.Error())
 	}
 
-	return &MetricsMiddleware{
+	m := &MetricsMiddleware{
+		app:              app,
 		requestsTotal:    counterVec,
 		constLabelValues: constLabelValues,
 	}
+
+	app.Logger().Info("metrics middleware initialized",
+		"metric", metricName,
+		"labels", labelNames,
+	)
+
+	return m
 }
 
 // Execute is the middleware handler function that wraps the next http.Handler
@@ -132,7 +167,7 @@ func (m *MetricsMiddleware) Execute(next http.Handler) http.Handler {
 		rec, ok := w.(*core.ResponseRecorder)
 		if !ok {
 			// Log error but continue processing
-			core.GetLogger().Error("metrics middleware: expected core.ResponseRecorder but got different type",
+			m.app.Logger().Error("metrics middleware: expected core.ResponseRecorder but got different type",
 				"type", "ResponseRecorder",
 				"got", w,
 			)
