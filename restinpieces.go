@@ -146,7 +146,7 @@ func setupPrerouter(app *core.App) http.Handler {
 	// --- Add Internal Middleware Conditionally (Order Matters!) ---
 	// Execution order will be: RequestLog -> BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> app.Router()
 
-	logger.Info(formatter.Info("Setting up Prerouter Middleware"))
+	logger.Info(formatter.Info("Setting up Prerouter Middleware Chain ..."))
 
 	// 0. Response Recorder Middleware (Added first, runs first)
 	recorder := prerouter.NewRecorder(app)
@@ -188,7 +188,7 @@ func setupPrerouter(app *core.App) http.Handler {
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
-	logger.Info(formatter.Info("Handler chain configured"))
+	logger.Info(formatter.Info("Prerouter Middleware Chain ready"))
 
 	return preRouterHandler
 }
