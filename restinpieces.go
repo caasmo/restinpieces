@@ -137,6 +137,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 func setupPrerouter(app *core.App) http.Handler {
 	logger := app.Logger()
 	cfg := app.Config()
+	formatter := log.NewMessageFormatter().WithComponent("prerouter", "🛠️")
 
 	// Start the chain with the application's main router as the base handler.
 	// The final handler in the chain will be app.Router().ServeHTTP
@@ -145,8 +146,7 @@ func setupPrerouter(app *core.App) http.Handler {
 	// --- Add Internal Middleware Conditionally (Order Matters!) ---
 	// Execution order will be: RequestLog -> BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> app.Router()
 
-	formatter := log.NewMessageFormatter().WithComponent("prerouter", "🛠️")
-	logger.Info("Setting up Prerouter Middleware ...")
+	logger.Info(formatter.Info("Setting up Prerouter Middleware"))
 
 	// 0. Response Recorder Middleware (Added first, runs first)
 	recorder := prerouter.NewRecorder(app)
