@@ -128,16 +128,8 @@ func NewMetricsMiddleware(opts MetricsMiddlewareOpts) *MetricsMiddleware {
 // to collect metrics.
 func (m *MetricsMiddleware) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check if we already have a ResponseRecorder from earlier middleware
-		rec, ok := w.(*core.ResponseRecorder)
-		if !ok {
-			// Create new recorder if one doesn't exist
-			rec = &core.ResponseRecorder{
-				ResponseWriter: w,
-				Status:         http.StatusOK,
-				StartTime:      time.Now(),
-			}
-		}
+		// ResponseRecorder should always be present from earlier middleware
+		rec := w.(*core.ResponseRecorder)
 
 		// Delegate to the next handler in the chain.
 		next.ServeHTTP(rec, r)
