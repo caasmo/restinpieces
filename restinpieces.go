@@ -145,31 +145,32 @@ func setupPrerouter(app *core.App) http.Handler {
 	// --- Add Internal Middleware Conditionally (Order Matters!) ---
 	// Execution order will be: RequestLog -> BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> app.Router()
 
+	formatter := NewLogMessageFormatter().WithComponent("prerouter", "🛠️")
 	prerouterLogger.Info("Setting up Prerouter Middleware ...")
 
 	// 0. Response Recorder Middleware (Added first, runs first)
 	recorder := prerouter.NewRecorder(app)
 	preRouterChain.WithMiddleware(recorder.Execute)
-	prerouterLogger.Info(formatInfoMessage("ResponseRecorder middleware added", "prerouter", "🛠️"))
+	prerouterLogger.Info(formatter.Info("ResponseRecorder middleware added"))
 
 	// 1. Request Logging Middleware (Added second, runs second)
 	requestLog := prerouter.NewRequestLog(app)
 	preRouterChain.WithMiddleware(requestLog.Execute)
-	prerouterLogger.Info(formatInfoMessage("RequestLog middleware added", "prerouter", "🛠️"))
+	prerouterLogger.Info(formatter.Info("RequestLog middleware added"))
 
 	// 2. BlockIp Middleware 
 	if cfg.BlockIp.Enabled {
 		blockIp := prerouter.NewBlockIp(app.Cache(), logger)
 		preRouterChain.WithMiddleware(blockIp.Execute)
-		prerouterLogger.Info(formatInfoMessage("BlockIp middleware added", "prerouter", "🛠️"))
+		prerouterLogger.Info(formatter.Info("BlockIp middleware added"))
 	} else {
-		prerouterLogger.Info(formatInfoMessage("BlockIp middleware skipped", "prerouter", "🛠️"))
+		prerouterLogger.Info(formatter.Info("BlockIp middleware skipped"))
 	}
 
 	// 3. BlockUaList Middleware
 	blockUaList := prerouter.NewBlockUaList(app)
 	preRouterChain.WithMiddleware(blockUaList.Execute)
-	prerouterLogger.Info(formatInfoMessage("BlockUaList middleware added", "prerouter", "🛠️"))
+	prerouterLogger.Info(formatter.Info("BlockUaList middleware added"))
 
 	// 4. TLSHeaderSTS Middleware
 	tlsHeaderSTS := prerouter.NewTLSHeaderSTS()
@@ -178,16 +179,16 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 5. Maintenance Middleware
 	maintenance := prerouter.NewMaintenance(app)
 	preRouterChain.WithMiddleware(maintenance.Execute)
-	prerouterLogger.Info(formatInfoMessage("Maintenance middleware added", "prerouter", "🛠️"))
+	prerouterLogger.Info(formatter.Info("Maintenance middleware added"))
 
 	// 6. BlockRequestBody Middleware
 	blockRequestBody := prerouter.NewBlockRequestBody(app)
 	preRouterChain.WithMiddleware(blockRequestBody.Execute)
-	prerouterLogger.Info(formatInfoMessage("BlockRequestBody middleware added", "prerouter", "🛠️"))
+	prerouterLogger.Info(formatter.Info("BlockRequestBody middleware added"))
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
-	prerouterLogger.Info(formatInfoMessage("Handler chain configured", "prerouter", "🛠️"))
+	prerouterLogger.Info(formatter.Info("Handler chain configured"))
 
 	return preRouterHandler
 }
@@ -211,7 +212,8 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 		mailer, err := mail.New(configProvider)
 		if err != nil {
-			logger.Error(formatErrorMessage("failed to create mailer", "mailer", "📧"), "error", err)
+			mailerFormatter := NewLogMessageFormatter().WithComponent("mailer", "📧")
+			logger.Error(mailerFormatter.Error("failed to create mailer"), "error", err)
 			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?
 			// For now, let's treat it as fatal if configured but failing.
 			os.Exit(1) // Or return err
@@ -242,19 +244,47 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 	},
 }
 
-// formatMessage creates a consistent log message format
+// LogMessageFormatter provides consistent log message formatting
+type LogMessageFormatter struct {
+	component     string
+	componentEmoji string
+}
+
+// NewLogMessageFormatter creates a new formatter instance
+func NewLogMessageFormatter() *LogMessageFormatter {
+	return &LogMessageFormatter{}
+}
+
+// WithComponent sets the component name and emoji
+func (f *LogMessageFormatter) WithComponent(name, emoji string) *LogMessageFormatter {
+	f.component = name
+	f.componentEmoji = emoji
+	return f
+}
+
+// Error formats an error message
+func (f *LogMessageFormatter) Error(msg string) string {
+	return fmt.Sprintf("%s  %s: ❌  %s", f.componentEmoji, f.component, msg)
+}
+
+// Info formats an info message
+func (f *LogMessageFormatter) Info(msg string) string {
+	return fmt.Sprintf("%s  %s: ℹ️  %s", f.componentEmoji, f.component, msg)
+}
+
+// formatMessage creates a consistent log message format (kept for backward compatibility)
 func formatMessage(humanMsg, component, componentEmoji, levelEmoji string) string {
 	return fmt.Sprintf("%s  %s: %s  %s", componentEmoji, component, levelEmoji, humanMsg)
 }
 
-// formatErrorMessage formats error messages consistently
+// formatErrorMessage formats error messages consistently (kept for backward compatibility)
 func formatErrorMessage(humanMsg, component, componentEmoji string) string {
-	return formatMessage(humanMsg, component, componentEmoji, "❌")
+	return NewLogMessageFormatter().WithComponent(component, componentEmoji).Error(humanMsg)
 }
 
-// formatInfoMessage formats info messages consistently
+// formatInfoMessage formats info messages consistently (kept for backward compatibility)
 func formatInfoMessage(humanMsg, component, componentEmoji string) string {
-	return formatMessage(humanMsg, component, componentEmoji, "ℹ️")
+	return NewLogMessageFormatter().WithComponent(component, componentEmoji).Info(humanMsg)
 }
 
 func SetupDefaultCache(app *core.App) error {
