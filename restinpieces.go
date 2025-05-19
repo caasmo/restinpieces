@@ -222,15 +222,15 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 		emailVerificationHandler := handlers.NewEmailVerificationHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
-		logger.Info(formatter.Info("registered email verification handler"), "handler", "email_verification")
+		logger.Info(formatter.Info("registered email verification handler"))
 
 		passwordResetHandler := handlers.NewPasswordResetHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
-		logger.Info(formatter.Info("registered password reset handler"), "handler", "password_reset")
+		logger.Info(formatter.Info("registered password reset handler"))
 
 		emailChangeHandler := handlers.NewEmailChangeHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
-		logger.Info(formatter.Info("registered email change handler"), "handler", "email_change")
+		logger.Info(formatter.Info("registered email change handler"))
 	}
 
 	// ACME handler registration removed.
