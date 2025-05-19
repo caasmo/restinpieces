@@ -68,9 +68,6 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Limit request body size TODO
 		//req.Body = http.MaxBytesReader(w, req.Body, maxBodySize)
 
-		// Simple time measurement
-		start := time.Now()
-		
 		// Check if we already have a ResponseRecorder from the recorder middleware
 		rec, ok := w.(*core.ResponseRecorder)
 		if !ok {
