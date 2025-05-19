@@ -161,7 +161,7 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 1. Request Logging Middleware (Added second, runs second)
 	requestLog := prerouter.NewRequestLog(app)
 	preRouterChain.WithMiddleware(requestLog.Execute)
-	prerouterLogger.Info("middleware added", 
+	prerouterLogger.Info(formatInfoMessage("middleware added", "prerouter"), 
 		"middleware", "RequestLog",
 		"dynamic", true,
 		"note", "can be activated/deactivated via config reload",
@@ -172,12 +172,12 @@ func setupPrerouter(app *core.App) http.Handler {
 		// Instantiate using app resources
 		blockIp := prerouter.NewBlockIp(app.Cache(), logger) // Keep logger for BlockIp
 		preRouterChain.WithMiddleware(blockIp.Execute)
-		prerouterLogger.Info("middleware added",
+		prerouterLogger.Info(formatInfoMessage("middleware added", "prerouter"),
 			"middleware", "BlockIp",
 			"enabled", true,
 		)
 	} else {
-		prerouterLogger.Info("middleware skipped",
+		prerouterLogger.Info(formatInfoMessage("middleware skipped", "prerouter"),
 			"middleware", "BlockIp",
 			"enabled", false,
 		)
@@ -220,7 +220,7 @@ func setupPrerouter(app *core.App) http.Handler {
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
-	prerouterLogger.Info("handler chain configured",
+	prerouterLogger.Info(formatInfoMessage("handler chain configured", "prerouter"),
 		"middleware_count", 7, // Update this number if adding/removing middleware
 		"status", "ready",
 	)
@@ -247,7 +247,7 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 		mailer, err := mail.New(configProvider)
 		if err != nil {
-			logger.Error("failed to create mailer", "error", err)
+			logger.Error(formatErrorMessage("failed to create mailer", "mailer"), "error", err)
 			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?
 			// For now, let's treat it as fatal if configured but failing.
 			os.Exit(1) // Or return err
@@ -276,6 +276,21 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 		}
 		return a
 	},
+}
+
+// formatMessage creates a consistent log message format
+func formatMessage(humanMsg, level, component, componentEmoji string) string {
+	return fmt.Sprintf("%s [%s] %s: %s", componentEmoji, level, component, humanMsg)
+}
+
+// formatErrorMessage formats error messages consistently
+func formatErrorMessage(humanMsg, component string) string {
+	return formatMessage(humanMsg, "ERROR", component, "❌")
+}
+
+// formatInfoMessage formats info messages consistently
+func formatInfoMessage(humanMsg, component string) string {
+	return formatMessage(humanMsg, "INFO", component, "ℹ️")
 }
 
 func SetupDefaultCache(app *core.App) error {
