@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/netip"
 	"strings"
-	"time"
 
 	"github.com/caasmo/restinpieces/core"
 	"log/slog"
