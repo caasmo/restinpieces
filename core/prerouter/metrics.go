@@ -40,39 +40,8 @@ const (
 
 // Metrics is a Go middleware for collecting HTTP request metrics.
 type Metrics struct {
+	app              *core.App
 	requestsTotal    *prometheus.CounterVec
-	constLabelValues []string // Pre-ordered values for const labels, to be used with status code.
-}
-
-// responseRecorder is no longer needed as we use core.ResponseRecorder
-
-// MetricsMiddlewareOpts holds configuration options for the MetricsMiddleware.
-type MetricsMiddlewareOpts struct {
-	// MetricName is the name of the Prometheus counter.
-	// Default: "http_server_requests_total"
-	MetricName string
-
-	// MetricHelp is the help string for the Prometheus counter.
-	// Default: "Total number of HTTP requests handled by the server, labeled by status code."
-	MetricHelp string
-
-	// StatusCodeLabelName is the name of the label used for the HTTP status code.
-	// Default: "code"
-	StatusCodeLabelName string
-
-	// ConstLabels are static labels to be added to every metric.
-	// Keys are label names, values are label values.
-	ConstLabels map[string]string
-
-	// Registry is the Prometheus registry to register the metric with.
-	// If nil, prometheus.DefaultRegisterer is used.
-	Registry prometheus.Registerer
-}
-
-// MetricsMiddleware is a Go middleware for collecting HTTP request metrics.
-type MetricsMiddleware struct {
-	app            *core.App
-	requestsTotal  *prometheus.CounterVec
 	constLabelValues []string // Pre-ordered values for const labels
 }
 
