@@ -8,36 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// responseRecorder wraps http.ResponseWriter to capture the status code and whether WriteHeader was called.
-// It initializes the status to http.StatusOK, as this is the default if WriteHeader is not called explicitly.
-type responseRecorder struct {
-	http.ResponseWriter
-	status      int
-	wroteHeader bool // Tracks if WriteHeader was called, to capture the first status.
-}
-
-// WriteHeader captures the status code if it hasn't been captured yet,
-// then calls the underlying ResponseWriter's WriteHeader.
-func (r *responseRecorder) WriteHeader(statusCode int) {
-	if !r.wroteHeader {
-		r.status = statusCode
-		r.wroteHeader = true
-	}
-	r.ResponseWriter.WriteHeader(statusCode)
-}
-
-// Write calls the underlying ResponseWriter's Write.
-// If WriteHeader has not been called yet, it calls WriteHeader(http.StatusOK)
-// to mimic net/http's default behavior, ensuring the status is captured.
-func (r *responseRecorder) Write(b []byte) (int, error) {
-	if !r.wroteHeader {
-		// This call to WriteHeader will set r.status and r.wroteHeader
-		// via the logic in our overridden WriteHeader method.
-		r.WriteHeader(http.StatusOK)
-	}
-	return r.ResponseWriter.Write(b)
-}
-
 // MetricsMiddlewareOpts holds configuration options for the MetricsMiddleware.
 type MetricsMiddlewareOpts struct {
 	// MetricName is the name of the Prometheus counter.
