@@ -203,6 +203,8 @@ func SetupDefaultRouter(app *core.App) error {
 }
 
 func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, logger *slog.Logger) (*scl.Scheduler, error) {
+	formatter := log.NewMessageFormatter().WithComponent("scheduler", "⏰")
+	logger.Info(formatter.Info("Setting up scheduler..."))
 
 	hdls := make(map[string]executor.JobHandler)
 
@@ -210,10 +212,9 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 	// Setup mailer only if SMTP is configured in the current config
 	if (cfg.Smtp != config.Smtp{}) {
-
 		mailer, err := mail.New(configProvider)
 		if err != nil {
-			logger.Error("📧  mailer: ❌  failed to create mailer", "error", err)
+			logger.Error(formatter.Error("failed to create mailer"), "error", err)
 			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?
 			// For now, let's treat it as fatal if configured but failing.
 			os.Exit(1) // Or return err
@@ -221,17 +222,22 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 		emailVerificationHandler := handlers.NewEmailVerificationHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
+		logger.Info(formatter.Info("registered email verification handler"))
 
 		passwordResetHandler := handlers.NewPasswordResetHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
+		logger.Info(formatter.Info("registered password reset handler"))
 
 		emailChangeHandler := handlers.NewEmailChangeHandler(dbAuth, configProvider, mailer)
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
+		logger.Info(formatter.Info("registered email change handler"))
 	}
 
 	// ACME handler registration removed.
 
-	return scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger), nil
+	scheduler := scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger)
+	logger.Info(formatter.Info("scheduler setup complete"))
+	return scheduler, nil
 }
 
 var DefaultLoggerOptions = &slog.HandlerOptions{
