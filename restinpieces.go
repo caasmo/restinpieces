@@ -279,18 +279,18 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 }
 
 // formatMessage creates a consistent log message format
-func formatMessage(humanMsg, levelEmoji, component, componentEmoji string) string {
+func formatMessage(humanMsg, component, componentEmoji, levelEmoji string) string {
 	return fmt.Sprintf("%s %s: %s %s", componentEmoji, component, levelEmoji, humanMsg)
 }
 
 // formatErrorMessage formats error messages consistently
 func formatErrorMessage(humanMsg, component string) string {
-	return formatMessage(humanMsg, "❌", component, "🛠️")
+	return formatMessage(humanMsg, component, "🛠️", "❌")
 }
 
 // formatInfoMessage formats info messages consistently
 func formatInfoMessage(humanMsg, component string) string {
-	return formatMessage(humanMsg, "ℹ️", component, "🛠️")
+	return formatMessage(humanMsg, component, "🛠️", "ℹ️")
 }
 
 func SetupDefaultCache(app *core.App) error {
