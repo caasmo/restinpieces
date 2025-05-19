@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
+
+	"github.com/caasmo/restinpieces/core"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -42,6 +45,8 @@ type MetricsMiddleware struct {
 	requestsTotal    *prometheus.CounterVec
 	constLabelValues []string // Pre-ordered values for const labels, to be used with status code.
 }
+
+// responseRecorder is no longer needed as we use core.ResponseRecorder
 
 // NewMetricsMiddleware creates a new MetricsMiddleware.
 // It registers a Prometheus counter vector for tracking requests by status code and any constant labels.
@@ -123,21 +128,25 @@ func NewMetricsMiddleware(opts MetricsMiddlewareOpts) *MetricsMiddleware {
 // to collect metrics.
 func (m *MetricsMiddleware) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		recorder := &responseRecorder{
-			ResponseWriter: w,
-			status:         http.StatusOK, // Default status if WriteHeader is not called.
-			wroteHeader:    false,
+		// Check if we already have a ResponseRecorder from earlier middleware
+		rec, ok := w.(*core.ResponseRecorder)
+		if !ok {
+			// Create new recorder if one doesn't exist
+			rec = &core.ResponseRecorder{
+				ResponseWriter: w,
+				Status:         http.StatusOK,
+				StartTime:      time.Now(),
+			}
 		}
 
 		// Delegate to the next handler in the chain.
-		next.ServeHTTP(recorder, r)
+		next.ServeHTTP(rec, r)
 
-		// After the handler has finished, recorder.status will contain the written status.
 		// Prepare all label values for the metric.
 		// The first value is always the status code.
 		// The subsequent values are the pre-ordered constant label values.
 		labelValues := make([]string, 1+len(m.constLabelValues))
-		labelValues[0] = strconv.Itoa(recorder.status)
+		labelValues[0] = strconv.Itoa(rec.Status)
 		copy(labelValues[1:], m.constLabelValues)
 
 		m.requestsTotal.WithLabelValues(labelValues...).Inc()
