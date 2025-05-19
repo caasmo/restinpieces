@@ -25,8 +25,8 @@ func (f *MessageFormatter) Fail(msg string) string {
 	return fmt.Sprintf("%s  %s: ❌  %s", f.componentEmoji, f.component, msg)
 }
 
-// Info formats an info message
-func (f *MessageFormatter) Info(msg string) string {
+// Ok formats a success/ok message
+func (f *MessageFormatter) Ok(msg string) string {
 	return fmt.Sprintf("%s  %s: ✅  %s", f.componentEmoji, f.component, msg)
 }
 
