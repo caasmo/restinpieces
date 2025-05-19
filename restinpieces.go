@@ -212,8 +212,7 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 
 		mailer, err := mail.New(configProvider)
 		if err != nil {
-			mailerFormatter := NewLogMessageFormatter().WithComponent("mailer", "📧")
-			logger.Error(mailerFormatter.Error("failed to create mailer"), "error", err)
+			logger.Error("📧  mailer: ❌  failed to create mailer", "error", err)
 			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?
 			// For now, let's treat it as fatal if configured but failing.
 			os.Exit(1) // Or return err
