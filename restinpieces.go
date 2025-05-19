@@ -146,31 +146,31 @@ func setupPrerouter(app *core.App) http.Handler {
 	// Execution order will be: RequestLog -> BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> app.Router()
 
 	formatter := NewLogMessageFormatter().WithComponent("prerouter", "🛠️")
-	prerouterLogger.Info("Setting up Prerouter Middleware ...")
+	logger.Info("Setting up Prerouter Middleware ...")
 
 	// 0. Response Recorder Middleware (Added first, runs first)
 	recorder := prerouter.NewRecorder(app)
 	preRouterChain.WithMiddleware(recorder.Execute)
-	prerouterLogger.Info(formatter.Info("ResponseRecorder middleware added"))
+	logger.Info(formatter.Info("ResponseRecorder middleware added"))
 
 	// 1. Request Logging Middleware (Added second, runs second)
 	requestLog := prerouter.NewRequestLog(app)
 	preRouterChain.WithMiddleware(requestLog.Execute)
-	prerouterLogger.Info(formatter.Info("RequestLog middleware added"))
+	logger.Info(formatter.Info("RequestLog middleware added"))
 
 	// 2. BlockIp Middleware 
 	if cfg.BlockIp.Enabled {
 		blockIp := prerouter.NewBlockIp(app.Cache(), logger)
 		preRouterChain.WithMiddleware(blockIp.Execute)
-		prerouterLogger.Info(formatter.Info("BlockIp middleware added"))
+		logger.Info(formatter.Info("BlockIp middleware added"))
 	} else {
-		prerouterLogger.Info(formatter.Info("BlockIp middleware skipped"))
+		logger.Info(formatter.Info("BlockIp middleware skipped"))
 	}
 
 	// 3. BlockUaList Middleware
 	blockUaList := prerouter.NewBlockUaList(app)
 	preRouterChain.WithMiddleware(blockUaList.Execute)
-	prerouterLogger.Info(formatter.Info("BlockUaList middleware added"))
+	logger.Info(formatter.Info("BlockUaList middleware added"))
 
 	// 4. TLSHeaderSTS Middleware
 	tlsHeaderSTS := prerouter.NewTLSHeaderSTS()
@@ -179,16 +179,16 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 5. Maintenance Middleware
 	maintenance := prerouter.NewMaintenance(app)
 	preRouterChain.WithMiddleware(maintenance.Execute)
-	prerouterLogger.Info(formatter.Info("Maintenance middleware added"))
+	logger.Info(formatter.Info("Maintenance middleware added"))
 
 	// 6. BlockRequestBody Middleware
 	blockRequestBody := prerouter.NewBlockRequestBody(app)
 	preRouterChain.WithMiddleware(blockRequestBody.Execute)
-	prerouterLogger.Info(formatter.Info("BlockRequestBody middleware added"))
+	logger.Info(formatter.Info("BlockRequestBody middleware added"))
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
-	prerouterLogger.Info(formatter.Info("Handler chain configured"))
+	logger.Info(formatter.Info("Handler chain configured"))
 
 	return preRouterHandler
 }
