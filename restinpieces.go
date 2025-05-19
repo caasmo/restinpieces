@@ -253,11 +253,17 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 
 
 func SetupDefaultCache(app *core.App) error {
+	ft := log.NewMessageFormatter().WithComponent("cache", "💾")
+	app.Logger().Info(ft.Start("Setting up default cache..."))
+
 	cacheInstance, err := ristretto.New[any]() // Explicit string keys and interface{} values
 	if err != nil {
+		app.Logger().Error(ft.Fail("failed to initialize default cache"), "error", err)
 		return fmt.Errorf("failed to initialize default cache: %w", err)
 	}
 	app.SetCache(cacheInstance)
+
+	app.Logger().Info(ft.Complete("Cache setup complete"))
 	return nil
 }
 
