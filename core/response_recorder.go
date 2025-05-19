@@ -35,3 +35,8 @@ func (r *ResponseRecorder) Write(b []byte) (int, error) {
 	r.BytesWritten += int64(n)
 	return n, err
 }
+
+// Duration returns the time elapsed since the request started
+func (r *ResponseRecorder) Duration() time.Duration {
+	return time.Since(r.StartTime)
+}

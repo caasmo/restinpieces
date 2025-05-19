@@ -85,8 +85,8 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Call next handler using existing recorder
 		next.ServeHTTP(rec, req)
 		
-		// Calculate duration using recorder's start time
-		duration := time.Since(rec.StartTime)
+		// Get duration from recorder
+		duration := rec.Duration()
 
 		// Build log attributes efficiently with cached values and length limits
 		attrs := make([]any, 0, 17) 
