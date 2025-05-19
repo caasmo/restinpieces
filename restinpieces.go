@@ -149,7 +149,16 @@ func setupPrerouter(app *core.App) http.Handler {
 	prerouterLogger := logger.With("component", "prerouter_init")
 	prerouterLogger.Info("Seting up Prerouter Middleware ...")
 
-	// 0. Request Logging Middleware (Added first, runs first)
+	// 0. Response Recorder Middleware (Added first, runs first)
+	recorder := prerouter.NewRecorder(app)
+	preRouterChain.WithMiddleware(recorder.Execute)
+	prerouterLogger.Info("middleware added",
+		"middleware", "ResponseRecorder",
+		"dynamic", false,
+		"note", "required for other middleware to work",
+	)
+
+	// 1. Request Logging Middleware (Added second, runs second)
 	requestLog := prerouter.NewRequestLog(app)
 	preRouterChain.WithMiddleware(requestLog.Execute)
 	prerouterLogger.Info("middleware added", 
@@ -212,7 +221,7 @@ func setupPrerouter(app *core.App) http.Handler {
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
 	prerouterLogger.Info("handler chain configured",
-		"middleware_count", 6, // Update this number if adding/removing middleware
+		"middleware_count", 7, // Update this number if adding/removing middleware
 		"status", "ready",
 	)
 
