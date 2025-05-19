@@ -263,10 +263,7 @@ func SetupDefaultCache(app *core.App) error {
 	}
 	app.SetCache(cacheInstance)
 
-	app.Logger().Info(ft.Complete("Ristretto cache initialized successfully"),
-		"type", "ristretto",
-		"features", "string keys, any values",
-	)
+	app.Logger().Info(ft.Complete("Ristretto cache initialized successfully"))
 	return nil
 }
 
