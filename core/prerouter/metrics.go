@@ -2,7 +2,6 @@ package prerouter
 
 import (
 	"net/http"
-	"sort"
 	"strconv"
 
 	"github.com/caasmo/restinpieces/core"
