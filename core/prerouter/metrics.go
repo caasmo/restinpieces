@@ -128,8 +128,17 @@ func NewMetricsMiddleware(opts MetricsMiddlewareOpts) *MetricsMiddleware {
 // to collect metrics.
 func (m *MetricsMiddleware) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// ResponseRecorder should always be present from earlier middleware
-		rec := w.(*core.ResponseRecorder)
+		// Check if we already have a ResponseRecorder from earlier middleware
+		rec, ok := w.(*core.ResponseRecorder)
+		if !ok {
+			// Log error but continue processing
+			slog.Error("metrics middleware: expected core.ResponseRecorder but got different type",
+				"type", "ResponseRecorder",
+				"got", w,
+			)
+			next.ServeHTTP(w, r)
+			return
+		}
 
 		// Delegate to the next handler in the chain.
 		next.ServeHTTP(rec, r)
