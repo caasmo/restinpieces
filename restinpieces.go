@@ -189,7 +189,7 @@ func setupPrerouter(app *core.App) http.Handler {
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
-	logger.Info(formatter.Info("Prerouter Middleware Chain ready"))
+	logger.Info(formatter.Info("Prerouter Middleware Chain Setup complete 🎉"))
 
 	return preRouterHandler
 }
