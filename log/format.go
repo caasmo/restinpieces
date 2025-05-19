@@ -34,3 +34,13 @@ func (f *MessageFormatter) Info(msg string) string {
 func (f *MessageFormatter) Warn(msg string) string {
 	return fmt.Sprintf("%s  %s: ⚠️  %s", f.componentEmoji, f.component, msg)
 }
+
+// Start formats a startup/begin message with rocket emoji
+func (f *MessageFormatter) Start(msg string) string {
+	return fmt.Sprintf("%s  %s: 🚀  %s", f.componentEmoji, f.component, msg)
+}
+
+// Complete formats a completion message with party popper emoji
+func (f *MessageFormatter) Complete(msg string) string {
+	return fmt.Sprintf("%s  %s: 🎉  %s", f.componentEmoji, f.component, msg)
+}
