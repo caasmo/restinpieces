@@ -55,21 +55,6 @@ func NewRequestLog(app *core.App) *RequestLog {
 	}
 }
 
-// responseRecorder wraps http.ResponseWriter to capture status code.
-// Initialized to StatusOK (200) because handlers may:
-// 1. Write response body without calling WriteHeader (implicit 200)
-// 2. Only call WriteHeader for error cases
-// 3. Let the http package set default 200 status
-type responseRecorder struct {
-	http.ResponseWriter
-	status int // initialized to http.StatusOK (200) to handle implicit success cases
-}
-
-func (r *responseRecorder) WriteHeader(status int) {
-    slog.Error("writing header")
-	r.status = status
-	r.ResponseWriter.WriteHeader(status)
-}
 
 // Execute wraps the next handler with request logging
 func (r *RequestLog) Execute(next http.Handler) http.Handler {
@@ -86,17 +71,18 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Simple time measurement
 		start := time.Now()
 		
-		// Create response recorder initialized to StatusOK (200) to handle implicit success cases
-		rec := &responseRecorder{
+		// Create response recorder from core package
+		rec := &core.ResponseRecorder{
 			ResponseWriter: w,
-			status:         http.StatusOK, // default success status
+			Status:        http.StatusOK, // Default to 200 OK
+			StartTime:     start,
 		}
 		
 		// Call next handler
 		next.ServeHTTP(rec, req)
 		
 		// Calculate duration
-		duration := time.Since(start)
+		duration := time.Since(rec.StartTime)
 
 		// Build log attributes efficiently with cached values and length limits
 		attrs := make([]any, 0, 17) 
@@ -104,7 +90,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method))) // Ensure uppercase method
 		limits := r.app.Config().Log.Request.Limits
 		attrs = append(attrs, slog.String("uri", cutStr(req.URL.RequestURI(), limits.URILength)))
-		attrs = append(attrs, slog.Int("status", rec.status))
+		attrs = append(attrs, slog.Int("status", rec.Status))
 		attrs = append(attrs, slog.String("duration", duration.String()))
 		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), limits.RemoteIPLength)))
 		attrs = append(attrs, slog.String("user_agent", cutStr(req.UserAgent(), limits.UserAgentLength)))
