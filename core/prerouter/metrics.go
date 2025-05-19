@@ -9,8 +9,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// MetricsMiddlewareOpts holds configuration options for the MetricsMiddleware.
-type MetricsMiddlewareOpts struct {
+// MetricsOpts holds configuration options for the Metrics.
+type MetricsOpts struct {
 	// MetricName is the name of the Prometheus counter.
 	// Default: "http_server_requests_total"
 	MetricName string
@@ -38,8 +38,8 @@ const (
 	defaultStatusCodeLabelName = "code"
 )
 
-// MetricsMiddleware is a Go middleware for collecting HTTP request metrics.
-type MetricsMiddleware struct {
+// Metrics is a Go middleware for collecting HTTP request metrics.
+type Metrics struct {
 	requestsTotal    *prometheus.CounterVec
 	constLabelValues []string // Pre-ordered values for const labels, to be used with status code.
 }
@@ -76,11 +76,11 @@ type MetricsMiddleware struct {
 	constLabelValues []string // Pre-ordered values for const labels
 }
 
-// NewMetricsMiddleware creates a new MetricsMiddleware instance.
+// NewMetrics creates a new Metrics instance.
 // It registers a Prometheus counter vector for tracking requests by status code and any constant labels.
 // This function will panic if metric registration fails (e.g., due to a name collision with an
 // incompatible metric type or other registration errors).
-func NewMetricsMiddleware(app *core.App, opts MetricsMiddlewareOpts) *MetricsMiddleware {
+func NewMetrics(app *core.App, opts MetricsOpts) *Metrics {
 	metricName := opts.MetricName
 	if metricName == "" {
 		metricName = defaultMetricName
@@ -145,7 +145,7 @@ func NewMetricsMiddleware(app *core.App, opts MetricsMiddlewareOpts) *MetricsMid
 		panic("metrics: failed to register requests_total counter vec: " + err.Error())
 	}
 
-	m := &MetricsMiddleware{
+	m := &Metrics{
 		app:              app,
 		requestsTotal:    counterVec,
 		constLabelValues: constLabelValues,
@@ -161,7 +161,7 @@ func NewMetricsMiddleware(app *core.App, opts MetricsMiddlewareOpts) *MetricsMid
 
 // Execute is the middleware handler function that wraps the next http.Handler
 // to collect metrics.
-func (m *MetricsMiddleware) Execute(next http.Handler) http.Handler {
+func (m *Metrics) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check if we already have a ResponseRecorder from earlier middleware
 		rec, ok := w.(*core.ResponseRecorder)
