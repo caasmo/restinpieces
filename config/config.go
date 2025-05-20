@@ -344,8 +344,9 @@ type Metrics struct {
 	// Endpoint is the HTTP path where metrics are exposed (e.g. "/metrics")
 	Endpoint string `toml:"endpoint" comment:"HTTP path where metrics are exposed"`
 
-	// AllowedIPs is a list of IP addresses/CIDRs that can access the metrics endpoint
-	AllowedIPs []string `toml:"allowed_ips" comment:"IP addresses/CIDRs allowed to access metrics endpoint"`
+	// AllowedIPs is a list of exact IP addresses that can access the metrics endpoint
+	// Example: ["127.0.0.1", "192.168.1.100"]
+	AllowedIPs []string `toml:"allowed_ips" comment:"List of exact IP addresses allowed to access metrics endpoint (no CIDR ranges)"`
 }
 
 type BlockRequestBody struct {

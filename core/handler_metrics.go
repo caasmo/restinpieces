@@ -26,24 +26,12 @@ func (a *App) MetricsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if IP is allowed
+	// Check if IP is in allowed list (exact match only)
 	allowed := false
 	for _, ip := range a.Config().Metrics.AllowedIPs {
 		if ip == clientIP {
 			allowed = true
 			break
-		}
-		// Check CIDR ranges if specified
-		if strings.Contains(ip, "/") {
-			_, cidrNet, err := net.ParseCIDR(ip)
-			if err != nil {
-				continue
-			}
-			clientAddr := net.ParseIP(clientIP)
-			if clientAddr != nil && cidrNet.Contains(clientAddr) {
-				allowed = true
-				break
-			}
 		}
 	}
 
