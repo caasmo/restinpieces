@@ -8,6 +8,11 @@
     - WithMetrics, will make handler, middleware and conf
     - we can still retiurn app and server. 
     - jsut not options
+- /metrics  
+    - allow conf for path, allos ofiuscation
+    - allowwed Ips configstore, reload with systemd
+    - static Bearer Token: Prometheus can be configured to send a specific
+      Authorization: Bearer <token> header. Your middleware checks for this. 
 - application  logs, 
     - maybe trace 
     - message is human friendly, with emoji
