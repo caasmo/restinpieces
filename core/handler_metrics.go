@@ -11,11 +11,6 @@ import (
 // Authenticated: No
 // Allowed Mimetype: text/plain
 func (a *App) MetricsHandler(w http.ResponseWriter, r *http.Request) {
-	// Reject non-GET requests
-	if r.Method != http.MethodGet {
-		WriteJsonError(w, errorMethodNotAllowed)
-		return
-	}
 
 	// Set proper content type for metrics
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4")
