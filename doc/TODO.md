@@ -1,5 +1,13 @@
 ### TODOs
 
+- startup: 
+    - func of type Option func(rip), or no options at all 
+    - WithCache() crete empty app and set or apply
+    -WithDaemon create empty server and apply
+    -WithJobHandler 
+    - WithMetrics, will make handler, middleware and conf
+    - we can still retiurn app and server. 
+    - jsut not options
 - application  logs, 
     - maybe trace 
     - message is human friendly, with emoji

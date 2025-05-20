@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	maxBodySize      = 1 << 20 // 1MB
-	logMessage   = "http_request"
+	maxBodySize = 1 << 20 // 1MB
+	logMessage  = "http_request"
 )
 
 // RemoteIP returns the normalized IP address from the request
@@ -25,8 +25,6 @@ func RemoteIP(r *http.Request) string {
 	}
 	return parsed.StringExpanded()
 }
-
-
 
 // cutStr limits string length by adding ellipsis if needed
 func cutStr(str string, max int) string {
@@ -54,7 +52,6 @@ func NewRequestLog(app *core.App) *RequestLog {
 	}
 }
 
-
 // Execute wraps the next handler with request logging
 func (r *RequestLog) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -77,15 +74,15 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 			next.ServeHTTP(w, req)
 			return
 		}
-		
+
 		// Call next handler using existing recorder
 		next.ServeHTTP(rec, req)
-		
+
 		// Get duration from recorder
 		duration := rec.Duration()
 
 		// Build log attributes efficiently with cached values and length limits
-		attrs := make([]any, 0, 17) 
+		attrs := make([]any, 0, 17)
 		attrs = append(attrs, logType)
 		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method))) // Ensure uppercase method
 		limits := r.app.Config().Log.Request.Limits

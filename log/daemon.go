@@ -101,9 +101,9 @@ func (ld *Daemon) prepareRecordForDB(record slog.Record) (db.Log, error) {
 	var err error
 	if len(attrsMap) > 0 {
 		jsonDataBytes, err = json.Marshal(attrsMap)
-	if err != nil {
+		if err != nil {
 			return db.Log{}, fmt.Errorf("failed to marshal log attributes to JSON: %w", err)
-	}
+		}
 	} else {
 		jsonDataBytes = []byte("{}") // Default JSON for empty attributes
 	}

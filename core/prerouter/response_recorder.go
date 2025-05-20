@@ -1,9 +1,9 @@
 package prerouter
 
 import (
+	"github.com/caasmo/restinpieces/core"
 	"net/http"
 	"time"
-	"github.com/caasmo/restinpieces/core"
 )
 
 type Recorder struct {
@@ -21,11 +21,11 @@ func (r *Recorder) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		recorder := &core.ResponseRecorder{
 			ResponseWriter: w,
-			Status:        http.StatusOK, // Default to 200 OK
-			StartTime:     time.Now(),
+			Status:         http.StatusOK, // Default to 200 OK
+			StartTime:      time.Now(),
 			//RequestID:     r.Header.Get("X-Request-ID"), // Optional
 		}
-		
+
 		// Continue chain with our recorder
 		next.ServeHTTP(recorder, r)
 	})

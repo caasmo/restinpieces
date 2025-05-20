@@ -4,7 +4,7 @@ import "fmt"
 
 // MessageFormatter provides consistent log message formatting
 type MessageFormatter struct {
-	component     string
+	component      string
 	componentEmoji string
 }
 

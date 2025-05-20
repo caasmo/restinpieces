@@ -60,7 +60,7 @@ func validateRequestLog(requestLog *LogRequest) error {
 	if !requestLog.Activated {
 		return nil
 	}
-	
+
 	minLimits := map[string]int{
 		"url":        64,
 		"user_agent": 32,

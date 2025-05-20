@@ -33,10 +33,10 @@ func NewDefaultConfig() *Config {
 			Request: LogRequest{
 				Activated: true,
 				Limits: LogRequestLimits{
-					URILength:       512,    // Minimum: 64
-					UserAgentLength: 256,    // Minimum: 32 
-					RefererLength:   512,    // Minimum: 64
-					RemoteIPLength:  64,     // Minimum: 15
+					URILength:       512, // Minimum: 64
+					UserAgentLength: 256, // Minimum: 32
+					RefererLength:   512, // Minimum: 64
+					RemoteIPLength:  64,  // Minimum: 15
 				},
 			},
 			Batch: BatchLogger{
@@ -135,7 +135,7 @@ func NewDefaultConfig() *Config {
 		},
 		BlockRequestBody: BlockRequestBody{
 			Activated: true,
-			Limit: 1024 * 1024, // 1MB default limit
+			Limit:     1024 * 1024, // 1MB default limit
 			ExcludedPaths: []string{
 				"/api/upload",
 				"/api/import",

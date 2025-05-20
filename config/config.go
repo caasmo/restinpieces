@@ -53,34 +53,34 @@ const (
 // - Fields named "Enabled" require a server restart to take effect
 // - Other boolean fields typically require restart unless documented otherwise
 type Config struct {
-	DBPath          string                    `toml:"db_path" comment:"Path to SQLite database file"`
-	PublicDir       string                    `toml:"public_dir" comment:"Directory containing static web assets"`
-	Source          string                    `toml:"-" comment:"[READONLY] Source of config - 'file:<path>' or 'db'"`
-	Jwt             Jwt                       `toml:"jwt" comment:"JSON Web Token settings"`
-	Scheduler       Scheduler                 `toml:"scheduler" comment:"Background job scheduler settings"`
-	Server          Server                    `toml:"server" comment:"HTTP server configuration"`
-	RateLimits      RateLimits                `toml:"rate_limits" comment:"Rate limiting settings"`
-	OAuth2Providers map[string]OAuth2Provider `toml:"oauth2_providers" comment:"OAuth2 provider configurations"`
-	Smtp            Smtp                      `toml:"smtp" comment:"SMTP email settings"`
-	Endpoints       Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
-	BlockIp     BlockIp     `toml:"block_ip" comment:"IP blocking settings"`
-	Maintenance Maintenance `toml:"maintenance" comment:"Maintenance mode settings"`
-	BlockUaList BlockUaList `toml:"block_ua_list" comment:"User-Agent block list settings"`
-	Notifier       Notifier       `toml:"notifier"`
-	Log            Log            `toml:"log" comment:"Logging configuration"`
-	BlockRequestBody BlockRequestBody `toml:"block_request_body" comment:"Request body size limiting configuration"`
+	DBPath           string                    `toml:"db_path" comment:"Path to SQLite database file"`
+	PublicDir        string                    `toml:"public_dir" comment:"Directory containing static web assets"`
+	Source           string                    `toml:"-" comment:"[READONLY] Source of config - 'file:<path>' or 'db'"`
+	Jwt              Jwt                       `toml:"jwt" comment:"JSON Web Token settings"`
+	Scheduler        Scheduler                 `toml:"scheduler" comment:"Background job scheduler settings"`
+	Server           Server                    `toml:"server" comment:"HTTP server configuration"`
+	RateLimits       RateLimits                `toml:"rate_limits" comment:"Rate limiting settings"`
+	OAuth2Providers  map[string]OAuth2Provider `toml:"oauth2_providers" comment:"OAuth2 provider configurations"`
+	Smtp             Smtp                      `toml:"smtp" comment:"SMTP email settings"`
+	Endpoints        Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
+	BlockIp          BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
+	Maintenance      Maintenance               `toml:"maintenance" comment:"Maintenance mode settings"`
+	BlockUaList      BlockUaList               `toml:"block_ua_list" comment:"User-Agent block list settings"`
+	Notifier         Notifier                  `toml:"notifier"`
+	Log              Log                       `toml:"log" comment:"Logging configuration"`
+	BlockRequestBody BlockRequestBody          `toml:"block_request_body" comment:"Request body size limiting configuration"`
 }
 
 // Log contains Default (Batch) log configuration
 type Log struct {
-	Request    LogRequest   `toml:"request" comment:"HTTP request logging configuration"`
-	Batch      BatchLogger  `toml:"batch" comment:"Batch logging configuration"`
+	Request LogRequest  `toml:"request" comment:"HTTP request logging configuration"`
+	Batch   BatchLogger `toml:"batch" comment:"Batch logging configuration"`
 }
 
 // LogRequest contains HTTP request logging configuration
 type LogRequest struct {
-	Activated    bool             `toml:"activated" comment:"Activate HTTP request logging"`
-	Limits       LogRequestLimits `toml:"limits" comment:"Maximum field lengths"`
+	Activated bool             `toml:"activated" comment:"Activate HTTP request logging"`
+	Limits    LogRequestLimits `toml:"limits" comment:"Maximum field lengths"`
 }
 
 // LogRequestLimits defines maximum lengths for request log fields

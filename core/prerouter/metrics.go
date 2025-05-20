@@ -26,7 +26,7 @@ type Metrics struct {
 // incompatible metric type or other registration errors).
 func NewMetrics(app *core.App) *Metrics {
 	labelNames := []string{statusCodeLabelName}
-	
+
 	counterVec := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: metricName,

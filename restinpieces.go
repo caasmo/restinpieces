@@ -158,7 +158,7 @@ func setupPrerouter(app *core.App) http.Handler {
 	preRouterChain.WithMiddleware(requestLog.Execute)
 	logger.Info(ft.Ok("RequestLog middleware added"), "activated", cfg.Log.Request.Activated)
 
-	// 2. BlockIp Middleware 
+	// 2. BlockIp Middleware
 	if cfg.BlockIp.Enabled {
 		blockIp := prerouter.NewBlockIp(app.Cache(), logger)
 		preRouterChain.WithMiddleware(blockIp.Execute)
@@ -254,8 +254,6 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 		return a
 	},
 }
-
-
 
 func SetupDefaultCache(app *core.App) error {
 	ft := log.NewMessageFormatter().WithComponent("cache", "🛠️")
