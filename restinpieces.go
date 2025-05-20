@@ -167,10 +167,14 @@ func setupPrerouter(app *core.App) http.Handler {
 		logger.Info(ft.Ok("BlockIp middleware not enabled"))
 	}
 
-	// 3. Metrics Middleware
-	metrics := prerouter.NewMetrics(app)
-	preRouterChain.WithMiddleware(metrics.Execute)
-	logger.Info(ft.Ok("Metrics middleware added"))
+	// 3. Metrics Middleware (only if enabled)
+	if cfg.Metrics.Enabled {
+		metrics := prerouter.NewMetrics(app)
+		preRouterChain.WithMiddleware(metrics.Execute)
+		logger.Info(ft.Ok("Metrics middleware added"), "activated", cfg.Metrics.Activated)
+	} else {
+		logger.Info(ft.Ok("Metrics middleware not enabled"))
+	}
 
 	// 4. BlockUaList Middleware
 	blockUaList := prerouter.NewBlockUaList(app)
