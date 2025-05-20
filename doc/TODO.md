@@ -1,65 +1,13 @@
 ### TODOs
 
-- startup: 
-    - func of type Option func(rip), or no options at all 
-    - WithCache() crete empty app and set or apply
-    -WithDaemon create empty server and apply
-    -WithJobHandler 
-    - WithMetrics, will make handler, middleware and conf
-    - we can still retiurn app and server. 
-    - jsut not options
-- /metrics  
-    - allow conf for path, allos ofiuscation
-    - allowwed Ips configstore, reload with systemd
-    - static Bearer Token: Prometheus can be configured to send a specific
-      Authorization: Bearer <token> header. Your middleware checks for this. 
-- application  logs, 
-    - maybe trace 
-    - message is human friendly, with emoji
-        - helper formatter 
-            ⏰scheduler: <level emoji> i am doing this 
-        - <what emoji> <where>: <level emoji> <human friendly message> <attrs only for details>
-- middleware block big bodyes
-- activated vs enabled consistency 
 - logger, have a text logger for startup before app logger, and for shutdown. pass to the app.logger and use as default?
     - logdb must be propely wal etc
-- shoutdown, with context in log handler, is better. But not enough. change logger to standard/ do not shoutdown log daemon concurrently
 - default logger db interface?
-- SEcureConfigSote is in app just to let users of the framework use the config table with a age key and a dbpath 
-    - worth it? users can create a instance itself.
-        - app provides agekey and we can add the dbpath- 
-        - there is nothing stateful in secureConfig, we just document use of secure store.
-        - we do not even need the app to provide age and dbpath. that is normally in the entry point
-    - and the server needs one for reloading, not the app. 
-        - if the app has it the server has also to receive it
-        - the server could provide the  object  instead
-    - polluting server or app with securestore is overkill
-    - agekeypath in app. Why?
-        - initalization in app of secureconfig?
-    - consider put agepath and dbpath in config.
-        - remove crap from app
-        - server has the conf provider, it can call Reload with dbPath and agePath
-        - users of secureConfig: create the secure config?
-            -  we still need dbconfig
-        - dbConfig
-
+- shoutdown, with context in log handler, is better. But not enough. change logger to standard/ do not shoutdown log daemon concurrently
 - mailer default local
     - no external smtp server
 - test functional uablock
-- LevelVar dinamically?
-- options.go: remove, full repo example.
-	- config get logger options, like level 
-		slog.HandlerOPtions. created in resinpieces from the config ones. just a few
-	- default Logger is text
-	- default cache is ristretto.
-	- example no defaults repo.
-		- use phus
-		- use crawshaw
-		- othe mailer  
-		- 
-
-- mailer interface for app
-
+- mailer interface for app/server, is for server though
 - sdk visibility, own route
 - make configstore from edit 
 	- configstore list <type>
@@ -73,7 +21,6 @@
 	- configstore types
 	- configstore rm <config>
 	- configstore rollback <type> it never rm just creates a copy
-- start logs: emojify, insightful
 - create-app shoudl create age key.
 - disable standard routes
 - is a framework, clear workflow  -> examples repo. od use of the features
@@ -160,6 +107,34 @@
     - https://github.com/privatenumber/minification-benchmarks?tab=readme-ov-file#%EF%B8%8F-minifier-showdown
 
 ### Maybe
+- superuser static Authorization: Bearer <token> header. Your middleware checks for this. 
+    - in some routes, static, configurable not dependen on user email.
+    - leverage existing jwt functions and wrap 
+- SEcureConfigSote is in app just to let users of the framework use the config table with a age key and a dbpath 
+    - worth it? users can create a instance itself.
+        - app provides agekey and we can add the dbpath- 
+        - there is nothing stateful in secureConfig, we just document use of secure store.
+        - we do not even need the app to provide age and dbpath. that is normally in the entry point
+    - and the server needs one for reloading, not the app. 
+        - if the app has it the server has also to receive it
+        - the server could provide the  object  instead
+    - polluting server or app with securestore is overkill
+    - agekeypath in app. Why?
+        - initalization in app of secureconfig?
+    - consider put agepath and dbpath in config.
+        - remove crap from app
+        - server has the conf provider, it can call Reload with dbPath and agePath
+        - users of secureConfig: create the secure config?
+            -  we still need dbconfig
+        - dbConfig
+- startup: 
+    - func of type Option func(rip), or no options at all 
+    - WithCache() crete empty app and set or apply
+    -WithDaemon create empty server and apply
+    -WithJobHandler 
+    - WithMetrics, will make handler, middleware and conf
+    - we can still retiurn app and server. 
+    - jsut not options
 - NewWithConfig(restinpieces.Config{
 - updatebenchmark: to own paclkage resuse modernc and 
 - modernc?
@@ -179,6 +154,31 @@
 
 ### done
 
+- start logs: emojify, insightful
+- options.go: remove, full repo example.
+	- config get logger options, like level 
+		slog.HandlerOPtions. created in resinpieces from the config ones. just a few
+	- default Logger is text
+	- default cache is ristretto.
+	- example no defaults repo.
+		- use phus
+		- use crawshaw
+		- othe mailer  
+		- 
+- LevelVar dinamically?
+- activated vs enabled consistency 
+- /metrics  
+    - allow conf for path, allos ofiuscation
+    - allowwed Ips configstore, reload with systemd
+    - static Bearer Token: Prometheus can be configured to send a specific
+      Authorization: Bearer <token> header. Your middleware checks for this. 
+- application  logs, 
+    - maybe trace 
+    - message is human friendly, with emoji
+        - helper formatter 
+            ⏰scheduler: <level emoji> i am doing this 
+        - <what emoji> <where>: <level emoji> <human friendly message> <attrs only for details>
+- middleware block big bodyes
 - move default config to config/default.go 
     - pelletier can decode into it
     - create app uses that default
