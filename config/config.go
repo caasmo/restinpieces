@@ -69,6 +69,7 @@ type Config struct {
 	Notifier         Notifier                  `toml:"notifier"`
 	Log              Log                       `toml:"log" comment:"Logging configuration"`
 	BlockRequestBody BlockRequestBody          `toml:"block_request_body" comment:"Request body size limiting configuration"`
+	Metrics          Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
 }
 
 // Log contains Default (Batch) log configuration
@@ -331,6 +332,22 @@ type Notifier struct {
 }
 
 // BlockRequestBody holds configuration for request body size limiting
+type Metrics struct {
+	// Enabled controls whether metrics collection is compiled into the binary and available.
+	// Changing this requires a server restart.
+	Enabled bool `toml:"enabled" comment:"Enable metrics collection (requires restart)"`
+
+	// Activated controls whether metrics are actively being collected.
+	// This can be toggled via config reload without restart.
+	Activated bool `toml:"activated" comment:"Activate metrics collection (can toggle via reload)"`
+
+	// Endpoint is the HTTP path where metrics are exposed (e.g. "/metrics")
+	Endpoint string `toml:"endpoint" comment:"HTTP path where metrics are exposed"`
+
+	// AllowedIPs is a list of IP addresses/CIDRs that can access the metrics endpoint
+	AllowedIPs []string `toml:"allowed_ips" comment:"IP addresses/CIDRs allowed to access metrics endpoint"`
+}
+
 type BlockRequestBody struct {
 	// Activated enables/disables request body size limiting middleware
 	Activated bool `toml:"activated" comment:"Enable request body size limiting"`

@@ -150,5 +150,11 @@ func NewDefaultConfig() *Config {
 				SendTimeout:  Duration{Duration: 10 * time.Second},
 			},
 		},
+		Metrics: Metrics{
+			Enabled:      true,
+			Activated:    true,
+			Endpoint:     "/metrics",
+			AllowedIPs:   []string{"127.0.0.1", "::1"},
+		},
 	}
 }
