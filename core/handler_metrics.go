@@ -1,7 +1,6 @@
 package core
 
 import (
-	"net"
 	"net/http"
 	"strings"
 
