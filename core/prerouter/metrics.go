@@ -54,6 +54,12 @@ func NewMetrics(app *core.App) *Metrics {
 // to collect metrics.
 func (m *Metrics) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Skip metrics collection if not activated
+		if !m.app.Config().Metrics.Activated {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// Check if we already have a ResponseRecorder from earlier middleware
 		rec, ok := w.(*core.ResponseRecorder)
 		if !ok {
