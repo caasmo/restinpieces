@@ -39,10 +39,6 @@ func (d *Db) GetConfig(scope string, generation int) ([]byte, string, error) {
 				return nil
 			},
 		})
-
-	if errors.Is(err, sqlite.ErrNoRows) {
-		return nil, "", fmt.Errorf("no version found %d generations back", generation)
-	}
 	return content, format, err
 }
 
