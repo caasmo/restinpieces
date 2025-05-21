@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/caasmo/restinpieces/config"
 )
 
-func handleDumpCommand(secureStore SecureStore, scope string) {
+func handleDumpCommand(secureStore config.SecureStore, scope string) {
 	decryptedData, err := secureStore.Latest(scope)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to retrieve latest config for scope '%s': %v\n", scope, err)
