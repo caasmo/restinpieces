@@ -89,6 +89,10 @@ func (s *secureStoreAge) Get(opts *GetOptions) ([]byte, string, error) {
 		opts = &GetOptions{}
 	}
 
+	if opts.Generation < 0 {
+		return nil, "", fmt.Errorf("generation cannot be negative")
+	}
+
 	scope := opts.Scope
 	if scope == "" {
 		scope = ScopeApplication

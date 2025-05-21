@@ -14,10 +14,6 @@ import (
 // LatestConfig retrieves the latest configuration content blob for the specified scope.
 // Returns nil slice if no config exists for the given scope (no error).
 func (d *Db) GetConfig(scope string, generation int) ([]byte, string, error) {
-	if generation < 0 {
-		return nil, "", fmt.Errorf("generation cannot be negative")
-	}
-
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to get db connection: %w", err)
