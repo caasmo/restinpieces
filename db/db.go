@@ -27,8 +27,10 @@ type DbQueue interface {
 
 // DbConfig defines database operations related to configuration.
 type DbConfig interface {
-	// LatestConfig returns the latest configuration content blob for the specified scope.
-	LatestConfig(scope string) ([]byte, error)
+	// GetConfig retrieves configuration content and format
+	// nil opts or empty Scope = application scope
+	// Generation 0 = latest, 1 = previous, etc.
+	GetConfig(opts *GetOptions) ([]byte, string, error)
 	// InsertConfig inserts a new configuration content blob for a given scope.
 	InsertConfig(scope string, contentData []byte, format string, description string) error
 }
