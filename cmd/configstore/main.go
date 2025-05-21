@@ -15,7 +15,6 @@ func main() {
 	// Global flags
 	ageIdentityPathFlag := flag.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
 	dbPathFlag := flag.String("db", "", "Path to the SQLite database file")
-	scopeFlag := flag.String("scope", config.ScopeApplication, "Scope for the configuration (e.g., 'application', 'plugin_x')")
 	formatFlag := flag.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
 	descFlag := flag.String("desc", "", "Optional description for this configuration version")
 
@@ -26,12 +25,11 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Global Options:\n")
 		originalUsage() // Prints the global flags
 		fmt.Fprintf(os.Stderr, "\nAvailable Commands:\n")
-		fmt.Fprintf(os.Stderr, "  set <path> <value>   Set a configuration value. Prefix value with '@' to load from file.\n")
-		fmt.Fprintf(os.Stderr, "  scopes               List all unique configuration scopes found in the database.\n")
-		fmt.Fprintf(os.Stderr, "  list [scope]         List configuration versions. If scope is omitted, lists for all scopes.\n")
-		fmt.Fprintf(os.Stderr, "  paths <scope> [filter] List all TOML paths for the latest configuration of a given scope.\n")
-		fmt.Fprintf(os.Stderr, "                       Optional filter string will only show paths containing the filter.\n")
-		fmt.Fprintf(os.Stderr, "  dump <scope>          Dump the latest configuration for a given scope.\n")
+		fmt.Fprintf(os.Stderr, "  set [-scope SCOPE] <path> <value>  Set a configuration value (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "  scopes                             List all unique configuration scopes\n")
+		fmt.Fprintf(os.Stderr, "  list [SCOPE]                       List configuration versions (all scopes if omitted)\n")
+		fmt.Fprintf(os.Stderr, "  paths [-scope SCOPE] [filter]      List TOML paths (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "  dump [-scope SCOPE]                Dump latest config (default scope: %s)\n", config.ScopeApplication)
 	}
 
 	flag.Parse()
@@ -82,7 +80,15 @@ func main() {
 
 	switch command {
 	case "set":
-		handleSetCommand(secureStore, *scopeFlag, *formatFlag, *descFlag, commandArgs)
+		setCmd := flag.NewFlagSet("set", flag.ExitOnError)
+		setScope := setCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		setCmd.Parse(commandArgs)
+		if setCmd.NArg() < 2 {
+			fmt.Fprintf(os.Stderr, "Error: 'set' requires path and value arguments\n")
+			setCmd.Usage()
+			os.Exit(1)
+		}
+		handleSetCommand(secureStore, *setScope, *formatFlag, *descFlag, setCmd.Args())
 	case "scopes":
 		if len(commandArgs) > 0 {
 			fmt.Fprintf(os.Stderr, "Error: 'scopes' command does not take any arguments\n")
@@ -102,25 +108,19 @@ func main() {
 		}
 		handleListCommand(pool, scopeToList)
 	case "paths":
-		if len(commandArgs) < 1 {
-			fmt.Fprintf(os.Stderr, "Error: 'paths' command requires a scope argument\n")
-			flag.Usage()
-			os.Exit(1)
-		}
-		scopeName := commandArgs[0]
+		pathsCmd := flag.NewFlagSet("paths", flag.ExitOnError)
+		pathsScope := pathsCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		pathsCmd.Parse(commandArgs)
 		filter := ""
-		if len(commandArgs) > 1 {
-			filter = commandArgs[1]
+		if pathsCmd.NArg() > 0 {
+			filter = pathsCmd.Arg(0)
 		}
-		handlePathsCommand(secureStore, scopeName, filter)
+		handlePathsCommand(secureStore, *pathsScope, filter)
 	case "dump":
-		if len(commandArgs) < 1 {
-			fmt.Fprintf(os.Stderr, "Error: 'dump' command requires a scope argument\n")
-			flag.Usage()
-			os.Exit(1)
-		}
-		scopeName := commandArgs[0]
-		handleDumpCommand(secureStore, scopeName)
+		dumpCmd := flag.NewFlagSet("dump", flag.ExitOnError)
+		dumpScope := dumpCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		dumpCmd.Parse(commandArgs)
+		handleDumpCommand(secureStore, *dumpScope)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
 		flag.Usage()

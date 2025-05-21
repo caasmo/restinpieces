@@ -16,6 +16,10 @@ func handleSetCommand(
 	defaultDescription string,
 	cmdArgs []string) {
 
+	if scope == "" {
+		scope = config.ScopeApplication
+	}
+
 	if len(cmdArgs) < 2 {
 		fmt.Fprintf(os.Stderr, "Error: missing path or value for 'set' command\n")
 		fmt.Fprintf(os.Stderr, "Usage: configstore ... set <path> <value>\n")

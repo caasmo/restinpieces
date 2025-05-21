@@ -8,6 +8,9 @@ import (
 )
 
 func handleDumpCommand(secureStore config.SecureStore, scope string) {
+	if scope == "" {
+		scope = config.ScopeApplication
+	}
 	decryptedData, err := secureStore.Latest(scope)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to retrieve latest config for scope '%s': %v\n", scope, err)
