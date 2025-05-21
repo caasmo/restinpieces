@@ -39,7 +39,11 @@ func (d *Db) GetConfig(scope string, generation int) ([]byte, string, error) {
 				return nil
 			},
 		})
-	return content, format, err
+
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to get config for scope '%s' generation %d: %w", scope, generation, err)
+	}
+	return content, format, nil
 }
 
 // InsertConfig inserts a new configuration content blob into the database.
