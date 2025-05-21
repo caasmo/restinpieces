@@ -33,6 +33,9 @@ func listTomlPathsRecursive(tree *toml.Tree, prefix string, paths *[]string) {
 }
 
 func handlePathsCommand(secureStore config.SecureStore, scopeName string, filter string) {
+	if scopeName == "" {
+		scopeName = config.ScopeApplication
+	}
 	decryptedData, err := secureStore.Latest(scopeName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to retrieve/decrypt latest config for scope '%s': %v\n", scopeName, err)
