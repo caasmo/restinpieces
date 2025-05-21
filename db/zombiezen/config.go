@@ -31,9 +31,14 @@ func (d *Db) GetConfig(scope string, generation int) ([]byte, string, error) {
 		 ORDER BY created_at DESC 
 		 LIMIT 1 OFFSET ?`,
 		&sqlitex.ExecOptions{
-			Args: []interface{}{scope, generation},
+			Args: []any{scope, generation},
 			ResultFunc: func(stmt *sqlite.Stmt) error {
-				content = stmt.GetBytes("content")
+				reader := stmt.ColumnReader(0)
+				var err error
+				content, err = io.ReadAll(reader)
+				if err != nil {
+					return err
+				}
 				format = stmt.GetText("format")
 				return nil
 			},
