@@ -13,36 +13,41 @@ import (
 
 // LatestConfig retrieves the latest configuration content blob for the specified scope.
 // Returns nil slice if no config exists for the given scope (no error).
-func (d *Db) LatestConfig(scope string) ([]byte, error) {
+func (d *Db) GetConfig(opts *config.GetOptions) ([]byte, string, error) {
+	if opts == nil {
+		opts = &config.GetOptions{}
+	}
+
+	scope := opts.Scope
+	if scope == "" {
+		scope = config.ScopeApplication
+	}
+
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get db connection for scope '%s': %w", scope, err)
+		return nil, "", fmt.Errorf("failed to get db connection: %w", err)
 	}
 	defer d.pool.Put(conn)
 
-	var contentData []byte // Renamed from encryptedData
+	var (content []byte; format string)
 	err = sqlitex.Execute(conn,
-		`SELECT content FROM app_config
-		 WHERE scope = ?
-		 ORDER BY created_at DESC
-		 LIMIT 1;`,
+		`SELECT content, format FROM app_config 
+		 WHERE scope = ? 
+		 ORDER BY created_at DESC 
+		 LIMIT 1 OFFSET ?`,
 		&sqlitex.ExecOptions{
-			Args: []any{scope}, // Bind the scope parameter
-			ResultFunc: func(stmt *sqlite.Stmt) (err error) {
-				// Get a reader for the blob column (index 0) - content
-				reader := stmt.ColumnReader(0)
-				// Read all data from the reader
-				contentData, err = io.ReadAll(reader) // Read into renamed variable
-				return err                            // Return any error from io.ReadAll
+			Args: []interface{}{scope, opts.Generation},
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				content = stmt.GetBytes("content")
+				format = stmt.GetText("format")
+				return nil
 			},
 		})
 
-	if err != nil {
-		return nil, fmt.Errorf("failed to get latest config content for scope '%s': %w", scope, err)
+	if errors.Is(err, sqlite.ErrNoRows) {
+		return nil, "", fmt.Errorf("no version found %d generations back", opts.Generation)
 	}
-
-	// contentData will be nil if no row was found, which is the desired behavior
-	return contentData, nil
+	return content, format, err
 }
 
 // InsertConfig inserts a new configuration content blob into the database.

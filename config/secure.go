@@ -16,10 +16,16 @@ const ScopeApplication = "application"
 
 // SecureStore defines an interface for securely storing and retrieving configuration data.
 // Implementations handle the encryption/decryption details.
+type GetOptions struct {
+	Scope      string
+	Generation int
+}
+
 type SecureStore interface {
-	// Latest retrieves the latest configuration for the given scope, decrypts it,
-	// and returns the plaintext data.
-	Latest(scope string) ([]byte, error)
+	// Get retrieves configuration, decrypts it, and returns plaintext + format
+	// nil opts or empty Scope = application scope
+	// Generation 0 = latest, 1 = previous, etc.
+	Get(opts *GetOptions) ([]byte, string, error)
 
 	// Save encrypts the given plaintext data and stores it as the latest configuration
 	// for the given scope, using the provided format and description.
@@ -78,35 +84,31 @@ func loadAndParseIdentities(keyPath string, operation string) ([]age.Identity, e
 
 // Latest implements the SecureStore interface for age.
 // It reads the key file and parses identities on demand for decryption.
-func (s *secureStoreAge) Latest(scope string) ([]byte, error) {
-	contentData, err := s.dbCfg.LatestConfig(scope)
-	if err != nil {
-		return nil, fmt.Errorf("securestore: failed to get latest config content for scope '%s' from db: %w", scope, err)
+func (s *secureStoreAge) Get(opts *GetOptions) ([]byte, string, error) {
+	if opts == nil {
+		opts = &GetOptions{}
 	}
-	if len(contentData) == 0 {
-		return nil, fmt.Errorf("securestore: no configuration content found for scope '%s'", scope)
+
+	encrypted, format, err := s.dbCfg.GetConfig(opts)
+	if err != nil {
+		return nil, "", fmt.Errorf("securestore: failed to get config: %w", err)
+	}
+	if len(encrypted) == 0 {
+		return nil, "", fmt.Errorf("securestore: no configuration content found")
 	}
 
 	identities, err := loadAndParseIdentities(s.ageKeyPath, "decryption")
 	if err != nil {
-		return nil, err // Return error directly
+		return nil, "", err
 	}
 
-	// Decrypt using the loaded identities
-	contentDataReader := bytes.NewReader(contentData)
-	decryptedDataReader, err := age.Decrypt(contentDataReader, identities...)
-
+	decrypted, err := age.Decrypt(bytes.NewReader(encrypted), identities...)
 	if err != nil {
-		return nil, fmt.Errorf("securestore: failed to decrypt configuration data for scope '%s': %w", scope, err)
+		return nil, "", fmt.Errorf("securestore: decrypt failed: %w", err)
 	}
 
-	// Read the decrypted result
-	decryptedBytes, err := io.ReadAll(decryptedDataReader)
-	if err != nil {
-		return nil, fmt.Errorf("securestore: failed to read decrypted data stream for scope '%s': %w", scope, err)
-	}
-
-	return decryptedBytes, nil
+	plaintext, err := io.ReadAll(decrypted)
+	return plaintext, format, err
 }
 
 // Save implements the SecureStore interface for age.
