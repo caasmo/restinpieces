@@ -1,5 +1,15 @@
 ### TODOs
 
+- good enough release
+    - superuser workflows
+		- scripts
+	    - workflow for recovery, 
+	- all shell test 
+	- unit test
+	- code review
+    - dunctional tests
+    - documentation
+	    - basic framework use examples repo, with examples of features.
 - logger, have a text logger for startup before app logger, and for shutdown. pass to the app.logger and use as default?
     - logdb must be propely wal etc
 - default logger db interface?
@@ -27,30 +37,6 @@
 - nocache? what about BlockIp.
 - notifications
     - slog? https://github.com/betrayy/slog-discord
-- good enough release
-    - basic metrics 
-		- https://github.com/prometheus/client_golang
-		- just requets/second. 
-    - notification basic
-    - superuser workflows
-		- scripts
-	    - workflow for recovery, 
-	- all shell test 
-	- unit test
-	- code review
-	- basic framework use examples repo, with examples of features.
-- robots.txt blocking
-	- see poc-regexp-aibots.go
-		- we have the nginx list make sure is RE2, check mustcomplile before insert
-		- we textuynmarshal to pointert o regexp. config type is config.Regexp and contain the pointer to the complied Regexp
-		- prerouter
-	- part of standard package
-	- In the restinpieces ualist can be sesactivated, prerouter
-	- saved in toml as string.
-	- no need to job, similar letsencript, enough with amanual trigger and notification 
-	- so handler, but can be used from script at the start, 
-	- we write thus the string patterns in separate config 
-		- we have edit-config update-ualist
 - script insert-job. --type 
 - config reload
 - race detection
@@ -61,7 +47,6 @@
         - or not jsut notification
     - some made in preRouter, conunters etc
     - no prometheus page
-- 10% reduction in req/sec from htttp, to https refresh auth, with block ip
 - password reset if no password ie oauth2 user => no only register with email
 - verify email for oauth -> yes verifed
 - corfirmation, spam sending the same right jwt 
@@ -154,6 +139,19 @@
 
 ### done
 
+- 10% reduction in req/sec from htttp, to https refresh auth, with block ip
+- robots.txt blocking
+	- see poc-regexp-aibots.go
+		- we have the nginx list make sure is RE2, check mustcomplile before insert
+		- we textuynmarshal to pointert o regexp. config type is config.Regexp and contain the pointer to the complied Regexp
+		- prerouter
+	- part of standard package
+	- In the restinpieces ualist can be sesactivated, prerouter
+	- saved in toml as string.
+	- no need to job, similar letsencript, enough with amanual trigger and notification 
+	- so handler, but can be used from script at the start, 
+	- we write thus the string patterns in separate config 
+		- we have edit-config update-ualist
 - start logs: emojify, insightful
 - options.go: remove, full repo example.
 	- config get logger options, like level 
