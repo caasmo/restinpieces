@@ -31,7 +31,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  list [SCOPE]                       List configuration versions (all scopes if omitted)\n")
 		fmt.Fprintf(os.Stderr, "  paths [-scope SCOPE] [filter]      List TOML paths (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  dump [-scope SCOPE]                Dump latest config (default scope: %s)\n", config.ScopeApplication)
-		fmt.Fprintf(os.Stderr, "  save [-scope SCOPE] <file>         Save latest config to file (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "  save [-scope SCOPE] <file>         Save file contents to database (default scope: %s)\n", config.ScopeApplication)
 	}
 
 	flag.Parse()

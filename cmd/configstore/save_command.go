@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/caasmo/restinpieces/config"
 )
@@ -12,17 +13,20 @@ func handleSaveCommand(secureStore config.SecureStore, scope string, filename st
 		scope = config.ScopeApplication
 	}
 
-	decryptedData, err := secureStore.Latest(scope)
+	fileData, err := os.ReadFile(filename)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to retrieve latest config for scope '%s': %v\n", scope, err)
+		fmt.Fprintf(os.Stderr, "Error: failed to read file '%s': %v\n", filename, err)
 		os.Exit(1)
 	}
 
-	err = os.WriteFile(filename, decryptedData, 0644)
+	description := fmt.Sprintf("Inserted from file: %s", filepath.Base(filename))
+	format := "toml" // Default format, could be detected from filename if needed
+
+	err = secureStore.Save(scope, fileData, format, description)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to write config to file '%s': %v\n", filename, err)
+		fmt.Fprintf(os.Stderr, "Error: failed to save config to database: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Successfully saved config for scope '%s' to file '%s'\n", scope, filename)
+	fmt.Printf("Successfully saved file '%s' to scope '%s' in database\n", filename, scope)
 }
