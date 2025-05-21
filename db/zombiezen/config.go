@@ -13,14 +13,9 @@ import (
 
 // LatestConfig retrieves the latest configuration content blob for the specified scope.
 // Returns nil slice if no config exists for the given scope (no error).
-func (d *Db) GetConfig(opts *config.GetOptions) ([]byte, string, error) {
-	if opts == nil {
-		opts = &config.GetOptions{}
-	}
-
-	scope := opts.Scope
-	if scope == "" {
-		scope = config.ScopeApplication
+func (d *Db) GetConfig(scope string, generation int) ([]byte, string, error) {
+	if generation < 0 {
+		return nil, "", fmt.Errorf("generation cannot be negative")
 	}
 
 	conn, err := d.pool.Take(context.TODO())
@@ -36,7 +31,7 @@ func (d *Db) GetConfig(opts *config.GetOptions) ([]byte, string, error) {
 		 ORDER BY created_at DESC 
 		 LIMIT 1 OFFSET ?`,
 		&sqlitex.ExecOptions{
-			Args: []interface{}{scope, opts.Generation},
+			Args: []interface{}{scope, generation},
 			ResultFunc: func(stmt *sqlite.Stmt) error {
 				content = stmt.GetBytes("content")
 				format = stmt.GetText("format")
@@ -45,7 +40,7 @@ func (d *Db) GetConfig(opts *config.GetOptions) ([]byte, string, error) {
 		})
 
 	if errors.Is(err, sqlite.ErrNoRows) {
-		return nil, "", fmt.Errorf("no version found %d generations back", opts.Generation)
+		return nil, "", fmt.Errorf("no version found %d generations back", generation)
 	}
 	return content, format, err
 }
