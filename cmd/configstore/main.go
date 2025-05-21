@@ -31,7 +31,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  list [scope]         List configuration versions. If scope is omitted, lists for all scopes.\n")
 		fmt.Fprintf(os.Stderr, "  paths <scope> [filter] List all TOML paths for the latest configuration of a given scope.\n")
 		fmt.Fprintf(os.Stderr, "                       Optional filter string will only show paths containing the filter.\n")
-		// Add other commands here in the future
+		fmt.Fprintf(os.Stderr, "  dump <scope>          Dump the latest configuration for a given scope.\n")
 	}
 
 	flag.Parse()
@@ -113,6 +113,14 @@ func main() {
 			filter = commandArgs[1]
 		}
 		handlePathsCommand(secureStore, scopeName, filter)
+	case "dump":
+		if len(commandArgs) < 1 {
+			fmt.Fprintf(os.Stderr, "Error: 'dump' command requires a scope argument\n")
+			flag.Usage()
+			os.Exit(1)
+		}
+		scopeName := commandArgs[0]
+		handleDumpCommand(secureStore, scopeName)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
 		flag.Usage()
