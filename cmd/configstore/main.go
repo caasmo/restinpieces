@@ -15,8 +15,6 @@ func main() {
 	// Global flags
 	ageIdentityPathFlag := flag.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
 	dbPathFlag := flag.String("db", "", "Path to the SQLite database file")
-	formatFlag := flag.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
-	descFlag := flag.String("desc", "", "Optional description for this configuration version")
 
 	originalUsage := flag.Usage
 	flag.Usage = func() {
@@ -25,7 +23,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Global Options:\n")
 		originalUsage() // Prints the global flags
 		fmt.Fprintf(os.Stderr, "\nAvailable Commands:\n")
-		fmt.Fprintf(os.Stderr, "  set [-scope SCOPE] <path> <value>  Set a configuration value (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "  set [-scope SCOPE] [-format FORMAT] [-desc DESC] <path> <value>\n")
+		fmt.Fprintf(os.Stderr, "                                     Set a configuration value (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "                                     -format: toml/json (default: toml)\n")
+		fmt.Fprintf(os.Stderr, "                                     -desc: optional description\n")
 		fmt.Fprintf(os.Stderr, "  scopes                             List all unique configuration scopes\n")
 		fmt.Fprintf(os.Stderr, "  list [SCOPE]                       List configuration versions (all scopes if omitted)\n")
 		fmt.Fprintf(os.Stderr, "  paths [-scope SCOPE] [filter]      List TOML paths (default scope: %s)\n", config.ScopeApplication)
@@ -82,6 +83,8 @@ func main() {
 	case "set":
 		setCmd := flag.NewFlagSet("set", flag.ExitOnError)
 		setScope := setCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		formatFlag := setCmd.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
+		descFlag := setCmd.String("desc", "", "Optional description for this configuration version")
 		setCmd.Parse(commandArgs)
 		if setCmd.NArg() < 2 {
 			fmt.Fprintf(os.Stderr, "Error: 'set' requires path and value arguments\n")

@@ -13,7 +13,7 @@ func handleSetCommand(
 	secureCfg config.SecureStore,
 	scope string,
 	format string,
-	defaultDescription string,
+	description string,
 	cmdArgs []string) {
 
 	if scope == "" {
