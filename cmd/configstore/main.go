@@ -31,6 +31,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  list [SCOPE]                       List configuration versions (all scopes if omitted)\n")
 		fmt.Fprintf(os.Stderr, "  paths [-scope SCOPE] [filter]      List TOML paths (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  dump [-scope SCOPE]                Dump latest config (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "  save [-scope SCOPE] <file>         Save latest config to file (default scope: %s)\n", config.ScopeApplication)
 	}
 
 	flag.Parse()
@@ -124,6 +125,16 @@ func main() {
 		dumpScope := dumpCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		dumpCmd.Parse(commandArgs)
 		handleDumpCommand(secureStore, *dumpScope)
+	case "save":
+		saveCmd := flag.NewFlagSet("save", flag.ExitOnError)
+		saveScope := saveCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		saveCmd.Parse(commandArgs)
+		if saveCmd.NArg() < 1 {
+			fmt.Fprintf(os.Stderr, "Error: 'save' requires filename argument\n")
+			saveCmd.Usage()
+			os.Exit(1)
+		}
+		handleSaveCommand(secureStore, *saveScope, saveCmd.Arg(0))
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
 		flag.Usage()
