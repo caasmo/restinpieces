@@ -16,11 +16,16 @@ const ScopeApplication = "application"
 
 // SecureStore defines an interface for securely storing and retrieving configuration data.
 // Implementations handle the encryption/decryption details.
+type GetOptions struct {
+    Scope      string
+    Generation int
+}
+
 type SecureStore interface {
 	// Get retrieves configuration, decrypts it, and returns plaintext + format
-	// empty scope = application scope
-	// generation 0 = latest, 1 = previous, etc.
-	Get(scope string, generation int) ([]byte, string, error)
+	// nil opts or empty Scope = application scope
+	// Generation 0 = latest, 1 = previous, etc.
+	Get(opts *GetOptions) ([]byte, string, error)
 
 	// Save encrypts the given plaintext data and stores it as the latest configuration
 	// for the given scope, using the provided format and description.
@@ -79,12 +84,17 @@ func loadAndParseIdentities(keyPath string, operation string) ([]age.Identity, e
 
 // Latest implements the SecureStore interface for age.
 // It reads the key file and parses identities on demand for decryption.
-func (s *secureStoreAge) Get(scope string, generation int) ([]byte, string, error) {
+func (s *secureStoreAge) Get(opts *GetOptions) ([]byte, string, error) {
+	if opts == nil {
+		opts = &GetOptions{}
+	}
+
+	scope := opts.Scope
 	if scope == "" {
 		scope = ScopeApplication
 	}
 
-	encrypted, format, err := s.dbCfg.GetConfig(scope, generation)
+	encrypted, format, err := s.dbCfg.GetConfig(scope, opts.Generation)
 	if err != nil {
 		return nil, "", fmt.Errorf("securestore: failed to get config: %w", err)
 	}
