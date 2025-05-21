@@ -72,7 +72,6 @@ func handleSetCommand(
 	}
 	updatedConfigData := []byte(updatedTomlString)
 
-	description := defaultDescription
 	if description == "" {
 		description = fmt.Sprintf("Updated field '%s'", configPath)
 	}
