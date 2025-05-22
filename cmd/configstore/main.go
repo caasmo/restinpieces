@@ -38,7 +38,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  get [-scope SCOPE] [filter]          Get config values by path (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  init [-scope SCOPE]                 Save default config to database (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  renew-jwt-secrets                  Renew all JWT secrets (application scope only)\n")
-		fmt.Fprintf(os.Stderr, "  oauth2 <provider>                  Add new OAuth2 provider skeleton (e.g. gitlab)\n")
+		fmt.Fprintf(os.Stderr, "  add-oauth2 <provider>              Add new OAuth2 provider skeleton (e.g. gitlab)\n")
 	}
 
 	flag.Parse()
@@ -198,9 +198,9 @@ func main() {
 			os.Exit(1)
 		}
 		handleRenewJwtSecretsCommand(secureStore)
-	case "oauth2":
+	case "add-oauth2":
 		if len(commandArgs) < 1 {
-			fmt.Fprintf(os.Stderr, "Error: 'oauth2' requires provider name argument\n")
+			fmt.Fprintf(os.Stderr, "Error: 'add-oauth2' requires provider name argument\n")
 			flag.Usage()
 			os.Exit(1)
 		}
