@@ -35,6 +35,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  save [-scope SCOPE] <file>         Save file contents to database (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  diff [-scope SCOPE] <generation>   Compare config against latest (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  rollback [-scope SCOPE] <generation>  Restore a previous configuration version (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "  get [-scope SCOPE] [filter]          Get config values by path (default scope: %s)\n", config.ScopeApplication)
 	}
 
 	flag.Parse()
@@ -168,6 +169,15 @@ func main() {
 			os.Exit(1)
 		}
 		handleSaveCommand(secureStore, *saveScope, saveCmd.Arg(0))
+	case "get":
+		getCmd := flag.NewFlagSet("get", flag.ExitOnError)
+		getScope := getCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		getCmd.Parse(commandArgs)
+		filter := ""
+		if getCmd.NArg() > 0 {
+			filter = getCmd.Arg(0)
+		}
+		handleGetCommand(secureStore, *getScope, filter)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
 		flag.Usage()
