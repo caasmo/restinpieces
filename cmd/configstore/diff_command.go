@@ -65,17 +65,24 @@ func handleDiffCommand(secureStore config.SecureStore, scope string, generation 
 		return
 	}
 
-	// Generate colored diff output
-	fmt.Printf("Differences between generation %d (left) and latest (right):\n", generation)
+	// Generate unified diff output showing only differences
+	fmt.Printf("Differences between generation %d and latest (0):\n", generation)
+	hasDifferences := false
+	
 	for _, diff := range diffs {
 		switch diff.Type {
 		case diffmatchpatch.DiffInsert:
-			fmt.Printf("\x1b[32m%s\x1b[0m", diff.Text) // Green for additions
+			fmt.Printf("\x1b[32m+ %s\x1b[0m", diff.Text) // Green for additions
+			hasDifferences = true
 		case diffmatchpatch.DiffDelete:
-			fmt.Printf("\x1b[31m%s\x1b[0m", diff.Text) // Red for deletions
-		case diffmatchpatch.DiffEqual:
-			fmt.Printf("%s", diff.Text) // No color for unchanged
+			fmt.Printf("\x1b[31m- %s\x1b[0m", diff.Text) // Red for deletions
+			hasDifferences = true
 		}
 	}
-	fmt.Println()
+	
+	if !hasDifferences {
+		fmt.Println("No differences found")
+	} else {
+		fmt.Println() // Add newline after differences
+	}
 }
