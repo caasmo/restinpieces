@@ -62,7 +62,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 
 	// Load config from database
 	scope := config.ScopeApplication
-	decryptedBytes, err := app.ConfigStore().Latest(scope)
+	decryptedBytes, _, err := app.ConfigStore().Get(scope, 0) // generation 0 = latest
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load config: %w", err)
 	}
