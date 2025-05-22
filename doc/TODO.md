@@ -30,6 +30,16 @@
 	- configstore cat <type>
 	- configstore types
 	- configstore rm <config>
+	- configstore diff
+         1 github.com/kylelemons/godebug/diff                                                                           
+            • Simple string diff output                                                                                 
+            • Works well for small configs                                                                              
+         2 github.com/sergi/go-diff                                                                                     
+            • More advanced diff algorithms                                                                             
+            • Supports color output                                                                                     
+         3 github.com/hexops/gotextdiff                                                                                 
+            • Unified diff format                                                                                       
+            • Good for CLI output
 	- configstore rollback <type> it never rm just creates a copy
 - create-app shoudl create age key.
 - disable standard routes

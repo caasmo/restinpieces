@@ -80,6 +80,6 @@ func handleDiffCommand(secureStore config.SecureStore, scope string, generation 
 
 	// Use the package's built-in pretty diff formatting on just the changes
 	diffText := dmp.DiffPrettyText(filteredDiffs)
-	fmt.Printf("Differences between generation %d and latest:\n", generation)
+	fmt.Printf("Differences between generation %d (red=removed) and latest (green=added):\n", generation)
 	fmt.Println(diffText)
 }
