@@ -3,9 +3,19 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/pelletier/go-toml/v2"
-	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/pmezard/go-difflib/difflib"
+)
+
+// ANSI color codes
+const (
+	ColorReset = "\033[0m"
+	ColorRed   = "\033[31m"
+	ColorGreen = "\033[32m"
+	ColorBlue  = "\033[34m"
+	ColorCyan  = "\033[36m"
 )
 
 func handleDiffCommand(secureStore config.SecureStore, scope string, generation int) {
@@ -50,30 +60,44 @@ func handleDiffCommand(secureStore config.SecureStore, scope string, generation 
 		os.Exit(1)
 	}
 
-	// Create diff instance
-	dmp := diffmatchpatch.New()
+	// Generate unified diff using difflib
+	diff := difflib.UnifiedDiff{
+		A:        difflib.SplitLines(string(targetToml)),
+		B:        difflib.SplitLines(string(latestToml)),
+		FromFile: fmt.Sprintf("generation_%d", generation),
+		ToFile:   "latest",
+		Context:  1, // Set to 0 to show only changed lines
+	}
 
-	// Generate diff
-	diffs := dmp.DiffMain(string(targetToml), string(latestToml), false)
+	result, err := difflib.GetUnifiedDiffString(diff)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to generate diff: %v\n", err)
+		os.Exit(1)
+	}
 
-	// Cleanup the diff for better readability
-	diffs = dmp.DiffCleanupSemantic(diffs)
-	diffs = dmp.DiffCleanupEfficiency(diffs)
-
-	if len(diffs) == 1 && diffs[0].Type == diffmatchpatch.DiffEqual {
+	if strings.TrimSpace(result) == "" {
 		fmt.Printf("No differences between generation %d and latest\n", generation)
 		return
 	}
 
-	// Generate unified diff with context
-	diff := dmp.DiffMain(string(targetToml), string(latestToml), true)
-	diff = dmp.DiffCleanupSemantic(diff)
-
-	if len(diff) == 1 && diff[0].Type == diffmatchpatch.DiffEqual {
-		fmt.Printf("No differences between generation %d and latest\n", generation)
-		return
+	fmt.Printf("Differences between generation %d and latest:\n\n", generation)
+	
+	// Colorize the output
+	lines := strings.Split(result, "\n")
+	for _, line := range lines {
+		switch {
+		case strings.HasPrefix(line, "---"):
+			fmt.Printf("%s%s%s\n", ColorBlue, line, ColorReset)
+		case strings.HasPrefix(line, "+++"):
+			fmt.Printf("%s%s%s\n", ColorBlue, line, ColorReset)
+		case strings.HasPrefix(line, "@@"):
+			fmt.Printf("%s%s%s\n", ColorCyan, line, ColorReset)
+		case strings.HasPrefix(line, "-"):
+			fmt.Printf("%s%s%s\n", ColorRed, line, ColorReset)
+		case strings.HasPrefix(line, "+"):
+			fmt.Printf("%s%s%s\n", ColorGreen, line, ColorReset)
+		default:
+			fmt.Println(line)
+		}
 	}
-
-	fmt.Printf("Differences between generation %d (red) and latest (green):\n", generation)
-	fmt.Println(dmp.DiffPrettyText(diff))
 }
