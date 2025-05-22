@@ -40,7 +40,7 @@ func Reload(configStore SecureStore, provider *Provider, logger *slog.Logger) fu
 	// Return a closure that captures the necessary dependencies (configStore, provider, logger)
 	return func() error {
 		logger.Debug("Reload func: Attempting to fetch latest application configuration")
-		decryptedBytes, err := configStore.Latest(ScopeApplication)
+		decryptedBytes, _, err := configStore.Get(ScopeApplication, 0)
 		if err != nil {
 			logger.Error("Reload func: Failed to fetch latest application configuration", "error", err)
 			return fmt.Errorf("failed to fetch latest application configuration: %w", err)
