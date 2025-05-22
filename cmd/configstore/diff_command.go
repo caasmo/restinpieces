@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -66,49 +65,13 @@ func handleDiffCommand(secureStore config.SecureStore, scope string, generation 
 		return
 	}
 
-	// Generate unified diff output showing only differences
-	fmt.Printf("Differences between generation %d and latest (0):\n", generation)
-	hasDifferences := false
-	
-	// Track current section to avoid repeating headers
-	currentSection := ""
-	
-	for _, diff := range diffs {
-		lines := strings.Split(diff.Text, "\n")
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			if line == "" {
-				continue
-			}
-			
-			// Check if this is a section header
-			if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-				currentSection = line
-				continue
-			}
-			
-			switch diff.Type {
-			case diffmatchpatch.DiffInsert:
-				if currentSection != "" {
-					fmt.Printf("\x1b[32m+ %s\n  %s\x1b[0m\n", currentSection, line)
-					currentSection = ""
-				} else {
-					fmt.Printf("\x1b[32m+ %s\x1b[0m\n", line)
-				}
-				hasDifferences = true
-			case diffmatchpatch.DiffDelete:
-				if currentSection != "" {
-					fmt.Printf("\x1b[31m- %s\n  %s\x1b[0m\n", currentSection, line)
-					currentSection = ""
-				} else {
-					fmt.Printf("\x1b[31m- %s\x1b[0m\n", line)
-				}
-				hasDifferences = true
-			}
-		}
+	// Use the package's built-in pretty diff formatting
+	diffText := dmp.DiffPrettyText(diffs)
+	if diffText == "" {
+		fmt.Printf("No differences between generation %d and latest\n", generation)
+		return
 	}
-	
-	if !hasDifferences {
-		fmt.Println("No differences found")
-	}
+
+	fmt.Printf("Differences between generation %d (left) and latest (right):\n", generation)
+	fmt.Println(diffText)
 }
