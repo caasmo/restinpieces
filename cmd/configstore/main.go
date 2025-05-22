@@ -34,6 +34,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  dump [-scope SCOPE]                Dump latest config (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  save [-scope SCOPE] <file>         Save file contents to database (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  diff [-scope SCOPE] <generation>   Compare config against latest (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "  rollback [-scope SCOPE] <generation>  Restore a previous configuration version (default scope: %s)\n", config.ScopeApplication)
 	}
 
 	flag.Parse()
@@ -142,6 +143,21 @@ func main() {
 			os.Exit(1)
 		}
 		handleDiffCommand(secureStore, *diffScope, gen)
+	case "rollback":
+		rollbackCmd := flag.NewFlagSet("rollback", flag.ExitOnError)
+		rollbackScope := rollbackCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		rollbackCmd.Parse(commandArgs)
+		if rollbackCmd.NArg() < 1 {
+			fmt.Fprintf(os.Stderr, "Error: 'rollback' requires generation number argument\n")
+			rollbackCmd.Usage()
+			os.Exit(1)
+		}
+		gen, err := strconv.Atoi(rollbackCmd.Arg(0))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: generation must be a number\n")
+			os.Exit(1)
+		}
+		handleRollbackCommand(secureStore, *rollbackScope, gen)
 	case "save":
 		saveCmd := flag.NewFlagSet("save", flag.ExitOnError)
 		saveScope := saveCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
