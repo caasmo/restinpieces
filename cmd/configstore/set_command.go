@@ -31,7 +31,7 @@ func handleSetCommand(
 	configPath := cmdArgs[0]
 	rawValue := cmdArgs[1]
 
-	decryptedData, err := secureCfg.Latest(scope)
+	decryptedData, _, err := secureCfg.Get(scope, 0) // generation 0 = latest
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to retrieve latest config via SecureStore (scope: %s): %v\n", scope, err)
 		os.Exit(1)
