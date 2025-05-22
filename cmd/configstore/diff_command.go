@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/sergi/go-diff/diffmatchpatch"
@@ -69,20 +70,45 @@ func handleDiffCommand(secureStore config.SecureStore, scope string, generation 
 	fmt.Printf("Differences between generation %d and latest (0):\n", generation)
 	hasDifferences := false
 	
+	// Track current section to avoid repeating headers
+	currentSection := ""
+	
 	for _, diff := range diffs {
-		switch diff.Type {
-		case diffmatchpatch.DiffInsert:
-			fmt.Printf("\x1b[32m+ %s\x1b[0m", diff.Text) // Green for additions
-			hasDifferences = true
-		case diffmatchpatch.DiffDelete:
-			fmt.Printf("\x1b[31m- %s\x1b[0m", diff.Text) // Red for deletions
-			hasDifferences = true
+		lines := strings.Split(diff.Text, "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" {
+				continue
+			}
+			
+			// Check if this is a section header
+			if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+				currentSection = line
+				continue
+			}
+			
+			switch diff.Type {
+			case diffmatchpatch.DiffInsert:
+				if currentSection != "" {
+					fmt.Printf("\x1b[32m+ %s\n  %s\x1b[0m\n", currentSection, line)
+					currentSection = ""
+				} else {
+					fmt.Printf("\x1b[32m+ %s\x1b[0m\n", line)
+				}
+				hasDifferences = true
+			case diffmatchpatch.DiffDelete:
+				if currentSection != "" {
+					fmt.Printf("\x1b[31m- %s\n  %s\x1b[0m\n", currentSection, line)
+					currentSection = ""
+				} else {
+					fmt.Printf("\x1b[31m- %s\x1b[0m\n", line)
+				}
+				hasDifferences = true
+			}
 		}
 	}
 	
 	if !hasDifferences {
 		fmt.Println("No differences found")
-	} else {
-		fmt.Println() // Add newline after differences
 	}
 }
