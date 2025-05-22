@@ -32,6 +32,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  paths [-scope SCOPE] [filter]      List TOML paths (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  dump [-scope SCOPE]                Dump latest config (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  save [-scope SCOPE] <file>         Save file contents to database (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "  diff [-scope SCOPE] <generation>   Compare config against latest (default scope: %s)\n", config.ScopeApplication)
 	}
 
 	flag.Parse()
@@ -125,6 +126,21 @@ func main() {
 		dumpScope := dumpCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		dumpCmd.Parse(commandArgs)
 		handleDumpCommand(secureStore, *dumpScope)
+	case "diff":
+		diffCmd := flag.NewFlagSet("diff", flag.ExitOnError)
+		diffScope := diffCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		diffCmd.Parse(commandArgs)
+		if diffCmd.NArg() < 1 {
+			fmt.Fprintf(os.Stderr, "Error: 'diff' requires generation number argument\n")
+			diffCmd.Usage()
+			os.Exit(1)
+		}
+		gen, err := strconv.Atoi(diffCmd.Arg(0))
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: generation must be a number\n")
+			os.Exit(1)
+		}
+		handleDiffCommand(secureStore, *diffScope, gen)
 	case "save":
 		saveCmd := flag.NewFlagSet("save", flag.ExitOnError)
 		saveScope := saveCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
