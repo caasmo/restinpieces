@@ -53,7 +53,14 @@ func handleSetCommand(
 		}
 		valueToSet = string(fileContent)
 	} else {
-		valueToSet = rawValue
+		// Parse the value as TOML to get proper type
+		tempTomlString := fmt.Sprintf("temp_key = %s", rawValue)
+		tempTree, err := toml.Load(tempTomlString)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: failed to parse value as TOML (value: %s): %v\n", rawValue, err)
+			os.Exit(1)
+		}
+		valueToSet = tempTree.Get("temp_key")
 	}
 
 	keyExists := tree.Has(configPath)
