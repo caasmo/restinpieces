@@ -65,21 +65,15 @@ func handleDiffCommand(secureStore config.SecureStore, scope string, generation 
 		return
 	}
 
-	// Filter out unchanged lines
-	var filteredDiffs []diffmatchpatch.Diff
-	for _, diff := range diffs {
-		if diff.Type != diffmatchpatch.DiffEqual {
-			filteredDiffs = append(filteredDiffs, diff)
-		}
-	}
+	// Generate unified diff with context
+	diff := dmp.DiffMain(string(targetToml), string(latestToml), true)
+	diff = dmp.DiffCleanupSemantic(diff)
 
-	if len(filteredDiffs) == 0 {
+	if len(diff) == 1 && diff[0].Type == diffmatchpatch.DiffEqual {
 		fmt.Printf("No differences between generation %d and latest\n", generation)
 		return
 	}
 
-	// Use the package's built-in pretty diff formatting on just the changes
-	diffText := dmp.DiffPrettyText(filteredDiffs)
-	fmt.Printf("Differences between previous generation %d and latest (green=added, red=removed):\n", generation)
-	fmt.Println(diffText)
+	fmt.Printf("Differences between generation %d (red) and latest (green):\n", generation)
+	fmt.Println(dmp.DiffPrettyText(diff))
 }
