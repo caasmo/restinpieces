@@ -56,7 +56,7 @@ func handleListCommand(pool *sqlitex.Pool, scopeFilter string) {
 		if len(format) > 4 {
 			format = format[:4]
 		}
-		fmt.Printf("%-3d  %-12s  %-21s  %-4s  %s\n", count, scope, createdAt, format, description)
+		fmt.Printf("%3d  %-12s  %-21s  %-4s  %s\n", count, scope, createdAt, format, description)
 		count++
 	}
 
