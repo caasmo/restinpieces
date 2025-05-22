@@ -11,7 +11,7 @@ func handleDumpCommand(secureStore config.SecureStore, scope string) {
 	if scope == "" {
 		scope = config.ScopeApplication
 	}
-	decryptedData, err := secureStore.Latest(scope)
+	decryptedData, _, err := secureStore.Get(scope, 0) // generation 0 = latest
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to retrieve latest config for scope '%s': %v\n", scope, err)
 		os.Exit(1)
