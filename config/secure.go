@@ -102,9 +102,6 @@ func (s *secureStoreAge) Get(opts *GetOptions) ([]byte, string, error) {
 	if err != nil {
 		return nil, "", fmt.Errorf("securestore: failed to get config: %w", err)
 	}
-	if len(encrypted) == 0 {
-		return nil, "", fmt.Errorf("securestore: no configuration content found")
-	}
 
 	identities, err := loadAndParseIdentities(s.ageKeyPath, "decryption")
 	if err != nil {
