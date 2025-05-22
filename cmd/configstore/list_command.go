@@ -34,8 +34,8 @@ func handleListCommand(pool *sqlitex.Pool, scopeFilter string) {
 		stmt.BindText(1, scopeFilter)
 	}
 
-	fmt.Println("Generation | Scope | Created At | Format | Description")
-	fmt.Println("-----------|-------|--------------|--------|-------------")
+	fmt.Println("Gen  Scope  Created At  Format  Description")
+	fmt.Println("---  -----  ----------  ------  -----------")
 
 	var count int
 	for {
@@ -52,7 +52,7 @@ func handleListCommand(pool *sqlitex.Pool, scopeFilter string) {
 		format := stmt.GetText("format")
 		description := stmt.GetText("description")
 
-		fmt.Printf("%9d | %s | %s | %s | %s\n", count, scope, createdAt, format, description)
+		fmt.Printf("%-3d  %-5s  %s  %-6s  %s\n", count, scope, createdAt, format, description)
 		count++
 	}
 
