@@ -39,6 +39,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  init [-scope SCOPE]                 Save default config to database (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  renew-jwt-secrets                  Renew all JWT secrets (application scope only)\n")
 		fmt.Fprintf(os.Stderr, "  add-oauth2 <provider>              Add new OAuth2 provider skeleton (e.g. gitlab)\n")
+		fmt.Fprintf(os.Stderr, "  rm-oauth2 <provider>               Remove OAuth2 provider (e.g. gitlab)\n")
 	}
 
 	flag.Parse()
@@ -205,6 +206,13 @@ func main() {
 			os.Exit(1)
 		}
 		handleOAuth2Command(secureStore, commandArgs[0])
+	case "rm-oauth2":
+		if len(commandArgs) < 1 {
+			fmt.Fprintf(os.Stderr, "Error: 'rm-oauth2' requires provider name argument\n")
+			flag.Usage()
+			os.Exit(1)
+		}
+		handleRmOAuth2Command(secureStore, commandArgs[0])
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
 		flag.Usage()
