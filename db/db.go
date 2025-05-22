@@ -27,8 +27,7 @@ type DbQueue interface {
 
 // DbConfig defines database operations related to configuration.
 type DbConfig interface {
-	// GetConfig retrieves encrypted config content and format by exact scope and generation offset
-	// scope must be provided, generation is passed through directly
+	// GetConfig retrieves encrypted config content and format by scope and generation
 	// generation 0 = latest, 1 = previous, etc.
 	GetConfig(scope string, generation int) ([]byte, string, error)
 	// InsertConfig inserts a new configuration content blob for a given scope.
