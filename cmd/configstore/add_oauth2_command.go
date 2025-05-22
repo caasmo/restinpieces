@@ -3,11 +3,21 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
+	"unicode"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/pelletier/go-toml"
 )
+
+// capitalizeFirst capitalizes the first letter of a string
+func capitalizeFirst(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToUpper(r[0])
+	return string(r)
+}
 
 func handleOAuth2Command(secureStore config.SecureStore, providerName string) {
 	// Only works with application scope
@@ -36,7 +46,7 @@ func handleOAuth2Command(secureStore config.SecureStore, providerName string) {
 	// Add skeleton provider
 	cfg.OAuth2Providers[providerName] = config.OAuth2Provider{
 		Name:            providerName,
-		DisplayName:     strings.Title(providerName),
+		DisplayName:     capitalizeFirst(providerName),
 		RedirectURL:     "",
 		RedirectURLPath: fmt.Sprintf("/oauth2/%s/callback", providerName),
 		AuthURL:         "",
