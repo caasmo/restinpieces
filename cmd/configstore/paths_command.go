@@ -36,7 +36,7 @@ func handlePathsCommand(secureStore config.SecureStore, scopeName string, filter
 	if scopeName == "" {
 		scopeName = config.ScopeApplication
 	}
-	decryptedData, err := secureStore.Latest(scopeName)
+	decryptedData, _, err := secureStore.Get(scopeName, 0) // generation 0 = latest
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to retrieve/decrypt latest config for scope '%s': %v\n", scopeName, err)
 		os.Exit(1)
