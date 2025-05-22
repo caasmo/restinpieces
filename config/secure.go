@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath" // For Save description
 
 	"filippo.io/age"
 	"github.com/caasmo/restinpieces/db"
@@ -140,6 +139,3 @@ func (s *secureStoreAge) Save(scope string, plaintextData []byte, format string,
 	return nil
 }
 
-func descriptionFromFile(filePath string) string {
-	return "Inserted from file: " + filepath.Base(filePath)
-}
