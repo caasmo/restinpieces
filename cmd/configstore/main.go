@@ -37,6 +37,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  rollback [-scope SCOPE] <generation>  Restore a previous configuration version (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  get [-scope SCOPE] [filter]          Get config values by path (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  init [-scope SCOPE]                 Save default config to database (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "  renew-jwt-secrets                  Renew all JWT secrets (application scope only)\n")
 	}
 
 	flag.Parse()
@@ -189,6 +190,13 @@ func main() {
 			os.Exit(1)
 		}
 		handleInitCommand(secureStore, *initScope)
+	case "renew-jwt-secrets":
+		if len(commandArgs) > 0 {
+			fmt.Fprintf(os.Stderr, "Error: 'renew-jwt-secrets' does not take any arguments\n")
+			flag.Usage()
+			os.Exit(1)
+		}
+		handleRenewJwtSecretsCommand(secureStore)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
 		flag.Usage()
