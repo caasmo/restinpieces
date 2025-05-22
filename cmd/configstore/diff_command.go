@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
-
 	"github.com/caasmo/restinpieces/config"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/sergi/go-diff/diffmatchpatch"
