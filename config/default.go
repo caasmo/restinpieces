@@ -151,10 +151,10 @@ func NewDefaultConfig() *Config {
 			},
 		},
 		Metrics: Metrics{
-			Enabled:      true,
-			Activated:    true,
-			Endpoint:     "/metrics",
-			AllowedIPs:   []string{"127.0.0.1", "::1"}, // Only exact IPs allowed, no CIDR ranges
+			Enabled:    true,
+			Activated:  true,
+			Endpoint:   "/metrics",
+			AllowedIPs: []string{"127.0.0.1", "::1"}, // Only exact IPs allowed, no CIDR ranges
 		},
 	}
 }

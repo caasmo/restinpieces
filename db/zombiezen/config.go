@@ -20,7 +20,10 @@ func (d *Db) GetConfig(scope string, generation int) ([]byte, string, error) {
 	}
 	defer d.pool.Put(conn)
 
-	var (content []byte; format string)
+	var (
+		content []byte
+		format  string
+	)
 	err = sqlitex.Execute(conn,
 		`SELECT content, format FROM app_config 
 		 WHERE scope = ? 

@@ -19,28 +19,6 @@
 - test functional uablock
 - mailer interface for app/server, is for server though
 - sdk visibility, own route
-- make configstore from edit 
-	- configstore list <type>
-		- we shoudlhave number
-	- configstore update-uablocklist
-	- configstore update-cert
-	- configstore renew-jwt
-	- configstore add-oauth2
-	- configstore dump <type>
-	- configstore cat <type>
-	- configstore types
-	- configstore rm <config>
-	- configstore diff
-         1 github.com/kylelemons/godebug/diff                                                                           
-            • Simple string diff output                                                                                 
-            • Works well for small configs                                                                              
-         2 github.com/sergi/go-diff                                                                                     
-            • More advanced diff algorithms                                                                             
-            • Supports color output                                                                                     
-         3 github.com/hexops/gotextdiff                                                                                 
-            • Unified diff format                                                                                       
-            • Good for CLI output
-	- configstore rollback <type> it never rm just creates a copy
 - create-app shoudl create age key.
 - disable standard routes
 - is a framework, clear workflow  -> examples repo. od use of the features
@@ -149,6 +127,28 @@
 
 ### done
 
+- make configstore from edit 
+	- configstore list <type>
+		- we shoudlhave number
+	- configstore update-uablocklist
+	- configstore update-cert
+	- configstore renew-jwt
+	- configstore add-oauth2
+	- configstore dump <type>
+	- configstore cat <type>
+	- configstore types
+	- configstore rm <config>
+	- configstore diff
+         1 github.com/kylelemons/godebug/diff                                                                           
+            • Simple string diff output                                                                                 
+            • Works well for small configs                                                                              
+         2 github.com/sergi/go-diff                                                                                     
+            • More advanced diff algorithms                                                                             
+            • Supports color output                                                                                     
+         3 github.com/hexops/gotextdiff                                                                                 
+            • Unified diff format                                                                                       
+            • Good for CLI output
+	- configstore rollback <type> it never rm just creates a copy
 - 10% reduction in req/sec from htttp, to https refresh auth, with block ip
 - robots.txt blocking
 	- see poc-regexp-aibots.go

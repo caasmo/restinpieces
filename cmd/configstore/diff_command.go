@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"strings"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/pmezard/go-difflib/difflib"
+	"os"
+	"strings"
 )
 
 // ANSI color codes
@@ -81,7 +81,7 @@ func handleDiffCommand(secureStore config.SecureStore, scope string, generation 
 	}
 
 	fmt.Printf("Differences between generation %d and latest:\n\n", generation)
-	
+
 	// Colorize the output
 	lines := strings.Split(result, "\n")
 	for _, line := range lines {
