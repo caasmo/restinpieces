@@ -23,6 +23,14 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 
 ## Key Features
 
+### Configuration Management
+- Secure configuration storage with [ConfigStore CLI tool](cmd/configstore/README.md)
+  - Versioned configuration with rollback support
+  - Age encryption for sensitive values
+  - JWT secret rotation
+  - OAuth2 provider management
+  - Multiple configuration scopes
+
 ### Authentication
 - Complete authentication workflows:
   - Password-based registration/login
