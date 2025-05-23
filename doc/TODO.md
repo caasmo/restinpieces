@@ -1,5 +1,10 @@
 ### TODOs
 
+- wraper activated flag 
+	- metrics and request logger check for existence rec, ok := w.(core.ResponseRecorder)
+	- 
+- alternative litestream workflow in daemon.
+- bug curl -vvi "http://localhost:8080/favicon.ico"
 - good enough release
     - superuser workflows
 		- scripts
