@@ -48,8 +48,24 @@ configstore -age-key age.key -db config.db scopes
 
 ### `list` - List configuration versions
 
-Lists configuration versions, optionally filtered by scope.
+Lists configuration versions, optionally filtered by scope. Shows generation number, scope, creation timestamp, format and description.
 
+Example output:
+```
+Gen  Scope        Created At             Format  Description
+---  ------------ ---------------------  ------  -----------
+  0  application   2025-05-23T15:10:05Z   toml  Inserted from file: config.toml
+  1  application   2025-05-21T19:38:04Z   toml  Inserted from file: config.toml
+  2  application   2025-05-15T22:04:42Z   toml  Inserted from file: config.toml
+  3  application   2025-04-27T15:28:24Z   toml  Updated field 'server.cert_data'
+  4  application   2025-04-27T15:26:37Z   toml  Updated field 'server.cert_data'
+  5  application   2025-04-27T15:25:54Z   toml  Updated field 'server.cert_data'
+  6  application   2025-04-27T15:16:12Z   toml  Updated field 'scheduler.interval'
+  7  application   2025-04-27T15:13:38Z   toml  Inserted from file: config.toml
+  8  application   2025-04-27T15:04:41Z   toml  Updated field 'Scheduler.Interval'
+```
+
+Usage:
 ```bash
 configstore -age-key age.key -db config.db list
 configstore -age-key age.key -db config.db list myapp
