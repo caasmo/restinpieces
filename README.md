@@ -9,10 +9,10 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 # Content
 
 - [Key Features](#key-features)
-  - [Configuration Management](#configuration-management)
   - [Authentication](#authentication)
   - [Security](#security)
   - [Core Infrastructure](#core-infrastructure)
+  - [Configuration Management](#configuration-management)
   - [Frontend Integration](#frontend-integration)
   - [Background Processing](#background-processing)
   - [Performance](#performance)
@@ -21,14 +21,6 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - [TODO](#todo)
 
 ## Key Features
-
-### Configuration Management
-- Secure configuration storage with [ConfigStore CLI tool](cmd/configstore/README.md)
-  - Versioned configuration with rollback support
-  - Age encryption for sensitive values
-  - JWT secret rotation
-  - OAuth2 provider management
-  - Multiple configuration scopes
 
 ### Authentication
 - Complete authentication workflows:
@@ -51,6 +43,15 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - Cache interface with [Ristretto](https://github.com/dgraph-io/ristretto) implementation
 - Router abstraction supporting standard Mux and [httprouter](https://github.com/julienschmidt/httprouter)
 - Middleware-compatible handlers
+
+### Configuration Management
+- Secure configuration storage with [ConfigStore CLI tool](cmd/configstore/README.md)
+  - Versioned configuration with rollback support
+  - Age encryption for sensitive values
+  - JWT secret rotation
+  - OAuth2 provider management
+  - Multiple configuration scopes
+
 
 ### Frontend Integration
 - JavaScript SDK for seamless frontend-backend interaction
