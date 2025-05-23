@@ -198,7 +198,7 @@ func main() {
 			flag.Usage()
 			os.Exit(1)
 		}
-		handleRenewJwtSecretsCommand(secureStore)
+		handleRotateJwtSecretsCommand(secureStore)
 	case "add-oauth2":
 		if len(commandArgs) < 1 {
 			fmt.Fprintf(os.Stderr, "Error: 'add-oauth2' requires provider name argument\n")
