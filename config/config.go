@@ -367,5 +367,5 @@ type BlockRequestBody struct {
 	// - Query strings are ignored (matches path only)
 	// - Paths should start with '/' (e.g. '/api/upload')
 	// - No wildcards or pattern matching
-	ExcludedPaths []string `toml:"excluded_paths" comment:"Paths that bypass size limiting`
+	ExcludedPaths []string `toml:"excluded_paths" comment:"Paths that bypass size limiting"`
 }
