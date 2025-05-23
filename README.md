@@ -9,16 +9,15 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 # Content
 
 - [Key Features](#key-features)
+  - [Configuration Management](#configuration-management)
   - [Authentication](#authentication)
   - [Security](#security)
   - [Core Infrastructure](#core-infrastructure)
   - [Frontend Integration](#frontend-integration)
   - [Background Processing](#background-processing)
   - [Performance](#performance)
+  - [Backups](#backups)
 - [Building the Project](#building-the-project)
-  - [Asset Generation](#asset-generation)
-  - [Production Build](#production-build)
-  - [Development Build](#development-build)
 - [TODO](#todo)
 
 ## Key Features
