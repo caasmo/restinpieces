@@ -5,8 +5,8 @@
 	- 
 - regression performance hey -n 100000 "https://localhost:8080/refresh-auth"
 	- 80k -> 40k, after metrics and db logger. and response wrapper, and prefilter middlewres
+	HEAD detached at 99a0523 with just blockip as first showing now 45k
 - alternative litestream workflow in daemon.
-- bug curl -vvi "http://localhost:8080/favicon.ico"
 - good enough release
     - superuser workflows
 		- scripts
