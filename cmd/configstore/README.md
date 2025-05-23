@@ -1,6 +1,12 @@
-# ConfigStore - Secure Configuration Management
+# ConfigStore - Secure Configuration Management for RestInPieces
 
-ConfigStore is a CLI tool for securely managing application configurations using SQLite and age encryption. It provides versioning, scoping, and secure storage of sensitive configuration data.
+ConfigStore is the official CLI tool for managing the RestInPieces framework's secure configuration store. It uses SQLite and age encryption to provide:
+
+- Secure storage of framework secrets and configurations
+- Versioning and rollback capabilities
+- Scoped configurations (application-wide or per-component)
+- JWT secret rotation
+- OAuth2 provider management
 
 ## Features
 
