@@ -37,7 +37,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  rollback [-scope SCOPE] <generation>  Restore any previous configuration version by generation number (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  get [-scope SCOPE] [filter]          Get config values by path (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  init [-scope SCOPE]                 Save default config to database (default scope: %s)\n", config.ScopeApplication)
-		fmt.Fprintf(os.Stderr, "  renew-jwt-secrets                  Renew all JWT secrets (application scope only)\n")
+		fmt.Fprintf(os.Stderr, "  rotate-jwt-secrets                  Rotate all JWT secrets (application scope only)\n")
 		fmt.Fprintf(os.Stderr, "  add-oauth2 <provider>              Add new OAuth2 provider skeleton (e.g. gitlab)\n")
 		fmt.Fprintf(os.Stderr, "  rm-oauth2 <provider>               Remove OAuth2 provider (e.g. gitlab)\n")
 	}
@@ -192,9 +192,9 @@ func main() {
 			os.Exit(1)
 		}
 		handleInitCommand(secureStore, *initScope)
-	case "renew-jwt-secrets":
+	case "rotate-jwt-secrets":
 		if len(commandArgs) > 0 {
-			fmt.Fprintf(os.Stderr, "Error: 'renew-jwt-secrets' does not take any arguments\n")
+			fmt.Fprintf(os.Stderr, "Error: 'rotate-jwt-secrets' does not take any arguments\n")
 			flag.Usage()
 			os.Exit(1)
 		}

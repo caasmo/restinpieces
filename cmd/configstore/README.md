@@ -129,12 +129,12 @@ Creates a new configuration with default values.
 configstore -age-key age.key -db config.db init -scope myapp
 ```
 
-### `renew-jwt-secrets` - Rotate JWT secrets
+### `rotate-jwt-secrets` - Rotate JWT secrets
 
 Generates new random secrets for JWT tokens (application scope only).
 
 ```bash
-configstore -age-key age.key -db config.db renew-jwt-secrets
+configstore -age-key age.key -db config.db rotate-jwt-secrets
 ```
 
 ### `add-oauth2` - Add OAuth2 provider

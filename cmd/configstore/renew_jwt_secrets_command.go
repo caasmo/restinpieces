@@ -9,7 +9,7 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-func handleRenewJwtSecretsCommand(secureStore config.SecureStore) {
+func handleRotateJwtSecretsCommand(secureStore config.SecureStore) {
 	// Only works with application scope
 	scopeName := config.ScopeApplication
 
