@@ -96,12 +96,13 @@ Shows differences between current and previous configuration versions.
 configstore -age-key age.key -db config.db diff -scope myapp 1
 ```
 
-### `rollback` - Restore previous version
+### `rollback` - Restore any previous version
 
-Rolls back to a previous configuration version.
+Rolls back to any previous configuration version by generation number. The generation number can be found using the `list` command.
 
 ```bash
-configstore -age-key age.key -db config.db rollback -scope myapp 1
+# Rollback to generation 3 (any valid generation number can be used)
+configstore -age-key age.key -db config.db rollback -scope myapp 3
 ```
 
 ### `save` - Save file contents

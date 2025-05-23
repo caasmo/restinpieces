@@ -34,7 +34,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  dump [-scope SCOPE]                Dump latest config (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  save [-scope SCOPE] <file>         Save file contents to database (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  diff [-scope SCOPE] <generation>   Compare config against latest (default scope: %s)\n", config.ScopeApplication)
-		fmt.Fprintf(os.Stderr, "  rollback [-scope SCOPE] <generation>  Restore a previous configuration version (default scope: %s)\n", config.ScopeApplication)
+		fmt.Fprintf(os.Stderr, "  rollback [-scope SCOPE] <generation>  Restore any previous configuration version by generation number (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  get [-scope SCOPE] [filter]          Get config values by path (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  init [-scope SCOPE]                 Save default config to database (default scope: %s)\n", config.ScopeApplication)
 		fmt.Fprintf(os.Stderr, "  renew-jwt-secrets                  Renew all JWT secrets (application scope only)\n")
