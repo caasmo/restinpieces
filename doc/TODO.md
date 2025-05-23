@@ -3,6 +3,8 @@
 - wraper activated flag 
 	- metrics and request logger check for existence rec, ok := w.(core.ResponseRecorder)
 	- 
+- regression performance hey -n 100000 "https://localhost:8080/refresh-auth"
+	- 80k -> 40k, after metrics and db logger. and response wrapper, and prefilter middlewres
 - alternative litestream workflow in daemon.
 - bug curl -vvi "http://localhost:8080/favicon.ico"
 - good enough release
