@@ -57,8 +57,13 @@ func handleSetCommand(
 		tempTomlString := fmt.Sprintf("temp_key = %s", rawValue)
 		tempTree, err := toml.Load(tempTomlString)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to parse value as TOML (value: %s): %v\n", rawValue, err)
-			os.Exit(1)
+			// If parsing fails, treat it as a string by adding quotes
+			tempTomlString = fmt.Sprintf("temp_key = %q", rawValue)
+			tempTree, err = toml.Load(tempTomlString)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error: failed to parse value (value: %s): %v\n", rawValue, err)
+				os.Exit(1)
+			}
 		}
 		valueToSet = tempTree.Get("temp_key")
 	}

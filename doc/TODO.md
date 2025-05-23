@@ -1,11 +1,11 @@
 ### TODOs
 
+- bug
+⤷ ../restinpieces/configstore -age-key age_key.txt -db app.db set log.batch.level info
+Error: failed to parse value as TOML (value: info): (1, 15): parsing error: no value can start with 
 - wraper activated flag 
 	- metrics and request logger check for existence rec, ok := w.(core.ResponseRecorder)
 	- 
-- regression performance hey -n 100000 "https://localhost:8080/refresh-auth"
-	- 80k -> 40k, after metrics and db logger. and response wrapper, and prefilter middlewres
-	HEAD detached at 99a0523 with just blockip as first showing now 45k
 - alternative litestream workflow in daemon.
 - good enough release
     - superuser workflows
@@ -134,6 +134,11 @@
 
 ### done
 
+- regression performance hey -n 100000 "https://localhost:8080/refresh-auth"
+	- no egression !!
+	- 80k -> 40k, after metrics and db logger. and response wrapper, and prefilter middlewres
+		- no just laptoo without cable, cpu throttle.
+		- request log activated -> 70k
 - make configstore from edit 
 	- configstore list <type>
 		- we shoudlhave number
