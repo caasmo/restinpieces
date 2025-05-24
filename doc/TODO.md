@@ -1,12 +1,9 @@
 ### TODOs
 
-- bug
-⤷ ../restinpieces/configstore -age-key age_key.txt -db app.db set log.batch.level info
-Error: failed to parse value as TOML (value: info): (1, 15): parsing error: no value can start with 
 - wraper activated flag 
 	- metrics and request logger check for existence rec, ok := w.(core.ResponseRecorder)
-	- 
 - alternative litestream workflow in daemon.
+- README 
 - good enough release
     - superuser workflows
 		- scripts
@@ -17,6 +14,7 @@ Error: failed to parse value as TOML (value: info): (1, 15): parsing error: no v
     - dunctional tests
     - documentation
 	    - basic framework use examples repo, with examples of features.
+	- pretty logging
 - logger, have a text logger for startup before app logger, and for shutdown. pass to the app.logger and use as default?
     - logdb must be propely wal etc
 - default logger db interface?
@@ -134,6 +132,9 @@ Error: failed to parse value as TOML (value: info): (1, 15): parsing error: no v
 
 ### done
 
+- bug
+⤷ ../restinpieces/configstore -age-key age_key.txt -db app.db set log.batch.level info
+Error: failed to parse value as TOML (value: info): (1, 15): parsing error: no value can start with 
 - regression performance hey -n 100000 "https://localhost:8080/refresh-auth"
 	- no egression !!
 	- 80k -> 40k, after metrics and db logger. and response wrapper, and prefilter middlewres
