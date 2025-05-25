@@ -3,6 +3,7 @@
 - wraper activated flag 
 	- metrics and request logger check for existence rec, ok := w.(core.ResponseRecorder)
 - alternative litestream workflow in daemon.
+- https://raw.githubusercontent.com/caddyserver/caddy/refs/heads/master/cmd/caddy/setcap.sh
 - README 
 - good enough release
     - superuser workflows
