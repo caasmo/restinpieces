@@ -3,8 +3,8 @@
 # USAGE:
 # 	go run -exec ./setcap.sh main.go <args...>
 #
-# For some reason this does not work on my Arch system, so if you find that's
-# the case, you can instead do:
+# The -exec flag tells go run to use the specified <command> to execute the
+# compiled binary instead of running it directly.
 #
 # 	go build && ./setcap.sh ./caddy <args...>
 #
