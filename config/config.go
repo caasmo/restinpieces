@@ -255,19 +255,21 @@ type Smtp struct {
 	UseStartTLS bool   `toml:"use_start_tls" comment:"Use STARTTLS (port 587)"`
 }
 
+// Endpoints defines the structure for API endpoint paths.
+// It includes TOML tags for configuration loading and JSON tags for API responses.
 type Endpoints struct {
-	RefreshAuth              string `toml:"refresh_auth" comment:"Refresh auth token endpoint"`
-	RequestEmailVerification string `toml:"request_email_verification" comment:"Request email verification endpoint"`
-	ConfirmEmailVerification string `toml:"confirm_email_verification" comment:"Confirm email verification endpoint"`
-	ListEndpoints            string `toml:"list_endpoints" comment:"List available endpoints"`
-	AuthWithPassword         string `toml:"auth_with_password" comment:"Password authentication endpoint"`
-	AuthWithOAuth2           string `toml:"auth_with_oauth2" comment:"OAuth2 authentication endpoint"`
-	RegisterWithPassword     string `toml:"register_with_password" comment:"Password registration endpoint"`
-	ListOAuth2Providers      string `toml:"list_oauth2_providers" comment:"List available OAuth2 providers"`
-	RequestPasswordReset     string `toml:"request_password_reset" comment:"Request password reset endpoint"`
-	ConfirmPasswordReset     string `toml:"confirm_password_reset" comment:"Confirm password reset endpoint"`
-	RequestEmailChange       string `toml:"request_email_change" comment:"Request email change endpoint"`
-	ConfirmEmailChange       string `toml:"confirm_email_change" comment:"Confirm email change endpoint"`
+	RefreshAuth              string `toml:"refresh_auth" json:"refresh_auth" comment:"Refresh auth token endpoint"`
+	RequestEmailVerification string `toml:"request_email_verification" json:"request_email_verification" comment:"Request email verification endpoint"`
+	ConfirmEmailVerification string `toml:"confirm_email_verification" json:"confirm_email_verification" comment:"Confirm email verification endpoint"`
+	ListEndpoints            string `toml:"list_endpoints" json:"list_endpoints" comment:"List available endpoints"`
+	AuthWithPassword         string `toml:"auth_with_password" json:"auth_with_password" comment:"Password authentication endpoint"`
+	AuthWithOAuth2           string `toml:"auth_with_oauth2" json:"auth_with_oauth2" comment:"OAuth2 authentication endpoint"`
+	RegisterWithPassword     string `toml:"register_with_password" json:"register_with_password" comment:"Password registration endpoint"`
+	ListOAuth2Providers      string `toml:"list_oauth2_providers" json:"list_oauth2_providers" comment:"List available OAuth2 providers"`
+	RequestPasswordReset     string `toml:"request_password_reset" json:"request_password_reset" comment:"Request password reset endpoint"`
+	ConfirmPasswordReset     string `toml:"confirm_password_reset" json:"confirm_password_reset" comment:"Confirm password reset endpoint"`
+	RequestEmailChange       string `toml:"request_email_change" json:"request_email_change" comment:"Request email change endpoint"`
+	ConfirmEmailChange       string `toml:"confirm_email_change" json:"confirm_email_change" comment:"Confirm email change endpoint"`
 }
 
 // Path extracts just the path portion from an endpoint string (removes method prefix)
