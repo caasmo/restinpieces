@@ -183,7 +183,11 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 4. BlockUaList Middleware
 	blockUaList := prerouter.NewBlockUaList(app)
 	preRouterChain.WithMiddleware(blockUaList.Execute)
-	logger.Info(ft.Ok("BlockUaList middleware added"), "activated", cfg.BlockUaList.Activated)
+	if cfg.BlockUaList.Activated {
+		logger.Info(ft.Active("BlockUaList middleware active"), "activated", cfg.BlockUaList.Activated)
+	} else {
+		logger.Info(ft.Inactive("BlockUaList middleware inactive"), "activated", cfg.BlockUaList.Activated)
+	}
 
 	// 4. TLSHeaderSTS Middleware
 	tlsHeaderSTS := prerouter.NewTLSHeaderSTS()
