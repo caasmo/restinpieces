@@ -39,3 +39,7 @@ func (f *MessageFormatter) Start(msg string) string {
 func (f *MessageFormatter) Complete(msg string) string {
 	return fmt.Sprintf("%s %s: 🎉 %s", f.componentEmoji, f.component, msg)
 }
+
+func (f *MessageFormatter) Package(msg string) string {
+	return fmt.Sprintf("%s %s: 📦 %s", f.componentEmoji, f.component, msg)
+}
