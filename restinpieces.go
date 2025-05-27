@@ -167,21 +167,21 @@ func setupPrerouter(app *core.App) http.Handler {
 		blockIp := prerouter.NewBlockIp(app.Cache(), logger)
 		preRouterChain.WithMiddleware(blockIp.Execute)
 		if cfg.BlockIp.Activated {
-			logger.Info(ft.Active("BlockIp middleware active"), "activated", cfg.BlockIp.Activated)
+			logger.Info(ft.Active("BlockIp middleware active"), "enabled", cfg.BlockIp.Enabled, "activated", cfg.BlockIp.Activated)
 		} else {
-			logger.Info(ft.Inactive("BlockIp middleware inactive"), "activated", cfg.BlockIp.Activated)
+			logger.Info(ft.Inactive("BlockIp middleware inactive"), "enabled", cfg.BlockIp.Enabled, "activated", cfg.BlockIp.Activated)
 		}
 	} else {
-		logger.Info(ft.Disabled("BlockIp middleware disabled"))
+		logger.Info(ft.Disabled("BlockIp middleware disabled"), "enabled", cfg.BlockIp.Enabled)
 	}
 
 	// 3. Metrics Middleware (only if enabled)
 	if cfg.Metrics.Enabled {
 		metrics := prerouter.NewMetrics(app)
 		preRouterChain.WithMiddleware(metrics.Execute)
-		logger.Info(ft.Active("Metrics middleware active"), "activated", cfg.Metrics.Activated)
+		logger.Info(ft.Active("Metrics middleware active"), "enabled", cfg.Metrics.Enabled, "activated", cfg.Metrics.Activated)
 	} else {
-		logger.Info(ft.Disabled("Metrics middleware disabled"))
+		logger.Info(ft.Disabled("Metrics middleware disabled"), "enabled", cfg.Metrics.Enabled)
 	}
 
 	// 4. BlockUaList Middleware
