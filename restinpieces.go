@@ -179,9 +179,9 @@ func setupPrerouter(app *core.App) http.Handler {
 	if cfg.Metrics.Enabled {
 		metrics := prerouter.NewMetrics(app)
 		preRouterChain.WithMiddleware(metrics.Execute)
-		logger.Info(ft.Ok("Metrics middleware enabled"), "activated", cfg.Metrics.Activated)
+		logger.Info(ft.Active("Metrics middleware active"), "activated", cfg.Metrics.Activated)
 	} else {
-		logger.Info(ft.Ok("Metrics middleware not enabled"))
+		logger.Info(ft.Disabled("Metrics middleware disabled"))
 	}
 
 	// 4. BlockUaList Middleware
