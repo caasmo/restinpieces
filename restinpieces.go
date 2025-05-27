@@ -156,7 +156,11 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 1. Request Logging Middleware (Added second, runs second)
 	requestLog := prerouter.NewRequestLog(app)
 	preRouterChain.WithMiddleware(requestLog.Execute)
-	logger.Info(ft.Ok("RequestLog middleware added"), "activated", cfg.Log.Request.Activated)
+	if cfg.Log.Request.Activated {
+		logger.Info(ft.Active("RequestLog middleware added"), "activated", cfg.Log.Request.Activated)
+	} else {
+		logger.Info(ft.Inactive("RequestLog middleware added"), "activated", cfg.Log.Request.Activated)
+	}
 
 	// 2. BlockIp Middleware
 	if cfg.BlockIp.Enabled {
