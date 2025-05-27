@@ -166,9 +166,13 @@ func setupPrerouter(app *core.App) http.Handler {
 	if cfg.BlockIp.Enabled {
 		blockIp := prerouter.NewBlockIp(app.Cache(), logger)
 		preRouterChain.WithMiddleware(blockIp.Execute)
-		logger.Info(ft.Ok("BlockIp middleware enabled"), "activated", cfg.BlockIp.Activated)
+		if cfg.BlockIp.Activated {
+			logger.Info(ft.Active("BlockIp middleware active"), "activated", cfg.BlockIp.Activated)
+		} else {
+			logger.Info(ft.Inactive("BlockIp middleware inactive"), "activated", cfg.BlockIp.Activated)
+		}
 	} else {
-		logger.Info(ft.Ok("BlockIp middleware not enabled"))
+		logger.Info(ft.Disabled("BlockIp middleware disabled"))
 	}
 
 	// 3. Metrics Middleware (only if enabled)
