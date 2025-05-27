@@ -151,7 +151,7 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 0. Response Recorder Middleware (Added first, runs first)
 	recorder := prerouter.NewRecorder(app)
 	preRouterChain.WithMiddleware(recorder.Execute)
-	logger.Info(ft.Ok("ResponseRecorder middleware added"))
+	logger.Info(ft.Seed("ResponseRecorder middleware added"))
 
 	// 1. Request Logging Middleware (Added second, runs second)
 	requestLog := prerouter.NewRequestLog(app)
