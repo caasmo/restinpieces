@@ -55,3 +55,7 @@ func (f *MessageFormatter) Inactive(msg string) string {
 func (f *MessageFormatter) Seed(msg string) string {
 	return fmt.Sprintf("%s %s: 🌱 %s", f.componentEmoji, f.component, msg)
 }
+
+func (f *MessageFormatter) Disabled(msg string) string {
+	return fmt.Sprintf("%s %s: 🚫 %s", f.componentEmoji, f.component, msg)
+}
