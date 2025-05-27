@@ -137,7 +137,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 func setupPrerouter(app *core.App) http.Handler {
 	logger := app.Logger()
 	cfg := app.Config()
-	ft := log.NewMessageFormatter().WithComponent("prerouter", "🛠️ ")
+	ft := log.NewMessageFormatter().WithComponent("prerouter", "⚙️ ")
 
 	// Start the chain with the application's main router as the base handler.
 	// The final handler in the chain will be app.Router().ServeHTTP
