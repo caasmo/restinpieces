@@ -202,7 +202,11 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 6. BlockRequestBody Middleware
 	blockRequestBody := prerouter.NewBlockRequestBody(app)
 	preRouterChain.WithMiddleware(blockRequestBody.Execute)
-	logger.Info(ft.Ok("BlockRequestBody middleware added"), "activated", cfg.BlockRequestBody.Activated)
+	if cfg.BlockRequestBody.Activated {
+		logger.Info(ft.Active("BlockRequestBody middleware active"), "activated", cfg.BlockRequestBody.Activated)
+	} else {
+		logger.Info(ft.Inactive("BlockRequestBody middleware inactive"), "activated", cfg.BlockRequestBody.Activated)
+	}
 
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
