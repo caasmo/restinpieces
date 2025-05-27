@@ -193,7 +193,11 @@ func setupPrerouter(app *core.App) http.Handler {
 	// 5. Maintenance Middleware
 	maintenance := prerouter.NewMaintenance(app)
 	preRouterChain.WithMiddleware(maintenance.Execute)
-	logger.Info(ft.Ok("Maintenance middleware added"), "activated", cfg.Maintenance.Activated)
+	if cfg.Maintenance.Activated {
+		logger.Info(ft.Active("Maintenance middleware active"), "activated", cfg.Maintenance.Activated)
+	} else {
+		logger.Info(ft.Inactive("Maintenance middleware inactive"), "activated", cfg.Maintenance.Activated)
+	}
 
 	// 6. BlockRequestBody Middleware
 	blockRequestBody := prerouter.NewBlockRequestBody(app)
