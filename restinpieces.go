@@ -22,8 +22,8 @@ import (
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/router"
 	"github.com/caasmo/restinpieces/router/servemux"
-	"github.com/caasmo/restinpieces/server"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/caasmo/restinpieces/server"
 )
 
 // New creates a new App instance and Server with the provided options and age key file path.
@@ -179,7 +179,11 @@ func setupPrerouter(app *core.App) http.Handler {
 	if cfg.Metrics.Enabled {
 		metrics := prerouter.NewMetrics(app)
 		preRouterChain.WithMiddleware(metrics.Execute)
-		logger.Info(ft.Active("Metrics middleware active"), "enabled", cfg.Metrics.Enabled, "activated", cfg.Metrics.Activated)
+		if cfg.Metrics.Activated {
+			logger.Info(ft.Active("Metrics middleware active"), "enabled", cfg.Metrics.Enabled, "activated", cfg.Metrics.Activated)
+		} else {
+			logger.Info(ft.Inactive("Metrics middleware inactive"), "enabled", cfg.Metrics.Enabled, "activated", cfg.Metrics.Activated)
+		}
 	} else {
 		logger.Info(ft.Disabled("Metrics middleware disabled"), "enabled", cfg.Metrics.Enabled)
 	}
