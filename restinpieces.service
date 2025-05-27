@@ -1,0 +1,62 @@
+[Unit]
+Description=restinpieces server
+Documentation=https://github.com/caasmo/restinpieces
+After=network-online.target
+Wants=network-online.target # Ensures network is fully up
+
+[Service]
+# User and Group
+User=restinpieces
+Group=restinpieces
+
+# Working Directory
+WorkingDirectory=/opt/restinpieces
+
+# Command to start the service
+# Adjust arguments as needed. TODO 
+ExecStart=/opt/restinpieces/restinpieces -dbpath app.db -age-key age_key.txt 
+
+# Capabilities:
+# This grants the ability to bind to privileged ports (<1024)
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+# CapabilityBoundingSet limits the *maximum* capabilities the process can ever have.
+# It's good practice to set this to the same as AmbientCapabilities or a superset if needed.
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+
+# Security Hardening (Highly Recommended)
+NoNewPrivileges=true          # Prevents the service from gaining more privileges
+ProtectSystem=full            # Makes /usr, /boot, /etc read-only (except /etc/mygoapp if specified in ReadWritePaths)
+ProtectHome=true              # Makes user home directories inaccessible
+PrivateTmp=true               # Service gets its own /tmp and /var/tmp
+# If your app needs to write to specific paths (e.g., logs, data), uncomment and adjust:
+# ReadWritePaths=/var/log/mygoapp /var/lib/mygoapp
+# If your app doesn't need network access *after* binding, you can restrict it further.
+# RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 # Allow common socket types
+
+# Restart behavior
+Restart=on-failure
+RestartSec=5s       # Time to wait before restarting
+
+# Standard output and error logging
+# 'journal' sends logs to the systemd journal
+StandardOutput=journal
+StandardError=journal
+# Alternatively, to append to files (ensure mygoappuser has write permissions):
+# StandardOutput=append:/var/log/mygoapp/app.log
+# StandardError=append:/var/log/mygoapp/error.log
+
+# Environment variables (optional)
+# Environment="GIN_MODE=release"
+# Environment="PORT=80"
+# EnvironmentFile=/etc/mygoapp/environment.conf # For many variables
+
+# Resource limits (optional)
+# LimitNOFILE=65536 # Max open files
+
+# Type of service
+# 'simple' is common for Go apps that don't fork and run in the foreground.
+# If your Go app uses systemd's sd_notify mechanism, use Type=notify
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
