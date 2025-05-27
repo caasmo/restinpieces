@@ -47,3 +47,7 @@ func (f *MessageFormatter) Component(msg string) string {
 func (f *MessageFormatter) Active(msg string) string {
 	return fmt.Sprintf("%s %s: ⚡ %s", f.componentEmoji, f.component, msg)
 }
+
+func (f *MessageFormatter) Inactive(msg string) string {
+	return fmt.Sprintf("%s %s: 😴 %s", f.componentEmoji, f.component, msg)
+}
