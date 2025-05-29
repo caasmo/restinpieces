@@ -17,6 +17,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
   - [Background Processing](#background-processing)
   - [Performance](#performance)
   - [Backups](#backups)
+- [Examples](#examples)
 - [Building the Project](#building-the-project)
 - [TODO](#todo)
 
@@ -73,6 +74,10 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - Supports incremental backups with minimal overhead
 - See [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) for implementation details
 
+## Examples
+
+- **JavaScript SDK Integration**: See how to integrate with the frontend using the official JavaScript SDK at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk).
+- **Custom Routers and DB Drivers**: Explore examples of using non-default routers and database drivers at [restinpieces-non-default](https://github.com/caasmo/restinpieces-non-default).
 
 ## Building the Project
 
@@ -85,4 +90,3 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 ## TODO
 
 [Todos](doc/TODO.md).
-
