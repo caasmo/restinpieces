@@ -157,10 +157,3 @@ Removes an OAuth2 provider configuration.
 
 ```bash
 ripconf -age-key age.key -db config.db rm-oauth2 gitlab
-```
-
-## Security Considerations
-
-- Always protect the age private key file
-- Database file should have restricted permissions
-- Configuration may contain sensitive credentials
