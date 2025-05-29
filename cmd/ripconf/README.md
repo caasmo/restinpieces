@@ -1,6 +1,6 @@
-# ConfigStore - Secure Configuration Management for RestInPieces
+# ripconf - Secure Configuration Management for RestInPieces
 
-ConfigStore is the official CLI tool for managing the RestInPieces framework's secure configuration store. It uses SQLite and age encryption to provide:
+ripconf is the official CLI tool for managing the RestInPieces framework's secure configuration store. It uses SQLite and age encryption to provide:
 
 - Secure storage of framework secrets and configurations
 - Versioning and rollback capabilities
