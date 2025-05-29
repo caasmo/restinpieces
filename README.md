@@ -21,6 +21,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
   - [Logger](#logger)
   - [Notifications](#notifications)
 - [Examples](#examples)
+- [Extensibility](#extensibility)
 - [Building the Project](#building-the-project)
 - [TODO](#todo)
 
@@ -44,7 +45,6 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 ### Core Infrastructure
 - Middleware-compatible handlers
 - Router abstraction supporting standard Mux and [httprouter](https://github.com/julienschmidt/httprouter)
-- Embedded file server with gzip compression
 - Discoverable API endpoints (/api/refresh-auth, /api/auth-with-oauth2, etc.)
 - SQLite database interface with pure Go [Zombiezen](https://github.com/zombiezen/go-sqlite) as default driver
   - Alternative drivers available in separate repos (like [Crawshaw](https://github.com/caasmo/restinpieces-sqlite-crawshaw))
@@ -100,6 +100,9 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 
 - **JavaScript SDK Integration**: See how to integrate with the frontend using the official JavaScript SDK at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk).
 - **Custom Routers and DB Drivers**: Explore examples of using non-default routers and database drivers at [restinpieces-non-default](https://github.com/caasmo/restinpieces-non-default).
+
+## Extensibility
+- Embedded file server with gzip compression for serving static assets.
 
 ## Building the Project
 
