@@ -39,6 +39,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - Built-in security headers (CSP, CORS, etc.)
 - IP blocking based on rate limiting
 - User-Agent blocking based on configuration
+- Request body blocking based on configurable size limits
 
 ### Core Infrastructure
 - Embedded file server with gzip compression
