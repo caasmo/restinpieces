@@ -61,7 +61,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 
 ### Frontend Integration
 - JavaScript SDK for seamless frontend-backend interaction
-- Built-in asset pipeline (minification + gzip bundling for HTML/CSS/JS)
+- Built-in asset pipeline (minification + gzip bundling for HTML/CSS/JS) with example scripts at [restinpieces-js-sdk/gen](https://github.com/caasmo/restinpieces-js-sdk/tree/master/gen)
 - Example usage of the SDK and authentication endpoints available at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk)
 
 ### Background Processing  
