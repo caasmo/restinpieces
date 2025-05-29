@@ -22,8 +22,8 @@ import (
 	scl "github.com/caasmo/restinpieces/queue/scheduler"
 	"github.com/caasmo/restinpieces/router"
 	"github.com/caasmo/restinpieces/router/servemux"
-	"github.com/pelletier/go-toml/v2"
 	"github.com/caasmo/restinpieces/server"
+	"github.com/pelletier/go-toml/v2"
 )
 
 // New creates a new App instance and Server with the provided options and age key file path.
