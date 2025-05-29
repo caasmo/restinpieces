@@ -19,6 +19,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
   - [Backups](#backups)
   - [Metrics](#metrics)
   - [Logger](#logger)
+  - [Notifications](#notifications)
 - [Examples](#examples)
 - [Building the Project](#building-the-project)
 - [TODO](#todo)
@@ -87,6 +88,11 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - High-performance batch logging to SQLite database.
 - Configurable log levels and flush intervals.
 - Request logging with configurable limits for URI, User-Agent, Referer, and Remote IP lengths.
+
+### Notifications
+- Flexible notification system for various events.
+- Default implementation for sending notifications to Discord webhooks.
+- Extensible to support other notification channels.
 
 ## Examples
 
