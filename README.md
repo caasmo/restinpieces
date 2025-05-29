@@ -45,7 +45,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - Middleware-compatible handlers
 
 ### Configuration Management
-- Secure configuration storage with [ConfigStore CLI tool](cmd/configstore/README.md)
+- Secure configuration storage with [ripconf CLI tool](cmd/ripconf/README.md)
   - Versioned configuration with rollback support
   - Age encryption for sensitive values
   - JWT secret rotation
