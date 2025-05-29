@@ -42,13 +42,13 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - Request body blocking based on configurable size limits
 
 ### Core Infrastructure
+- Middleware-compatible handlers
+- Router abstraction supporting standard Mux and [httprouter](https://github.com/julienschmidt/httprouter)
 - Embedded file server with gzip compression
 - Discoverable API endpoints (/api/refresh-auth, /api/auth-with-oauth2, etc.)
 - SQLite database interface with pure Go [Zombiezen](https://github.com/zombiezen/go-sqlite) as default driver
   - Alternative drivers available in separate repos (like [Crawshaw](https://github.com/caasmo/restinpieces-sqlite-crawshaw))
 - Cache interface with [Ristretto](https://github.com/dgraph-io/ristretto) implementation
-- Router abstraction supporting standard Mux and [httprouter](https://github.com/julienschmidt/httprouter)
-- Middleware-compatible handlers
 
 ### Configuration Management
 - Secure configuration storage with [ripconf CLI tool](cmd/ripconf/README.md)
