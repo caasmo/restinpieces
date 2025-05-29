@@ -1,10 +1,14 @@
 ### TODOs
 
-- wraper activated flag 
-	- metrics and request logger check for existence rec, ok := w.(core.ResponseRecorder)
 - alternative litestream workflow in daemon.
+	- why not a simple script ssh hosted in client or machine, using just litestream binary
+	- ssh ltbackupme   
+		- ltbackupme uses litestream binary to create db file in tmp
+		- it uses scp to bring the file
+		- or just local litestream that downloads from s3
 - https://raw.githubusercontent.com/caddyserver/caddy/refs/heads/master/cmd/caddy/setcap.sh
-- README 
+- directory instead of dbpath is directory
+	- reanme logs.db
 - good enough release
     - superuser workflows
 		- scripts
@@ -34,13 +38,6 @@
 - script insert-job. --type 
 - config reload
 - race detection
-- basic metrics 
-	- https://pkg.go.dev/runtime/metrics
-    - go ones
-    - basic superuser endpoint
-        - or not jsut notification
-    - some made in preRouter, conunters etc
-    - no prometheus page
 - password reset if no password ie oauth2 user => no only register with email
 - verify email for oauth -> yes verifed
 - corfirmation, spam sending the same right jwt 
@@ -133,6 +130,15 @@
 
 ### done
 
+- basic metrics 
+	- https://pkg.go.dev/runtime/metrics
+    - go ones
+    - basic superuser endpoint
+        - or not jsut notification
+    - some made in preRouter, conunters etc
+    - no prometheus page
+- wraper activated flag 
+	- metrics and request logger check for existence rec, ok := w.(core.ResponseRecorder)
 - bug
 ⤷ ../restinpieces/configstore -age-key age_key.txt -db app.db set log.batch.level info
 Error: failed to parse value as TOML (value: info): (1, 15): parsing error: no value can start with 
