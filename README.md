@@ -44,7 +44,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 
 ### Core Infrastructure
 - Middleware-compatible handlers
-- Router abstraction supporting standard Mux and [httprouter](https://github.com/julienschmidt/httprouter)
+- Router abstraction supporting standard Mux and [httprouter](https://github.com/julienschmidt/httprouter) (example implementation at [restinpieces-httprouter](https://github.com/caasmo/restinpieces-httprouter))
 - Discoverable API endpoints (/api/refresh-auth, /api/auth-with-oauth2, etc.)
 - SQLite database interface with pure Go [Zombiezen](https://github.com/zombiezen/go-sqlite) as default driver
   - Alternative drivers available in separate repos (like [Crawshaw](https://github.com/caasmo/restinpieces-sqlite-crawshaw))
