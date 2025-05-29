@@ -1,4 +1,4 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/caasmo/restinpieces)](https://pkg.go.dev/github.com/caasmo/restinpieces)
+[![Go Reference](https://pkg.go.dev/badge/github.com/caasmo/restinpieces)](https://pkg.go.dev/badge/github.com/caasmo/restinpieces)
 [![Go Report Card](https://goreportcard.com/badge/github.com/caasmo/restinpieces)](https://goreportcard.com/report/github.com/caasmo/restinpieces)
 ![sloc](https://sloc.xyz/github/caasmo/restinpieces)
 
@@ -17,6 +17,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
   - [Background Processing](#background-processing)
   - [Performance](#performance)
   - [Backups](#backups)
+  - [Metrics](#metrics)
 - [Examples](#examples)
 - [Building the Project](#building-the-project)
 - [TODO](#todo)
@@ -74,6 +75,11 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - Built-in Litestream integration for continuous SQLite backups
 - Supports incremental backups with minimal overhead
 - See [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) for implementation details
+
+### Metrics
+- Integrated Prometheus client for collecting application metrics.
+- Configurable endpoint for exposing metrics (e.g., `/metrics`).
+- Toggle metrics collection on/off via configuration without requiring a server restart.
 
 ## Examples
 
