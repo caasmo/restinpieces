@@ -58,9 +58,6 @@ func loadAndParseIdentities(keyPath string, operation string) ([]age.Identity, e
 	for i := range keyContent {
 		keyContent[i] = 0
 	}
-	// The assignment keyContent = nil is ineffectual as keyContent is a local slice
-	// and its value is not used after this point. The loop above already zeroes
-	// the underlying array, which is the security objective.
 
 	if err != nil {
 		return nil, fmt.Errorf("securestore: failed to parse age identities from key file '%s' for %s: %w", keyPath, operation, err)
