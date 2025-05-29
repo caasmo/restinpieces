@@ -88,6 +88,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - High-performance batch logging to SQLite database.
 - Configurable log levels and flush intervals.
 - Request logging with configurable limits for URI, User-Agent, Referer, and Remote IP lengths.
+- Supports overriding the default logger with a custom user-defined logger.
 
 ### Notifications
 - Flexible notification system for various events.
