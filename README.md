@@ -18,6 +18,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
   - [Performance](#performance)
   - [Backups](#backups)
   - [Metrics](#metrics)
+  - [Logger](#logger)
 - [Examples](#examples)
 - [Building the Project](#building-the-project)
 - [TODO](#todo)
@@ -80,6 +81,12 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
 - Integrated Prometheus client for collecting application metrics.
 - Configurable endpoint for exposing metrics (e.g., `/metrics`).
 - Toggle metrics collection on/off via configuration without requiring a server restart.
+
+### Logger
+- Default structured logger based on `slog`.
+- High-performance batch logging to SQLite database.
+- Configurable log levels and flush intervals.
+- Request logging with configurable limits for URI, User-Agent, Referer, and Remote IP lengths.
 
 ## Examples
 
