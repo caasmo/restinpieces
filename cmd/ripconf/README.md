@@ -20,7 +20,7 @@ ConfigStore is the official CLI tool for managing the RestInPieces framework's s
 ## Installation
 
 ```bash
-go install github.com/caasmo/restinpieces/cmd/configstore
+go install github.com/caasmo/restinpieces/cmd/ripconf
 ```
 
 ## Global Options
@@ -36,7 +36,7 @@ All commands require these global flags:
 Sets a configuration value at a given path. Creates new configuration versions.
 
 ```bash
-configstore -age-key age.key -db config.db set -scope myapp -format toml -desc "Update API settings" api.url "https://api.example.com"
+ripconf -age-key age.key -db config.db set -scope myapp -format toml -desc "Update API settings" api.url "https://api.example.com"
 ```
 
 Options:
@@ -49,7 +49,7 @@ Options:
 Lists all unique configuration scopes in the database.
 
 ```bash
-configstore -age-key age.key -db config.db scopes
+ripconf -age-key age.key -db config.db scopes
 ```
 
 ### `list` - List configuration versions
@@ -73,8 +73,8 @@ Gen  Scope        Created At             Format  Description
 
 Usage:
 ```bash
-configstore -age-key age.key -db config.db list
-configstore -age-key age.key -db config.db list myapp
+ripconf -age-key age.key -db config.db list
+ripconf -age-key age.key -db config.db list myapp
 ```
 
 ### `paths` - List TOML paths
@@ -82,8 +82,8 @@ configstore -age-key age.key -db config.db list myapp
 Lists all available TOML paths in the configuration, optionally filtered.
 
 ```bash
-configstore -age-key age.key -db config.db paths -scope myapp
-configstore -age-key age.key -db config.db paths -scope myapp "api.*"
+ripconf -age-key age.key -db config.db paths -scope myapp
+ripconf -age-key age.key -db config.db paths -scope myapp "api.*"
 ```
 
 ### `dump` - Dump configuration
@@ -91,7 +91,7 @@ configstore -age-key age.key -db config.db paths -scope myapp "api.*"
 Outputs the latest configuration in plaintext.
 
 ```bash
-configstore -age-key age.key -db config.db dump -scope myapp
+ripconf -age-key age.key -db config.db dump -scope myapp
 ```
 
 ### `diff` - Compare configurations
@@ -99,7 +99,7 @@ configstore -age-key age.key -db config.db dump -scope myapp
 Shows differences between current and previous configuration versions.
 
 ```bash
-configstore -age-key age.key -db config.db diff -scope myapp 1
+ripconf -age-key age.key -db config.db diff -scope myapp 1
 ```
 
 ### `rollback` - Restore any previous version
@@ -108,7 +108,7 @@ Rolls back to any previous configuration version by generation number. The gener
 
 ```bash
 # Rollback to generation 3 (any valid generation number can be used)
-configstore -age-key age.key -db config.db rollback -scope myapp 3
+ripconf -age-key age.key -db config.db rollback -scope myapp 3
 ```
 
 ### `save` - Save file contents
@@ -116,7 +116,7 @@ configstore -age-key age.key -db config.db rollback -scope myapp 3
 Saves the contents of a file to the configuration store.
 
 ```bash
-configstore -age-key age.key -db config.db save -scope myapp config.toml
+ripconf -age-key age.key -db config.db save -scope myapp config.toml
 ```
 
 ### `get` - Get configuration values
@@ -124,7 +124,7 @@ configstore -age-key age.key -db config.db save -scope myapp config.toml
 Retrieves configuration values by path.
 
 ```bash
-configstore -age-key age.key -db config.db get -scope myapp "api.url"
+ripconf -age-key age.key -db config.db get -scope myapp "api.url"
 ```
 
 ### `init` - Initialize default config
@@ -132,7 +132,7 @@ configstore -age-key age.key -db config.db get -scope myapp "api.url"
 Creates a new configuration with default values.
 
 ```bash
-configstore -age-key age.key -db config.db init -scope myapp
+ripconf -age-key age.key -db config.db init -scope myapp
 ```
 
 ### `rotate-jwt-secrets` - Rotate JWT secrets
@@ -140,7 +140,7 @@ configstore -age-key age.key -db config.db init -scope myapp
 Generates new random secrets for JWT tokens (application scope only).
 
 ```bash
-configstore -age-key age.key -db config.db rotate-jwt-secrets
+ripconf -age-key age.key -db config.db rotate-jwt-secrets
 ```
 
 ### `add-oauth2` - Add OAuth2 provider
@@ -148,7 +148,7 @@ configstore -age-key age.key -db config.db rotate-jwt-secrets
 Adds a new OAuth2 provider configuration skeleton.
 
 ```bash
-configstore -age-key age.key -db config.db add-oauth2 gitlab
+ripconf -age-key age.key -db config.db add-oauth2 gitlab
 ```
 
 ### `rm-oauth2` - Remove OAuth2 provider
@@ -156,7 +156,7 @@ configstore -age-key age.key -db config.db add-oauth2 gitlab
 Removes an OAuth2 provider configuration.
 
 ```bash
-configstore -age-key age.key -db config.db rm-oauth2 gitlab
+ripconf -age-key age.key -db config.db rm-oauth2 gitlab
 ```
 
 ## Security Considerations
