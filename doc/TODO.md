@@ -1,5 +1,18 @@
 ### TODOs
 
+- request resource rate limiting 
+    - regular use of paid resources
+    - per user request
+    - make a new table ratelimit with user resource (ex path) and request time 
+    - tabel is in app.
+    - Requests per minute (RPM)
+    - Requests per day (RPD)
+    - 2 queries
+    - job can be made to delete older than 24h
+    - first check if we can use the request log. what is the penalty of json, ->  NO 
+    - can be activated
+    - middleware writes in table after next 
+    - same middleware makes two queries before next
 - alternative litestream workflow in daemon.
 	- why not a simple script ssh hosted in client or machine, using just litestream binary
 	- ssh ltbackupme   
