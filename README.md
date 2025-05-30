@@ -57,6 +57,7 @@ A one-file golang server using sqlite, with focus on simplicity, performance and
   - JWT secret rotation
   - OAuth2 provider management
   - Multiple configuration scopes
+  - Hot reloading of configuration without server restart
 
 
 ### Frontend Integration
