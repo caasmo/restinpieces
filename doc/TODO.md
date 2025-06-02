@@ -3,16 +3,37 @@
 - request resource rate limiting 
     - regular use of paid resources
     - per user request
-    - make a new table ratelimit with user resource (ex path) and request time 
-    - tabel is in app.
+    - batch
     - Requests per minute (RPM)
     - Requests per day (RPD)
-    - 2 queries
-    - job can be made to delete older than 24h
-    - first check if we can use the request log. what is the penalty of json, ->  NO 
-    - can be activated
-    - middleware writes in table after next 
-    - same middleware makes two queries before next
+    - middleware generates labels based on its request 
+        - upon initlaization it can have labels indexes based on the rules from config
+            - ex rule for presence of header H
+                - labels have structure ex "H:X-my-app", default paths
+            - middleware sees label of rule upon init. 
+                - in request it has to build functions for the label rule, how to fill them
+
+    - it matches the generated labels agaist each rule and 
+    - it checks them in app.Cache for a block
+    - if labels not blocked, it puts the matches rule ids in the channel
+    - the rules ids can be a conccatenation of label+duration+auth
+    - if channel full, block or ignore, based on conf
+    - daemon reads from the channel
+        - it deals with fixed windown, counters
+        - because sequential, maps, other structure does not have lock 
+        - a map of map[ruleid]map[rulewindowinsecondsbucket]map[ip/userid]counter
+        - a tick remove expired bucket indexes, only the last remains.
+        - if counter is max, put in app.Cache the label   
+    - todo
+        - use/ip, where to put the middleware
+            - if userid, we can not put it in prerouter, as of now aith is even in each handler
+            - this is not app proteccion, is normal not to be in prerouter
+            - for auth rules per userid, a handler method?
+                - that means each hndler must be aware
+            - probably move the auth to middleware
+- maintenance: mimetype decides output
+- https://github.com/jellydator/ttlcache
+- simple ttl map instead of ristretto  https://stackoverflow.com/questions/25484122/map-with-ttl-option-in-go
 - alternative litestream workflow in daemon.
 	- why not a simple script ssh hosted in client or machine, using just litestream binary
 	- ssh ltbackupme   
