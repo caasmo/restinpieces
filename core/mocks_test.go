@@ -29,7 +29,8 @@ type MockDB struct {
 	MarkFailedFunc    func(jobID int64, errMsg string) error
 
 	// --- Mock DbConfig Methods ---
-	GetConfigFunc func(scope string, generation int) ([]byte, string, error)
+	GetConfigFunc    func(scope string, generation int) ([]byte, string, error)
+	InsertConfigFunc func(scope string, contentData []byte, format string, description string) error
 
 	// DbLifecycle methods removed
 }
@@ -114,6 +115,13 @@ func (m *MockDB) GetConfig(scope string, generation int) ([]byte, string, error)
 		return m.GetConfigFunc(scope, generation)
 	}
 	return nil, "", nil // Default: No config found, no error
+}
+
+func (m *MockDB) InsertConfig(scope string, contentData []byte, format string, description string) error {
+	if m.InsertConfigFunc != nil {
+		return m.InsertConfigFunc(scope, contentData, format, description)
+	}
+	return nil // Default: Success
 }
 
 // --- DbLifecycle methods removed ---
