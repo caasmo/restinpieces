@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
+	// Removed: "github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/router"
 )
 
@@ -24,8 +24,8 @@ type MockDB struct {
 	UpdateEmailFunc            func(userId string, newEmail string) error
 
 	// --- Mock DbQueue Methods ---
-	InsertJobFunc     func(job queue.Job) error
-	ClaimFunc         func(limit int) ([]*queue.Job, error)
+	InsertJobFunc     func(job db.Job) error
+	ClaimFunc         func(limit int) ([]*db.Job, error)
 	MarkCompletedFunc func(jobID int64) error
 	MarkFailedFunc    func(jobID int64, errMsg string) error
 
@@ -81,17 +81,17 @@ func (m *MockDB) UpdateEmail(userId string, newEmail string) error {
 }
 
 // --- Implement DbQueue ---
-func (m *MockDB) InsertJob(job queue.Job) error {
+func (m *MockDB) InsertJob(job db.Job) error {
 	if m.InsertJobFunc != nil {
 		return m.InsertJobFunc(job)
 	}
 	return nil // Default: Success
 }
-func (m *MockDB) Claim(limit int) ([]*queue.Job, error) {
+func (m *MockDB) Claim(limit int) ([]*db.Job, error) {
 	if m.ClaimFunc != nil {
 		return m.ClaimFunc(limit)
 	}
-	return []*queue.Job{}, nil // Default: No jobs claimed
+	return []*db.Job{}, nil // Default: No jobs claimed
 }
 func (m *MockDB) MarkCompleted(jobID int64) error {
 	if m.MarkCompletedFunc != nil {
