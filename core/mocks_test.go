@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/caasmo/restinpieces/db"
-	// Removed: "github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/router"
 )
 
@@ -115,4 +114,4 @@ func (m *MockRouter) Handle(path string, handler http.Handler)                  
 func (m *MockRouter) HandleFunc(path string, handler func(http.ResponseWriter, *http.Request)) {}
 func (m *MockRouter) ServeHTTP(w http.ResponseWriter, r *http.Request)                         {}
 func (m *MockRouter) Param(req *http.Request, key string) string                               { return "" }
-func (m *MockRouter) Register(routes ...*router.Route)                                         {}
+func (m *MockRouter) Register(chains router.Chains)                                            {}
