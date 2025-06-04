@@ -94,3 +94,89 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestRequestVerificationHandlerDatabase(t *testing.T) {
+	testCases := []struct {
+		name       string
+		json       string
+		dbSetup    func(*MockDB) // Configures mock DB behavior
+		wantStatus int
+		desc       string // Description of test case
+	}{
+		{
+			name: "email exists but user is nil",
+			json: `{"email":"niluser@example.com"}`,
+			dbSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByEmailConfig.User = nil
+			},
+			wantStatus: http.StatusNotFound,
+			desc:       "When email exists but GetUserByEmail returns nil user, should return 404",
+		},
+		{
+			name: "email exists but user not verified",
+			json: `{"email":"unverified@example.com"}`,
+			dbSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByEmailConfig.User = &db.User{
+					ID:       "test123",
+					Email:    "unverified@example.com",
+					Verified: false,
+				}
+			},
+			wantStatus: http.StatusAccepted,
+			desc:       "When email exists and user is not verified, should return 202 Accepted",
+		},
+		{
+			name: "email exists and user is verified",
+			json: `{"email":"verified@example.com"}`,
+			dbSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByEmailConfig.User = &db.User{
+					ID:       "test456",
+					Email:    "verified@example.com",
+					Verified: true,
+				}
+			},
+			wantStatus: http.StatusConflict,
+			desc:       "When email exists and user is already verified, should return 409 Conflict",
+		},
+		{
+			name: "database error",
+			json: `{"email":"error@example.com"}`,
+			dbSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByEmailConfig.Error = errors.New("database connection failed")
+			},
+			wantStatus: http.StatusInternalServerError,
+			desc:       "When database query fails, should return 500 Internal Server Error",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			reqBody := tc.json
+			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
+			req.Header.Set("Content-Type", "application/json")
+
+			rr := httptest.NewRecorder()
+			mockDB := &MockDB{}
+			if tc.dbSetup != nil {
+				tc.dbSetup(mockDB)
+			}
+
+			a, _ := New(
+				WithConfig(&config.Config{
+					Jwt: config.Jwt{
+						AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
+						AuthTokenDuration: 15 * time.Minute,
+					},
+				}),
+				WithDB(mockDB),
+				WithRouter(&MockRouter{}),
+			)
+
+			a.RequestVerificationHandler(rr, req)
+
+			if rr.Code != tc.wantStatus {
+				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
+			}
+		})
+	}
+}
