@@ -1,6 +1,21 @@
 ### TODOs
 
 - request resource rate limiting 
+        - user id/ip, where to put the middleware
+            - if userid, we can not put it in prerouter, as of now auth is even in each handler
+            - we have a auth method, user can make a easy midleware of it in its endpoints.
+            - we can even provide the middleware for the user to use 
+            - leaning to separate user id and ip rate limiting
+            - ip rate limiting, user id rate limiting
+                - we make method isUserRateLimited to be used in handler, or in a simple middleware.
+                - isIpRateLImited
+            - or remove ip rate limiting enterely -> we already have a dinamic blocking, 
+                - we can extend the existing blokcing algo.
+                    - the sketch gives a number request per bucket -> r/s
+                        - configuration has rate limitin for entire site
+            - for user id, the possibilty of implement with db lookup remains, that is for pay
+              for request scenarios, not protection
+              the endpoint can take ip or user id. each can have different rules.
     - regular use of paid resources
     - per user request
     - batch
@@ -24,13 +39,6 @@
         - a map of map[ruleid]map[rulewindowinsecondsbucket]map[ip/userid]counter
         - a tick remove expired bucket indexes, only the last remains.
         - if counter is max, put in app.Cache the label   
-    - todo
-        - use/ip, where to put the middleware
-            - if userid, we can not put it in prerouter, as of now aith is even in each handler
-            - this is not app proteccion, is normal not to be in prerouter
-            - for auth rules per userid, a handler method?
-                - that means each hndler must be aware
-            - probably move the auth to middleware
 - maintenance: mimetype decides output
 - https://github.com/jellydator/ttlcache
 - simple ttl map instead of ristretto  https://stackoverflow.com/questions/25484122/map-with-ttl-option-in-go
