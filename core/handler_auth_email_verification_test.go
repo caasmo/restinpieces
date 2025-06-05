@@ -71,7 +71,6 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 						AuthTokenDuration: 15 * time.Minute,
 					},
 				}),
-				router: &MockRouter{},
 			}
 
 			a.RequestVerificationHandler(rr, req)
@@ -171,7 +170,6 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				dbAuth:   mockDB,
 				dbQueue:  mockDB,
 				dbConfig: mockDB,
-				router:   &MockRouter{},
 			}
 
 			a.RequestVerificationHandler(rr, req)
