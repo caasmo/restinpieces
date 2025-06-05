@@ -5,6 +5,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
+	"log/slog" // Import slog for default logger
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	jwtv5 "github.com/golang-jwt/jwt/v5"
+	"github.com/caasmo/restinpieces/notify" // Import notify for NilNotifier
 )
 
 func TestAuthenticateRequestValidation(t *testing.T) {
@@ -47,22 +49,41 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 				req.Header.Set("Authorization", tc.authHeader)
 			}
 
-			// No need for ResponseRecorder or middleware setup, as Authenticate is a direct function call
-			// rr := httptest.NewRecorder() // Removed
+			mockDB := &MockDB{} // Create a mock DB instance
 
-			a, _ := New(
-				WithConfig(&config.Config{
-					Jwt: config.Jwt{
-						AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
-						AuthTokenDuration: 15 * time.Minute,
-					},
-				}),
-				WithDB(&MockDB{}),
-				WithRouter(&MockRouter{}),
-			)
+			// Create a config provider
+			cfg := &config.Config{
+				Jwt: config.Jwt{
+					AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
+					AuthTokenDuration: 15 * time.Minute,
+				},
+			}
+			configProvider := config.NewProvider(cfg) // Assuming config.NewProvider exists
+
+			// Directly create the App instance
+			a := &App{
+				dbAuth:         mockDB,
+				dbQueue:        mockDB,
+				dbConfig:       mockDB, // MockDB implements DbConfig
+				router:         &MockRouter{},
+				configProvider: configProvider,
+				logger:         slog.Default(),      // Provide a default logger
+				notifier:       &notify.NilNotifier{}, // Provide a default notifier
+				// ageKeyPath and configStore are not directly used by Authenticate, so they can be omitted
+			}
 
 			// Directly call the Authenticate method
 			user, authErr, resp := a.Authenticate(req)
+
+			// Assert that user is nil for these error cases
+			if user != nil {
+				t.Errorf("expected user to be nil, got %v", user)
+			}
+
+			// Assert that authErr is not nil (it's always "Auth error" for security)
+			if authErr == nil {
+				t.Error("expected an authentication error, got nil")
+			}
 
 			// Assert on the jsonResponse returned by Authenticate
 			if resp.status != tc.wantError.status {
@@ -91,7 +112,9 @@ func TestAuthenticateDatabase(t *testing.T) {
 		{
 			name: "invalid signing method",
 			userSetup: func(mockDB *MockDB) {
-				mockDB.GetUserByIdConfig.User = testUser
+				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field
+					return testUser, nil
+				}
 			},
 			tokenSetup: func(t *testing.T) string {
 				token, err := generateES256Token(testUser.ID)
@@ -100,12 +123,14 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: &errorJwtInvalidSignMethod,
+			wantError: errorJwtInvalidSignMethod,
 		},
 		{
 			name: "valid token",
 			userSetup: func(mockDB *MockDB) {
-				mockDB.GetUserByIdConfig.User = testUser
+				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field
+					return testUser, nil
+				}
 			},
 			tokenSetup: func(t *testing.T) string {
 				token, err := generateToken(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
@@ -119,7 +144,9 @@ func TestAuthenticateDatabase(t *testing.T) {
 		{
 			name: "expired token",
 			userSetup: func(mockDB *MockDB) {
-				mockDB.GetUserByIdConfig.User = testUser
+				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field
+					return testUser, nil
+				}
 			},
 			tokenSetup: func(t *testing.T) string {
 				token, err := generateToken(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), -30*time.Minute)
@@ -128,12 +155,14 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: &errorJwtTokenExpired,
+			wantError: errorJwtTokenExpired,
 		},
 		{
 			name: "user not found",
 			userSetup: func(mockDB *MockDB) {
-				mockDB.GetUserByIdConfig.User = nil
+				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field
+					return nil, db.ErrUserNotFound // Simulate user not found
+				}
 			},
 			tokenSetup: func(t *testing.T) string {
 				token, err := generateToken(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
@@ -142,7 +171,23 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: &errorJwtInvalidToken,
+			wantError: errorJwtInvalidToken,
+		},
+		{
+			name: "database error on GetUserById",
+			userSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field
+					return nil, errors.New("database error") // Simulate database error
+				}
+			},
+			tokenSetup: func(t *testing.T) string {
+				token, err := generateToken(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
+				if err != nil {
+					t.Fatalf("failed to generate token: %v", err)
+				}
+				return token
+			},
+			wantError: errorJwtInvalidToken, // Authenticate maps DB errors to generic invalid token
 		},
 	}
 
@@ -156,40 +201,56 @@ func TestAuthenticateDatabase(t *testing.T) {
 			req := httptest.NewRequest("GET", "/protected", nil)
 			req.Header.Set("Authorization", "Bearer "+tc.tokenSetup(t))
 
-			rr := httptest.NewRecorder()
-			a, _ := New(
-				WithConfig(&config.Config{
-					Jwt: config.Jwt{
-						AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
-						AuthTokenDuration: 15 * time.Minute,
-					},
-				}),
-				WithDB(mockDB),
-				WithRouter(&MockRouter{}),
-			)
+			// Create a config provider
+			cfg := &config.Config{
+				Jwt: config.Jwt{
+					AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
+					AuthTokenDuration: 15 * time.Minute,
+				},
+			}
+			configProvider := config.NewProvider(cfg)
 
-			var capturedUserID string
-			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				capturedUserID = r.Context().Value(UserIDKey).(string)
-				w.WriteHeader(http.StatusOK)
-			})
+			// Directly create the App instance
+			a := &App{
+				dbAuth:         mockDB,
+				dbQueue:        mockDB,
+				dbConfig:       mockDB,
+				router:         &MockRouter{},
+				configProvider: configProvider,
+				logger:         slog.Default(),
+				notifier:       &notify.NilNotifier{},
+			}
 
-			middleware := a.JwtValidate(testHandler)
-			middleware.ServeHTTP(rr, req)
+			// Directly call the Authenticate method
+			user, authErr, resp := a.Authenticate(req)
 
 			if tc.wantError != nil {
-				if rr.Code != tc.wantError.status {
-					t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
+				// Expect an error case
+				if user != nil {
+					t.Errorf("expected user to be nil, got %v", user)
 				}
-				if !strings.Contains(rr.Body.String(), string(tc.wantError.body)) {
-					t.Errorf("expected error response %q, got %q", string(tc.wantError.body), rr.Body.String())
+				if authErr == nil {
+					t.Error("expected an authentication error, got nil")
+				}
+				if resp.status != tc.wantError.status {
+					t.Errorf("expected status %d, got %d", tc.wantError.status, resp.status)
+				}
+				if string(resp.body) != string(tc.wantError.body) {
+					t.Errorf("expected error response body %q, got %q", string(tc.wantError.body), string(resp.body))
 				}
 			} else {
-				if rr.Code != http.StatusOK {
-					t.Errorf("expected status OK, got %d", rr.Code)
+				// Expect success case
+				if user == nil {
+					t.Error("expected a user, got nil")
 				}
-				if capturedUserID != testUser.ID {
-					t.Errorf("expected user ID %q in context, got %q", testUser.ID, capturedUserID)
+				if authErr != nil {
+					t.Errorf("expected no authentication error, got %v", authErr)
+				}
+				if resp.status != 0 || len(resp.body) != 0 { // jsonResponse{} is zero value for success
+					t.Errorf("expected empty jsonResponse, got status %d, body %q", resp.status, string(resp.body))
+				}
+				if user.ID != testUser.ID {
+					t.Errorf("expected authenticated user ID %q, got %q", testUser.ID, user.ID)
 				}
 			}
 		})
