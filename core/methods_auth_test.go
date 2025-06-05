@@ -114,7 +114,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: errorJwtInvalidSignMethod,
+			wantError: &errorJwtInvalidSignMethod,
 		},
 		{
 			name: "valid token",
@@ -146,7 +146,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: errorJwtTokenExpired,
+			wantError: &errorJwtTokenExpired,
 		},
 		{
 			name: "user not found",
@@ -162,7 +162,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: errorJwtInvalidToken,
+			wantError: &errorJwtInvalidToken,
 		},
 		{
 			name: "database error on GetUserById",
@@ -178,7 +178,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: errorJwtInvalidToken, // Authenticate maps DB errors to generic invalid token
+			wantError: &errorJwtInvalidToken, // Authenticate maps DB errors to generic invalid token
 		},
 	}
 
