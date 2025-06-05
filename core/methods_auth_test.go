@@ -99,7 +99,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 		name       string
 		userSetup  func(*MockDB)
 		tokenSetup func(*testing.T) string
-		wantError  *jsonResponse
+		wantError  jsonResponse
 	}{
 		{
 			name: "invalid signing method",
@@ -115,7 +115,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: &errorJwtInvalidSignMethod,
+			wantError: errorJwtInvalidSignMethod,
 		},
 		{
 			name: "valid token",
@@ -131,7 +131,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: nil,
+			wantError: jsonResponse{},
 		},
 		{
 			name: "expired token",
@@ -147,7 +147,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: &errorJwtTokenExpired,
+			wantError: errorJwtTokenExpired,
 		},
 		{
 			name: "user not found",
@@ -163,7 +163,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: &errorJwtInvalidToken,
+			wantError: errorJwtInvalidToken,
 		},
 		{
 			name: "database error on GetUserById",
@@ -179,7 +179,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 				return token
 			},
-			wantError: &errorJwtInvalidToken, // Authenticate maps DB errors to generic invalid token
+			wantError: errorJwtInvalidToken, // Authenticate maps DB errors to generic invalid token
 		},
 	}
 
@@ -213,7 +213,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 			// Directly call the Authenticate method
 			user, authErr, resp := a.Authenticate(req)
 
-			if tc.wantError != nil {
+			if tc.wantError.status != 0 {
 				// Expect an error case
 				if user != nil {
 					t.Errorf("expected user to be nil, got %v", user)
