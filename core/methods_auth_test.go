@@ -124,7 +124,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 			},
 			tokenSetup: func(t *testing.T) string {
-				token, err := generateToken(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
+				token, err := generateToken(testUser.Email, testUser.Password, "test_secret_32_bytes_long_xxxxxx", 15*time.Minute)
 				if err != nil {
 					t.Fatalf("failed to generate token: %v", err)
 				}
@@ -140,7 +140,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 			},
 			tokenSetup: func(t *testing.T) string {
-				token, err := generateToken(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), -30*time.Minute)
+				token, err := generateToken(testUser.Email, testUser.Password, "test_secret_32_bytes_long_xxxxxx", -30*time.Minute)
 				if err != nil {
 					t.Fatalf("failed to generate token: %v", err)
 				}
@@ -156,7 +156,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 			},
 			tokenSetup: func(t *testing.T) string {
-				token, err := generateToken(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
+				token, err := generateToken(testUser.Email, testUser.Password, "test_secret_32_bytes_long_xxxxxx", 15*time.Minute)
 				if err != nil {
 					t.Fatalf("failed to generate token: %v", err)
 				}
@@ -172,7 +172,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				}
 			},
 			tokenSetup: func(t *testing.T) string {
-				token, err := generateToken(testUser.Email, testUser.Password, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
+				token, err := generateToken(testUser.Email, testUser.Password, "test_secret_32_bytes_long_xxxxxx", 15*time.Minute)
 				if err != nil {
 					t.Fatalf("failed to generate token: %v", err)
 				}
