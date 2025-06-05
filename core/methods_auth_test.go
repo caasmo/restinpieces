@@ -26,17 +26,17 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 		{
 			name:       "missing authorization header",
 			authHeader: "",
-			wantError:  &errorNoAuthHeader,
+			wantError:  errorNoAuthHeader,
 		},
 		{
 			name:       "invalid token format",
 			authHeader: "InvalidToken",
-			wantError:  &errorInvalidTokenFormat,
+			wantError:  errorInvalidTokenFormat,
 		},
 		{
 			name:       "invalid bearer prefix",
 			authHeader: "Basic abc123",
-			wantError:  &errorInvalidTokenFormat,
+			wantError:  errorInvalidTokenFormat,
 		},
 	}
 
