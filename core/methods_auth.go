@@ -37,6 +37,9 @@ func (a *App) Authenticate(r *http.Request) (*db.User, error, jsonResponse) {
 
 	// Validate session claims before fetching user
 	if err := crypto.ValidateSessionClaims(claims); err != nil {
+		if errors.Is(err, crypto.ErrJwtTokenExpired) {
+			return nil, errAuth, errorJwtTokenExpired
+		}
 		return nil, errAuth, errorJwtInvalidToken
 	}
 
