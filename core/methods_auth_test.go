@@ -19,22 +19,22 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 	testCases := []struct {
 		name       string
 		authHeader string
-		wantError  *jsonError // This represents the expected jsonResponse
+		wantError  *jsonResponse // This represents the expected jsonResponse
 	}{
 		{
 			name:       "missing authorization header",
 			authHeader: "",
-			wantError:  errorNoAuthHeader,
+			wantError:  &errorNoAuthHeader,
 		},
 		{
 			name:       "invalid token format",
 			authHeader: "InvalidToken",
-			wantError:  errorInvalidTokenFormat,
+			wantError:  &errorInvalidTokenFormat,
 		},
 		{
 			name:       "invalid bearer prefix",
 			authHeader: "Basic abc123",
-			wantError:  errorInvalidTokenFormat,
+			wantError:  &errorInvalidTokenFormat,
 		},
 	}
 
@@ -98,7 +98,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 		name       string
 		userSetup  func(*MockDB)
 		tokenSetup func(*testing.T) string
-		wantError  *jsonError
+		wantError  *jsonResponse
 	}{
 		{
 			name: "invalid signing method",
