@@ -5,7 +5,6 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
-	"log/slog" // Import slog for default logger
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,7 +15,6 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	jwtv5 "github.com/golang-jwt/jwt/v5"
-	"github.com/caasmo/restinpieces/notify" // Import notify for NilNotifier
 )
 
 func TestAuthenticateRequestValidation(t *testing.T) {
@@ -210,10 +208,7 @@ func TestAuthenticateDatabase(t *testing.T) {
 				dbAuth:         mockDB,
 				dbQueue:        mockDB,
 				dbConfig:       mockDB,
-				router:         &MockRouter{},
 				configProvider: configProvider,
-				logger:         slog.Default(),
-				notifier:       &notify.NilNotifier{},
 			}
 
 			// Directly call the Authenticate method
