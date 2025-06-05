@@ -73,7 +73,7 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 				}),
 			}
 
-			a.RequestVerificationHandler(rr, req)
+			a.RequestEmailVerificationHandler(rr, req)
 
 			if rr.Code != tc.wantStatus {
 				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
@@ -172,7 +172,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				dbConfig: mockDB,
 			}
 
-			a.RequestVerificationHandler(rr, req)
+			a.RequestEmailVerificationHandler(rr, req)
 
 			if rr.Code != tc.wantStatus {
 				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
