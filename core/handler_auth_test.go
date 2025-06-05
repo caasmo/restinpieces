@@ -61,8 +61,7 @@ func TestRefreshAuthHandler(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup request with context
 			req := httptest.NewRequest("POST", "/auth-refresh", nil)
-			ctx := context.WithValue(req.Context(), UserIDKey, tc.userID)
-			req = req.WithContext(ctx)
+			// Authentication is handled by the handler method directly
 
 			// Setup response recorder
 			rr := httptest.NewRecorder()
