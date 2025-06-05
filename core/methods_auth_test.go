@@ -21,7 +21,7 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 	testCases := []struct {
 		name       string
 		authHeader string
-		wantError  *jsonError
+		wantError  *jsonError // This represents the expected jsonResponse
 	}{
 		{
 			name:       "missing authorization header",
@@ -47,7 +47,9 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 				req.Header.Set("Authorization", tc.authHeader)
 			}
 
-			rr := httptest.NewRecorder()
+			// No need for ResponseRecorder or middleware setup, as Authenticate is a direct function call
+			// rr := httptest.NewRecorder() // Removed
+
 			a, _ := New(
 				WithConfig(&config.Config{
 					Jwt: config.Jwt{
@@ -59,15 +61,25 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 				WithRouter(&MockRouter{}),
 			)
 
-			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-			middleware := a.JwtValidate(testHandler)
-			middleware.ServeHTTP(rr, req)
+			// Directly call the Authenticate method
+			user, authErr, resp := a.Authenticate(req)
 
-			if rr.Code != tc.wantError.status {
-				t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
+			// Assert that user is nil for these error cases
+			if user != nil {
+				t.Errorf("expected user to be nil, got %v", user)
 			}
-			if !strings.Contains(rr.Body.String(), string(tc.wantError.body)) {
-				t.Errorf("expected error response %q, got %q", string(tc.wantError.body), rr.Body.String())
+
+			// Assert that authErr is not nil (it's always "Auth error" for security)
+			if authErr == nil {
+				t.Error("expected an authentication error, got nil")
+			}
+
+			// Assert on the jsonResponse returned by Authenticate
+			if resp.status != tc.wantError.status {
+				t.Errorf("expected status %d, got %d", tc.wantError.status, resp.status)
+			}
+			if string(resp.body) != string(tc.wantError.body) {
+				t.Errorf("expected error response body %q, got %q", string(tc.wantError.body), string(resp.body))
 			}
 		})
 	}
