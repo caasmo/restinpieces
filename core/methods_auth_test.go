@@ -52,8 +52,8 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 			// Create a config provider
 			cfg := &config.Config{
 				Jwt: config.Jwt{
-					AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
-					AuthTokenDuration: 15 * time.Minute,
+					AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
+					AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
 				},
 			}
 			configProvider := config.NewProvider(cfg) // Assuming config.NewProvider exists
@@ -197,8 +197,8 @@ func TestAuthenticateDatabase(t *testing.T) {
 			// Create a config provider
 			cfg := &config.Config{
 				Jwt: config.Jwt{
-					AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
-					AuthTokenDuration: 15 * time.Minute,
+					AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
+					AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
 				},
 			}
 			configProvider := config.NewProvider(cfg)
