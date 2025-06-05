@@ -64,15 +64,15 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()
-			a, _ := New(
-				WithConfig(&config.Config{
+			a := &App{
+				configProvider: config.NewProvider(&config.Config{
 					Jwt: config.Jwt{
 						AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
 						AuthTokenDuration: 15 * time.Minute,
 					},
 				}),
-				WithRouter(&MockRouter{}),
-			)
+				router: &MockRouter{},
+			}
 
 			a.RequestVerificationHandler(rr, req)
 
@@ -161,16 +161,18 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				tc.dbSetup(mockDB)
 			}
 
-			a, _ := New(
-				WithConfig(&config.Config{
+			a := &App{
+				configProvider: config.NewProvider(&config.Config{
 					Jwt: config.Jwt{
 						AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
 						AuthTokenDuration: 15 * time.Minute,
 					},
 				}),
-				WithDB(mockDB),
-				WithRouter(&MockRouter{}),
-			)
+				dbAuth:   mockDB,
+				dbQueue:  mockDB,
+				dbConfig: mockDB,
+				router:   &MockRouter{},
+			}
 
 			a.RequestVerificationHandler(rr, req)
 
