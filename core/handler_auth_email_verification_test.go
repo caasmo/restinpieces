@@ -67,8 +67,8 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			a := &App{
 				configProvider: config.NewProvider(&config.Config{
 					Jwt: config.Jwt{
-						AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
-						AuthTokenDuration: 15 * time.Minute,
+						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
+						AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
 					},
 				}),
 			}
@@ -163,8 +163,8 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 			a := &App{
 				configProvider: config.NewProvider(&config.Config{
 					Jwt: config.Jwt{
-						AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
-						AuthTokenDuration: 15 * time.Minute,
+						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
+						AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
 					},
 				}),
 				dbAuth:   mockDB,
