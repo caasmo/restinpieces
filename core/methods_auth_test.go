@@ -17,7 +17,7 @@ import (
 	jwtv5 "github.com/golang-jwt/jwt/v5"
 )
 
-func TestJwtValidate_RequestValidation(t *testing.T) {
+func TestAuthenticateRequestValidation(t *testing.T) {
 	testCases := []struct {
 		name       string
 		authHeader string
