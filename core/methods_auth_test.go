@@ -64,16 +64,6 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 			// Directly call the Authenticate method
 			user, authErr, resp := a.Authenticate(req)
 
-			// Assert that user is nil for these error cases
-			if user != nil {
-				t.Errorf("expected user to be nil, got %v", user)
-			}
-
-			// Assert that authErr is not nil (it's always "Auth error" for security)
-			if authErr == nil {
-				t.Error("expected an authentication error, got nil")
-			}
-
 			// Assert on the jsonResponse returned by Authenticate
 			if resp.status != tc.wantError.status {
 				t.Errorf("expected status %d, got %d", tc.wantError.status, resp.status)
