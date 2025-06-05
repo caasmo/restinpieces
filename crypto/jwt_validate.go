@@ -145,9 +145,9 @@ func ValidateSessionClaims(claims jwt.MapClaims) error {
 		return fmt.Errorf("%w: %v", ErrJwtInvalidToken, err)
 	}
 
-	// Validate exp claim
+	// Validate exp claim - return raw expiration error
 	if err := validateClaimExpiresAt(claims[ClaimExpiresAt]); err != nil {
-		return fmt.Errorf("%w: %v", ErrJwtInvalidToken, err)
+		return err // Return unwrapped error
 	}
 
 	// Validate user_id claim
