@@ -65,14 +65,9 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 				dbAuth:         mockDB,
 				dbQueue:        mockDB,
 				dbConfig:       mockDB, // MockDB implements DbConfig
-				router:         &MockRouter{},
 				configProvider: configProvider,
-				logger:         slog.Default(),      // Provide a default logger
-				notifier:       &notify.NilNotifier{}, // Provide a default notifier
-				// ageKeyPath and configStore are not directly used by Authenticate, so they can be omitted
 			}
 
-			// Directly call the Authenticate method
 			user, authErr, resp := a.Authenticate(req)
 
 			// Assert that user is nil for these error cases
