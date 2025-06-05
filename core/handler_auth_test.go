@@ -74,16 +74,17 @@ func TestRefreshAuthHandler(t *testing.T) {
 			}
 
 			// Create app with test config
-			a, _ := New(
-				WithConfig(&config.Config{
+			a := &App{
+				dbAuth:   mockDB,
+				dbQueue:  mockDB,
+				dbConfig: mockDB,
+				configProvider: config.NewProvider(&config.Config{
 					Jwt: config.Jwt{
-						AuthSecret:        []byte("test_secret_32_bytes_long_xxxxxx"),
-						AuthTokenDuration: 15 * time.Minute,
+						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
+						AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
 					},
 				}),
-				WithDB(mockDB),
-				WithRouter(&MockRouter{}),
-			)
+			}
 
 			// Execute handler
 			a.RefreshAuthHandler(rr, req)
