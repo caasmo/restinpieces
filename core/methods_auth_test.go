@@ -269,7 +269,7 @@ func generateES256Token(userID string) (string, error) {
 	return tokenString, nil
 }
 
-func generateToken(email, passwordHash string, secret []byte, expiresIn time.Duration) (string, error) {
+func generateToken(email, passwordHash string, secret string, expiresIn time.Duration) (string, error) {
 	// Generate signing key using user credentials and secret
 	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
