@@ -29,9 +29,11 @@ func TestRefreshAuthHandler(t *testing.T) {
 			userID:     "testuser123",
 			wantStatus: http.StatusOK,
 			dbSetup: func(mockDB *MockDB) {
-				mockDB.GetUserByIdConfig.User = &db.User{
-					ID:    "testuser123",
-					Email: "test@example.com",
+				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) {
+					return &db.User{
+						ID:    "testuser123",
+						Email: "test@example.com",
+					}, nil
 				}
 			},
 			desc: "When valid user ID is present in context and user exists in database, should return new token",
@@ -47,7 +49,9 @@ func TestRefreshAuthHandler(t *testing.T) {
 			userID:     "nonexistent",
 			wantStatus: http.StatusUnauthorized,
 			dbSetup: func(mockDB *MockDB) {
-				mockDB.GetUserByIdConfig.User = nil
+				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) {
+					return nil, nil
+				}
 			},
 			desc: "When user ID exists but user is not found in database, should return 401 unauthorized",
 		},
