@@ -5,9 +5,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"fmt"
-	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 	"time"
 
