@@ -279,7 +279,7 @@ func generateToken(email, passwordHash string, secret string, expiresIn time.Dur
 
 	// Generate token with derived signing key
 	claims := map[string]any{crypto.ClaimUserID: "testuser123"} // Use fixed test user ID
-	token, _, err := crypto.NewJwt(claims, signingKey, expiresIn)
+	token, err := crypto.NewJwt(claims, signingKey, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate test token: %w", err)
 	}
