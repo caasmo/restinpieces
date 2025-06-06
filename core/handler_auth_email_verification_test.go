@@ -15,44 +15,29 @@ import (
 
 func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 	testCases := []struct {
-		name       string
-		json       string
-		wantStatus int
+		name      string
+		json      string
+		wantError jsonResponse
 	}{
 		{
-			name:       "invalid email format",
-			json:       `{"email":"not-an-email"}`,
-			wantStatus: http.StatusBadRequest,
+			name:      "invalid email format",
+			json:      `{"email":"not-an-email"}`,
+			wantError: errorInvalidRequest,
 		},
 		{
-			name:       "empty email",
-			json:       `{"email":""}`,
-			wantStatus: http.StatusBadRequest,
+			name:      "empty email",
+			json:      `{"email":""}`,
+			wantError: errorInvalidRequest,
 		},
 		{
-			name:       "missing email field",
-			json:       `{}`,
-			wantStatus: http.StatusBadRequest,
+			name:      "missing email field",
+			json:      `{}`,
+			wantError: errorInvalidRequest,
 		},
 		{
-			name:       "invalid JSON",
-			json:       `{"email": invalid}`,
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name:       "empty email",
-			json:       `{"email":""}`,
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name:       "missing email field",
-			json:       `{}`,
-			wantStatus: http.StatusBadRequest,
-		},
-		{
-			name:       "invalid JSON",
-			json:       `{"email": invalid}`,
-			wantStatus: http.StatusBadRequest,
+			name:      "invalid JSON",
+			json:      `{"email": invalid}`,
+			wantError: errorInvalidRequest,
 		},
 	}
 
@@ -74,20 +59,21 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 
 			a.RequestEmailVerificationHandler(rr, req)
 
-			if rr.Code != tc.wantStatus {
-				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
+			if rr.Code != tc.wantError.status {
+				t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
 			}
 
-			// Validate error response body when expected
-			if tc.wantStatus >= 400 {
-				var resp map[string]interface{}
-				if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
-					t.Fatalf("failed to decode error response: %v", err)
-				}
+			// Compare response bodies
+			var gotBody, wantBody map[string]interface{}
+			if err := json.NewDecoder(rr.Body).Decode(&gotBody); err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+			if err := json.Unmarshal(tc.wantError.body, &wantBody); err != nil {
+				t.Fatalf("failed to decode wantError body: %v", err)
+			}
 
-				if _, ok := resp["message"]; !ok {
-					t.Error("error response missing 'message' field")
-				}
+			if gotBody["code"] != wantBody["code"] {
+				t.Errorf("expected error code %q, got %q", wantBody["code"], gotBody["code"])
 			}
 		})
 	}
