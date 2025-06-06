@@ -16,34 +16,34 @@ import (
 func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 	testCases := []struct {
 		name      string
-		json      string
-		wantError jsonResponse
+		requestBody string
+		wantError   jsonResponse
 	}{
 		{
 			name:      "invalid email format",
-			json:      `{"email":"not-an-email"}`,
+			requestBody: `{"email":"not-an-email"}`,
 			wantError: errorInvalidRequest,
 		},
 		{
 			name:      "empty email",
-			json:      `{"email":""}`,
+			requestBody: `{"email":""}`,
 			wantError: errorInvalidRequest,
 		},
 		{
 			name:      "missing email field",
-			json:      `{}`,
+			requestBody: `{}`,
 			wantError: errorInvalidRequest,
 		},
 		{
 			name:      "invalid JSON",
-			json:      `{"email": invalid}`,
+			requestBody: `{"email": invalid}`,
 			wantError: errorInvalidRequest,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			reqBody := tc.json
+			reqBody := tc.requestBody
 			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -82,14 +82,14 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 func TestRequestVerificationHandlerDatabase(t *testing.T) {
 	testCases := []struct {
 		name       string
-		json       string
+		requestBody string
 		dbSetup    func(*MockDB) // Configures mock DB behavior
 		wantStatus int
 		desc       string // Description of test case
 	}{
 		{
 			name: "email exists but user is nil",
-			json: `{"email":"niluser@example.com"}`,
+			requestBody: `{"email":"niluser@example.com"}`,
 			dbSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
 					return nil, nil
@@ -100,7 +100,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 		},
 		{
 			name: "email exists but user not verified",
-			json: `{"email":"unverified@example.com"}`,
+			requestBody: `{"email":"unverified@example.com"}`,
 			dbSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
 					return &db.User{
@@ -115,7 +115,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 		},
 		{
 			name: "email exists and user is verified",
-			json: `{"email":"verified@example.com"}`,
+			requestBody: `{"email":"verified@example.com"}`,
 			dbSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
 					return &db.User{
@@ -130,7 +130,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 		},
 		{
 			name: "database error",
-			json: `{"email":"error@example.com"}`,
+			requestBody: `{"email":"error@example.com"}`,
 			dbSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
 					return nil, errors.New("database connection failed")
@@ -143,7 +143,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			reqBody := tc.json
+			reqBody := tc.requestBody
 			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
 			req.Header.Set("Content-Type", "application/json")
 
