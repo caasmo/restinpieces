@@ -63,7 +63,6 @@ var (
 
 // Implement only the validation you need rather than using the full validator
 func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
-	// Pre-allocate the claims map for better performance
 	claims := make(jwt.MapClaims)
 
 	_, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
