@@ -142,17 +142,17 @@ func validateClaimUserID(userID any) error {
 func ValidateSessionClaims(claims jwt.MapClaims) error {
 	// Validate iat claim and token age
 	if err := validateClaimIssuedAt(claims[ClaimIssuedAt]); err != nil {
-		return fmt.Errorf("%w: %v", ErrJwtInvalidToken, err)
+		return err
 	}
 
-	// Validate exp claim - return raw expiration error
+	// Validate exp claim
 	if err := validateClaimExpiresAt(claims[ClaimExpiresAt]); err != nil {
-		return err // Return unwrapped error
+		return err
 	}
 
 	// Validate user_id claim
 	if err := validateClaimUserID(claims[ClaimUserID]); err != nil {
-		return fmt.Errorf("%w: %v", ErrJwtInvalidToken, err)
+		return err
 	}
 
 	return nil
