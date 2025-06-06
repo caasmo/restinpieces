@@ -31,7 +31,6 @@ func (a *App) Authenticate(r *http.Request) (*db.User, error, jsonResponse) {
 	// Parse unverified token to get claims
 	claims, err := crypto.ParseJwtUnverified(tokenString)
 	if err != nil {
-		// Map generic parse error to our specific error
 		return nil, errAuth, errorJwtInvalidToken
 	}
 
