@@ -104,7 +104,7 @@ func TestAuthenticateToken(t *testing.T) {
 		{
 			name: "invalid signing method",
 			userSetup: func(mockDB *MockDB) {
-				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field
+				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { 
 					return testUser, nil
 				}
 			},
