@@ -88,7 +88,7 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 	}
 }
 
-func TestAuthenticateDatabase(t *testing.T) {
+func TestAuthenticateToken(t *testing.T) {
 	testUser := &db.User{
 		ID:       "testuser123",
 		Email:    "test@example.com",
