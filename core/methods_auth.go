@@ -36,7 +36,7 @@ func (a *App) Authenticate(r *http.Request) (*db.User, error, jsonResponse) {
 
 	// Validate session claims before fetching user
 	if err := crypto.ValidateSessionClaims(claims); err != nil {
-		if errors.Is(err, crypto.ErrJwtTokenExpired) {
+		if err == crypto.ErrJwtTokenExpired {
 			return nil, errAuth, errorJwtTokenExpired
 		}
 		return nil, errAuth, errorJwtInvalidToken
@@ -62,10 +62,10 @@ func (a *App) Authenticate(r *http.Request) (*db.User, error, jsonResponse) {
 	_, err = crypto.ParseJwt(tokenString, signingKey)
 	if err != nil {
 		// Map specific JWT errors to our precomputed responses
-		if errors.Is(err, crypto.ErrJwtTokenExpired) {
+		if err == crypto.ErrJwtTokenExpired {
 			return nil, errAuth, errorJwtTokenExpired
 		}
-		if errors.Is(err, crypto.ErrJwtInvalidSigningMethod) {
+		if err == crypto.ErrJwtInvalidSigningMethod {
 			return nil, errAuth, errorJwtInvalidSignMethod
 		}
 		// Treat all other verification errors as an invalid token
