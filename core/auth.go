@@ -3,9 +3,11 @@ package core
 import (
 	"errors"
 	"net/http"
+	"log/slog"
 	"strings"
 
 	"github.com/caasmo/restinpieces/crypto"
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 )
 
