@@ -57,15 +57,9 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 			}
 			configProvider := config.NewProvider(cfg) // Assuming config.NewProvider exists
 
-			// Directly create the App instance
-			a := &App{
-				dbAuth:         mockDB,
-				dbQueue:        mockDB,
-				dbConfig:       mockDB, // MockDB implements DbConfig
-				configProvider: configProvider,
-			}
-
-			user, authErr, resp := a.Auth().Authenticate(req)
+			// Create authenticator directly
+			auth := NewDefaultAuthenticator(mockDB, slog.Default(), configProvider)
+			user, authErr, resp := auth.Authenticate(req)
 
 			// Assert that user is nil for these error cases
 			if user != nil {
@@ -202,16 +196,9 @@ func TestAuthenticateToken(t *testing.T) {
 			}
 			configProvider := config.NewProvider(cfg)
 
-			// Directly create the App instance
-			a := &App{
-				dbAuth:         mockDB,
-				dbQueue:        mockDB,
-				dbConfig:       mockDB,
-				configProvider: configProvider,
-			}
-
-			// Call Authenticate via the Auth() method
-			user, authErr, resp := a.Auth().Authenticate(req)
+			// Create authenticator directly
+			auth := NewDefaultAuthenticator(mockDB, slog.Default(), configProvider)
+			user, authErr, resp := auth.Authenticate(req)
 
 			if tc.wantError.status != 0 {
 				// Expect an error case
