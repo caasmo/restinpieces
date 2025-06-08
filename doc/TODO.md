@@ -1,5 +1,14 @@
 ### TODOs
 
+- refactor methods
+    type App struct {
+        authenticator Authenticator
+            validator     Validator
+
+    - split app Split when:
+        - App struct has > 15-20 dependencies
+        - Clear domain boundaries emerge
+        - Handlers use < 30% of available dependencies
 - request resource rate limiting 
         - user id/ip, where to put the middleware
             - if userid, we can not put it in prerouter, as of now auth is even in each handler
