@@ -124,6 +124,10 @@ func (a *App) SetAuthenticator(auth Authenticator) {
 	a.authenticator = auth
 }
 
+func (a *App) Auth() Authenticator {
+	return a.authenticator
+}
+
 func (a *App) SetConfigProvider(provider *config.Provider) {
 	a.configProvider = provider
 }
