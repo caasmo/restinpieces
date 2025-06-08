@@ -20,7 +20,7 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Authenticate the user using the token from the request
-	user, err, authResp := a.Authenticate(r)
+	user, err, authResp := a.Auth().Authenticate(r)
 	if err != nil {
 		WriteJsonError(w, authResp)
 		return
