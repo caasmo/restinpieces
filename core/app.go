@@ -34,6 +34,7 @@ type App struct {
 	// The implementation uses age encryption with keys from ageKeyPath.
 	configStore config.SecureStore
 	notifier    notify.Notifier
+	authenticator Authenticator
 }
 
 // ServeHTTP method removed as App no longer acts as the primary handler
@@ -116,6 +117,11 @@ func (a *App) Notifier() notify.Notifier {
 
 func (a *App) SetNotifier(n notify.Notifier) {
 	a.notifier = n
+}
+
+// SetAuthenticator sets the authenticator implementation
+func (a *App) SetAuthenticator(auth Authenticator) {
+	a.authenticator = auth
 }
 
 func (a *App) SetConfigProvider(provider *config.Provider) {
