@@ -22,9 +22,9 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	// Require authentication
-	user, _, resp := a.Authenticate(r)
-	if user == nil {
-		WriteJsonError(w, resp)
+	user, err, authResp := a.Auth().Authenticate(r)
+	if err != nil {
+		WriteJsonError(w, authResp)
 		return
 	}
 
