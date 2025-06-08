@@ -65,7 +65,7 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 				configProvider: configProvider,
 			}
 
-			user, authErr, resp := a.Authenticate(req)
+			user, authErr, resp := a.Auth().Authenticate(req)
 
 			// Assert that user is nil for these error cases
 			if user != nil {
@@ -210,8 +210,8 @@ func TestAuthenticateToken(t *testing.T) {
 				configProvider: configProvider,
 			}
 
-			// Directly call the Authenticate method
-			user, authErr, resp := a.Authenticate(req)
+			// Call Authenticate via the Auth() method
+			user, authErr, resp := a.Auth().Authenticate(req)
 
 			if tc.wantError.status != 0 {
 				// Expect an error case
