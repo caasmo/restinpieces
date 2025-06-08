@@ -67,6 +67,11 @@ func NewApp(opts ...Option) (*App, error) {
 
 	a.configStore = ss
 
+	// Initialize default authenticator if none was provided
+	if a.authenticator == nil {
+		a.authenticator = NewDefaultAuthenticator(a.dbAuth, a.logger, a.configProvider)
+	}
+
 	return a, nil
 }
 
