@@ -22,7 +22,7 @@ import (
 // - Email enumeration is prevented by uniform success responses
 // - Email verification check prevents password reset on unverified accounts
 func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
+	if err, resp := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
 		WriteJsonError(w, resp)
 		return
 	}
@@ -112,7 +112,7 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 // Authenticated: No
 // Allowed Mimetype: application/json
 func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.ValidateContentType(r, MimeTypeJSON); err != nil {
+	if err, resp := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
 		WriteJsonError(w, resp)
 		return
 	}
