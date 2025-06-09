@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -123,7 +124,7 @@ func TestRequestVerificationHandlerAuth(t *testing.T) {
 			}
 
 			a := &App{
-				auth: mockAuth,
+				authenticator: mockAuth,
 				configProvider: config.NewProvider(&config.Config{
 					Jwt: config.Jwt{
 						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
