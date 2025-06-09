@@ -157,68 +157,65 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 	testCases := []struct {
 		name       string
 		requestBody string
-		dbSetup    func(*MockDB) // Configures mock DB behavior
+		dbSetup    func(*MockDB)
 		wantStatus int
-		desc       string // Description of test case
 	}{
 		{
-			name: "email exists but user is nil",
-			requestBody: `{"email":"niluser@example.com"}`,
-			dbSetup: func(mockDB *MockDB) {
-				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
-					return nil, nil
-				}
-			},
-			wantStatus: http.StatusNotFound,
-			desc:       "When email exists but GetUserByEmail returns nil user, should return 404",
-		},
-		{
-			name: "email exists but user not verified",
-			requestBody: `{"email":"unverified@example.com"}`,
+			name: "database unique constraint error",
+			requestBody: `{"email":"test@example.com"}`,
 			dbSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
 					return &db.User{
 						ID:       "test123",
-						Email:    "unverified@example.com",
+						Email:    "test@example.com",
 						Verified: false,
 					}, nil
 				}
-			},
-			wantStatus: http.StatusAccepted,
-			desc:       "When email exists and user is not verified, should return 202 Accepted",
-		},
-		{
-			name: "email exists and user is verified",
-			requestBody: `{"email":"verified@example.com"}`,
-			dbSetup: func(mockDB *MockDB) {
-				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
-					return &db.User{
-						ID:       "test456",
-						Email:    "verified@example.com",
-						Verified: true,
-					}, nil
+				mockDB.InsertJobFunc = func(job db.Job) error {
+					return db.ErrConstraintUnique
 				}
 			},
 			wantStatus: http.StatusConflict,
-			desc:       "When email exists and user is already verified, should return 409 Conflict",
 		},
 		{
-			name: "database error",
-			requestBody: `{"email":"error@example.com"}`,
+			name: "database other error",
+			requestBody: `{"email":"test@example.com"}`,
 			dbSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
-					return nil, errors.New("database connection failed")
+					return &db.User{
+						ID:       "test123",
+						Email:    "test@example.com",
+						Verified: false,
+					}, nil
+				}
+				mockDB.InsertJobFunc = func(job db.Job) error {
+					return errors.New("database connection failed")
 				}
 			},
-			wantStatus: http.StatusInternalServerError,
-			desc:       "When database query fails, should return 500 Internal Server Error",
+			wantStatus: http.StatusServiceUnavailable,
+		},
+		{
+			name: "successful job insertion",
+			requestBody: `{"email":"test@example.com"}`,
+			dbSetup: func(mockDB *MockDB) {
+				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					return &db.User{
+						ID:       "test123",
+						Email:    "test@example.com",
+						Verified: false,
+					}, nil
+				}
+				mockDB.InsertJobFunc = func(job db.Job) error {
+					return nil
+				}
+			},
+			wantStatus: http.StatusAccepted,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			reqBody := tc.requestBody
-			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(reqBody))
+			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(tc.requestBody))
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()
@@ -227,7 +224,18 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				tc.dbSetup(mockDB)
 			}
 
+			// Setup mock authenticator to return valid user
+			mockAuth := &MockAuth{
+				AuthenticateFunc: func(r *http.Request) (*db.User, error, jsonResponse) {
+					return &db.User{
+						Email:    "test@example.com",
+						Verified: false,
+					}, nil, jsonResponse{}
+				},
+			}
+
 			a := &App{
+				authenticator: mockAuth,
 				configProvider: config.NewProvider(&config.Config{
 					Jwt: config.Jwt{
 						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
