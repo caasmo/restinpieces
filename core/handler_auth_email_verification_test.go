@@ -234,17 +234,23 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				},
 			}
 
+			// Create test config with rate limits
+			testConfig := &config.Config{
+				Jwt: config.Jwt{
+					AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
+					AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
+				},
+				RateLimits: config.RateLimits{
+					EmailVerificationCooldown: config.Duration{Duration: 5 * time.Minute},
+				},
+			}
+
 			a := &App{
-				authenticator: mockAuth,
-				configProvider: config.NewProvider(&config.Config{
-					Jwt: config.Jwt{
-						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
-						AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
-					},
-				}),
-				dbAuth:   mockDB,
-				dbQueue:  mockDB,
-				dbConfig: mockDB,
+				authenticator:  mockAuth,
+				configProvider: config.NewProvider(testConfig),
+				dbAuth:         mockDB,
+				dbQueue:        mockDB,
+				dbConfig:       mockDB,
 			}
 
 			a.RequestEmailVerificationHandler(rr, req)
