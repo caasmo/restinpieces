@@ -1,7 +1,6 @@
 package core
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
