@@ -155,10 +155,10 @@ func TestRequestVerificationHandlerAuth(t *testing.T) {
 
 func TestRequestVerificationHandlerDatabase(t *testing.T) {
 	testCases := []struct {
-		name       string
+		name        string
 		requestBody string
-		dbSetup    func(*MockDB)
-		wantStatus int
+		dbSetup     func(*MockDB)
+		wantError   jsonResponse
 	}{
 		{
 			name: "database unique constraint error",
@@ -175,7 +175,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 					return db.ErrConstraintUnique
 				}
 			},
-			wantStatus: http.StatusConflict,
+			wantError: errorEmailVerificationAlreadyRequested,
 		},
 		{
 			name: "database other error",
@@ -192,7 +192,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 					return errors.New("database connection failed")
 				}
 			},
-			wantStatus: http.StatusServiceUnavailable,
+			wantError: errorServiceUnavailable,
 		},
 		{
 			name: "successful job insertion",
@@ -209,7 +209,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 					return nil
 				}
 			},
-			wantStatus: http.StatusAccepted,
+			wantError: okVerificationRequested,
 		},
 	}
 
@@ -249,8 +249,20 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 
 			a.RequestEmailVerificationHandler(rr, req)
 
-			if rr.Code != tc.wantStatus {
-				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
+			if rr.Code != tc.wantError.status {
+				t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
+			}
+
+			var gotBody, wantBody map[string]interface{}
+			if err := json.NewDecoder(rr.Body).Decode(&gotBody); err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+			if err := json.Unmarshal(tc.wantError.body, &wantBody); err != nil {
+				t.Fatalf("failed to decode wantError body: %v", err)
+			}
+
+			if gotBody["code"] != wantBody["code"] {
+				t.Errorf("expected error code %q, got %q", wantBody["code"], gotBody["code"])
 			}
 		})
 	}
