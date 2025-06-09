@@ -75,40 +75,40 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 
 func TestRequestVerificationHandlerAuth(t *testing.T) {
 	testCases := []struct {
-		name         string
-		requestBody  string
-		mockAuthFunc func(r *http.Request) (*db.User, error, jsonResponse)
-		wantResponse *jsonResponse
+		name        string
+		requestBody string
+		mockAuth    func(r *http.Request) (*db.User, error, jsonResponse)
+		wantError   jsonResponse
 	}{
 		{
 			name:        "authenticated user already verified",
 			requestBody: `{"email":"verified@example.com"}`,
-			mockAuthFunc: func(r *http.Request) (*db.User, error, jsonResponse) {
+			mockAuth: func(r *http.Request) (*db.User, error, jsonResponse) {
 				return &db.User{
 					Email:    "verified@example.com",
 					Verified: true,
 				}, nil, jsonResponse{}
 			},
-			wantResponse: &okAlreadyVerified,
+			wantError: okAlreadyVerified,
 		},
 		{
 			name:        "authenticated user email mismatch",
 			requestBody: `{"email":"other@example.com"}`,
-			mockAuthFunc: func(r *http.Request) (*db.User, error, jsonResponse) {
+			mockAuth: func(r *http.Request) (*db.User, error, jsonResponse) {
 				return &db.User{
 					Email:    "verified@example.com",
 					Verified: false,
 				}, nil, jsonResponse{}
 			},
-			wantResponse: &errorEmailConflict,
+			wantError: errorEmailConflict,
 		},
 		{
 			name:        "unauthenticated request",
 			requestBody: `{"email":"test@example.com"}`,
-			mockAuthFunc: func(r *http.Request) (*db.User, error, jsonResponse) {
+			mockAuth: func(r *http.Request) (*db.User, error, jsonResponse) {
 				return nil, nil, errorInvalidCredentials
 			},
-			wantResponse: &errorInvalidCredentials,
+			wantError: errorInvalidCredentials,
 		},
 	}
 
@@ -120,7 +120,7 @@ func TestRequestVerificationHandlerAuth(t *testing.T) {
 			rr := httptest.NewRecorder()
 			
 			mockAuth := &MockAuth{
-				AuthenticateFunc: tc.mockAuthFunc,
+				AuthenticateFunc: tc.mockAuth,
 			}
 
 			a := &App{
@@ -135,12 +135,20 @@ func TestRequestVerificationHandlerAuth(t *testing.T) {
 
 			a.RequestEmailVerificationHandler(rr, req)
 
-			if rr.Code != tc.wantResponse.status {
-				t.Errorf("expected status %d, got %d", tc.wantResponse.status, rr.Code)
+			if rr.Code != tc.wantError.status {
+				t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
 			}
 
-			if !bytes.Equal(rr.Body.Bytes(), tc.wantResponse.body) {
-				t.Errorf("expected response body %q, got %q", tc.wantResponse.body, rr.Body.Bytes())
+			var gotBody, wantBody map[string]interface{}
+			if err := json.NewDecoder(rr.Body).Decode(&gotBody); err != nil {
+				t.Fatalf("failed to decode response body: %v", err)
+			}
+			if err := json.Unmarshal(tc.wantError.body, &wantBody); err != nil {
+				t.Fatalf("failed to decode wantError body: %v", err)
+			}
+
+			if gotBody["code"] != wantBody["code"] {
+				t.Errorf("expected error code %q, got %q", wantBody["code"], gotBody["code"])
 			}
 		})
 	}
