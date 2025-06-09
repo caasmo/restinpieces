@@ -91,8 +91,9 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
 	}
 
-	// Setup authenticator
+	// Setup authenticator and validator
 	app.SetAuthenticator(core.NewDefaultAuthenticator(app.DbAuth(), app.Logger(), configProvider))
+	app.SetValidator(core.NewValidator())
 
 	// Setup custom application logic and routes
 	route(cfg, app)

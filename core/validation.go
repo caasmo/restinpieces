@@ -15,8 +15,8 @@ type Validator interface {
 // DefaultValidator implements the Validator interface
 type DefaultValidator struct{}
 
-// NewDefaultValidator creates a new DefaultValidator instance
-func NewDefaultValidator() *DefaultValidator {
+// NewValidator creates a new DefaultValidator instance
+func NewValidator() Validator {
 	return &DefaultValidator{}
 }
 

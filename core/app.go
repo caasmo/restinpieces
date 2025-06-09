@@ -68,9 +68,6 @@ func NewApp(opts ...Option) (*App, error) {
 
 	a.configStore = ss
 
-	// Initialize default validator
-	a.validator = NewDefaultValidator()
-
 	return a, nil
 }
 
