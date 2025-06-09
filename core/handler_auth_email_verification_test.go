@@ -36,7 +36,7 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 		},
 		{
 			name:      "invalid JSON",
-			requestBody: `{"email": invalid}`,
+			requestBody: `{"email": invalid`,
 			wantError: errorInvalidRequest,
 		},
 	}
