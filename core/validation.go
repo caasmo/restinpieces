@@ -8,8 +8,8 @@ import (
 
 // Validator defines an interface for request validation operations
 type Validator interface {
-	// ValidateContentType checks if the request's Content-Type matches the allowed type
-	ValidateContentType(r *http.Request, allowedType string) (error, jsonResponse)
+	// ContentType checks if the request's Content-Type matches the allowed type
+	ContentType(r *http.Request, allowedType string) (error, jsonResponse)
 }
 
 // DefaultValidator implements the Validator interface
@@ -20,12 +20,12 @@ func NewDefaultValidator() *DefaultValidator {
 	return &DefaultValidator{}
 }
 
-// ValidateContentType checks if the request's Content-Type matches the allowed type.
+// ContentType checks if the request's Content-Type matches the allowed type.
 // Returns:
 // - error (always "Invalid content type" for security)
 // - precomputed jsonResponse for error cases
 // Uses http.StatusUnsupportedMediaType (415) for invalid content types as per HTTP spec.
-func (v *DefaultValidator) ValidateContentType(r *http.Request, allowedType string) (error, jsonResponse) {
+func (v *DefaultValidator) ContentType(r *http.Request, allowedType string) (error, jsonResponse) {
 	errInvalidType := errors.New("Invalid content type")
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "" {
