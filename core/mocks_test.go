@@ -133,6 +133,20 @@ func (m *MockDB) InsertConfig(scope string, contentData []byte, format string, d
 
 // --- DbLifecycle methods removed ---
 
+// MockAuthenticator implements the Authenticator interface for testing
+type MockAuthenticator struct {
+	// AuthenticateFunc allows customizing the authentication behavior
+	AuthenticateFunc func(r *http.Request) (*db.User, error, jsonResponse)
+}
+
+func (m *MockAuthenticator) Authenticate(r *http.Request) (*db.User, error, jsonResponse) {
+	if m.AuthenticateFunc != nil {
+		return m.AuthenticateFunc(r)
+	}
+	// Default: Return nil user with no error (unauthenticated)
+	return nil, nil, jsonResponse{}
+}
+
 // MockRouter implements router.Router interface for testing
 type MockRouter struct{}
 
