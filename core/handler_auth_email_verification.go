@@ -21,19 +21,6 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// Require authentication
-	user, _, resp := a.Auth().Authenticate(r)
-	if user == nil {
-		WriteJsonError(w, resp)
-		return
-	}
-
-	// Check if user is already verified
-	if user.Verified {
-		WriteJsonOk(w, okAlreadyVerified)
-		return
-	}
-
 	var req struct {
 		Email string `json:"email"`
 	}
@@ -50,6 +37,20 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	}
 	if err := ValidateEmail(req.Email); err != nil {
 		WriteJsonError(w, errorInvalidRequest)
+		return
+	}
+
+
+	// Require authentication
+	user, _, resp := a.Auth().Authenticate(r)
+	if user == nil {
+		WriteJsonError(w, resp)
+		return
+	}
+
+	// Check if user is already verified
+	if user.Verified {
+		WriteJsonOk(w, okAlreadyVerified)
 		return
 	}
 
