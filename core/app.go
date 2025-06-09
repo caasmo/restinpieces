@@ -35,6 +35,7 @@ type App struct {
 	configStore config.SecureStore
 	notifier    notify.Notifier
 	authenticator Authenticator
+	validator    Validator
 }
 
 // ServeHTTP method removed as App no longer acts as the primary handler
@@ -66,6 +67,9 @@ func NewApp(opts ...Option) (*App, error) {
 	}
 
 	a.configStore = ss
+
+	// Initialize default validator
+	a.validator = NewDefaultValidator()
 
 	return a, nil
 }
@@ -130,4 +134,14 @@ func (a *App) Auth() Authenticator {
 
 func (a *App) SetConfigProvider(provider *config.Provider) {
 	a.configProvider = provider
+}
+
+// SetValidator sets the validator implementation
+func (a *App) SetValidator(v Validator) {
+	a.validator = v
+}
+
+// Validator returns the validator instance
+func (a *App) Validator() Validator {
+	return a.validator
 }
