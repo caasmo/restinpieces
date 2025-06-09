@@ -72,6 +72,79 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 	}
 }
 
+func TestRequestVerificationHandlerAuth(t *testing.T) {
+	testCases := []struct {
+		name         string
+		requestBody  string
+		mockAuthFunc func(r *http.Request) (*db.User, error, jsonResponse)
+		wantResponse *jsonResponse
+	}{
+		{
+			name:        "authenticated user already verified",
+			requestBody: `{"email":"verified@example.com"}`,
+			mockAuthFunc: func(r *http.Request) (*db.User, error, jsonResponse) {
+				return &db.User{
+					Email:    "verified@example.com",
+					Verified: true,
+				}, nil, jsonResponse{}
+			},
+			wantResponse: &okAlreadyVerified,
+		},
+		{
+			name:        "authenticated user email mismatch",
+			requestBody: `{"email":"other@example.com"}`,
+			mockAuthFunc: func(r *http.Request) (*db.User, error, jsonResponse) {
+				return &db.User{
+					Email:    "verified@example.com",
+					Verified: false,
+				}, nil, jsonResponse{}
+			},
+			wantResponse: &errorEmailConflict,
+		},
+		{
+			name:        "unauthenticated request",
+			requestBody: `{"email":"test@example.com"}`,
+			mockAuthFunc: func(r *http.Request) (*db.User, error, jsonResponse) {
+				return nil, nil, errorInvalidCredentials
+			},
+			wantResponse: &errorInvalidCredentials,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest("POST", "/request-verification", strings.NewReader(tc.requestBody))
+			req.Header.Set("Content-Type", "application/json")
+
+			rr := httptest.NewRecorder()
+			
+			mockAuth := &MockAuth{
+				AuthenticateFunc: tc.mockAuthFunc,
+			}
+
+			a := &App{
+				auth: mockAuth,
+				configProvider: config.NewProvider(&config.Config{
+					Jwt: config.Jwt{
+						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
+						AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
+					},
+				}),
+			}
+
+			a.RequestEmailVerificationHandler(rr, req)
+
+			if rr.Code != tc.wantResponse.status {
+				t.Errorf("expected status %d, got %d", tc.wantResponse.status, rr.Code)
+			}
+
+			if !bytes.Equal(rr.Body.Bytes(), tc.wantResponse.body) {
+				t.Errorf("expected response body %q, got %q", tc.wantResponse.body, rr.Body.Bytes())
+			}
+		})
+	}
+}
+
 func TestRequestVerificationHandlerDatabase(t *testing.T) {
 	testCases := []struct {
 		name       string
