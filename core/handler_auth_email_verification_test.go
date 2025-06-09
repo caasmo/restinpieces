@@ -48,14 +48,7 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()
-			a := &App{
-				configProvider: config.NewProvider(&config.Config{
-					Jwt: config.Jwt{
-						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
-						AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
-					},
-				}),
-			}
+			a := &App{}
 
 			a.RequestEmailVerificationHandler(rr, req)
 

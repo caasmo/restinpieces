@@ -21,7 +21,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-    // check first request
+    // validate request first
 	var req struct {
 		Email string `json:"email"`
 	}
@@ -40,7 +40,6 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
-
 
 	// Require authentication
 	user, _, resp := a.Auth().Authenticate(r)
