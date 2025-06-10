@@ -42,7 +42,7 @@ func TestValidateClaimUserID(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateClaimUserID(tc.claims)
+			err := validateClaimUserID(tc.claims[ClaimUserID])
 			if !errors.Is(err, tc.wantError) {
 				t.Errorf("ValidateClaimUserID() error = %v, want %v", err, tc.wantError)
 			}
@@ -91,11 +91,10 @@ func TestValidateClaimIssuedAt(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateClaimIssuedAt(tc.claims)
+			err := validateClaimIssuedAt(tc.claims[ClaimIssuedAt])
 			if !errors.Is(err, tc.wantError) {
 				t.Errorf("ValidateClaimIssuedAt() error = %v, want %v", err, tc.wantError)
 			}
 		})
 	}
 }
-
