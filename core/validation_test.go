@@ -53,7 +53,7 @@ func TestContentTypeValidation(t *testing.T) {
 				req.Header.Set("Content-Type", tc.contentType)
 			}
 
-			err, resp := validator.ContentType(req, "application/json")
+			err, resp := validator.ContentType(req, tc.allowedType)
 
 			if tc.wantError.status == 0 {
 				// Expect success case
