@@ -37,6 +37,7 @@ func (a *App) IsBlocked(ip string) bool {
 	return false
 }
 
+// TODO move to middleware 
 // BlockIP adds an IP to the blocklist in current and next time bucket with adjusted TTL
 func (a *App) BlockIP(ip string) error {
 	now := time.Now()
