@@ -75,7 +75,7 @@ func TestParseInvalidToken(t *testing.T) {
 
 func TestCreateWithInvalidSecret(t *testing.T) {
 	claims := jwt.MapClaims{"user_id": "user123"}
-	_, err := NewJwt(claims, nil, 15*time.Minute) // Corrected: removed one '_'
+	_, err := NewJwt(claims, nil, 15*time.Minute)
 	if !errors.Is(err, ErrJwtInvalidSecretLength) {
 		t.Errorf("expected ErrInvalidSecretLength, got %v", err)
 	}
@@ -183,7 +183,7 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			key1, err := NewJwtSigningKeyWithCredentials(tc.email, tc.password, validSecret)
+			key1, err := NewJwtSigningKeyWithCredentials(tc.email, tc.password, string(validSecret))
 			if !errors.Is(err, tc.wantError) {
 				t.Fatalf("NewJwtSigningKeyWithCredentials() error = %v, want %v", err, tc.wantError)
 			}
@@ -193,7 +193,7 @@ func TestNewJwtSigningKeyWithCredentials(t *testing.T) {
 			}
 
 			// Verify deterministic output
-			key2, err := NewJwtSigningKeyWithCredentials(tc.email, tc.password, validSecret)
+			key2, err := NewJwtSigningKeyWithCredentials(tc.email, tc.password, string(validSecret))
 			if err != nil {
 				t.Fatalf("Second call failed unexpectedly: %v", err)
 			}
@@ -240,7 +240,7 @@ func TestNewJwtSigningKeyWithCredentialsErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := NewJwtSigningKeyWithCredentials(tt.email, tt.password, tt.secret)
+			_, err := NewJwtSigningKeyWithCredentials(tt.email, tt.password, string(tt.secret))
 			if !errors.Is(err, tt.wantError) {
 				t.Errorf("NewJwtSigningKeyWithCredentials() error = %v, want %v", err, tt.wantError)
 			}
