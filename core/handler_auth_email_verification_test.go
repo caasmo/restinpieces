@@ -48,7 +48,9 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()
-			a := &App{}
+			a := &App{
+				validator: &DefaultValidator{},
+			}
 
 			a.RequestEmailVerificationHandler(rr, req)
 
@@ -251,6 +253,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				dbAuth:         mockDB,
 				dbQueue:        mockDB,
 				dbConfig:       mockDB,
+				validator:      &DefaultValidator{},
 			}
 
 			a.RequestEmailVerificationHandler(rr, req)
