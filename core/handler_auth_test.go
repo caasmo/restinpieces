@@ -12,13 +12,6 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-type MockValidator struct {
-	ContentTypeFunc func(r *http.Request, allowedType string) (error, jsonResponse)
-}
-
-func (m *MockValidator) ContentType(r *http.Request, allowedType string) (error, jsonResponse) {
-	return m.ContentTypeFunc(r, allowedType)
-}
 
 
 

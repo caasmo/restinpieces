@@ -147,6 +147,15 @@ func (m *MockAuth) Authenticate(r *http.Request) (*db.User, error, jsonResponse)
 	return nil, nil, jsonResponse{}
 }
 
+// MockValidator implements the Validator interface for testing
+type MockValidator struct {
+	ContentTypeFunc func(r *http.Request, allowedType string) (error, jsonResponse)
+}
+
+func (m *MockValidator) ContentType(r *http.Request, allowedType string) (error, jsonResponse) {
+	return m.ContentTypeFunc(r, allowedType)
+}
+
 // MockRouter implements router.Router interface for testing
 type MockRouter struct{}
 
