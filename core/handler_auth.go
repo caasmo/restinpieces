@@ -37,7 +37,6 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 		WriteJsonError(w, errorTokenGeneration)
 		return
 	}
-	a.Logger().Debug("New token generated", "token_length", len(newToken))
 
 	// Return standardized authentication response
 	writeAuthResponse(w, newToken, user)
