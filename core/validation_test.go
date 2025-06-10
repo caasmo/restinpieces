@@ -7,39 +7,53 @@ import (
 )
 
 func TestContentTypeValidation(t *testing.T) {
+	const (
+		contentTypeJSON            = "application/json"
+		contentTypeJSONWithCharset = "application/json; charset=utf-8"
+		contentTypeJSONWithParams  = "application/json; charset=utf-8; version=1"
+		contentTypePlainText       = "text/plain"
+	)
+
 	testCases := []struct {
-		name        string
-		contentType string
-		wantError   jsonResponse
+		name         string
+		contentType  string
+		allowedType  string
+		wantError    jsonResponse
 	}{
 		{
 			name:        "no content-type header",
 			contentType: "",
+			allowedType: contentTypeJSON,
 			wantError:   errorInvalidContentType,
 		},
 		{
 			name:        "empty content-type value",
 			contentType: "",
+			allowedType: contentTypeJSON,
 			wantError:   errorInvalidContentType,
 		},
 		{
 			name:        "valid json content-type",
-			contentType: "application/json",
+			contentType: contentTypeJSON,
+			allowedType: contentTypeJSON,
 			wantError:   jsonResponse{},
 		},
 		{
 			name:        "json with charset",
-			contentType: "application/json; charset=utf-8",
+			contentType: contentTypeJSONWithCharset,
+			allowedType: contentTypeJSON,
 			wantError:   jsonResponse{},
 		},
 		{
 			name:        "json with extra parameters",
-			contentType: "application/json; charset=utf-8; version=1",
+			contentType: contentTypeJSONWithParams,
+			allowedType: contentTypeJSON,
 			wantError:   jsonResponse{},
 		},
 		{
 			name:        "invalid content-type",
-			contentType: "text/plain",
+			contentType: contentTypePlainText,
+			allowedType: contentTypeJSON,
 			wantError:   errorInvalidContentType,
 		},
 	}
