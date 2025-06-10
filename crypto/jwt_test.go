@@ -75,7 +75,7 @@ func TestParseInvalidToken(t *testing.T) {
 
 func TestCreateWithInvalidSecret(t *testing.T) {
 	claims := jwt.MapClaims{"user_id": "user123"}
-	_, _, err := NewJwt(claims, nil, 15*time.Minute)
+	_, err := NewJwt(claims, nil, 15*time.Minute) // Corrected: removed one '_'
 	if !errors.Is(err, ErrJwtInvalidSecretLength) {
 		t.Errorf("expected ErrInvalidSecretLength, got %v", err)
 	}
