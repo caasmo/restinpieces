@@ -132,6 +132,7 @@ func TestRequestVerificationHandlerAuth(t *testing.T) {
 						AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
 					},
 				}),
+				validator: &DefaultValidator{},
 			}
 
 			a.RequestEmailVerificationHandler(rr, req)
