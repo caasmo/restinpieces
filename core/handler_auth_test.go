@@ -66,8 +66,8 @@ func TestRefreshAuthHandler(t *testing.T) {
 
 			// Create app with test config
 			a := &App{
-				auth:      mockAuth,
-				validator: mockValidator,
+				authenticator: mockAuth,
+				validator:    mockValidator,
 				configProvider: config.NewProvider(&config.Config{
 					Jwt: config.Jwt{
 						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
