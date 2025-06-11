@@ -21,6 +21,7 @@ func TestRefreshAuthHandlerValid(t *testing.T) {
 
 	testCases := []struct {
 		name      string
+		wantError jsonResponse
 		authSetup func(*MockAuth)
 		desc      string
 	}{
