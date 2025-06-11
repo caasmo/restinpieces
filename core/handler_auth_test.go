@@ -12,9 +12,6 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-
-
-
 func TestRefreshAuthHandler(t *testing.T) {
 	testUser := &db.User{
 		ID:       "testuser123",
@@ -23,10 +20,10 @@ func TestRefreshAuthHandler(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		wantError  jsonResponse
-		authSetup  func(*MockAuth)
-		desc       string
+		name      string
+		wantError jsonResponse
+		authSetup func(*MockAuth)
+		desc      string
 	}{
 		{
 			name:      "valid token refresh",
@@ -52,7 +49,6 @@ func TestRefreshAuthHandler(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Setup mocks
 			mockAuth := &MockAuth{}
 			if tc.authSetup != nil {
 				tc.authSetup(mockAuth)
@@ -64,10 +60,9 @@ func TestRefreshAuthHandler(t *testing.T) {
 				},
 			}
 
-			// Create app with test config
 			a := &App{
 				authenticator: mockAuth,
-				validator:    mockValidator,
+				validator:     mockValidator,
 				configProvider: config.NewProvider(&config.Config{
 					Jwt: config.Jwt{
 						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
@@ -76,14 +71,11 @@ func TestRefreshAuthHandler(t *testing.T) {
 				}),
 			}
 
-			// Setup request
 			req := httptest.NewRequest("POST", "/auth-refresh", nil)
 			rr := httptest.NewRecorder()
 
-			// Execute handler
 			a.RefreshAuthHandler(rr, req)
 
-			// Check for expected error response
 			if tc.wantError.status != 0 {
 				var resp JsonBasic
 				if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
@@ -94,7 +86,6 @@ func TestRefreshAuthHandler(t *testing.T) {
 					t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
 				}
 
-				// Compare with expected error code
 				var wantResp JsonBasic
 				if err := json.Unmarshal(tc.wantError.body, &wantResp); err != nil {
 					t.Fatalf("failed to unmarshal wantError: %v", err)
@@ -104,21 +95,32 @@ func TestRefreshAuthHandler(t *testing.T) {
 					t.Errorf("expected error code %q, got %q", wantResp.Code, resp.Code)
 				}
 			} else {
-				// Verify successful token response
-				var body map[string]interface{}
-				if err := json.NewDecoder(rr.Body).Decode(&body); err != nil {
+				var resp JsonWithData
+				if err := json.NewDecoder(rr.Body).Decode(&resp); err != nil {
 					t.Fatalf("failed to decode response body: %v", err)
 				}
 
-				requiredFields := []string{"access_token", "token_type", "expires_in"}
+				if resp.Status != http.StatusOK {
+					t.Errorf("expected status %d, got %d", http.StatusOK, resp.Status)
+				}
+				if resp.Code != CodeOkAuthentication {
+					t.Errorf("expected code %q, got %q", CodeOkAuthentication, resp.Code)
+				}
+
+				authData, ok := resp.Data.(map[string]interface{})
+				if !ok {
+					t.Fatalf("expected Data to be an AuthData map, got %T", resp.Data)
+				}
+
+				requiredFields := []string{"access_token", "token_type", "record"}
 				for _, field := range requiredFields {
-					if _, ok := body[field]; !ok {
-						t.Errorf("response missing required field: %s", field)
+					if _, ok := authData[field]; !ok {
+						t.Errorf("response data missing required field: %s", field)
 					}
 				}
 
-				if body["token_type"] != "Bearer" {
-					t.Errorf("expected token_type Bearer, got %s", body["token_type"])
+				if authData["token_type"] != "Bearer" {
+					t.Errorf("expected token_type Bearer, got %s", authData["token_type"])
 				}
 			}
 		})
