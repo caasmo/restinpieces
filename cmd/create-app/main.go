@@ -8,14 +8,11 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"regexp"
-	"time"
 
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/crypto"
 	zdb "github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite/sqlitex"
