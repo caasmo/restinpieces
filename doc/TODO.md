@@ -1,53 +1,14 @@
 ### TODOs
 
-- refactor methods
-    type App struct {
-        authenticator Authenticator
-            validator     Validator
-
-    - split app Split when:
-        - App struct has > 15-20 dependencies
-        - Clear domain boundaries emerge
-        - Handlers use < 30% of available dependencies
-- request resource rate limiting 
-        - user id/ip, where to put the middleware
-            - if userid, we can not put it in prerouter, as of now auth is even in each handler
-            - we have a auth method, user can make a easy midleware of it in its endpoints.
-            - we can even provide the middleware for the user to use 
-            - leaning to separate user id and ip rate limiting
-            - ip rate limiting, user id rate limiting
-                - we make method isUserRateLimited to be used in handler, or in a simple middleware.
-                - isIpRateLImited
-            - or remove ip rate limiting enterely -> we already have a dinamic blocking, 
-                - we can extend the existing blokcing algo.
-                    - the sketch gives a number request per bucket -> r/s
-                        - configuration has rate limitin for entire site
-            - for user id, the possibilty of implement with db lookup remains, that is for pay
-              for request scenarios, not protection
-              the endpoint can take ip or user id. each can have different rules.
-    - regular use of paid resources
-    - per user request
-    - batch
-    - Requests per minute (RPM)
-    - Requests per day (RPD)
-    - middleware generates labels based on its request 
-        - upon initlaization it can have labels indexes based on the rules from config
-            - ex rule for presence of header H
-                - labels have structure ex "H:X-my-app", default paths
-            - middleware sees label of rule upon init. 
-                - in request it has to build functions for the label rule, how to fill them
-
-    - it matches the generated labels agaist each rule and 
-    - it checks them in app.Cache for a block
-    - if labels not blocked, it puts the matches rule ids in the channel
-    - the rules ids can be a conccatenation of label+duration+auth
-    - if channel full, block or ignore, based on conf
-    - daemon reads from the channel
-        - it deals with fixed windown, counters
-        - because sequential, maps, other structure does not have lock 
-        - a map of map[ruleid]map[rulewindowinsecondsbucket]map[ip/userid]counter
-        - a tick remove expired bucket indexes, only the last remains.
-        - if counter is max, put in app.Cache the label   
+- logs db, is zombiezen harcoded, is this right?
+    - at least document.
+    - only method is writeLogBatch, with better name it can go to a interface
+        - can the user use external driver for the logger?
+- dbPath:
+    - the log db should be in a main directory
+    - the rip.db shoudl be also in the main 
+    - the name of the main db file is harcoded, bacuase we need it for accessing the config
+    - dblog also needs the directory to put there its harcoded file.
 - maintenance: mimetype decides output
 - https://github.com/jellydator/ttlcache
 - simple ttl map instead of ristretto  https://stackoverflow.com/questions/25484122/map-with-ttl-option-in-go
@@ -134,6 +95,45 @@
     - https://github.com/privatenumber/minification-benchmarks?tab=readme-ov-file#%EF%B8%8F-minifier-showdown
 
 ### Maybe
+- request resource rate limiting 
+        - user id/ip, where to put the middleware
+            - if userid, we can not put it in prerouter, as of now auth is even in each handler
+            - we have a auth method, user can make a easy midleware of it in its endpoints.
+            - we can even provide the middleware for the user to use 
+            - leaning to separate user id and ip rate limiting
+            - ip rate limiting, user id rate limiting
+                - we make method isUserRateLimited to be used in handler, or in a simple middleware.
+                - isIpRateLImited
+            - or remove ip rate limiting enterely -> we already have a dinamic blocking, 
+                - we can extend the existing blokcing algo.
+                    - the sketch gives a number request per bucket -> r/s
+                        - configuration has rate limitin for entire site
+            - for user id, the possibilty of implement with db lookup remains, that is for pay
+              for request scenarios, not protection
+              the endpoint can take ip or user id. each can have different rules.
+    - regular use of paid resources
+    - per user request
+    - batch
+    - Requests per minute (RPM)
+    - Requests per day (RPD)
+    - middleware generates labels based on its request 
+        - upon initlaization it can have labels indexes based on the rules from config
+            - ex rule for presence of header H
+                - labels have structure ex "H:X-my-app", default paths
+            - middleware sees label of rule upon init. 
+                - in request it has to build functions for the label rule, how to fill them
+
+    - it matches the generated labels agaist each rule and 
+    - it checks them in app.Cache for a block
+    - if labels not blocked, it puts the matches rule ids in the channel
+    - the rules ids can be a conccatenation of label+duration+auth
+    - if channel full, block or ignore, based on conf
+    - daemon reads from the channel
+        - it deals with fixed windown, counters
+        - because sequential, maps, other structure does not have lock 
+        - a map of map[ruleid]map[rulewindowinsecondsbucket]map[ip/userid]counter
+        - a tick remove expired bucket indexes, only the last remains.
+        - if counter is max, put in app.Cache the label   
 - superuser static Authorization: Bearer <token> header. Your middleware checks for this. 
     - in some routes, static, configurable not dependen on user email.
     - leverage existing jwt functions and wrap 
@@ -181,6 +181,15 @@
 
 ### done
 
+- refactor methods
+    type App struct {
+        authenticator Authenticator
+            validator     Validator
+
+    - split app Split when:
+        - App struct has > 15-20 dependencies
+        - Clear domain boundaries emerge
+        - Handlers use < 30% of available dependencies
 - basic metrics 
 	- https://pkg.go.dev/runtime/metrics
     - go ones
