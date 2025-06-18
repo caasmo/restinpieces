@@ -1,14 +1,37 @@
 ### TODOs
 
-- logs db, is zombiezen harcoded, is this right?
+- logs db, zombiezen harcoded, is this right?
+    - => we make interface but we do not allow the user to choose driver for the log.
+            we document that
     - at least document.
     - only method is writeLogBatch, with better name it can go to a interface
         - can the user use external driver for the logger?
+    - -> this is internal, there is no benefit at this time for allowing the
+      user to have driver there, just zombiezen  
 - dbPath:
+    - => we keep dppath as pointer to main app file 
+        - we can query the db PRAGMA database_list; to get the file
+        - app receives only pool 
+        - we can query on initialization and put the thing in config or app
+        - or just in init we query for the file ad hoc 
+            - in the case of dblogs, if not dblog file in config, get PRAGMA and put in the same dir
+            - zombiezen has function Dir 
+            - We DO put that as a db interface.
+                - implmentator must comply but app does not have the?
+                - if you choose crashaw?
+    - still dir is better than file, more dbs can come
     - the log db should be in a main directory
     - the rip.db shoudl be also in the main 
-    - the name of the main db file is harcoded, bacuase we need it for accessing the config
+    - the name of the main db file is harcoded, because we need it for accessing the config
     - dblog also needs the directory to put there its harcoded file.
+    - user initilizes the pool and passes pool and additionally dir
+    - why should the logs be in the same dir as the man app db?
+        - it will grow probably more than other tables, why do not have elsewhre
+        - if no config, we could  
+    -  what pragma_database_list Really Shows It's answering: "What databases can I query from this connection right now?"- 
+        SELECT substr(file, instr(file, '/') + 1) 
+        FROM pragma_database_list 
+        WHERE name = 'main' AND file NOT LIKE ':memory:' AND file != '';
 - maintenance: mimetype decides output
 - https://github.com/jellydator/ttlcache
 - simple ttl map instead of ristretto  https://stackoverflow.com/questions/25484122/map-with-ttl-option-in-go

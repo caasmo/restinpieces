@@ -86,6 +86,7 @@ func New(opts ...core.Option) (*core.App, *server.Server, error) {
 	app.SetConfigProvider(configProvider)
 
 	// Setup default logger if non of user
+    // TODO put the check withUserLogger here
 	logDaemon, err := SetupDefaultLogger(app, configProvider, withUserLogger)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
