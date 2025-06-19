@@ -1,10 +1,9 @@
 ### TODOs
 
 - logs db, zombiezen harcoded, is this right?
-    - => we make interface but we do not allow the user to choose driver for the log.
+    - => we make interface but we do not allow the user to choose for the moment driver for the log.
             we document that
-    - at least document.
-    - only method is writeLogBatch, with better name it can go to a interface
+    - only method is writeLogBatch, with better InsertLogs name it can go to a interface
         - can the user use external driver for the logger?
     - -> this is internal, there is no benefit at this time for allowing the
       user to have driver there, just zombiezen  
