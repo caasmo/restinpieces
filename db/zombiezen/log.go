@@ -27,9 +27,9 @@ func NewConn(dbPath string) (*sqlite.Conn, error) {
 	return conn, nil
 }
 
-// WriteLogBatch writes a batch of log entries to the SQLite database.
+// InsertLogs writes a batch of log entries to the SQLite database.
 // It uses an explicit transaction that will be rolled back on any error.
-func WriteLogBatch(conn *sqlite.Conn, batch []db.Log) error {
+func InsertLogs(conn *sqlite.Conn, batch []db.Log) error {
 	if len(batch) == 0 {
 		return nil
 	}

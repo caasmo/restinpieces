@@ -130,7 +130,7 @@ func (ld *Daemon) processLogs() {
 		if len(batch) == 0 {
 			return
 		}
-		if err := zombiezen.WriteLogBatch(ld.db, batch); err != nil {
+		if err := zombiezen.InsertLogs(ld.db, batch); err != nil {
 			ld.opLogger.Error("Failed to write log batch to DB", "error", err, "batch_size", len(batch), "reason", reason)
 		}
 		batch = batch[:0]
@@ -203,9 +203,9 @@ func (ld *Daemon) processLogs() {
 	}
 }
 
-// WriteLogBatch writes a batch of pre-processed dbLogEntry items to the SQLite database.
-func (ld *Daemon) WriteLogBatch(ctx context.Context, batch []db.Log) error {
-	return zombiezen.WriteLogBatch(ld.db, batch)
+// InsertLogs writes a batch of pre-processed dbLogEntry items to the SQLite database.
+func (ld *Daemon) InsertLogs(ctx context.Context, batch []db.Log) error {
+	return zombiezen.InsertLogs(ld.db, batch)
 }
 
 // convertSlogRecordToMap is primarily used by resolveAndInsertAttr for group attributes.
