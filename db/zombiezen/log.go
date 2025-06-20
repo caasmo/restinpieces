@@ -7,8 +7,14 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-// NewConn creates a new SQLite connection for logging purposes with performance optimizations.
-func NewConn(dbPath string) (*sqlite.Conn, error) {
+// Log represents a connection to the SQLite database for logging purposes.
+type Log struct {
+	conn *sqlite.Conn
+}
+
+// New creates a new SQLite connection for logging purposes with performance optimizations.
+// It returns a pointer to a Log struct.
+func New(dbPath string) (*Log, error) {
 	// Use URI filename with performance pragmas
 	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_synchronous=NORMAL&_busy_timeout=5000&_foreign_keys=off", dbPath)
 
@@ -24,18 +30,18 @@ func NewConn(dbPath string) (*sqlite.Conn, error) {
 	//	return nil, fmt.Errorf("failed to set cache_size: %w", err)
 	//}
 
-	return conn, nil
+	return &Log{conn: conn}, nil
 }
 
-// InsertLogs writes a batch of log entries to the SQLite database.
+// InsertBatch writes a batch of log entries to the SQLite database.
 // It uses an explicit transaction that will be rolled back on any error.
-func InsertLogs(conn *sqlite.Conn, batch []db.Log) error {
+func (l *Log) InsertBatch(batch []db.Log) error {
 	if len(batch) == 0 {
 		return nil
 	}
 
 	// Start immediate transaction for better concurrency control
-	err := sqlitex.Execute(conn, "BEGIN IMMEDIATE;", nil)
+	err := sqlitex.Execute(l.conn, "BEGIN IMMEDIATE;", nil)
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
@@ -43,12 +49,12 @@ func InsertLogs(conn *sqlite.Conn, batch []db.Log) error {
 	// Defer rollback in case we exit early
 	defer func() {
 		if err != nil {
-			_ = sqlitex.Execute(conn, "ROLLBACK;", nil)
+			_ = sqlitex.Execute(l.conn, "ROLLBACK;", nil)
 		}
 	}()
 
 	// Prepare insert statement
-	stmt, err := conn.Prepare("INSERT INTO logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
+	stmt, err := l.conn.Prepare("INSERT INTO logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
@@ -69,9 +75,17 @@ func InsertLogs(conn *sqlite.Conn, batch []db.Log) error {
 	}
 
 	// Commit transaction if all inserts succeeded
-	if err = sqlitex.Execute(conn, "COMMIT;", nil); err != nil {
+	if err = sqlitex.Execute(l.conn, "COMMIT;", nil); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
+	return nil
+}
+
+// Close closes the underlying SQLite connection.
+func (l *Log) Close() error {
+	if l.conn != nil {
+		return l.conn.Close()
+	}
 	return nil
 }
