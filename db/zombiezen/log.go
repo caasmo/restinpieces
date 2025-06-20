@@ -7,6 +7,9 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
+// Verify interface implementation
+var _ db.LogWriter = (*Log)(nil)
+
 // Log represents a connection to the SQLite database for logging purposes.
 type Log struct {
 	conn *sqlite.Conn
