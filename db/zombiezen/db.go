@@ -27,17 +27,3 @@ func New(pool *sqlitex.Pool) (*Db, error) {
 	return &Db{pool: pool}, nil
 }
 
-func (d *Db) InsertWithPool(value int64) {
-	conn, err := d.pool.Take(context.TODO())
-	if err != nil {
-		panic(err) // TODO: Proper error handling
-	}
-	defer d.pool.Put(conn)
-
-	if err := sqlitex.Execute(conn, "INSERT INTO foo(id, value) values(1000000,?)", &sqlitex.ExecOptions{
-		Args: []any{value},
-	}); err != nil {
-		// TODO
-		panic(err)
-	}
-}

@@ -1,5 +1,6 @@
 ### TODOs
 
+- remove config Source and DBPath
 - logs db, zombiezen harcoded, is this right?
     - => we make interface but we do not allow the user to choose for the moment driver for the log.
             we document that
