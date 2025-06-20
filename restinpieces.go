@@ -319,7 +319,7 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUser
 		return nil, fmt.Errorf("logger daemon: database path (LoggerBatch.DbPath) is not configured")
 	}
 
-	logDb, err := zombiezen.NewConn(logDbPath)
+	logDb, err := zombiezen.NewLog(logDbPath)
 	if err != nil {
 		return nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", logDbPath, err)
 	}

@@ -20,7 +20,7 @@ type Daemon struct {
 	name string // Constant name for this daemon type
 	// BatchHandler sends to this channel via the write-end provided by RecordChan().
 	recordChan     chan slog.Record
-	db             *sqlite.Conn
+	db             db.DbLog
 	opLogger       *slog.Logger
 	configProvider *config.Provider
 
@@ -31,7 +31,7 @@ type Daemon struct {
 
 // New creates a new Daemon.
 // It creates a channel for slog.Records and establishes a database connection.
-func New(configProvider *config.Provider, opLogger *slog.Logger, db *sqlite.Conn) (*Daemon, error) {
+func New(configProvider *config.Provider, opLogger *slog.Logger, db db.DbLog) (*Daemon, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cfg := configProvider.Get()
 
@@ -130,7 +130,7 @@ func (ld *Daemon) processLogs() {
 		if len(batch) == 0 {
 			return
 		}
-		if err := zombiezen.InsertLogs(ld.db, batch); err != nil {
+		if err := ld.db.InsertBatch(batch); err != nil {
 			ld.opLogger.Error("Failed to write log batch to DB", "error", err, "batch_size", len(batch), "reason", reason)
 		}
 		batch = batch[:0]
@@ -203,9 +203,9 @@ func (ld *Daemon) processLogs() {
 	}
 }
 
-// InsertLogs writes a batch of pre-processed dbLogEntry items to the SQLite database.
+// InsertLogs writes a batch of pre-processed dbLogEntry items to the database.
 func (ld *Daemon) InsertLogs(ctx context.Context, batch []db.Log) error {
-	return zombiezen.InsertLogs(ld.db, batch)
+	return ld.db.InsertBatch(batch)
 }
 
 // convertSlogRecordToMap is primarily used by resolveAndInsertAttr for group attributes.
