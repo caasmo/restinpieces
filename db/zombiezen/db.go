@@ -1,7 +1,6 @@
 package zombiezen
 
 import (
-	"context"
 	"fmt"
 	"github.com/caasmo/restinpieces/db"
 	"zombiezen.com/go/sqlite/sqlitex"
