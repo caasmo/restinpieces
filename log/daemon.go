@@ -9,8 +9,6 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/db/zombiezen"
-	"zombiezen.com/go/sqlite"
 )
 
 // Daemon consumes slog.Records from a channel and writes them to a DB.
