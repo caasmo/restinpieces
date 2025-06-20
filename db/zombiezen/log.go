@@ -14,7 +14,7 @@ type Log struct {
 
 // New creates a new SQLite connection for logging purposes with performance optimizations.
 // It returns a pointer to a Log struct.
-func New(dbPath string) (*Log, error) {
+func NewLog(dbPath string) (*Log, error) {
 	// Use URI filename with performance pragmas
 	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_synchronous=NORMAL&_busy_timeout=5000&_foreign_keys=off", dbPath)
 
