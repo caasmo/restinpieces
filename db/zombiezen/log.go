@@ -8,7 +8,7 @@ import (
 )
 
 // Verify interface implementation
-var _ db.LogWriter = (*Log)(nil)
+var _ db.LogDB = (*Log)(nil)
 
 // Log represents a connection to the SQLite database for logging purposes.
 type Log struct {
