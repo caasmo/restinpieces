@@ -32,6 +32,8 @@ type DbConfig interface {
 	GetConfig(scope string, generation int) ([]byte, string, error)
 	// InsertConfig inserts a new configuration content blob for a given scope.
 	InsertConfig(scope string, contentData []byte, format string, description string) error
+	// Path returns the filesystem path of the SQLite database file.
+	Path() string
 }
 
 type DbApp interface {

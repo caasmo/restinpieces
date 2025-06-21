@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time" // Add time import
+	"time"
 
 	"github.com/caasmo/restinpieces/db" // Import db for TimeFormat
 	"zombiezen.com/go/sqlite"
@@ -83,4 +83,29 @@ func (d *Db) InsertConfig(scope string, contentData []byte, format string, descr
 	}
 
 	return nil
+}
+
+// Path returns the filesystem path of the SQLite database file by querying PRAGMA database_list.
+// Returns empty string if the path cannot be determined.
+func (d *Db) Path() string {
+	conn, err := d.pool.Take(context.Background())
+	if err != nil {
+		return ""
+	}
+	defer d.pool.Put(conn)
+
+	var path string
+	err = sqlitex.Execute(conn, "PRAGMA database_list;", &sqlitex.ExecOptions{
+		ResultFunc: func(stmt *sqlite.Stmt) error {
+			if stmt.GetText("name") == "main" {
+				path = stmt.GetText("file")
+			}
+			return nil
+		},
+	})
+
+	if err != nil {
+		return ""
+	}
+	return path
 }
