@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/config"
@@ -314,11 +315,12 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUser
 	}
 
 	cfg := configProvider.Get()
-	logDbPath := cfg.Log.Batch.DbPath
-	if logDbPath == "" {
-		return nil, fmt.Errorf("logger daemon: database path (LoggerBatch.DbPath) is not configured")
+	logDbPath, err := getLogDbPath(cfg, app.DbConfig())
+	if err != nil {
+		return nil, fmt.Errorf("logger daemon: %w", err)
 	}
 
+	app.Logger().Info("Using log database", "path", logDbPath)
 	logDb, err := zombiezen.NewLog(logDbPath)
 	if err != nil {
 		return nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", logDbPath, err)
@@ -340,6 +342,22 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUser
 	app.SetLogger(slog.New(batchHandler))
 
 	return logDaemon, nil
+}
+
+const defaultLogFilename = "logs.db"
+
+// getLogDbPath returns the path for the log database, either from config or by
+// placing it in the same directory as the main database with default filename.
+func getLogDbPath(cfg *config.Config, dbConfig db.DbConfig) (string, error) {
+	if path := cfg.Log.Batch.DbPath; path != "" {
+		return path, nil
+	}
+
+	mainPath := dbConfig.Path()
+	if mainPath == "" {
+		return "", fmt.Errorf("cannot determine log database path - main database path unavailable")
+	}
+	return filepath.Join(filepath.Dir(mainPath), defaultLogFilename), nil
 }
 
 func SetupDefaultNotifier(cfg *config.Config, app *core.App) error {
