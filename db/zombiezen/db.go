@@ -15,7 +15,6 @@ var (
 	_ db.DbAuth   = (*Db)(nil)
 	_ db.DbQueue  = (*Db)(nil) 
 	_ db.DbConfig = (*Db)(nil)
-	_ db.DbApp    = (*Db)(nil)
 )
 
 // New creates a new Db instance using an existing pool provided by the user.
