@@ -11,9 +11,12 @@ type Db struct {
 }
 
 // Verify interface implementations
-var _ db.DbAuth = (*Db)(nil)
-var _ db.DbQueue = (*Db)(nil)
-var _ db.DbConfig = (*Db)(nil)
+var (
+	_ db.DbAuth   = (*Db)(nil)
+	_ db.DbQueue  = (*Db)(nil) 
+	_ db.DbConfig = (*Db)(nil)
+	_ db.DbApp    = (*Db)(nil)
+)
 
 // New creates a new Db instance using an existing pool provided by the user.
 // Note: The lifecycle of the provided pool (*sqlitex.Pool) is managed externally.
