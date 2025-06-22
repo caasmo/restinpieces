@@ -1,6 +1,9 @@
 ### TODOs
 
 - remove config Source and DBPath
+- maube new inerface with
+    Path
+    DriverName ??
 - logs db, zombiezen harcoded, is this right?
     - => we make interface but we do not allow the user to choose for the moment driver for the log.
             we document that
