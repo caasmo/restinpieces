@@ -30,11 +30,16 @@ import (
 // New creates a new App instance and Server with the provided options and age key file path.
 // It initializes the core application components like database, router, cache first,
 // then loads configuration from the database using the provided age key.
-func New(opts ...core.Option) (*core.App, *server.Server, error) {
-	app, err := core.NewApp(opts...)
-	if err != nil {
-		return nil, nil, err
-	}
+func New(opts ...Option) (*core.App, *server.Server, error) {
+
+    app := &core.App{}
+
+    // Apply all options
+    for _, opt := range opts {
+        opt(app)
+    }
+
+
 
 	// Set up temporary bootstrap logger if none was provided before setting the
 	// default db based one.
