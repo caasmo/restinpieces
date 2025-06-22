@@ -1,9 +1,10 @@
-package core
+package restinpieces
 
 import (
 	"log/slog"
 
 	"github.com/caasmo/restinpieces/cache"
+	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/notify"
 	"github.com/caasmo/restinpieces/router"
@@ -13,7 +14,7 @@ type Option func(*App)
 
 // WithCache sets the cache implementation
 func WithCache(c cache.Cache[string, interface{}]) Option {
-	return func(a *App) {
+	return func(a *core.App) {
 		a.cache = c
 	}
 }
