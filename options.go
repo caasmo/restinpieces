@@ -10,7 +10,7 @@ import (
 	"github.com/caasmo/restinpieces/router"
 )
 
-type Option func(*App)
+type Option func(*core.App)
 
 // WithCache sets the cache implementation
 func WithCache(c cache.Cache[string, interface{}]) Option {
@@ -22,7 +22,7 @@ func WithCache(c cache.Cache[string, interface{}]) Option {
 // WithDbApp sets the application's database implementation.
 // It expects a single concrete type (like *crawshaw.Db) that implements db.DbApp.
 func WithDbApp(dbApp db.DbApp) Option {
-	return func(a *App) {
+	return func(a *core.App) {
 		if dbApp == nil {
 			panic("DbApp cannot be nil")
 		}
@@ -34,28 +34,28 @@ func WithDbApp(dbApp db.DbApp) Option {
 
 // WithRouter sets the router implementation
 func WithRouter(r router.Router) Option {
-	return func(a *App) {
+	return func(a *core.App) {
 		a.router = r
 	}
 }
 
 // WithLogger sets the logger implementation
 func WithLogger(l *slog.Logger) Option {
-	return func(a *App) {
+	return func(a *core.App) {
 		a.logger = l
 	}
 }
 
 // WithAgeKeyPath sets the path to the age identity file
 func WithAgeKeyPath(path string) Option {
-	return func(a *App) {
+	return func(a *core.App) {
 		a.ageKeyPath = path
 	}
 }
 
 // WithNotifier sets the notifier implementation
 func WithNotifier(n notify.Notifier) Option {
-	return func(a *App) {
+	return func(a *core.App) {
 		a.notifier = n
 	}
 }
