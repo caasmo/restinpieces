@@ -158,7 +158,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	srv := server.NewServer(
 		configProvider,
 		preRouterHandler,
-		app.Logger(),
+		init.app.Logger(),
 		reloadFn, // Pass the reload function
 	)
 
