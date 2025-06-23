@@ -197,7 +197,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 	logger.Info(ft.Seed("ResponseRecorder middleware added"))
 
 	// 1. Request Logging Middleware (Added second, runs second)
-	requestLog := prerouter.NewRequestLog(app)
+	requestLog := prerouter.NewRequestLog(i.app)
 	preRouterChain.WithMiddleware(requestLog.Execute)
 	if cfg.Log.Request.Activated {
 		logger.Info(ft.Active("RequestLog middleware active"), "activated", cfg.Log.Request.Activated)
@@ -207,7 +207,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 
 	// 2. BlockIp Middleware
 	if cfg.BlockIp.Enabled {
-		blockIp := prerouter.NewBlockIp(app.Cache(), logger)
+		blockIp := prerouter.NewBlockIp(i.app.Cache(), logger)
 		preRouterChain.WithMiddleware(blockIp.Execute)
 		if cfg.BlockIp.Activated {
 			logger.Info(ft.Active("BlockIp middleware active"), "enabled", cfg.BlockIp.Enabled, "activated", cfg.BlockIp.Activated)
@@ -220,7 +220,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 
 	// 3. Metrics Middleware (only if enabled)
 	if cfg.Metrics.Enabled {
-		metrics := prerouter.NewMetrics(app)
+		metrics := prerouter.NewMetrics(i.app)
 		preRouterChain.WithMiddleware(metrics.Execute)
 		if cfg.Metrics.Activated {
 			logger.Info(ft.Active("Metrics middleware active"), "enabled", cfg.Metrics.Enabled, "activated", cfg.Metrics.Activated)
@@ -232,7 +232,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 	}
 
 	// 4. BlockUaList Middleware
-	blockUaList := prerouter.NewBlockUaList(app)
+	blockUaList := prerouter.NewBlockUaList(i.app)
 	preRouterChain.WithMiddleware(blockUaList.Execute)
 	if cfg.BlockUaList.Activated {
 		logger.Info(ft.Active("BlockUaList middleware active"), "activated", cfg.BlockUaList.Activated)
@@ -246,7 +246,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 	logger.Info(ft.Seed("TLSHeaderSTS middleware added"), "tls_enabled", cfg.Server.EnableTLS)
 
 	// 5. Maintenance Middleware
-	maintenance := prerouter.NewMaintenance(app)
+	maintenance := prerouter.NewMaintenance(i.app)
 	preRouterChain.WithMiddleware(maintenance.Execute)
 	if cfg.Maintenance.Activated {
 		logger.Info(ft.Active("Maintenance middleware active"), "activated", cfg.Maintenance.Activated)
@@ -255,7 +255,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 	}
 
 	// 6. BlockRequestBody Middleware
-	blockRequestBody := prerouter.NewBlockRequestBody(app)
+	blockRequestBody := prerouter.NewBlockRequestBody(i.app)
 	preRouterChain.WithMiddleware(blockRequestBody.Execute)
 	if cfg.BlockRequestBody.Activated {
 		logger.Info(ft.Active("BlockRequestBody middleware active"), "activated", cfg.BlockRequestBody.Activated)
