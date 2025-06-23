@@ -137,7 +137,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	// Setup custom application logic and routes
 	route(cfg, init.app)
 
-	scheduler, err := init.setupScheduler()
+	scheduler, err := init.setupScheduler(configProvider)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -280,13 +280,12 @@ func (i *initializer) setupDefaultRouter() error {
 	return nil
 }
 
-func (i *initializer) setupScheduler() (*scl.Scheduler, error) {
+func (i *initializer) setupScheduler(configProvider *config.Provider) (*scl.Scheduler, error) {
 	ft := log.NewMessageFormatter().WithComponent("scheduler", "🛠️ ")
 	logger := i.app.Logger()
 	logger.Info(ft.Start("Setting up scheduler..."))
 
 	hdls := make(map[string]executor.JobHandler)
-	configProvider := i.app.ConfigProvider()
 	cfg := configProvider.Get()
 
 	// Setup mailer only if SMTP is configured in the current config
