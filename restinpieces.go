@@ -153,7 +153,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	reloadFn := config.Reload(init.app.ConfigStore(), configProvider, init.app.Logger())
 
 	// Initialize the PreRouter chain with internal middleware
-	preRouterHandler := setupPrerouter(init.app)
+	preRouterHandler := init.setupPrerouter()
 
 	srv := server.NewServer(
 		configProvider,
@@ -177,9 +177,9 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 // we allow disable in config, we do not allow adding, the user can put in normal middleware.
 // configure the framework's pre-router features; add your own logic at the route level.
 // Framework handles everything before routing; user handles everything after routing
-func setupPrerouter(app *core.App) http.Handler {
-	logger := app.Logger()
-	cfg := app.Config()
+func (i *initializer) setupPrerouter() http.Handler {
+	logger := i.app.Logger()
+	cfg := i.app.Config()
 	ft := log.NewMessageFormatter().WithComponent("prerouter", "⚙️ ")
 
 	// Start the chain with the application's main router as the base handler.
