@@ -86,7 +86,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 
 	// Setup default cache if none was set via options
 	if init.app.Cache() == nil {
-		if err := SetupDefaultCache(init.app); err != nil {
+		if err := init.setupDefaultCache(); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -324,18 +324,18 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 	},
 }
 
-func SetupDefaultCache(app *core.App) error {
+func (i *initializer) setupDefaultCache() error {
 	ft := log.NewMessageFormatter().WithComponent("cache", "🛠️")
-	app.Logger().Info(ft.Start("Initializing Ristretto cache..."))
+	i.app.Logger().Info(ft.Start("Initializing Ristretto cache..."))
 
 	cacheInstance, err := ristretto.New[any]() // Explicit string keys and interface{} values
 	if err != nil {
-		app.Logger().Error(ft.Fail("Ristretto cache initialization failed"), "error", err)
+		i.app.Logger().Error(ft.Fail("Ristretto cache initialization failed"), "error", err)
 		return fmt.Errorf("failed to initialize Ristretto cache: %w", err)
 	}
-	app.SetCache(cacheInstance)
+	i.app.SetCache(cacheInstance)
 
-	app.Logger().Info(ft.Complete("Ristretto cache initialized successfully"))
+	i.app.Logger().Info(ft.Complete("Ristretto cache initialized successfully"))
 	return nil
 }
 
