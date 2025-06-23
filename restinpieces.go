@@ -50,9 +50,16 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 		opt(init)
 	}
 
-    //if a.ageKeyPath == "" {
-    //    return nil, fmt.Errorf("ageKeyPath is required but was not provided (use WithAgeKeyPath)")
-    //}
+	// Validate required fields were set
+	if init.app.DbAuth() == nil {
+		return nil, nil, fmt.Errorf("DbAuth is required but was not provided (use WithDbApp)")
+	}
+	if init.app.DbQueue() == nil {
+		return nil, nil, fmt.Errorf("DbQueue is required but was not provided (use WithDbApp)")
+	}
+	if init.app.DbConfig() == nil {
+		return nil, nil, fmt.Errorf("DbConfig is required but was not provided (use WithDbApp)")
+	}
 
 
 	// Set up temporary bootstrap logger if none was provided before setting the
