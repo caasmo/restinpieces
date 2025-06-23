@@ -21,7 +21,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-    // validate request first
+	// validate request first
 	var req struct {
 		Email string `json:"email"`
 	}

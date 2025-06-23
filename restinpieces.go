@@ -30,7 +30,7 @@ import (
 // initializer holds temporary state during application initialization
 type initializer struct {
 	app *core.App
-	
+
 	// temp state during init
 	dbConfig   db.DbConfig
 	ageKeyPath string // Path to age identity file for config decryption
@@ -65,7 +65,6 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	if _, err := os.Stat(init.ageKeyPath); err != nil {
 		return nil, nil, fmt.Errorf("age key path %q is not readable: %w", init.ageKeyPath, err)
 	}
-
 
 	// Set up temporary bootstrap logger if none was provided before setting the
 	// default db based one.
@@ -125,7 +124,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	init.app.SetConfigProvider(configProvider)
 
 	// Setup default logger if non of user
-    // TODO put the check withUserLogger here
+	// TODO put the check withUserLogger here
 	logDaemon, err := SetupDefaultLogger(init.app, configProvider, withUserLogger)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)

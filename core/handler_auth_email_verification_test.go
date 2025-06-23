@@ -15,29 +15,29 @@ import (
 
 func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 	testCases := []struct {
-		name      string
+		name        string
 		requestBody string
 		wantError   jsonResponse
 	}{
 		{
-			name:      "invalid email format",
+			name:        "invalid email format",
 			requestBody: `{"email":"not-an-email"}`,
-			wantError: errorInvalidRequest,
+			wantError:   errorInvalidRequest,
 		},
 		{
-			name:      "empty email",
+			name:        "empty email",
 			requestBody: `{"email":""}`,
-			wantError: errorInvalidRequest,
+			wantError:   errorInvalidRequest,
 		},
 		{
-			name:      "missing email field",
+			name:        "missing email field",
 			requestBody: `{}`,
-			wantError: errorInvalidRequest,
+			wantError:   errorInvalidRequest,
 		},
 		{
-			name:      "invalid JSON",
+			name:        "invalid JSON",
 			requestBody: `{"email": invalid`,
-			wantError: errorInvalidRequest,
+			wantError:   errorInvalidRequest,
 		},
 	}
 
@@ -119,7 +119,7 @@ func TestRequestVerificationHandlerAuth(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()
-			
+
 			mockAuth := &MockAuth{
 				AuthenticateFunc: tc.mockAuth,
 			}
@@ -164,7 +164,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 		wantError   jsonResponse
 	}{
 		{
-			name: "database unique constraint error",
+			name:        "database unique constraint error",
 			requestBody: `{"email":"test@example.com"}`,
 			dbSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
@@ -181,7 +181,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 			wantError: errorEmailVerificationAlreadyRequested,
 		},
 		{
-			name: "database other error",
+			name:        "database other error",
 			requestBody: `{"email":"test@example.com"}`,
 			dbSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
@@ -198,7 +198,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 			wantError: errorServiceUnavailable,
 		},
 		{
-			name: "successful job insertion",
+			name:        "successful job insertion",
 			requestBody: `{"email":"test@example.com"}`,
 			dbSetup: func(mockDB *MockDB) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {

@@ -101,7 +101,6 @@ func generateExpiredToken(t *testing.T) string {
 	return token
 }
 
-
 func TestParseJwtUnverified(t *testing.T) {
 	testCases := []struct {
 		name        string

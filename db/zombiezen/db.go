@@ -13,7 +13,7 @@ type Db struct {
 // Verify interface implementations
 var (
 	_ db.DbAuth   = (*Db)(nil)
-	_ db.DbQueue  = (*Db)(nil) 
+	_ db.DbQueue  = (*Db)(nil)
 	_ db.DbConfig = (*Db)(nil)
 )
 
@@ -27,4 +27,3 @@ func New(pool *sqlitex.Pool) (*Db, error) {
 	// The pool is managed externally, just store it.
 	return &Db{pool: pool}, nil
 }
-

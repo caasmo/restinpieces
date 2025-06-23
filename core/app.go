@@ -29,10 +29,10 @@ type App struct {
 	// It acts as a secrets manager for securely storing sensitive configuration in the database.
 	// Primarily used during application initialization to load encrypted configs on startup.
 	// The implementation uses age encryption with keys from ageKeyPath.
-	configStore config.SecureStore
-	notifier    notify.Notifier
+	configStore   config.SecureStore
+	notifier      notify.Notifier
 	authenticator Authenticator
-	validator    Validator
+	validator     Validator
 }
 
 // ServeHTTP method removed as App no longer acts as the primary handler

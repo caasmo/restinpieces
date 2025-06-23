@@ -23,10 +23,10 @@ type MockDB struct {
 	UpdateEmailFunc            func(userId string, newEmail string) error
 
 	// --- Mock DbQueue Methods ---
-	InsertJobFunc            func(job db.Job) error
-	ClaimFunc                func(limit int) ([]*db.Job, error)
-	MarkCompletedFunc        func(jobID int64) error
-	MarkFailedFunc           func(jobID int64, errMsg string) error
+	InsertJobFunc              func(job db.Job) error
+	ClaimFunc                  func(limit int) ([]*db.Job, error)
+	MarkCompletedFunc          func(jobID int64) error
+	MarkFailedFunc             func(jobID int64, errMsg string) error
 	MarkRecurrentCompletedFunc func(completedJobID int64, newJob db.Job) error
 
 	// --- Mock DbConfig Methods ---

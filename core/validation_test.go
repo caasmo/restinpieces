@@ -14,10 +14,10 @@ func TestContentTypeValidation(t *testing.T) {
 	)
 
 	testCases := []struct {
-		name         string
-		contentType  string
-		allowedType  string
-		wantError    jsonResponse
+		name        string
+		contentType string
+		allowedType string
+		wantError   jsonResponse
 	}{
 		{
 			name:        "no content-type header",

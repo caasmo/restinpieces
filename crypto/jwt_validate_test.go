@@ -1,4 +1,5 @@
 package crypto
+
 import (
 	"errors"
 	"testing"
