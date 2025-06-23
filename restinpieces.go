@@ -339,8 +339,10 @@ func (i *initializer) setupDefaultCache() error {
 	return nil
 }
 
-// setupDefaultLogger initializes the logger daemon and batch handler.
+// setupDefaultLogger initializes the logger daemon and batch handler that writes to a SQLite database.
 // The default logger uses batch inserts to maximize performance by:
+//   - Writing log entries to a dedicated SQLite database file
+//   - Batching multiple log entries together before writing to disk
 //   - Reducing disk I/O operations
 //   - Minimizing database contention
 //   - Improving write throughput
