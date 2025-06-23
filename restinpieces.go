@@ -150,10 +150,10 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	}
 
 	// Prepare the configuration reload function
-	reloadFn := config.Reload(app.ConfigStore(), configProvider, app.Logger())
+	reloadFn := config.Reload(init.app.ConfigStore(), configProvider, init.app.Logger())
 
 	// Initialize the PreRouter chain with internal middleware
-	preRouterHandler := setupPrerouter(app)
+	preRouterHandler := setupPrerouter(init.app)
 
 	srv := server.NewServer(
 		configProvider,
