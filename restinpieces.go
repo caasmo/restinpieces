@@ -79,7 +79,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 
 	// Load config from database
 	scope := config.ScopeApplication
-	decryptedBytes, _, err := app.ConfigStore().Get(scope, 0) // generation 0 = latest
+	decryptedBytes, _, err := init.app.ConfigStore().Get(scope, 0) // generation 0 = latest
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load config: %w", err)
 	}
@@ -100,30 +100,30 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	cfg.Source = "" // Clear source field
 
 	configProvider := config.NewProvider(cfg)
-	app.SetConfigProvider(configProvider)
+	init.app.SetConfigProvider(configProvider)
 
 	// Setup default logger if non of user
     // TODO put the check withUserLogger here
-	logDaemon, err := SetupDefaultLogger(app, configProvider, withUserLogger)
+	logDaemon, err := SetupDefaultLogger(init.app, configProvider, withUserLogger)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
 	}
 
 	// Setup authenticator and validator
-	app.SetAuthenticator(core.NewDefaultAuthenticator(app.DbAuth(), app.Logger(), configProvider))
-	app.SetValidator(core.NewValidator())
+	init.app.SetAuthenticator(core.NewDefaultAuthenticator(init.app.DbAuth(), init.app.Logger(), configProvider))
+	init.app.SetValidator(core.NewValidator())
 
 	// Setup custom application logic and routes
-	route(cfg, app)
+	route(cfg, init.app)
 
-	scheduler, err := SetupScheduler(configProvider, app.DbAuth(), app.DbQueue(), app.Logger())
+	scheduler, err := SetupScheduler(configProvider, init.app.DbAuth(), init.app.DbQueue(), init.app.Logger())
 	if err != nil {
 		return nil, nil, err
 	}
 
 	// Setup default notifier if none was set via options
-	if app.Notifier() == nil {
-		if err := SetupDefaultNotifier(cfg, app); err != nil {
+	if init.app.Notifier() == nil {
+		if err := SetupDefaultNotifier(cfg, init.app); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -147,7 +147,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 		srv.AddDaemon(logDaemon)
 	}
 
-	return app, srv, nil
+	return init.app, srv, nil
 }
 
 // setupPrerouter sets up the internal pre-router middleware chain based on configuration
