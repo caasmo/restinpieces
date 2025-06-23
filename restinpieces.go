@@ -50,6 +50,9 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 		opt(init)
 	}
 
+    //if a.ageKeyPath == "" {
+    //    return nil, fmt.Errorf("ageKeyPath is required but was not provided (use WithAgeKeyPath)")
+    //}
 
 
 	// Set up temporary bootstrap logger if none was provided before setting the
