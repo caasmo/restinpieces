@@ -1,8 +1,6 @@
 package restinpieces
 
 import (
-	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/core"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -12,6 +10,7 @@ import (
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
+	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/core/prerouter"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/db/zombiezen"
@@ -57,24 +56,24 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	// Set up temporary bootstrap logger if none was provided before setting the
 	// default db based one.
 	var withUserLogger = true
-	if app.Logger() == nil {
+	if init.app.Logger() == nil {
 		withUserLogger = false
 
-		app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		init.app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
-		})))
+		}))
 	}
 
 	// Setup default router if none was set via options
-	if app.Router() == nil {
-		if err := SetupDefaultRouter(app); err != nil {
+	if init.app.Router() == nil {
+		if err := SetupDefaultRouter(init.app); err != nil {
 			return nil, nil, err
 		}
 	}
 
 	// Setup default cache if none was set via options
-	if app.Cache() == nil {
-		if err := SetupDefaultCache(app); err != nil {
+	if init.app.Cache() == nil {
+		if err := SetupDefaultCache(init.app); err != nil {
 			return nil, nil, err
 		}
 	}
