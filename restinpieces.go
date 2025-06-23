@@ -79,7 +79,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 
 	// Setup default router if none was set via options
 	if init.app.Router() == nil {
-		if err := SetupDefaultRouter(init.app); err != nil {
+		if err := init.setupDefaultRouter(); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -270,14 +270,13 @@ func setupPrerouter(app *core.App) http.Handler {
 	return preRouterHandler
 }
 
-// SetupScheduler initializes the job scheduler and its handlers.
-// dbAcme parameter removed.
-func SetupDefaultRouter(app *core.App) error {
+// setupDefaultRouter initializes the default router implementation
+func (i *initializer) setupDefaultRouter() error {
 	ft := log.NewMessageFormatter().WithComponent("router", "🗺️")
-	app.Logger().Info(ft.Component("Default router serveMux component"))
+	i.app.Logger().Info(ft.Component("Default router serveMux component"))
 
 	r := servemux.New()
-	app.SetRouter(r)
+	i.app.SetRouter(r)
 	return nil
 }
 
