@@ -87,6 +87,16 @@ func (a *App) DbQueue() db.DbQueue {
 	return a.dbQueue
 }
 
+// SetDb sets all database interfaces at once
+func (a *App) SetDb(dbApp db.DbApp) {
+	if dbApp == nil {
+		panic("DbApp cannot be nil")
+	}
+	a.dbAuth = dbApp
+	a.dbQueue = dbApp
+	a.dbConfig = dbApp
+}
+
 func (a *App) Logger() *slog.Logger {
 	return a.logger
 }

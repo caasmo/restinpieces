@@ -24,12 +24,7 @@ func WithCache(c cache.Cache[string, interface{}]) Option {
 // It expects a single concrete type (like *crawshaw.Db) that implements db.DbApp.
 func WithDbApp(dbApp db.DbApp) Option {
 	return func(i *initializer) {
-		if dbApp == nil {
-			panic("DbApp cannot be nil")
-		}
-		i.app.SetDbAuth(dbApp)
-		i.app.SetDbQueue(dbApp)
-		i.app.SetDbConfig(dbApp)
+		i.app.SetDb(dbApp)
 	}
 }
 
