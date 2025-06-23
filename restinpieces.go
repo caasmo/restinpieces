@@ -159,7 +159,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 		configProvider,
 		preRouterHandler,
 		init.app.Logger(),
-		reloadFn, // Pass the reload function
+		reloadFn, 
 	)
 
 	// Register the framework's core daemons
@@ -173,9 +173,9 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 
 // setupPrerouter sets up the internal pre-router middleware chain based on configuration
 // and returns the final http.Handler.
-// No User Pre-Router Customization:
-// we allow disable in config, we do not allow adding, the user can put in normal middleware.
-// configure the framework's pre-router features; add your own logic at the route level.
+// We do support user Pre-Router Customization:
+// We allow disabling the middlewares in the config, but we do not allow
+// adding or alterinf the order. Users can put additional middlewares post-router
 // Framework handles everything before routing; user handles everything after routing
 func (i *initializer) setupPrerouter() http.Handler {
 	logger := i.app.Logger()
@@ -341,10 +341,11 @@ func (i *initializer) setupDefaultCache() error {
 
 // setupDefaultLogger initializes the logger daemon and batch handler that writes to a SQLite database.
 // The default logger uses batch inserts to maximize performance by:
-//   - Writing log entries to a dedicated SQLite database file
 //   - Batching multiple log entries together before writing to disk
+//
 // We use a hardcoded zombiezen driver since:
 //   - Only the logger daemon needs access to this database  
+//   - the database in in another file as the main db
 //   - Using the same driver as the main app would require additional wiring
 //
 // Users can configure the log database path via config.Log.Batch.DbPath.
