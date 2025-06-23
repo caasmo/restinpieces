@@ -137,7 +137,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	// Setup custom application logic and routes
 	route(cfg, init.app)
 
-	scheduler, err := SetupScheduler(configProvider, init.app.DbAuth(), init.app.DbQueue(), init.app.Logger())
+	scheduler, err := init.setupScheduler()
 	if err != nil {
 		return nil, nil, err
 	}
@@ -280,12 +280,13 @@ func (i *initializer) setupDefaultRouter() error {
 	return nil
 }
 
-func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue db.DbQueue, logger *slog.Logger) (*scl.Scheduler, error) {
+func (i *initializer) setupScheduler() (*scl.Scheduler, error) {
 	ft := log.NewMessageFormatter().WithComponent("scheduler", "🛠️ ")
+	logger := i.app.Logger()
 	logger.Info(ft.Start("Setting up scheduler..."))
 
 	hdls := make(map[string]executor.JobHandler)
-
+	configProvider := i.app.ConfigProvider()
 	cfg := configProvider.Get()
 
 	// Setup mailer only if SMTP is configured in the current config
@@ -293,27 +294,23 @@ func SetupScheduler(configProvider *config.Provider, dbAuth db.DbAuth, dbQueue d
 		mailer, err := mail.New(configProvider)
 		if err != nil {
 			logger.Error(ft.Fail("failed to create mailer"), "error", err)
-			// Decide if this is fatal. If mailing is optional, maybe just log and continue without mail handlers?
-			// For now, let's treat it as fatal if configured but failing.
-			os.Exit(1) // Or return err
+			return nil, fmt.Errorf("failed to create mailer: %w", err)
 		}
 
-		emailVerificationHandler := handlers.NewEmailVerificationHandler(dbAuth, configProvider, mailer)
+		emailVerificationHandler := handlers.NewEmailVerificationHandler(i.app.DbAuth(), configProvider, mailer)
 		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
 		logger.Info(ft.Ok("registered email verification handler"))
 
-		passwordResetHandler := handlers.NewPasswordResetHandler(dbAuth, configProvider, mailer)
+		passwordResetHandler := handlers.NewPasswordResetHandler(i.app.DbAuth(), configProvider, mailer)
 		hdls[queue.JobTypePasswordReset] = passwordResetHandler
 		logger.Info(ft.Ok("registered password reset handler"))
 
-		emailChangeHandler := handlers.NewEmailChangeHandler(dbAuth, configProvider, mailer)
+		emailChangeHandler := handlers.NewEmailChangeHandler(i.app.DbAuth(), configProvider, mailer)
 		hdls[queue.JobTypeEmailChange] = emailChangeHandler
 		logger.Info(ft.Ok("registered email change handler"))
 	}
 
-	// ACME handler registration removed.
-
-	scheduler := scl.NewScheduler(configProvider, dbQueue, executor.NewExecutor(hdls), logger)
+	scheduler := scl.NewScheduler(configProvider, i.app.DbQueue(), executor.NewExecutor(hdls), logger)
 	logger.Info(ft.Complete("scheduler setup complete"), "handlers_registered", len(hdls))
 	return scheduler, nil
 }
