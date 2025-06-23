@@ -60,6 +60,12 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	if init.app.DbConfig() == nil {
 		return nil, nil, fmt.Errorf("DbConfig is required but was not provided (use WithDbApp)")
 	}
+	if init.ageKeyPath == "" {
+		return nil, nil, fmt.Errorf("ageKeyPath is required but was not provided (use WithAgeKeyPath)")
+	}
+	if _, err := os.Stat(init.ageKeyPath); err != nil {
+		return nil, nil, fmt.Errorf("age key path %q is not readable: %w", init.ageKeyPath, err)
+	}
 
 
 	// Set up temporary bootstrap logger if none was provided before setting the
@@ -87,9 +93,16 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 		}
 	}
 
+	// Initialize config store with age key
+	ss, err := config.NewSecureStoreAge(init.app.DbConfig(), init.ageKeyPath)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to initialize config store: %w", err)
+	}
+	init.app.SetConfigStore(ss)
+
 	// Load config from database
 	scope := config.ScopeApplication
-	decryptedBytes, _, err := init.app.ConfigStore().Get(scope, 0) // generation 0 = latest
+	decryptedBytes, _, err := ss.Get(scope, 0) // generation 0 = latest
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to load config: %w", err)
 	}
