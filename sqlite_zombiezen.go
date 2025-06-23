@@ -16,7 +16,6 @@ import (
 
 	"zombiezen.com/go/sqlite/sqlitex"
 
-	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/db/zombiezen"
 )
 
