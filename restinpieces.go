@@ -343,9 +343,6 @@ func (i *initializer) setupDefaultCache() error {
 // The default logger uses batch inserts to maximize performance by:
 //   - Writing log entries to a dedicated SQLite database file
 //   - Batching multiple log entries together before writing to disk
-//   - Reducing disk I/O operations
-//   - Minimizing database contention
-//   - Improving write throughput
 // We use a hardcoded zombiezen driver since:
 //   - Only the logger daemon needs access to this database  
 //   - Using the same driver as the main app would require additional wiring
