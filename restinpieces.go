@@ -1,6 +1,9 @@
 package restinpieces
 
 import (
+	"filippo.io/age"
+	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/core"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -26,6 +29,16 @@ import (
 	"github.com/caasmo/restinpieces/server"
 	"github.com/pelletier/go-toml/v2"
 )
+
+// initializer holds temporary state during application initialization
+type initializer struct {
+	app *core.App
+	
+	// temp state during init
+	db     db.DbMeta
+	dbLog  db.DbLog
+	ageKey *age.X25519Identity
+}
 
 // New creates a new App instance and Server with the provided options and age key file path.
 // It initializes the core application components like database, router, cache first,
