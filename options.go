@@ -40,10 +40,10 @@ func WithLogger(l *slog.Logger) Option {
 	}
 }
 
-// WithAgeKeyPath sets the path to the age identity file
+// WithAgeKeyPath sets the path to the age identity file in the initializer
 func WithAgeKeyPath(path string) Option {
 	return func(i *initializer) {
-		i.app.SetAgeKeyPath(path)
+		i.ageKeyPath = path
 	}
 }
 
