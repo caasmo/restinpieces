@@ -1,7 +1,6 @@
 package restinpieces
 
 import (
-	"filippo.io/age"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/core"
 	"fmt"
@@ -37,20 +36,21 @@ type initializer struct {
 	// temp state during init
 	//db     db.DbMeta
 	//dbLog  db.DbLog
-	ageKey *age.X25519Identity
+	ageKeyPath string
 }
 
-// New creates a new App instance and Server with the provided options and age key file path.
+// New creates a new App instance and Server with the provided options.
 // It initializes the core application components like database, router, cache first,
-// then loads configuration from the database using the provided age key.
+// then loads configuration from the database.
 func New(opts ...Option) (*core.App, *server.Server, error) {
+	init := &initializer{
+		app: &core.App{},
+	}
 
-    app := &core.App{}
-
-    // Apply all options
-    for _, opt := range opts {
-        opt(app)
-    }
+	// Apply all options
+	for _, opt := range opts {
+		opt(init)
+	}
 
 
 

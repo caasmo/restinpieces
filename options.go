@@ -3,7 +3,6 @@ package restinpieces
 import (
 	"log/slog"
 
-	"filippo.io/age"
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/db"
