@@ -339,10 +339,13 @@ func (i *initializer) setupDefaultCache() error {
 	return nil
 }
 
-// setupDefaultLogger initializes the database-backed logger daemon and batch handler.
-// The default logger writes to a SQLite database to maximize performance and reduce contention.
+// setupDefaultLogger initializes the logger daemon and batch handler.
+// The default logger uses batch inserts to maximize performance by:
+//   - Reducing disk I/O operations
+//   - Minimizing database contention
+//   - Improving write throughput
 // We use a hardcoded zombiezen driver since:
-//   - Only the logger daemon needs access to this database
+//   - Only the logger daemon needs access to this database  
 //   - Using the same driver as the main app would require additional wiring
 //
 // Users can configure the log database path via config.Log.Batch.DbPath.
