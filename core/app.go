@@ -21,7 +21,6 @@ import (
 type App struct {
 	dbAuth         db.DbAuth
 	dbQueue        db.DbQueue
-	dbConfig       db.DbConfig
 	router         router.Router
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
@@ -87,14 +86,13 @@ func (a *App) DbQueue() db.DbQueue {
 	return a.dbQueue
 }
 
-// SetDb sets all database interfaces at once
+// SetDb sets the database interfaces for auth and queue
 func (a *App) SetDb(dbApp db.DbApp) {
 	if dbApp == nil {
 		panic("DbApp cannot be nil")
 	}
 	a.dbAuth = dbApp
 	a.dbQueue = dbApp
-	a.dbConfig = dbApp
 }
 
 func (a *App) Logger() *slog.Logger {

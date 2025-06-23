@@ -29,6 +29,7 @@ func WithZombiezenPool(pool *sqlitex.Pool) Option {
 			panic(fmt.Sprintf("failed to initialize zombiezen DB with existing pool: %v", err))
 		}
 		i.app.SetDb(dbInstance)
+		i.dbConfig = dbInstance
 	}
 }
 

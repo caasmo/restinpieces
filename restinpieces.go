@@ -32,8 +32,7 @@ type initializer struct {
 	app *core.App
 	
 	// temp state during init
-	//db     db.DbMeta
-	//dbLog  db.DbLog
+	dbConfig   db.DbConfig
 	ageKeyPath string
 }
 
@@ -57,7 +56,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	if init.app.DbQueue() == nil {
 		return nil, nil, fmt.Errorf("DbQueue is required but was not provided (use WithDbApp)")
 	}
-	if init.app.DbConfig() == nil {
+	if init.dbConfig == nil {
 		return nil, nil, fmt.Errorf("DbConfig is required but was not provided (use WithDbApp)")
 	}
 	if init.ageKeyPath == "" {
@@ -94,7 +93,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	}
 
 	// Initialize config store with age key
-	ss, err := config.NewSecureStoreAge(init.app.DbConfig(), init.ageKeyPath)
+	ss, err := config.NewSecureStoreAge(init.dbConfig, init.ageKeyPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to initialize config store: %w", err)
 	}
