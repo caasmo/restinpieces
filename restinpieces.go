@@ -10,7 +10,6 @@ import (
 	"github.com/caasmo/restinpieces/cache/ristretto"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
-	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/core/prerouter"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/db/zombiezen"
