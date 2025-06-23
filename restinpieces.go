@@ -61,7 +61,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 
 		init.app.SetLogger(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 			Level: slog.LevelInfo,
-		}))
+		})))
 	}
 
 	// Setup default router if none was set via options
