@@ -10,7 +10,7 @@ import (
 	"github.com/caasmo/restinpieces/router"
 )
 
-// App is the application wide context.
+// App is the application runtime  wide context.
 // db connections and permanent structs should go here.
 //
 // For simplicity, all handlers and middleware should have App as receiver.
@@ -34,39 +34,6 @@ type App struct {
 	authenticator Authenticator
 	validator     Validator
 }
-
-// ServeHTTP method removed as App no longer acts as the primary handler
-
-//func NewApp(opts ...Option) (*App, error) {
-//	a := &App{}
-//	for _, opt := range opts {
-//		opt(a)
-//	}
-//
-//	// Check for required interfaces
-//	if a.dbAuth == nil {
-//		return nil, fmt.Errorf("dbAuth is required but was not provided (use WithDbApp)")
-//	}
-//	if a.dbQueue == nil {
-//		return nil, fmt.Errorf("dbQueue is required but was not provided (use WithDbApp)")
-//	}
-//	if a.dbConfig == nil {
-//		return nil, fmt.Errorf("dbConfig is required but was not provided (use WithDbApp)")
-//	}
-//
-//	if a.ageKeyPath == "" {
-//		return nil, fmt.Errorf("ageKeyPath is required but was not provided (use WithAgeKeyPath)")
-//	}
-//
-//	ss, err := config.NewSecureStoreAge(a.dbConfig, a.ageKeyPath)
-//	if err != nil {
-//		return nil, fmt.Errorf("failed to initialize config store: %w", err)
-//	}
-//
-//	a.configStore = ss
-//
-//	return a, nil
-//}
 
 // Router returns the application's router instance
 func (a *App) Router() router.Router {
