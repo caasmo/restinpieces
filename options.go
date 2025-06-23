@@ -16,7 +16,7 @@ type Option func(*initializer)
 // WithCache sets the cache implementation
 func WithCache(c cache.Cache[string, interface{}]) Option {
 	return func(i *initializer) {
-		i.app.cache = c
+		i.app.SetCache(c)
 	}
 }
 
@@ -27,36 +27,36 @@ func WithDbApp(dbApp db.DbApp) Option {
 		if dbApp == nil {
 			panic("DbApp cannot be nil")
 		}
-		i.app.dbAuth = dbApp
-		i.app.dbQueue = dbApp
-		i.app.dbConfig = dbApp
+		i.app.SetDbAuth(dbApp)
+		i.app.SetDbQueue(dbApp)
+		i.app.SetDbConfig(dbApp)
 	}
 }
 
 // WithRouter sets the router implementation
 func WithRouter(r router.Router) Option {
 	return func(i *initializer) {
-		i.app.router = r
+		i.app.SetRouter(r)
 	}
 }
 
 // WithLogger sets the logger implementation
 func WithLogger(l *slog.Logger) Option {
 	return func(i *initializer) {
-		i.app.logger = l
+		i.app.SetLogger(l)
 	}
 }
 
 // WithAgeKeyPath sets the path to the age identity file
 func WithAgeKeyPath(path string) Option {
 	return func(i *initializer) {
-		i.app.ageKeyPath = path
+		i.app.SetAgeKeyPath(path)
 	}
 }
 
 // WithNotifier sets the notifier implementation
 func WithNotifier(n notify.Notifier) Option {
 	return func(i *initializer) {
-		i.app.notifier = n
+		i.app.SetNotifier(n)
 	}
 }
