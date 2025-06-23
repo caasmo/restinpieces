@@ -35,8 +35,8 @@ type initializer struct {
 	app *core.App
 	
 	// temp state during init
-	db     db.DbMeta
-	dbLog  db.DbLog
+	//db     db.DbMeta
+	//dbLog  db.DbLog
 	ageKey *age.X25519Identity
 }
 

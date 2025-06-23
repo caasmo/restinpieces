@@ -27,13 +27,11 @@ func WithZombiezenPool(pool *sqlitex.Pool) core.Option {
 	if err != nil {
 		panic(fmt.Sprintf("failed to initialize zombiezen DB with existing pool: %v", err))
 	}
-	// Use the renamed app database option
 	return core.WithDbApp(dbInstance)
 }
 
 // NewZombiezenPool creates a new Zombiezen SQLite connection pool with reasonable defaults
 // compatible with restinpieces (e.g., WAL mode enabled, busy_timeout set).
-// Use this if your application needs to share the pool with restinpieces.
 func NewZombiezenPool(dbPath string) (*sqlitex.Pool, error) {
 	poolSize := runtime.NumCPU()
 	// Re-add busy_timeout pragma as part of reasonable defaults for Zombiezen.
@@ -70,10 +68,8 @@ func NewZombiezenPerformancePool(dbPath string) (*sqlitex.Pool, error) {
 	// The URI flag is necessary for the DSN parameters to be parsed.
 	pool, err := sqlitex.NewPool(dsn, sqlitex.PoolOptions{
 		PoolSize: poolSize,
-		// No PrepareConn needed as PRAGMAs are in DSN
 	})
 	if err != nil {
-		// Include the DSN in the error message for easier debugging
 		return nil, fmt.Errorf("failed to create performance zombiezen pool at %s using DSN '%s': %w", dbPath, dsn, err)
 	}
 	return pool, nil
