@@ -4,7 +4,6 @@ import (
 	"log/slog"
 
 	"github.com/caasmo/restinpieces/cache"
-	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/notify"
 	"github.com/caasmo/restinpieces/router"
