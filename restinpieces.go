@@ -339,8 +339,17 @@ func (i *initializer) setupDefaultCache() error {
 	return nil
 }
 
-// setupDefaultLogger initializes the logger daemon and batch handler
-// withUserLogger indicates if the app already had a logger configured
+// setupDefaultLogger initializes the database-backed logger daemon and batch handler.
+// The default logger writes to a SQLite database to maximize performance and reduce contention.
+// We use a hardcoded zombiezen driver since:
+//   - Only the logger daemon needs access to this database
+//   - Using the same driver as the main app would require additional wiring
+//
+// Users can configure the log database path via config.Log.Batch.DbPath.
+// If not specified, it defaults to "logs.db" in the same directory as the main database.
+//
+// withUserLogger indicates if the app already had a logger configured via options.
+// If true, this function does nothing since the user provided their own logger.
 func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUserLogger bool) (*log.Daemon, error) {
 	if withUserLogger {
 		return nil, nil
