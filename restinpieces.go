@@ -125,7 +125,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 
 	// Setup default logger if non of user
 	// TODO put the check withUserLogger here
-	logDaemon, err := SetupDefaultLogger(init.app, configProvider, withUserLogger)
+	logDaemon, err := init.setupDefaultLogger(configProvider, withUserLogger)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to setup logger: %w", err)
 	}
@@ -344,26 +344,26 @@ func SetupDefaultCache(app *core.App) error {
 	return nil
 }
 
-// SetupDefaultLogger initializes the logger daemon and batch handler
+// setupDefaultLogger initializes the logger daemon and batch handler
 // withUserLogger indicates if the app already had a logger configured
-func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUserLogger bool) (*log.Daemon, error) {
+func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUserLogger bool) (*log.Daemon, error) {
 	if withUserLogger {
 		return nil, nil
 	}
 
 	cfg := configProvider.Get()
-	logDbPath, err := getLogDbPath(cfg, app.DbConfig())
+	logDbPath, err := getLogDbPath(cfg, i.dbConfig)
 	if err != nil {
 		return nil, fmt.Errorf("logger daemon: %w", err)
 	}
 
-	app.Logger().Info("Using log database", "path", logDbPath)
+	i.app.Logger().Info("Using log database", "path", logDbPath)
 	logDb, err := zombiezen.NewLog(logDbPath)
 	if err != nil {
 		return nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", logDbPath, err)
 	}
 
-	logDaemon, err := log.New(configProvider, app.Logger(), logDb)
+	logDaemon, err := log.New(configProvider, i.app.Logger(), logDb)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create log daemon: %w", err)
 	}
@@ -376,7 +376,7 @@ func SetupDefaultLogger(app *core.App, configProvider *config.Provider, withUser
 		daemonCtx,
 	)
 
-	app.SetLogger(slog.New(batchHandler))
+	i.app.SetLogger(slog.New(batchHandler))
 
 	return logDaemon, nil
 }
