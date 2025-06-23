@@ -144,7 +144,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 
 	// Setup default notifier if none was set via options
 	if init.app.Notifier() == nil {
-		if err := SetupDefaultNotifier(cfg, init.app); err != nil {
+		if err := init.setupDefaultNotifier(); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -392,15 +392,16 @@ func getLogDbPath(cfg *config.Config, dbConfig db.DbConfig) (string, error) {
 	return filepath.Join(filepath.Dir(mainPath), defaultLogFilename), nil
 }
 
-func SetupDefaultNotifier(cfg *config.Config, app *core.App) error {
+func (i *initializer) setupDefaultNotifier() error {
+	cfg := i.app.Config()
 	if cfg.Notifier.Discord.Activated {
-		discordNotifier, err := discord.New(cfg.Notifier.Discord, app.Logger())
+		discordNotifier, err := discord.New(cfg.Notifier.Discord, i.app.Logger())
 		if err != nil {
 			return fmt.Errorf("failed to initialize Discord notifier: %w", err)
 		}
-		app.SetNotifier(discordNotifier)
+		i.app.SetNotifier(discordNotifier)
 	} else {
-		app.SetNotifier(notify.NewNilNotifier())
+		i.app.SetNotifier(notify.NewNilNotifier())
 	}
 	return nil
 }
