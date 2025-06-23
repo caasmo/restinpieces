@@ -134,7 +134,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	init.app.SetAuthenticator(core.NewDefaultAuthenticator(init.app.DbAuth(), init.app.Logger(), configProvider))
 	init.app.SetValidator(core.NewValidator())
 
-	// Setup custom application logic and routes
+	// Setup custom routes
 	route(cfg, init.app)
 
 	scheduler, err := init.setupScheduler(configProvider)
