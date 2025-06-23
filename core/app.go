@@ -118,6 +118,10 @@ func (a *App) ConfigStore() config.SecureStore {
 	return a.configStore
 }
 
+func (a *App) SetConfigStore(store config.SecureStore) {
+	a.configStore = store
+}
+
 func (a *App) Notifier() notify.Notifier {
 	return a.notifier
 }
