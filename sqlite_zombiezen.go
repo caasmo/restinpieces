@@ -22,12 +22,14 @@ import (
 
 // WithZombiezenPool configures the App to use the Zombiezen SQLite implementation with an existing pool.
 // The user is responsible for creating and managing the lifecycle of the provided pool.
-func WithZombiezenPool(pool *sqlitex.Pool) core.Option {
-	dbInstance, err := zombiezen.New(pool)
-	if err != nil {
-		panic(fmt.Sprintf("failed to initialize zombiezen DB with existing pool: %v", err))
+func WithZombiezenPool(pool *sqlitex.Pool) Option {
+	return func(i *initializer) {
+		dbInstance, err := zombiezen.New(pool)
+		if err != nil {
+			panic(fmt.Sprintf("failed to initialize zombiezen DB with existing pool: %v", err))
+		}
+		i.app.SetDb(dbInstance)
 	}
-	return core.WithDbApp(dbInstance)
 }
 
 // NewZombiezenPool creates a new Zombiezen SQLite connection pool with reasonable defaults
