@@ -25,7 +25,6 @@ type App struct {
 	cache          cache.Cache[string, interface{}] // Using string keys and interface{} values
 	configProvider *config.Provider                 // Holds the config provider
 	logger         *slog.Logger
-	ageKeyPath     string // Path to age identity file
 	// ConfigStore provides encrypted configuration storage/retrieval capabilities.
 	// It acts as a secrets manager for securely storing sensitive configuration in the database.
 	// Primarily used during application initialization to load encrypted configs on startup.

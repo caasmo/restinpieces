@@ -33,7 +33,7 @@ type initializer struct {
 	
 	// temp state during init
 	dbConfig   db.DbConfig
-	ageKeyPath string
+	ageKeyPath string // Path to age identity file for config decryption
 }
 
 // New creates a new App instance and Server with the provided options.
