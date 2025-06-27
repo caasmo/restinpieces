@@ -10,8 +10,6 @@
 		- it uses scp to bring the file
 		- or just local litestream that downloads from s3
 - https://raw.githubusercontent.com/caddyserver/caddy/refs/heads/master/cmd/caddy/setcap.sh
-- directory instead of dbpath is directory
-	- reanme logs.db
 - good enough release
     - superuser workflows
 		- scripts
@@ -172,6 +170,8 @@
 
 ### done
 
+- directory instead of dbpath is directory
+	- reanme logs.db
 - maube new inerface with
     Path
     DriverName ??

@@ -91,37 +91,11 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 		}
 	}
 
-	// Initialize config store with age key
-	ss, err := config.NewSecureStoreAge(init.dbConfig, init.ageKeyPath)
+	configProvider, err := init.setupConfig()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to initialize config store: %w", err)
+		return nil, nil, err
 	}
-	init.app.SetConfigStore(ss)
-
-	// Load config from database
-	scope := config.ScopeApplication
-	decryptedBytes, _, err := ss.Get(scope, 0) // generation 0 = latest
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	// Start with default config
-	cfg := config.NewDefaultConfig()
-
-	// Unmarshal TOML into default config
-	if err := toml.Unmarshal(decryptedBytes, cfg); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse config: %w", err)
-	}
-
-	// Validate config
-	if err := config.Validate(cfg); err != nil {
-		return nil, nil, fmt.Errorf("invalid config: %w", err)
-	}
-
-	cfg.Source = "" // Clear source field
-
-	configProvider := config.NewProvider(cfg)
-	init.app.SetConfigProvider(configProvider)
+	cfg := configProvider.Get()
 
 	// Setup default logger if non of user
 	// TODO put the check withUserLogger here
@@ -159,7 +133,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 		configProvider,
 		preRouterHandler,
 		init.app.Logger(),
-		reloadFn, 
+		reloadFn,
 	)
 
 	// Register the framework's core daemons
@@ -169,6 +143,42 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	}
 
 	return init.app, srv, nil
+}
+
+func (i *initializer) setupConfig() (*config.Provider, error) {
+	// Initialize config store with age key
+	ss, err := config.NewSecureStoreAge(i.dbConfig, i.ageKeyPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize config store: %w", err)
+	}
+	i.app.SetConfigStore(ss)
+
+	// Load config from database
+	scope := config.ScopeApplication
+	decryptedBytes, _, err := ss.Get(scope, 0) // generation 0 = latest
+	if err != nil {
+		return nil, fmt.Errorf("failed to load config: %w", err)
+	}
+
+	// Start with default config
+	cfg := config.NewDefaultConfig()
+
+	// Unmarshal TOML into default config
+	if err := toml.Unmarshal(decryptedBytes, cfg); err != nil {
+		return nil, fmt.Errorf("failed to parse config: %w", err)
+	}
+
+	// Validate config
+	if err := config.Validate(cfg); err != nil {
+		return nil, fmt.Errorf("invalid config: %w", err)
+	}
+
+	cfg.Source = "" // Clear source field
+
+	configProvider := config.NewProvider(cfg)
+	i.app.SetConfigProvider(configProvider)
+
+	return configProvider, nil
 }
 
 // setupPrerouter sets up the internal pre-router middleware chain based on configuration
