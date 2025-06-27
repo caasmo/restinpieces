@@ -86,37 +86,6 @@ public_dir = "static/dist"
   activated = false
 
 
-# --- ACME / Let's Encrypt Settings ---
-[acme]
-  # Enable automatic TLS certificate management using ACME (e.g., Let's Encrypt).
-  # Requires server.enable_tls = true and server.cert_file/key_file to be set.
-  enabled = false
-
-  # Email address for ACME account registration and important notifications (e.g., expiry warnings).
-  email = "your-email@example.com"
-
-  # List of domain names to include in the certificate. The first domain is the primary common name (CN).
-  domains = ["yourdomain.com", "www.yourdomain.com"]
-
-  # DNS provider used for the DNS-01 challenge. Currently, only "cloudflare" is supported by the handler.
-  dns_provider = "cloudflare" # e.g., "cloudflare"
-
-  # Renew the certificate if it expires within this many days. Let's Encrypt recommends 30 days.
-  renewal_days_before_expiry = 30
-
-  # ACME directory URL. Use Let's Encrypt staging for testing, production for live certs.
-  # Staging: "https://acme-staging-v02.api.letsencrypt.org/directory"
-  # Production: "https://acme-v02.api.letsencrypt.org/directory"
-  ca_directory_url = "https://acme-staging-v02.api.letsencrypt.org/directory"
-
-  # Cloudflare API Token for DNS-01 challenge validation.
-  # Set via ACME_CLOUDFLARE_API_TOKEN environment variable. DO NOT STORE HERE.
-  cloudflare_api_token = "" # Example placeholder - set via environment variable in production
-
-  # ACME account private key (ECDSA P-256 in PEM format).
-  # Set via ACME_LETSENCRYPT_PRIVATE_KEY environment variable. DO NOT STORE HERE.
-  # Generate with: openssl ecparam -name prime256v1 -genkey -noout -outform PEM
-  acme_private_key = "" # Example placeholder - set via environment variable in production
 
 
 # --- Background Job Scheduler Settings ---
