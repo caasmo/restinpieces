@@ -253,8 +253,11 @@ func (s *Server) BaseURL() string {
 }
 
 type RateLimits struct {
+	// Minimum time a user must wait between requesting password resets for the same account.
 	PasswordResetCooldown     Duration `toml:"password_reset_cooldown" comment:"Min time between password reset requests"`
+	// Minimum time a user must wait between requesting email verifications for the same email.
 	EmailVerificationCooldown Duration `toml:"email_verification_cooldown" comment:"Min time between email verification requests"`
+	// Minimum time a user must wait between requesting email address changes.
 	EmailChangeCooldown       Duration `toml:"email_change_cooldown" comment:"Min time between email change requests"`
 }
 
