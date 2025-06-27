@@ -199,17 +199,41 @@ type Scheduler struct {
 }
 
 type Server struct {
-	Addr                    string   `toml:"addr" comment:"HTTP listen address (e.g. ':8080')"`
+	// Network address and port the HTTP server listens on.
+	// Examples: ":8080" (all interfaces, port 8080), "localhost:9000"
+	Addr string `toml:"addr" comment:"HTTP listen address (e.g. ':8080')"`
+
+	// Maximum duration the server waits for ongoing requests to complete before shutting down.
 	ShutdownGracefulTimeout Duration `toml:"shutdown_graceful_timeout" comment:"Max time to wait for graceful shutdown"`
-	ReadTimeout             Duration `toml:"read_timeout" comment:"Max time to read full request"`
-	ReadHeaderTimeout       Duration `toml:"read_header_timeout" comment:"Max time to read request headers"`
-	WriteTimeout            Duration `toml:"write_timeout" comment:"Max time to write response"`
-	IdleTimeout             Duration `toml:"idle_timeout" comment:"Max time for idle keep-alive connections"`
-	ClientIpProxyHeader     string   `toml:"client_ip_proxy_header" comment:"Header to trust for client IP (e.g. 'X-Forwarded-For')"`
-	EnableTLS               bool     `toml:"enable_tls" comment:"Enable HTTPS/TLS"`
-	CertData                string   `toml:"cert_data" comment:"PEM-encoded TLS certificate (alternative to file)"`
-	KeyData                 string   `toml:"key_data" comment:"PEM-encoded TLS private key (alternative to file)"`
-	RedirectAddr            string   `toml:"redirect_addr" comment:"HTTP->HTTPS redirect address (e.g. ':80')"`
+
+	// Maximum duration for reading the entire request, including the body.
+	ReadTimeout Duration `toml:"read_timeout" comment:"Max time to read full request"`
+
+	// Maximum duration for reading only the request headers.
+	ReadHeaderTimeout Duration `toml:"read_header_timeout" comment:"Max time to read request headers"`
+
+	// Maximum duration before timing out writes of the response.
+	WriteTimeout Duration `toml:"write_timeout" comment:"Max time to write response"`
+
+	// Maximum duration for waiting for the next request on a keep-alive connection.
+	IdleTimeout Duration `toml:"idle_timeout" comment:"Max time for idle keep-alive connections"`
+
+	// If behind a trusted proxy, specify the header containing the real client IP.
+	// Common values: "X-Forwarded-For", "X-Real-IP". Leave empty if not behind a proxy.
+	ClientIpProxyHeader string `toml:"client_ip_proxy_header" comment:"Header to trust for client IP (e.g. 'X-Forwarded-For')"`
+
+	// Enable HTTPS/TLS for secure connections
+	EnableTLS bool `toml:"enable_tls" comment:"Enable HTTPS/TLS"`
+
+	// PEM-encoded TLS certificate data (alternative to cert_file)
+	CertData string `toml:"cert_data" comment:"PEM-encoded TLS certificate (alternative to file)"`
+
+	// PEM-encoded TLS private key data (alternative to key_file)
+	KeyData string `toml:"key_data" comment:"PEM-encoded TLS private key (alternative to file)"`
+
+	// Address for HTTP->HTTPS redirect server (e.g. ":80")
+	// Only used when enable_tls is true
+	RedirectAddr string `toml:"redirect_addr" comment:"HTTP->HTTPS redirect address (e.g. ':80')"`
 }
 
 func (s *Server) BaseURL() string {
