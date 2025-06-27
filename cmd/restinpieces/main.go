@@ -7,8 +7,7 @@ import (
 	"os"
 
 	"github.com/caasmo/restinpieces"
-	"github.com/caasmo/restinpieces/core"
-)
+	)
 
 func main() {
 	dbPath := flag.String("db", "", "Path to the SQLite database file (required)")
@@ -46,7 +45,7 @@ func main() {
 	// --- Initialize the Application ---
 	_, srv, err := restinpieces.New(
 		restinpieces.WithZombiezenPool(dbPool),
-		core.WithAgeKeyPath(*ageKeyPath),
+		restinpieces.WithAgeKeyPath(*ageKeyPath),
 	)
 	if err != nil {
 		slog.Error("failed to initialize application", "error", err)
