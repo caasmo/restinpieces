@@ -27,9 +27,6 @@ func checkChangedRestartFields(oldCfg, newCfg *Config) []string {
 	if oldCfg.Server.RedirectAddr != newCfg.Server.RedirectAddr {
 		changed = append(changed, "Server.RedirectAddr")
 	}
-	if oldCfg.DBPath != newCfg.DBPath {
-		changed = append(changed, "DBPath")
-	}
 
 	return changed
 }

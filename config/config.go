@@ -53,7 +53,6 @@ const (
 // - Fields named "Enabled" require a server restart to take effect
 // - Other boolean fields typically require restart unless documented otherwise
 type Config struct {
-	DBPath           string                    `toml:"db_path" comment:"Path to SQLite database file"`
 	PublicDir        string                    `toml:"public_dir" comment:"Directory containing static web assets"`
 	Source           string                    `toml:"-" comment:"[READONLY] Source of config - 'file:<path>' or 'db'"`
 	Jwt              Jwt                       `toml:"jwt" comment:"JSON Web Token settings"`

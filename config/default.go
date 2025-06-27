@@ -12,7 +12,6 @@ import (
 // All secret values are randomly generated.
 func NewDefaultConfig() *Config {
 	return &Config{
-		DBPath:    "app.db",
 		PublicDir: "static/dist",
 		Jwt: Jwt{
 			AuthSecret:                     crypto.RandomString(32, crypto.AlphanumericAlphabet),
