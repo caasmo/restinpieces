@@ -182,13 +182,21 @@ func (r Regexp) MarshalText() ([]byte, error) {
 }
 
 type Jwt struct {
-	AuthSecret                     string   `toml:"auth_secret" comment:"Secret key for auth tokens (set via JWT_AUTH_SECRET)"`
+	// Secret key for auth tokens.
+	AuthSecret                     string   `toml:"auth_secret" comment:"Secret key for auth tokens"`
+	// Duration for which standard authentication tokens are valid.
 	AuthTokenDuration              Duration `toml:"auth_token_duration" comment:"Duration auth tokens remain valid"`
+	// Secret key for email verification tokens.
 	VerificationEmailSecret        string   `toml:"verification_email_secret" comment:"Secret key for email verification tokens"`
+	// Duration for which email verification tokens are valid.
 	VerificationEmailTokenDuration Duration `toml:"verification_email_token_duration" comment:"Duration email verification tokens remain valid"`
+	// Secret key for password reset tokens.
 	PasswordResetSecret            string   `toml:"password_reset_secret" comment:"Secret key for password reset tokens"`
+	// Duration for which password reset tokens are valid.
 	PasswordResetTokenDuration     Duration `toml:"password_reset_token_duration" comment:"Duration password reset tokens remain valid"`
+	// Secret key for email change tokens.
 	EmailChangeSecret              string   `toml:"email_change_secret" comment:"Secret key for email change tokens"`
+	// Duration for which email change confirmation tokens are valid.
 	EmailChangeTokenDuration       Duration `toml:"email_change_token_duration" comment:"Duration email change tokens remain valid"`
 }
 
