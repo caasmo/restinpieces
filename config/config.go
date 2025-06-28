@@ -200,9 +200,15 @@ type Jwt struct {
 	EmailChangeTokenDuration       Duration `toml:"email_change_token_duration" comment:"Duration email change tokens remain valid"`
 }
 
+// Scheduler defines settings for the background job processing queue.
 type Scheduler struct {
+	// Interval specifies how often the scheduler checks for pending jobs.
 	Interval              Duration `toml:"interval" comment:"How often to check for pending jobs"`
+	// MaxJobsPerTick limits the number of jobs processed in a single scheduler run.
 	MaxJobsPerTick        int      `toml:"max_jobs_per_tick" comment:"Max jobs to process per scheduler run"`
+	// ConcurrencyMultiplier sets the number of concurrent workers per CPU core.
+	// For I/O-bound tasks, a value between 2 and 8 is recommended.
+	// For CPU-bound tasks, this should typically be 1.
 	ConcurrencyMultiplier int      `toml:"concurrency_multiplier" comment:"Workers per CPU core (2-8 for I/O bound)"`
 }
 

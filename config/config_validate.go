@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+// Validate checks the entire configuration for correctness.
+// It aggregates validation checks from different parts of the configuration.
 func Validate(cfg *Config) error {
 	if err := validateServer(&cfg.Server); err != nil {
 		return fmt.Errorf("server config validation failed: %w", err)
@@ -39,6 +41,7 @@ func Validate(cfg *Config) error {
 	return nil
 }
 
+// validateLoggerBatch checks the batch logger configuration for logical consistency.
 func validateLoggerBatch(loggerBatch *BatchLogger) error {
 	if loggerBatch.ChanSize < 1 {
 		return fmt.Errorf("chan_size must be >= 1")
