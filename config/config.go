@@ -281,34 +281,58 @@ type OAuth2Provider struct {
 	PKCE            bool     `toml:"pkce" comment:"Enable PKCE flow"`
 }
 
+// Smtp holds the configuration for sending emails via an SMTP server.
 type Smtp struct {
+	// Enabled controls whether the SMTP email sending functionality is active.
 	Enabled     bool   `toml:"enabled" comment:"Enable SMTP email sending"`
+	// Host is the SMTP server hostname or IP address.
 	Host        string `toml:"host" comment:"SMTP server hostname"`
+	// Port is the SMTP server port. Common values are 587 (STARTTLS), 465 (TLS), or 25 (unencrypted).
 	Port        int    `toml:"port" comment:"SMTP server port (587/465/25)"`
+	// Username for SMTP authentication. It is recommended to set this via an environment variable.
 	Username    string `toml:"username" comment:"SMTP username (set via env)"`
+	// Password for SMTP authentication. It is recommended to set this via an environment variable.
 	Password    string `toml:"password" comment:"SMTP password (set via env)"`
+	// FromName is the display name for the sender (e.g., "My Application").
 	FromName    string `toml:"from_name" comment:"Sender display name"`
+	// FromAddress is the email address from which emails are sent (e.g., "noreply@example.com").
 	FromAddress string `toml:"from_address" comment:"Sender email address"`
+	// LocalName is the domain name sent during the HELO/EHLO handshake. Defaults to "localhost".
 	LocalName   string `toml:"local_name" comment:"HELO/EHLO domain name"`
+	// AuthMethod specifies the authentication mechanism, e.g., "plain", "login", "cram-md5".
 	AuthMethod  string `toml:"auth_method" comment:"Auth method (plain/login/cram-md5)"`
+	// UseTLS enables a direct TLS connection (SMTPS), typically on port 465.
 	UseTLS      bool   `toml:"use_tls" comment:"Use direct TLS (port 465)"`
+	// UseStartTLS enables the STARTTLS command to upgrade an insecure connection to a secure one, typically on port 587.
 	UseStartTLS bool   `toml:"use_start_tls" comment:"Use STARTTLS (port 587)"`
 }
 
-// Endpoints defines the structure for API endpoint paths.
-// It includes TOML tags for configuration loading and JSON tags for API responses.
+// Endpoints defines the API endpoint paths for various authentication and account management actions.
+// Each field maps a function to a specific HTTP method and path (e.g., "POST /api/refresh-auth").
 type Endpoints struct {
+	// RefreshAuth is the endpoint for refreshing an authentication token.
 	RefreshAuth              string `toml:"refresh_auth" json:"refresh_auth" comment:"Refresh auth token endpoint"`
+	// RequestEmailVerification is the endpoint for users to request an email verification link.
 	RequestEmailVerification string `toml:"request_email_verification" json:"request_email_verification" comment:"Request email verification endpoint"`
+	// ConfirmEmailVerification is the endpoint for verifying a user's email address using a token.
 	ConfirmEmailVerification string `toml:"confirm_email_verification" json:"confirm_email_verification" comment:"Confirm email verification endpoint"`
+	// ListEndpoints is the endpoint that provides a list of all available API endpoints.
 	ListEndpoints            string `toml:"list_endpoints" json:"list_endpoints" comment:"List available endpoints"`
+	// AuthWithPassword is the endpoint for authenticating a user with their email and password.
 	AuthWithPassword         string `toml:"auth_with_password" json:"auth_with_password" comment:"Password authentication endpoint"`
+	// AuthWithOAuth2 is the endpoint for initiating or handling an OAuth2 authentication flow.
 	AuthWithOAuth2           string `toml:"auth_with_oauth2" json:"auth_with_oauth2" comment:"OAuth2 authentication endpoint"`
+	// RegisterWithPassword is the endpoint for creating a new user account with an email and password.
 	RegisterWithPassword     string `toml:"register_with_password" json:"register_with_password" comment:"Password registration endpoint"`
+	// ListOAuth2Providers is the endpoint for listing all configured OAuth2 providers.
 	ListOAuth2Providers      string `toml:"list_oauth2_providers" json:"list_oauth2_providers" comment:"List available OAuth2 providers"`
+	// RequestPasswordReset is the endpoint for users to request a password reset link.
 	RequestPasswordReset     string `toml:"request_password_reset" json:"request_password_reset" comment:"Request password reset endpoint"`
+	// ConfirmPasswordReset is the endpoint for resetting a user's password using a token.
 	ConfirmPasswordReset     string `toml:"confirm_password_reset" json:"confirm_password_reset" comment:"Confirm password reset endpoint"`
+	// RequestEmailChange is the endpoint for users to request an email address change.
 	RequestEmailChange       string `toml:"request_email_change" json:"request_email_change" comment:"Request email change endpoint"`
+	// ConfirmEmailChange is the endpoint for confirming an email address change using a token.
 	ConfirmEmailChange       string `toml:"confirm_email_change" json:"confirm_email_change" comment:"Confirm email change endpoint"`
 }
 
@@ -335,18 +359,31 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 }
 
 // BlockIp holds configuration specific to IP blocking.
+// This feature is intended to automatically block IP addresses based on
+// certain criteria, such as excessive requests, to mitigate abuse.
 type BlockIp struct {
+	// Enabled determines if the IP blocking feature is compiled and available.
+	// A restart is required to apply changes to this field.
 	Enabled   bool `toml:"enabled" comment:"Enable automatic IP blocking (requires restart)"`
+	// Activated controls whether IP blocking is currently active.
+	// This can be toggled dynamically via a configuration reload.
 	Activated bool `toml:"activated" comment:"Activate IP blocking (can be toggled via config reload)"`
 }
 
 // Maintenance holds configuration for the maintenance mode feature.
+// When activated, the application will serve a maintenance page or message
+// for all incoming requests, effectively taking the service offline gracefully.
 type Maintenance struct {
+	// Activated controls whether maintenance mode is currently active.
+	// This can be toggled dynamically via a configuration reload.
 	Activated bool `toml:"activated" comment:"Currently in maintenance mode"`
 }
 
 // BlockUaList holds configuration for blocking requests based on User-Agent patterns.
+// This is useful for filtering out bots, scrapers, or other unwanted clients.
 type BlockUaList struct {
+	// Activated controls whether the User-Agent block list is currently active.
+	// This can be toggled dynamically via a configuration reload.
 	Activated bool `toml:"activated" comment:"Activate User-Agent block list"`
 	// List holds a compiled regular expression for matching User-Agent strings.
 	// RE2 Syntax Notes: Go uses the RE2 regex engine. For literal matching:
@@ -361,19 +398,29 @@ type BlockUaList struct {
 	List Regexp `toml:"list" comment:"Regex for matching User-Agents to block"`
 }
 
+// Discord holds the configuration for sending notifications via a Discord webhook.
 type Discord struct {
+	// Activated controls whether the Discord notifier is active.
 	Activated    bool     `toml:"activated" comment:"Activate the default Discord notifier"`
+	// WebhookURL is the URL of the Discord webhook to which notifications will be sent.
 	WebhookURL   string   `toml:"webhook_url" comment:"Discord webhook URL"`
+	// APIRateLimit specifies the minimum time between API calls to avoid rate limiting.
 	APIRateLimit Duration `toml:"api_rate_limit" comment:"API call rate limit (e.g., '2s'). Discord webhooks generally allow ~30 requests/minute."`
+	// APIBurst allows for a certain number of requests to be made in quick succession before rate limiting is enforced.
 	APIBurst     int      `toml:"api_burst" comment:"API call burst allowance (e.g., 1, 5)"`
+	// SendTimeout is the maximum time to wait for a single notification to be sent to Discord.
 	SendTimeout  Duration `toml:"send_timeout" comment:"Timeout for sending a single notification via Discord (e.g., '10s')"`
 }
 
+// Notifier holds the configuration for various notification services.
+// Currently, it only contains settings for Discord.
 type Notifier struct {
+	// Discord holds the configuration for the Discord notifier.
 	Discord Discord `toml:"discord" comment:"Default Discord notifier configuration"`
 }
 
-// BlockRequestBody holds configuration for request body size limiting
+// Metrics holds the configuration for collecting and exposing application metrics,
+// typically for monitoring purposes (e.g., with Prometheus).
 type Metrics struct {
 	// Enabled controls whether metrics collection is compiled into the binary and available.
 	// Changing this requires a server restart.
@@ -391,18 +438,21 @@ type Metrics struct {
 	AllowedIPs []string `toml:"allowed_ips" comment:"List of exact IP addresses allowed to access metrics endpoint (no CIDR ranges)"`
 }
 
+// BlockRequestBody holds configuration for limiting the size of incoming request bodies.
+// This is a security measure to prevent denial-of-service attacks using large payloads.
 type BlockRequestBody struct {
-	// Activated enables/disables request body size limiting middleware
+	// Activated enables or disables the request body size limiting middleware.
+	// This can be toggled dynamically via a configuration reload.
 	Activated bool `toml:"activated" comment:"Enable request body size limiting"`
 
-	// Limit is the maximum allowed request body size in bytes
+	// Limit is the maximum allowed request body size in bytes.
 	// Common values:
 	// - 1MB (1048576) for typical APIs
 	// - 10MB (10485760) for file uploads
 	// - 100MB (104857600) for large media uploads
 	Limit int64 `toml:"limit" comment:"Maximum allowed request body size in bytes"`
 
-	// ExcludedPaths are URL paths that bypass size limiting
+	// ExcludedPaths are URL paths that bypass the size limiting middleware.
 	// Path matching rules:
 	// - Exact match required (case-sensitive)
 	// - Trailing slashes are significant ('/path' ≠ '/path/')
