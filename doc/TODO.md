@@ -1,5 +1,6 @@
 ### TODOs
 
+- newLog -> newConn
 - maintenance: mimetype decides output
 - https://github.com/jellydator/ttlcache
 - simple ttl map instead of ristretto  https://stackoverflow.com/questions/25484122/map-with-ttl-option-in-go
@@ -170,8 +171,6 @@
 
 ### done
 
-- directory instead of dbpath is directory
-	- reanme logs.db
 - maube new inerface with
     Path
     DriverName ??

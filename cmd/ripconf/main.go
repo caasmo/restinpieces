@@ -15,7 +15,7 @@ import (
 func main() {
 	// Global flags
 	ageIdentityPathFlag := flag.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
-	dbPathFlag := flag.String("db", "", "Path to the SQLite database file")
+	dbPathFlag := flag.String("dbpath", "", "Path to the SQLite database file")
 
 	originalUsage := flag.Usage
 	flag.Usage = func() {
