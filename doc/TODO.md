@@ -1,6 +1,9 @@
 ### TODOs
 
 - newLog -> newConn
+- integrate local backup in main framework
+    - handler receives conn to app file? no better create two more. ones for source one for destiny they are harcoded zombiezen
+        - we can not use app.DBQueue etc.
 - maintenance: mimetype decides output
 - https://github.com/jellydator/ttlcache
 - simple ttl map instead of ristretto  https://stackoverflow.com/questions/25484122/map-with-ttl-option-in-go

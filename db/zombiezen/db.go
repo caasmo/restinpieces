@@ -24,6 +24,5 @@ func New(pool *sqlitex.Pool) (*Db, error) {
 	if pool == nil {
 		return nil, fmt.Errorf("provided pool cannot be nil")
 	}
-	// The pool is managed externally, just store it.
 	return &Db{pool: pool}, nil
 }
