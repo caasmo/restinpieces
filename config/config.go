@@ -69,6 +69,16 @@ type Config struct {
 	Log              Log                       `toml:"log" comment:"Logging configuration"`
 	BlockRequestBody BlockRequestBody          `toml:"block_request_body" comment:"Request body size limiting configuration"`
 	Metrics          Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
+	BackupLocal      BackupLocal               `toml:"backup_local" comment:"Local backup configuration"`
+}
+
+// BackupLocal defines the settings for the local backup job.
+type BackupLocal struct {
+	SourcePath    string   `toml:"source_path" comment:"Path to the source database file to back up."`
+	BackupDir     string   `toml:"backup_dir" comment:"Directory where backup files will be stored."`
+	Strategy      string   `toml:"strategy" comment:"Backup strategy to use ('online' or 'vacuum'). 'online' is the default."`
+	PagesPerStep  int      `toml:"pages_per_step" comment:"For 'online' strategy, the number of pages to copy in each step."`
+	SleepInterval Duration `toml:"sleep_interval" comment:"For 'online' strategy, the duration to sleep between steps."`
 }
 
 // Log contains Default (Batch) log configuration

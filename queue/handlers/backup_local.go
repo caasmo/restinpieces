@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 	"zombiezen.com/go/sqlite"
 )
@@ -21,51 +22,34 @@ const (
 	StrategyOnline = "online"
 )
 
-// Config defines the settings for the backup job.
-type Config struct {
-	SourcePath    string   `toml:"source_path"`
-	BackupDir     string   `toml:"backup_dir"`
-	Strategy      string   `toml:"strategy"`
-	PagesPerStep  int      `toml:"pages_per_step"`
-	SleepInterval Duration `toml:"sleep_interval"`
-}
-
 // Handler handles database backup jobs
 type Handler struct {
-	cfg    *Config
-	logger *slog.Logger
+	configProvider *config.Provider
+	logger         *slog.Logger
 }
 
 // NewHandler creates a new Handler
-func NewHandler(cfg *Config, logger *slog.Logger) *Handler {
-	if cfg == nil || logger == nil {
-		panic("NewHandler: received nil config or logger")
+func NewHandler(provider *config.Provider, logger *slog.Logger) *Handler {
+	if provider == nil || logger == nil {
+		panic("NewHandler: received nil provider or logger")
 	}
 	return &Handler{
-		cfg:    cfg,
-		logger: logger.With("job_handler", "sqlite_backup"),
-	}
-}
-
-// GenerateBlueprintConfig creates a default configuration for a new setup.
-func GenerateBlueprintConfig() Config {
-	return Config{
-		SourcePath:    "/path/to/your/database.db",
-		BackupDir:     "/path/to/your/backups",
-		Strategy:      StrategyOnline,
-		PagesPerStep:  100,
-		SleepInterval: Duration{Duration: 10 * time.Millisecond},
+		configProvider: provider,
+		logger:         logger.With("job_handler", "sqlite_backup"),
 	}
 }
 
 // Handle implements the JobHandler interface for database backups
 func (h *Handler) Handle(ctx context.Context, job db.Job) error {
+	cfg := h.configProvider.Get()
+	backupCfg := cfg.BackupLocal
+
 	// --- Define Paths and Filenames ---
-	sourceDbPath := h.cfg.SourcePath
-	backupDir := h.cfg.BackupDir
+	sourceDbPath := backupCfg.SourcePath
+	backupDir := backupCfg.BackupDir
 	tempBackupPath := filepath.Join(os.TempDir(), fmt.Sprintf("backup-%d.db", time.Now().UnixNano()))
 
-	strategyForFilename := h.cfg.Strategy
+	strategyForFilename := backupCfg.Strategy
 	if strategyForFilename == "" {
 		strategyForFilename = StrategyOnline
 	}
@@ -77,17 +61,17 @@ func (h *Handler) Handle(ctx context.Context, job db.Job) error {
 
 	finalBackupPath := filepath.Join(backupDir, finalBackupName)
 
-	h.logger.Info("Starting database backup process", "source", sourceDbPath, "strategy", h.cfg.Strategy, "destination", finalBackupPath)
+	h.logger.Info("Starting database backup process", "source", sourceDbPath, "strategy", backupCfg.Strategy, "destination", finalBackupPath)
 
 	// --- Dispatch to the chosen backup strategy ---
 	var backupErr error
-	switch h.cfg.Strategy {
+	switch backupCfg.Strategy {
 	case StrategyVacuum:
 		backupErr = h.vacuumInto(sourceDbPath, tempBackupPath)
 	case StrategyOnline, "":
 		backupErr = h.onlineBackup(sourceDbPath, tempBackupPath)
 	default:
-		return fmt.Errorf("unknown backup strategy: %q", h.cfg.Strategy)
+		return fmt.Errorf("unknown backup strategy: %q", backupCfg.Strategy)
 	}
 
 	if backupErr != nil {
@@ -108,11 +92,12 @@ func (h *Handler) Handle(ctx context.Context, job db.Job) error {
 
 // validateOnlineConfig checks if the configuration for the online strategy is valid.
 func (h *Handler) validateOnlineConfig() error {
-	if h.cfg.PagesPerStep <= 0 {
-		return fmt.Errorf("invalid configuration for online backup: pages_per_step must be a positive value, but was %d", h.cfg.PagesPerStep)
+	backupCfg := h.configProvider.Get().BackupLocal
+	if backupCfg.PagesPerStep <= 0 {
+		return fmt.Errorf("invalid configuration for online backup: pages_per_step must be a positive value, but was %d", backupCfg.PagesPerStep)
 	}
-	if h.cfg.SleepInterval.Duration < 0 {
-		return fmt.Errorf("invalid configuration for online backup: sleep_interval cannot be negative, but was %v", h.cfg.SleepInterval)
+	if backupCfg.SleepInterval.Duration < 0 {
+		return fmt.Errorf("invalid configuration for online backup: sleep_interval cannot be negative, but was %v", backupCfg.SleepInterval)
 	}
 	return nil
 }
@@ -143,8 +128,9 @@ func (h *Handler) onlineBackup(sourcePath, destPath string) error {
 		return err
 	}
 
-	pagesPerStep := h.cfg.PagesPerStep
-	sleepInterval := h.cfg.SleepInterval.Duration
+	backupCfg := h.configProvider.Get().BackupLocal
+	pagesPerStep := backupCfg.PagesPerStep
+	sleepInterval := backupCfg.SleepInterval.Duration
 
 	srcConn, err := sqlite.OpenConn(sourcePath, sqlite.OpenReadOnly)
 	if err != nil {
@@ -281,25 +267,4 @@ func (h *Handler) compressFile(sourcePath, destPath string) error {
 	}
 
 	return nil
-}
-
-// Duration is a wrapper around time.Duration that supports TOML marshalling
-// to and from a string value (e.g., "3h", "15m", "1h30m").
-type Duration struct {
-	time.Duration
-}
-
-// UnmarshalText implements the encoding.TextUnmarshaler interface.
-func (d *Duration) UnmarshalText(text []byte) error {
-	var err error
-	d.Duration, err = time.ParseDuration(string(text))
-	if err != nil {
-		return fmt.Errorf("failed to parse duration '%s': %w", string(text), err)
-	}
-	return nil
-}
-
-// MarshalText implements the encoding.TextMarshaler interface.
-func (d Duration) MarshalText() ([]byte, error) {
-	return []byte(d.Duration.String()), nil
 }
