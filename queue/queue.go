@@ -43,6 +43,7 @@ const (
 	JobTypePasswordReset     = "job_type_password_reset"
 	JobTypeEmailChange       = "job_type_email_change"
 	JobTypeTLSCertRenewal    = "job_type_tls_cert_renewal"
+	JobTypeBackupLocal       = "job_type_backup_local"
 )
 
 // Job statuses
