@@ -13,6 +13,7 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/db/zombiezen"
 	"zombiezen.com/go/sqlite"
 )
 
@@ -104,7 +105,7 @@ func (h *Handler) validateOnlineConfig() error {
 
 // vacuumInto creates a clean, defragmented copy of the database.
 func (h *Handler) vacuumInto(sourcePath, destPath string) error {
-	sourceConn, err := sqlite.OpenConn(sourcePath, sqlite.OpenReadOnly)
+	sourceConn, err := zombiezen.NewConn(sourcePath)
 	if err != nil {
 		return fmt.Errorf("failed to open source db for vacuum: %w", err)
 	}
@@ -132,13 +133,13 @@ func (h *Handler) onlineBackup(sourcePath, destPath string) error {
 	pagesPerStep := backupCfg.PagesPerStep
 	sleepInterval := backupCfg.SleepInterval.Duration
 
-	srcConn, err := sqlite.OpenConn(sourcePath, sqlite.OpenReadOnly)
+	srcConn, err := zombiezen.NewConn(sourcePath)
 	if err != nil {
 		return fmt.Errorf("failed to open source db for online backup: %w", err)
 	}
 	defer srcConn.Close()
 
-	destConn, err := sqlite.OpenConn(destPath, sqlite.OpenCreate|sqlite.OpenReadWrite)
+	destConn, err := zombiezen.NewConn(destPath)
 	if err != nil {
 		return fmt.Errorf("failed to create destination db for online backup: %w", err)
 	}

@@ -142,5 +142,12 @@ func NewDefaultConfig() *Config {
 			Endpoint:   "/metrics",
 			AllowedIPs: []string{"127.0.0.1", "::1"}, // Only exact IPs allowed, no CIDR ranges
 		},
+		BackupLocal: BackupLocal{
+			SourcePath:    "restinpieces.db",
+			BackupDir:     "backups",
+			Strategy:      "online",
+			PagesPerStep:  100,
+			SleepInterval: Duration{Duration: 10 * time.Millisecond},
+		},
 	}
 }
