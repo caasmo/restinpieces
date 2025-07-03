@@ -10,8 +10,18 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
-	"github.com/caasmo/restinpieces/queue"
 )
+
+const JobTypeEmailVerification = "job_type_email_verification"
+
+// PayloadEmailVerification contains the email verification details
+type PayloadEmailVerification struct {
+	Email string `json:"email"`
+	// CooldownBucket is the time bucket number calculated from the current time divided by the cooldown duration.
+	// This provides a basic rate limiting mechanism where only one email verification request is allowed per time bucket.
+	// The bucket number is calculated as: floor(current Unix time / cooldown duration in seconds)
+	CooldownBucket int `json:"cooldown_bucket"`
+}
 
 // EmailVerificationHandler handles email verification jobs
 type EmailVerificationHandler struct {
@@ -33,7 +43,7 @@ func NewEmailVerificationHandler(dbAuth db.DbAuth, provider *config.Provider, ma
 func (h *EmailVerificationHandler) Handle(ctx context.Context, job db.Job) error {
 	cfg := h.configProvider.Get()
 
-	var payload queue.PayloadEmailVerification
+	var payload PayloadEmailVerification
 	if err := json.Unmarshal(job.Payload, &payload); err != nil {
 		return fmt.Errorf("failed to parse email verification payload: %w", err)
 	}

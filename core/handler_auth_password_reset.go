@@ -9,6 +9,7 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/queue/handlers"
 )
 
 // RequestPasswordResetHandler handles password reset requests
@@ -80,15 +81,15 @@ func (a *App) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request
 
 	// Create queue job with cooldown bucket. Second insertion in same bucket
 	// will fail because unique
-	payload, _ := json.Marshal(queue.PayloadPasswordReset{
+	payload, _ := json.Marshal(handlers.PayloadPasswordReset{
 		UserID:         user.ID,
 		CooldownBucket: cooldownBucket,
 	})
-	payloadExtra, _ := json.Marshal(queue.PayloadPasswordResetExtra{
+	payloadExtra, _ := json.Marshal(handlers.PayloadPasswordResetExtra{
 		Email: req.Email,
 	})
 	job := db.Job{
-		JobType:      queue.JobTypePasswordReset,
+		JobType:      handlers.JobTypePasswordReset,
 		Payload:      payload,
 		PayloadExtra: payloadExtra,
 	}

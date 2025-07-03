@@ -9,8 +9,18 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
-	"github.com/caasmo/restinpieces/queue"
 )
+
+const JobTypeEmailChange = "job_type_email_change"
+
+type PayloadEmailChange struct {
+	UserID         string `json:"user_id"`
+	CooldownBucket int    `json:"cooldown_bucket"`
+}
+
+type PayloadEmailChangeExtra struct {
+	NewEmail string `json:"new_email"`
+}
 
 // EmailChangeHandler handles email change requests
 type EmailChangeHandler struct {
@@ -33,12 +43,12 @@ func (h *EmailChangeHandler) Handle(ctx context.Context, job db.Job) error {
 	// Get current config snapshot
 	cfg := h.configProvider.Get()
 
-	var payload queue.PayloadEmailChange
+	var payload PayloadEmailChange
 	if err := json.Unmarshal(job.Payload, &payload); err != nil {
 		return fmt.Errorf("failed to parse email change payload: %w", err)
 	}
 
-	var payloadExtra queue.PayloadEmailChangeExtra
+	var payloadExtra PayloadEmailChangeExtra
 	if err := json.Unmarshal(job.PayloadExtra, &payloadExtra); err != nil {
 		return fmt.Errorf("failed to parse email change extra payload: %w", err)
 	}

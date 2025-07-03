@@ -8,6 +8,7 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/queue/handlers"
 )
 
 // RequestEmailChangeHandler handles email change requests
@@ -63,12 +64,12 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	// this is for uniqueness
 	// use one request per bucket.
 	cfg := a.Config() // Get the current config
-	payload := queue.PayloadEmailChange{
+	payload := handlers.PayloadEmailChange{
 		UserID:         user.ID,
 		CooldownBucket: queue.CoolDownBucket(cfg.RateLimits.EmailChangeCooldown.Duration, time.Now()),
 	}
 
-	payloadExtra := queue.PayloadEmailChangeExtra{
+	payloadExtra := handlers.PayloadEmailChangeExtra{
 		NewEmail: req.NewEmail,
 	}
 
@@ -85,7 +86,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	err = a.DbQueue().InsertJob(db.Job{
-		JobType:      queue.JobTypeEmailChange,
+		JobType:      handlers.JobTypeEmailChange,
 		Payload:      payloadBytes,
 		PayloadExtra: payloadExtraBytes,
 		Status:       queue.StatusPending,

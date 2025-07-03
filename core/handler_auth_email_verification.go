@@ -9,6 +9,7 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/queue/handlers"
 )
 
 // RequestVerificationHandler handles email verification requests
@@ -65,12 +66,12 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.EmailVerificationCooldown.Duration, time.Now())
 
 	// Create queue job with cooldown bucket
-	payload, _ := json.Marshal(queue.PayloadEmailVerification{
+	payload, _ := json.Marshal(handlers.PayloadEmailVerification{
 		Email:          req.Email,
 		CooldownBucket: cooldownBucket,
 	})
 	job := db.Job{
-		JobType: queue.JobTypeEmailVerification,
+		JobType: handlers.JobTypeEmailVerification,
 		Payload: payload,
 	}
 

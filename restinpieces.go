@@ -307,20 +307,20 @@ func (i *initializer) setupScheduler(configProvider *config.Provider) (*scl.Sche
 		}
 
 		emailVerificationHandler := handlers.NewEmailVerificationHandler(i.app.DbAuth(), configProvider, mailer)
-		hdls[queue.JobTypeEmailVerification] = emailVerificationHandler
+		hdls[handlers.JobTypeEmailVerification] = emailVerificationHandler
 		logger.Info(ft.Ok("registered email verification handler"))
 
 		passwordResetHandler := handlers.NewPasswordResetHandler(i.app.DbAuth(), configProvider, mailer)
-		hdls[queue.JobTypePasswordReset] = passwordResetHandler
+		hdls[handlers.JobTypePasswordReset] = passwordResetHandler
 		logger.Info(ft.Ok("registered password reset handler"))
 
 		emailChangeHandler := handlers.NewEmailChangeHandler(i.app.DbAuth(), configProvider, mailer)
-		hdls[queue.JobTypeEmailChange] = emailChangeHandler
+		hdls[handlers.JobTypeEmailChange] = emailChangeHandler
 		logger.Info(ft.Ok("registered email change handler"))
 	}
 
 	backupLocalHandler := handlers.NewHandler(configProvider, logger)
-	hdls[queue.JobTypeBackupLocal] = backupLocalHandler
+	hdls[handlers.JobTypeBackupLocal] = backupLocalHandler
 	logger.Info(ft.Ok("registered backup local handler"))
 
 	scheduler := scl.NewScheduler(configProvider, i.app.DbQueue(), executor.NewExecutor(hdls), logger)

@@ -18,9 +18,10 @@ import (
 )
 
 const (
-	ScopeDbBackup  = "sqlite_backup"
-	StrategyVacuum = "vacuum"
-	StrategyOnline = "online"
+	JobTypeBackupLocal = "job_type_backup_local"
+	ScopeDbBackup      = "sqlite_backup"
+	StrategyVacuum     = "vacuum"
+	StrategyOnline     = "online"
 )
 
 // Handler handles database backup jobs

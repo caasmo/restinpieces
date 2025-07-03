@@ -10,8 +10,18 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/mail"
-	"github.com/caasmo/restinpieces/queue"
 )
+
+const JobTypePasswordReset = "job_type_password_reset"
+
+type PayloadPasswordReset struct {
+	UserID         string `json:"user_id"`
+	CooldownBucket int    `json:"cooldown_bucket"`
+}
+
+type PayloadPasswordResetExtra struct {
+	Email string `json:"email"`
+}
 
 // PasswordResetHandler handles password reset requests
 type PasswordResetHandler struct {
@@ -33,12 +43,12 @@ func NewPasswordResetHandler(dbAuth db.DbAuth, provider *config.Provider, mailer
 func (h *PasswordResetHandler) Handle(ctx context.Context, job db.Job) error {
 	cfg := h.configProvider.Get()
 
-	var payload queue.PayloadPasswordReset
+	var payload PayloadPasswordReset
 	if err := json.Unmarshal(job.Payload, &payload); err != nil {
 		return fmt.Errorf("failed to parse password reset payload: %w", err)
 	}
 
-	var payloadExtra queue.PayloadPasswordResetExtra
+	var payloadExtra PayloadPasswordResetExtra
 	if err := json.Unmarshal(job.PayloadExtra, &payloadExtra); err != nil {
 		return fmt.Errorf("failed to parse password reset extra payload: %w", err)
 	}

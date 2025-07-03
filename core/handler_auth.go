@@ -7,7 +7,7 @@ import (
 
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
+	"github.com/caasmo/restinpieces/queue/handlers"
 )
 
 // RefreshAuthHandler handles explicit JWT token refresh requests
@@ -175,9 +175,9 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 
 	// If user is not verified, add verification job to queue
 	if !retrievedUser.Verified {
-		payload, _ := json.Marshal(queue.PayloadEmailVerification{Email: retrievedUser.Email})
+		payload, _ := json.Marshal(handlers.PayloadEmailVerification{Email: retrievedUser.Email})
 		job := db.Job{
-			JobType: queue.JobTypeEmailVerification,
+			JobType: handlers.JobTypeEmailVerification,
 			Payload: payload,
 		}
 
