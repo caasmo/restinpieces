@@ -8,6 +8,13 @@
             - there is no restinpices binary
             - we can call ripc, and add create command to reduce 
             - only one binary con configuration and creation
+            - rename ripc, rename restinpieces, must be example. 
+            - commetn is meant to be extended.
+    - about inserting backup job
+        in ripc job-add <template>? it must be always a handler, handler could decribe the Job.
+        job-list id recurrent payload prefix payloadextra prefix
+        job-deactivate id for recurrent just modify flag recurrent
+        job-interval id 24h
 - maintenance: mimetype decides output
 - https://github.com/jellydator/ttlcache
 - simple ttl map instead of ristretto  https://stackoverflow.com/questions/25484122/map-with-ttl-option-in-go
