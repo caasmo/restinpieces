@@ -40,6 +40,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  rotate-jwt-secrets                  Rotate all JWT secrets (application scope only)\n")
 		fmt.Fprintf(os.Stderr, "  add-oauth2 <provider>              Add new OAuth2 provider skeleton (e.g. gitlab)\n")
 		fmt.Fprintf(os.Stderr, "  rm-oauth2 <provider>               Remove OAuth2 provider (e.g. gitlab)\n")
+        fmt.Fprintf(os.Stderr, "  job <subcommand> [options]         Manage background jobs (add, list, rm)\n")
 	}
 
 	flag.Parse()
@@ -213,6 +214,8 @@ func main() {
 			os.Exit(1)
 		}
 		handleRmOAuth2Command(secureStore, commandArgs[0])
+	case "job":
+		handleJobCommand(dbImpl, commandArgs)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
 		flag.Usage()
