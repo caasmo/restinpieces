@@ -1,9 +1,13 @@
 ### TODOs
 
-- newLog -> newConn
 - integrate local backup in main framework
     - handler receives conn to app file? no better create two more. ones for source one for destiny they are harcoded zombiezen
         - we can not use app.DBQueue etc.
+    - about command restinpieces wiht serve and ripc integration create etc
+        - no restinpieces is meant to be always extended: is a framwork
+            - there is no restinpices binary
+            - we can call ripc, and add create command to reduce 
+            - only one binary con configuration and creation
 - maintenance: mimetype decides output
 - https://github.com/jellydator/ttlcache
 - simple ttl map instead of ristretto  https://stackoverflow.com/questions/25484122/map-with-ttl-option-in-go

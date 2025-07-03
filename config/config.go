@@ -193,33 +193,33 @@ func (r Regexp) MarshalText() ([]byte, error) {
 
 type Jwt struct {
 	// Secret key for auth tokens.
-	AuthSecret                     string   `toml:"auth_secret" comment:"Secret key for auth tokens"`
+	AuthSecret string `toml:"auth_secret" comment:"Secret key for auth tokens"`
 	// Duration for which standard authentication tokens are valid.
-	AuthTokenDuration              Duration `toml:"auth_token_duration" comment:"Duration auth tokens remain valid"`
+	AuthTokenDuration Duration `toml:"auth_token_duration" comment:"Duration auth tokens remain valid"`
 	// Secret key for email verification tokens.
-	VerificationEmailSecret        string   `toml:"verification_email_secret" comment:"Secret key for email verification tokens"`
+	VerificationEmailSecret string `toml:"verification_email_secret" comment:"Secret key for email verification tokens"`
 	// Duration for which email verification tokens are valid.
 	VerificationEmailTokenDuration Duration `toml:"verification_email_token_duration" comment:"Duration email verification tokens remain valid"`
 	// Secret key for password reset tokens.
-	PasswordResetSecret            string   `toml:"password_reset_secret" comment:"Secret key for password reset tokens"`
+	PasswordResetSecret string `toml:"password_reset_secret" comment:"Secret key for password reset tokens"`
 	// Duration for which password reset tokens are valid.
-	PasswordResetTokenDuration     Duration `toml:"password_reset_token_duration" comment:"Duration password reset tokens remain valid"`
+	PasswordResetTokenDuration Duration `toml:"password_reset_token_duration" comment:"Duration password reset tokens remain valid"`
 	// Secret key for email change tokens.
-	EmailChangeSecret              string   `toml:"email_change_secret" comment:"Secret key for email change tokens"`
+	EmailChangeSecret string `toml:"email_change_secret" comment:"Secret key for email change tokens"`
 	// Duration for which email change confirmation tokens are valid.
-	EmailChangeTokenDuration       Duration `toml:"email_change_token_duration" comment:"Duration email change tokens remain valid"`
+	EmailChangeTokenDuration Duration `toml:"email_change_token_duration" comment:"Duration email change tokens remain valid"`
 }
 
 // Scheduler defines settings for the background job processing queue.
 type Scheduler struct {
 	// Interval specifies how often the scheduler checks for pending jobs.
-	Interval              Duration `toml:"interval" comment:"How often to check for pending jobs"`
+	Interval Duration `toml:"interval" comment:"How often to check for pending jobs"`
 	// MaxJobsPerTick limits the number of jobs processed in a single scheduler run.
-	MaxJobsPerTick        int      `toml:"max_jobs_per_tick" comment:"Max jobs to process per scheduler run"`
+	MaxJobsPerTick int `toml:"max_jobs_per_tick" comment:"Max jobs to process per scheduler run"`
 	// ConcurrencyMultiplier sets the number of concurrent workers per CPU core.
 	// For I/O-bound tasks, a value between 2 and 8 is recommended.
 	// For CPU-bound tasks, this should typically be 1.
-	ConcurrencyMultiplier int      `toml:"concurrency_multiplier" comment:"Workers per CPU core (2-8 for I/O bound)"`
+	ConcurrencyMultiplier int `toml:"concurrency_multiplier" comment:"Workers per CPU core (2-8 for I/O bound)"`
 }
 
 type Server struct {
@@ -270,11 +270,11 @@ func (s *Server) BaseURL() string {
 
 type RateLimits struct {
 	// Minimum time a user must wait between requesting password resets for the same account.
-	PasswordResetCooldown     Duration `toml:"password_reset_cooldown" comment:"Min time between password reset requests"`
+	PasswordResetCooldown Duration `toml:"password_reset_cooldown" comment:"Min time between password reset requests"`
 	// Minimum time a user must wait between requesting email verifications for the same email.
 	EmailVerificationCooldown Duration `toml:"email_verification_cooldown" comment:"Min time between email verification requests"`
 	// Minimum time a user must wait between requesting email address changes.
-	EmailChangeCooldown       Duration `toml:"email_change_cooldown" comment:"Min time between email change requests"`
+	EmailChangeCooldown Duration `toml:"email_change_cooldown" comment:"Min time between email change requests"`
 }
 
 type OAuth2Provider struct {
@@ -294,56 +294,56 @@ type OAuth2Provider struct {
 // Smtp holds the configuration for sending emails via an SMTP server.
 type Smtp struct {
 	// Enabled controls whether the SMTP email sending functionality is active.
-	Enabled     bool   `toml:"enabled" comment:"Enable SMTP email sending"`
+	Enabled bool `toml:"enabled" comment:"Enable SMTP email sending"`
 	// Host is the SMTP server hostname or IP address.
-	Host        string `toml:"host" comment:"SMTP server hostname"`
+	Host string `toml:"host" comment:"SMTP server hostname"`
 	// Port is the SMTP server port. Common values are 587 (STARTTLS), 465 (TLS), or 25 (unencrypted).
-	Port        int    `toml:"port" comment:"SMTP server port (587/465/25)"`
+	Port int `toml:"port" comment:"SMTP server port (587/465/25)"`
 	// Username for SMTP authentication. It is recommended to set this via an environment variable.
-	Username    string `toml:"username" comment:"SMTP username (set via env)"`
+	Username string `toml:"username" comment:"SMTP username (set via env)"`
 	// Password for SMTP authentication. It is recommended to set this via an environment variable.
-	Password    string `toml:"password" comment:"SMTP password (set via env)"`
+	Password string `toml:"password" comment:"SMTP password (set via env)"`
 	// FromName is the display name for the sender (e.g., "My Application").
-	FromName    string `toml:"from_name" comment:"Sender display name"`
+	FromName string `toml:"from_name" comment:"Sender display name"`
 	// FromAddress is the email address from which emails are sent (e.g., "noreply@example.com").
 	FromAddress string `toml:"from_address" comment:"Sender email address"`
 	// LocalName is the domain name sent during the HELO/EHLO handshake. Defaults to "localhost".
-	LocalName   string `toml:"local_name" comment:"HELO/EHLO domain name"`
+	LocalName string `toml:"local_name" comment:"HELO/EHLO domain name"`
 	// AuthMethod specifies the authentication mechanism, e.g., "plain", "login", "cram-md5".
-	AuthMethod  string `toml:"auth_method" comment:"Auth method (plain/login/cram-md5)"`
+	AuthMethod string `toml:"auth_method" comment:"Auth method (plain/login/cram-md5)"`
 	// UseTLS enables a direct TLS connection (SMTPS), typically on port 465.
-	UseTLS      bool   `toml:"use_tls" comment:"Use direct TLS (port 465)"`
+	UseTLS bool `toml:"use_tls" comment:"Use direct TLS (port 465)"`
 	// UseStartTLS enables the STARTTLS command to upgrade an insecure connection to a secure one, typically on port 587.
-	UseStartTLS bool   `toml:"use_start_tls" comment:"Use STARTTLS (port 587)"`
+	UseStartTLS bool `toml:"use_start_tls" comment:"Use STARTTLS (port 587)"`
 }
 
 // Endpoints defines the API endpoint paths for various authentication and account management actions.
 // Each field maps a function to a specific HTTP method and path (e.g., "POST /api/refresh-auth").
 type Endpoints struct {
 	// RefreshAuth is the endpoint for refreshing an authentication token.
-	RefreshAuth              string `toml:"refresh_auth" json:"refresh_auth" comment:"Refresh auth token endpoint"`
+	RefreshAuth string `toml:"refresh_auth" json:"refresh_auth" comment:"Refresh auth token endpoint"`
 	// RequestEmailVerification is the endpoint for users to request an email verification link.
 	RequestEmailVerification string `toml:"request_email_verification" json:"request_email_verification" comment:"Request email verification endpoint"`
 	// ConfirmEmailVerification is the endpoint for verifying a user's email address using a token.
 	ConfirmEmailVerification string `toml:"confirm_email_verification" json:"confirm_email_verification" comment:"Confirm email verification endpoint"`
 	// ListEndpoints is the endpoint that provides a list of all available API endpoints.
-	ListEndpoints            string `toml:"list_endpoints" json:"list_endpoints" comment:"List available endpoints"`
+	ListEndpoints string `toml:"list_endpoints" json:"list_endpoints" comment:"List available endpoints"`
 	// AuthWithPassword is the endpoint for authenticating a user with their email and password.
-	AuthWithPassword         string `toml:"auth_with_password" json:"auth_with_password" comment:"Password authentication endpoint"`
+	AuthWithPassword string `toml:"auth_with_password" json:"auth_with_password" comment:"Password authentication endpoint"`
 	// AuthWithOAuth2 is the endpoint for initiating or handling an OAuth2 authentication flow.
-	AuthWithOAuth2           string `toml:"auth_with_oauth2" json:"auth_with_oauth2" comment:"OAuth2 authentication endpoint"`
+	AuthWithOAuth2 string `toml:"auth_with_oauth2" json:"auth_with_oauth2" comment:"OAuth2 authentication endpoint"`
 	// RegisterWithPassword is the endpoint for creating a new user account with an email and password.
-	RegisterWithPassword     string `toml:"register_with_password" json:"register_with_password" comment:"Password registration endpoint"`
+	RegisterWithPassword string `toml:"register_with_password" json:"register_with_password" comment:"Password registration endpoint"`
 	// ListOAuth2Providers is the endpoint for listing all configured OAuth2 providers.
-	ListOAuth2Providers      string `toml:"list_oauth2_providers" json:"list_oauth2_providers" comment:"List available OAuth2 providers"`
+	ListOAuth2Providers string `toml:"list_oauth2_providers" json:"list_oauth2_providers" comment:"List available OAuth2 providers"`
 	// RequestPasswordReset is the endpoint for users to request a password reset link.
-	RequestPasswordReset     string `toml:"request_password_reset" json:"request_password_reset" comment:"Request password reset endpoint"`
+	RequestPasswordReset string `toml:"request_password_reset" json:"request_password_reset" comment:"Request password reset endpoint"`
 	// ConfirmPasswordReset is the endpoint for resetting a user's password using a token.
-	ConfirmPasswordReset     string `toml:"confirm_password_reset" json:"confirm_password_reset" comment:"Confirm password reset endpoint"`
+	ConfirmPasswordReset string `toml:"confirm_password_reset" json:"confirm_password_reset" comment:"Confirm password reset endpoint"`
 	// RequestEmailChange is the endpoint for users to request an email address change.
-	RequestEmailChange       string `toml:"request_email_change" json:"request_email_change" comment:"Request email change endpoint"`
+	RequestEmailChange string `toml:"request_email_change" json:"request_email_change" comment:"Request email change endpoint"`
 	// ConfirmEmailChange is the endpoint for confirming an email address change using a token.
-	ConfirmEmailChange       string `toml:"confirm_email_change" json:"confirm_email_change" comment:"Confirm email change endpoint"`
+	ConfirmEmailChange string `toml:"confirm_email_change" json:"confirm_email_change" comment:"Confirm email change endpoint"`
 }
 
 // Path extracts just the path portion from an endpoint string (removes method prefix)
@@ -374,7 +374,7 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 type BlockIp struct {
 	// Enabled determines if the IP blocking feature is compiled and available.
 	// A restart is required to apply changes to this field.
-	Enabled   bool `toml:"enabled" comment:"Enable automatic IP blocking (requires restart)"`
+	Enabled bool `toml:"enabled" comment:"Enable automatic IP blocking (requires restart)"`
 	// Activated controls whether IP blocking is currently active.
 	// This can be toggled dynamically via a configuration reload.
 	Activated bool `toml:"activated" comment:"Activate IP blocking (can be toggled via config reload)"`
@@ -411,15 +411,15 @@ type BlockUaList struct {
 // Discord holds the configuration for sending notifications via a Discord webhook.
 type Discord struct {
 	// Activated controls whether the Discord notifier is active.
-	Activated    bool     `toml:"activated" comment:"Activate the default Discord notifier"`
+	Activated bool `toml:"activated" comment:"Activate the default Discord notifier"`
 	// WebhookURL is the URL of the Discord webhook to which notifications will be sent.
-	WebhookURL   string   `toml:"webhook_url" comment:"Discord webhook URL"`
+	WebhookURL string `toml:"webhook_url" comment:"Discord webhook URL"`
 	// APIRateLimit specifies the minimum time between API calls to avoid rate limiting.
 	APIRateLimit Duration `toml:"api_rate_limit" comment:"API call rate limit (e.g., '2s'). Discord webhooks generally allow ~30 requests/minute."`
 	// APIBurst allows for a certain number of requests to be made in quick succession before rate limiting is enforced.
-	APIBurst     int      `toml:"api_burst" comment:"API call burst allowance (e.g., 1, 5)"`
+	APIBurst int `toml:"api_burst" comment:"API call burst allowance (e.g., 1, 5)"`
 	// SendTimeout is the maximum time to wait for a single notification to be sent to Discord.
-	SendTimeout  Duration `toml:"send_timeout" comment:"Timeout for sending a single notification via Discord (e.g., '10s')"`
+	SendTimeout Duration `toml:"send_timeout" comment:"Timeout for sending a single notification via Discord (e.g., '10s')"`
 }
 
 // Notifier holds the configuration for various notification services.

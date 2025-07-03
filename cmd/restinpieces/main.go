@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/caasmo/restinpieces"
-	)
+)
 
 func main() {
 	dbPath := flag.String("db", "", "Path to the SQLite database file (required)")

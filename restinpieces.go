@@ -357,7 +357,7 @@ func (i *initializer) setupDefaultCache() error {
 //   - Batching multiple log entries together before writing to disk
 //
 // We use a hardcoded zombiezen driver since:
-//   - Only the logger daemon needs access to this database  
+//   - Only the logger daemon needs access to this database
 //   - the database in in another file as the main db
 //   - Using the same driver as the main app would require additional wiring
 //
