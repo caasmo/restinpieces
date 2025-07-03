@@ -11,9 +11,7 @@ type PayloadRecurrent struct {
 }
 
 // Job types
-const (
-	JobTypeTLSCertRenewal = "job_type_tls_cert_renewal"
-)
+const ()
 
 // Job statuses
 const (
