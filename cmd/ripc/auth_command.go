@@ -1,0 +1,42 @@
+package main
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/caasmo/restinpieces/config"
+)
+
+func handleAuthCommand(secureStore *config.SecureStore, commandArgs []string) {
+	if len(commandArgs) < 1 {
+		fmt.Fprintln(os.Stderr, "Error: auth command requires a subcommand (rotate-jwt-secrets, add-oauth2, rm-oauth2)")
+		os.Exit(1)
+	}
+
+	subcommand := commandArgs[0]
+	subcommandArgs := commandArgs[1:]
+
+	switch subcommand {
+	case "rotate-jwt-secrets":
+		if len(subcommandArgs) > 0 {
+			fmt.Fprintf(os.Stderr, "Error: 'rotate-jwt-secrets' does not take any arguments\n")
+			os.Exit(1)
+		}
+		handleRotateJwtSecretsCommand(secureStore)
+	case "add-oauth2":
+		if len(subcommandArgs) < 1 {
+			fmt.Fprintf(os.Stderr, "Error: 'add-oauth2' requires provider name argument\n")
+			os.Exit(1)
+		}
+		handleOAuth2Command(secureStore, subcommandArgs[0])
+	case "rm-oauth2":
+		if len(subcommandArgs) < 1 {
+			fmt.Fprintf(os.Stderr, "Error: 'rm-oauth2' requires provider name argument\n")
+			os.Exit(1)
+		}
+		handleRmOAuth2Command(secureStore, subcommandArgs[0])
+	default:
+		fmt.Fprintf(os.Stderr, "Error: unknown auth subcommand: %s\n", subcommand)
+		os.Exit(1)
+	}
+}
