@@ -29,8 +29,7 @@ func handleJobCommand(dbConn db.DbQueue, args []string) {
 	case "rm":
 		fmt.Println("job rm command not yet implemented")
 	default:
-		fmt.Fprintf(os.Stderr, "Error: unknown job subcommand: %s
-", subcommand)
+		fmt.Fprintf(os.Stderr, "Error: unknown job subcommand: %s\n", subcommand)
 		// TODO: Print job-specific usage from a helper function
 		os.Exit(1)
 	}
@@ -51,14 +50,9 @@ func handleJobAdd(dbConn db.DbQueue, args []string) {
 	maxAttempts := addCmd.Int("max-attempts", 3, "Maximum number of attempts")
 
 	addCmd.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: ripconf job add [options]
-
-")
-		fmt.Fprintf(os.Stderr, "Adds a new job to the queue.
-
-")
-		fmt.Fprintf(os.Stderr, "Options:
-")
+		fmt.Fprintf(os.Stderr, "Usage: ripconf job add [options]\n\n")
+		fmt.Fprintf(os.Stderr, "Adds a new job to the queue.\n\n")
+		fmt.Fprintf(os.Stderr, "Options:\n")
 		addCmd.PrintDefaults()
 	}
 
@@ -84,8 +78,7 @@ func handleJobAdd(dbConn db.DbQueue, args []string) {
 	// Parse time and duration
 	scheduledTime, err := time.Parse(time.RFC3339, *scheduledFor)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Invalid -scheduled-for format: %v
-", err)
+		fmt.Fprintf(os.Stderr, "Error: Invalid -scheduled-for format: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -98,8 +91,7 @@ func handleJobAdd(dbConn db.DbQueue, args []string) {
 		}
 		intervalDuration, err = time.ParseDuration(*interval)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: Invalid -interval format: %v
-", err)
+			fmt.Fprintf(os.Stderr, "Error: Invalid -interval format: %v\n", err)
 			os.Exit(1)
 		}
 	}
@@ -117,11 +109,9 @@ func handleJobAdd(dbConn db.DbQueue, args []string) {
 
 	// Insert the job using the existing DB interface
 	if err := dbConn.InsertJob(newJob); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Failed to insert job: %v
-", err)
+		fmt.Fprintf(os.Stderr, "Error: Failed to insert job: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Successfully inserted job of type '%s'.
-", newJob.JobType)
+	fmt.Printf("Successfully inserted job of type '%s'.\n", newJob.JobType)
 }
