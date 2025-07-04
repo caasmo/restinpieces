@@ -11,8 +11,25 @@ import (
 )
 
 func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, commandArgs []string) {
+	configCmd := flag.NewFlagSet("config", flag.ExitOnError)
+	configCmd.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s config <subcommand> [options]\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Manages the application configuration.\n\n")
+		fmt.Fprintf(os.Stderr, "Subcommands:\n")
+		fmt.Fprintf(os.Stderr, "  set <path> <value>    Set a configuration value\n")
+		fmt.Fprintf(os.Stderr, "  scopes                List all configuration scopes\n")
+		fmt.Fprintf(os.Stderr, "  list [scope]          List configuration versions\n")
+		fmt.Fprintf(os.Stderr, "  paths [filter]        List all keys in the configuration\n")
+		fmt.Fprintf(os.Stderr, "  dump                  Dump the configuration\n")
+		fmt.Fprintf(os.Stderr, "  diff <generation>     Compare configuration versions\n")
+		fmt.Fprintf(os.Stderr, "  rollback <generation> Restore a previous configuration version\n")
+		fmt.Fprintf(os.Stderr, "  save <file>           Save file contents to the configuration\n")
+		fmt.Fprintf(os.Stderr, "  get [filter]          Get configuration values by path\n")
+		fmt.Fprintf(os.Stderr, "  init                  Initialize the configuration with default values\n")
+	}
+
 	if len(commandArgs) < 1 {
-		fmt.Fprintln(os.Stderr, "Error: config command requires a subcommand (set, scopes, list, paths, dump, diff, rollback, save, get, init)")
+		configCmd.Usage()
 		os.Exit(1)
 	}
 
@@ -35,6 +52,7 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 	case "scopes":
 		if len(subcommandArgs) > 0 {
 			fmt.Fprintf(os.Stderr, "Error: 'scopes' command does not take any arguments\n")
+			configCmd.Usage()
 			os.Exit(1)
 		}
 		handleScopesCommand(dbPool)
@@ -44,6 +62,7 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 			scopeToList = subcommandArgs[0]
 			if len(subcommandArgs) > 1 {
 				fmt.Fprintf(os.Stderr, "Error: 'list' command takes at most one scope argument\n")
+				configCmd.Usage()
 				os.Exit(1)
 			}
 		}
@@ -123,6 +142,7 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		handleInitCommand(secureStore, *initScope)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown config subcommand: %s\n", subcommand)
+		configCmd.Usage()
 		os.Exit(1)
 	}
 }
