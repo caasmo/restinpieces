@@ -27,8 +27,7 @@ func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, 
 	// Marshal Config to TOML
 	tomlBytes, err := toml.Marshal(defaultCfg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to marshal default config to TOML: %v
-", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to marshal default config to TOML: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -38,15 +37,13 @@ func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, 
 		os.Exit(1)
 	}
 
-	fmt.Printf("Application database created and configured successfully: %s
-", dbPath)
+	fmt.Printf("Application database created and configured successfully: %s\n", dbPath)
 }
 
 func runMigrations(pool *sqlitex.Pool) error {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to get connection from pool for migrations: %v
-", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to get connection from pool for migrations: %v\n", err)
 		return err
 	}
 	defer pool.Put(conn)
@@ -54,8 +51,7 @@ func runMigrations(pool *sqlitex.Pool) error {
 	schemaFS := migrations.Schema()
 	migrationFiles, err := fs.ReadDir(schemaFS, ".")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to read embedded migrations: %v
-", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to read embedded migrations: %v\n", err)
 		return err
 	}
 
@@ -66,16 +62,13 @@ func runMigrations(pool *sqlitex.Pool) error {
 
 		sqlBytes, err := fs.ReadFile(schemaFS, migration.Name())
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to read embedded migration file %s: %v
-", migration.Name(), err)
+			fmt.Fprintf(os.Stderr, "Error: failed to read embedded migration file %s: %v\n", migration.Name(), err)
 			return err
 		}
 
-		fmt.Printf("Applying migration: %s
-", migration.Name())
+		fmt.Printf("Applying migration: %s\n", migration.Name())
 		if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to execute migration file %s: %v
-", migration.Name(), err)
+			fmt.Fprintf(os.Stderr, "Error: failed to execute migration file %s: %v\n", migration.Name(), err)
 			return err
 		}
 	}
@@ -91,8 +84,7 @@ func saveConfig(secureStore config.SecureStore, configData []byte) error {
 		"Initial default configuration",
 	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to save initial config via SecureStore: %v
-", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to save initial config via SecureStore: %v\n", err)
 		return fmt.Errorf("failed to save initial config: %w", err)
 	}
 	return nil
