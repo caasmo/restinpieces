@@ -8,7 +8,6 @@ import (
 	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	dbz "github.com/caasmo/restinpieces/db/zombiezen"
-	// toml "github.com/pelletier/go-toml" // No longer needed directly in main
 )
 
 func main() {
@@ -23,6 +22,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Global Options:\n")
 		originalUsage() // Prints the global flags
 		fmt.Fprintf(os.Stderr, "\nAvailable Commands:\n")
+		fmt.Fprintf(os.Stderr, "  app <subcommand> [options]       Manage application lifecycle (create)\n")
 		fmt.Fprintf(os.Stderr, "  config <subcommand> [options]    Manage configuration (set, list, dump, etc.)\n")
 		fmt.Fprintf(os.Stderr, "  auth <subcommand> [options]      Manage authentication (rotate-jwt-secrets, add-oauth2, etc.)\n")
 		fmt.Fprintf(os.Stderr, "  job <subcommand> [options]         Manage background jobs (add, list, rm)\n")
@@ -51,6 +51,16 @@ func main() {
 	command := args[0]
 	commandArgs := args[1:]
 
+	// For all commands except 'app create', the database must exist.
+	isAppCreate := command == "app" && len(commandArgs) > 0 && commandArgs[0] == "create"
+	if !isAppCreate {
+		if _, err := os.Stat(*dbPathFlag); os.IsNotExist(err) {
+			fmt.Fprintf(os.Stderr, "Error: database file not found: %s\n", *dbPathFlag)
+			fmt.Fprintf(os.Stderr, "Please create it first using 'ripc app create'.\n")
+			os.Exit(1)
+		}
+	}
+
 	pool, err := restinpieces.NewZombiezenPool(*dbPathFlag)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to create database pool (db_path: %s): %v\n", *dbPathFlag, err)
@@ -75,6 +85,8 @@ func main() {
 	}
 
 	switch command {
+	case "app":
+		handleAppCommand(secureStore, pool, *dbPathFlag, commandArgs)
 	case "config":
 		handleConfigCommand(secureStore, pool, commandArgs)
 	case "auth":
