@@ -10,12 +10,14 @@ import (
 
 	"github.com/pelletier/go-toml/v2"
 
+	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string) {
+func handleAppCreateCommand(ageKeyPath, dbPath string) {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
@@ -26,17 +28,33 @@ func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, 
 		os.Exit(1)
 	}
 
+	// --- Database and SecureStore Initialization ---
+	pool, err := restinpieces.NewZombiezenPool(dbPath)
+	if err != nil {
+		logger.Error("failed to create database pool", "db_path", dbPath, "error", err)
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	dbImpl, err := zombiezen.New(pool)
+	if err != nil {
+		logger.Error("failed to instantiate zombiezen db from pool", "error", err)
+		os.Exit(1)
+	}
+
+	secureStore, err := config.NewSecureStoreAge(dbImpl, ageKeyPath)
+	if err != nil {
+		logger.Error("failed to instantiate secure store", "age_key_path", ageKeyPath, "error", err)
+		os.Exit(1)
+	}
+
 	// Run Migrations (Apply Schema)
 	if err := runMigrations(logger, pool); err != nil {
 		os.Exit(1) // Error logged in runMigrations
 	}
 
 	// Generate Default Config Struct
-	defaultCfg, err := config.NewDefaultConfig(), nil
-	if err != nil {
-		logger.Error("failed to generate default config struct", "error", err)
-		os.Exit(1)
-	}
+	defaultCfg := config.NewDefaultConfig()
 
 	// Marshal Config to TOML
 	tomlBytes, err := toml.Marshal(defaultCfg)

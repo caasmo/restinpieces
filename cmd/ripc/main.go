@@ -51,14 +51,19 @@ func main() {
 	command := args[0]
 	commandArgs := args[1:]
 
-	// For all commands except 'app create', the database must exist.
 	isAppCreate := command == "app" && len(commandArgs) > 0 && commandArgs[0] == "create"
-	if !isAppCreate {
-		if _, err := os.Stat(*dbPathFlag); os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "Error: database file not found: %s\n", *dbPathFlag)
-			fmt.Fprintf(os.Stderr, "Please create it first using 'ripc app create'.\n")
-			os.Exit(1)
-		}
+	if isAppCreate {
+		// The 'app create' command handles its own database creation and checks.
+		// We pass the dbPath directly to it.
+		handleAppCreateCommand(*ageIdentityPathFlag, *dbPathFlag) // Pass dbPath and age key path
+		return                                                    // Exit after create command
+	}
+
+	// For all other commands, the database must exist.
+	if _, err := os.Stat(*dbPathFlag); os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "Error: database file not found: %s\n", *dbPathFlag)
+		fmt.Fprintf(os.Stderr, "Please create it first using 'ripc app create'.\n")
+		os.Exit(1)
 	}
 
 	pool, err := restinpieces.NewZombiezenPool(*dbPathFlag)
@@ -85,19 +90,24 @@ func main() {
 	}
 
 	switch command {
-	case "app":
-		handleAppCommand(secureStore, pool, *dbPathFlag, commandArgs)
-	case "config":
-		handleConfigCommand(secureStore, pool, commandArgs)
-	case "auth":
-		handleAuthCommand(secureStore, commandArgs)
-	case "job":
-		handleJobCommand(dbImpl, commandArgs)
-	case "help":
-		handleHelpCommand(commandArgs, flag.Usage)
-	default:
-		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
-		flag.Usage()
-		os.Exit(1)
-	}
+    // case "app": // 'app create' is handled above
+    //  handleAppCommand(secureStore, pool, *dbPathFlag, commandArgs)
+    case "config":
+        handleConfigCommand(secureStore, pool, commandArgs)
+    case "auth":
+        handleAuthCommand(secureStore, commandArgs)
+    case "job":
+        handleJobCommand(dbImpl, commandArgs)
+    case "help":
+        handleHelpCommand(commandArgs, flag.Usage)
+    default:
+        // This now also catches other 'app' subcommands, which need to be implemented.
+        if command == "app" {
+            fmt.Fprintf(os.Stderr, "Error: unknown or not yet implemented 'app' subcommand: %s\n", commandArgs[0])
+        } else {
+            fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
+        }
+        flag.Usage()
+        os.Exit(1)
+    }
 }
