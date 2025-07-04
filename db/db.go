@@ -25,6 +25,12 @@ type DbQueue interface {
 	MarkRecurrentCompleted(completedJobID int64, newJob Job) error
 }
 
+// DbQueueAdmin defines database operations for administering the job queue.
+type DbQueueAdmin interface {
+	ListJobs(limit int) ([]*Job, error)
+	DeleteJob(jobID int64) error
+}
+
 // DbConfig defines database operations related to configuration.
 type DbConfig interface {
 	// GetConfig retrieves encrypted config content and format by scope and generation
