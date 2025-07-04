@@ -7,7 +7,7 @@ import (
 	"github.com/caasmo/restinpieces/config"
 )
 
-func handleAuthCommand(secureStore *config.SecureStore, commandArgs []string) {
+func handleAuthCommand(secureStore config.SecureStore, commandArgs []string) {
 	if len(commandArgs) < 1 {
 		fmt.Fprintln(os.Stderr, "Error: auth command requires a subcommand (rotate-jwt-secrets, add-oauth2, rm-oauth2)")
 		os.Exit(1)

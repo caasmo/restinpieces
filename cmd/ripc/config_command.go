@@ -1,16 +1,16 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"os"
 	"strconv"
 
 	"github.com/caasmo/restinpieces/config"
+	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-func handleConfigCommand(secureStore *config.SecureStore, dbPool *sql.DB, commandArgs []string) {
+func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, commandArgs []string) {
 	if len(commandArgs) < 1 {
 		fmt.Fprintln(os.Stderr, "Error: config command requires a subcommand (set, scopes, list, paths, dump, diff, rollback, save, get, init)")
 		os.Exit(1)
