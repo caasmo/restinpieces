@@ -24,6 +24,8 @@ func handleJobCommand(dbConn db.DbQueue, args []string) {
 	switch subcommand {
 	case "add":
 		handleJobAdd(dbConn, subcommandArgs)
+	case "add-backup":
+		handleJobAddBackup(dbConn, subcommandArgs)
 	case "list":
 		fmt.Println("job list command not yet implemented")
 	case "rm":
