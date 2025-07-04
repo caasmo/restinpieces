@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/db/zombiezen"
 )
 
 // handleJobCommand is the dispatcher for all "job" subcommands.
-func handleJobCommand(dbConn db.DbQueue, args []string) {
+func handleJobCommand(dbConn *zombiezen.Db, args []string) {
 	if len(args) < 1 {
 		fmt.Fprintln(os.Stderr, "Error: 'job' command requires a subcommand (e.g., add, list, rm)")
 		// TODO: Print job-specific usage from a helper function
@@ -27,7 +28,7 @@ func handleJobCommand(dbConn db.DbQueue, args []string) {
 	case "add-backup":
 		handleJobAddBackup(dbConn, subcommandArgs)
 	case "list":
-		fmt.Println("job list command not yet implemented")
+		handleJobList(dbConn, subcommandArgs)
 	case "rm":
 		fmt.Println("job rm command not yet implemented")
 	default:
