@@ -10,7 +10,7 @@ import (
 )
 
 // ListJobs retrieves a list of all jobs from the database, ordered by creation time.
-func (d *DB) ListJobs(limit int) ([]*db.Job, error) {
+func (d *Db) ListJobs(limit int) ([]*db.Job, error) {
 	conn, err := d.pool.Take(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db connection for list jobs: %w", err)
@@ -50,7 +50,7 @@ func (d *DB) ListJobs(limit int) ([]*db.Job, error) {
 }
 
 // DeleteJob removes a job from the queue by its ID.
-func (d *DB) DeleteJob(jobID int64) error {
+func (d *Db) DeleteJob(jobID int64) error {
 	conn, err := d.pool.Take(context.Background())
 	if err != nil {
 		return fmt.Errorf("failed to get db connection for delete job: %w", err)
