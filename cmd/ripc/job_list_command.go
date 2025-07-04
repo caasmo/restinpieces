@@ -34,8 +34,8 @@ func handleJobList(dbConn db.DbQueueAdmin, args []string) {
 
 	// Format the output using a tabwriter for alignment
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID\tTYPE\tSTATUS\tSCHEDULED FOR\tINTERVAL\tATTEMPTS\tLAST ERROR")
-	fmt.Fprintln(w, "--\t----\t------\t-------------\t--------\t--------\t----------")
+	fmt.Fprintln(w, "ID	TYPE	STATUS	SCHEDULED FOR	INTERVAL	ATTEMPTS	PAYLOAD	PAYLOAD EXTRA	LAST ERROR")
+	fmt.Fprintln(w, "--	----	------	-------------	--------	--------	-------	-------------	----------")
 
 	for _, job := range jobs {
 		scheduledFor := "N/A"
@@ -48,12 +48,22 @@ func handleJobList(dbConn db.DbQueueAdmin, args []string) {
 			interval = job.Interval.String()
 		}
 
+		payload := string(job.Payload)
+		if len(payload) > 20 {
+			payload = payload[:17] + "..."
+		}
+
+		payloadExtra := string(job.PayloadExtra)
+		if len(payloadExtra) > 20 {
+			payloadExtra = payloadExtra[:17] + "..."
+		}
+
 		lastError := job.LastError
 		if len(lastError) > 50 {
 			lastError = lastError[:47] + "..."
 		}
 
-		fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%d/%d\t%s\n",
+		fmt.Fprintf(w, "%d	%s	%s	%s	%s	%d/%d	%s	%s	%s\n",
 			job.ID,
 			job.JobType,
 			job.Status,
@@ -61,6 +71,8 @@ func handleJobList(dbConn db.DbQueueAdmin, args []string) {
 			interval,
 			job.Attempts,
 			job.MaxAttempts,
+			payload,
+			payloadExtra,
 			lastError,
 		)
 	}
