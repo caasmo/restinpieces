@@ -10,43 +10,15 @@ import (
 
 	"github.com/pelletier/go-toml/v2"
 
-	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-func handleAppCreateCommand(ageKeyPath, dbPath string) {
+func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string) {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
 	}))
-
-	// Check if database already exists
-	if _, err := os.Stat(dbPath); err == nil {
-		logger.Error("database file already exists", "file", dbPath)
-		os.Exit(1)
-	}
-
-	// --- Database and SecureStore Initialization ---
-	pool, err := restinpieces.NewZombiezenPool(dbPath)
-	if err != nil {
-		logger.Error("failed to create database pool", "db_path", dbPath, "error", err)
-		os.Exit(1)
-	}
-	defer pool.Close()
-
-	dbImpl, err := zombiezen.New(pool)
-	if err != nil {
-		logger.Error("failed to instantiate zombiezen db from pool", "error", err)
-		os.Exit(1)
-	}
-
-	secureStore, err := config.NewSecureStoreAge(dbImpl, ageKeyPath)
-	if err != nil {
-		logger.Error("failed to instantiate secure store", "age_key_path", ageKeyPath, "error", err)
-		os.Exit(1)
-	}
 
 	// Run Migrations (Apply Schema)
 	if err := runMigrations(logger, pool); err != nil {
