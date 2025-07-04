@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"log/slog"
 	"os"
 	"path/filepath"
 
@@ -16,13 +15,10 @@ import (
 )
 
 func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string) {
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
-	}))
-
 	// Run Migrations (Apply Schema)
-	if err := runMigrations(logger, pool); err != nil {
-		os.Exit(1) // Error logged in runMigrations
+	if err := runMigrations(pool); err != nil {
+		// Error already printed by runMigrations
+		os.Exit(1)
 	}
 
 	// Generate Default Config Struct
@@ -31,23 +27,26 @@ func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, 
 	// Marshal Config to TOML
 	tomlBytes, err := toml.Marshal(defaultCfg)
 	if err != nil {
-		logger.Error("failed to marshal default config to TOML", "error", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to marshal default config to TOML: %v
+", err)
 		os.Exit(1)
 	}
 
 	// Save Encrypted Config into DB via SecureConfig
-	if err := saveConfig(logger, secureStore, tomlBytes); err != nil {
-		// Error logged in saveConfig
+	if err := saveConfig(secureStore, tomlBytes); err != nil {
+		// Error already printed by saveConfig
 		os.Exit(1)
 	}
 
-	logger.Info("application database created and configured successfully", "db_file", dbPath)
+	fmt.Printf("Application database created and configured successfully: %s
+", dbPath)
 }
 
-func runMigrations(logger *slog.Logger, pool *sqlitex.Pool) error {
+func runMigrations(pool *sqlitex.Pool) error {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
-		logger.Error("failed to get connection from pool for migrations", "error", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to get connection from pool for migrations: %v
+", err)
 		return err
 	}
 	defer pool.Put(conn)
@@ -55,7 +54,8 @@ func runMigrations(logger *slog.Logger, pool *sqlitex.Pool) error {
 	schemaFS := migrations.Schema()
 	migrationFiles, err := fs.ReadDir(schemaFS, ".")
 	if err != nil {
-		logger.Error("failed to read embedded migrations", "error", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to read embedded migrations: %v
+", err)
 		return err
 	}
 
@@ -66,25 +66,24 @@ func runMigrations(logger *slog.Logger, pool *sqlitex.Pool) error {
 
 		sqlBytes, err := fs.ReadFile(schemaFS, migration.Name())
 		if err != nil {
-			logger.Error("failed to read embedded migration",
-				"file", migration.Name(),
-				"error", err)
+			fmt.Fprintf(os.Stderr, "Error: failed to read embedded migration file %s: %v
+", migration.Name(), err)
 			return err
 		}
 
-		logger.Info("applying migration", "file", migration.Name())
+		fmt.Printf("Applying migration: %s
+", migration.Name())
 		if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
-			logger.Error("failed to execute migration",
-				"file", migration.Name(),
-				"error", err)
+			fmt.Fprintf(os.Stderr, "Error: failed to execute migration file %s: %v
+", migration.Name(), err)
 			return err
 		}
 	}
 	return nil
 }
 
-func saveConfig(logger *slog.Logger, secureStore config.SecureStore, configData []byte) error {
-	logger.Info("saving initial configuration using SecureStore")
+func saveConfig(secureStore config.SecureStore, configData []byte) error {
+	fmt.Println("Saving initial configuration...")
 	err := secureStore.Save(
 		config.ScopeApplication,
 		configData,
@@ -92,7 +91,8 @@ func saveConfig(logger *slog.Logger, secureStore config.SecureStore, configData 
 		"Initial default configuration",
 	)
 	if err != nil {
-		logger.Error("failed to save initial config via SecureStore", "error", err)
+		fmt.Fprintf(os.Stderr, "Error: failed to save initial config via SecureStore: %v
+", err)
 		return fmt.Errorf("failed to save initial config: %w", err)
 	}
 	return nil
