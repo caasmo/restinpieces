@@ -11,21 +11,20 @@ import (
 	"github.com/caasmo/restinpieces/db/zombiezen"
 )
 
+func printJobUsage() {
+	fmt.Fprintf(os.Stderr, "Usage: %s job <subcommand> [options]\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Manages background jobs.\n\n")
+	fmt.Fprintf(os.Stderr, "Subcommands:\n")
+	fmt.Fprintf(os.Stderr, "  add-backup [options]    Add a new recurrent backup job\n")
+	fmt.Fprintf(os.Stderr, "  list [limit]            List jobs in the queue\n")
+	fmt.Fprintf(os.Stderr, "  rm <job_id>             Remove a job from the queue\n")
+	fmt.Fprintf(os.Stderr, "  add [options]           Add a generic job (advanced)\n")
+}
+
 // handleJobCommand is the dispatcher for all "job" subcommands.
 func handleJobCommand(dbConn *zombiezen.Db, args []string) {
-	jobCmd := flag.NewFlagSet("job", flag.ExitOnError)
-	jobCmd.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s job <subcommand> [options]\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Manages background jobs.\n\n")
-		fmt.Fprintf(os.Stderr, "Subcommands:\n")
-		fmt.Fprintf(os.Stderr, "  add-backup [options]    Add a new recurrent backup job\n")
-		fmt.Fprintf(os.Stderr, "  list [limit]            List jobs in the queue\n")
-		fmt.Fprintf(os.Stderr, "  rm <job_id>             Remove a job from the queue\n")
-		fmt.Fprintf(os.Stderr, "  add [options]           Add a generic job (advanced)\n")
-	}
-
 	if len(args) < 1 {
-		jobCmd.Usage()
+		printJobUsage()
 		os.Exit(1)
 	}
 
@@ -43,7 +42,7 @@ func handleJobCommand(dbConn *zombiezen.Db, args []string) {
 		handleJobRm(dbConn, subcommandArgs)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown job subcommand: %s\n", subcommand)
-		jobCmd.Usage()
+		printJobUsage()
 		os.Exit(1)
 	}
 }

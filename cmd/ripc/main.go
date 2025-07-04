@@ -81,6 +81,8 @@ func main() {
 		handleAuthCommand(secureStore, commandArgs)
 	case "job":
 		handleJobCommand(dbImpl, commandArgs)
+	case "help":
+		handleHelpCommand(commandArgs, flag.Usage)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
 		flag.Usage()
