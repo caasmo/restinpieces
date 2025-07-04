@@ -30,7 +30,7 @@ func handleJobCommand(dbConn *zombiezen.Db, args []string) {
 	case "list":
 		handleJobList(dbConn, subcommandArgs)
 	case "rm":
-		fmt.Println("job rm command not yet implemented")
+		handleJobRm(dbConn, subcommandArgs)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown job subcommand: %s\n", subcommand)
 		// TODO: Print job-specific usage from a helper function
