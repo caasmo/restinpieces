@@ -39,7 +39,7 @@ func (d *Db) ListJobs(limit int) ([]*db.Job, error) {
 			break
 		}
 
-		job, err := scanJob(stmt)
+		job, err := newJobFromStmt(stmt)
 		if err != nil {
 			return nil, err // error already contains context
 		}
@@ -69,39 +69,4 @@ func (d *Db) DeleteJob(jobID int64) error {
 	}
 
 	return nil
-}
-
-// scanJob is a helper function to scan a sqlite.Stmt into a db.Job struct.
-func scanJob(stmt *sqlite.Stmt) (*db.Job, error) {
-	job := &db.Job{
-		ID:           stmt.GetInt64("id"),
-		JobType:      stmt.GetText("job_type"),
-		Payload:      []byte(stmt.GetText("payload")),
-		PayloadExtra: []byte(stmt.GetText("payload_extra")),
-		Status:       stmt.GetText("status"),
-		LastError:    stmt.GetText("last_error"),
-		Attempts:     int(stmt.GetInt64("attempts")),
-		MaxAttempts:  int(stmt.GetInt64("max_attempts")),
-		Recurrent:    stmt.GetInt64("recurrent") == 1,
-	}
-
-	var err error
-	job.CreatedAt, err = db.TimeParse(stmt.GetText("created_at"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse created_at for job %d: %w", job.ID, err)
-	}
-	job.ScheduledFor, err = db.TimeParse(stmt.GetText("scheduled_for"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse scheduled_for for job %d: %w", job.ID, err)
-	}
-	job.ClaimedAt, err = db.TimeParse(stmt.GetText("claimed_at"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse claimed_at for job %d: %w", job.ID, err)
-	}
-	job.CompletedAt, err = db.TimeParse(stmt.GetText("completed_at"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse completed_at for job %d: %w", job.ID, err)
-	}
-
-	return job, nil
 }
