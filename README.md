@@ -55,7 +55,7 @@ A one-file golang API focused server using sqlite, with focus on simplicity, per
 - Cache interface with [Ristretto](https://github.com/dgraph-io/ristretto) implementation
 
 ### Configuration Management
-- Secure configuration storage with [ripconf CLI tool](cmd/ripconf/README.md)
+- Secure configuration storage with [ripc CLI tool](cmd/ripc/README.md)
   - Versioned configuration with rollback support
   - Age encryption for sensitive values
   - JWT secret rotation
@@ -110,11 +110,17 @@ A one-file golang API focused server using sqlite, with focus on simplicity, per
 
 ## Building the Project
 
+### Build Server
 
-### Build
+Builds the example server application.
 
-    # Default build with pure Go Zombiezen SQLite driver
-    go build -ldflags="-s -w" -trimpath ./cmd/restinpieces/...
+    go build -ldflags="-s -w" -trimpath -o restinpieces_server ./cmd/example/
+
+### Build CLI
+
+Builds the `ripc` command-line tool.
+
+    go build -ldflags="-s -w" -trimpath -o ripc ./cmd/ripc/
 
 ## TODO
 
