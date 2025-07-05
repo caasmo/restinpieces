@@ -1,159 +1,95 @@
-# ripconf - Secure Configuration Management for RestInPieces
+# `ripc` - Command-Line Interface for RestInPieces
 
-ripconf is the official CLI tool for managing the RestInPieces framework's secure configuration store. It uses SQLite and age encryption to provide:
-
-- Secure storage of framework secrets and configurations
-- Versioning and rollback capabilities
-- Scoped configurations (application-wide or per-component)
-- JWT secret rotation
-- OAuth2 provider management
-
-## Features
-
-- Secure storage using age encryption
-- Configuration versioning and rollback
-- Multiple configuration scopes
-- TOML and JSON format support
-- JWT secret management
-- OAuth2 provider management
+`ripc` is a CLI tool for managing RestInPieces application instances. It handles the creation of new application databases and provides tools for managing the secure configuration store, authentication settings, and background jobs.
 
 ## Installation
 
 ```bash
-go install github.com/caasmo/restinpieces/cmd/ripconf
+go install github.com/caasmo/restinpieces/cmd/ripc
 ```
 
 ## Global Options
 
-All commands require these global flags:
-- `-age-key`: Path to age private key file
-- `-db`: Path to SQLite database file
+All commands require the following global flags:
+
+-   `-age-key`: Path to the `age` identity file (private key).
+-   `-dbpath`: Path to the SQLite database file.
+
+## Usage
+
+```
+ripc [global options] <command> <subcommand> [options]
+```
 
 ## Commands
 
-### `set` - Set configuration values
+`ripc` uses a command and subcommand structure. For example, to list configuration versions, you would use `ripc config list`.
 
-Sets a configuration value at a given path. Creates new configuration versions.
+### `app`
 
-```bash
-ripconf -age-key age.key -db config.db set -scope myapp -format toml -desc "Update API settings" api.url "https://api.example.com"
-```
+Manages the application lifecycle.
 
-Options:
-- `-scope`: Configuration scope (default: application)
-- `-format`: Configuration format (toml/json)
-- `-desc`: Description of this change
+-   **`create`**: Creates a new application instance, including the database file and a default, encrypted configuration. The database file must not already exist.
+    ```bash
+    ripc -age-key age.key -dbpath app.db app create
+    ```
 
-### `scopes` - List configuration scopes
+### `config`
 
-Lists all unique configuration scopes in the database.
+Manages the secure configuration store.
 
-```bash
-ripconf -age-key age.key -db config.db scopes
-```
+-   **`dump`**: Outputs the latest configuration in plaintext.
+    -   `ripc -age-key age.key -dbpath app.db config dump -scope myapp`
+-   **`get [filter]`**: Retrieves configuration values by path, optionally filtered.
+    -   `ripc -age-key age.key -dbpath app.db config get "server.http_port"`
+-   **`init`**: Creates a new configuration with default values.
+    -   `ripc -age-key age.key -dbpath app.db config init -scope myapp`
+-   **`list [scope]`**: Lists configuration versions, optionally filtered by scope.
+    -   `ripc -age-key age.key -dbpath app.db config list`
+    -   `ripc -age-key age.key -dbpath app.db config list myapp`
+-   **`paths [filter]`**: Lists all available TOML paths in the configuration, optionally filtered.
+    -   `ripc -age-key age.key -dbpath app.db config paths`
+    -   `ripc -age-key age.key -dbpath app.db config paths "server.*"`
+-   **`rollback <generation>`**: Rolls back to a previous configuration version by its generation number (from `config list`).
+    -   `ripc -age-key age.key -dbpath app.db config rollback -scope myapp 3`
+-   **`save <file>`**: Saves the contents of a file to the configuration store.
+    -   `ripc -age-key age.key -dbpath app.db config save -scope myapp config.toml`
+-   **`scopes`**: Lists all unique configuration scopes.
+    -   `ripc -age-key age.key -dbpath app.db config scopes`
+-   **`set <path> <value>`**: Sets a configuration value at a given path.
+    -   `ripc -age-key age.key -dbpath app.db config set -desc "Update port" server.http_port 8080`
+-   **`diff <generation>`**: Shows differences between the latest configuration and a previous version.
+    -   `ripc -age-key age.key -dbpath app.db config diff -scope myapp 1`
 
-### `list` - List configuration versions
+### `auth`
 
-Lists configuration versions, optionally filtered by scope. Shows generation number, scope, creation timestamp, format and description.
+Manages authentication settings. These commands operate on the `application` scope.
 
-Example output:
-```
-Gen  Scope        Created At             Format  Description
----  ------------ ---------------------  ------  -----------
-  0  application   2025-05-23T15:10:05Z   toml  Inserted from file: config.toml
-  1  application   2025-05-21T19:38:04Z   toml  Inserted from file: config.toml
-  2  application   2025-05-15T22:04:42Z   toml  Inserted from file: config.toml
-  3  application   2025-04-27T15:28:24Z   toml  Updated field 'server.cert_data'
-  4  application   2025-04-27T15:26:37Z   toml  Updated field 'server.cert_data'
-  5  application   2025-04-27T15:25:54Z   toml  Updated field 'server.cert_data'
-  6  application   2025-04-27T15:16:12Z   toml  Updated field 'scheduler.interval'
-  7  application   2025-04-27T15:13:38Z   toml  Inserted from file: config.toml
-  8  application   2025-04-27T15:04:41Z   toml  Updated field 'Scheduler.Interval'
-```
+-   **`add-oauth2 <provider>`**: Adds a new, empty OAuth2 provider configuration.
+    -   `ripc -age-key age.key -dbpath app.db auth add-oauth2 github`
+-   **`rm-oauth2 <provider>`**: Removes an OAuth2 provider configuration.
+    -   `ripc -age-key age.key -dbpath app.db auth rm-oauth2 github`
+-   **`rotate-jwt-secrets`**: Generates new random secrets for all JWTs.
+    -   `ripc -age-key age.key -dbpath app.db auth rotate-jwt-secrets`
 
-Usage:
-```bash
-ripconf -age-key age.key -db config.db list
-ripconf -age-key age.key -db config.db list myapp
-```
+### `job`
 
-### `paths` - List TOML paths
+Manages background jobs in the queue.
 
-Lists all available TOML paths in the configuration, optionally filtered.
+-   **`add-backup`**: Adds a new recurrent database backup job.
+    -   `ripc -age-key age.key -dbpath app.db job add-backup --interval 24h`
+-   **`list [limit]`**: Lists jobs in the queue, optionally limiting the number of results.
+    -   `ripc -age-key age.key -dbpath app.db job list 10`
+-   **`rm <job_id>`**: Removes a job from the queue by its ID.
+    -   `ripc -age-key age.key -dbpath app.db job rm 123`
+-   **`add`**: (Advanced) Adds a generic job to the queue with specified parameters.
+    -   `ripc -age-key age.key -dbpath app.db job add --type my_job --payload '''{"key":"value"}'''`
 
-```bash
-ripconf -age-key age.key -db config.db paths -scope myapp
-ripconf -age-key age.key -db config.db paths -scope myapp "api.*"
-```
+### `help`
 
-### `dump` - Dump configuration
-
-Outputs the latest configuration in plaintext.
-
-```bash
-ripconf -age-key age.key -db config.db dump -scope myapp
-```
-
-### `diff` - Compare configurations
-
-Shows differences between current and previous configuration versions.
-
-```bash
-ripconf -age-key age.key -db config.db diff -scope myapp 1
-```
-
-### `rollback` - Restore any previous version
-
-Rolls back to any previous configuration version by generation number. The generation number can be found using the `list` command.
+Shows usage information for a specific command.
 
 ```bash
-# Rollback to generation 3 (any valid generation number can be used)
-ripconf -age-key age.key -db config.db rollback -scope myapp 3
+ripc help config
+ripc help auth
 ```
-
-### `save` - Save file contents
-
-Saves the contents of a file to the configuration store.
-
-```bash
-ripconf -age-key age.key -db config.db save -scope myapp config.toml
-```
-
-### `get` - Get configuration values
-
-Retrieves configuration values by path.
-
-```bash
-ripconf -age-key age.key -db config.db get -scope myapp "api.url"
-```
-
-### `init` - Initialize default config
-
-Creates a new configuration with default values.
-
-```bash
-ripconf -age-key age.key -db config.db init -scope myapp
-```
-
-### `rotate-jwt-secrets` - Rotate JWT secrets
-
-Generates new random secrets for JWT tokens (application scope only).
-
-```bash
-ripconf -age-key age.key -db config.db rotate-jwt-secrets
-```
-
-### `add-oauth2` - Add OAuth2 provider
-
-Adds a new OAuth2 provider configuration skeleton.
-
-```bash
-ripconf -age-key age.key -db config.db add-oauth2 gitlab
-```
-
-### `rm-oauth2` - Remove OAuth2 provider
-
-Removes an OAuth2 provider configuration.
-
-```bash
-ripconf -age-key age.key -db config.db rm-oauth2 gitlab
