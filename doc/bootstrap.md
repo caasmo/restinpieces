@@ -40,20 +40,25 @@ This approach is especially recommended for complex, multiline values like TLS c
 
 #### Direct Configuration with `ripc`
 
-The `ripc config` command provides `get` and `set` subcommands to interact with specific configuration values by their path.
+The `ripc config` command provides `get`, `set`, and `paths` subcommands to interact with specific configuration values.
 
-First, you can list all available configuration paths:
+To discover what settings are available, you can use the `paths` subcommand. It displays a flat list of all configurable fields, making it easy to find the exact path you need to modify.
+
 ```bash
+# List all available configuration paths
 ripc -age-key age.key -dbpath ./myapp.db config paths
+
+# You can also filter the list
+ripc -age-key age.key -dbpath ./myapp.db config paths server
 ```
 
-To retrieve the current value of a specific setting:
+Once you know the path, you can retrieve its current value with `get` or modify it with `set`.
+
 ```bash
+# Get the current server port
 ripc -age-key age.key -dbpath ./myapp.db config get server.http_port
-```
 
-To change a simple value:
-```bash
+# Change the server port
 ripc -age-key age.key -dbpath ./myapp.db config set server.http_port 8081
 ```
 
