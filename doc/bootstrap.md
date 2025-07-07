@@ -34,19 +34,53 @@ ripc -age-key age.key -dbpath ./myapp.db app create
 
 ### 3. Customize the Configuration
 
-The default configuration provides a sensible starting point, but you will need to customize it for your environment. The easiest way to do this is to dump the default configuration to a file and edit it.
+The default configuration provides a sensible starting point, but you will need to customize it for your environment. While you can dump the entire configuration to a file for bulk editing, it is often safer and more precise to manage individual settings directly from the command line using `ripc config`.
 
+This approach is especially recommended for complex, multiline values like TLS certificates or private keys, where editing them in a TOML file can easily introduce formatting errors.
+
+#### Direct Configuration with `ripc`
+
+The `ripc config` command provides `get` and `set` subcommands to interact with specific configuration values by their path.
+
+First, you can list all available configuration paths:
 ```bash
-# Dump the default config to a file
-ripc -age-key age.key -dbpath ./myapp.db config dump > config.toml
+ripc -age-key age.key -dbpath ./myapp.db config paths
 ```
 
-Now, open `config.toml` in your favorite text editor. You will likely want to configure:
+To retrieve the current value of a specific setting:
+```bash
+ripc -age-key age.key -dbpath ./myapp.db config get server.http_port
+```
 
-*   **Server Port:** `server.http_port`
-*   **JWT Secrets:** `jwt.auth_secret`, `jwt.password_reset_secret`, etc. These should be set to strong, random strings.
-*   **Logger Database Path:** `log.batch.db_path`. By default, logs are stored in `logs.db` next to your main database, but for production, you should specify an absolute path (e.g., `/var/log/myapp/logs.db`).
-*   **SMTP Settings:** If your application needs to send emails (e.g., for password resets), configure the `smtp` section.
+To change a simple value:
+```bash
+ripc -age-key age.key -dbpath ./myapp.db config set server.http_port 8081
+```
+
+#### Handling Complex Values
+
+For multiline values, such as a TLS certificate, you can instruct `ripc` to read the value directly from a file by prefixing the file path with `@`. This avoids any copy-paste or formatting issues.
+
+For example, to set the TLS certificate and key:
+```bash
+# First, ensure your certificate and key files are ready
+# For example: localhost.pem and localhost-key.pem
+
+# Set the certificate
+ripc -age-key age.key -dbpath ./myapp.db config set server.tls_cert @/path/to/localhost.pem
+
+# Set the private key
+ripc -age-key age.key -dbpath ./myapp.db config set server.tls_key @/path/to/localhost-key.pem
+```
+This method is robust and script-friendly, making it ideal for automated deployments and managing sensitive information.
+
+#### Bulk Editing (If Necessary)
+
+If you still prefer to edit the entire configuration at once, you can dump it to a file:
+```bash
+ripc -age-key age.key -dbpath ./myapp.db config dump > config.toml
+```
+After editing `config.toml`, you will save it back using the `config save` command as described in the next step.
 
 ### 4. Save the Custom Configuration
 
