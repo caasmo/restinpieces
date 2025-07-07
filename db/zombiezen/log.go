@@ -75,6 +75,27 @@ func (l *Log) InsertBatch(batch []db.Log) error {
 	return nil
 }
 
+// Ping checks if the 'logs' table exists.
+func (l *Log) Ping() error {
+	stmt, _, err := l.conn.PrepareTransient("SELECT 1 FROM logs LIMIT 1;")
+	if err != nil {
+		return fmt.Errorf("failed to prepare ping statement: %w", err)
+	}
+	defer stmt.Finalize()
+
+	_, err = stmt.Step()
+	if err != nil {
+		// Check if the error is due to a missing table
+		if sqlite.ErrCode(err) == sqlite.ResultError {
+			return fmt.Errorf("table 'logs' not found: %w", err)
+		}
+		return fmt.Errorf("failed to execute ping statement: %w", err)
+	}
+
+	return nil
+}
+
+
 // Close closes the underlying SQLite connection.
 func (l *Log) Close() error {
 	if l.conn != nil {

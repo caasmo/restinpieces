@@ -1,6 +1,6 @@
 -- Logs table stores application logs in structured format for querying and analysis
 -- Uses RFC 3339 format with milliseconds for timestamps (compatible with Go's time.RFC3339Nano)
-CREATE TABLE logs (
+CREATE TABLE IF NOT EXISTS logs (
     -- Unique identifier using random 7 bytes prefixed with 'r' for better readability
     -- Example: "r4e3a7d9b2c1f0"
     id TEXT PRIMARY KEY DEFAULT ('r'||lower(hex(randomblob(7)))) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE logs (
 );
 
 -- Index for filtering logs by severity level
-CREATE INDEX idx_logs_level ON logs (level);
+CREATE INDEX IF NOT EXISTS idx_logs_level ON logs (level);
 
 -- Index for searching log messages (supports prefix searches)
-CREATE INDEX idx_logs_message ON logs (message);
+CREATE INDEX IF NOT EXISTS idx_logs_message ON logs (message);

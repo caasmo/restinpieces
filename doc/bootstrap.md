@@ -100,7 +100,19 @@ You can view the history of configuration changes at any time:
 ripc -age-key age.key -dbpath ./myapp.db config list
 ```
 
-### 5. Write the Application Code
+### 5. Initialize the Logger Database
+
+The framework uses a separate, high-performance SQLite database for batch-logging application events. Before the main application can start, this database must be created and its schema must be applied.
+
+Use the `ripc log init` command to perform this one-time setup. The command is idempotent, meaning you can run it multiple times without causing issues.
+
+```bash
+ripc -age-key age.key -dbpath ./myapp.db log init
+```
+
+This command reads the `log.batch.db_path` from your configuration, creates the database file (e.g., `logs.db`) if it doesn't exist, and applies the necessary table schema. If you have not configured a path, it will default to creating a `logs.db` file in the same directory as your main application database.
+
+### 6. Write the Application Code
 
 With the configuration in place, you can write your application's entry point. This is typically a `main.go` file. The framework is initialized by calling `restinpieces.New()`, which handles loading the configuration, setting up the database connections, and preparing all core components.
 
@@ -160,7 +172,7 @@ func main() {
 }
 ```
 
-### 6. Run the Application
+### 7. Run the Application
 
 Finally, compile and run your server.
 
@@ -168,13 +180,11 @@ Finally, compile and run your server.
 go run ./cmd/myapp/main.go -dbpath ./myapp.db -age-key ./age.key
 ```
 
-On the first run, `restinpieces.New()` will:
+On startup, `restinpieces.New()` will:
 *   Decrypt your configuration using the provided `age.key`.
 *   Connect to the main application database (`myapp.db`).
-*   **Automatically initialize the logger database.** It reads the `log.batch.db_path` from your config, creates the database file if it doesn't exist, and applies the required schema. There is no need for a separate `log init` command.
+*   **Verify the logger database is initialized.** It will check for the existence of the log database file and its schema. If this check fails, the application will exit with an error, instructing you to run `ripc log init`.
 *   Set up the job scheduler, cache, and all other core services.
-
-Your application is now running.
 
 ---
 

@@ -25,7 +25,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  app <subcommand> [options]       Manage application lifecycle (create)\n")
 		fmt.Fprintf(os.Stderr, "  config <subcommand> [options]    Manage configuration (set, list, dump, etc.)\n")
 		fmt.Fprintf(os.Stderr, "  auth <subcommand> [options]      Manage authentication (rotate-jwt-secrets, add-oauth2, etc.)\n")
-		fmt.Fprintf(os.Stderr, "  job <subcommand> [options]         Manage background jobs (add, list, rm)\n")
+		fmt.Fprintf(os.Stderr, "  job <subcommand> [options]       Manage background jobs (add, list, rm)\n")
+		fmt.Fprintf(os.Stderr, "  log <subcommand> [options]       Manage the log database (init)\n")
 	}
 
 	flag.Parse()
@@ -97,6 +98,8 @@ func main() {
 		handleAuthCommand(secureStore, commandArgs)
 	case "job":
 		handleJobCommand(dbImpl, commandArgs)
+	case "log":
+		handleLogCommand(secureStore, *dbPathFlag, commandArgs)
 	case "help":
 		handleHelpCommand(commandArgs, flag.Usage)
 	default:
