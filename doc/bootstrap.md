@@ -195,4 +195,19 @@ The `ripc` tool is also used for managing the application after it has been boot
     ripc -age-key age.key -dbpath ./myapp.db job add-backup --interval 24h
     ```
 
-Refer to the `ripc help` command for a full list of capabilities.
+The `ripc` tool is also used for managing the application after it has been bootstrapped. Some common operations include:
+
+*   **Updating a single config value:**
+    ```bash
+    ripc -age-key age.key -dbpath ./myapp.db config set server.http_port 8081
+    ```
+*   **Rotating JWT secrets for security:**
+    ```bash
+    ripc -age-key age.key -dbpath ./myapp.db auth rotate-jwt-secrets
+    ```
+*   **Adding a recurring database backup job:**
+    ```bash
+    ripc -age-key age.key -dbpath ./myapp.db job add-backup --interval 24h
+    ```
+
+For a complete list of commands and in-depth documentation, refer to the **[`ripc` README](cmd/ripc/README.md)** or use the `ripc help` command.
