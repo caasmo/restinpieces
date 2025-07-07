@@ -15,12 +15,12 @@ Before you begin, ensure you have the following tools installed:
 *   **Go:** The Go programming language environment.
 *   **age:** A simple, modern, and secure file encryption tool.
 
-You'll start by generating a master encryption key. This key is the root of trust for your application's configuration. Guard it carefully.
+The first and most critical step is to generate a master encryption key. **All framework configuration, including secrets like JWT keys and SMTP passwords, is encrypted at rest within the main application's SQLite database file.** This `age` key is the root of trust used to secure that data. You will need the private key to start the server and to manage its configuration via the `ripc` tool. Guard it carefully.
 
 ```bash
 age-keygen -o age.key
 ```
-This will create `age.key` containing your private key and print the corresponding public key.
+This will create `age.key` containing your private key and print the corresponding public key to the console.
 
 ### 2. Create the Application Instance
 
