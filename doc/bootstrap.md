@@ -1,67 +1,159 @@
-The End-User Workflow (Bootstrapping a restinpieces App)
+# Bootstrapping a RestInPieces Application
 
-    This is how a developer would use the framework:
+This document guides you through the initial setup and bootstrapping of a new web application using the RestInPieces framework. The process is designed to be straightforward, establishing a secure and well-configured foundation for your project.
 
-    1. Prerequisites: The developer has Go and the age tool installed. They generate their master encryption key:
+The core philosophy is a clean separation between one-time setup and the application's runtime lifecycle. We use the `ripc` command-line tool to manage the application's persistent state, including its encrypted configuration and database schema. This approach ensures that your application code remains focused on business logic, while the framework handles the underlying infrastructure.
 
+---
 
-    1     age-keygen -o age.key
+## Developer Workflow
 
+### 1. Prerequisites
 
-    2. Step 1: Create the Application Instance (`ripc`)
-    The developer uses the CLI to create the core application database and the initial, default configuration.
+Before you begin, ensure you have the following tools installed:
 
+*   **Go:** The Go programming language environment.
+*   **age:** A simple, modern, and secure file encryption tool.
 
-    1     ripc -age-key age.key -dbpath ./myapp.db app create
+You'll start by generating a master encryption key. This key is the root of trust for your application's configuration. Guard it carefully.
 
-    * Result: A myapp.db file is created containing the application schema (users, app_config, etc.) and one encrypted
-    configuration entry.
+```bash
+age-keygen -o age.key
+```
+This will create `age.key` containing your private key and print the corresponding public key.
 
-   3. Step 2: Customize Configuration (`ripc` + Editor)
-      The developer will almost certainly want to customize the configuration (e.g., set JWT secrets, SMTP settings, and
-importantly, the log database path).
+### 2. Create the Application Instance
 
+Next, use the `ripc` tool to create the core application database. This command initializes the database file, applies the necessary schema (for users, jobs, etc.), and saves a default configuration, which is encrypted at rest using your `age` key.
 
-   1     # Dump the default config to a file
-   2     ripc -age-key age.key -dbpath ./myapp.db config dump > config.toml
-   3
-   4     # Edit config.toml with a text editor
-   5     # For example, they add or uncomment:
-   6     # [log.batch]
-   7     # db_path = "/var/log/restinpieces/prod.log.db"
+```bash
+ripc -age-key age.key -dbpath ./myapp.db app create
+```
 
+*   **Result:** A `myapp.db` file is created. This single file contains your application's core tables and its first encrypted configuration entry. The database must not exist before running this command.
 
+### 3. Customize the Configuration
 
-   4. Step 3: Save the Custom Configuration (`ripc`)
-      The developer saves their customized config.toml back into the secure store as the new "latest" version.
+The default configuration provides a sensible starting point, but you will need to customize it for your environment. The easiest way to do this is to dump the default configuration to a file and edit it.
 
-   1     ripc -age-key age.key -dbpath ./myapp.db config save config.toml
+```bash
+# Dump the default config to a file
+ripc -age-key age.key -dbpath ./myapp.db config dump > config.toml
+```
 
+Now, open `config.toml` in your favorite text editor. You will likely want to configure:
 
+*   **Server Port:** `server.http_port`
+*   **JWT Secrets:** `jwt.auth_secret`, `jwt.password_reset_secret`, etc. These should be set to strong, random strings.
+*   **Logger Database Path:** `log.batch.db_path`. By default, logs are stored in `logs.db` next to your main database, but for production, you should specify an absolute path (e.g., `/var/log/myapp/logs.db`).
+*   **SMTP Settings:** If your application needs to send emails (e.g., for password resets), configure the `smtp` section.
 
-   5. Step 4: Initialize the Logger Database (`ripc`) 
-      This is the ideal, explicit point to initialize the logger. The main application is configured, so we know exactly
-where the log database should be.
+### 4. Save the Custom Configuration
 
-  2     ripc -age-key age.key -dbpath ./myapp.db log init
+After editing `config.toml`, save it back into the secure store. This creates a new, versioned entry in the configuration table, which will now be considered the "latest".
 
-       * Action: This command reads the latest config from myapp.db, finds the log.batch.db_path, connects to it (creatin
-g the file), and applies the logs.sql schema.
-       * Benefit: It's a clean, one-time setup action that prepares the environment for the application.
+```bash
+ripc -age-key age.key -dbpath ./myapp.db config save config.toml
+```
 
+You can view the history of configuration changes at any time:
+```bash
+ripc -age-key age.key -dbpath ./myapp.db config list
+```
 
-   6. Step 5: Write the Application Code (Go)
-      The developer writes their main.go (like main.go.orig), which calls restinpieces.New() and srv.Run(). This is the s
-table, long-term entry point to their server.
+### 5. Write the Application Code
 
-   7. Step 6: Run the Application (Go)
-      The developer compiles and runs their server.
+With the configuration in place, you can write your application's entry point. This is typically a `main.go` file. The framework is initialized by calling `restinpieces.New()`, which handles loading the configuration, setting up the database connections, and preparing all core components.
 
+Here is a minimal `main.go` example:
 
-   1     go run ./cmd/myapp/main.go -dbpath ./myapp.db -age-key ./age.key
+```go
+package main
 
-       * When restinpieces.New() is called, the setupDefaultLogger function will find the log database path in the config
- and connect to it. Since Step 4 was
-         completed, the file and its schema are already present and waiting. The application starts cleanly with no schem
-a-check logic.
+import (
+	"flag"
+	"fmt"
+	"log/slog"
+	"os"
 
+	"github.com/caasmo/restinpieces"
+	"github.com/caasmo/restinpieces/db/zombiezen"
+)
+
+func main() {
+	// Define and parse command-line flags for required paths
+	dbPath := flag.String("dbpath", "", "Path to the application's SQLite database file.")
+	ageKeyPath := flag.String("age-key", "", "Path to the age identity file (private key).")
+	flag.Parse()
+
+	if *dbPath == "" || *ageKeyPath == "" {
+		fmt.Fprintln(os.Stderr, "Error: both -dbpath and -age-key flags are required.")
+		flag.Usage()
+		os.Exit(1)
+	}
+
+	// Create a database pool
+	pool, err := restinpieces.NewZombiezenPool(*dbPath)
+	if err != nil {
+		slog.Error("Failed to create database pool", "error", err, "path", *dbPath)
+		os.Exit(1)
+	}
+	defer pool.Close()
+
+	// Create a new application instance with required options
+	app, srv, err := restinpieces.New(
+		restinpieces.WithDbApp(zombiezen.New(pool)),
+		restinpieces.WithAgeKeyPath(*ageKeyPath),
+	)
+	if err != nil {
+		slog.Error("Failed to initialize restinpieces app", "error", err)
+		os.Exit(1)
+	}
+
+	// The app object is now available to register your custom routes
+	// app.Router().Post("/my/endpoint", myHandler)
+
+	// Start the server. This is a blocking call.
+	if err := srv.Run(); err != nil {
+		app.Logger().Error("Server shut down with error", "error", err)
+		os.Exit(1)
+	}
+}
+```
+
+### 6. Run the Application
+
+Finally, compile and run your server.
+
+```bash
+go run ./cmd/myapp/main.go -dbpath ./myapp.db -age-key ./age.key
+```
+
+On the first run, `restinpieces.New()` will:
+*   Decrypt your configuration using the provided `age.key`.
+*   Connect to the main application database (`myapp.db`).
+*   **Automatically initialize the logger database.** It reads the `log.batch.db_path` from your config, creates the database file if it doesn't exist, and applies the required schema. There is no need for a separate `log init` command.
+*   Set up the job scheduler, cache, and all other core services.
+
+Your application is now running.
+
+---
+
+## Ongoing Management
+
+The `ripc` tool is also used for managing the application after it has been bootstrapped. Some common operations include:
+
+*   **Updating a single config value:**
+    ```bash
+    ripc -age-key age.key -dbpath ./myapp.db config set server.http_port 8081
+    ```
+*   **Rotating JWT secrets for security:**
+    ```bash
+    ripc -age-key age.key -dbpath ./myapp.db auth rotate-jwt-secrets
+    ```
+*   **Adding a recurring database backup job:**
+    ```bash
+    ripc -age-key age.key -dbpath ./myapp.db job add-backup --interval 24h
+    ```
+
+Refer to the `ripc help` command for a full list of capabilities.
