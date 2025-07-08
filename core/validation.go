@@ -26,7 +26,7 @@ func NewValidator() Validator {
 // - precomputed jsonResponse for error cases
 // Uses http.StatusUnsupportedMediaType (415) for invalid content types as per HTTP spec.
 func (v *DefaultValidator) ContentType(r *http.Request, allowedType string) (jsonResponse, error) {
-	errInvalidType := errors.New("Invalid content type")
+	errInvalidType := errors.New("invalid content type")
 	contentType := r.Header.Get("Content-Type")
 	if contentType == "" {
 		return errorInvalidContentType, errInvalidType
