@@ -46,7 +46,7 @@ type oauth2Request struct {
 // Authenticated: No
 // Allowed Mimetype: application/json
 func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
+	if resp, err := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
 		WriteJsonError(w, resp)
 		return
 	}
@@ -221,7 +221,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 //
 // Endpoint: GET /list-oauth2-providers
 func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
+	if resp, err := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
 		WriteJsonError(w, resp)
 		return
 	}
