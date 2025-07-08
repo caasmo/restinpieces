@@ -78,36 +78,36 @@ func TestRequestVerificationHandlerAuth(t *testing.T) {
 	testCases := []struct {
 		name        string
 		requestBody string
-		mockAuth    func(r *http.Request) (*db.User, error, jsonResponse)
+		mockAuth    func(r *http.Request) (*db.User, jsonResponse, error)
 		wantError   jsonResponse
 	}{
 		{
 			name:        "authenticated user already verified",
 			requestBody: `{"email":"verified@example.com"}`,
-			mockAuth: func(r *http.Request) (*db.User, error, jsonResponse) {
+			mockAuth: func(r *http.Request) (*db.User, jsonResponse, error) {
 				return &db.User{
 					Email:    "verified@example.com",
 					Verified: true,
-				}, nil, jsonResponse{}
+				}, jsonResponse{}, nil
 			},
 			wantError: okAlreadyVerified,
 		},
 		{
 			name:        "authenticated user email mismatch",
 			requestBody: `{"email":"other@example.com"}`,
-			mockAuth: func(r *http.Request) (*db.User, error, jsonResponse) {
+			mockAuth: func(r *http.Request) (*db.User, jsonResponse, error) {
 				return &db.User{
 					Email:    "verified@example.com",
 					Verified: false,
-				}, nil, jsonResponse{}
+				}, jsonResponse{}, nil
 			},
 			wantError: errorEmailConflict,
 		},
 		{
 			name:        "unauthenticated request",
 			requestBody: `{"email":"test@example.com"}`,
-			mockAuth: func(r *http.Request) (*db.User, error, jsonResponse) {
-				return nil, nil, errorInvalidCredentials
+			mockAuth: func(r *http.Request) (*db.User, jsonResponse, error) {
+				return nil, errorInvalidCredentials, errors.New("auth error")
 			},
 			wantError: errorInvalidCredentials,
 		},
@@ -229,11 +229,11 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 
 			// Setup mock authenticator to return valid user
 			mockAuth := &MockAuth{
-				AuthenticateFunc: func(r *http.Request) (*db.User, error, jsonResponse) {
+				AuthenticateFunc: func(r *http.Request) (*db.User, jsonResponse, error) {
 					return &db.User{
 						Email:    "test@example.com",
 						Verified: false,
-					}, nil, jsonResponse{}
+					}, jsonResponse{}, nil
 				},
 			}
 

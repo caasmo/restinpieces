@@ -60,7 +60,7 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 
 			// Create authenticator directly
 			auth := NewDefaultAuthenticator(mockDB, slog.Default(), configProvider)
-			user, authErr, resp := auth.Authenticate(req)
+			user, resp, authErr := auth.Authenticate(req)
 
 			// Assert that user is nil for these error cases
 			if user != nil {
@@ -199,7 +199,7 @@ func TestAuthenticateToken(t *testing.T) {
 
 			// Create authenticator directly
 			auth := NewDefaultAuthenticator(mockDB, slog.Default(), configProvider)
-			user, authErr, resp := auth.Authenticate(req)
+			user, resp, authErr := auth.Authenticate(req)
 
 			if tc.wantError.status != 0 {
 				// Expect an error case
