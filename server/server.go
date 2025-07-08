@@ -132,7 +132,6 @@ func (s *Server) Run() {
 	// Start servers
 	serverError := make(chan error, 1)
 	go func() {
-		var err error
 		if serverCfg.EnableTLS {
 			// Start HTTPS server
 			tlsConfig, err := createTLSConfig(&serverCfg)
@@ -163,15 +162,16 @@ func (s *Server) Run() {
 				}()
 			}
 
-			err = srv.ListenAndServeTLS("", "")
+			if err := srv.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+				s.logger.Error("Server error", "err", err)
+				serverError <- err
+			}
 		} else {
 			s.logger.Info("Starting HTTP server", "addr", serverCfg.Addr)
-			err = srv.ListenAndServe()
-		}
-
-		if err != nil && err != http.ErrServerClosed {
-			s.logger.Error("Server error", "err", err)
-			serverError <- err
+			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				s.logger.Error("Server error", "err", err)
+				serverError <- err
+			}
 		}
 	}()
 
