@@ -206,20 +206,6 @@ func (ld *Daemon) InsertLogs(ctx context.Context, batch []db.Log) error {
 	return ld.db.InsertBatch(batch)
 }
 
-// convertSlogRecordToMap is primarily used by resolveAndInsertAttr for group attributes.
-func convertSlogRecordToMap(r slog.Record) map[string]any {
-	data := make(map[string]any)
-	data["time"] = r.Time.UTC().Format(time.RFC3339Nano)
-	data["level"] = r.Level.String()
-	data["msg"] = r.Message
-
-	r.Attrs(func(a slog.Attr) bool {
-		resolveAndInsertAttr(data, a)
-		return true
-	})
-	return data
-}
-
 // resolveAndInsertAttr recursively resolves attributes and adds them to the map.
 func resolveAndInsertAttr(m map[string]any, a slog.Attr) {
 	key := a.Key
