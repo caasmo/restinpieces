@@ -131,6 +131,11 @@ func (m *MockDB) InsertConfig(scope string, contentData []byte, format string, d
 	return nil // Default: Success
 }
 
+// Path implements db.DbConfig for testing purposes.
+func (m *MockDB) Path() string {
+	return "/tmp/mock.db"
+}
+
 // --- DbLifecycle methods removed ---
 
 // MockAuthenticator implements the Authenticator interface for testing

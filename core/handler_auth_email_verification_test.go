@@ -253,7 +253,6 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 				configProvider: config.NewProvider(testConfig),
 				dbAuth:         mockDB,
 				dbQueue:        mockDB,
-				dbConfig:       mockDB,
 				validator:      &DefaultValidator{},
 			}
 
