@@ -91,7 +91,6 @@ func (s *Scheduler) Start() error {
 				//	s.logger.Error("Error waiting for jobs to complete", "err", err)
 				//}
 				close(s.shutdownDone) // Signal that scheduler has completely shut down
-				return
 			case <-ticker.C:
 				s.processJobs()
 			}
