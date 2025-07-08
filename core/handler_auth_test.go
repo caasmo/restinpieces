@@ -44,8 +44,8 @@ func TestRefreshAuthHandlerValid(t *testing.T) {
 			}
 
 			mockValidator := &MockValidator{
-				ContentTypeFunc: func(r *http.Request, allowedType string) (error, jsonResponse) {
-					return nil, jsonResponse{}
+				ContentTypeFunc: func(r *http.Request, allowedType string) (jsonResponse, error) {
+					return jsonResponse{}, nil
 				},
 			}
 
@@ -123,8 +123,8 @@ func TestRefreshAuthHandlerError(t *testing.T) {
 			}
 
 			mockValidator := &MockValidator{
-				ContentTypeFunc: func(r *http.Request, allowedType string) (error, jsonResponse) {
-					return nil, jsonResponse{}
+				ContentTypeFunc: func(r *http.Request, allowedType string) (jsonResponse, error) {
+					return jsonResponse{}, nil
 				},
 			}
 

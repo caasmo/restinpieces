@@ -16,7 +16,7 @@ import (
 // Authenticated: Yes (requires valid auth token)
 // Allowed Mimetype: application/json
 func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
+	if resp, err := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
 		WriteJsonError(w, resp)
 		return
 	}
@@ -106,7 +106,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
+	if resp, err := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
 		WriteJsonError(w, resp)
 		return
 	}

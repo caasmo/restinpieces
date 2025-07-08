@@ -17,7 +17,7 @@ import (
 // Authenticated: Yes
 // Allowed Mimetype: application/json
 func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
+	if resp, err := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
 		WriteJsonError(w, resp)
 		return
 	}
@@ -89,7 +89,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 }
 
 func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Request) {
-	if err, resp := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
+	if resp, err := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
 		WriteJsonError(w, resp)
 		return
 	}
