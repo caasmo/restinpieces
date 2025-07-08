@@ -1,5 +1,6 @@
 <p align="center"><img alt="restinpieces" src="doc/logo.png"/></p>
 
+[![Test](https://github.com/caasmo/restinpieces/actions/workflows/test.yml/badge.svg)](https://github.com/caasmo/restinpieces/actions/workflows/test.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/caasmo/restinpieces)](https://pkg.go.dev/github.com/caasmo/restinpieces)
 [![Go Report Card](https://goreportcard.com/badge/github.com/caasmo/restinpieces)](https://goreportcard.com/report/github.com/caasmo/restinpieces)
 ![sloc](https://sloc.xyz/github/caasmo/restinpieces)
