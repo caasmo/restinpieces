@@ -392,7 +392,7 @@ func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUs
 	}
 
 	// Verify that the 'logs' table exists
-	if err := logDb.Ping(); err != nil {
+	if err := logDb.Ping("logs"); err != nil {
 		return nil, fmt.Errorf(
 			"log database at %s is not initialized or schema is missing. Please run 'ripc log init'. Error: %w",
 			logDbPath,
