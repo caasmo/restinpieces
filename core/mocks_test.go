@@ -141,15 +141,15 @@ func (m *MockDB) Path() string {
 // MockAuthenticator implements the Authenticator interface for testing
 type MockAuth struct {
 	// AuthenticateFunc allows customizing the authentication behavior
-	AuthenticateFunc func(r *http.Request) (*db.User, error, jsonResponse)
+	AuthenticateFunc func(r *http.Request) (*db.User, jsonResponse, error)
 }
 
-func (m *MockAuth) Authenticate(r *http.Request) (*db.User, error, jsonResponse) {
+func (m *MockAuth) Authenticate(r *http.Request) (*db.User, jsonResponse, error) {
 	if m.AuthenticateFunc != nil {
 		return m.AuthenticateFunc(r)
 	}
 	// Default: Return nil user with no error (unauthenticated)
-	return nil, nil, jsonResponse{}
+	return nil, jsonResponse{}, nil
 }
 
 // MockValidator implements the Validator interface for testing

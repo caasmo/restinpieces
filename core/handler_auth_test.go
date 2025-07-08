@@ -28,8 +28,8 @@ func TestRefreshAuthHandlerValid(t *testing.T) {
 		{
 			name: "valid token refresh",
 			authSetup: func(m *MockAuth) {
-				m.AuthenticateFunc = func(r *http.Request) (*db.User, error, jsonResponse) {
-					return testUser, nil, jsonResponse{}
+				m.AuthenticateFunc = func(r *http.Request) (*db.User, jsonResponse, error) {
+					return testUser, jsonResponse{}, nil
 				}
 			},
 			desc: "When authentication succeeds, should return new token",
@@ -107,8 +107,8 @@ func TestRefreshAuthHandlerError(t *testing.T) {
 			name:      "authentication error",
 			wantError: errorInvalidCredentials,
 			authSetup: func(m *MockAuth) {
-				m.AuthenticateFunc = func(r *http.Request) (*db.User, error, jsonResponse) {
-					return nil, errors.New("auth error"), errorInvalidCredentials
+				m.AuthenticateFunc = func(r *http.Request) (*db.User, jsonResponse, error) {
+					return nil, errorInvalidCredentials, errors.New("auth error")
 				}
 			},
 			desc: "When authentication fails, should return error",
