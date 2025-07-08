@@ -5,7 +5,7 @@ import (
 	"io/fs"
 )
 
-//go:embed schema/*.sql
+//go:embed schema/**/*.sql
 var schemaFS embed.FS
 
 // Schema returns the embedded schema filesystem
