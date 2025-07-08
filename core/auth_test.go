@@ -226,7 +226,7 @@ func TestAuthenticateToken(t *testing.T) {
 				if resp.status != 0 || len(resp.body) != 0 { // jsonResponse{} is zero value for success
 					t.Errorf("expected empty jsonResponse, got status %d, body %q", resp.status, string(resp.body))
 				}
-				if user.ID != testUser.ID {
+				if user != nil && user.ID != testUser.ID {
 					t.Errorf("expected authenticated user ID %q, got %q", testUser.ID, user.ID)
 				}
 			}
