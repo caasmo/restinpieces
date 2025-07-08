@@ -100,6 +100,12 @@ You can view the history of configuration changes at any time:
 ripc -age-key age.key -dbpath ./myapp.db config list
 ```
 
+Should you need to revert to a previous configuration, the `rollback` command allows you to restore any historical version by its generation number (obtained from `config list`). This provides a safety net for configuration changes.
+
+```bash
+ripc -age-key age.key -dbpath ./myapp.db config rollback 3
+```
+
 ### 5. Initialize the Logger Database
 
 The framework uses a separate, high-performance SQLite database for batch-logging application events. Before the main application can start, this database must be created and its schema must be applied.
