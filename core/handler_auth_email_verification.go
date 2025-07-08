@@ -43,8 +43,8 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	// Require authentication
-	user, _, resp := a.Auth().Authenticate(r)
-	if user == nil {
+	user, resp, err := a.Auth().Authenticate(r)
+	if err != nil {
 		WriteJsonError(w, resp)
 		return
 	}
@@ -75,7 +75,7 @@ func (a *App) RequestEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		Payload: payload,
 	}
 
-	err := a.DbQueue().InsertJob(job)
+	err = a.DbQueue().InsertJob(job)
 	if err != nil {
 		if err == db.ErrConstraintUnique {
 			WriteJsonError(w, errorEmailVerificationAlreadyRequested)

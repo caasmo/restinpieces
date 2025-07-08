@@ -22,7 +22,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Authenticate the user using the token from the request
-	user, err, authResp := a.Auth().Authenticate(r)
+	user, authResp, err := a.Auth().Authenticate(r)
 	if err != nil {
 		WriteJsonError(w, authResp)
 		return
