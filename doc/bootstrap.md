@@ -108,7 +108,7 @@ ripc -age-key age.key -dbpath ./myapp.db config rollback 3
 
 ### 5. Initialize the Logger Database
 
-The framework uses a separate, high-performance SQLite database for batch-logging application events. Before the main application can start, this database must be created and its schema must be applied.
+The framework accepts any logger that complies with the standard `log/slog` interface. If no custom logger is provided, it defaults to a high-performance batch logger that writes application events to a separate SQLite database. Before the main application can start, this database must be created and its schema must be applied.
 
 Use the `ripc log init` command to perform this one-time setup. The command is idempotent, meaning you can run it multiple times without causing issues.
 
