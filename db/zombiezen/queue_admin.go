@@ -9,7 +9,7 @@ import (
 )
 
 // ListJobs retrieves a list of all jobs from the database, ordered by creation time.
-func (d *Db) ListJobs(limit int) ([]*db.Job, error) {
+func (d *Db) ListJobs(limit int) (jobs []*db.Job, err error) {
 	conn, err := d.pool.Take(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get db connection for list jobs: %w", err)
@@ -26,11 +26,15 @@ func (d *Db) ListJobs(limit int) ([]*db.Job, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare statement for list jobs: %w", err)
 	}
-	defer stmt.Finalize()
+	defer func() {
+		if ferr := stmt.Finalize(); ferr != nil && err == nil {
+			err = fmt.Errorf("failed to finalize statement: %w", ferr)
+		}
+	}()
 
-	var jobs []*db.Job
 	for {
-		hasRow, err := stmt.Step()
+		var hasRow bool
+		hasRow, err = stmt.Step()
 		if err != nil {
 			return nil, fmt.Errorf("failed to step through list jobs results: %w", err)
 		}
@@ -38,7 +42,8 @@ func (d *Db) ListJobs(limit int) ([]*db.Job, error) {
 			break
 		}
 
-		job, err := newJobFromStmt(stmt)
+		var job *db.Job
+		job, err = newJobFromStmt(stmt)
 		if err != nil {
 			return nil, err // error already contains context
 		}
