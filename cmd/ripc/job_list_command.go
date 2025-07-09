@@ -68,7 +68,6 @@ func handleJobList(dbConn db.DbQueueAdmin, args []string) {
 		}
 
 		if _, err := fmt.Fprintf(w, "%d	%s	%s	%s	%s	%d/%d	%s	%s	%s\n",
-
 			job.ID,
 			job.JobType,
 			job.Status,
@@ -79,7 +78,9 @@ func handleJobList(dbConn db.DbQueueAdmin, args []string) {
 			payload,
 			payloadExtra,
 			lastError,
-		)
+		); err != nil {
+			// Ignoring error as writing to stdout via tabwriter
+		}
 	}
 
 	w.Flush()
