@@ -54,11 +54,9 @@ func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
 			gzPath := strings.TrimPrefix(r.URL.Path, "/") + ".gz"
 			f, err := fsys.Open(gzPath)
 			if err != nil {
-				if errors.Is(err, fs.ErrNotExist) {
-					// Gzipped file doesn't exist, fall through to next handler (likely serving the uncompressed version)
-				} else {
-					// Log unexpected errors (e.g., permissions)
-				}
+				// If gzipped file doesn't exist, or another error occurs (e.g. permissions),
+				// fall through to the next handler which will serve the uncompressed version.
+				// A logger would be useful here for non-ErrNotExist cases.
 				next.ServeHTTP(w, r)
 				return
 			}
