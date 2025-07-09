@@ -28,7 +28,11 @@ func handleListCommand(pool *sqlitex.Pool, scopeFilter string) {
 		fmt.Fprintf(os.Stderr, "Error: failed to prepare statement for list command: %v\n", err)
 		os.Exit(1)
 	}
-	defer stmt.Finalize()
+	defer func() {
+		if err := stmt.Finalize(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: failed to finalize statement: %v\n", err)
+		}
+	}()
 
 	if scopeFilter != "" {
 		stmt.BindText(1, scopeFilter)
