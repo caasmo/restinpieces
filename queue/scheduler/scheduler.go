@@ -91,10 +91,14 @@ func (s *Scheduler) Start() error {
 				//	s.logger.Error("Error waiting for jobs to complete", "err", err)
 				//}
 				close(s.shutdownDone) // Signal that scheduler has completely shut down
+				return
 			case <-ticker.C:
 				s.processJobs()
 			}
 		}
+		// Although unreachable due to the infinite loop exiting via ctx.Done(),
+		// a return statement is needed to satisfy the compiler for the anonymous func.
+		return
 	}()
 	return nil // Start returns immediately, background goroutine handles work/errors
 }

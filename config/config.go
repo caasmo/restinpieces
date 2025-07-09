@@ -62,13 +62,13 @@ type Config struct {
 	OAuth2Providers  map[string]OAuth2Provider `toml:"oauth2_providers" comment:"OAuth2 provider configurations"`
 	Smtp             Smtp                      `toml:"smtp" comment:"SMTP email settings"`
 	Endpoints        Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
-	BlockIp          BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
 	Maintenance      Maintenance               `toml:"maintenance" comment:"Maintenance mode settings"`
+	BlockIp          BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
 	BlockUaList      BlockUaList               `toml:"block_ua_list" comment:"User-Agent block list settings"`
 	BlockHost        BlockHost                 `toml:"block_host" comment:"Host blocking settings"`
+	BlockRequestBody BlockRequestBody          `toml:"block_request_body" comment:"Request body size limiting configuration"`
 	Notifier         Notifier                  `toml:"notifier"`
 	Log              Log                       `toml:"log" comment:"Logging configuration"`
-	BlockRequestBody BlockRequestBody          `toml:"block_request_body" comment:"Request body size limiting configuration"`
 	Metrics          Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
 	BackupLocal      BackupLocal               `toml:"backup_local" comment:"Local backup configuration"`
 }
