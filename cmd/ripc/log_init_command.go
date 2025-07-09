@@ -31,7 +31,11 @@ func handleLogInitCommand(secureStore config.SecureStore, appDbPath string) {
 		fmt.Fprintf(os.Stderr, "Error: failed to open/create log database at %s: %v\n", logDbPath, err)
 		os.Exit(1)
 	}
-	defer pool.Close()
+	defer func() {
+		if err := pool.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error closing log database pool: %v\n", err)
+		}
+	}()
 
 	// Apply the schema
 	if err := runLogMigrations(pool); err != nil {
