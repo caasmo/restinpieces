@@ -85,6 +85,14 @@ public_dir = "static/dist"
   # If true (and enabled=true), the maintenance page/message will be shown.
   activated = false
 
+# --- Host Blocking Settings ---
+[block_host]
+  # Activate or deactivate host blocking.
+  activated = true
+  # List of allowed hostnames. Supports exact matches ("example.com") and wildcards ("*.example.com").
+  # If empty, all hosts are allowed.
+  allowed_hosts = []
+
 
 
 

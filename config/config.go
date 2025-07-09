@@ -65,11 +65,22 @@ type Config struct {
 	BlockIp          BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
 	Maintenance      Maintenance               `toml:"maintenance" comment:"Maintenance mode settings"`
 	BlockUaList      BlockUaList               `toml:"block_ua_list" comment:"User-Agent block list settings"`
+	BlockHost        BlockHost                 `toml:"block_host" comment:"Host blocking settings"`
 	Notifier         Notifier                  `toml:"notifier"`
 	Log              Log                       `toml:"log" comment:"Logging configuration"`
 	BlockRequestBody BlockRequestBody          `toml:"block_request_body" comment:"Request body size limiting configuration"`
 	Metrics          Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
 	BackupLocal      BackupLocal               `toml:"backup_local" comment:"Local backup configuration"`
+}
+
+// BlockHost holds configuration for blocking requests based on the Host header.
+type BlockHost struct {
+	// Activated controls whether host blocking is currently active.
+	Activated bool `toml:"activated" comment:"Activate host blocking"`
+	// AllowedHosts is a list of hostnames that are allowed to access the server.
+	// If the list is empty, all hosts are allowed.
+	// Supports exact matches (e.g., "example.com") and wildcard subdomains (e.g., "*.example.com").
+	AllowedHosts []string `toml:"allowed_hosts" comment:"List of allowed hostnames (e.g., 'example.com', '*.example.com')"`
 }
 
 // BackupLocal defines the settings for the local backup job.
