@@ -79,7 +79,11 @@ func (h *Handler) Handle(ctx context.Context, job db.Job) error {
 	if backupErr != nil {
 		return fmt.Errorf("backup creation failed: %w", backupErr)
 	}
-	defer func() { if err := os.Remove(tempBackupPath); err != nil { h.logger.Error("Error removing temporary backup file", "error", err) } }()
+	defer func() {
+		if err := os.Remove(tempBackupPath); err != nil {
+			h.logger.Error("Error removing temporary backup file", "error", err)
+		}
+	}()
 	h.logger.Info("Successfully created temporary backup database", "path", tempBackupPath)
 
 	// --- Gzip and Finalize ---
@@ -110,7 +114,11 @@ func (h *Handler) vacuumInto(sourcePath, destPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open source db for vacuum: %w", err)
 	}
-	defer func() { if err := sourceConn.Close(); err != nil { h.logger.Error("Error closing source database connection", "error", err) } }()
+	defer func() {
+		if err := sourceConn.Close(); err != nil {
+			h.logger.Error("Error closing source database connection", "error", err)
+		}
+	}()
 
 	stmt, err := sourceConn.Prepare(fmt.Sprintf("VACUUM INTO '%s';", destPath))
 	if err != nil {
@@ -138,13 +146,21 @@ func (h *Handler) onlineBackup(sourcePath, destPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open source db for online backup: %w", err)
 	}
-	defer func() { if err := srcConn.Close(); err != nil { h.logger.Error("Error closing source database connection", "error", err) } }()
+	defer func() {
+		if err := srcConn.Close(); err != nil {
+			h.logger.Error("Error closing source database connection", "error", err)
+		}
+	}()
 
 	destConn, err := zombiezen.NewConn(destPath)
 	if err != nil {
 		return fmt.Errorf("failed to create destination db for online backup: %w", err)
 	}
-	defer func() { if err := destConn.Close(); err != nil { h.logger.Error("Error closing destination database connection", "error", err) } }()
+	defer func() {
+		if err := destConn.Close(); err != nil {
+			h.logger.Error("Error closing destination database connection", "error", err)
+		}
+	}()
 
 	backup, err := sqlite.NewBackup(destConn, "main", srcConn, "main")
 	if err != nil {
@@ -253,16 +269,28 @@ func (h *Handler) compressFile(sourcePath, destPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open source file for compression: %w", err)
 	}
-	defer func() { if err := sourceFile.Close(); err != nil { h.logger.Error("Error closing source file", "error", err) } }()
+	defer func() {
+		if err := sourceFile.Close(); err != nil {
+			h.logger.Error("Error closing source file", "error", err)
+		}
+	}()
 
 	destFile, err := os.Create(destPath)
 	if err != nil {
 		return fmt.Errorf("failed to create destination file for compression: %w", err)
 	}
-	defer func() { if err := destFile.Close(); err != nil { h.logger.Error("Error closing destination file", "error", err) } }()
+	defer func() {
+		if err := destFile.Close(); err != nil {
+			h.logger.Error("Error closing destination file", "error", err)
+		}
+	}()
 
 	gzipWriter := gzip.NewWriter(destFile)
-	defer func() { if err := gzipWriter.Close(); err != nil { h.logger.Error("Error closing gzip writer", "error", err) } }()
+	defer func() {
+		if err := gzipWriter.Close(); err != nil {
+			h.logger.Error("Error closing gzip writer", "error", err)
+		}
+	}()
 
 	if _, err := io.Copy(gzipWriter, sourceFile); err != nil {
 		return fmt.Errorf("failed to copy and compress data: %w", err)
