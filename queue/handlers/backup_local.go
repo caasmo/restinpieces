@@ -124,7 +124,11 @@ func (h *Handler) vacuumInto(sourcePath, destPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to prepare vacuum statement: %w", err)
 	}
-	defer stmt.Finalize()
+	defer func() {
+		if err := stmt.Finalize(); err != nil {
+			h.logger.Error("Error finalizing vacuum statement", "error", err)
+		}
+	}()
 
 	if _, err := stmt.Step(); err != nil {
 		return fmt.Errorf("failed to execute vacuum statement: %w", err)

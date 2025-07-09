@@ -157,7 +157,11 @@ func (dn *Notifier) Send(_ context.Context, n notify.Notification) error {
 				"source", notif.Source, "message", notif.Message, "error", err)
 			return
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				dn.logger.Warn("discord: failed to close response body", "error", err)
+			}
+		}()
 
 		if resp.StatusCode >= 300 {
 			dn.logger.Error("discord: goroutine received non-2xx status from Discord",

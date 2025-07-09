@@ -23,7 +23,11 @@ func handleScopesCommand(pool *sqlitex.Pool) {
 		fmt.Fprintf(os.Stderr, "Error: failed to prepare statement for scopes command: %v\n", err)
 		os.Exit(1)
 	}
-	defer stmt.Finalize()
+	defer func() {
+		if err := stmt.Finalize(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: failed to finalize statement: %v\n", err)
+		}
+	}()
 
 	// fmt.Println("Unique scopes found in app_config:") // Optional: keep or remove this header
 	var count int
