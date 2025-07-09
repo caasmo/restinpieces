@@ -164,7 +164,7 @@ func (d *Duration) UnmarshalText(text []byte) error {
 // This is useful if you ever need to marshal the config back to TOML,
 // ensuring durations are written as strings.
 func (d Duration) MarshalText() ([]byte, error) {
-	return []byte(d.Duration.String()), nil
+	return []byte(d.String()), nil
 }
 
 // Regexp is a wrapper around *regexp.Regexp that supports TOML unmarshalling
@@ -188,7 +188,7 @@ func (r Regexp) MarshalText() ([]byte, error) {
 	if r.Regexp == nil {
 		return []byte(""), nil
 	}
-	return []byte(r.Regexp.String()), nil
+	return []byte(r.String()), nil
 }
 
 type Jwt struct {
