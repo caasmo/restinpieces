@@ -33,5 +33,5 @@ type JsonWithData struct {
 func WriteJsonWithData(w http.ResponseWriter, resp JsonWithData) {
 	SetHeaders(w, HeadersJson)
 	w.WriteHeader(resp.Status)
-	json.NewEncoder(w).Encode(resp)
+	_ = json.NewEncoder(w).Encode(resp)
 }

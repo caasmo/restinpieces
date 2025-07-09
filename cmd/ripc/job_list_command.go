@@ -83,5 +83,8 @@ func handleJobList(dbConn db.DbQueueAdmin, args []string) {
 		}
 	}
 
-	w.Flush()
+	if err := w.Flush(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to flush output: %v\n", err)
+		os.Exit(1)
+	}
 }
