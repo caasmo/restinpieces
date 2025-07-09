@@ -7,7 +7,6 @@ package core
 // This disables If-Modified-Since checks but improves performance.
 
 import (
-	"errors"
 	"io"
 	"io/fs"
 	"net/http"
