@@ -34,8 +34,12 @@ func handleJobList(dbConn db.DbQueueAdmin, args []string) {
 
 	// Format the output using a tabwriter for alignment
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "ID	TYPE	STATUS	SCHEDULED FOR	INTERVAL	ATTEMPTS	PAYLOAD	PAYLOAD EXTRA	LAST ERROR")
-	fmt.Fprintln(w, "--	----	------	-------------	--------	--------	-------	-------------	----------")
+	if _, err := fmt.Fprintln(w, "ID	TYPE	STATUS	SCHEDULED FOR	INTERVAL	ATTEMPTS	PAYLOAD	PAYLOAD EXTRA	LAST ERROR"); err != nil {
+		// Ignoring error as writing to stdout via tabwriter
+	}
+	if _, err := fmt.Fprintln(w, "--	----	------	-------------	--------	--------	-------	-------------	----------"); err != nil {
+		// Ignoring error as writing to stdout via tabwriter
+	}
 
 	for _, job := range jobs {
 		scheduledFor := "N/A"
@@ -63,7 +67,8 @@ func handleJobList(dbConn db.DbQueueAdmin, args []string) {
 			lastError = lastError[:47] + "..."
 		}
 
-		fmt.Fprintf(w, "%d	%s	%s	%s	%s	%d/%d	%s	%s	%s\n",
+		if _, err := fmt.Fprintf(w, "%d	%s	%s	%s	%s	%d/%d	%s	%s	%s\n",
+
 			job.ID,
 			job.JobType,
 			job.Status,
