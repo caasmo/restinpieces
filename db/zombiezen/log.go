@@ -28,14 +28,13 @@ func NewLog(dbPath string) (*Log, error) {
 
 // InsertBatch writes a batch of log entries to the SQLite database.
 // It uses an explicit transaction that will be rolled back on any error.
-func (l *Log) InsertBatch(batch []db.Log) error {
+func (l *Log) InsertBatch(batch []db.Log) (err error) {
 	if len(batch) == 0 {
 		return nil
 	}
 
 	// Start immediate transaction for better concurrency control
-	err := sqlitex.Execute(l.conn, "BEGIN IMMEDIATE;", nil)
-	if err != nil {
+	if err = sqlitex.Execute(l.conn, "BEGIN IMMEDIATE;", nil); err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 
@@ -47,11 +46,16 @@ func (l *Log) InsertBatch(batch []db.Log) error {
 	}()
 
 	// Prepare insert statement
-	stmt, err := l.conn.Prepare("INSERT INTO logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
+	var stmt *sqlite.Stmt
+	stmt, err = l.conn.Prepare("INSERT INTO logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
 	if err != nil {
 		return fmt.Errorf("failed to prepare statement: %w", err)
 	}
-	defer stmt.Finalize()
+	defer func() {
+		if ferr := stmt.Finalize(); ferr != nil && err == nil {
+			err = fmt.Errorf("failed to finalize statement: %w", ferr)
+		}
+	}()
 
 	// Insert each record
 	for _, entry := range batch {
@@ -61,10 +65,15 @@ func (l *Log) InsertBatch(batch []db.Log) error {
 		stmt.SetText("$created", entry.Created)
 
 		if _, err = stmt.Step(); err != nil {
-			stmt.Reset()
-			return fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.Message, err)
+			_ = stmt.Reset()
+			err = fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.Message, err)
+			return err
 		}
-		stmt.Reset()
+
+		if err = stmt.Reset(); err != nil {
+			err = fmt.Errorf("failed to reset statement: %w", err)
+			return err
+		}
 	}
 
 	// Commit transaction if all inserts succeeded
@@ -76,16 +85,20 @@ func (l *Log) InsertBatch(batch []db.Log) error {
 }
 
 // Ping checks if the specified table exists.
-func (l *Log) Ping(tableName string) error {
+func (l *Log) Ping(tableName string) (err error) {
 	query := fmt.Sprintf("SELECT 1 FROM %s LIMIT 1;", tableName)
-	stmt, _, err := l.conn.PrepareTransient(query)
+	var stmt *sqlite.Stmt
+	stmt, _, err = l.conn.PrepareTransient(query)
 	if err != nil {
 		return fmt.Errorf("failed to prepare ping statement for table %s: %w", tableName, err)
 	}
-	defer stmt.Finalize()
+	defer func() {
+		if ferr := stmt.Finalize(); ferr != nil && err == nil {
+			err = ferr
+		}
+	}()
 
-	_, err = stmt.Step()
-	if err != nil {
+	if _, err = stmt.Step(); err != nil {
 		// Check if the error is due to a missing table
 		if sqlite.ErrCode(err) == sqlite.ResultError {
 			return fmt.Errorf("table '%s' not found: %w", tableName, err)
