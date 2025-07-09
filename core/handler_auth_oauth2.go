@@ -113,7 +113,11 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		WriteJsonError(w, errorOAuth2UserInfoFailed)
 		return
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			a.Logger().Warn("failed to close response body", "error", err)
+		}
+	}()
 
 	oauthUser, err := oauth2provider.UserFromUserInfoURL(resp, provider.Name)
 	if err != nil {

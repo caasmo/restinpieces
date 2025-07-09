@@ -62,7 +62,7 @@ func GzipMiddleware(fsys fs.FS) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			defer f.Close()
+			defer func() { _ = f.Close() }()
 
 			// Check if the file implements io.ReadSeeker. While files from standard library
 			// fs.FS implementations (like embed.FS, os.DirFS) typically do, custom implementations
