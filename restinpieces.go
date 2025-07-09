@@ -200,7 +200,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 
 	logger.Info(ft.Start("Setting up Prerouter Middleware Chain ..."))
 
-	// 0. Response Recorder Middleware (Added first, runs first)
+	// 0. Response Recorder Middleware (Added first, runs last before router)
 	recorder := prerouter.NewRecorder(i.app)
 	preRouterChain.WithMiddleware(recorder.Execute)
 	logger.Info(ft.Seed("ResponseRecorder middleware added"))
@@ -227,7 +227,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 		logger.Info(ft.Disabled("BlockIp middleware disabled"), "enabled", cfg.BlockIp.Enabled)
 	}
 
-	// 3. Metrics Middleware (only if enabled)
+	// 3. Metrics Middleware
 	if cfg.Metrics.Enabled {
 		metrics := prerouter.NewMetrics(i.app)
 		preRouterChain.WithMiddleware(metrics.Execute)
@@ -247,6 +247,15 @@ func (i *initializer) setupPrerouter() http.Handler {
 		logger.Info(ft.Active("BlockUaList middleware active"), "activated", cfg.BlockUaList.Activated)
 	} else {
 		logger.Info(ft.Inactive("BlockUaList middleware inactive"), "activated", cfg.BlockUaList.Activated)
+	}
+
+	// 5. BlockHost Middleware
+	blockHost := prerouter.NewBlockHost(i.app)
+	preRouterChain.WithMiddleware(blockHost.Execute)
+	if cfg.BlockHost.Activated {
+		logger.Info(ft.Active("BlockHost middleware active"), "activated", cfg.BlockHost.Activated)
+	} else {
+		logger.Info(ft.Inactive("BlockHost middleware inactive"), "activated", cfg.BlockHost.Activated)
 	}
 
 	// 4. TLSHeaderSTS Middleware
