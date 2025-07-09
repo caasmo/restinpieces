@@ -12,7 +12,7 @@ import (
 
 // handleJobAddBackup handles the "job add-backup" subcommand.
 func handleJobAddBackup(dbConn db.DbQueue, args []string) {
-	addBackupCmd := flag.NewFlagSet("add-backup", flag.ExitOnError)
+	addBackupCmd := flag.NewFlagSet("add-backup", flag.ContinueOnError)
 
 	interval := addBackupCmd.String("interval", "24h", "Interval for the recurrent backup job (e.g., '24h', '1h30m')")
 	scheduledFor := addBackupCmd.String("scheduled-for", time.Now().Format(time.RFC3339), "Start time in RFC3339 format for the first job")
@@ -25,7 +25,11 @@ func handleJobAddBackup(dbConn db.DbQueue, args []string) {
 		addBackupCmd.PrintDefaults()
 	}
 
-	addBackupCmd.Parse(args)
+	if err := addBackupCmd.Parse(args); err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing add-backup flags: %v\n", err)
+		addBackupCmd.Usage()
+		os.Exit(1)
+	}
 
 	// --- Parse and validate flags ---
 	if *interval == "" {
@@ -33,6 +37,7 @@ func handleJobAddBackup(dbConn db.DbQueue, args []string) {
 		addBackupCmd.Usage()
 		os.Exit(1)
 	}
+
 
 	intervalDuration, err := time.ParseDuration(*interval)
 	if err != nil {

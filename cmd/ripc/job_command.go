@@ -50,7 +50,7 @@ func handleJobCommand(dbConn *zombiezen.Db, args []string) {
 // handleJobAdd handles the "job add" subcommand and its specific flags.
 func handleJobAdd(dbConn db.DbQueue, args []string) {
 	// Create a FlagSet specific to the "add" subcommand.
-	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
+	addCmd := flag.NewFlagSet("add", flag.ContinueOnError)
 
 	// Define flags for the 'add' subcommand
 	jobType := addCmd.String("type", "", "Job type (e.g., 'job_type_backup_local') (required)")
@@ -69,7 +69,11 @@ func handleJobAdd(dbConn db.DbQueue, args []string) {
 	}
 
 	// Parse the arguments passed specifically to this handler.
-	addCmd.Parse(args)
+	if err := addCmd.Parse(args); err != nil {
+		fmt.Fprintf(os.Stderr, "Error parsing add flags: %v\n", err)
+		addCmd.Usage()
+		os.Exit(1)
+	}
 
 	if *jobType == "" {
 		fmt.Fprintln(os.Stderr, "Error: -type is a required flag for 'job add'")
