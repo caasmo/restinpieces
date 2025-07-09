@@ -119,6 +119,10 @@ func NewDefaultConfig() *Config {
 				Regexp: regexp.MustCompile(`(BotName\.v1|Super\-Bot|My\ Bot|AnotherBot)`),
 			},
 		},
+		BlockHost: BlockHost{
+			Activated:    true,
+			AllowedHosts: []string{},
+		},
 		BlockRequestBody: BlockRequestBody{
 			Activated: true,
 			Limit:     1024 * 1024, // 1MB default limit

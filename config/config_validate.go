@@ -29,6 +29,9 @@ func Validate(cfg *Config) error {
 	if err := validateBlockUaList(&cfg.BlockUaList); err != nil {
 		return fmt.Errorf("block_ua_list config validation failed: %w", err)
 	}
+	if err := validateBlockHost(&cfg.BlockHost); err != nil {
+		return fmt.Errorf("block_host config validation failed: %w", err)
+	}
 	if err := validateNotifier(&cfg.Notifier); err != nil {
 		return fmt.Errorf("notifier config validation failed: %w", err)
 	}
@@ -270,7 +273,24 @@ func validateBlockUaList(blockUaList *BlockUaList) error {
 	return nil
 }
 
+func validateBlockHost(blockHost *BlockHost) error {
+	if !blockHost.Activated {
+		return nil
+	}
+
+	for _, host := range blockHost.AllowedHosts {
+		if host == "" {
+			return fmt.Errorf("block_host.allowed_hosts must not contain empty strings")
+		}
+		if strings.ContainsAny(host, " \t\r\n") {
+			return fmt.Errorf("block_host.allowed_hosts: host '%s' contains whitespace characters", host)
+		}
+	}
+	return nil
+}
+
 func validateNotifier(notifier *Notifier) error {
+
 	if !notifier.Discord.Activated {
 		return nil
 	}
