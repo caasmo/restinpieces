@@ -96,7 +96,6 @@ func (l *Log) Ping(tableName string) error {
 	return nil
 }
 
-
 // Close closes the underlying SQLite connection.
 func (l *Log) Close() error {
 	if l.conn != nil {

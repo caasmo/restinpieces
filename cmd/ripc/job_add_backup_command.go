@@ -38,7 +38,6 @@ func handleJobAddBackup(dbConn db.DbQueue, args []string) {
 		os.Exit(1)
 	}
 
-
 	intervalDuration, err := time.ParseDuration(*interval)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: Invalid -interval format: %v\n", err)
