@@ -35,10 +35,12 @@ func handleJobList(dbConn db.DbQueueAdmin, args []string) {
 	// Format the output using a tabwriter for alignment
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	if _, err := fmt.Fprintln(w, "ID	TYPE	STATUS	SCHEDULED FOR	INTERVAL	ATTEMPTS	PAYLOAD	PAYLOAD EXTRA	LAST ERROR"); err != nil {
-		// Ignoring error as writing to stdout via tabwriter
+		fmt.Fprintf(os.Stderr, "Error: failed to write header: %v\n", err)
+		os.Exit(1)
 	}
 	if _, err := fmt.Fprintln(w, "--	----	------	-------------	--------	--------	-------	-------------	----------"); err != nil {
-		// Ignoring error as writing to stdout via tabwriter
+		fmt.Fprintf(os.Stderr, "Error: failed to write header separator: %v\n", err)
+		os.Exit(1)
 	}
 
 	for _, job := range jobs {
@@ -79,7 +81,8 @@ func handleJobList(dbConn db.DbQueueAdmin, args []string) {
 			payloadExtra,
 			lastError,
 		); err != nil {
-			// Ignoring error as writing to stdout via tabwriter
+			fmt.Fprintf(os.Stderr, "Error: failed to write job list item: %v\n", err)
+			os.Exit(1)
 		}
 	}
 
