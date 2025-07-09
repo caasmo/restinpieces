@@ -195,7 +195,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 	// The final handler in the chain will be i.app.Router().ServeHTTP
 	preRouterChain := router.NewChain(i.app.Router())
 
-	// --- Add Internal Middleware Conditionally (Order Matters!) ---
+	// Add Internal Middleware. Order Matters, first added are run first.
 	// Execution order will be: RequestLog -> BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> i.app.Router()
 
 	logger.Info(ft.Start("Setting up Prerouter Middleware Chain ..."))
