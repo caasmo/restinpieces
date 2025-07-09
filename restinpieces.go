@@ -200,7 +200,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 
 	logger.Info(ft.Start("Setting up Prerouter Middleware Chain ..."))
 
-	// 0. Response Recorder Middleware (Added first, runs last before router)
+	// 0. Response Recorder Middleware (Added first, runs first)
 	recorder := prerouter.NewRecorder(i.app)
 	preRouterChain.WithMiddleware(recorder.Execute)
 	logger.Info(ft.Seed("ResponseRecorder middleware added"))
