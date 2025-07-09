@@ -100,7 +100,6 @@ func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL s
 		<p>Thanks,<br>%s team</p>
 	`, smtpCfg.FromName, callbackURL, smtpCfg.FromName))
 
-	return fmt.Errorf("IN MAIL DEBUG: %s", callbackURL)
 	// Send email with context timeout
 	done := make(chan error, 1)
 	go func() {
@@ -162,7 +161,6 @@ func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newE
 		<p>Thanks,<br>%s team</p>
 	`, oldEmail, newEmail, warning, callbackURL, smtpCfg.FromName))
 
-	return fmt.Errorf("CHANGE EMAIL SEND DEBUG: %s", callbackURL)
 	// Send email with context timeout
 	done := make(chan error, 1)
 	go func() {
@@ -212,8 +210,6 @@ func (m *Mailer) SendPasswordResetEmail(ctx context.Context, email, callbackURL 
 		<p>If you didn't request this, you can safely ignore this email.</p>
 		<p>Thanks,<br>%s team</p>
 	`, smtpCfg.FromName, callbackURL, smtpCfg.FromName))
-
-	return fmt.Errorf("IN MAIL DEBUGGGGGGGGGGGGGGGGGGGGGGGGG: %s", callbackURL)
 
 	// Send email with context timeout
 	done := make(chan error, 1)
