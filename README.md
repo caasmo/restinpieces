@@ -60,13 +60,12 @@ To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which wa
 - Cache interface with [Ristretto](https://github.com/dgraph-io/ristretto) implementation
 
 ### Configuration Management
-- Secure configuration storage with [ripc CLI tool](cmd/ripc/README.md)
+- All configuration is stored directly in the SQLite database as serialized TOML files. The `ripc` command-line tool is provided to manage this configuration, with support for encrypting sensitive values using `age`.
+- Key features of `ripc` include:
   - Versioned configuration with rollback support
-  - Age encryption for sensitive values
   - JWT secret rotation
   - OAuth2 provider management
-  - Multiple configuration scopes
-  - Hot reloading of configuration without server restart
+  - Hot reloading of configuration without a server restart
 
 
 ### Frontend Integration
