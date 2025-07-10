@@ -49,6 +49,7 @@ To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which wa
 - Dynamic IP blocking based on traffic patterns
 - User-Agent blocking based on configuration
 - Request body blocking based on configurable size limits
+- Hostname validation against a configurable whitelist.
 
 ### Core Infrastructure
 - Uses middleware and handler standard Go patterns
