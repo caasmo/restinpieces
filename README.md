@@ -58,14 +58,14 @@ To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which wa
 - SQLite database interface with pure Go [Zombiezen](https://github.com/zombiezen/go-sqlite) as default driver
   - Alternative drivers available in separate repos (like [Crawshaw](https://github.com/caasmo/restinpieces-sqlite-crawshaw))
 - Cache interface with [Ristretto](https://github.com/dgraph-io/ristretto) implementation
+- Hot reloading of configuration without server restart
 
 ### Configuration Management
-- All configuration is stored directly in the SQLite database as serialized TOML files. The `ripc` command-line tool is provided to manage this configuration, with support for encrypting sensitive values using `age`.
+- All configuration is stored encrypted in the SQLite database as serialized TOML files. The `ripc` command-line tool is provided to manage this configuration.
 - Key features of `ripc` include:
   - Versioned configuration with rollback support
   - JWT secret rotation
   - OAuth2 provider management
-  - Hot reloading of configuration without a server restart
 
 
 ### Frontend Integration
