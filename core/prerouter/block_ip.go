@@ -44,7 +44,6 @@ func GetClientIP(r *http.Request) string {
 	return ip
 }
 
-// BlockIp implements the FeatureBlocker interface using a cache for storage and a TopK sketch for detection.
 type BlockIp struct {
 	cache  cache.Cache[string, interface{}]
 	sketch *topk.TopKSketch
@@ -111,7 +110,6 @@ func (b *BlockIp) IsBlocked(ip string) bool {
 }
 
 // Block adds the given IP to the block list.
-// Placeholder implementation: does nothing yet.
 func (b *BlockIp) Block(ip string) error {
 	now := time.Now()
 	currentBucket := getTimeBucket(now)
