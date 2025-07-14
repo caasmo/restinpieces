@@ -60,7 +60,6 @@ func NewBlockIp(cache cache.Cache[string, interface{}], logger *slog.Logger) *Bl
 	tickSize := uint64(100) // Process sketch every 100 requests
 
 	cs := topk.New(window, segments, width, depth, tickSize)
-	logger.Info("TopK sketch memory usage", "bytes", cs.SizeBytes())
 
 	return &BlockIp{
 		cache:  cache,

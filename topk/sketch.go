@@ -40,13 +40,6 @@ func New(window, segments, width, depth int, tickSize uint64) *TopKSketch {
 	}
 }
 
-// SizeBytes returns the memory usage of the sketch in bytes.
-func (cs *TopKSketch) SizeBytes() int {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
-	return cs.sketch.SizeBytes()
-}
-
 func (cs *TopKSketch) ProcessTick(ip string) []string {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
