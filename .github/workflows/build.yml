@@ -2,8 +2,6 @@ name: Build
 on:
   release:
     types: [published]
-  push:
-  pull_request:
 permissions:
   contents: read
 jobs:
@@ -29,7 +27,7 @@ jobs:
           fetch-depth: 0
       - name: Build binary
         run: |        
-          VERSION="$(git describe --tags)"
+          VERSION="$GITHUB_REF_NAME"
           DIR="$(mktemp -d)"
           mkdir "$DIR/ripc"
           go build -o "$DIR/ripc" -ldflags "-X main.BuildTag=$VERSION" -trimpath ./cmd/...
