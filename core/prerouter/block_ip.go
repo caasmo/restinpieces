@@ -85,11 +85,7 @@ func (b *BlockIp) Execute(next http.Handler) http.Handler {
 				w.WriteHeader(http.StatusTooManyRequests)
 				return
 			} else {
-				// TODO
-				// Process the IP (e.g., add to sketch). Log any processing errors.
 				if err := b.Process(ip); err != nil {
-					// Log the error but typically continue processing the request,
-					// as failure here might just mean the sketch update failed.
 					b.logger.Error("Error processing IP in blocker", "ip", ip, "error", err)
 				}
 			}
