@@ -9,7 +9,6 @@ import (
 
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/topk"
-	"github.com/keilerkonzept/topk/sliding"
 	// "github.com/caasmo/restinpieces/config" // No longer needed here
 )
 
@@ -44,6 +43,7 @@ func GetClientIP(r *http.Request) string {
 	return ip
 }
 
+// BlockIp implements the FeatureBlocker interface using a cache for storage and a TopK sketch for detection.
 type BlockIp struct {
 	cache  cache.Cache[string, interface{}]
 	sketch *topk.TopKSketch
@@ -59,10 +59,8 @@ func NewBlockIp(cache cache.Cache[string, interface{}], logger *slog.Logger) *Bl
 	depth := 3
 	tickSize := uint64(100) // Process sketch every 100 requests
 
-	sketchInstance := sliding.New(window, segments, sliding.WithWidth(width), sliding.WithDepth(depth))
-	logger.Info("TopK sketch memory usage", "bytes", sketchInstance.SizeBytes())
-
-	cs := topk.NewTopkSketch(sketchInstance, tickSize)
+	cs := topk.New(window, segments, width, depth, tickSize)
+	logger.Info("TopK sketch memory usage", "bytes", cs.SizeBytes())
 
 	return &BlockIp{
 		cache:  cache,

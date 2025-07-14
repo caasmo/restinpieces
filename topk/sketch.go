@@ -6,7 +6,8 @@ import (
 	"github.com/keilerkonzept/topk/sliding"
 )
 
-// ConcurrentSketch provides thread-safe access to a sketch instance and manages ticking.
+// TopKSketch provides a thread-safe wrapper around a sliding window sketch
+// for tracking frequent items and managing ticking.
 const (
 	thresholdPercent = 80 // 80% of window capacity
 )
@@ -20,25 +21,30 @@ type TopKSketch struct {
 	threshold int    // Precomputed threshold value
 }
 
-// NewConcurrentSketch creates a new thread-safe sketch wrapper.
-// tickSize: How many requests trigger a sketch tick and top-k check.
-// TODO reove reference to Ips
-func NewTopkSketch(instance *sliding.Sketch, tickSize uint64) *TopKSketch {
-	if instance == nil {
-		panic("sketch instance cannot be nil for ConcurrentSketch")
-	}
+// New creates a new thread-safe sketch wrapper.
+// It initializes the underlying sliding window sketch with the given parameters.
+func New(window, segments, width, depth int, tickSize uint64) *TopKSketch {
+	sketchInstance := sliding.New(window, segments, sliding.WithWidth(width), sliding.WithDepth(depth))
+
 	if tickSize == 0 {
 		tickSize = 1000 // Default tick size if not specified
 	}
 
-	windowCapacity := uint64(instance.WindowSize) * tickSize
+	windowCapacity := uint64(sketchInstance.WindowSize) * tickSize
 	threshold := int((windowCapacity * thresholdPercent) / 100)
 
 	return &TopKSketch{
-		sketch:    instance,
+		sketch:    sketchInstance,
 		tickSize:  tickSize,
 		threshold: threshold,
 	}
+}
+
+// SizeBytes returns the memory usage of the sketch in bytes.
+func (cs *TopKSketch) SizeBytes() int {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	return cs.sketch.SizeBytes()
 }
 
 func (cs *TopKSketch) ProcessTick(ip string) []string {
