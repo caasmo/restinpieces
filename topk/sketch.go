@@ -23,8 +23,8 @@ type TopKSketch struct {
 
 // New creates a new thread-safe sketch wrapper.
 // It initializes the underlying sliding window sketch with the given parameters.
-func New(window, segments, width, depth int, tickSize uint64) *TopKSketch {
-	sketchInstance := sliding.New(window, segments, sliding.WithWidth(width), sliding.WithDepth(depth))
+func New(k, windowSize, width, depth int, tickSize uint64) *TopKSketch {
+	sketchInstance := sliding.New(k, windowSize, sliding.WithWidth(width), sliding.WithDepth(depth))
 
 	if tickSize == 0 {
 		tickSize = 1000 // Default tick size if not specified

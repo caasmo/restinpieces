@@ -52,14 +52,14 @@ type BlockIp struct {
 
 // NewBlockIp creates a new BlockIp instance with the given cache and logger.
 func NewBlockIp(cache cache.Cache[string, interface{}], logger *slog.Logger) *BlockIp {
-	// TODO: Make sketch parameters configurable (window, segments, width, depth, tickSize)
-	window := 3
-	segments := 10
+	// TODO: Make sketch parameters configurable (k, windowSize, width, depth, tickSize)
+	k := 3                  // Number of top items to track
+	windowSize := 10        // Sliding window size in ticks
 	width := 1024
 	depth := 3
 	tickSize := uint64(100) // Process sketch every 100 requests
 
-	cs := topk.New(window, segments, width, depth, tickSize)
+	cs := topk.New(k, windowSize, width, depth, tickSize)
 
 	return &BlockIp{
 		cache:  cache,
