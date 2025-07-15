@@ -184,44 +184,28 @@ func (b *BlockIp) Block(ip string) error {
 // It processes the IP using the sketch and potentially triggers blocking.
 // Returns an error if the processing itself fails (unlikely here).
 func (b *BlockIp) Process(ip string) error {
-	rps, didTick := b.sketch.ProcessTick(ip)
-
-	// Only check for blocking when a tick is completed.
-	if !didTick {
-		return nil
-	}
-
 	cfg := b.app.Config().BlockIp
+	blockedIPs := b.sketch.ProcessTick(ip, cfg.Level, cfg.ActivationRPS)
 
-	// --- Gate 1: Is the server busy enough to warrant blocking? ---
-	if rps < float64(cfg.ActivationRPS) {
-		return nil // Server is not under high load, do nothing.
-	}
-
-	// --- Gate 2: Is any single IP consuming a disproportionate share of traffic? ---
-	windowCapacity := b.sketch.WindowCapacity()
-	// Calculate the absolute count threshold from the percentage.
-	thresholdCount := (windowCapacity * uint64(cfg.MaxSharePercent)) / 100
-
-	ipsToBlock := make([]string, 0)
-	for _, item := range b.sketch.TopItems() {
-		if item.Count > uint32(thresholdCount) {
-			ipsToBlock = append(ipsToBlock, item.Item)
-		} else {
-			// The list is sorted, so we can stop early.
-			break
-		}
-	}
-
-	if len(ipsToBlock) > 0 {
-		b.app.Logger().Info("IPs to be blocked", "ips", ipsToBlock, "rps", rps)
+	// Handle blocking asynchronously
+	//
+	// Even if multiple goroutines call a.BlockIP for the same IP
+	// concurrently, Ristretto will handle it safely. Blocking an IP
+	// multiple times is harmless if the operation is idempotent (same key).
+	// Ristretto batches writes into a ring buffer, so frequent Set calls
+	// for the same key will be merged efficiently. The last write (in
+	// buffer order) will determine the final value.
+	// Ristretto uses a buffered write mechanism (a ring buffer) to batch
+	// Set/Del operations for performance.
+	if len(blockedIPs) > 0 {
+		b.app.Logger().Info("IPs to be blocked", "ips", blockedIPs)
 		go func(ips []string) {
 			for _, ip := range ips {
 				if err := b.Block(ip); err != nil {
 					b.app.Logger().Error("failed to block IP", "ip", ip, "error", err)
 				}
 			}
-		}(ipsToBlock)
+		}(blockedIPs)
 	}
 
 	// Return nil as errors are handled within the goroutine or sketch processing

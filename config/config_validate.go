@@ -67,10 +67,6 @@ func validateBlockIp(blockIp *BlockIp) error {
 		return fmt.Errorf("block_ip.activation_rps must be positive")
 	}
 
-	if blockIp.MaxSharePercent <= 0 || blockIp.MaxSharePercent > 100 {
-		return fmt.Errorf("block_ip.max_share_percent must be between 1 and 100")
-	}
-
 	return nil
 }
 

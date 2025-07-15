@@ -107,11 +107,10 @@ func NewDefaultConfig() *Config {
 			ConfirmEmailChange:       "POST /api/confirm-email-change",
 		},
 		BlockIp: BlockIp{
-			Enabled:         true,
-			Activated:       true,
-			Level:           "medium",
-			ActivationRPS:   500,
-			MaxSharePercent: 25,
+			Enabled:       true,
+			Activated:     true,
+			Level:         "medium",
+			ActivationRPS: 500,
 		},
 		Maintenance: Maintenance{
 			Activated: false,

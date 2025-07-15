@@ -34,9 +34,8 @@ func New(k, windowSize, width, depth int, tickSize uint64) *TopKSketch {
 }
 
 // ProcessTick increments the count for the given item. If a tick completes,
-// it returns the requests per second (RPS) for that tick and true.
-// Otherwise, it returns 0 and false.
-func (cs *TopKSketch) ProcessTick(ip string) (float64, bool) {
+// it checks against the provided thresholds and returns a list of IPs to block.
+func (cs *TopKSketch) ProcessTick(ip string, level string, activationRPS int) []string {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -44,33 +43,51 @@ func (cs *TopKSketch) ProcessTick(ip string) (float64, bool) {
 	cs.tickReq++
 
 	if cs.tickReq >= cs.tickSize {
-		cs.sketch.Tick()
+		// A tick has completed, now we check the conditions for blocking.
 		cs.tickReq = 0
-
 		now := time.Now()
 		duration := now.Sub(cs.lastTickTime)
 		cs.lastTickTime = now
 
-		if duration.Seconds() <= 0 {
-			return 0, true // Avoid division by zero, but signal that a tick occurred
+		var rps float64
+		if duration.Seconds() > 0 {
+			rps = float64(cs.tickSize) / duration.Seconds()
 		}
 
-		rps := float64(cs.tickSize) / duration.Seconds()
-		return rps, true
+		// --- Gate 1: Is the server busy enough? ---
+		if rps < float64(activationRPS) {
+			cs.sketch.Tick() // Still tick the sketch to slide the window, but don't block.
+			return nil
+		}
+
+		// --- Gate 2: Is any IP consuming too much? ---
+		// Determine maxSharePercent internally based on the level.
+		var maxSharePercent int
+		switch level {
+		case "low":
+			maxSharePercent = 50 // Lenient
+		case "high":
+			maxSharePercent = 20 // Aggressive
+		default: // "medium"
+			maxSharePercent = 35 // Balanced
+		}
+
+		windowCapacity := uint64(cs.sketch.WindowSize) * cs.tickSize
+		thresholdCount := (windowCapacity * uint64(maxSharePercent)) / 100
+
+		itemsToBlock := make([]string, 0)
+		// We check the items *before* ticking to evaluate the window that just completed.
+		for _, item := range cs.sketch.SortedSlice() {
+			if item.Count > uint32(thresholdCount) {
+				itemsToBlock = append(itemsToBlock, item.Item)
+			} else {
+				break // Sorted list allows early exit.
+			}
+		}
+
+		cs.sketch.Tick() // Now, slide the window.
+		return itemsToBlock
 	}
 
-	return 0, false
-}
-
-// TopItems returns a sorted slice of the most frequent items in the sketch.
-func (cs *TopKSketch) TopItems() []sliding.Item {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
-	return cs.sketch.SortedSlice()
-}
-
-// WindowCapacity returns the total number of requests that a full window can hold.
-func (cs *TopKSketch) WindowCapacity() uint64 {
-	// This doesn't need a lock as sketch.WindowSize is constant after init.
-	return uint64(cs.sketch.WindowSize) * cs.tickSize
+	return nil
 }
