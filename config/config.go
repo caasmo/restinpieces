@@ -389,6 +389,9 @@ type BlockIp struct {
 	// Activated controls whether IP blocking is currently active.
 	// This can be toggled dynamically via a configuration reload.
 	Activated bool `toml:"activated" comment:"Activate IP blocking (can be toggled via config reload)"`
+	// Level sets the sensitivity and memory usage profile for the blocker.
+	// Valid options: "low", "medium", "high".
+	Level string `toml:"level" comment:"Sensitivity profile: 'low', 'medium', or 'high'"`
 }
 
 // Maintenance holds configuration for the maintenance mode feature.
