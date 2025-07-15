@@ -2,14 +2,12 @@ package prerouter
 
 import (
 	"fmt"
-	"log/slog"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/caasmo/restinpieces/cache"
+	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/topk"
-	// "github.com/caasmo/restinpieces/config" // No longer needed here
 )
 
 const (
@@ -45,13 +43,12 @@ func GetClientIP(r *http.Request) string {
 
 // BlockIp implements the FeatureBlocker interface using a cache for storage and a TopK sketch for detection.
 type BlockIp struct {
-	cache  cache.Cache[string, interface{}]
+	app    *core.App
 	sketch *topk.TopKSketch
-	logger *slog.Logger
 }
 
 // NewBlockIp creates a new BlockIp instance with the given cache and logger.
-func NewBlockIp(cache cache.Cache[string, interface{}], logger *slog.Logger) *BlockIp {
+func NewBlockIp(app *core.App) *BlockIp {
 	// TODO: Make sketch parameters configurable (k, windowSize, width, depth, tickSize)
 	k := 3                  // Number of top items to track
 	windowSize := 10        // Sliding window size in ticks
@@ -62,9 +59,8 @@ func NewBlockIp(cache cache.Cache[string, interface{}], logger *slog.Logger) *Bl
 	cs := topk.New(k, windowSize, width, depth, tickSize)
 
 	return &BlockIp{
-		cache:  cache,
+		app:    app,
 		sketch: cs,
-		logger: logger,
 	}
 }
 
@@ -82,7 +78,7 @@ func (b *BlockIp) Execute(next http.Handler) http.Handler {
 				return
 			} else {
 				if err := b.Process(ip); err != nil {
-					b.logger.Error("Error processing IP in blocker", "ip", ip, "error", err)
+					b.app.Logger().Error("Error processing IP in blocker", "ip", ip, "error", err)
 				}
 			}
 		}
@@ -102,7 +98,7 @@ func (b *BlockIp) IsEnabled() bool {
 func (b *BlockIp) IsBlocked(ip string) bool {
 	currentBucket := getTimeBucket(time.Now())
 	key := formatBlockKey(ip, currentBucket)
-	_, found := b.cache.Get(key)
+	_, found := b.app.Cache().Get(key)
 	return found
 }
 
@@ -116,11 +112,11 @@ func (b *BlockIp) Block(ip string) error {
 	// Block in current bucket with full blocking duration
 	currentKey := formatBlockKey(ip, currentBucket)
 	// Use the internal cache instance (b.cache) and logger
-	if !b.cache.SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration) {
-		b.logger.Error("failed to block IP in current bucket", "ip", ip, "bucket", currentBucket)
+	if !b.app.Cache().SetWithTTL(currentKey, true, defaultBlockCost, blockingDuration) {
+		b.app.Logger().Error("failed to block IP in current bucket", "ip", ip, "bucket", currentBucket)
 		return fmt.Errorf("failed to block IP %s in current bucket %d", ip, currentBucket)
 	}
-	b.logger.Info("IP blocked in current bucket",
+	b.app.Logger().Info("IP blocked in current bucket",
 		"ip", ip,
 		"bucket", currentBucket,
 		"duration", blockingDuration)
@@ -133,11 +129,11 @@ func (b *BlockIp) Block(ip string) error {
 	if ttlNext > 0 {
 		nextKey := formatBlockKey(ip, nextBucket)
 		// Use the internal cache instance (b.cache) and logger
-		if !b.cache.SetWithTTL(nextKey, true, defaultBlockCost, ttlNext) {
-			b.logger.Error("failed to block IP in next bucket", "ip", ip, "bucket", nextBucket)
+		if !b.app.Cache().SetWithTTL(nextKey, true, defaultBlockCost, ttlNext) {
+			b.app.Logger().Error("failed to block IP in next bucket", "ip", ip, "bucket", nextBucket)
 			return fmt.Errorf("failed to block IP %s in next bucket %d", ip, nextBucket)
 		}
-		b.logger.Info("IP blocked in next bucket",
+		b.app.Logger().Info("IP blocked in next bucket",
 			"ip", ip,
 			"bucket", nextBucket,
 			"duration", ttlNext)
@@ -164,11 +160,11 @@ func (b *BlockIp) Process(ip string) error {
 	// Ristretto uses a buffered write mechanism (a ring buffer) to batch
 	// Set/Del operations for performance.
 	if len(blockedIPs) > 0 {
-		b.logger.Info("IPs to be blocked", "ips", blockedIPs)
+		b.app.Logger().Info("IPs to be blocked", "ips", blockedIPs)
 		go func(ips []string) {
 			for _, ip := range ips {
 				if err := b.Block(ip); err != nil {
-					b.logger.Error("failed to block IP", "ip", ip, "error", err)
+					b.app.Logger().Error("failed to block IP", "ip", ip, "error", err)
 				}
 			}
 		}(blockedIPs)
