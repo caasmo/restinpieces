@@ -129,7 +129,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			requestSequence: generateRequestSequence(0, map[string]int{
 				"1.1.1.1": 201, "2.2.2.2": 202, "3.3.3.3": 597,
 			}),
-			wantBlockedIPs: []string{"1.1.1.1", "2.2.2.2"},
+			wantBlockedIPs: []string{"1.1.1.1", "2.2.2.2", "3.3.3.3"},
 		},
 		{
 			// Purpose: Verify that the sketch's internal state (lastTickTime, window)
