@@ -15,6 +15,7 @@ type SketchParams struct {
 	Depth           int
 	TickSize        uint64
 	MaxSharePercent int
+	ActivationRPS   int
 }
 
 // TopKSketch provides a thread-safe wrapper around a sliding window sketch
@@ -26,6 +27,7 @@ type TopKSketch struct {
 	tickReq         uint64 // Counter for requests processed since last tick
 	lastTickTime    time.Time
 	maxSharePercent int
+	activationRPS   int
 }
 
 // New creates a new thread-safe sketch wrapper.
@@ -38,12 +40,13 @@ func New(params SketchParams) *TopKSketch {
 		tickSize:        params.TickSize,
 		lastTickTime:    time.Now(),
 		maxSharePercent: params.MaxSharePercent,
+		activationRPS:   params.ActivationRPS,
 	}
 }
 
 // ProcessTick increments the count for the given item. If a tick completes,
 // it checks against the provided thresholds and returns a list of IPs to block.
-func (cs *TopKSketch) ProcessTick(ip string, activationRPS int) []string {
+func (cs *TopKSketch) ProcessTick(ip string) []string {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -63,7 +66,7 @@ func (cs *TopKSketch) ProcessTick(ip string, activationRPS int) []string {
 		}
 
 		// --- Gate 1: Is the server busy enough? ---
-		if rps < float64(activationRPS) {
+		if rps < float64(cs.activationRPS) {
 			cs.sketch.Tick() // Still tick the sketch to slide the window, but don't block.
 			return nil
 		}

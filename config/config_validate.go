@@ -63,10 +63,6 @@ func validateBlockIp(blockIp *BlockIp) error {
 		return fmt.Errorf("invalid block_ip.level '%s': must be one of 'low', 'medium', or 'high'", blockIp.Level)
 	}
 
-	if blockIp.ActivationRPS <= 0 {
-		return fmt.Errorf("block_ip.activation_rps must be positive")
-	}
-
 	return nil
 }
 

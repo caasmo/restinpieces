@@ -62,6 +62,7 @@ var sketchLevels = map[string]topk.SketchParams{
 		Depth:           2,
 		TickSize:        100,
 		MaxSharePercent: 50, // Lenient
+		ActivationRPS:   100,
 	},
 	"medium": {
 		K:               3,
@@ -70,6 +71,7 @@ var sketchLevels = map[string]topk.SketchParams{
 		Depth:           3,
 		TickSize:        100,
 		MaxSharePercent: 35, // Balanced
+		ActivationRPS:   500,
 	},
 	"high": {
 		K:               5,
@@ -78,6 +80,7 @@ var sketchLevels = map[string]topk.SketchParams{
 		Depth:           4,
 		TickSize:        200,
 		MaxSharePercent: 20, // Aggressive
+		ActivationRPS:   1000,
 	},
 }
 
@@ -178,8 +181,7 @@ func (b *BlockIp) Block(ip string) error {
 // It processes the IP using the sketch and potentially triggers blocking.
 // Returns an error if the processing itself fails (unlikely here).
 func (b *BlockIp) Process(ip string) error {
-	cfg := b.app.Config().BlockIp
-	blockedIPs := b.sketch.ProcessTick(ip, cfg.ActivationRPS)
+	blockedIPs := b.sketch.ProcessTick(ip)
 
 	// Handle blocking asynchronously
 	//
