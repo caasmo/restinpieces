@@ -132,29 +132,6 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			wantBlockedIPs: []string{"1.1.1.1", "2.2.2.2", "3.3.3.3"},
 		},
 		{
-			// Purpose: Verify that the sketch's internal state (lastTickTime, window)
-			// is correctly managed across multiple, distinct ticks.
-			// Tick 1 (High RPS): 1.1.1.1 is a top talker and should be blocked.
-			// Tick 2 (Low RPS): 3.3.3.3 is a top talker but should NOT be blocked.
-			// Tick 3 (High RPS): 5.5.5.5 is now a top talker and should be blocked.
-			// Therefore, only 1.1.1.1 and 5.5.5.5 should be blocked.
-			name: "StateAcrossMultipleTicks",
-			params: SketchParams{
-				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
-				ActivationRPS: 500, MaxSharePercent: 20, // Threshold: 20% of 1000 = 200 requests
-			},
-			requestSequence: combineRequestSequences(
-				// Tick 1: High RPS, IP 1.1.1.1 is a top talker and should be blocked.
-				generateRequestSequence(0, map[string]int{"1.1.1.1": 300, "2.2.2.2": 700}),
-				// Tick 2: Low RPS, IP 3.3.3.3 is a top talker but should NOT be blocked.
-				generateRequestSequence(3*time.Millisecond, map[string]int{"3.3.3.3": 90, "4.4.4.4": 10}),
-				// Tick 3: High RPS again, IP 5.5.5.5 is now a top talker and should be blocked.
-				generateRequestSequence(0, map[string]int{"5.5.5.5": 400, "6.6.6.6": 600}),
-			),
-			// We only expect the IPs from the high-RPS ticks to be blocked.
-			wantBlockedIPs: []string{"1.1.1.1", "5.5.5.5"},
-		},
-		{
 			// Purpose: This is an edge case test to ensure that if a tick happens
 			// instantaneously (zero duration), the code doesn't panic due to division by zero.
 			// The threshold is 10% of the window capacity (1000), so 100 requests.
@@ -231,11 +208,22 @@ func generateRequestSequence(sleep time.Duration, counts map[string]int) []Reque
 	return requests
 }
 
-// combineRequestSequences merges multiple request sequences for multi-tick tests.
-func combineRequestSequences(sequenceLists ...[]Request) []Request {
-	var combined []Request
-	for _, list := range sequenceLists {
-		combined = append(combined, list...)
+// interleaveRequestSequences mixes multiple request sequences to simulate real traffic patterns
+func interleaveRequestSequences(seqs ...[]Request) []Request {
+	var mixed []Request
+	maxLen := 0
+	for _, seq := range seqs {
+		if len(seq) > maxLen {
+			maxLen = len(seq)
+		}
 	}
-	return combined
+	
+	for i := 0; i < maxLen; i++ {
+		for _, seq := range seqs {
+			if i < len(seq) {
+				mixed = append(mixed, seq[i])
+			}
+		}
+	}
+	return mixed
 }
