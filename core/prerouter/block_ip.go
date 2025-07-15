@@ -57,6 +57,10 @@ type sketchParams struct {
 }
 
 // sketchLevels defines the parameter presets for different sensitivity levels.
+// These presets balance memory usage against detection accuracy.
+// - "low":    Minimal memory, for low-traffic sites. Less accurate.
+// - "medium": Balanced profile for most use cases. Good accuracy, moderate memory.
+// - "high":   High memory usage for high-traffic sites needing maximum accuracy.
 var sketchLevels = map[string]sketchParams{
 	"low": {
 		k:          2,
