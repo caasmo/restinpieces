@@ -25,10 +25,17 @@ type SketchParams struct {
 	// this many requests, the sketch's internal clock advances.
 	TickSize uint64
 	// MaxSharePercent is the maximum percentage of the total window capacity that
-	// a single IP can consume before being considered for blocking.
+	// a single IP can consume before being considered for blocking. This logic prevents
+	// server breakdown by allowing a higher share for lower traffic levels (where a
+	// dominant IP is not a threat) and a lower, more aggressive share for higher
+	// traffic levels. For example, at the 'medium' level (35% share, 1000 request
+	// capacity), an IP is blocked if it exceeds 350 requests within the window.
 	MaxSharePercent int
-	// ActivationRPS is the requests-per-second threshold that must be met or
-	// exceeded for the blocking logic to become active.
+	// ActivationRPS is the requests-per-second threshold that must be met for the
+	// blocker to become active. Its primary purpose is to act as a gate, ensuring
+	// the blocker does nothing during periods of low server load. For example, at the
+	// 'medium' level (100 request TickSize, 500 RPS activation), a tick must occur
+	// in 200ms or less for the blocker to engage.
 	ActivationRPS int
 }
 
