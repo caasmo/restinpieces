@@ -216,7 +216,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 
 	// 2. BlockIp Middleware
 	if cfg.BlockIp.Enabled {
-		blockIp := prerouter.NewBlockIp(i.app.Cache(), logger)
+		blockIp := prerouter.NewBlockIp(i.app)
 		preRouterChain.WithMiddleware(blockIp.Execute)
 		if cfg.BlockIp.Activated {
 			logger.Info(ft.Active("BlockIp middleware active"), "enabled", cfg.BlockIp.Enabled, "activated", cfg.BlockIp.Activated)
