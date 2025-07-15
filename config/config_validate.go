@@ -53,9 +53,8 @@ func validateBlockIp(blockIp *BlockIp) error {
 		return nil
 	}
 
-	// If level is not specified, default to "medium".
 	if blockIp.Level == "" {
-		blockIp.Level = "medium"
+		return fmt.Errorf("block_ip.level cannot be empty")
 	}
 
 	// Validate that the level is one of the allowed values.

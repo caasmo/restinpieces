@@ -109,6 +109,7 @@ func NewDefaultConfig() *Config {
 		BlockIp: BlockIp{
 			Enabled:   true,
 			Activated: true,
+			Level:     "medium",
 		},
 		Maintenance: Maintenance{
 			Activated: false,
