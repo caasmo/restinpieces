@@ -41,7 +41,9 @@ func GetClientIP(r *http.Request) string {
 	return ip
 }
 
-// BlockIp implements the FeatureBlocker interface using a cache for storage and a TopK sketch for detection.
+// The primary goal of this middleware is to act as a simple, robust circuit
+// breaker to try to prevent server collapse, not to be a nuanced,
+// application-aware rate-limiting system (quotas, etc)
 type BlockIp struct {
 	app    *core.App
 	sketch *topk.TopKSketch
@@ -58,9 +60,9 @@ type sketchParams struct {
 
 // sketchLevels defines the parameter presets for different sensitivity levels.
 // These presets balance memory usage against detection accuracy.
-// - "low":    ~10KB memory. For low-traffic sites (< 50 RPS). Less accurate.
-// - "medium": ~80KB memory. Balanced profile for most use cases (50-500 RPS).
-// - "high":   ~500KB memory. For high-traffic sites (> 500 RPS) needing max accuracy.
+// - "low":    ~10 KB memory. For low-traffic sites (< 50 RPS). Less accurate.
+// - "medium": ~120 KB memory. Balanced profile for most use cases (50-500 RPS).
+// - "high":   ~640 KB memory. For high-traffic sites (> 500 RPS) needing max accuracy.
 var sketchLevels = map[string]sketchParams{
 	"low": {
 		k:          2,

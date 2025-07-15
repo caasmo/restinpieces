@@ -391,11 +391,11 @@ type BlockIp struct {
 	Activated bool `toml:"activated" comment:"Activate IP blocking (can be toggled via config reload)"`
 	// Level sets the sensitivity and memory usage profile for the blocker.
 	// Valid options: "low", "medium", "high".
-	// - "low":    Minimal memory footprint (~10KB). Suitable for low-traffic sites (e.g., < 50 RPS)
+	// - "low":    Minimal memory footprint (~10 KB). Suitable for low-traffic sites (e.g., < 50 RPS)
 	//             or environments with strict memory constraints. Less accurate at detecting sophisticated attacks.
-	// - "medium": A balanced profile (~80KB). Suitable for most applications (e.g., 50-500 RPS).
+	// - "medium": A balanced profile (~120 KB). Suitable for most applications (e.g., 50-500 RPS).
 	//             Offers good accuracy with moderate memory usage. This is the recommended default.
-	// - "high":   Maximum accuracy and responsiveness (~500KB). Best for high-traffic sites or APIs
+	// - "high":   Maximum accuracy and responsiveness (~640 KB). Best for high-traffic sites or APIs
 	//             (e.g., > 500 RPS) that are critical targets for DDoS attacks. Consumes significantly more memory.
 	Level string `toml:"level" comment:"Sensitivity profile: 'low', 'medium', or 'high'"`
 }
