@@ -43,8 +43,7 @@ type testAction struct {
 	sleep time.Duration // How long to wait *after* this request to simulate traffic rate.
 }
 
-// processTickTestCase defines a complete scenario for the table-driven test.
-type processTickTestCase struct {
+type testCase struct {
 	name           string       // A descriptive name for the scenario.
 	params         SketchParams // The configuration to initialize the sketch with.
 	actions        []testAction // A sequence of calls to ProcessTick to simulate traffic.
@@ -55,7 +54,7 @@ type processTickTestCase struct {
 // Its purpose is to validate the behavior of the sketch under various traffic scenarios,
 // ensuring it correctly implements the time-gated, high-share blocking logic.
 func TestTopKSketch_ProcessTick(t *testing.T) {
-	testCases := []processTickTestCase{
+	testCases := []testCase{
 		{
 			// Purpose: Verify that if not enough requests are made to complete a tick,
 			// no blocking occurs. This is the simplest "do nothing" case.
