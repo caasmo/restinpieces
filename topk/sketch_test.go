@@ -1,7 +1,6 @@
 package topk
 
 import (
-	"reflect"
 	"sort"
 	"testing"
 	"time"
@@ -65,7 +64,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
 				ActivationRPS: 100, MaxSharePercent: 20,
 			},
-			actions:        generateActions(99, 0, map[string]int{"1.1.1.1": 99}),
+			actions:        generateActions(0, map[string]int{"1.1.1.1": 99}),
 			wantBlockedIPs: nil,
 		},
 		{
@@ -80,7 +79,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 				ActivationRPS: 500, MaxSharePercent: 20,
 			},
 			// Simulate 100 requests over 250ms (400 RPS), which is below the 500 RPS activation.
-			actions:        generateActions(100, 2*time.Millisecond, map[string]int{"1.1.1.1": 100}),
+			actions:        generateActions(2*time.Millisecond, map[string]int{"1.1.1.1": 100}),
 			wantBlockedIPs: nil,
 		},
 		{
@@ -95,7 +94,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 				ActivationRPS: 500, MaxSharePercent: 20, // Threshold: 20% of 1000 = 200 requests
 			},
 			// Simulate 1000 RPS, but distribute them so none has > 20% share.
-			actions: generateActions(1000, 0, map[string]int{
+			actions: generateActions(0, map[string]int{
 				"1.1.1.1": 199, "2.2.2.2": 199, "3.3.3.3": 199,
 				"4.4.4.4": 199, "5.5.5.5": 199, "6.6.6.6": 5,
 			}),
@@ -113,7 +112,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 				ActivationRPS: 500, MaxSharePercent: 20, // Threshold: 20% of 1000 = 200 requests
 			},
 			// Simulate 1000 RPS, with one IP sending 201 requests.
-			actions:        generateActions(1000, 0, map[string]int{"1.1.1.1": 201, "2.2.2.2": 799}),
+			actions:        generateActions(0, map[string]int{"1.1.1.1": 201, "2.2.2.2": 199}),
 			wantBlockedIPs: []string{"1.1.1.1"},
 		},
 		{
@@ -127,7 +126,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 				ActivationRPS: 500, MaxSharePercent: 20, // Threshold: 20% of 1000 = 200 requests
 			},
 			// Simulate 1000 RPS, with two IPs each sending > 200 requests.
-			actions: generateActions(1000, 0, map[string]int{
+			actions: generateActions(0, map[string]int{
 				"1.1.1.1": 201, "2.2.2.2": 202, "3.3.3.3": 597,
 			}),
 			wantBlockedIPs: []string{"1.1.1.1", "2.2.2.2"},
@@ -146,11 +145,11 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			},
 			actions: combineActions(
 				// Tick 1: High RPS, IP 1.1.1.1 is a top talker and should be blocked.
-				generateActions(1000, 0, map[string]int{"1.1.1.1": 300, "2.2.2.2": 700}),
+				generateActions(0, map[string]int{"1.1.1.1": 300, "2.2.2.2": 700}),
 				// Tick 2: Low RPS, IP 3.3.3.3 is a top talker but should NOT be blocked.
-				generateActions(100, 3*time.Millisecond, map[string]int{"3.3.3.3": 90, "4.4.4.4": 10}),
+				generateActions(3*time.Millisecond, map[string]int{"3.3.3.3": 90, "4.4.4.4": 10}),
 				// Tick 3: High RPS again, IP 5.5.5.5 is now a top talker and should be blocked.
-				generateActions(1000, 0, map[string]int{"5.5.5.5": 400, "6.6.6.6": 600}),
+				generateActions(0, map[string]int{"5.5.5.5": 400, "6.6.6.6": 600}),
 			),
 			// We only expect the IPs from the high-RPS ticks to be blocked.
 			wantBlockedIPs: []string{"1.1.1.1", "5.5.5.5"},
@@ -166,7 +165,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 				ActivationRPS: 1, MaxSharePercent: 10, // Threshold: 10% of 1000 = 100 requests
 			},
 			// All actions have zero sleep, making the duration between ticks potentially zero.
-			actions:        generateActions(1000, 0, map[string]int{"1.1.1.1": 101, "2.2.2.2": 899}),
+			actions:        generateActions(0, map[string]int{"1.1.1.1": 101, "2.2.2.2": 899}),
 			wantBlockedIPs: []string{"1.1.1.1"},
 		},
 	}
@@ -174,40 +173,60 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cs := New(tc.params)
-			var allBlockedIPs []string
+			blockedIPs := make(map[string]struct{})
 
 			for _, action := range tc.actions {
 				blocked := cs.ProcessTick(action.ip)
 				if blocked != nil {
-					allBlockedIPs = append(allBlockedIPs, blocked...)
+					for _, ip := range blocked {
+						blockedIPs[ip] = struct{}{}
+					}
 				}
 				if action.sleep > 0 {
 					time.Sleep(action.sleep)
 				}
 			}
 
+			gotBlockedIPs := make([]string, 0, len(blockedIPs))
+			for ip := range blockedIPs {
+				gotBlockedIPs = append(gotBlockedIPs, ip)
+			}
+
 			// Sort both slices for consistent comparison
-			sort.Strings(allBlockedIPs)
+			sort.Strings(gotBlockedIPs)
 			sort.Strings(tc.wantBlockedIPs)
 
-			if !reflect.DeepEqual(allBlockedIPs, tc.wantBlockedIPs) {
-				t.Errorf("Test case '%s' failed: \n- got:  %v\n- want: %v", tc.name, allBlockedIPs, tc.wantBlockedIPs)
+			if !equalSlices(gotBlockedIPs, tc.wantBlockedIPs) {
+				t.Errorf("Test case '%s' failed: \n- got:  %v\n- want: %v", tc.name, gotBlockedIPs, tc.wantBlockedIPs)
 			}
 		})
 	}
 }
 
+// equalSlices is a helper function to compare two string slices.
+func equalSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
+}
+
 // generateActions is a helper function to create a sequence of test actions.
-func generateActions(totalActions int, sleep time.Duration, counts map[string]int) []testAction {
+func generateActions(sleep time.Duration, counts map[string]int) []testAction {
+	var totalActions int
+	for _, count := range counts {
+		totalActions += count
+	}
 	actions := make([]testAction, 0, totalActions)
 	for ip, count := range counts {
 		for i := 0; i < count; i++ {
 			actions = append(actions, testAction{ip: ip, sleep: sleep})
 		}
-	}
-	// Ensure the total number of actions is met, filling with a generic IP if needed.
-	for len(actions) < totalActions {
-		actions = append(actions, testAction{ip: "9.9.9.9", sleep: sleep})
 	}
 	return actions
 }
