@@ -47,35 +47,47 @@ type BlockIp struct {
 	sketch *topk.TopKSketch
 }
 
+// sketchParams holds the configuration for a TopK sketch.
+type sketchParams struct {
+	k          int
+	windowSize int
+	width      int
+	depth      int
+	tickSize   uint64
+}
+
+// sketchLevels defines the parameter presets for different sensitivity levels.
+var sketchLevels = map[string]sketchParams{
+	"low": {
+		k:          2,
+		windowSize: 5,
+		width:      256,
+		depth:      2,
+		tickSize:   100,
+	},
+	"medium": {
+		k:          3,
+		windowSize: 10,
+		width:      1024,
+		depth:      3,
+		tickSize:   100,
+	},
+	"high": {
+		k:          5,
+		windowSize: 10,
+		width:      4096,
+		depth:      4,
+		tickSize:   200,
+	},
+}
+
 // NewBlockIp creates a new BlockIp instance with the given cache and logger.
 func NewBlockIp(app *core.App) *BlockIp {
-	cfg := app.Config().BlockIp
+	level := app.Config().BlockIp.Level
+	// The level is validated in config.Validate, so we can safely assume it exists in the map.
+	params := sketchLevels[level]
 
-	var k, windowSize, width, depth int
-	var tickSize uint64
-
-	switch cfg.Level {
-	case "low":
-		k = 2
-		windowSize = 5
-		width = 256
-		depth = 2
-		tickSize = 100
-	case "high":
-		k = 5
-		windowSize = 10
-		width = 4096
-		depth = 4
-		tickSize = 200
-	default: // "medium" and any other value
-		k = 3
-		windowSize = 10
-		width = 1024
-		depth = 3
-		tickSize = 100
-	}
-
-	cs := topk.New(k, windowSize, width, depth, tickSize)
+	cs := topk.New(params.k, params.windowSize, params.width, params.depth, params.tickSize)
 
 	return &BlockIp{
 		app:    app,

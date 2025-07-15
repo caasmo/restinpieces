@@ -41,6 +41,29 @@ func Validate(cfg *Config) error {
 	if err := validateRequestLog(&cfg.Log.Request); err != nil {
 		return fmt.Errorf("request_log config validation failed: %w", err)
 	}
+	if err := validateBlockIp(&cfg.BlockIp); err != nil {
+		return fmt.Errorf("block_ip config validation failed: %w", err)
+	}
+	return nil
+}
+
+// validateBlockIp checks the BlockIp configuration section.
+func validateBlockIp(blockIp *BlockIp) error {
+	if !blockIp.Enabled {
+		return nil
+	}
+
+	// If level is not specified, default to "medium".
+	if blockIp.Level == "" {
+		blockIp.Level = "medium"
+	}
+
+	// Validate that the level is one of the allowed values.
+	allowedLevels := map[string]bool{"low": true, "medium": true, "high": true}
+	if !allowedLevels[blockIp.Level] {
+		return fmt.Errorf("invalid block_ip.level '%s': must be one of 'low', 'medium', or 'high'", blockIp.Level)
+	}
+
 	return nil
 }
 
