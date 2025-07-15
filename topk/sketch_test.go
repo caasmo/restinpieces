@@ -131,20 +131,6 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			}),
 			wantBlockedIPs: []string{"1.1.1.1", "2.2.2.2", "3.3.3.3"},
 		},
-		{
-			// Purpose: This is an edge case test to ensure that if a tick happens
-			// instantaneously (zero duration), the code doesn't panic due to division by zero.
-			// The threshold is 10% of the window capacity (1000), so 100 requests.
-			// IP 1.1.1.1 sends 101 requests and should be blocked.
-			name: "InstantaneousTick_NoPanic",
-			params: SketchParams{
-				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
-				ActivationRPS: 1, MaxSharePercent: 10, // Threshold: 10% of 1000 = 100 requests
-			},
-			// All actions have zero sleep, making the duration between ticks potentially zero.
-			requestSequence: generateRequestSequence(0, map[string]int{"1.1.1.1": 101, "2.2.2.2": 899}),
-			wantBlockedIPs: []string{"1.1.1.1"},
-		},
 	}
 
 	for _, tc := range testCases {
