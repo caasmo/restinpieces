@@ -398,6 +398,12 @@ type BlockIp struct {
 	// - "high":   Maximum accuracy and responsiveness (~640 KB). Best for high-traffic sites or APIs
 	//             (e.g., > 500 RPS) that are critical targets for DDoS attacks. Consumes significantly more memory.
 	Level string `toml:"level" comment:"Sensitivity profile: 'low', 'medium', or 'high'"`
+	// ActivationRPS is the requests-per-second threshold that must be exceeded for the blocker to become active.
+	// This acts as a gate to ensure blocking only occurs during high-traffic periods.
+	ActivationRPS int `toml:"activation_rps" comment:"RPS threshold to activate the blocker"`
+	// MaxSharePercent is the percentage of the total traffic in the observation window that a single IP
+	// can consume before being blocked. This only applies if ActivationRPS has been met.
+	MaxSharePercent int `toml:"max_share_percent" comment:"Max traffic share (%) an IP can consume before being blocked"`
 }
 
 // Maintenance holds configuration for the maintenance mode feature.

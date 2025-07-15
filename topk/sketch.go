@@ -2,23 +2,19 @@ package topk
 
 import (
 	"sync"
+	"time"
 
 	"github.com/keilerkonzept/topk/sliding"
 )
 
 // TopKSketch provides a thread-safe wrapper around a sliding window sketch
 // for tracking frequent items and managing ticking.
-const (
-	thresholdPercent = 80 // 80% of window capacity
-)
-
 type TopKSketch struct {
-	mu        sync.Mutex
-	sketch    *sliding.Sketch
-	tickSize  uint64 // number of request per tick
-	tickReq   uint64 // Counter for requests processed since last tick
-	tickCount uint64 // Counter for total ticks processed
-	threshold int    // Precomputed threshold value
+	mu           sync.Mutex
+	sketch       *sliding.Sketch
+	tickSize     uint64 // number of request per tick
+	tickReq      uint64 // Counter for requests processed since last tick
+	lastTickTime time.Time
 }
 
 // New creates a new thread-safe sketch wrapper.
@@ -30,17 +26,17 @@ func New(k, windowSize, width, depth int, tickSize uint64) *TopKSketch {
 		tickSize = 1000 // Default tick size if not specified
 	}
 
-	windowCapacity := uint64(sketchInstance.WindowSize) * tickSize
-	threshold := int((windowCapacity * thresholdPercent) / 100)
-
 	return &TopKSketch{
-		sketch:    sketchInstance,
-		tickSize:  tickSize,
-		threshold: threshold,
+		sketch:       sketchInstance,
+		tickSize:     tickSize,
+		lastTickTime: time.Now(),
 	}
 }
 
-func (cs *TopKSketch) ProcessTick(ip string) []string {
+// ProcessTick increments the count for the given item. If a tick completes,
+// it returns the requests per second (RPS) for that tick and true.
+// Otherwise, it returns 0 and false.
+func (cs *TopKSketch) ProcessTick(ip string) (float64, bool) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 
@@ -49,20 +45,32 @@ func (cs *TopKSketch) ProcessTick(ip string) []string {
 
 	if cs.tickReq >= cs.tickSize {
 		cs.sketch.Tick()
-		cs.tickCount++
 		cs.tickReq = 0
 
-		items := cs.sketch.SortedSlice()
+		now := time.Now()
+		duration := now.Sub(cs.lastTickTime)
+		cs.lastTickTime = now
 
-		ipsToBlock := make([]string, 0)
-		for _, item := range items {
-			if item.Count > uint32(cs.threshold) {
-				ipsToBlock = append(ipsToBlock, item.Item)
-			} else {
-				break // Early exit due to sorted list
-			}
+		if duration.Seconds() <= 0 {
+			return 0, true // Avoid division by zero, but signal that a tick occurred
 		}
-		return ipsToBlock // Return IPs to block
+
+		rps := float64(cs.tickSize) / duration.Seconds()
+		return rps, true
 	}
-	return nil // No blocking needed this tick
+
+	return 0, false
+}
+
+// TopItems returns a sorted slice of the most frequent items in the sketch.
+func (cs *TopKSketch) TopItems() []sliding.Item {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+	return cs.sketch.SortedSlice()
+}
+
+// WindowCapacity returns the total number of requests that a full window can hold.
+func (cs *TopKSketch) WindowCapacity() uint64 {
+	// This doesn't need a lock as sketch.WindowSize is constant after init.
+	return uint64(cs.sketch.WindowSize) * cs.tickSize
 }
