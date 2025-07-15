@@ -49,41 +49,35 @@ type BlockIp struct {
 	sketch *topk.TopKSketch
 }
 
-// sketchParams holds the configuration for a TopK sketch.
-type sketchParams struct {
-	k          int
-	windowSize int
-	width      int
-	depth      int
-	tickSize   uint64
-}
-
 // sketchLevels defines the parameter presets for different sensitivity levels.
 // These presets balance memory usage against detection accuracy.
 // - "low":    ~10 KB memory. For low-traffic sites (< 50 RPS). Less accurate.
 // - "medium": ~120 KB memory. Balanced profile for most use cases (50-500 RPS).
 // - "high":   ~640 KB memory. For high-traffic sites (> 500 RPS) needing max accuracy.
-var sketchLevels = map[string]sketchParams{
+var sketchLevels = map[string]topk.SketchParams{
 	"low": {
-		k:          2,
-		windowSize: 5,
-		width:      256,
-		depth:      2,
-		tickSize:   100,
+		K:               2,
+		WindowSize:      5,
+		Width:           256,
+		Depth:           2,
+		TickSize:        100,
+		MaxSharePercent: 50, // Lenient
 	},
 	"medium": {
-		k:          3,
-		windowSize: 10,
-		width:      1024,
-		depth:      3,
-		tickSize:   100,
+		K:               3,
+		WindowSize:      10,
+		Width:           1024,
+		Depth:           3,
+		TickSize:        100,
+		MaxSharePercent: 35, // Balanced
 	},
 	"high": {
-		k:          5,
-		windowSize: 10,
-		width:      4096,
-		depth:      4,
-		tickSize:   200,
+		K:               5,
+		WindowSize:      10,
+		Width:           4096,
+		Depth:           4,
+		TickSize:        200,
+		MaxSharePercent: 20, // Aggressive
 	},
 }
 
@@ -93,7 +87,7 @@ func NewBlockIp(app *core.App) *BlockIp {
 	// The level is validated in config.Validate, so we can safely assume it exists in the map.
 	params := sketchLevels[level]
 
-	cs := topk.New(params.k, params.windowSize, params.width, params.depth, params.tickSize)
+	cs := topk.New(params)
 
 	return &BlockIp{
 		app:    app,
@@ -185,7 +179,7 @@ func (b *BlockIp) Block(ip string) error {
 // Returns an error if the processing itself fails (unlikely here).
 func (b *BlockIp) Process(ip string) error {
 	cfg := b.app.Config().BlockIp
-	blockedIPs := b.sketch.ProcessTick(ip, cfg.Level, cfg.ActivationRPS)
+	blockedIPs := b.sketch.ProcessTick(ip, cfg.ActivationRPS)
 
 	// Handle blocking asynchronously
 	//
