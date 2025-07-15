@@ -9,13 +9,27 @@ import (
 
 // SketchParams holds the configuration for creating a new TopKSketch.
 type SketchParams struct {
-	K               int
-	WindowSize      int
-	Width           int
-	Depth           int
-	TickSize        uint64
+	// K is the number of top items to keep track of in the sketch.
+	K int
+	// WindowSize is the size of the sliding window, measured in ticks. The total
+	// theoretical capacity of the window is `WindowSize * TickSize`. For example,
+	// if WindowSize is 10 and TickSize is 100, the window capacity is 1000 requests.
+	WindowSize int
+	// Width is the width of the underlying Count-Min sketch. A larger width
+	// reduces the probability of over-counting but increases memory usage.
+	Width int
+	// Depth is the depth of the underlying Count-Min sketch. A larger depth
+	// also reduces over-counting at the cost of more memory.
+	Depth int
+	// TickSize is the number of requests that constitute a single "tick". After
+	// this many requests, the sketch's internal clock advances.
+	TickSize uint64
+	// MaxSharePercent is the maximum percentage of the total window capacity that
+	// a single IP can consume before being considered for blocking.
 	MaxSharePercent int
-	ActivationRPS   int
+	// ActivationRPS is the requests-per-second threshold that must be met or
+	// exceeded for the blocking logic to become active.
+	ActivationRPS int
 }
 
 // TopKSketch provides a thread-safe wrapper around a sliding window sketch
