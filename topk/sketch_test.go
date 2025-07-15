@@ -70,11 +70,11 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 		},
 		{
 			// Purpose: This is a critical test for the circuit breaker's main gate.
-			// It ensures that even if one IP is completely dominant, it is NOT blocked
+			// It ensures that even if one IP is a top talker, it is NOT blocked
 			// if the overall request rate is below the activation threshold.
 			// With ActivationRPS=500, but the actions simulating only 400 RPS,
 			// the blocker remains inactive.
-			name: "LowRPS_DominantIP_ShouldNotBlock",
+			name: "LowRPS_TopkIP_ShouldNotBlock",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
 				ActivationRPS: 500, MaxSharePercent: 20,
@@ -89,7 +89,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			// This prevents false positives during legitimate traffic spikes.
 			// The threshold is 20% of the total window capacity (10 * 100 = 1000), so 200 requests.
 			// No IP exceeds this, so no blocking occurs.
-			name: "HighRPS_NoDominantIP_ShouldNotBlock",
+			name: "HighRPS_NoTopkIP_ShouldNotBlock",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
 				ActivationRPS: 500, MaxSharePercent: 20, // Threshold: 20% of 1000 = 200 requests
@@ -107,7 +107,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			// disproportionate amount of that load.
 			// The threshold is 20% of the total window capacity (10 * 100 = 1000), so 200 requests.
 			// IP 1.1.1.1 sends 201 requests, exceeding the threshold, and should be blocked.
-			name: "HighRPS_SingleDominantIP_ShouldBlock",
+			name: "HighRPS_SingleTopkIP_ShouldBlock",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
 				ActivationRPS: 500, MaxSharePercent: 20, // Threshold: 20% of 1000 = 200 requests
@@ -121,7 +121,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			// same window, not just the single top talker.
 			// The threshold is 20% of the total window capacity (10 * 100 = 1000), so 200 requests.
 			// Both 1.1.1.1 (201) and 2.2.2.2 (202) exceed this and should be blocked.
-			name: "HighRPS_MultipleDominantIPs_ShouldBlockAll",
+			name: "HighRPS_MultipleTopkIPs_ShouldBlockAll",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
 				ActivationRPS: 500, MaxSharePercent: 20, // Threshold: 20% of 1000 = 200 requests
@@ -135,9 +135,9 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 		{
 			// Purpose: Verify that the sketch's internal state (lastTickTime, window)
 			// is correctly managed across multiple, distinct ticks.
-			// Tick 1 (High RPS): 1.1.1.1 sends 300 requests, exceeding the 200-request threshold.
-			// Tick 2 (Low RPS): 3.3.3.3 sends 90 requests, but the RPS is too low to trigger blocking.
-			// Tick 3 (High RPS): 5.5.5.5 sends 400 requests, exceeding the threshold.
+			// Tick 1 (High RPS): 1.1.1.1 is a top talker and should be blocked.
+			// Tick 2 (Low RPS): 3.3.3.3 is a top talker but should NOT be blocked.
+			// Tick 3 (High RPS): 5.5.5.5 is now a top talker and should be blocked.
 			// Therefore, only 1.1.1.1 and 5.5.5.5 should be blocked.
 			name: "StateAcrossMultipleTicks",
 			params: SketchParams{
@@ -145,11 +145,11 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 				ActivationRPS: 500, MaxSharePercent: 20, // Threshold: 20% of 1000 = 200 requests
 			},
 			actions: combineActions(
-				// Tick 1: High RPS, IP 1.1.1.1 is dominant and should be blocked.
+				// Tick 1: High RPS, IP 1.1.1.1 is a top talker and should be blocked.
 				generateActions(1000, 0, map[string]int{"1.1.1.1": 300, "2.2.2.2": 700}),
-				// Tick 2: Low RPS, IP 3.3.3.3 is dominant but should NOT be blocked.
+				// Tick 2: Low RPS, IP 3.3.3.3 is a top talker but should NOT be blocked.
 				generateActions(100, 3*time.Millisecond, map[string]int{"3.3.3.3": 90, "4.4.4.4": 10}),
-				// Tick 3: High RPS again, IP 5.5.5.5 is now dominant and should be blocked.
+				// Tick 3: High RPS again, IP 5.5.5.5 is now a top talker and should be blocked.
 				generateActions(1000, 0, map[string]int{"5.5.5.5": 400, "6.6.6.6": 600}),
 			),
 			// We only expect the IPs from the high-RPS ticks to be blocked.
