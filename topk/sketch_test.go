@@ -58,6 +58,8 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 		{
 			// Purpose: Verify that if not enough requests are made to complete a tick,
 			// no blocking occurs. This is the simplest "do nothing" case.
+			// With TickSize=100, but only 99 requests, the tick never completes,
+			// so no blocking logic is triggered.
 			name: "NoTick_ShouldNotBlock",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
@@ -70,6 +72,8 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			// Purpose: This is a critical test for the circuit breaker's main gate.
 			// It ensures that even if one IP is completely dominant, it is NOT blocked
 			// if the overall request rate is below the activation threshold.
+			// With ActivationRPS=500, but the actions simulating only 400 RPS,
+			// the blocker remains inactive.
 			name: "LowRPS_DominantIP_ShouldNotBlock",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
@@ -83,6 +87,8 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			// Purpose: Verify that high server load alone does not trigger blocking
 			// if the traffic is distributed and no single IP is consuming an unfair share.
 			// This prevents false positives during legitimate traffic spikes.
+			// The threshold is 20% of the total window capacity (10 * 100 = 1000), so 200 requests.
+			// No IP exceeds this, so no blocking occurs.
 			name: "HighRPS_NoDominantIP_ShouldNotBlock",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
@@ -99,6 +105,8 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			// Purpose: Test the primary success case where the circuit breaker should trip.
 			// The server is under high load, and a single IP is responsible for a
 			// disproportionate amount of that load.
+			// The threshold is 20% of the total window capacity (10 * 100 = 1000), so 200 requests.
+			// IP 1.1.1.1 sends 201 requests, exceeding the threshold, and should be blocked.
 			name: "HighRPS_SingleDominantIP_ShouldBlock",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
@@ -111,6 +119,8 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 		{
 			// Purpose: Ensure the logic can identify and block multiple offenders in the
 			// same window, not just the single top talker.
+			// The threshold is 20% of the total window capacity (10 * 100 = 1000), so 200 requests.
+			// Both 1.1.1.1 (201) and 2.2.2.2 (202) exceed this and should be blocked.
 			name: "HighRPS_MultipleDominantIPs_ShouldBlockAll",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
@@ -125,6 +135,10 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 		{
 			// Purpose: Verify that the sketch's internal state (lastTickTime, window)
 			// is correctly managed across multiple, distinct ticks.
+			// Tick 1 (High RPS): 1.1.1.1 sends 300 requests, exceeding the 200-request threshold.
+			// Tick 2 (Low RPS): 3.3.3.3 sends 90 requests, but the RPS is too low to trigger blocking.
+			// Tick 3 (High RPS): 5.5.5.5 sends 400 requests, exceeding the threshold.
+			// Therefore, only 1.1.1.1 and 5.5.5.5 should be blocked.
 			name: "StateAcrossMultipleTicks",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
@@ -144,6 +158,8 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 		{
 			// Purpose: This is an edge case test to ensure that if a tick happens
 			// instantaneously (zero duration), the code doesn't panic due to division by zero.
+			// The threshold is 10% of the window capacity (1000), so 100 requests.
+			// IP 1.1.1.1 sends 101 requests and should be blocked.
 			name: "InstantaneousTick_NoPanic",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
