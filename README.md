@@ -104,9 +104,10 @@ To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which wa
 - Supports overriding the default logger with a custom user-defined logger.
 
 ### Notifications
-- Flexible notification system for various events.
-- Default implementation for sending notifications to Discord webhooks.
-- Extensible to support other notification channels.
+
+The framework's notification system is designed around a `Notifier` interface, which standardizes how notifications are sent. The primary data structure, `Notification`, carries a `Type` (e.g., `Alarm`, `Metric`), `Source`, `Message`, and a map of `Fields` for additional structured data.
+
+An official implementation for Discord is included, which sends formatted messages to a configured webhook URL. This notifier operates asynchronously, using goroutines for non-blocking `Send` calls. It incorporates a rate limiter to prevent API abuse and automatically truncates messages that exceed Discord's 2000-character limit. Developers can create custom notifiers for other services (like Slack or email) by providing their own implementation of the `Notifier` interface.
 
 ## Examples
 
