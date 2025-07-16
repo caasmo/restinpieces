@@ -1,4 +1,4 @@
-name: sloc
+name: SLOC
 
 on:
   push:
@@ -25,12 +25,13 @@ jobs:
           go install github.com/boyter/scc/v3@latest
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      - name: Run scc and extract line count
+      - name: Run scc and format line count
         run: |
           scc --format json --output scc.json .
-          # scc outputs an array of language stats. We sum the "Code" field from all of them.
           LINES_OF_CODE=$(jq 'map(.Code) | add' scc.json)
+          FORMATTED_LINES=$(echo $LINES_OF_CODE | awk '{if ($1 >= 1000) {printf "%dk", $1/1000} else {print $1}}')
           echo "LINES_OF_CODE=$LINES_OF_CODE" >> $GITHUB_ENV
+          echo "FORMATTED_LINES=$FORMATTED_LINES" >> $GITHUB_ENV
 
       - name: Generate SLOC badge
         run: |
@@ -39,25 +40,25 @@ jobs:
 
           # Generate SVG badge using shields.io format
           cat > .github/badges/sloc.svg << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="140" height="20" role="img" aria-label="lines of code: ${{ env.LINES_OF_CODE }}">
-            <title>lines of code: ${{ env.LINES_OF_CODE }}</title>
+          <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="120" height="20" role="img" aria-label="total lines: ${{ env.FORMATTED_LINES }}">
+            <title>total lines: ${{ env.FORMATTED_LINES }}</title>
             <linearGradient id="s" x2="0" y2="100%">
               <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
               <stop offset="1" stop-opacity=".1"/>
             </linearGradient>
             <clipPath id="r">
-              <rect width="140" height="20" rx="3" fill="#fff"/>
+              <rect width="120" height="20" rx="3" fill="#fff"/>
             </clipPath>
             <g clip-path="url(#r)">
-              <rect width="95" height="20" fill="#555"/>
-              <rect x="95" width="45" height="20" fill="#007ec6"/>
-              <rect width="140" height="20" fill="url(#s)"/>
+              <rect width="75" height="20" fill="#555"/>
+              <rect x="75" width="45" height="20" fill="#4c1"/>
+              <rect width="120" height="20" fill="url(#s)"/>
             </g>
             <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
-              <text aria-hidden="true" x="475" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="850">lines of code</text>
-              <text x="475" y="140" transform="scale(.1)" fill="#fff" textLength="850">lines of code</text>
-              <text aria-hidden="true" x="1175" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="350">${{ env.LINES_OF_CODE }}</text>
-              <text x="1175" y="140" transform="scale(.1)" fill="#fff" textLength="350">${{ env.LINES_OF_CODE }}</text>
+              <text aria-hidden="true" x="375" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="650">total lines</text>
+              <text x="375" y="140" transform="scale(.1)" fill="#fff" textLength="650">total lines</text>
+              <text aria-hidden="true" x="975" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="350">${{ env.FORMATTED_LINES }}</text>
+              <text x="975" y="140" transform="scale(.1)" fill="#fff" textLength="350">${{ env.FORMATTED_LINES }}</text>
             </g>
           </svg>
           EOF
@@ -71,6 +72,6 @@ jobs:
             echo "No changes to SLOC badge"
           else
             git add .github/badges/sloc.svg
-            git commit -m "Update lines of code badge: ${{ env.LINES_OF_CODE }}"
+            git commit -m "Update total lines badge: ${{ env.LINES_OF_CODE }}"
             git push
           fi
