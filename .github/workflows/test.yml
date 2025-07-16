@@ -19,9 +19,9 @@ jobs:
           go-version: 1.24
 
       - name: Test with coverage
-        run: |
-          go test -v -cover ./... -coverprofile=coverage.out -coverpkg=./...
-	  - name: Show coverage by package
+        run: go test -v -cover ./... -coverprofile=coverage.out -coverpkg=./...
+
+      - name: Show coverage by package
         run: |
           echo "=== Package-level Coverage ==="
           go list ./... | grep -v "^$(go list -m)$" | while read pkg; do
