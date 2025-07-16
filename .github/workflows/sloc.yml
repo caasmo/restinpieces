@@ -1,0 +1,76 @@
+name: SLOC
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  sloc-badge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Install scc and jq
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          go install github.com/boyter/scc/v3@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Run scc and extract line count
+        run: |
+          scc --format json --output scc.json .
+          # scc outputs an array of language stats. We sum the "Code" field from all of them.
+          LINES_OF_CODE=$(jq 'map(.Code) | add' scc.json)
+          echo "LINES_OF_CODE=$LINES_OF_CODE" >> $GITHUB_ENV
+
+      - name: Generate SLOC badge
+        run: |
+          # Create badge directory
+          mkdir -p .github/badges
+
+          # Generate SVG badge using shields.io format
+          cat > .github/badges/sloc.svg << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="140" height="20" role="img" aria-label="lines of code: ${{ env.LINES_OF_CODE }}">
+            <title>lines of code: ${{ env.LINES_OF_CODE }}</title>
+            <linearGradient id="s" x2="0" y2="100%">
+              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+              <stop offset="1" stop-opacity=".1"/>
+            </linearGradient>
+            <clipPath id="r">
+              <rect width="140" height="20" rx="3" fill="#fff"/>
+            </clipPath>
+            <g clip-path="url(#r)">
+              <rect width="95" height="20" fill="#555"/>
+              <rect x="95" width="45" height="20" fill="#007ec6"/>
+              <rect width="140" height="20" fill="url(#s)"/>
+            </g>
+            <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
+              <text aria-hidden="true" x="475" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="850">lines of code</text>
+              <text x="475" y="140" transform="scale(.1)" fill="#fff" textLength="850">lines of code</text>
+              <text aria-hidden="true" x="1175" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="350">${{ env.LINES_OF_CODE }}</text>
+              <text x="1175" y="140" transform="scale(.1)" fill="#fff" textLength="350">${{ env.LINES_OF_CODE }}</text>
+            </g>
+          </svg>
+          EOF
+
+      - name: Commit SLOC badge
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          if git diff --quiet HEAD -- .github/badges/sloc.svg; then
+            echo "No changes to SLOC badge"
+          else
+            git add .github/badges/sloc.svg
+            git commit -m "Update lines of code badge: ${{ env.LINES_OF_CODE }}"
+            git push
+          fi
