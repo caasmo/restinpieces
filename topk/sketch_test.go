@@ -194,23 +194,3 @@ func generateRequestSequence(sleep time.Duration, counts map[string]int) []Reque
 	}
 	return requests
 }
-
-// interleaveRequestSequences mixes multiple request sequences to simulate real traffic patterns
-func interleaveRequestSequences(seqs ...[]Request) []Request {
-	var mixed []Request
-	maxLen := 0
-	for _, seq := range seqs {
-		if len(seq) > maxLen {
-			maxLen = len(seq)
-		}
-	}
-	
-	for i := 0; i < maxLen; i++ {
-		for _, seq := range seqs {
-			if i < len(seq) {
-				mixed = append(mixed, seq[i])
-			}
-		}
-	}
-	return mixed
-}
