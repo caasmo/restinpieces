@@ -92,9 +92,7 @@ To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which wa
 - **Litestream Integration**: For more robust, real-time replication and point-in-time recovery, a Litestream-based integration is available in a separate repository. See [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) for implementation details.
 
 ### Metrics
-- Integrated Prometheus client for collecting application metrics.
-- Configurable endpoint for exposing metrics (e.g., `/metrics`).
-- Toggle metrics collection on/off via configuration without requiring a server restart.
+The framework provides built-in metrics collection using the `prometheus/client_golang` library. It includes a middleware that tracks the total number of HTTP requests (`http_server_requests_total`), a counter labeled by HTTP status code, allowing for detailed monitoring of server responses. Metrics collection can be toggled on or off via configuration without a server restart and is exposed on a configurable endpoint (e.g., `/metrics`) for a Prometheus server to scrape.
 
 ### Logger
 The framework's logging is built upon the standard `slog` library for structured logging. It includes a high-performance batching handler that writes logs to the SQLite database, with configurable flush intervals and log levels. For incoming requests, a dedicated middleware logs request details but truncates overly long URI, User-Agent, Referer, and IP values to maintain clean logs. The entire logging implementation can be replaced with a user-defined logger to accommodate custom requirements.
