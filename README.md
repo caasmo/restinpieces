@@ -5,7 +5,9 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/caasmo/restinpieces)](https://goreportcard.com/report/github.com/caasmo/restinpieces)
 ![sloc](https://sloc.xyz/github/caasmo/restinpieces)
 [![GitHub Release](https://img.shields.io/badge/built_with-Go-00ADD8.svg?style=flat)]()
-![Coverage](.github/badges/coverage.svg)
+[![Coverage](.github/badges/coverage.svg)](https://github.com/caasmo/restinpieces/actions/workflows/test.yml)
+
+
 
 
 # REST in pieces
