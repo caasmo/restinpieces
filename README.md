@@ -6,6 +6,7 @@
 ![sloc](https://sloc.xyz/github/caasmo/restinpieces)
 [![GitHub Release](https://img.shields.io/badge/built_with-Go-00ADD8.svg?style=flat)]()
 [![Coverage](.github/badges/coverage.svg)](https://github.com/caasmo/restinpieces/actions/workflows/test.yml)
+[![sloc](.github/badges/sloc.svg)](https://github.com/caasmo/restinpieces/actions/workflows/test.yml)
 
 
 
