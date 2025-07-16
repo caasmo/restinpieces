@@ -71,15 +71,16 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			// Purpose: This is a critical test for the circuit breaker's main gate.
 			// It ensures that even if one IP is a top talker, it is NOT blocked
 			// if the overall request rate is below the activation threshold.
-			// With ActivationRPS=500, but the actions simulating only 400 RPS,
-			// the blocker remains inactive.
+			// The IP sends 101 requests, which is over the 10% share threshold (100 requests),
+			// but the RPS is ~400, which is below the 500 RPS activation threshold,
+			// so the blocker should remain inactive.
 			name: "LowRPS_TopkIP_ShouldNotBlock",
 			params: SketchParams{
 				K: 5, WindowSize: 10, Width: 1024, Depth: 3, TickSize: 100,
-				ActivationRPS: 500, MaxSharePercent: 20,
+				ActivationRPS: 500, MaxSharePercent: 10, // Threshold: 10% of 1000 = 100 requests
 			},
-			// Simulate 100 requests over 250ms (400 RPS), which is below the 500 RPS activation.
-			requestSequence: generateRequestSequence(2*time.Millisecond, map[string]int{"1.1.1.1": 100}),
+			// Simulate 101 requests over ~252.5ms (400 RPS), which is below the 500 RPS activation.
+			requestSequence: generateRequestSequence(2500*time.Microsecond, map[string]int{"1.1.1.1": 101}),
 			wantBlockedIPs: nil,
 		},
 		{
