@@ -39,13 +39,13 @@ To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which wa
 ## Key Features
 
 ### Authentication
-- Complete authentication workflows:
-  - Password-based registration/login
-  - OAuth2 integration for social login
-  - Email verification with confirmation flow
-  - Password reset via email
-  - Email address change with confirmation
-- JWT-based session management
+The framework provides a comprehensive authentication system built around JSON Web Tokens (JWT). Session management is handled via bearer tokens sent in the `Authorization` header. A key security feature is the use of dynamic JWT signing keys, which are derived from a combination of user-specific credentials (email and password hash) and a global server secret. This ensures that a token's signature is invalidated if a user's password changes.
+
+The system supports multiple authentication and account management workflows through a set of API endpoints:
+
+- **Password-based**: Includes endpoints for user registration (`/register-with-password`), login (`/auth-with-password`), and token refresh (`/auth-refresh`).
+- **OAuth2**: Provides a generic flow (`/auth-with-oauth2`) to authenticate users via third-party providers. It handles the token exchange, fetches user information, and creates or links the user account in the local database. An endpoint (`/list-oauth2-providers`) is available to discover configured providers.
+- **Account Management**: All account management processes, such as email verification, password reset, and email address changes, are handled through secure, multi-step flows. These flows typically involve generating a unique, short-lived JWT that is sent to the user's email via a background job queue, which the user then submits back to a confirmation endpoint.
 
 ### Security
 - Built-in security headers (CSP, CORS, etc.)
