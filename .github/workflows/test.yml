@@ -1,4 +1,4 @@
-me: Generate Coverage Badge
+name: Generate Coverage Badge
 
 on:
   push:
