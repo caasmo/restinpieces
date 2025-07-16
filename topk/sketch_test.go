@@ -141,10 +141,8 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 
 			for _, req := range tc.requestSequence {
 				blocked := cs.ProcessTick(req.ip)
-				if blocked != nil {
-					for _, ip := range blocked {
-						blockedIPs[ip] = struct{}{}
-					}
+				for _, ip := range blocked {
+					blockedIPs[ip] = struct{}{}
 				}
 				if req.sleep > 0 {
 					time.Sleep(req.sleep)
