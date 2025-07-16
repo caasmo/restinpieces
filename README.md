@@ -97,11 +97,7 @@ To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which wa
 - Toggle metrics collection on/off via configuration without requiring a server restart.
 
 ### Logger
-- Default structured logger based on `slog`.
-- High-performance batch logging to SQLite database.
-- Configurable log levels and flush intervals.
-- Request logging with configurable limits for URI, User-Agent, Referer, and Remote IP lengths.
-- Supports overriding the default logger with a custom user-defined logger.
+The framework's logging is built upon the standard `slog` library for structured logging. It includes a high-performance batching handler that writes logs to the SQLite database, with configurable flush intervals and log levels. For incoming requests, a dedicated middleware logs request details but truncates overly long URI, User-Agent, Referer, and IP values to maintain clean logs. The entire logging implementation can be replaced with a user-defined logger to accommodate custom requirements.
 
 ### Notifications
 
