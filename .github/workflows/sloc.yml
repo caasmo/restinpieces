@@ -58,8 +58,8 @@ jobs:
             <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
               <text aria-hidden="true" x="375" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="630">total lines</text>
               <text x="375" y="140" transform="scale(.1)" fill="#fff" textLength="630">total lines</text>
-              <text aria-hidden="true" x="905" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="270">${{ env.FORMATTED_LINES }}</text>
-              <text x="905" y="140" transform="scale(.1)" fill="#fff" textLength="270">${{ env.FORMATTED_LINES }}</text>
+              <text aria-hidden="true" x="905" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">${{ env.FORMATTED_LINES }}</text>
+              <text x="905" y="140" transform="scale(.1)" fill="#fff">${{ env.FORMATTED_LINES }}</text>
             </g>
           </svg>
           EOF
