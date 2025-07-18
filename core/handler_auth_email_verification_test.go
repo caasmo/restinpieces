@@ -11,6 +11,7 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/db/mock"
 )
 
 func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
@@ -31,7 +32,7 @@ func TestRequestVerificationHandlerRequestValidation(t *testing.T) {
 		},
 		{
 			name:        "missing email field",
-			requestBody: `{}`,
+			requestBody: `{}`, 
 			wantError:   errorInvalidRequest,
 		},
 		{
@@ -160,13 +161,13 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 	testCases := []struct {
 		name        string
 		requestBody string
-		dbSetup     func(*MockDB)
+		dbSetup     func(*mock.Db)
 		wantError   jsonResponse
 	}{
 		{
 			name:        "database unique constraint error",
 			requestBody: `{"email":"test@example.com"}`,
-			dbSetup: func(mockDB *MockDB) {
+			dbSetup: func(mockDB *mock.Db) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
 					return &db.User{
 						ID:       "test123",
@@ -183,7 +184,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 		{
 			name:        "database other error",
 			requestBody: `{"email":"test@example.com"}`,
-			dbSetup: func(mockDB *MockDB) {
+			dbSetup: func(mockDB *mock.Db) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
 					return &db.User{
 						ID:       "test123",
@@ -200,7 +201,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 		{
 			name:        "successful job insertion",
 			requestBody: `{"email":"test@example.com"}`,
-			dbSetup: func(mockDB *MockDB) {
+			dbSetup: func(mockDB *mock.Db) {
 				mockDB.GetUserByEmailFunc = func(email string) (*db.User, error) {
 					return &db.User{
 						ID:       "test123",
@@ -222,7 +223,7 @@ func TestRequestVerificationHandlerDatabase(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 
 			rr := httptest.NewRecorder()
-			mockDB := &MockDB{}
+			mockDB := &mock.Db{}
 			if tc.dbSetup != nil {
 				tc.dbSetup(mockDB)
 			}

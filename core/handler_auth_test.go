@@ -10,6 +10,7 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/db/mock"
 )
 
 func TestRefreshAuthHandlerValid(t *testing.T) {
