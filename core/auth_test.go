@@ -14,6 +14,7 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/db/dbmock"
 	jwtv5 "github.com/golang-jwt/jwt/v5"
 )
 
@@ -47,7 +48,7 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 				req.Header.Set("Authorization", tc.authHeader)
 			}
 
-			mockDB := &MockDB{} // Create a mock DB instance
+			mockDB := &dbmock.Db{} // Create a mock DB instance
 
 			// Create a config provider
 			cfg := &config.Config{
@@ -92,13 +93,13 @@ func TestAuthenticateToken(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		userSetup  func(*MockDB)
+		userSetup  func(*dbmock.Db)
 		tokenSetup func(*testing.T) string
 		wantError  jsonResponse
 	}{
 		{
 			name: "invalid signing method",
-			userSetup: func(mockDB *MockDB) {
+			userSetup: func(mockDB *dbmock.Db) {
 				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) {
 					return testUser, nil
 				}
@@ -114,7 +115,7 @@ func TestAuthenticateToken(t *testing.T) {
 		},
 		{
 			name: "valid token",
-			userSetup: func(mockDB *MockDB) {
+			userSetup: func(mockDB *dbmock.Db) {
 				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field
 					return testUser, nil
 				}
@@ -130,7 +131,7 @@ func TestAuthenticateToken(t *testing.T) {
 		},
 		{
 			name: "expired token",
-			userSetup: func(mockDB *MockDB) {
+			userSetup: func(mockDB *dbmock.Db) {
 				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field
 					return testUser, nil
 				}
@@ -146,7 +147,7 @@ func TestAuthenticateToken(t *testing.T) {
 		},
 		{
 			name: "user not found",
-			userSetup: func(mockDB *MockDB) {
+			userSetup: func(mockDB *dbmock.Db) {
 				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field
 					return nil, db.ErrUserNotFound // Simulate user not found
 				}
@@ -162,7 +163,7 @@ func TestAuthenticateToken(t *testing.T) {
 		},
 		{
 			name: "database error on GetUserById",
-			userSetup: func(mockDB *MockDB) {
+			userSetup: func(mockDB *dbmock.Db) {
 				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field
 					return nil, errors.New("database error") // Simulate database error
 				}
@@ -180,7 +181,7 @@ func TestAuthenticateToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockDB := &MockDB{}
+			mockDB := &dbmock.Db{}
 			if tc.userSetup != nil {
 				tc.userSetup(mockDB)
 			}
