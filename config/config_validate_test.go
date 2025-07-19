@@ -1,9 +1,63 @@
 package config
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
+	"net"
 	"regexp"
 	"testing"
+	"time"
 )
+
+// newTestCert generates a self-signed certificate and key, returning them as PEM-encoded strings.
+func newTestCert(t *testing.T, notBefore, notAfter time.Time) (string, string) {
+	t.Helper()
+
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("Failed to generate private key: %v", err)
+	}
+
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		t.Fatalf("Failed to generate serial number: %v", err)
+	}
+
+	template := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization: []string{"Test Co"},
+		},
+		NotBefore: notBefore,
+		NotAfter:  notAfter,
+
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		IPAddresses:           []net.IP{net.ParseIP("127.0.0.1")},
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &priv.PublicKey, priv)
+	if err != nil {
+		t.Fatalf("Failed to create certificate: %v", err)
+	}
+
+	certOut := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+
+	privBytes, err := x509.MarshalPKCS8PrivateKey(priv)
+	if err != nil {
+		t.Fatalf("Unable to marshal private key: %v", err)
+	}
+	keyOut := pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBytes})
+
+	return string(certOut), string(keyOut)
+}
 
 // newTestConfig creates a valid config for tests.
 func newTestConfig() *Config {
@@ -27,10 +81,6 @@ func newTestConfig() *Config {
 	return cfg
 }
 
-// TestValidate serves as an integration test to ensure that the main Validate function
-// correctly calls all the individual validation sub-routines. It does this by
-// creating a valid configuration and then, for each sub-validator, introducing
-// a single, specific error to confirm that the corresponding validation logic is triggered.
 func TestValidate(t *testing.T) {
 	t.Parallel()
 
@@ -41,6 +91,10 @@ func TestValidate(t *testing.T) {
 		}
 	})
 
+	// TestValidate serves as an integration test to ensure that the main Validate function
+	// correctly calls all the individual validation sub-routines. It does this by
+	// creating a valid configuration and then, for each sub-validator, introducing
+	// a single, specific error to confirm that the corresponding validation logic is triggered.
 	errorCases := []struct {
 		name    string
 		mutator func(*Config)
@@ -175,6 +229,7 @@ func TestValidateServer(t *testing.T) {
 		{Addr: "localhost"},
 		{Addr: ":99999"},
 		{Addr: ":8080", RedirectAddr: "localhost"},
+		{Addr: ":8080", RedirectAddr: ":99999"}, // Invalid redirect port
 		{Addr: ":8443", EnableTLS: true, KeyData: "key"},
 		{Addr: ":8443", EnableTLS: true, CertData: "cert"},
 		{Addr: ":8443", EnableTLS: true, CertData: "cert", KeyData: "key"}, // invalid cert data
@@ -288,5 +343,63 @@ func TestValidateNotifier(t *testing.T) {
 		if err := validateNotifier(&cfg); err == nil {
 			t.Errorf("validateNotifier(%+v) expected error, got nil", cfg)
 		}
+	}
+}
+
+func TestValidateServerTLS(t *testing.T) {
+	t.Parallel()
+
+	validCert, validKey := newTestCert(t, time.Now().Add(-1*time.Hour), time.Now().Add(1*time.Hour))
+	expiredCert, _ := newTestCert(t, time.Now().Add(-2*time.Hour), time.Now().Add(-1*time.Hour))
+	futureCert, _ := newTestCert(t, time.Now().Add(1*time.Hour), time.Now().Add(2*time.Hour))
+
+	testCases := []struct {
+		name      string
+		server    *Server
+		expectErr bool
+	}{
+		{"TLS disabled", &Server{EnableTLS: false}, false},
+		{"Valid TLS", &Server{EnableTLS: true, CertData: validCert, KeyData: validKey}, false},
+		{"Missing CertData", &Server{EnableTLS: true, KeyData: validKey}, true},
+		{"Missing KeyData", &Server{EnableTLS: true, CertData: validCert}, true},
+		{"Invalid PEM block", &Server{EnableTLS: true, CertData: "not a pem block", KeyData: validKey}, true},
+		{"Wrong PEM block type", &Server{EnableTLS: true, CertData: string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: []byte("dummy")})), KeyData: validKey}, true},
+		{"Expired certificate", &Server{EnableTLS: true, CertData: expiredCert, KeyData: validKey}, true},
+		{"Not yet valid certificate", &Server{EnableTLS: true, CertData: futureCert, KeyData: validKey}, true},
+		{"Invalid certificate bytes", &Server{EnableTLS: true, CertData: string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: []byte("dummy")})), KeyData: validKey}, true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateServerTLS(tc.server)
+			if (err != nil) != tc.expectErr {
+				t.Fatalf("validateServerTLS() error = %v, expectErr %v", err, tc.expectErr)
+			}
+		})
+	}
+}
+
+func TestValidateServerPort(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name      string
+		portStr   string
+		expectErr bool
+	}{
+		{"Valid port", "8080", false},
+		{"Empty port", "", false},
+		{"Port 0", "0", true},
+		{"Port 65536", "65536", true},
+		{"Non-numeric port", "http", true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateServerPort(tc.portStr)
+			if (err != nil) != tc.expectErr {
+				t.Fatalf("validateServerPort() error = %v, expectErr %v", err, tc.expectErr)
+			}
+		})
 	}
 }
