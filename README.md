@@ -29,6 +29,7 @@ To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which wa
   - [Metrics](#metrics)
   - [Logger](#logger)
   - [Notifications](#notifications)
+  - [Middleware](#middleware)
 - [Examples](#examples)
 - [Extensibility](#extensibility)
 - [Building the Project](#building-the-project)
@@ -100,6 +101,19 @@ The framework's logging is built upon the standard `slog` library for structured
 The framework's notification system is designed around a `Notifier` interface, which standardizes how notifications are sent. The primary data structure, `Notification`, carries a `Type` (e.g., `Alarm`, `Metric`), `Source`, `Message`, and a map of `Fields` for additional structured data.
 
 An official implementation for Discord is included, which sends formatted messages to a configured webhook URL. This notifier operates asynchronously, using goroutines for non-blocking `Send` calls. It incorporates a rate limiter to prevent API abuse and automatically truncates messages that exceed Discord's 2000-character limit. Developers can create custom notifiers for other services (like Slack or email) by providing their own implementation of the `Notifier` interface.
+
+### Middleware
+The framework provides a collection of built-in middleware to handle common cross-cutting concerns like security, logging, and metrics.
+
+-   **ResponseRecorder**: A utility middleware that wraps the standard `http.ResponseWriter` to capture the status code, response size, and timing information. This is used internally by other middleware like `Metrics` and `RequestLog` and should typically be the first middleware in the chain.
+-   **RequestLog**: Provides structured logging for every incoming HTTP request. It captures details like method, URI, status, duration, remote IP, and user agent, with configurable length limits to keep logs concise.
+-   **Metrics**: Collects Prometheus-compatible metrics for HTTP requests, labeled by status code. When activated, metrics are exposed on a configurable endpoint (e.g., `/metrics`) for scraping.
+-   **BlockIp**: Acts as a dynamic IP blocking mechanism to protect the server from traffic spikes and potential denial-of-service attacks. It uses a Top-K sketch algorithm to identify and temporarily block IP addresses that are responsible for a disproportionate amount of traffic, functioning as a circuit breaker under heavy load.
+-   **BlockHost**: Enforces security by validating the `Host` header of incoming requests against a configurable whitelist of allowed hostnames. It supports exact matches and wildcard subdomains (e.g., `*.example.com`).
+-   **BlockRequestBody**: Limits the size of incoming request bodies to a configurable maximum. This helps prevent resource exhaustion from excessively large payloads and can be configured to exclude specific URL paths.
+-   **BlockUaList**: Filters requests by matching the `User-Agent` string against a configurable regular expression. This can be used to block scrapers, bots, or other unwanted clients.
+-   **TLSHeaderSTS**: Sets the `Strict-Transport-Security` (HSTS) header for all responses served over a TLS connection, instructing browsers to communicate with the server only over HTTPS.
+-   **Maintenance**: When activated via configuration, this middleware puts the server into maintenance mode. It responds to all requests with a `503 Service Unavailable` status code, allowing for system updates without shutting down the server.
 
 ## Examples
 
