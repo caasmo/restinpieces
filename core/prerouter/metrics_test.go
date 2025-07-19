@@ -148,4 +148,32 @@ func TestMetricsMiddleware(t *testing.T) {
 	}
 }
 
+func TestNewMetrics_PanicOnReregister(t *testing.T) {
+	// Setup: Create a mock app.
+	mockApp := &core.App{}
+	mockApp.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
+
+	// This is the metric that NewMetrics will try to register.
+	expectedMetric := prometheus.NewCounterVec(
+		prometheus.CounterOpts{Name: "http_server_requests_total"},
+		[]string{"code"},
+	)
+
+	// Cleanup: Ensure the metric is unregistered from the global registry after the test.
+	defer prometheus.DefaultRegisterer.Unregister(expectedMetric)
+
+	// First call should succeed.
+	_ = NewMetrics(mockApp)
+
+	// Second call should panic. We use a defer/recover to catch it.
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected NewMetrics to panic on second call, but it did not")
+		}
+	}()
+
+	// This call must panic.
+	_ = NewMetrics(mockApp)
+}
+
 
