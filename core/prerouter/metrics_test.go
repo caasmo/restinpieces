@@ -130,12 +130,9 @@ func TestMetricsMiddleware(t *testing.T) {
 			// Execution: Run the request(s) through the chain.
 			for i := 0; i < tc.requestCount; i++ {
 				req := httptest.NewRequest("GET", "/", nil)
-				// If we aren't using our custom recorder, use the standard httptest one.
-				// Otherwise, the recorder middleware will create the correct one.
+				// The handler chain is already configured for the specific test case.
+				// We just need to provide a ResponseWriter.
 				var rw http.ResponseWriter = httptest.NewRecorder()
-				if tc.useResponseRecorder {
-					// The recorder middleware will wrap this, so we can start with a plain one.
-				}
 				handler.ServeHTTP(rw, req)
 			}
 
@@ -151,13 +148,4 @@ func TestMetricsMiddleware(t *testing.T) {
 	}
 }
 
-// mockNextHandler is defined in another test file in this package
-// but we include a minimal version here in case tests are run individually.
-type minimalMockNext struct {
-	called bool
-}
 
-func (m *minimalMockNext) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	m.called = true
-	w.WriteHeader(http.StatusOK)
-}
