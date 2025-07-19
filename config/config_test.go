@@ -2,6 +2,7 @@ package config
 
 import (
 	"log/slog"
+	"reflect"
 	"regexp"
 	"sync"
 	"testing"
@@ -11,20 +12,25 @@ import (
 func TestProvider_GetAndUpdate(t *testing.T) {
 	t.Parallel()
 
-	// Initial setup
-	c1 := &Config{Server: Server{Addr: ":8080"}}
-	p := NewProvider(c1)
+	// Test that NewProvider panics with a nil config
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("NewProvider did not panic with nil config")
+		}
+	}()
+	_ = NewProvider(nil)
 
-	if p.Get().Server.Addr != ":8080" {
-		t.Fatalf("p.Get() after init returned wrong addr: got %v, want :8080", p.Get().Server.Addr)
+	// Test Get and Update
+	cfg1 := &Config{Server: Server{Addr: ":8080"}}
+	provider := NewProvider(cfg1)
+	if !reflect.DeepEqual(cfg1, provider.Get()) {
+		t.Errorf("Get() got = %v, want %v", provider.Get(), cfg1)
 	}
 
-	// Test Update
-	c2 := &Config{Server: Server{Addr: ":9090"}}
-	p.Update(c2)
-
-	if p.Get().Server.Addr != ":9090" {
-		t.Fatalf("p.Get() after update returned wrong addr: got %v, want :9090", p.Get().Server.Addr)
+	cfg2 := &Config{Server: Server{Addr: ":9090"}}
+	provider.Update(cfg2)
+	if !reflect.DeepEqual(cfg2, provider.Get()) {
+		t.Errorf("Get() got = %v, want %v", provider.Get(), cfg2)
 	}
 }
 
@@ -90,6 +96,30 @@ func TestDuration_UnmarshalText(t *testing.T) {
 	}
 }
 
+func TestDuration_MarshalText(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		name     string
+		duration Duration
+		want     string
+	}{
+		{"10 seconds", Duration{10 * time.Second}, "10s"},
+		{"5 minutes", Duration{5 * time.Minute}, "5m0s"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := tc.duration.MarshalText()
+			if err != nil {
+				t.Fatalf("MarshalText() returned an unexpected error: %v", err)
+			}
+			if string(got) != tc.want {
+				t.Errorf("MarshalText() got = %q, want %q", string(got), tc.want)
+			}
+		})
+	}
+}
+
 func TestLogLevel_UnmarshalText(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
@@ -119,6 +149,32 @@ func TestLogLevel_UnmarshalText(t *testing.T) {
 	}
 }
 
+func TestLogLevel_MarshalText(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		name  string
+		level LogLevel
+		want  string
+	}{
+		{"Info level", LogLevel{slog.LevelInfo}, "INFO"},
+		{"Debug level", LogLevel{slog.LevelDebug}, "DEBUG"},
+		{"Warn level", LogLevel{slog.LevelWarn}, "WARN"},
+		{"Error level", LogLevel{slog.LevelError}, "ERROR"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := tc.level.MarshalText()
+			if err != nil {
+				t.Fatalf("MarshalText() returned an unexpected error: %v", err)
+			}
+			if string(got) != tc.want {
+				t.Errorf("MarshalText() got = %q, want %q", string(got), tc.want)
+			}
+		})
+	}
+}
+
 func TestRegexp_UnmarshalText(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {
@@ -142,6 +198,31 @@ func TestRegexp_UnmarshalText(t *testing.T) {
 			}
 			if !tc.expectErr && r.String() != tc.want {
 				t.Errorf("UnmarshalText() got = %v, want %v", r.String(), tc.want)
+			}
+		})
+	}
+}
+
+func TestRegexp_MarshalText(t *testing.T) {
+	t.Parallel()
+	testCases := []struct {
+		name  string
+		regex *regexp.Regexp
+		want  string
+	}{
+		{"Valid regex", regexp.MustCompile(`^test$`), `^test$`},
+		{"Nil regex", nil, ``},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			r := Regexp{Regexp: tc.regex}
+			got, err := r.MarshalText()
+			if err != nil {
+				t.Fatalf("MarshalText() returned an unexpected error: %v", err)
+			}
+			if string(got) != tc.want {
+				t.Errorf("MarshalText() got = %q, want %q", string(got), tc.want)
 			}
 		})
 	}
@@ -206,32 +287,6 @@ func TestEndpoints_ConfirmHtml(t *testing.T) {
 			var e Endpoints
 			if got := e.ConfirmHtml(tc.endpoint); got != tc.want {
 				t.Errorf("ConfirmHtml() = %v, want %v", got, tc.want)
-			}
-		})
-	}
-}
-
-// TestRegexp_MarshalText ensures that marshalling a Regexp works as expected.
-func TestRegexp_MarshalText(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name  string
-		regex *regexp.Regexp
-		want  string
-	}{
-		{"Valid regex", regexp.MustCompile(`^test$`), `^test$`},
-		{"Nil regex", nil, ``},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			r := Regexp{Regexp: tc.regex}
-			got, err := r.MarshalText()
-			if err != nil {
-				t.Fatalf("MarshalText() returned an unexpected error: %v", err)
-			}
-			if string(got) != tc.want {
-				t.Errorf("MarshalText() got = %q, want %q", string(got), tc.want)
 			}
 		})
 	}
