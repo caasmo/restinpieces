@@ -15,7 +15,11 @@ import (
 func newTestDB(t *testing.T) *Db {
 	t.Helper()
 
-	pool, err := sqlitex.NewPool("file::memory:?vfs=memdb", sqlitex.PoolOptions{})
+    //  each connection in the pool gets its own separate in-memory database
+    //  instance. we need to make sure we only have one
+	pool, err := sqlitex.NewPool("file::memory:", sqlitex.PoolOptions{
+        PoolSize: 1,
+    })
 	if err != nil {
 		t.Fatalf("failed to create db pool: %v", err)
 	}
@@ -38,7 +42,7 @@ func newTestDB(t *testing.T) *Db {
 	}
 
 	t.Logf("Applying migration: app/app_config.sql")
-	t.Logf("Migration SQL contents:\n%s", string(sqlBytes))
+	//t.Logf("Migration SQL contents:\n%s", string(sqlBytes))
 	if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
 		t.Fatalf("Failed to execute app_config.sql: %v", err)
 	}
