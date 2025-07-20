@@ -142,9 +142,9 @@ func TestBlockIP_ProcessAndBlockTrigger(t *testing.T) {
 
 	// --- Execution ---
 	// Process IPs to trigger the blocking condition.
-	middleware.Process(ipToBlock)
-	middleware.Process("192.0.2.99") // A different IP to fill the tick.
-	middleware.Process(ipToBlock)    // This third request should trigger the block.
+	_ = middleware.Process(ipToBlock)
+	_ = middleware.Process("192.0.2.99") // A different IP to fill the tick.
+	_ = middleware.Process(ipToBlock)    // This third request should trigger the block.
 
 	// --- Verification ---
 	// Because blocking is asynchronous (in a goroutine), we must poll the cache.
