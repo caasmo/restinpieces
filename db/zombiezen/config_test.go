@@ -30,31 +30,16 @@ func newTestDB(t *testing.T) *Db {
 	defer pool.Put(conn)
 
 	schemaFS := migrations.Schema()
-	migrationFiles, err := fs.ReadDir(schemaFS, ".")
+	
+	// Directly read and execute the app_config.sql file we need
+	sqlBytes, err := fs.ReadFile(schemaFS, "app/app_config.sql")
 	if err != nil {
-		t.Fatalf("Failed to read embedded migrations: %v", err)
+		t.Fatalf("Failed to read app_config.sql: %v", err)
 	}
 
-	// Log all found files for debugging
-	t.Logf("Found %d files in migrations:", len(migrationFiles))
-	for _, f := range migrationFiles {
-		t.Logf("- %s (isDir: %v)", f.Name(), f.IsDir())
-	}
-
-	for _, migration := range migrationFiles {
-		if filepath.Ext(migration.Name()) != ".sql" {
-			continue
-		}
-
-		t.Logf("Applying migration: %s", migration.Name())
-		sqlBytes, err := fs.ReadFile(schemaFS, migration.Name())
-		if err != nil {
-			t.Fatalf("Failed to read embedded migration file %s: %v", migration.Name(), err)
-		}
-
-		if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
-			t.Fatalf("Failed to execute migration file %s: %v", migration.Name(), err)
-		}
+	t.Logf("Applying migration: app/app_config.sql")
+	if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
+		t.Fatalf("Failed to execute app_config.sql: %v", err)
 	}
 
 	return &Db{pool: pool}
