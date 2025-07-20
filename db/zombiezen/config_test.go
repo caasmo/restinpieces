@@ -30,26 +30,24 @@ func newTestDB(t *testing.T) *Db {
 	defer pool.Put(conn)
 
 	schemaFS := migrations.Schema()
-
-	// Walk the embedded FS and apply all .sql files, including those in subdirectories.
-	err = fs.WalkDir(schemaFS, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() || filepath.Ext(path) != ".sql" {
-			return nil
-		}
-
-		sqlBytes, err := fs.ReadFile(schemaFS, path)
-		if err != nil {
-			return err
-		}
-
-		return sqlitex.ExecuteScript(conn, string(sqlBytes), nil)
-	})
-
+	migrationFiles, err := fs.ReadDir(schemaFS, ".")
 	if err != nil {
-		t.Fatalf("Failed to apply migrations: %v", err)
+		t.Fatalf("Failed to read embedded migrations: %v", err)
+	}
+
+	for _, migration := range migrationFiles {
+		if filepath.Ext(migration.Name()) != ".sql" {
+			continue
+		}
+
+		sqlBytes, err := fs.ReadFile(schemaFS, migration.Name())
+		if err != nil {
+			t.Fatalf("Failed to read embedded migration file %s: %v", migration.Name(), err)
+		}
+
+		if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
+			t.Fatalf("Failed to execute migration file %s: %v", migration.Name(), err)
+		}
 	}
 
 	return &Db{pool: pool}
