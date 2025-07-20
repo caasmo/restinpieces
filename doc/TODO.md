@@ -1,6 +1,6 @@
 ### TODOs
 
-- bug crtl-c because scheduler
+- created at etc shoudl have nano resolution, make 2 fuctions? 
 - integrate local backup in main framework
     - handler receives conn to app file? no better create two more. ones for source one for destiny they are harcoded zombiezen
         - we can not use app.DBQueue etc.
