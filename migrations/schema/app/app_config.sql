@@ -23,5 +23,5 @@ CREATE TABLE IF NOT EXISTS app_config (
 );
 
 -- Create index separately to avoid trailing bytes in table creation
-CREATE INDEX IF NOT EXISTS idx_app_config_created ON app_config(created_at DESC)
+CREATE INDEX IF NOT EXISTS idx_app_config_created ON app_config(created_at DESC);
 
