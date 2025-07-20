@@ -66,10 +66,10 @@ func TestRequestLog_SuccessfulRequest(t *testing.T) {
 	provider := config.NewProvider(cfg)
 	mockApp.SetConfigProvider(provider)
 
-	finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(finalHandler))
+	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(nextHandler))
 
 	req := httptest.NewRequest("GET", "/test?q=1", nil)
 	req.RemoteAddr = "192.0.2.1:12345"
@@ -111,8 +111,12 @@ func TestRequestLog_Deactivated(t *testing.T) {
 	provider := config.NewProvider(cfg)
 	mockApp.SetConfigProvider(provider)
 
-	finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(finalHandler))
+	// The next handler will be called, but its action is irrelevant.
+	nextHandler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
+
+	middleware := NewRequestLog(mockApp)
+	// The chain is minimal: just the middleware and the next handler. No recorder.
+	handlerChain := middleware.Execute(nextHandler)
 
 	req := httptest.NewRequest("GET", "/", nil)
 
@@ -144,8 +148,8 @@ func TestRequestLog_FieldTruncation(t *testing.T) {
 	provider := config.NewProvider(cfg)
 	mockApp.SetConfigProvider(provider)
 
-	finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(finalHandler))
+	nextHandler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
+	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(nextHandler))
 
 	longString := strings.Repeat("a", 200)
 	req := httptest.NewRequest("POST", "/"+longString, nil)
@@ -188,8 +192,8 @@ func TestRequestLog_HttpsRequest(t *testing.T) {
 	provider := config.NewProvider(cfg)
 	mockApp.SetConfigProvider(provider)
 
-	finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(finalHandler))
+	nextHandler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
+	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(nextHandler))
 
 	req := httptest.NewRequest("GET", "/secure", nil)
 	req.TLS = &tls.ConnectionState{} // Simulate HTTPS
@@ -216,8 +220,8 @@ func TestRequestLog_InvalidRemoteIP(t *testing.T) {
 	provider := config.NewProvider(cfg)
 	mockApp.SetConfigProvider(provider)
 
-	finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(finalHandler))
+	nextHandler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
+	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(nextHandler))
 
 	req := httptest.NewRequest("GET", "/", nil)
 	req.RemoteAddr = "invalid-ip-format"
@@ -246,12 +250,12 @@ func TestRequestLog_Robustness_MissingResponseRecorder(t *testing.T) {
 	provider := config.NewProvider(cfg)
 	mockApp.SetConfigProvider(provider)
 
-	finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// This handler should still be called.
 		w.Header().Set("X-Handler-Called", "true")
 	})
 	// The key to this test: Execute the middleware without the recorder.
-	handlerChain := NewRequestLog(mockApp).Execute(finalHandler)
+	handlerChain := NewRequestLog(mockApp).Execute(nextHandler)
 
 	req := httptest.NewRequest("GET", "/", nil)
 	rr := httptest.NewRecorder()
