@@ -58,7 +58,8 @@ func TestRequestLog_SuccessfulRequest(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
 	logBuffer := new(bytes.Buffer)
-	mockApp.SetLogger(slog.New(newMemoryHandler(logBuffer)))
+	memHandler := newMemoryHandler(logBuffer)
+	mockApp.SetLogger(slog.New(memHandler))
 
 	cfg := config.NewDefaultConfig()
 	cfg.Log.Request.Activated = true
@@ -68,7 +69,6 @@ func TestRequestLog_SuccessfulRequest(t *testing.T) {
 	finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	// The Recorder must wrap the logger's handler.
 	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(finalHandler))
 
 	req := httptest.NewRequest("GET", "/test?q=1", nil)
@@ -82,7 +82,7 @@ func TestRequestLog_SuccessfulRequest(t *testing.T) {
 		t.Fatal("Expected a log entry, but none was written")
 	}
 
-	logRecord, err := newMemoryHandler(logBuffer).LastRecord()
+	logRecord, err := memHandler.LastRecord()
 	if err != nil {
 		t.Fatalf("Failed to parse log output: %v", err)
 	}
@@ -103,7 +103,8 @@ func TestRequestLog_Deactivated(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
 	logBuffer := new(bytes.Buffer)
-	mockApp.SetLogger(slog.New(newMemoryHandler(logBuffer)))
+	memHandler := newMemoryHandler(logBuffer)
+	mockApp.SetLogger(slog.New(memHandler))
 
 	cfg := config.NewDefaultConfig()
 	cfg.Log.Request.Activated = false // Key for this test
@@ -129,7 +130,8 @@ func TestRequestLog_FieldTruncation(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
 	logBuffer := new(bytes.Buffer)
-	mockApp.SetLogger(slog.New(newMemoryHandler(logBuffer)))
+	memHandler := newMemoryHandler(logBuffer)
+	mockApp.SetLogger(slog.New(memHandler))
 
 	cfg := config.NewDefaultConfig()
 	cfg.Log.Request.Activated = true
@@ -155,7 +157,7 @@ func TestRequestLog_FieldTruncation(t *testing.T) {
 	handlerChain.ServeHTTP(httptest.NewRecorder(), req)
 
 	// --- Verification ---
-	logRecord, err := newMemoryHandler(logBuffer).LastRecord()
+	logRecord, err := memHandler.LastRecord()
 	if err != nil {
 		t.Fatalf("Failed to parse log output: %v", err)
 	}
@@ -179,7 +181,8 @@ func TestRequestLog_HttpsRequest(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
 	logBuffer := new(bytes.Buffer)
-	mockApp.SetLogger(slog.New(newMemoryHandler(logBuffer)))
+	memHandler := newMemoryHandler(logBuffer)
+	mockApp.SetLogger(slog.New(memHandler))
 
 	cfg := config.NewDefaultConfig()
 	provider := config.NewProvider(cfg)
@@ -195,7 +198,7 @@ func TestRequestLog_HttpsRequest(t *testing.T) {
 	handlerChain.ServeHTTP(httptest.NewRecorder(), req)
 
 	// --- Verification ---
-	logRecord, _ := newMemoryHandler(logBuffer).LastRecord()
+	logRecord, _ := memHandler.LastRecord()
 	if tls, ok := logRecord["tls"].(bool); !ok || !tls {
 		t.Errorf("Expected 'tls' field to be true, but it was not")
 	}
@@ -206,7 +209,8 @@ func TestRequestLog_InvalidRemoteIP(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
 	logBuffer := new(bytes.Buffer)
-	mockApp.SetLogger(slog.New(newMemoryHandler(logBuffer)))
+	memHandler := newMemoryHandler(logBuffer)
+	mockApp.SetLogger(slog.New(memHandler))
 
 	cfg := config.NewDefaultConfig()
 	provider := config.NewProvider(cfg)
@@ -222,7 +226,7 @@ func TestRequestLog_InvalidRemoteIP(t *testing.T) {
 	handlerChain.ServeHTTP(httptest.NewRecorder(), req)
 
 	// --- Verification ---
-	logRecord, _ := newMemoryHandler(logBuffer).LastRecord()
+	logRecord, _ := memHandler.LastRecord()
 	if ip, _ := logRecord["remote_ip"].(string); ip != "invalid-ip-format" {
 		t.Errorf("Expected remote_ip to be 'invalid-ip-format', got '%v'", ip)
 	}
@@ -234,8 +238,9 @@ func TestRequestLog_Robustness_MissingResponseRecorder(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
 	errorLogBuffer := new(bytes.Buffer)
+	memHandler := newMemoryHandler(errorLogBuffer)
 	// The middleware should log an error to the app's logger. We capture it here.
-	mockApp.SetLogger(slog.New(newMemoryHandler(errorLogBuffer)))
+	mockApp.SetLogger(slog.New(memHandler))
 
 	cfg := config.NewDefaultConfig()
 	provider := config.NewProvider(cfg)
@@ -259,7 +264,7 @@ func TestRequestLog_Robustness_MissingResponseRecorder(t *testing.T) {
 	if errorLogBuffer.Len() == 0 {
 		t.Fatal("Expected an error to be logged, but buffer is empty")
 	}
-	logRecord, _ := newMemoryHandler(errorLogBuffer).LastRecord()
+	logRecord, _ := memHandler.LastRecord()
 	if level, _ := logRecord["level"].(string); level != "ERROR" {
 		t.Errorf("Expected log level to be ERROR, got %s", level)
 	}
