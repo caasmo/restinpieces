@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time"
 
-	"github.com/caasmo/restinpieces/db" // Import db for TimeFormat
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
@@ -57,23 +55,19 @@ func (d *Db) InsertConfig(scope string, contentData []byte, format string, descr
 	}
 	defer d.pool.Put(conn)
 
-	now := db.TimeFormat(time.Now()) // Use db.TimeFormat for consistency
-
 	err = sqlitex.Execute(conn,
 		`INSERT INTO app_config (
 			scope,
 			content,
 			format,
-			description,
-			created_at
-		) VALUES (?, ?, ?, ?, ?)`,
+			description
+		) VALUES (?, ?, ?, ?)`,
 		&sqlitex.ExecOptions{
 			Args: []interface{}{
 				scope,
 				contentData, // Use renamed parameter
 				format,
 				description,
-				now,
 			},
 		})
 
