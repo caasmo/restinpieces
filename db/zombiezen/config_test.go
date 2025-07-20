@@ -38,6 +38,7 @@ func newTestDB(t *testing.T) *Db {
 	}
 
 	t.Logf("Applying migration: app/app_config.sql")
+	t.Logf(string(sqlBytes))
 	if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
 		t.Fatalf("Failed to execute app_config.sql: %v", err)
 	}
