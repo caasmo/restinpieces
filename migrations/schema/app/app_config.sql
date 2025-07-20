@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS app_config (
     description TEXT,
 
     -- created_at: Timestamp when this version was inserted, used for ordering
-    -- format UTC, RFC3339
-    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+    -- format UTC, RFC3339Nano
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now', 'subsec', 'nanoseconds'))
 );
 
 -- Create index separately to avoid trailing bytes in table creation
