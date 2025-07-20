@@ -15,23 +15,35 @@ const (
 	logMessage  = "http_request"
 )
 
-// RemoteIP returns the normalized IP address from the request
-// TODO remove
+// RemoteIP returns the normalized IP address from the request.
+// It attempts to parse the IP from the host-port combination and falls back
+// to the raw RemoteAddr if parsing fails at any stage.
 func RemoteIP(r *http.Request) string {
-	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		// If splitting fails, RemoteAddr might not have a port.
+		// Use the whole string and try to parse it directly.
+		ip = r.RemoteAddr
+	}
+
 	parsed, err := netip.ParseAddr(ip)
 	if err != nil {
-		return ip // fallback to original if parsing fails
+		return ip // Fallback to the best IP string we have
 	}
 	return parsed.StringExpanded()
 }
 
-// cutStr limits string length by adding ellipsis if needed
+// cutStr limits string length, adding ellipsis if the string is truncated.
+// The total length of the returned string will not exceed max.
 func cutStr(str string, max int) string {
-	if len(str) > max {
-		return str[:max] + "..."
+	if len(str) <= max {
+		return str
 	}
-	return str
+	if max < 3 {
+		// Not enough space for ellipsis, just truncate.
+		return str[:max]
+	}
+	return str[:max-3] + "..."
 }
 
 // Cached common log attributes
