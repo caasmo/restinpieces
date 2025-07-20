@@ -35,11 +35,18 @@ func newTestDB(t *testing.T) *Db {
 		t.Fatalf("Failed to read embedded migrations: %v", err)
 	}
 
+	// Log all found files for debugging
+	t.Logf("Found %d files in migrations:", len(migrationFiles))
+	for _, f := range migrationFiles {
+		t.Logf("- %s (isDir: %v)", f.Name(), f.IsDir())
+	}
+
 	for _, migration := range migrationFiles {
 		if filepath.Ext(migration.Name()) != ".sql" {
 			continue
 		}
 
+		t.Logf("Applying migration: %s", migration.Name())
 		sqlBytes, err := fs.ReadFile(schemaFS, migration.Name())
 		if err != nil {
 			t.Fatalf("Failed to read embedded migration file %s: %v", migration.Name(), err)
