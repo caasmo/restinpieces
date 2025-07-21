@@ -267,3 +267,135 @@ Vdo6H3z/uB1sD6l0HqBz1Y8e+9q9q3X7PA==
 	}
 	return tokenString
 }
+
+func TestNewTypedTokens(t *testing.T) {
+	userID := "user123"
+	email := "test@example.com"
+	newEmail := "new@example.com"
+	passwordHash := "hashed_password"
+	secret := "a_very_long_and_secure_secret_key"
+	duration := 15 * time.Minute
+
+	testCases := []struct {
+		name        string
+		tokenFunc   func() (string, error)
+		expectedClaims map[string]any
+	}{
+		{
+			name: "Session Token",
+			tokenFunc: func() (string, error) {
+				return NewJwtSessionToken(userID, email, passwordHash, secret, duration)
+			},
+			expectedClaims: map[string]any{
+				ClaimUserID: userID,
+			},
+		},
+		{
+			name: "Email Change Token",
+			tokenFunc: func() (string, error) {
+				return NewJwtEmailChangeToken(userID, email, newEmail, passwordHash, secret, duration)
+			},
+			expectedClaims: map[string]any{
+				ClaimUserID:   userID,
+				ClaimEmail:    email,
+				ClaimNewEmail: newEmail,
+				ClaimType:     ClaimEmailChangeValue,
+			},
+		},
+		{
+			name: "Password Reset Token",
+			tokenFunc: func() (string, error) {
+				return NewJwtPasswordResetToken(userID, email, passwordHash, secret, duration)
+			},
+			expectedClaims: map[string]any{
+				ClaimUserID: userID,
+				ClaimEmail:  email,
+				ClaimType:   ClaimPasswordResetValue,
+			},
+		},
+		{
+			name: "Email Verification Token",
+			tokenFunc: func() (string, error) {
+				return NewJwtEmailVerificationToken(userID, email, passwordHash, secret, duration)
+			},
+			expectedClaims: map[string]any{
+				ClaimUserID: userID,
+				ClaimEmail:  email,
+				ClaimType:   ClaimVerificationValue,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tokenString, err := tc.tokenFunc()
+			if err != nil {
+				t.Fatalf("failed to create token: %v", err)
+			}
+
+			signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
+			if err != nil {
+				t.Fatalf("failed to create signing key: %v", err)
+			}
+
+			claims, err := ParseJwt(tokenString, signingKey)
+			if err != nil {
+				t.Fatalf("failed to parse token: %v", err)
+			}
+
+			for key, expectedValue := range tc.expectedClaims {
+				if claims[key] != expectedValue {
+					t.Errorf("expected claim %s to be %v, got %v", key, expectedValue, claims[key])
+				}
+			}
+		})
+	}
+}
+
+func TestNewTypedTokensWithInvalidSecret(t *testing.T) {
+	userID := "user123"
+	email := "test@example.com"
+	newEmail := "new@example.com"
+	passwordHash := "hashed_password"
+	secret := "short"
+	duration := 15 * time.Minute
+
+	testCases := []struct {
+		name      string
+		tokenFunc func() (string, error)
+	}{
+		{
+			name: "Session Token",
+			tokenFunc: func() (string, error) {
+				return NewJwtSessionToken(userID, email, passwordHash, secret, duration)
+			},
+		},
+		{
+			name: "Email Change Token",
+			tokenFunc: func() (string, error) {
+				return NewJwtEmailChangeToken(userID, email, newEmail, passwordHash, secret, duration)
+			},
+		},
+		{
+			name: "Password Reset Token",
+			tokenFunc: func() (string, error) {
+				return NewJwtPasswordResetToken(userID, email, passwordHash, secret, duration)
+			},
+		},
+		{
+			name: "Email Verification Token",
+			tokenFunc: func() (string, error) {
+				return NewJwtEmailVerificationToken(userID, email, passwordHash, secret, duration)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := tc.tokenFunc()
+			if !errors.Is(err, ErrJwtInvalidSecretLength) {
+				t.Errorf("expected ErrJwtInvalidSecretLength, got %v", err)
+			}
+		})
+	}
+}

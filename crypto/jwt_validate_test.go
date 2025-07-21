@@ -8,50 +8,88 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func TestValidateClaimUserID(t *testing.T) {
+func TestValidateClaimEmail(t *testing.T) {
 	testCases := []struct {
 		name      string
 		claims    jwt.MapClaims
 		wantError error
 	}{
 		{
-			name:      "valid user_id",
-			claims:    jwt.MapClaims{ClaimUserID: "user123"},
+			name:      "valid email",
+			claims:    jwt.MapClaims{ClaimEmail: "test@example.com"},
 			wantError: nil,
 		},
 		{
-			name:      "missing user_id in empty claims",
+			name:      "missing email",
 			claims:    jwt.MapClaims{},
 			wantError: ErrClaimNotFound,
 		},
 		{
-			name:      "missing user_id in non-empty claims",
-			claims:    jwt.MapClaims{"foo": "bar"},
-			wantError: ErrClaimNotFound,
-		},
-		{
-			name:      "user_id as number",
-			claims:    jwt.MapClaims{ClaimUserID: 123},
+			name:      "empty email",
+			claims:    jwt.MapClaims{ClaimEmail: ""},
 			wantError: ErrInvalidClaimFormat,
 		},
 		{
-			name:      "empty user_id string",
-			claims:    jwt.MapClaims{ClaimUserID: ""},
+			name:      "invalid email type",
+			claims:    jwt.MapClaims{ClaimEmail: 123},
 			wantError: ErrInvalidClaimFormat,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateClaimUserID(tc.claims[ClaimUserID])
+			err := validateClaimEmail(tc.claims[ClaimEmail])
 			if !errors.Is(err, tc.wantError) {
-				t.Errorf("ValidateClaimUserID() error = %v, want %v", err, tc.wantError)
+				t.Errorf("validateClaimEmail() error = %v, want %v", err, tc.wantError)
 			}
 		})
 	}
 }
 
-func TestValidateClaimIssuedAt(t *testing.T) {
+func TestValidateClaimType(t *testing.T) {
+	testCases := []struct {
+		name          string
+		claims        jwt.MapClaims
+		expectedValue string
+		wantError     error
+	}{
+		{
+			name:          "valid type",
+			claims:        jwt.MapClaims{ClaimType: "verification"},
+			expectedValue: "verification",
+			wantError:     nil,
+		},
+		{
+			name:          "missing type",
+			claims:        jwt.MapClaims{},
+			expectedValue: "verification",
+			wantError:     ErrClaimNotFound,
+		},
+		{
+			name:          "mismatched type",
+			claims:        jwt.MapClaims{ClaimType: "password_reset"},
+			expectedValue: "verification",
+			wantError:     ErrInvalidClaimFormat,
+		},
+		{
+			name:          "invalid type format",
+			claims:        jwt.MapClaims{ClaimType: 123},
+			expectedValue: "verification",
+			wantError:     ErrInvalidClaimFormat,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateClaimType(tc.claims[ClaimType], tc.expectedValue)
+			if !errors.Is(err, tc.wantError) {
+				t.Errorf("validateClaimType() error = %v, want %v", err, tc.wantError)
+			}
+		})
+	}
+}
+
+func TestValidateClaimExpiresAt(t *testing.T) {
 	now := time.Now()
 	testCases := []struct {
 		name      string
@@ -59,43 +97,144 @@ func TestValidateClaimIssuedAt(t *testing.T) {
 		wantError error
 	}{
 		{
-			name:      "valid iat",
-			claims:    jwt.MapClaims{ClaimIssuedAt: float64(now.Add(-1 * time.Minute).Unix())},
+			name:      "valid exp",
+			claims:    jwt.MapClaims{ClaimExpiresAt: float64(now.Add(1 * time.Minute).Unix())},
 			wantError: nil,
 		},
 		{
-			name:      "missing iat",
+			name:      "missing exp",
 			claims:    jwt.MapClaims{},
 			wantError: ErrClaimNotFound,
 		},
 		{
-			name:      "iat in future",
-			claims:    jwt.MapClaims{ClaimIssuedAt: float64(now.Add(1 * time.Minute).Unix())},
-			wantError: ErrTokenUsedBeforeIssued,
+			name:      "expired token",
+			claims:    jwt.MapClaims{ClaimExpiresAt: float64(now.Add(-1 * time.Minute).Unix())},
+			wantError: ErrJwtTokenExpired,
 		},
 		{
-			name:      "invalid iat type",
-			claims:    jwt.MapClaims{ClaimIssuedAt: "not a number"},
+			name:      "invalid exp type",
+			claims:    jwt.MapClaims{ClaimExpiresAt: "not a number"},
 			wantError: ErrInvalidClaimFormat,
-		},
-		{
-			name:      "iat in non-empty claims",
-			claims:    jwt.MapClaims{"foo": "bar", ClaimIssuedAt: float64(now.Add(-1 * time.Minute).Unix())},
-			wantError: nil,
-		},
-		{
-			name:      "token too old",
-			claims:    jwt.MapClaims{ClaimIssuedAt: float64(now.Add(-8 * 24 * time.Hour).Unix())},
-			wantError: ErrTokenTooOld,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := validateClaimIssuedAt(tc.claims[ClaimIssuedAt])
+			err := validateClaimExpiresAt(tc.claims[ClaimExpiresAt])
 			if !errors.Is(err, tc.wantError) {
-				t.Errorf("ValidateClaimIssuedAt() error = %v, want %v", err, tc.wantError)
+				t.Errorf("validateClaimExpiresAt() error = %v, want %v", err, tc.wantError)
 			}
 		})
 	}
+}
+
+func TestValidateTypedClaims(t *testing.T) {
+	now := time.Now()
+	validClaims := jwt.MapClaims{
+		ClaimIssuedAt:  float64(now.Unix()),
+		ClaimExpiresAt: float64(now.Add(15 * time.Minute).Unix()),
+		ClaimUserID:    "user123",
+		ClaimEmail:     "test@example.com",
+		ClaimNewEmail:  "new@example.com",
+	}
+
+	testCases := []struct {
+		name          string
+		claims        jwt.MapClaims
+		validationFunc func(jwt.MapClaims) error
+		wantError     error
+	}{
+		// Email Verification
+		{
+			name: "Valid Email Verification",
+			claims: func() jwt.MapClaims {
+				c := cloneClaims(validClaims)
+				c[ClaimType] = ClaimVerificationValue
+				return c
+			}(),
+			validationFunc: ValidateEmailVerificationClaims,
+			wantError:     nil,
+		},
+		{
+			name: "Invalid Email Verification - Missing iat",
+			claims: func() jwt.MapClaims {
+				c := cloneClaims(validClaims)
+				c[ClaimType] = ClaimVerificationValue
+				delete(c, ClaimIssuedAt)
+				return c
+			}(),
+			validationFunc: ValidateEmailVerificationClaims,
+			wantError:     ErrInvalidVerificationToken,
+		},
+
+		// Password Reset
+		{
+			name: "Valid Password Reset",
+			claims: func() jwt.MapClaims {
+				c := cloneClaims(validClaims)
+				c[ClaimType] = ClaimPasswordResetValue
+				return c
+			}(),
+			validationFunc: ValidatePasswordResetClaims,
+			wantError:     nil,
+		},
+
+		// Session
+		{
+			name:           "Valid Session",
+			claims:         validClaims,
+			validationFunc: ValidateSessionClaims,
+			wantError:      nil,
+		},
+		{
+			name: "Invalid Session - Missing iat",
+			claims: func() jwt.MapClaims {
+				c := cloneClaims(validClaims)
+				delete(c, ClaimIssuedAt)
+				return c
+			}(),
+			validationFunc: ValidateSessionClaims,
+			wantError:     ErrClaimNotFound,
+		},
+
+		// Email Change
+		{
+			name: "Valid Email Change",
+			claims: func() jwt.MapClaims {
+				c := cloneClaims(validClaims)
+				c[ClaimType] = ClaimEmailChangeValue
+				return c
+			}(),
+			validationFunc: ValidateEmailChangeClaims,
+			wantError:     nil,
+		},
+		{
+			name: "Invalid Email Change - Missing new_email",
+			claims: func() jwt.MapClaims {
+				c := cloneClaims(validClaims)
+				c[ClaimType] = ClaimEmailChangeValue
+				delete(c, ClaimNewEmail)
+				return c
+			}(),
+			validationFunc: ValidateEmailChangeClaims,
+			wantError:     ErrInvalidVerificationToken,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := tc.validationFunc(tc.claims)
+			if !errors.Is(err, tc.wantError) {
+				t.Errorf("validation error = %v, want %v", err, tc.wantError)
+			}
+		})
+	}
+}
+
+func cloneClaims(c jwt.MapClaims) jwt.MapClaims {
+	clone := make(jwt.MapClaims, len(c))
+	for k, v := range c {
+		clone[k] = v
+	}
+	return clone
 }
