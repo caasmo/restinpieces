@@ -158,7 +158,11 @@ func TestPath_FileDB(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create db pool: %v", err)
 	}
-	defer pool.Close()
+	t.Cleanup(func() {
+		if err := pool.Close(); err != nil {
+			t.Errorf("failed to close db pool: %v", err)
+		}
+	})
 
 	db := &Db{pool: pool}
 
