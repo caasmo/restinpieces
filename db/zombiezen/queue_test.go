@@ -236,8 +236,12 @@ func TestRecurrentJob(t *testing.T) {
 func TestJobAdminAndEdgeCases(t *testing.T) {
 	t.Run("ListJobs", func(t *testing.T) {
 		testDB := newTestQueueDB(t)
-		testDB.InsertJob(db.Job{JobType: "job1"})
-		testDB.InsertJob(db.Job{JobType: "job2"})
+		if err := testDB.InsertJob(db.Job{JobType: "job1"}); err != nil {
+			t.Fatalf("InsertJob failed: %v", err)
+		}
+		if err := testDB.InsertJob(db.Job{JobType: "job2"}); err != nil {
+			t.Fatalf("InsertJob failed: %v", err)
+		}
 
 		jobs, err := testDB.ListJobs(0)
 		if err != nil {
@@ -258,7 +262,9 @@ func TestJobAdminAndEdgeCases(t *testing.T) {
 
 	t.Run("DeleteJob", func(t *testing.T) {
 		testDB := newTestQueueDB(t)
-		testDB.InsertJob(db.Job{JobType: "to_delete"})
+		if err := testDB.InsertJob(db.Job{JobType: "to_delete"}); err != nil {
+			t.Fatalf("InsertJob failed: %v", err)
+		}
 		jobs, _ := testDB.ListJobs(0)
 		jobID := jobs[0].ID
 
