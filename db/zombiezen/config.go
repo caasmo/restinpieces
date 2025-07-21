@@ -25,7 +25,7 @@ func (d *Db) GetConfig(scope string, generation int) ([]byte, string, error) {
 	err = sqlitex.Execute(conn,
 		`SELECT content, format FROM app_config 
 		 WHERE scope = ? 
-		 ORDER BY created_at DESC 
+		 ORDER BY created_at DESC, id DESC
 		 LIMIT 1 OFFSET ?`,
 		&sqlitex.ExecOptions{
 			Args: []any{scope, generation},
