@@ -16,7 +16,7 @@ func (d *Db) ListJobs(limit int) (jobs []*db.Job, err error) {
 	}
 	defer d.pool.Put(conn)
 
-	query := "SELECT * FROM job_queue ORDER BY created_at DESC"
+	query := "SELECT * FROM job_queue ORDER BY created_at DESC, id DESC"
 	if limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d", limit)
 	}
