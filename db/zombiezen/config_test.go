@@ -25,12 +25,16 @@ func newTestDB(t *testing.T) *Db {
 	}
 
 	t.Cleanup(func() {
-		if err := pool.Close(); err != nil {
+		err := pool.Close()
+		if err != nil {
 			t.Errorf("failed to close db pool: %v", err)
 		}
 	})
 
-	conn := pool.Get(context.Background())
+	conn, err := pool.Take(context.Background())
+	if err != nil {
+		t.Fatalf("failed to get db connection: %v", err)
+	}
 	defer pool.Put(conn)
 
 	schemaFS := migrations.Schema()
