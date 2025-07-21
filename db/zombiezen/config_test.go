@@ -51,7 +51,11 @@ func newTestDB(t *testing.T) *Db {
 		t.Fatalf("Failed to execute app_config.sql: %v", err)
 	}
 
-	return &Db{pool: pool}
+	db, err := New(pool)
+	if err != nil {
+		t.Fatalf("failed to create db: %v", err)
+	}
+	return db
 }
 
 func TestGetAndInsertConfig(t *testing.T) {

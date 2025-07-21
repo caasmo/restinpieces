@@ -29,6 +29,9 @@ func NewLog(dbPath string) (*Log, error) {
 // InsertBatch writes a batch of log entries to the SQLite database.
 // It uses an explicit transaction that will be rolled back on any error.
 func (l *Log) InsertBatch(batch []db.Log) (err error) {
+	if l.conn == nil {
+		return fmt.Errorf("database connection is closed")
+	}
 	if len(batch) == 0 {
 		return nil
 	}
@@ -86,6 +89,9 @@ func (l *Log) InsertBatch(batch []db.Log) (err error) {
 
 // Ping checks if the specified table exists.
 func (l *Log) Ping(tableName string) (err error) {
+	if l.conn == nil {
+		return fmt.Errorf("database connection is closed")
+	}
 	query := fmt.Sprintf("SELECT 1 FROM %s LIMIT 1;", tableName)
 	var stmt *sqlite.Stmt
 	stmt, _, err = l.conn.PrepareTransient(query)
@@ -112,7 +118,9 @@ func (l *Log) Ping(tableName string) (err error) {
 // Close closes the underlying SQLite connection.
 func (l *Log) Close() error {
 	if l.conn != nil {
-		return l.conn.Close()
+		err := l.conn.Close()
+		l.conn = nil // Set to nil after closing
+		return err
 	}
 	return nil
 }
