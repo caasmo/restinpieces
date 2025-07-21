@@ -48,7 +48,9 @@ func newTestLogDB(t *testing.T) (*Log, string) {
 	}
 
 	t.Cleanup(func() {
-		logDB.Close()
+		if err := logDB.Close(); err != nil && err != ErrConnectionClosed {
+			t.Errorf("failed to close log db: %v", err)
+		}
 	})
 
 	return logDB, dbPath
@@ -120,7 +122,9 @@ func TestLog_InsertBatch(t *testing.T) {
 		logDB, dbPath := newTestLogDB(t)
 
 		// Close the connection to force a failure on the next operation
-		logDB.Close()
+		if err := logDB.Close(); err != nil {
+			t.Fatalf("failed to close log db for test setup: %v", err)
+		}
 
 		batch := []db.Log{
 			{Level: 1, Message: "this should fail", JsonData: "{}", Created: db.TimeFormat(time.Now())},
@@ -135,7 +139,11 @@ func TestLog_InsertBatch(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to reopen db for verification: %v", err)
 		}
-		defer verifyConn.Close()
+		defer func() {
+			if err := verifyConn.Close(); err != nil {
+				t.Errorf("failed to close verification connection: %v", err)
+			}
+		}()
 
 		var count int
 		err = sqlitex.Execute(verifyConn, "SELECT COUNT(*) FROM logs", &sqlitex.ExecOptions{
@@ -204,7 +212,9 @@ func TestLog_Close(t *testing.T) {
 
 	t.Run("Operations After Close", func(t *testing.T) {
 		logDB, _ := newTestLogDB(t)
-		logDB.Close()
+		if err := logDB.Close(); err != nil {
+			t.Fatalf("failed to close log db for test setup: %v", err)
+		}
 
 		err := logDB.Ping("logs")
 		if err != ErrConnectionClosed {
