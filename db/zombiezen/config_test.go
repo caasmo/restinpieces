@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite/sqlitex"
@@ -83,7 +82,6 @@ func TestGetAndInsertConfig(t *testing.T) {
 		if err != nil {
 			t.Fatalf("InsertConfig failed: %v", err)
 		}
-		time.Sleep(100 * time.Millisecond)
 	}
 
 	// 3. Test GetConfig
