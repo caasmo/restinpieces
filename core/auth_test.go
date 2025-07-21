@@ -274,3 +274,110 @@ func generateToken(email, passwordHash string, secret string, expiresIn time.Dur
 	}
 	return token, nil
 }
+
+func TestNewDefaultAuthenticator(t *testing.T) {
+	mockDB := &mock.Db{}
+	logger := slog.Default()
+	cfg := &config.Config{}
+	configProvider := config.NewProvider(cfg)
+
+	auth := NewDefaultAuthenticator(mockDB, logger, configProvider)
+
+	if auth.dbAuth != mockDB {
+		t.Error("dbAuth not set correctly")
+	}
+	if auth.logger != logger {
+		t.Error("logger not set correctly")
+	}
+	if auth.configProvider != configProvider {
+		t.Error("configProvider not set correctly")
+	}
+}
+
+func TestAuthenticateErrorCases(t *testing.T) {
+	testUser := &db.User{
+		ID:       "testuser123",
+		Email:    "test@example.com",
+		Password: "hashed_password",
+	}
+
+	testCases := []struct {
+		name       string
+		userSetup  func(*mock.Db)
+		token      string
+		secret     string
+		wantError  jsonResponse
+	}{
+		{
+			name:       "unverified parse error",
+			userSetup:  nil,
+			token:      "invalid.token.string",
+			secret:     "test_secret_32_bytes_long_xxxxxx",
+			wantError:  errorJwtInvalidToken,
+		},
+		{
+			name: "session validation error",
+			userSetup: nil,
+			token: func() string {
+				claims := jwtv5.MapClaims{
+					crypto.ClaimUserID: "user123",
+					// Missing iat and exp
+				}
+				token, _ := crypto.NewJwt(claims, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
+				return token
+			}(),
+			secret:    "test_secret_32_bytes_long_xxxxxx",
+			wantError: errorJwtInvalidToken,
+		},
+		{
+			name: "signing key creation error",
+			userSetup: func(mockDB *mock.Db) {
+				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) {
+					return testUser, nil
+				}
+			},
+			token: func() string {
+				token, _ := generateToken(testUser.Email, testUser.Password, "a_different_secret_that_is_long_enough", 15*time.Minute)
+				return token
+			}(),
+			secret:    "short", // This will cause NewJwtSigningKeyWithCredentials to fail
+			wantError: errorTokenGeneration,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockDB := &mock.Db{}
+			if tc.userSetup != nil {
+				tc.userSetup(mockDB)
+			}
+
+			req := httptest.NewRequest("GET", "/protected", nil)
+			req.Header.Set("Authorization", "Bearer "+tc.token)
+
+			cfg := &config.Config{
+				Jwt: config.Jwt{
+					AuthSecret:        tc.secret,
+					AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
+				},
+			}
+			configProvider := config.NewProvider(cfg)
+
+			auth := NewDefaultAuthenticator(mockDB, slog.Default(), configProvider)
+			user, resp, authErr := auth.Authenticate(req)
+
+			if user != nil {
+				t.Errorf("expected user to be nil, got %v", user)
+			}
+			if authErr == nil {
+				t.Error("expected an authentication error, got nil")
+			}
+			if resp.status != tc.wantError.status {
+				t.Errorf("expected status %d, got %d", tc.wantError.status, resp.status)
+			}
+			if string(resp.body) != string(tc.wantError.body) {
+				t.Errorf("expected error response body %q, got %q", string(tc.wantError.body), string(resp.body))
+			}
+		})
+	}
+}
