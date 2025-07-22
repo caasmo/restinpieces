@@ -197,7 +197,9 @@ func TestGzipMiddleware(t *testing.T) {
 		// A simple fallback that just writes "fallback"
 		fallback := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
-			io.WriteString(w, "fallback executed")
+			if _, err := io.WriteString(w, "fallback executed"); err != nil {
+				t.Fatalf("fallback handler failed to write response: %v", err)
+			}
 		})
 
 		middleware := GzipMiddleware(nonSeekableTestFS)
