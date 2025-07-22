@@ -21,7 +21,7 @@ func TestFaviconHandler(t *testing.T) {
 	})
 
 	t.Run("CacheControlHeader", func(t *testing.T) {
-		expected := "public, max-age=86400"
+		expected := HeadersFavicon["Cache-Control"]
 		if val := rr.Header().Get("Cache-Control"); val != expected {
 			t.Errorf("handler returned wrong Cache-Control header: got %q want %q",
 				val, expected)
