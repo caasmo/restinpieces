@@ -1,11 +1,62 @@
 package core
 
 import (
+	"context"
 	"net/http"
+	"time"
 
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/notify"
 	"github.com/caasmo/restinpieces/router"
 )
+
+// mockDbApp is a mock for db.DbApp
+type mockDbApp struct {
+	db.DbApp
+}
+
+// mockCache is a mock for cache.Cache
+type mockCache struct{}
+
+func (m *mockCache) Set(key string, value interface{}, cost int64) bool { return true }
+func (m *mockCache) Get(key string) (interface{}, bool) {
+	return nil, false
+}
+func (m *mockCache) Del(key string)                                          {}
+func (m *mockCache) SetWithTTL(key string, value interface{}, cost int64, ttl time.Duration) bool {
+	return true
+}
+
+// mockConfigStore is a mock for config.SecureStore
+type mockConfigStore struct{}
+
+func (m *mockConfigStore) Get(scope string, generation int) ([]byte, string, error) {
+	return nil, "", nil
+}
+func (m *mockConfigStore) Save(scope string, plaintextData []byte, format string, description string) error {
+	return nil
+}
+
+// mockNotifier is a mock for notify.Notifier
+type mockNotifier struct{}
+
+func (m *mockNotifier) Send(ctx context.Context, n notify.Notification) error {
+	return nil
+}
+
+// mockConfigProvider is a manual mock for config.Provider
+type mockConfigProvider struct {
+	config.Provider
+	getFunc func() *config.Config
+}
+
+func (m *mockConfigProvider) Get() *config.Config {
+	if m.getFunc != nil {
+		return m.getFunc()
+	}
+	return nil
+}
 
 // MockAuthenticator implements the Authenticator interface for testing
 type MockAuth struct {
