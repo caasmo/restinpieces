@@ -23,8 +23,12 @@ type JobHandler interface {
 	Handle(ctx context.Context, job db.Job) error // Changed to db.Job
 }
 
-// NewExecutor creates an executor with the given handlers
+// NewExecutor creates an executor with the given handlers.
+// If handlers is nil, an empty map will be initialized for the registry.
 func NewExecutor(handlers map[string]JobHandler) *DefaultExecutor {
+	if handlers == nil {
+		handlers = make(map[string]JobHandler)
+	}
 	return &DefaultExecutor{
 		registry: handlers,
 	}
