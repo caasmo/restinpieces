@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/notify"
 	"github.com/caasmo/restinpieces/router"
@@ -42,19 +41,6 @@ func (m *mockConfigStore) Save(scope string, plaintextData []byte, format string
 type mockNotifier struct{}
 
 func (m *mockNotifier) Send(ctx context.Context, n notify.Notification) error {
-	return nil
-}
-
-// mockConfigProvider is a manual mock for config.Provider
-type mockConfigProvider struct {
-	config.Provider
-	getFunc func() *config.Config
-}
-
-func (m *mockConfigProvider) Get() *config.Config {
-	if m.getFunc != nil {
-		return m.getFunc()
-	}
 	return nil
 }
 
