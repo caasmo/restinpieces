@@ -7,7 +7,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
-	"sync"
+	//"sync"
 	"testing"
 	"time"
 
@@ -224,60 +224,60 @@ func TestScheduler_ProcessJobs(t *testing.T) {
 }
 
 // TODO
-func aTestScheduler_ShutdownCancellation(t *testing.T) {
-	cfg := config.Scheduler{Interval: config.Duration{Duration: 100 * time.Millisecond}, MaxJobsPerTick: 1}
-	scheduler, testDB := newTestScheduler(t, cfg)
-
-	jobStarted := make(chan struct{})
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	scheduler.Executor().Register("cancellable", FuncHandler(func(ctx context.Context, job db.Job) error {
-		close(jobStarted)
-		<-ctx.Done() // Wait for cancellation
-		wg.Done()
-		return ctx.Err()
-	}))
-
-	if err := testDB.InsertJob(db.Job{JobType: "cancellable"}); err != nil {
-		t.Fatalf("InsertJob failed: %v", err)
-	}
-
-	// Start the scheduler
-	if err := scheduler.Start(); err != nil {
-		t.Fatalf("Start failed: %v", err)
-	}
-
-	// Wait for the job to be picked up by the scheduler's ticker
-	select {
-	case <-jobStarted:
-		// It started, now stop the scheduler
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for job to start")
-	}
-
-	// Stop the scheduler, which will cancel the context for processJobs
-	stopCtx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	if err := scheduler.Stop(stopCtx); err != nil {
-		t.Fatalf("Stop failed: %v", err)
-	}
-
-	// Wait for the job handler to complete to ensure DB updates are finished
-	wg.Wait()
-
-	// Check the job's final state
-	jobs, err := testDB.Claim(1)
-	if err != nil {
-		t.Fatalf("Claim failed: %v", err)
-	}
-	if len(jobs) != 1 {
-		t.Fatalf("expected 1 failed job to be claimable, got %d", len(jobs))
-	}
-	if jobs[0].LastError != "job execution canceled" {
-		t.Errorf("expected last error to be 'job execution canceled', got %q", jobs[0].LastError)
-	}
-}
+//func aTestScheduler_ShutdownCancellation(t *testing.T) {
+//	cfg := config.Scheduler{Interval: config.Duration{Duration: 100 * time.Millisecond}, MaxJobsPerTick: 1}
+//	scheduler, testDB := newTestScheduler(t, cfg)
+//
+//	jobStarted := make(chan struct{})
+//	var wg sync.WaitGroup
+//	wg.Add(1)
+//
+//	scheduler.Executor().Register("cancellable", FuncHandler(func(ctx context.Context, job db.Job) error {
+//		close(jobStarted)
+//		<-ctx.Done() // Wait for cancellation
+//		wg.Done()
+//		return ctx.Err()
+//	}))
+//
+//	if err := testDB.InsertJob(db.Job{JobType: "cancellable"}); err != nil {
+//		t.Fatalf("InsertJob failed: %v", err)
+//	}
+//
+//	// Start the scheduler
+//	if err := scheduler.Start(); err != nil {
+//		t.Fatalf("Start failed: %v", err)
+//	}
+//
+//	// Wait for the job to be picked up by the scheduler's ticker
+//	select {
+//	case <-jobStarted:
+//		// It started, now stop the scheduler
+//	case <-time.After(2 * time.Second):
+//		t.Fatal("timed out waiting for job to start")
+//	}
+//
+//	// Stop the scheduler, which will cancel the context for processJobs
+//	stopCtx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+//	defer cancel()
+//	if err := scheduler.Stop(stopCtx); err != nil {
+//		t.Fatalf("Stop failed: %v", err)
+//	}
+//
+//	// Wait for the job handler to complete to ensure DB updates are finished
+//	wg.Wait()
+//
+//	// Check the job's final state
+//	jobs, err := testDB.Claim(1)
+//	if err != nil {
+//		t.Fatalf("Claim failed: %v", err)
+//	}
+//	if len(jobs) != 1 {
+//		t.Fatalf("expected 1 failed job to be claimable, got %d", len(jobs))
+//	}
+//	if jobs[0].LastError != "job execution canceled" {
+//		t.Errorf("expected last error to be 'job execution canceled', got %q", jobs[0].LastError)
+//	}
+//}
 
 func TestNextRecurrentJob(t *testing.T) {
 	now := time.Now()
