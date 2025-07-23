@@ -24,6 +24,7 @@ const (
 	// discordMaxMessageLength is the maximum character limit for a Discord message.
 	// Messages longer than this will be truncated.
 	discordMaxMessageLength = 2000
+	discordMessageFormat    = "[%s] from *%s*:\n> %s\n"
 )
 
 // Notifier implements the notify.Notifier interface for sending notifications to Discord.
@@ -77,7 +78,7 @@ func New(discordCfg config.Discord, logger *slog.Logger) (*Notifier, error) {
 }
 
 func (dn *Notifier) formatMessage(n notify.Notification) string {
-	mainMessage := fmt.Sprintf("[%s] from *%s*:\n> %s\n",
+	mainMessage := fmt.Sprintf(discordMessageFormat,
 		n.Type.String(),
 		n.Source,
 		n.Message)
