@@ -15,7 +15,7 @@ RestInPieces is a Go framework for building secure, high-performance API servers
 
 To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which walks you through the initial setup of a new application.
 
-## Core Philosophy: One Process Programming
+## Core Philosophy: One Process Paradigm
 
 This framework is built on the principle of "one process programming," a design philosophy that prioritizes simplicity and effectiveness by leveraging a single, powerful server instead of a complex distributed system. The core idea is straightforward: **don't use N computers when 1 will do.**
 
