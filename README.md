@@ -17,7 +17,7 @@ To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which wa
 
 ## Core Philosophy: One Process Paradigm
 
-This framework is built on the principle of "one process programming," a design philosophy that prioritizes simplicity and effectiveness by leveraging a single, powerful server instead of a complex distributed system. The core idea is straightforward: **don't use N computers when 1 will do.**
+This framework is built on the principle of "one process programming," a design philosophy that prioritizes simplicity and effectiveness by leveraging a single server instead of a complex distributed system. The core idea is straightforward: **don't use N computers when 1 will do.**
 
 By running a single Go binary with an embedded SQLite database on one VM, this approach dramatically simplifies development, deployment, and maintenance. While it doesn't offer the auto-scaling or "serverless" benefits of modern cloud architectures, it provides a robust and high-performance foundation that can serve thousands of concurrent requests and support a growing business for years.
 
