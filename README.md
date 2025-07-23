@@ -39,6 +39,7 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
   - [Metrics](#metrics)
   - [Logger](#logger)
   - [Notifications](#notifications)
+  - [Mailer](#mailer)
   - [Middleware](#middleware)
 - [Examples](#examples)
 - [Extensibility](#extensibility)
@@ -114,6 +115,19 @@ The framework's logging is built upon the standard `slog` library for structured
 The framework's notification system is designed around a `Notifier` interface, which standardizes how notifications are sent. The primary data structure, `Notification`, carries a `Type` (e.g., `Alarm`, `Metric`), `Source`, `Message`, and a map of `Fields` for additional structured data.
 
 An official implementation for Discord is included, which sends formatted messages to a configured webhook URL. This notifier operates asynchronously, using goroutines for non-blocking `Send` calls. It incorporates a rate limiter to prevent API abuse and automatically truncates messages that exceed Discord's 2000-character limit. Developers can create custom notifiers for other services (like Slack or email) by providing their own implementation of the `Notifier` interface.
+
+### Mailer
+
+The framework includes a `Mailer` component for sending transactional emails over SMTP. It is designed to be flexible and resilient, handling common account management workflows.
+
+-   **Configuration**: The mailer is configured through the application's central configuration provider, allowing for dynamic updates to SMTP settings (host, port, credentials, TLS) without a server restart.
+-   **Protocol Support**: It supports standard SMTP authentication methods (`PLAIN`, `CRAM-MD5`) and connection security (explicit `TLS` and `STARTTLS`).
+-   **Transactional Emails**: Pre-built methods are included for common user actions:
+    -   Email address verification
+    -   Password reset requests
+    -   Email change notifications
+-   **Asynchronous Sending**: Emails are sent in a non-blocking manner using goroutines, with context-based timeouts to prevent long-running operations from impacting application performance.
+-   **Templating**: It uses simple, embedded HTML templates for emails, which can be easily customized.
 
 ### Middleware
 The framework provides a collection of built-in middleware to handle common cross-cutting concerns like security, logging, and metrics.
