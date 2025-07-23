@@ -28,6 +28,7 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
 # Content
 
 - [Key Features](#key-features)
+  - [Durability](#durability)
   - [Authentication](#authentication)
   - [Security](#security)
   - [Core Infrastructure](#core-infrastructure)
@@ -35,7 +36,6 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
   - [Frontend Integration](#frontend-integration)
   - [Background Processing](#background-processing)
   - [Performance](#performance)
-  - [Backups](#backups)
   - [Metrics](#metrics)
   - [Logger](#logger)
   - [Notifications](#notifications)
@@ -46,6 +46,16 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
 - [TODO](#todo)
 
 ## Key Features
+
+### Durability
+A key challenge of the single-process paradigm is ensuring data durability in the event of a server failure. This framework addresses this with two primary strategies:
+
+- **Local Backups**: The framework includes a simple, integrated backup solution for SQLite databases, managed as a background job. This can be configured and activated directly in the application's settings. It operates in two modes:
+  - **Online Mode**: Performs a live backup using SQLite's Online Backup API. This allows the application to continue its operations with minimal interruption, making it ideal for active databases. The backup process copies the database page by page, with configurable pauses to reduce I/O contention.
+  - **Vacuum Mode**: Creates a clean, defragmented, and compact copy of the database using the `VACUUM INTO` command. This method is thorough but requires more significant locking, making it suitable for maintenance windows or less active databases.
+- Backups are saved as compressed `.bck.gz` archives in a configurable directory, with filenames containing a timestamp and the strategy used. You can pull those gz files from a client available at [restinpieces-sqlite-backup](https://github.com/caasmo/restinpieces-sqlite-backup/tree/master/cmd/client).
+
+- **Real-Time Replication**: For more robust, real-time replication and point-in-time recovery, a Litestream-based integration is available in a separate repository. See [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) for implementation details.
 
 ### Authentication
 The framework provides a comprehensive authentication system built around JSON Web Tokens (JWT). Session management is handled via bearer tokens sent in the `Authorization` header. A key security feature is the use of dynamic JWT signing keys, which are derived from a combination of user-specific credentials (email and password hash) and a global server secret. This ensures that a token's signature is invalidated if a user's password changes.
@@ -93,13 +103,6 @@ The system supports multiple authentication and account management workflows thr
 - Minimal external dependencies
 - Production-ready builds with size optimization
 
-### Backups
-- **Built-in Local Backups**: The framework includes a simple, integrated backup solution for SQLite databases, managed as a background job. This can be configured and activated directly in the application's settings. It operates in two modes:
-  - **Online Mode**: Performs a live backup using SQLite's Online Backup API. This allows the application to continue its operations with minimal interruption, making it ideal for active databases. The backup process copies the database page by page, with configurable pauses to reduce I/O contention.
-  - **Vacuum Mode**: Creates a clean, defragmented, and compact copy of the database using the `VACUUM INTO` command. This method is thorough but requires more significant locking, making it suitable for maintenance windows or less active databases.
-- Backups are saved as compressed `.bck.gz` archives in a configurable directory, with filenames containing a timestamp and the strategy used. You can pull those gz files from a client available at [restinpieces-sqlite-backup](https://github.com/caasmo/restinpieces-sqlite-backup/tree/master/cmd/client).
-- **Litestream Integration**: For more robust, real-time replication and point-in-time recovery, a Litestream-based integration is available in a separate repository. See [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) for implementation details.
-
 ### Metrics
 The framework provides built-in metrics collection using the `prometheus/client_golang` library. It includes a middleware that tracks the total number of HTTP requests (`http_server_requests_total`), a counter labeled by HTTP status code, allowing for detailed monitoring of server responses. Metrics collection can be toggled on or off via configuration without a server restart and is exposed on a configurable endpoint (e.g., `/metrics`) for a Prometheus server to scrape.
 
@@ -118,7 +121,7 @@ The framework provides a collection of built-in middleware to handle common cros
 -   **ResponseRecorder**: A utility middleware that wraps the standard `http.ResponseWriter` to capture the status code, response size, and timing information. This is used internally by other middleware like `Metrics` and `RequestLog` and should typically be the first middleware in the chain.
 -   **RequestLog**: Provides structured logging for every incoming HTTP request. It captures details like method, URI, status, duration, remote IP, and user agent, with configurable length limits to keep logs concise.
 -   **Metrics**: Collects Prometheus-compatible metrics for HTTP requests, labeled by status code. When activated, metrics are exposed on a configurable endpoint (e.g., `/metrics`) for scraping.
--   **BlockIp**: Acts as a dynamic IP blocking mechanism to protect the server from traffic spikes and potential denial-of-service attacks. It uses a Top-K sketch algorithm to identify and temporarily block IP addresses that are responsible for a disproportionate amount of traffic, functioning as a circuit breaker under heavy load.
+-   **BlockIp**: Acts as a dynamic IP blocking mechanism to protect the server from traffic spikes and potential denial-of-service attacks. It uses a Top-K sketch algorithm to identify and temporarily block IP addresses that are responsible for a disproportionate amount of traffic, a circuit breaker under heavy load.
 -   **BlockHost**: Enforces security by validating the `Host` header of incoming requests against a configurable whitelist of allowed hostnames. It supports exact matches and wildcard subdomains (e.g., `*.example.com`).
 -   **BlockRequestBody**: Limits the size of incoming request bodies to a configurable maximum. This helps prevent resource exhaustion from excessively large payloads and can be configured to exclude specific URL paths.
 -   **BlockUaList**: Filters requests by matching the `User-Agent` string against a configurable regular expression. This can be used to block scrapers, bots, or other unwanted clients.
