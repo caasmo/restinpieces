@@ -48,3 +48,24 @@ func NewNilNotifier() *NilNotifier {
 func (nn *NilNotifier) Send(ctx context.Context, n Notification) error {
 	return nil
 }
+
+// MultiNotifier sends notifications to multiple notifiers.
+type MultiNotifier struct {
+	notifiers []Notifier
+}
+
+// NewMultiNotifier creates a new MultiNotifier.
+func NewMultiNotifier(notifiers ...Notifier) *MultiNotifier {
+	return &MultiNotifier{notifiers: notifiers}
+}
+
+// Send sends the notification to all notifiers.
+// It stops and returns the error if any of the notifiers fail.
+func (mn *MultiNotifier) Send(ctx context.Context, n Notification) error {
+	for _, notifier := range mn.notifiers {
+		if err := notifier.Send(ctx, n); err != nil {
+			return err
+		}
+	}
+	return nil
+}
