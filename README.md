@@ -127,6 +127,7 @@ The framework provides a collection of built-in middleware to handle common cros
 -   **BlockUaList**: Filters requests by matching the `User-Agent` string against a configurable regular expression. This can be used to block scrapers, bots, or other unwanted clients.
 -   **TLSHeaderSTS**: Sets the `Strict-Transport-Security` (HSTS) header for all responses served over a TLS connection, instructing browsers to communicate with the server only over HTTPS.
 -   **Maintenance**: When activated via configuration, this middleware puts the server into maintenance mode. It responds to all requests with a `503 Service Unavailable` status code, allowing for system updates without shutting down the server.
+-   **Gzip**: Serves pre-compressed static assets (`.gz` files) from a given file system (`fs.FS`) to clients that support gzip encoding. This reduces bandwidth and improves load times. If a compressed file is not found, it seamlessly falls back to the next handler.
 
 ## Examples
 
