@@ -71,6 +71,14 @@ type Config struct {
 	Log              Log                       `toml:"log" comment:"Logging configuration"`
 	Metrics          Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
 	BackupLocal      BackupLocal               `toml:"backup_local" comment:"Local backup configuration"`
+	Cache            Cache                     `toml:"cache" comment:"Cache system settings"`
+}
+
+// Cache contains settings for the cache system.
+type Cache struct {
+	// Level defines the cache size and performance preset.
+	// Valid options are "small", "medium", "large", "very-large".
+	Level string `toml:"level"`
 }
 
 // BlockHost holds configuration for blocking requests based on the Host header.

@@ -154,5 +154,8 @@ func NewDefaultConfig() *Config {
 			PagesPerStep:  100,
 			SleepInterval: Duration{Duration: 10 * time.Millisecond},
 		},
+		Cache: Cache{
+			Level: "medium",
+		},
 	}
 }

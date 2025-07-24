@@ -42,14 +42,19 @@ func (rc *Cache[V]) SetWithTTL(key string, value V, cost int64, ttl time.Duratio
 	return rc.c.SetWithTTL(key, value, cost, ttl)
 }
 
-// New creates a new Ristretto cache instance specialized for string keys
-// and generic for the value type V.
-func New[V any]() (cache.Cache[string, V], error) {
+// New creates a new Ristretto cache instance based on a predefined level.
+func New[V any](level string) (cache.Cache[string, V], error) {
+	params, ok := cacheLevels[level]
+	if !ok {
+		// This check is a safeguard; validation in the config should prevent this.
+		return nil, fmt.Errorf("invalid cache level provided: %s", level)
+	}
+
 	// Instantiate ristretto.NewCache and ristr.Config with string and V
 	ristrettoCache, err := ristr.NewCache[string, V](&ristr.Config[string, V]{
-		NumCounters: 1e7,     // number of keys to track frequency of (10M)
-		MaxCost:     1 << 30, // maximum cost of cache (1GB)
-		BufferItems: 64,      // number of keys per Get buffer
+		NumCounters: params.NumCounters,
+		MaxCost:     params.MaxCost,
+		BufferItems: params.BufferItems,
 		// Metrics: true, // Enable metrics if needed
 	})
 	if err != nil {
@@ -59,4 +64,40 @@ func New[V any]() (cache.Cache[string, V], error) {
 	// Return our specialized wrapper Cache[V]
 	// which implements cache.Cache[string, V]
 	return &Cache[V]{c: ristrettoCache}, nil
+}
+
+// CacheParams holds the configuration for a Ristretto cache instance.
+type CacheParams struct {
+	NumCounters int64
+	MaxCost     int64
+	BufferItems int64
+}
+
+// cacheLevels defines presets for different operational environments,
+// mapping semantic VM sizes to Ristretto parameters.
+// - "small":      ~64MB cache. Suitable for small VMs, dev environments, or low-traffic sites.
+// - "medium":     ~256MB cache. A balanced default for general-purpose applications.
+// - "large":      ~1GB cache. For high-traffic applications on larger VMs.
+// - "very-large": ~4GB cache. For very high-traffic services requiring extensive caching.
+var cacheLevels = map[string]CacheParams{
+	"small": {
+		NumCounters: 1e5,     // Track 100k keys, assumes ~10k active items
+		MaxCost:     1 << 26, // 64MB
+		BufferItems: 64,
+	},
+	"medium": {
+		NumCounters: 1e6,     // Track 1M keys, assumes ~100k active items
+		MaxCost:     1 << 28, // 256MB
+		BufferItems: 64,
+	},
+	"large": {
+		NumCounters: 1e7,     // Track 10M keys, assumes ~1M active items
+		MaxCost:     1 << 30, // 1GB
+		BufferItems: 64,
+	},
+	"very-large": {
+		NumCounters: 4e7,     // Track 40M keys, assumes ~4M active items
+		MaxCost:     1 << 32, // 4GB
+		BufferItems: 64,
+	},
 }

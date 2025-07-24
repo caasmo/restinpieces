@@ -44,6 +44,29 @@ func Validate(cfg *Config) error {
 	if err := validateBlockIp(&cfg.BlockIp); err != nil {
 		return fmt.Errorf("block_ip config validation failed: %w", err)
 	}
+	if err := validateCache(&cfg.Cache); err != nil {
+		return fmt.Errorf("cache config validation failed: %w", err)
+	}
+	return nil
+}
+
+// validateCache checks the Cache configuration section.
+func validateCache(cache *Cache) error {
+	if cache.Level == "" {
+		return fmt.Errorf("cache.level cannot be empty")
+	}
+
+	// Validate that the level is one of the allowed values.
+	allowedLevels := map[string]struct{}{
+		"small":      {},
+		"medium":     {},
+		"large":      {},
+		"very-large": {},
+	}
+	if _, ok := allowedLevels[cache.Level]; !ok {
+		return fmt.Errorf("invalid cache.level '%s': must be one of 'small', 'medium', 'large', or 'very-large'", cache.Level)
+	}
+
 	return nil
 }
 
