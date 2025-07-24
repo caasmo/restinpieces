@@ -68,11 +68,8 @@ The system supports multiple authentication and account management workflows thr
 - **Account Management**: All account management processes, such as email verification, password reset, and email address changes, are handled through secure, multi-step flows. These flows typically involve generating a unique, short-lived JWT that is sent to the user's email via a background job queue, which the user then submits back to a confirmation endpoint.
 
 ### Security
-- Built-in security headers (CSP, CORS, etc.)
-- Dynamic IP blocking based on traffic patterns
-- User-Agent blocking based on configuration
-- Request body blocking based on configurable size limits
-- Hostname validation against a configurable whitelist.
+
+The "one process" paradigm simplifies deployment by running a single binary on a single VM, but it also means the application is directly exposed to the internet without a reverse proxy like Nginx acting as a first line of defense. This necessitates a defensive approach to security. The framework addresses this with a suite of built-in middleware designed to protect the server from common threats. These include dynamic IP blocking (`BlockIp`) to mitigate traffic spikes, hostname validation against a whitelist (`BlockHost`), request body size limitation (`BlockRequestBody`), and `User-Agent` filtering (`BlockUaList`). The framework also helps secure client communications by automatically setting security headers like `Strict-Transport-Security`.
 
 ### Core Infrastructure
 - Uses middleware and handler standard Go patterns
