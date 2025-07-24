@@ -74,5 +74,6 @@ jobs:
           else
             git add .github/badges/sloc.svg
             git commit -m "Update total lines badge: ${{ env.LINES_OF_CODE }}"
+            git pull --rebase
             git push
           fi

@@ -90,5 +90,6 @@ jobs:
             git add .github/badges/coverage.svg
             COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}')
             git commit -m "Update coverage badge: $COVERAGE"
+            git pull --rebase
             git push
           fi
