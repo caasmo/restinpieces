@@ -75,29 +75,26 @@ type CacheParams struct {
 
 // cacheLevels defines presets for different operational environments,
 // mapping semantic VM sizes to Ristretto parameters.
-// - "small":      ~64MB cache. Suitable for small VMs, dev environments, or low-traffic sites.
-// - "medium":     ~256MB cache. A balanced default for general-purpose applications.
-// - "large":      ~1GB cache. For high-traffic applications on larger VMs.
-// - "very-large": ~4GB cache. For very high-traffic services requiring extensive caching.
 var cacheLevels = map[string]CacheParams{
-	"small": {
-		NumCounters: 1e5,     // Track 100k keys, assumes ~10k active items
-		MaxCost:     1 << 26, // 64MB
-		BufferItems: 64,
-	},
-	"medium": {
-		NumCounters: 1e6,     // Track 1M keys, assumes ~100k active items
-		MaxCost:     1 << 28, // 256MB
-		BufferItems: 64,
-	},
-	"large": {
-		NumCounters: 1e7,     // Track 10M keys, assumes ~1M active items
-		MaxCost:     1 << 30, // 1GB
-		BufferItems: 64,
-	},
-	"very-large": {
-		NumCounters: 4e7,     // Track 40M keys, assumes ~4M active items
-		MaxCost:     1 << 32, // 4GB
-		BufferItems: 64,
-	},
+    "small": {
+        NumCounters: 1e5,     // Track 100k keys, assumes ~10k active items
+        MaxCost:     1 << 26, // 64MB
+        BufferItems: 64,
+    },
+    "medium": {
+        NumCounters: 1e6,     // Track 1M keys, assumes ~100k active items
+        MaxCost:     1 << 28, // 256MB
+        BufferItems: 128,     // Increase buffer for better batching
+    },
+    "large": {
+        NumCounters: 1e7,     // Track 10M keys, assumes ~1M active items
+        MaxCost:     1 << 30, // 1GB
+        BufferItems: 256,     // Higher buffer for high-throughput scenarios
+    },
+    "very-large": {
+        NumCounters: 4e7,     // Track 40M keys, assumes ~4M active items
+        MaxCost:     1 << 32, // 4GB
+        BufferItems: 512,     // Maximum reasonable buffer size
+    },
 }
+
