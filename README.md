@@ -29,6 +29,9 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
 
 - [Key Features](#key-features)
   - [Durability](#durability)
+  - [Database Drivers](#database-drivers)
+  - [Router](#router)
+  - [Cache](#cache)
   - [Authentication](#authentication)
   - [Security](#security)
   - [Core Infrastructure](#core-infrastructure)
