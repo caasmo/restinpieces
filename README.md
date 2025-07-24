@@ -58,6 +58,9 @@ A key challenge of the single-process paradigm is ensuring data durability in th
 
 - **Real-Time Replication**: For more robust, real-time replication and point-in-time recovery, a Litestream-based integration is available in a separate repository. See [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) for implementation details.
 
+### Database Drivers
+The framework defaults to using [zombiezen/go-sqlite](https://github.com/zombiezen/go-sqlite), a pure Go SQLite driver that offers excellent performance without relying on CGo. This simplifies the build process and ensures portability. For users who require an alternative, the framework is designed to be modular, and an implementation using the popular [crawshaw.io/sqlite](https://github.com/caasmo/restinpieces-sqlite-crawshaw) driver is also available.
+
 ### Authentication
 The framework provides a comprehensive authentication system built around JSON Web Tokens (JWT). Session management is handled via bearer tokens sent in the `Authorization` header. A key security feature is the use of dynamic JWT signing keys, which are derived from a combination of user-specific credentials (email and password hash) and a global server secret. This ensures that a token's signature is invalidated if a user's password changes.
 
