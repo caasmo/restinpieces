@@ -81,15 +81,12 @@ The system supports multiple authentication and account management workflows thr
 - SQLite database interface with pure Go [Zombiezen](https://github.com/zombiezen/go-sqlite) as default driver
   - Alternative drivers available in separate repos (like [Crawshaw](https://github.com/caasmo/restinpieces-sqlite-crawshaw))
 - Cache interface with [Ristretto](https://github.com/dgraph-io/ristretto) implementation
-- Hot reloading of configuration without server restart
 
 ### Configuration Management
-- All configuration is stored encrypted in the SQLite database as serialized TOML files. The `ripc` command-line tool is provided to manage this configuration.
-- Key features of `ripc` include:
-  - Versioned configuration with rollback support
-  - JWT secret rotation
-  - OAuth2 provider management
 
+The framework's configuration is securely managed within the SQLite database. The configuration is stored as encrypted, TOML-formatted content in the `app_config` table, the schema for which is detailed in `migrations/schema/app/app_config.sql`. Management is performed using the `ripc` command-line tool, which supports versioning, diffing, and rollbacks. Beyond managing the core application's settings, `ripc` can be extended to handle custom configuration scopes for your own modules. For more details on the tool, see the [`ripc` documentation](doc/ripc.md).
+
+A key feature is support for dynamic updates. The server listens for the `SIGHUP` signal to trigger a hot-reload of the configuration, allowing most settings to be changed in real-time without service interruption. While the majority of parameters can be updated on-the-fly, critical changes like modifications to TLS certificates require a full server reload to be applied.
 
 ### Frontend Integration
 - JavaScript SDK for seamless frontend-backend interaction
