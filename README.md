@@ -61,6 +61,9 @@ A key challenge of the single-process paradigm is ensuring data durability in th
 ### Database Drivers
 The framework defaults to using [zombiezen/go-sqlite](https://github.com/zombiezen/go-sqlite), a pure Go SQLite driver that offers excellent performance without relying on CGo. This simplifies the build process and ensures portability. For users who require an alternative, the framework is designed to be modular, and an implementation using the popular [crawshaw.io/sqlite](https://github.com/caasmo/restinpieces-sqlite-crawshaw) driver is also available.
 
+### Router
+The framework uses Go's standard `http.ServeMux` as its default router for simplicity and compatibility with the standard library. As of Go 1.22, the standard mux includes support for path parameters. Recognizing that different applications have different routing needs, the router is implemented as a swappable component. For those seeking maximum performance, an alternative implementation using the highly optimized [julienschmidt/httprouter](https://github.com/julienschmidt/httprouter) is also provided. See [restinpieces-httprouter](https://github.com/caasmo/restinpieces-httprouter) for details.
+
 ### Authentication
 The framework provides a comprehensive authentication system built around JSON Web Tokens (JWT). Session management is handled via bearer tokens sent in the `Authorization` header. A key security feature is the use of dynamic JWT signing keys, which are derived from a combination of user-specific credentials (email and password hash) and a global server secret. This ensures that a token's signature is invalidated if a user's password changes.
 
@@ -71,19 +74,14 @@ The system supports multiple authentication and account management workflows thr
 - **Account Management**: All account management processes, such as email verification, password reset, and email address changes, are handled through secure, multi-step flows. These flows typically involve generating a unique, short-lived JWT that is sent to the user's email via a background job queue, which the user then submits back to a confirmation endpoint.
 
 ### Security
-
 The "one process" paradigm simplifies deployment by running a single binary on a single VM, but it also means the application is directly exposed to the internet without a reverse proxy like Nginx acting as a first line of defense. This necessitates a defensive approach to security. The framework addresses this with a suite of built-in middleware designed to protect the server from common threats. These include dynamic IP blocking (`BlockIp`) to mitigate traffic spikes, hostname validation against a whitelist (`BlockHost`), request body size limitation (`BlockRequestBody`), and `User-Agent` filtering (`BlockUaList`). The framework also helps secure client communications by automatically setting security headers like `Strict-Transport-Security`.
 
 ### Core Infrastructure
 - Uses middleware and handler standard Go patterns
-- Router abstraction supporting standard Mux and [httprouter](https://github.com/julienschmidt/httprouter) (example implementation at [restinpieces-httprouter](https://github.com/caasmo/restinpieces-httprouter))
 - Discoverable API endpoints (/api/refresh-auth, /api/auth-with-oauth2, etc.)
-- SQLite database interface with pure Go [Zombiezen](https://github.com/zombiezen/go-sqlite) as default driver
-  - Alternative drivers available in separate repos (like [Crawshaw](https://github.com/caasmo/restinpieces-sqlite-crawshaw))
 - Cache interface with [Ristretto](https://github.com/dgraph-io/ristretto) implementation
 
 ### Configuration Management
-
 The framework's configuration is securely managed within the SQLite database. The configuration is stored as encrypted, TOML-formatted content in the `app_config` table, the schema for which is detailed in `migrations/schema/app/app_config.sql`. Management is performed using the `ripc` command-line tool, which supports versioning, diffing, and rollbacks. Beyond managing the core application's settings, `ripc` can be extended to handle custom configuration scopes for your own modules. For more details on the tool, see the [`ripc` documentation](doc/ripc.md).
 
 A key feature is support for dynamic updates. The server listens for the `SIGHUP` signal to trigger a hot-reload of the configuration, allowing most settings to be changed in real-time without service interruption. While the majority of parameters can be updated on-the-fly, critical changes like modifications to TLS certificates require a full server reload to be applied.
@@ -108,13 +106,11 @@ The framework provides built-in metrics collection using the `prometheus/client_
 The framework's logging is built upon the standard `slog` library for structured logging. It includes a high-performance batching handler that writes logs to the SQLite database, with configurable flush intervals and log levels. For incoming requests, a dedicated middleware logs request details but truncates overly long URI, User-Agent, Referer, and IP values to maintain clean logs. The entire logging implementation can be replaced with a user-defined logger to accommodate custom requirements.
 
 ### Notifications
-
 The framework's notification system is designed around a `Notifier` interface, which standardizes how notifications are sent. The primary data structure, `Notification`, carries a `Type` (e.g., `Alarm`, `Metric`), `Source`, `Message`, and a map of `Fields` for additional structured data.
 
 An official implementation for Discord is included, which sends formatted messages to a configured webhook URL. This notifier operates asynchronously, using goroutines for non-blocking `Send` calls. It incorporates a rate limiter to prevent API abuse and automatically truncates messages that exceed Discord's 2000-character limit. Developers can create custom notifiers for other services (like Slack or email) by providing their own implementation of the `Notifier` interface.
 
 ### Mailer
-
 The framework includes a `Mailer` component for sending transactional emails over SMTP. It is designed to be flexible and resilient, handling common account management workflows.
 
 -   **Configuration**: The mailer is configured through the application's central configuration provider, allowing for dynamic updates to SMTP settings (host, port, credentials, TLS) without a server restart.
