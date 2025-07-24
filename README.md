@@ -79,7 +79,6 @@ The "one process" paradigm simplifies deployment by running a single binary on a
 ### Core Infrastructure
 - Uses middleware and handler standard Go patterns
 - Discoverable API endpoints (/api/refresh-auth, /api/auth-with-oauth2, etc.)
-- Cache interface with [Ristretto](https://github.com/dgraph-io/ristretto) implementation
 
 ### Configuration Management
 The framework's configuration is securely managed within the SQLite database. The configuration is stored as encrypted, TOML-formatted content in the `app_config` table, the schema for which is detailed in `migrations/schema/app/app_config.sql`. Management is performed using the `ripc` command-line tool, which supports versioning, diffing, and rollbacks. Beyond managing the core application's settings, `ripc` can be extended to handle custom configuration scopes for your own modules. For more details on the tool, see the [`ripc` documentation](doc/ripc.md).
