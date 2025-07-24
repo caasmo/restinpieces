@@ -109,6 +109,7 @@ func TestValidate(t *testing.T) {
 		{"invalid logger batch", func(c *Config) { c.Log.Batch.DbPath = "" }},
 		{"invalid request log", func(c *Config) { c.Log.Request.Limits.URILength = 0 }},
 		{"invalid block ip", func(c *Config) { c.BlockIp.Level = "" }},
+		{"invalid cache", func(c *Config) { c.Cache.Level = "" }},
 	}
 
 	for _, tt := range errorCases {
@@ -119,6 +120,32 @@ func TestValidate(t *testing.T) {
 				t.Errorf("Validate() expected an error for %s, but got nil", tt.name)
 			}
 		})
+	}
+}
+
+func TestValidateCache(t *testing.T) {
+	t.Parallel()
+	validCases := []Cache{
+		{Level: "small"},
+		{Level: "medium"},
+		{Level: "large"},
+		{Level: "very-large"},
+	}
+	for _, cfg := range validCases {
+		if err := validateCache(&cfg); err != nil {
+			t.Errorf("validateCache(%+v) failed: %v", cfg, err)
+		}
+	}
+
+	invalidCases := []Cache{
+		{Level: ""},
+		{Level: "critical"},
+		{Level: "small "},
+	}
+	for _, cfg := range invalidCases {
+		if err := validateCache(&cfg); err == nil {
+			t.Errorf("validateCache(%+v) expected error, got nil", cfg)
+		}
 	}
 }
 
