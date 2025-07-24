@@ -14,19 +14,27 @@ func TestServeMuxRouter(t *testing.T) {
 	// Register handlers for testing
 	// Note: Go's new ServeMux requires method specification in the path for registration.
 	mux.Handle("GET /hello", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "Hello, World!")
+		if _, err := fmt.Fprint(w, "Hello, World!"); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	}))
 	mux.Handle("POST /data", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
-		fmt.Fprint(w, "Data created")
+		if _, err := fmt.Fprint(w, "Data created"); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	}))
 	mux.Handle("GET /users/{id}", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// The custom Param method is not used directly in Handle, but we test the underlying mechanism
 		id := r.PathValue("id")
-		fmt.Fprintf(w, "User ID: %s", id)
+		if _, err := fmt.Fprintf(w, "User ID: %s", id); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	}))
 	mux.Handle("GET /users/new", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprint(w, "New User Form")
+		if _, err := fmt.Fprint(w, "New User Form"); err != nil {
+			t.Errorf("failed to write response: %v", err)
+		}
 	}))
 
 	testCases := []struct {
