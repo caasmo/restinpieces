@@ -64,6 +64,9 @@ The framework defaults to using [zombiezen/go-sqlite](https://github.com/zombiez
 ### Router
 The framework uses Go's standard `http.ServeMux` as its default router for simplicity and compatibility with the standard library. As of Go 1.22, the standard mux includes support for path parameters. Recognizing that different applications have different routing needs, the router is implemented as a swappable component. For those seeking maximum performance, an alternative implementation using the highly optimized [julienschmidt/httprouter](https://github.com/julienschmidt/httprouter) is also provided. See [restinpieces-httprouter](https://github.com/caasmo/restinpieces-httprouter) for details.
 
+### Cache
+For in-memory caching, the framework uses [Ristretto](https://github.com/dgraph-io/ristretto), a high-performance, concurrent cache. The caching system is designed around a simple interface, allowing developers to easily swap in their own caching implementation if needed.
+
 ### Authentication
 The framework provides a comprehensive authentication system built around JSON Web Tokens (JWT). Session management is handled via bearer tokens sent in the `Authorization` header. A key security feature is the use of dynamic JWT signing keys, which are derived from a combination of user-specific credentials (email and password hash) and a global server secret. This ensures that a token's signature is invalidated if a user's password changes.
 
