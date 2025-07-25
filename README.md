@@ -59,7 +59,8 @@ To address this, the framework provides robust mechanisms for data protection an
 - **Local Backups**: The framework includes a simple, integrated backup solution for SQLite databases, managed as a background job. This can be configured and activated directly in the application's settings. It operates in two modes:
   - **Online Mode**: Performs a live backup using SQLite's Online Backup API. This allows the application to continue its operations with minimal interruption, making it ideal for active databases. The backup process copies the database page by page, with configurable pauses to reduce I/O contention.
   - **Vacuum Mode**: Creates a clean, defragmented, and compact copy of the database using the `VACUUM INTO` command. This method is thorough but requires more significant locking, making it suitable for maintenance windows or less active databases.
-- Backups are saved as compressed `.bck.gz` archives in a configurable directory, with filenames containing a timestamp and the strategy used. You can pull those gz files from a client available at [restinpieces-sqlite-backup](https://github.com/caasmo/restinpieces-sqlite-backup/tree/master/cmd/client).
+  
+  Backups are saved as compressed `.bck.gz` archives in a configurable directory, with filenames containing a timestamp and the strategy used. You can pull those gz files from a client available at [restinpieces-sqlite-backup](https://github.com/caasmo/restinpieces-sqlite-backup/tree/master/cmd/client).
 
 - **Real-Time Replication**: For more robust, real-time replication and point-in-time recovery, a Litestream-based integration is available in a separate repository. See [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) for implementation details. This approach ensures that the state of the SQLite database is continuously synchronized to a remote location, providing a strong guarantee against data loss.
 
