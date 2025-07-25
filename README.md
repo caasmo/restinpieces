@@ -37,7 +37,7 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
   - [Core Infrastructure](#core-infrastructure)
   - [Configuration Management](#configuration-management)
   - [Frontend Integration](#frontend-integration)
-  - [Background Processing](#background-processing)
+  - [Job Framework](#job-framework)
   - [Performance](#performance)
   - [Metrics](#metrics)
   - [Logger](#logger)
@@ -98,9 +98,16 @@ A key feature is support for dynamic updates. The server listens for the `SIGHUP
 - JavaScript SDK for seamless frontend-backend interaction
 - Example usage of the SDK and authentication endpoints available at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk)
 
-### Background Processing  
-- Job queue system for async tasks (email sending, etc.)
-- Worker implementation for processing background jobs
+### Job Framework
+The framework includes a robust job queue system for handling asynchronous tasks, supporting both one-time and recurrent jobs. This is essential for offloading work from the request-response cycle, such as sending emails, processing data, or performing periodic maintenance.
+
+The system is composed of a scheduler that claims jobs from the `job_queue` table and an executor that runs the corresponding handler. The framework provides built-in handlers for core functionalities like sending password reset emails, email verifications, and performing local database backups.
+
+You can easily extend the system to run your own custom tasks. This involves two main steps:
+1.  **Write a Job Handler**: Create a new handler that implements the `JobHandler` interface. This is where you define the logic for your task.
+2.  **Insert a Job**: Add a new record to the `job_queue` table in the database. The scheduler will automatically pick it up and execute it using your custom handler.
+
+This design allows for a clean separation of concerns and makes it straightforward to add new background processing capabilities to your application.
 
 ### Performance
 - Optimized for high throughput (thousands of requests/second)
