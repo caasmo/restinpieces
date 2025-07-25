@@ -53,21 +53,16 @@ func addOAuth2Provider(stdout, stderr io.Writer, secureStore config.SecureStore,
 		return fmt.Errorf("failed to unmarshal config TOML: %w", err)
 	}
 
-	// Initialize map if it's nil
-	if cfg.OAuth2Providers == nil {
-		cfg.OAuth2Providers = make(map[string]config.OAuth2Provider)
-	}
-
-	// Initialize map if it's nil
-	if cfg.OAuth2Providers == nil {
-		cfg.OAuth2Providers = make(map[string]config.OAuth2Provider)
-	}
-
 	// Check if provider already exists
 	if _, exists := cfg.OAuth2Providers[providerName]; exists {
 		errMessage := fmt.Sprintf("Error: OAuth2 provider '%s' already exists\n", providerName)
 		fmt.Fprint(stderr, errMessage)
 		return fmt.Errorf("OAuth2 provider '%s' already exists", providerName)
+	}
+
+	// Initialize map if it's nil
+	if cfg.OAuth2Providers == nil {
+		cfg.OAuth2Providers = make(map[string]config.OAuth2Provider)
 	}
 
 	// Add skeleton provider
