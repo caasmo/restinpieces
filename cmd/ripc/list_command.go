@@ -38,8 +38,12 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count 
 		stmt.BindText(1, scopeFilter)
 	}
 
-	fmt.Fprintln(stdout, "Gen  Scope        Created At             Format  Description")
-	fmt.Fprintln(stdout, "---  ------------ ---------------------  ------  -----------")
+	if _, err := fmt.Fprintln(stdout, "Gen  Scope        Created At             Format  Description"); err != nil {
+		return 0, fmt.Errorf("%w: %w", ErrWriteOutput, err)
+	}
+	if _, err := fmt.Fprintln(stdout, "---  ------------ ---------------------  ------  -----------"); err != nil {
+		return 0, fmt.Errorf("%w: %w", ErrWriteOutput, err)
+	}
 
 	for {
 		hasRow, stepErr := stmt.Step()
@@ -58,10 +62,13 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count 
 		if len(format) > 4 {
 			format = format[:4]
 		}
-		fmt.Fprintf(stdout, "%3d  %-12s  %-21s  %-4s  %s\n", count, scope, createdAt, format, description)
+		if _, err := fmt.Fprintf(stdout, "%3d  %-12s  %-21s  %-4s  %s\n", count, scope, createdAt, format, description); err != nil {
+			return count, fmt.Errorf("%w: %w", ErrWriteOutput, err)
+		}
 		count++
 	}
 	return count, nil
+
 }
 
 // handleListCommand is a wrapper around listItems that handles the command-line

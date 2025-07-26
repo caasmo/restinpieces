@@ -22,9 +22,16 @@ func setupTestDB(t *testing.T, configs [][2]string) *sqlitex.Pool {
 	if err != nil {
 		t.Fatalf("failed to open in-memory database: %v", err)
 	}
-	t.Cleanup(func() { pool.Close() })
+	t.Cleanup(func() {
+		if err := pool.Close(); err != nil {
+			t.Fatalf("failed to close test database: %v", err)
+		}
+	})
 
-	conn := pool.Get(context.Background())
+	conn, err := pool.Take(context.Background())
+	if err != nil {
+		t.Fatalf("failed to get connection from pool: %v", err)
+	}
 	defer pool.Put(conn)
 
 	schemaFS := migrations.Schema()
@@ -42,7 +49,11 @@ func setupTestDB(t *testing.T, configs [][2]string) *sqlitex.Pool {
 		if err != nil {
 			t.Fatalf("failed to prepare insert statement: %v", err)
 		}
-		defer stmt.Finalize()
+		defer func() {
+			if err := stmt.Finalize(); err != nil {
+				t.Fatalf("failed to finalize statement: %v", err)
+			}
+		}()
 
 		for _, config := range configs {
 			stmt.BindText(1, config[0])
@@ -50,7 +61,9 @@ func setupTestDB(t *testing.T, configs [][2]string) *sqlitex.Pool {
 			if _, err := stmt.Step(); err != nil {
 				t.Fatalf("failed to insert config with scope '%s': %v", config[0], err)
 			}
-			stmt.Reset()
+			if err := stmt.Reset(); err != nil {
+				t.Fatalf("failed to reset statement: %v", err)
+			}
 		}
 	}
 
@@ -102,7 +115,9 @@ func TestListItems_Failure_DbConnectionError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to open in-memory database: %v", err)
 	}
-	pool.Close() // Close the pool to trigger a connection error
+	if err := pool.Close(); err != nil {
+		t.Fatalf("failed to close pool for test setup: %v", err)
+	}
 
 	var stdout bytes.Buffer
 	_, err = listItems(&stdout, pool, "")
