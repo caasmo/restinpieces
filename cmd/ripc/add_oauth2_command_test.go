@@ -174,8 +174,8 @@ func TestAddOAuth2Provider_Failure_ProviderAlreadyExists(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected an error, but got nil")
 	}
-	if !errors.Is(err, ErrProviderAlreadyExists) {
-		t.Errorf("Expected error to be of type ErrProviderAlreadyExists, but got %T", err)
+	if !strings.Contains(err.Error(), "OAuth2 provider 'github' already exists") {
+		t.Errorf("Expected error to contain 'OAuth2 provider 'github' already exists', got '%s'", err.Error())
 	}
 }
 

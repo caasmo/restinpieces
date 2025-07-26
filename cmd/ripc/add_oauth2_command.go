@@ -27,16 +27,8 @@ func capitalizeFirst(s string) string {
 // handleOAuth2Command is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
 func handleOAuth2Command(secureStore config.SecureStore, providerName string) {
-	err := addOAuth2Provider(os.Stdout, secureStore, providerName)
-	if err != nil {
-		// The error is already formatted and printed to Stderr by the logic function.
-		// We just need to exit.
-		if errors.Is(err, ErrProviderAlreadyExists) {
-			fmt.Fprintf(os.Stderr, "Error: OAuth2 provider '%s' already exists\n", providerName)
-		} else {
-			// Generic error message for other failures
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		}
+	if err := addOAuth2Provider(os.Stdout, secureStore, providerName); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -61,7 +53,7 @@ func addOAuth2Provider(stdout io.Writer, secureStore config.SecureStore, provide
 
 	// Check if provider already exists
 	if _, exists := cfg.OAuth2Providers[providerName]; exists {
-		return fmt.Errorf("OAuth2 provider '%s' already exists: %w", providerName, ErrProviderAlreadyExists)
+		return fmt.Errorf("OAuth2 provider '%s' already exists", providerName)
 	}
 
 	// Initialize map if it's nil
