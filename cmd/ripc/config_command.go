@@ -159,7 +159,6 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		handleGetCommand(secureStore, *getScope, filter)
 	case "init":
 		initCmd := flag.NewFlagSet("init", flag.ContinueOnError)
-		initScope := initCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := initCmd.Parse(subcommandArgs); err != nil {
 			fmt.Fprintf(os.Stderr, "Error parsing init flags: %v\n", err)
 			initCmd.Usage()
