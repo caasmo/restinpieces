@@ -53,7 +53,7 @@ func addOAuth2Provider(stdout io.Writer, secureStore config.SecureStore, provide
 
 	// Check if provider already exists
 	if _, exists := cfg.OAuth2Providers[providerName]; exists {
-		return fmt.Errorf("OAuth2 provider '%s' already exists", providerName)
+		return fmt.Errorf("OAuth2 provider '%s' already exists: %w", providerName, ErrProviderAlreadyExists)
 	}
 
 	// Initialize map if it's nil
