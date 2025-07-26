@@ -144,7 +144,7 @@ func TestListItems_Failure_QueryError(t *testing.T) {
 	pool.Put(conn)
 
 	var stdout bytes.Buffer
-	_, err := listItems(&stdout, pool, "")
+	_, err = listItems(&stdout, pool, "")
 
 	if err == nil {
 		t.Fatal("expected an error, but got nil")
