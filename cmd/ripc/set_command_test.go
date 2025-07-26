@@ -134,13 +134,19 @@ func TestSetConfigValue_Success_FromFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() {
+		if err := os.Remove(tmpFile.Name()); err != nil {
+			t.Logf("warning: failed to remove temp file %s: %v", tmpFile.Name(), err)
+		}
+	}()
 
 	fileContent := "new value from file"
 	if _, err := tmpFile.WriteString(fileContent); err != nil {
 		t.Fatal(err)
 	}
-	tmpFile.Close()
+	if err := tmpFile.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
