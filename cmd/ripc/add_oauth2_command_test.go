@@ -51,8 +51,6 @@ func (m *MockSecureStore) Save(scope string, data []byte, format string, descrip
 }
 
 func TestAddOAuth2Provider_Success(t *testing.T) {
-	t.Parallel()
-
 	providerName := "github"
 	mockStore := NewMockSecureStore(nil) // Empty store
 
@@ -88,8 +86,6 @@ func getConfigFromStore(t *testing.T, store *MockSecureStore) *config.Config {
 }
 
 func TestAddOAuth2Provider_ExistingConfig(t *testing.T) {
-	t.Parallel()
-
 	initialCfg := config.Config{
 		Server: config.Server{Addr: ":8080"},
 		OAuth2Providers: map[string]config.OAuth2Provider{
