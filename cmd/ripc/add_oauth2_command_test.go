@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"reflect"
+	"io"
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
