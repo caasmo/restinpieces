@@ -94,8 +94,12 @@ func addOAuth2Provider(stdout io.Writer, secureStore config.SecureStore, provide
 		return fmt.Errorf("%w: failed to save new OAuth2 provider for scope '%s': %w", ErrSecureStoreSave, scopeName, err)
 	}
 
-	fmt.Fprintf(stdout, "Successfully added OAuth2 provider '%s'\n", providerName)
-	fmt.Fprintln(stdout, "Please configure the provider's URLs, scopes and credentials")
+	if _, err := fmt.Fprintf(stdout, "Successfully added OAuth2 provider '%s'\n", providerName); err != nil {
+		return fmt.Errorf("failed to write output: %w", err)
+	}
+	if _, err := fmt.Fprintln(stdout, "Please configure the provider's URLs, scopes and credentials"); err != nil {
+		return fmt.Errorf("failed to write output: %w", err)
+	}
 	return nil
 }
 
