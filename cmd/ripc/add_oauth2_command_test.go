@@ -33,7 +33,7 @@ func NewMockSecureStore(initialData map[string][]byte) *MockSecureStore {
 // Get retrieves the configuration for a scope.
 func (m *MockSecureStore) Get(scope string, generation int) ([]byte, string, error) {
 	if m.ForceGetError {
-		return nil, "", errors.New("forced get error")
+		return nil, "", fmt.Errorf("%w: forced get error", config.ErrSecureStoreGet)
 	}
 	data, ok := m.data[scope]
 	if !ok {
@@ -214,8 +214,7 @@ func TestAddOAuth2Provider_Failure_GetFromSecureStoreFails(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected an error, but got nil")
 	}
-	expectedError := "failed to retrieve/decrypt latest config"
-	if !strings.Contains(err.Error(), expectedError) {
-		t.Errorf("Expected error to contain '%s', got '%s'", expectedError, err.Error())
+	if !errors.Is(err, config.ErrSecureStoreGet) {
+		t.Errorf("Expected error to wrap ErrSecureStoreGet, got %T", err)
 	}
 }

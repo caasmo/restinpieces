@@ -45,7 +45,7 @@ func addOAuth2Provider(stdout io.Writer, secureStore config.SecureStore, provide
 	// Get latest config
 	decryptedData, format, err := secureStore.Get(scopeName, 0)
 	if err != nil {
-		return fmt.Errorf("failed to retrieve/decrypt latest config for scope '%s': %w", scopeName, err)
+		return fmt.Errorf("%w: failed to retrieve/decrypt latest config for scope '%s': %w", ErrSecureStoreGet, scopeName, err)
 	}
 
 	// Load into config struct
@@ -82,13 +82,13 @@ func addOAuth2Provider(stdout io.Writer, secureStore config.SecureStore, provide
 	// Marshal back to TOML
 	tomlBytes, err := toml.Marshal(cfg)
 	if err != nil {
-		return fmt.Errorf("failed to marshal config to TOML: %w", err)
+		return fmt.Errorf("%w: failed to marshal config to TOML: %w", ErrConfigUnmarshal, err)
 	}
 
 	// Save updated config
 	err = secureStore.Save(scopeName, tomlBytes, format, fmt.Sprintf("Added OAuth2 provider: %s", providerName))
 	if err != nil {
-		return fmt.Errorf("failed to save new OAuth2 provider for scope '%s': %w", scopeName, err)
+		return fmt.Errorf("%w: failed to save new OAuth2 provider for scope '%s': %w", ErrSecureStoreSave, scopeName, err)
 	}
 
 	fmt.Fprintf(stdout, "Successfully added OAuth2 provider '%s'\n", providerName)
