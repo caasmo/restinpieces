@@ -12,7 +12,6 @@ import (
 
 // Custom errors for the scopes command
 var (
-	ErrDbConnection = errors.New("failed to get db connection")
 	ErrDbPrepare    = errors.New("failed to prepare statement")
 	ErrDbStep       = errors.New("failed to step through results")
 	ErrDbFinalize   = errors.New("failed to finalize statement")

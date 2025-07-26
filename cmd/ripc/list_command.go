@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io"
 	"os"
@@ -12,8 +11,7 @@ import (
 
 // listItems retrieves and prints a formatted list of configurations from the
 // database, optionally filtered by scope. It is a testable function that
-prepares
-// and executes a SQL query, then formats the results into a table for display.
+// prepares and executes a SQL query, then formats the results into a table for display.
 func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (int, error) {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
