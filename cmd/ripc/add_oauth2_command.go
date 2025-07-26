@@ -14,10 +14,6 @@ import (
 // ErrProviderAlreadyExists is returned when trying to add an OAuth2 provider that already exists.
 var (
 	ErrProviderAlreadyExists = errors.New("provider already exists")
-	ErrConfigUnmarshal      = errors.New("failed to unmarshal config")
-	ErrConfigMarshal        = errors.New("failed to marshal config")
-	ErrSecureStoreGet       = errors.New("failed to get from secure store")
-	ErrSecureStoreSave      = errors.New("failed to save to secure store")
 )
 
 // capitalizeFirst capitalizes the first letter of a string
