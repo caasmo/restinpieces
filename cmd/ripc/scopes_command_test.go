@@ -24,8 +24,16 @@ func setupTestScopesDB(t *testing.T, scopes []string) *sqlitex.Pool {
 	if err != nil {
 		t.Fatalf("Failed to open in-memory database: %v", err)
 	}
+	t.Cleanup(func() {
+		if err := pool.Close(); err != nil {
+			t.Logf("Failed to close test database pool: %v", err)
+		}
+	})
 
-	conn := pool.Get(context.Background())
+	conn, err := pool.Take(context.Background())
+	if err != nil {
+		t.Fatalf("Failed to get connection from pool: %v", err)
+	}
 	defer pool.Put(conn)
 
 	// Create schema from embedded migrations
@@ -44,7 +52,11 @@ func setupTestScopesDB(t *testing.T, scopes []string) *sqlitex.Pool {
 		if err != nil {
 			t.Fatalf("Failed to prepare insert statement: %v", err)
 		}
-		defer stmt.Finalize()
+		defer func() {
+			if err := stmt.Finalize(); err != nil {
+				t.Logf("Failed to finalize statement: %v", err)
+			}
+		}()
 
 		for _, scope := range scopes {
 			stmt.BindText(1, scope)
@@ -52,7 +64,9 @@ func setupTestScopesDB(t *testing.T, scopes []string) *sqlitex.Pool {
 			if _, err := stmt.Step(); err != nil {
 				t.Fatalf("Failed to insert scope '%s': %v", scope, err)
 			}
-			stmt.Reset()
+			if err := stmt.Reset(); err != nil {
+				t.Fatalf("Failed to reset statement: %v", err)
+			}
 		}
 	}
 
@@ -100,7 +114,14 @@ func TestListScopes_Success_NoScopes(t *testing.T) {
 
 func TestListScopes_Failure_DbConnectionError(t *testing.T) {
 	// --- Setup ---
-	pool := setupTestScopesDB(t, []string{})
+	// Create a pool but don't use the helper that adds cleanup,
+	// as we are testing the connection error by closing it manually.
+	pool, err := sqlitex.NewPool("file::memory:", sqlitex.PoolOptions{
+		PoolSize: 1,
+	})
+	if err != nil {
+		t.Fatalf("Failed to open in-memory database: %v", err)
+	}
 	// Immediately close the pool to force a connection error.
 	if err := pool.Close(); err != nil {
 		t.Fatalf("failed to close pool for test setup: %v", err)
@@ -108,7 +129,7 @@ func TestListScopes_Failure_DbConnectionError(t *testing.T) {
 	var stdout bytes.Buffer
 
 	// --- Execute ---
-	err := listScopes(&stdout, pool)
+	err = listScopes(&stdout, pool)
 
 	// --- Assert ---
 	if err == nil {

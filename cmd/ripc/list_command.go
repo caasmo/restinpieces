@@ -12,7 +12,7 @@ import (
 // listItems retrieves and prints a formatted list of configurations from the
 // database, optionally filtered by scope. It is a testable function that
 // prepares and executes a SQL query, then formats the results into a table for display.
-func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (int, error) {
+func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count int, err error) {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
 		return 0, fmt.Errorf("%w: failed to get db connection for list command", ErrDbConnection)
@@ -28,7 +28,11 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (int, e
 	if err != nil {
 		return 0, fmt.Errorf("%w: failed to prepare statement for list command", ErrQueryPrepare)
 	}
-	defer stmt.Finalize()
+	defer func() {
+		if ferr := stmt.Finalize(); ferr != nil && err == nil {
+			err = fmt.Errorf("failed to finalize statement: %w", ferr)
+		}
+	}()
 
 	if scopeFilter != "" {
 		stmt.BindText(1, scopeFilter)
@@ -37,11 +41,10 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (int, e
 	fmt.Fprintln(stdout, "Gen  Scope        Created At             Format  Description")
 	fmt.Fprintln(stdout, "---  ------------ ---------------------  ------  -----------")
 
-	var count int
 	for {
-		hasRow, err := stmt.Step()
-		if err != nil {
-			return count, fmt.Errorf("failed to step through list results: %w", err)
+		hasRow, stepErr := stmt.Step()
+		if stepErr != nil {
+			return count, fmt.Errorf("failed to step through list results: %w", stepErr)
 		}
 		if !hasRow {
 			break
