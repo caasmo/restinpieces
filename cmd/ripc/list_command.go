@@ -2,66 +2,74 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
+	"io"
 	"os"
 
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-func handleListCommand(pool *sqlitex.Pool, scopeFilter string) {
+// listItems retrieves and prints a formatted list of configurations from the
+// database, optionally filtered by scope. It is a testable function that
+prepares
+// and executes a SQL query, then formats the results into a table for display.
+func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (int, error) {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to get db connection for list command: %v\n", err)
-		os.Exit(1)
+		return 0, fmt.Errorf("%w: failed to get db connection for list command", ErrDbConnection)
 	}
 	defer pool.Put(conn)
 
-	var query string
+	query := "SELECT id, scope, created_at, format, description FROM app_config ORDER BY created_at DESC;"
 	if scopeFilter != "" {
 		query = "SELECT id, scope, created_at, format, description FROM app_config WHERE scope = ? ORDER BY created_at DESC;"
-	} else {
-		query = "SELECT id, scope, created_at, format, description FROM app_config ORDER BY created_at DESC;"
 	}
 
 	stmt, err := conn.Prepare(query)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to prepare statement for list command: %v\n", err)
-		os.Exit(1)
+		return 0, fmt.Errorf("%w: failed to prepare statement for list command", ErrQueryPrepare)
 	}
-	defer func() {
-		if err := stmt.Finalize(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to finalize statement: %v\n", err)
-		}
-	}()
+	defer stmt.Finalize()
 
 	if scopeFilter != "" {
 		stmt.BindText(1, scopeFilter)
 	}
 
-	fmt.Println("Gen  Scope        Created At             Format  Description")
-	fmt.Println("---  ------------ ---------------------  ------  -----------")
+	fmt.Fprintln(stdout, "Gen  Scope        Created At             Format  Description")
+	fmt.Fprintln(stdout, "---  ------------ ---------------------  ------  -----------")
 
 	var count int
 	for {
 		hasRow, err := stmt.Step()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to step through list results: %v\n", err)
-			os.Exit(1)
+			return count, fmt.Errorf("failed to step through list results: %w", err)
 		}
 		if !hasRow {
 			break
 		}
+
 		scope := stmt.GetText("scope")
 		createdAt := stmt.GetText("created_at")
 		format := stmt.GetText("format")
 		description := stmt.GetText("description")
 
-		// Truncate format to 4 chars if needed
 		if len(format) > 4 {
 			format = format[:4]
 		}
-		fmt.Printf("%3d  %-12s  %-21s  %-4s  %s\n", count, scope, createdAt, format, description)
+		fmt.Fprintf(stdout, "%3d  %-12s  %-21s  %-4s  %s\n", count, scope, createdAt, format, description)
 		count++
+	}
+	return count, nil
+}
+
+// handleListCommand is a wrapper around listItems that handles the command-line
+// execution, including printing errors to stderr and exiting the program on failure.
+func handleListCommand(pool *sqlitex.Pool, scopeFilter string) {
+	count, err := listItems(os.Stdout, pool, scopeFilter)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
 	}
 
 	if count == 0 {
