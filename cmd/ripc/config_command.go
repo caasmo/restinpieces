@@ -166,14 +166,14 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 			os.Exit(1)
 		}
 		if initCmd.NArg() > 0 {
-			fmt.Fprintf(os.Stderr, "Error: 'init' does not take any arguments\n")
-			initCmd.Usage()
-			os.Exit(1)
-		}
-		handleInitCommand(secureStore, *initScope)
-	default:
-		fmt.Fprintf(os.Stderr, "Error: unknown config subcommand: %s\n", subcommand)
-		printConfigUsage()
-		os.Exit(1)
+            fmt.Fprintf(os.Stderr, "Error: 'init' does not take any arguments\n")
+            initCmd.Usage()
+            os.Exit(1)
+        }
+        handleInitCommand(secureStore)
+    default:
+        fmt.Fprintf(os.Stderr, "Error: unknown config subcommand: %s\n", subcommand)
+        printConfigUsage()
+        os.Exit(1)
 	}
 }
