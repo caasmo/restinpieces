@@ -15,6 +15,9 @@ import (
 var (
 	ErrProviderAlreadyExists = errors.New("provider already exists")
 	ErrConfigUnmarshal      = errors.New("failed to unmarshal config")
+	ErrConfigMarshal        = errors.New("failed to marshal config")
+	ErrSecureStoreGet       = errors.New("failed to get from secure store")
+	ErrSecureStoreSave      = errors.New("failed to save to secure store")
 )
 
 // capitalizeFirst capitalizes the first letter of a string
@@ -45,13 +48,13 @@ func addOAuth2Provider(stdout io.Writer, secureStore config.SecureStore, provide
 	// Get latest config
 	decryptedData, format, err := secureStore.Get(scopeName, 0)
 	if err != nil {
-		return fmt.Errorf("%w: failed to retrieve/decrypt latest config for scope '%s': %w", ErrSecureStoreGet, scopeName, err)
+		return fmt.Errorf("%w: failed to retrieve/decrypt latest config for scope '%s': %w", config.ErrSecureStoreGet, scopeName, err)
 	}
 
 	// Load into config struct
 	var cfg config.Config
 	if err := toml.Unmarshal(decryptedData, &cfg); err != nil {
-		return fmt.Errorf("%w: %v", ErrConfigUnmarshal, err)
+		return fmt.Errorf("%w: %w", ErrConfigUnmarshal, err)
 	}
 
 	// Check if provider already exists
@@ -82,13 +85,13 @@ func addOAuth2Provider(stdout io.Writer, secureStore config.SecureStore, provide
 	// Marshal back to TOML
 	tomlBytes, err := toml.Marshal(cfg)
 	if err != nil {
-		return fmt.Errorf("%w: failed to marshal config to TOML: %w", ErrConfigUnmarshal, err)
+		return fmt.Errorf("%w: failed to marshal config to TOML: %w", ErrConfigMarshal, err)
 	}
 
 	// Save updated config
 	err = secureStore.Save(scopeName, tomlBytes, format, fmt.Sprintf("Added OAuth2 provider: %s", providerName))
 	if err != nil {
-		return fmt.Errorf("%w: failed to save new OAuth2 provider for scope '%s': %w", ErrSecureStoreSave, scopeName, err)
+		return fmt.Errorf("%w: failed to save new OAuth2 provider for scope '%s': %w", config.ErrSecureStoreSave, scopeName, err)
 	}
 
 	fmt.Fprintf(stdout, "Successfully added OAuth2 provider '%s'\n", providerName)

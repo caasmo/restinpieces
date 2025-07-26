@@ -196,7 +196,7 @@ func TestAddOAuth2Provider_Failure_MalformedInitialConfig(t *testing.T) {
 		t.Fatal("Expected an error, but got nil")
 	}
 	if !errors.Is(err, ErrConfigUnmarshal) {
-		t.Errorf("Expected error to wrap ErrConfigUnmarshal, got %T", err)
+		t.Errorf("Expected error to wrap ErrConfigUnmarshal, got %v", err)
 	}
 }
 
@@ -215,6 +215,6 @@ func TestAddOAuth2Provider_Failure_GetFromSecureStoreFails(t *testing.T) {
 		t.Fatal("Expected an error, but got nil")
 	}
 	if !errors.Is(err, config.ErrSecureStoreGet) {
-		t.Errorf("Expected error to wrap ErrSecureStoreGet, got %T", err)
+		t.Errorf("Expected error to wrap ErrSecureStoreGet, got %v", err)
 	}
 }
