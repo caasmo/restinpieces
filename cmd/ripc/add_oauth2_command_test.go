@@ -195,9 +195,8 @@ func TestAddOAuth2Provider_Failure_MalformedInitialConfig(t *testing.T) {
 	if err == nil {
 		t.Fatal("Expected an error, but got nil")
 	}
-	expectedError := "failed to unmarshal config TOML"
-	if !strings.Contains(err.Error(), expectedError) {
-		t.Errorf("Expected error to contain '%s', got '%s'", expectedError, err.Error())
+	if !errors.Is(err, ErrConfigUnmarshal) {
+		t.Errorf("Expected error to wrap ErrConfigUnmarshal, got %T", err)
 	}
 }
 

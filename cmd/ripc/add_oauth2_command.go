@@ -12,7 +12,10 @@ import (
 )
 
 // ErrProviderAlreadyExists is returned when trying to add an OAuth2 provider that already exists.
-var ErrProviderAlreadyExists = errors.New("provider already exists")
+var (
+	ErrProviderAlreadyExists = errors.New("provider already exists")
+	ErrConfigUnmarshal      = errors.New("failed to unmarshal config")
+)
 
 // capitalizeFirst capitalizes the first letter of a string
 func capitalizeFirst(s string) string {
@@ -48,7 +51,7 @@ func addOAuth2Provider(stdout io.Writer, secureStore config.SecureStore, provide
 	// Load into config struct
 	var cfg config.Config
 	if err := toml.Unmarshal(decryptedData, &cfg); err != nil {
-		return fmt.Errorf("failed to unmarshal config TOML: %w", err)
+		return fmt.Errorf("%w: %v", ErrConfigUnmarshal, err)
 	}
 
 	// Check if provider already exists
