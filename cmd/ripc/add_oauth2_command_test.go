@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
