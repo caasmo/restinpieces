@@ -130,10 +130,14 @@ func TestListItems_Failure_DbConnectionError(t *testing.T) {
 func TestListItems_Failure_QueryError(t *testing.T) {
 	pool := setupTestDB(t, nil)
 
-	// Get a connection from the pool to modify the schema.
-	conn := pool.Get(context.Background())
+	// Take a connection from the pool to modify the schema.
+	conn, err := pool.Take(context.Background())
+	if err != nil {
+		t.Fatalf("failed to get connection: %v", err)
+	}
 	// Intentionally drop the table to cause a query error in the function under test.
 	if err := sqlitex.ExecuteTransient(conn, "DROP TABLE app_config;", nil); err != nil {
+		pool.Put(conn)
 		t.Fatalf("failed to drop table: %v", err)
 	}
 	// IMPORTANT: Return the connection to the pool so the function under test can use it.
