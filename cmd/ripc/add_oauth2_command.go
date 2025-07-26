@@ -18,6 +18,7 @@ var (
 	ErrConfigMarshal        = errors.New("failed to marshal config")
 	ErrSecureStoreGet       = errors.New("failed to get from secure store")
 	ErrSecureStoreSave      = errors.New("failed to save to secure store")
+	ErrSecureStoreKeyRead   = errors.New("failed to read secure store key")
 )
 
 // capitalizeFirst capitalizes the first letter of a string
@@ -48,7 +49,7 @@ func addOAuth2Provider(stdout io.Writer, secureStore config.SecureStore, provide
 	// Get latest config
 	decryptedData, format, err := secureStore.Get(scopeName, 0)
 	if err != nil {
-		return fmt.Errorf("%w: failed to retrieve/decrypt latest config for scope '%s': %w", config.ErrSecureStoreGet, scopeName, err)
+		return fmt.Errorf("%w: failed to retrieve/decrypt latest config for scope '%s': %w", ErrSecureStoreGet, scopeName, err)
 	}
 
 	// Load into config struct
@@ -91,7 +92,7 @@ func addOAuth2Provider(stdout io.Writer, secureStore config.SecureStore, provide
 	// Save updated config
 	err = secureStore.Save(scopeName, tomlBytes, format, fmt.Sprintf("Added OAuth2 provider: %s", providerName))
 	if err != nil {
-		return fmt.Errorf("%w: failed to save new OAuth2 provider for scope '%s': %w", config.ErrSecureStoreSave, scopeName, err)
+		return fmt.Errorf("%w: failed to save new OAuth2 provider for scope '%s': %w", ErrSecureStoreSave, scopeName, err)
 	}
 
 	fmt.Fprintf(stdout, "Successfully added OAuth2 provider '%s'\n", providerName)
