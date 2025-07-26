@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -9,6 +11,16 @@ import (
 	toml "github.com/pelletier/go-toml"
 )
 
+// Error definitions for set command
+var (
+	ErrMissingSetArguments = errors.New("missing path or value for 'set' command")
+	ErrPathNotFound        = errors.New("configuration path does not exist")
+	ErrReadFile            = errors.New("failed to read value from file")
+	ErrParseValue          = errors.New("failed to parse value")
+)
+
+// handleSetCommand is the command-level wrapper. It executes the core logic
+// and handles exiting the process on error.
 func handleSetCommand(
 	secureCfg config.SecureStore,
 	scope string,
@@ -16,31 +28,44 @@ func handleSetCommand(
 	description string,
 	cmdArgs []string) {
 
-	if scope == "" {
-		scope = config.ScopeApplication
-	}
-
 	if len(cmdArgs) < 2 {
-		fmt.Fprintf(os.Stderr, "Error: missing path or value for 'set' command\n")
-		fmt.Fprintf(os.Stderr, "Usage: configstore ... set <path> <value>\n")
-		fmt.Fprintf(os.Stderr, "Set the value at the given TOML path.\n")
-		fmt.Fprintf(os.Stderr, "Prefix <value> with '@' (e.g., @./file.txt) to load value from a file.\n")
+		fmt.Fprintf(os.Stderr, "Error: %v\n", ErrMissingSetArguments)
+		fmt.Fprintf(os.Stderr, "Usage: ... set <path> <value>\n")
 		os.Exit(1)
 	}
 
 	configPath := cmdArgs[0]
 	rawValue := cmdArgs[1]
 
-	decryptedData, _, err := secureCfg.Get(scope, 0) // generation 0 = latest
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to retrieve latest config via SecureStore (scope: %s): %v\n", scope, err)
+	if err := setConfigValue(os.Stdout, secureCfg, scope, format, description, configPath, rawValue); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
+	}
+}
+
+// setConfigValue contains the testable core logic for setting a configuration value.
+// It accepts io.Writer for output, making it easy to test.
+func setConfigValue(
+	stdout io.Writer,
+	secureCfg config.SecureStore,
+	scope string,
+	format string,
+	description string,
+	configPath string,
+	rawValue string) error {
+
+	if scope == "" {
+		scope = config.ScopeApplication
+	}
+
+	decryptedData, fileFormat, err := secureCfg.Get(scope, 0) // generation 0 = latest
+	if err != nil {
+		return fmt.Errorf("%w: failed to retrieve latest config for scope '%s': %w", ErrSecureStoreGet, scope, err)
 	}
 
 	tree, err := toml.LoadBytes(decryptedData)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to load config data into TOML tree (scope: %s): %v\n", scope, err)
-		os.Exit(1)
+		return fmt.Errorf("%w: failed to load config data for scope '%s': %w", ErrConfigUnmarshal, scope, err)
 	}
 
 	var valueToSet interface{}
@@ -48,51 +73,50 @@ func handleSetCommand(
 		filePath := strings.TrimPrefix(rawValue, "@")
 		fileContent, err := os.ReadFile(filePath)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to read value file (path: %s): %v\n", filePath, err)
-			os.Exit(1)
+			return fmt.Errorf("%w: failed to read from path '%s': %w", ErrReadFile, filePath, err)
 		}
 		valueToSet = string(fileContent)
 	} else {
-		// Parse the value as TOML to get proper type
 		tempTomlString := fmt.Sprintf("temp_key = %s", rawValue)
 		tempTree, err := toml.Load(tempTomlString)
 		if err != nil {
-			// If parsing fails, treat it as a string by adding quotes
 			tempTomlString = fmt.Sprintf("temp_key = %q", rawValue)
 			tempTree, err = toml.Load(tempTomlString)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error: failed to parse value (value: %s): %v\n", rawValue, err)
-				os.Exit(1)
+				return fmt.Errorf("%w: could not parse '%s': %w", ErrParseValue, rawValue, err)
 			}
 		}
 		valueToSet = tempTree.Get("temp_key")
 	}
 
-	keyExists := tree.Has(configPath)
-
-	if !keyExists {
-		fmt.Fprintf(os.Stderr, "Error: configuration path does not exist in the TOML structure: %s\n", configPath)
-		os.Exit(1)
+	if !tree.Has(configPath) {
+		return fmt.Errorf("%w: path '%s' not found in config for scope '%s'", ErrPathNotFound, configPath, scope)
 	}
 
 	tree.Set(configPath, valueToSet)
 
-	updatedTomlString, err := tree.ToTomlString()
+	updatedTomlBytes, err := toml.Marshal(tree)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to marshal updated TOML tree to string: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("%w: failed to marshal updated config: %w", ErrConfigMarshal, err)
 	}
-	updatedConfigData := []byte(updatedTomlString)
 
 	if description == "" {
 		description = fmt.Sprintf("Updated field '%s'", configPath)
 	}
 
-	err = secureCfg.Save(scope, updatedConfigData, format, description)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to save updated config via SecureStore: %v\n", err)
-		os.Exit(1)
+	// Preserve the original format from the file unless overridden by the flag
+	saveFormat := fileFormat
+	if format != "" {
+		saveFormat = format
 	}
 
-	fmt.Printf("Successfully set '%s' in scope '%s'\n", configPath, scope)
+	err = secureCfg.Save(scope, updatedTomlBytes, saveFormat, description)
+	if err != nil {
+		return fmt.Errorf("%w: failed to save updated config for scope '%s': %w", ErrSecureStoreSave, scope, err)
+	}
+
+	if _, err := fmt.Fprintf(stdout, "Successfully set '%s' in scope '%s'\n", configPath, scope); err != nil {
+		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
+	}
+	return nil
 }
