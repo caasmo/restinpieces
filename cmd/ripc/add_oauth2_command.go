@@ -18,7 +18,6 @@ var (
 	ErrConfigMarshal        = errors.New("failed to marshal config")
 	ErrSecureStoreGet       = errors.New("failed to get from secure store")
 	ErrSecureStoreSave      = errors.New("failed to save to secure store")
-	ErrSecureStoreKeyRead   = errors.New("failed to read secure store key")
 )
 
 // capitalizeFirst capitalizes the first letter of a string
