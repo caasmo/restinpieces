@@ -100,15 +100,15 @@ func diffConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 		var err error
 		switch {
 		case strings.HasPrefix(line, "---"):
-			_, err = fmt.Fprintf(stdout, "%s%s%s ", ColorBlue, line, ColorReset)
+			_, err = fmt.Fprintf(stdout, "%s%s%s\n", ColorBlue, line, ColorReset)
 		case strings.HasPrefix(line, "+++"):
-			_, err = fmt.Fprintf(stdout, "%s%s%s ", ColorBlue, line, ColorReset)
+			_, err = fmt.Fprintf(stdout, "%s%s%s\n", ColorBlue, line, ColorReset)
 		case strings.HasPrefix(line, "@@"):
-			_, err = fmt.Fprintf(stdout, "%s%s%s ", ColorCyan, line, ColorReset)
+			_, err = fmt.Fprintf(stdout, "%s%s%s\n", ColorCyan, line, ColorReset)
 		case strings.HasPrefix(line, "-"):
-			_, err = fmt.Fprintf(stdout, "%s%s%s ", ColorRed, line, ColorReset)
+			_, err = fmt.Fprintf(stdout, "%s%s%s\n", ColorRed, line, ColorReset)
 		case strings.HasPrefix(line, "+"):
-			_, err = fmt.Fprintf(stdout, "%s%s%s ", ColorGreen, line, ColorReset)
+			_, err = fmt.Fprintf(stdout, "%s%s%s\n", ColorGreen, line, ColorReset)
 		default:
 			_, err = fmt.Fprintln(stdout, line)
 		}
