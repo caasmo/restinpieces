@@ -95,6 +95,57 @@ func TestParseConfigSubcommand(t *testing.T) {
 			args:        []string{"init", "extra"},
 			expectedErr: ErrTooManyArguments,
 		},
+
+		// 'paths' subcommand
+		{
+			name:         "PathsSuccess",
+			args:         []string{"paths", "--scope", "test", "filter"},
+			expectedCmd:  "paths",
+			expectedArgs: []string{"test", "filter"},
+			expectedErr:  nil,
+		},
+		{
+			name:        "PathsTooManyArgs",
+			args:        []string{"paths", "filter", "extra"},
+			expectedErr: ErrTooManyArguments,
+		},
+
+		// 'dump' subcommand
+		{
+			name:         "DumpSuccess",
+			args:         []string{"dump", "--scope", "test"},
+			expectedCmd:  "dump",
+			expectedArgs: []string{"test"},
+			expectedErr:  nil,
+		},
+		{
+			name:        "DumpTooManyArgs",
+			args:        []string{"dump", "extra"},
+			expectedErr: ErrTooManyArguments,
+		},
+
+		// 'get' subcommand
+		{
+			name:         "GetSuccess",
+			args:         []string{"get", "--scope", "test", "filter"},
+			expectedCmd:  "get",
+			expectedArgs: []string{"test", "filter"},
+			expectedErr:  nil,
+		},
+
+		// 'save' subcommand
+		{
+			name:         "SaveSuccess",
+			args:         []string{"save", "--scope", "test", "file.toml"},
+			expectedCmd:  "save",
+			expectedArgs: []string{"test", "file.toml"},
+			expectedErr:  nil,
+		},
+		{
+			name:        "SaveMissingArgument",
+			args:        []string{"save"},
+			expectedErr: ErrMissingArgument,
+		},
 	}
 
 	for _, tc := range testCases {

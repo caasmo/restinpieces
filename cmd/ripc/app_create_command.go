@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -14,11 +16,24 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
+var (
+	ErrReadMigrations = errors.New("failed to read migrations")
+	ErrExecMigration  = errors.New("failed to execute migration")
+)
+
+// handleAppCreateCommand is the command-level wrapper that executes the core app creation logic.
 func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string) {
-	// Run Migrations (Apply Schema)
-	if err := runMigrations(pool); err != nil {
-		// Error already printed by runMigrations
+	if err := createApplication(os.Stdout, secureStore, pool, dbPath); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
+	}
+}
+
+// createApplication contains the testable core logic for creating and configuring the application.
+func createApplication(stdout io.Writer, secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string) error {
+	// Run Migrations (Apply Schema)
+	if err := runMigrations(stdout, pool); err != nil {
+		return err // Error is already wrapped by runMigrations
 	}
 
 	// Generate Default Config Struct
@@ -27,56 +42,63 @@ func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, 
 	// Marshal Config to TOML
 	tomlBytes, err := toml.Marshal(defaultCfg)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to marshal default config to TOML: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("%w: failed to marshal default config to TOML: %w", ErrConfigMarshal, err)
 	}
 
 	// Save Encrypted Config into DB via SecureConfig
-	if err := saveConfig(secureStore, tomlBytes); err != nil {
-		// Error already printed by saveConfig
-		os.Exit(1)
+	if err := saveConfig(stdout, secureStore, tomlBytes); err != nil {
+		return err // Error is already wrapped by saveConfig
 	}
 
-	fmt.Printf("Application database created and configured successfully: %s\n", dbPath)
-}
-
-func runMigrations(pool *sqlitex.Pool) error {
-	conn, err := pool.Take(context.Background())
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to get connection from pool for migrations: %v\n", err)
-		return err
-	}
-	defer pool.Put(conn)
-
-	schemaFS := migrations.Schema()
-	migrationFiles, err := fs.ReadDir(schemaFS, ".")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to read embedded migrations: %v\n", err)
-		return err
-	}
-
-	for _, migration := range migrationFiles {
-		if filepath.Ext(migration.Name()) != ".sql" {
-			continue
-		}
-
-		sqlBytes, err := fs.ReadFile(schemaFS, migration.Name())
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to read embedded migration file %s: %v\n", migration.Name(), err)
-			return err
-		}
-
-		fmt.Printf("Applying migration: %s\n", migration.Name())
-		if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: failed to execute migration file %s: %v\n", migration.Name(), err)
-			return err
-		}
+	if _, err := fmt.Fprintf(stdout, "Application database created and configured successfully: %s\n", dbPath); err != nil {
+		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 	return nil
 }
 
-func saveConfig(secureStore config.SecureStore, configData []byte) error {
-	fmt.Println("Saving initial configuration...")
+func runMigrations(stdout io.Writer, pool *sqlitex.Pool) error {
+	conn, err := pool.Take(context.Background())
+	if err != nil {
+		return fmt.Errorf("%w: for migrations: %w", ErrDbConnection, err)
+	}
+	defer pool.Put(conn)
+
+	schemaFS := migrations.Schema()
+	// Use WalkDir to recursively find all .sql files
+	err = fs.WalkDir(schemaFS, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err // Propagate errors from WalkDir
+		}
+		if d.IsDir() || filepath.Ext(path) != ".sql" {
+			return nil // Skip directories and non-sql files
+		}
+
+		sqlBytes, err := fs.ReadFile(schemaFS, path)
+		if err != nil {
+			return fmt.Errorf("%w: could not read embedded migration file %s: %w", ErrReadMigrations, path, err)
+		}
+
+		if _, err := fmt.Fprintf(stdout, "Applying migration: %s\n", path); err != nil {
+			return fmt.Errorf("%w: %w", ErrWriteOutput, err)
+		}
+		if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
+			return fmt.Errorf("%w: failed to execute migration file %s: %w", ErrExecMigration, path, err)
+		}
+		return nil
+	})
+
+	if err != nil {
+		// Wrap any error from WalkDir to provide context
+		return fmt.Errorf("migration process failed: %w", err)
+	}
+
+	return nil
+}
+
+func saveConfig(stdout io.Writer, secureStore config.SecureStore, configData []byte) error {
+	if _, err := fmt.Fprintln(stdout, "Saving initial configuration..."); err != nil {
+		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
+	}
 	err := secureStore.Save(
 		config.ScopeApplication,
 		configData,
@@ -84,8 +106,7 @@ func saveConfig(secureStore config.SecureStore, configData []byte) error {
 		"Initial default configuration",
 	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to save initial config via SecureStore: %v\n", err)
-		return fmt.Errorf("failed to save initial config: %w", err)
+		return fmt.Errorf("%w: failed to save initial config: %w", ErrSecureStoreSave, err)
 	}
 	return nil
 }
