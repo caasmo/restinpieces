@@ -1,6 +1,8 @@
 package main
 
+
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -10,7 +12,17 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
+var (
+	ErrUnknownSubcommand = errors.New("unknown config subcommand")
+	ErrMissingArgument   = errors.New("missing required argument")
+	ErrTooManyArguments  = errors.New("too many arguments")
+	ErrInvalidFlag       = errors.New("invalid flag provided")
+	ErrNotANumber        = errors.New("argument must be a number")
+)
+
 func printConfigUsage() {
+// ... (rest of the file is unchanged)
+
 	fmt.Fprintf(os.Stderr, "Usage: %s config <subcommand> [options]\n\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "Manages the application configuration.\n\n")
 	fmt.Fprintf(os.Stderr, "Subcommands:\n")
@@ -32,6 +44,50 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		os.Exit(1)
 	}
 
+	subcommand, subcommandArgs, err := parseConfigSubcommand(commandArgs)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		// Potentially print usage for the specific subcommand if flags were involved
+		printConfigUsage()
+		os.Exit(1)
+	}
+
+	switch subcommand {
+	case "set":
+		handleSetCommand(secureStore, subcommandArgs[0], subcommandArgs[1], subcommandArgs[2], subcommandArgs[3:])
+	case "scopes":
+		handleScopesCommand(dbPool)
+	case "list":
+		scopeToList := ""
+		if len(subcommandArgs) > 0 {
+			scopeToList = subcommandArgs[0]
+		}
+		handleListCommand(dbPool, scopeToList)
+	case "paths":
+		handlePathsCommand(secureStore, subcommandArgs[0], subcommandArgs[1])
+	case "dump":
+		handleDumpCommand(secureStore, subcommandArgs[0])
+	case "diff":
+		gen, _ := strconv.Atoi(subcommandArgs[1])
+		handleDiffCommand(secureStore, subcommandArgs[0], gen)
+	case "rollback":
+		gen, _ := strconv.Atoi(subcommandArgs[1])
+		handleRollbackCommand(secureStore, subcommandArgs[0], gen)
+	case "save":
+		handleSaveCommand(secureStore, subcommandArgs[0], subcommandArgs[1])
+	case "get":
+		handleGetCommand(secureStore, subcommandArgs[0], subcommandArgs[1])
+	case "init":
+		handleInitCommand(secureStore)
+	default:
+		// This case should ideally not be reached if parseConfigSubcommand is correct
+		fmt.Fprintf(os.Stderr, "Error: unknown config subcommand: %s\n", subcommand)
+		printConfigUsage()
+		os.Exit(1)
+	}
+}
+
+func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 	subcommand := commandArgs[0]
 	subcommandArgs := commandArgs[1:]
 
@@ -42,137 +98,119 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		formatFlag := setCmd.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
 		descFlag := setCmd.String("desc", "", "Optional description for this configuration version")
 		if err := setCmd.Parse(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing set flags: %v\n", err)
-			setCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("parsing set flags: %w: %v", ErrInvalidFlag, err)
 		}
 		if setCmd.NArg() < 2 {
-			fmt.Fprintf(os.Stderr, "Error: 'set' requires path and value arguments\n")
-			setCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("'set' requires path and value arguments: %w", ErrMissingArgument)
 		}
-		handleSetCommand(secureStore, *setScope, *formatFlag, *descFlag, setCmd.Args())
+		// Return flags and args in a specific order
+		return subcommand, append([]string{*setScope, *formatFlag, *descFlag}, setCmd.Args()...), nil
 	case "scopes":
 		if len(subcommandArgs) > 0 {
-			fmt.Fprintf(os.Stderr, "Error: 'scopes' command does not take any arguments\n")
-			printConfigUsage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("'scopes' command does not take any arguments: %w", ErrTooManyArguments)
 		}
-		handleScopesCommand(dbPool)
+		return subcommand, nil, nil
 	case "list":
-		scopeToList := ""
-		if len(subcommandArgs) > 0 {
-			scopeToList = subcommandArgs[0]
-			if len(subcommandArgs) > 1 {
-				fmt.Fprintf(os.Stderr, "Error: 'list' command takes at most one scope argument\n")
-				printConfigUsage()
-				os.Exit(1)
-			}
+		if len(subcommandArgs) > 1 {
+			return "", nil, fmt.Errorf("'list' command takes at most one scope argument: %w", ErrTooManyArguments)
 		}
-		handleListCommand(dbPool, scopeToList)
+		return subcommand, subcommandArgs, nil
 	case "paths":
 		pathsCmd := flag.NewFlagSet("paths", flag.ContinueOnError)
 		pathsScope := pathsCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := pathsCmd.Parse(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing paths flags: %v\n", err)
-			pathsCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("parsing paths flags: %w: %v", ErrInvalidFlag, err)
 		}
 		filter := ""
 		if pathsCmd.NArg() > 0 {
 			filter = pathsCmd.Arg(0)
 		}
-		handlePathsCommand(secureStore, *pathsScope, filter)
+		if pathsCmd.NArg() > 1 {
+			return "", nil, fmt.Errorf("'paths' command takes at most one filter argument: %w", ErrTooManyArguments)
+		}
+		return subcommand, []string{*pathsScope, filter}, nil
 	case "dump":
 		dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
 		dumpScope := dumpCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := dumpCmd.Parse(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing dump flags: %v\n", err)
-			dumpCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
 		}
-		handleDumpCommand(secureStore, *dumpScope)
+		if dumpCmd.NArg() > 0 {
+			return "", nil, fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
+		}
+		return subcommand, []string{*dumpScope}, nil
 	case "diff":
 		diffCmd := flag.NewFlagSet("diff", flag.ContinueOnError)
 		diffScope := diffCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := diffCmd.Parse(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing diff flags: %v\n", err)
-			diffCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("parsing diff flags: %w: %v", ErrInvalidFlag, err)
 		}
 		if diffCmd.NArg() < 1 {
-			fmt.Fprintf(os.Stderr, "Error: 'diff' requires generation number argument\n")
-			diffCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("'diff' requires generation number argument: %w", ErrMissingArgument)
 		}
-		gen, err := strconv.Atoi(diffCmd.Arg(0))
+		if diffCmd.NArg() > 1 {
+			return "", nil, fmt.Errorf("'diff' command takes at most one generation argument: %w", ErrTooManyArguments)
+		}
+		_, err := strconv.Atoi(diffCmd.Arg(0))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: generation must be a number\n")
-			os.Exit(1)
+			return "", nil, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
 		}
-		handleDiffCommand(secureStore, *diffScope, gen)
+		return subcommand, []string{*diffScope, diffCmd.Arg(0)}, nil
 	case "rollback":
 		rollbackCmd := flag.NewFlagSet("rollback", flag.ContinueOnError)
 		rollbackScope := rollbackCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := rollbackCmd.Parse(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing rollback flags: %v\n", err)
-			rollbackCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("parsing rollback flags: %w: %v", ErrInvalidFlag, err)
 		}
 		if rollbackCmd.NArg() < 1 {
-			fmt.Fprintf(os.Stderr, "Error: 'rollback' requires generation number argument\n")
-			rollbackCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("'rollback' requires generation number argument: %w", ErrMissingArgument)
 		}
-		gen, err := strconv.Atoi(rollbackCmd.Arg(0))
+		if rollbackCmd.NArg() > 1 {
+			return "", nil, fmt.Errorf("'rollback' command takes at most one generation argument: %w", ErrTooManyArguments)
+		}
+		_, err := strconv.Atoi(rollbackCmd.Arg(0))
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: generation must be a number\n")
-			os.Exit(1)
+			return "", nil, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
 		}
-		handleRollbackCommand(secureStore, *rollbackScope, gen)
+		return subcommand, []string{*rollbackScope, rollbackCmd.Arg(0)}, nil
 	case "save":
 		saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
 		saveScope := saveCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := saveCmd.Parse(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing save flags: %v\n", err)
-			saveCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)
 		}
 		if saveCmd.NArg() < 1 {
-			fmt.Fprintf(os.Stderr, "Error: 'save' requires filename argument\n")
-			saveCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("'save' requires filename argument: %w", ErrMissingArgument)
 		}
-		handleSaveCommand(secureStore, *saveScope, saveCmd.Arg(0))
+		if saveCmd.NArg() > 1 {
+			return "", nil, fmt.Errorf("'save' command takes at most one filename argument: %w", ErrTooManyArguments)
+		}
+		return subcommand, []string{*saveScope, saveCmd.Arg(0)}, nil
 	case "get":
 		getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
 		getScope := getCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := getCmd.Parse(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing get flags: %v\n", err)
-			getCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("parsing get flags: %w: %v", ErrInvalidFlag, err)
 		}
 		filter := ""
 		if getCmd.NArg() > 0 {
 			filter = getCmd.Arg(0)
 		}
-		handleGetCommand(secureStore, *getScope, filter)
+		if getCmd.NArg() > 1 {
+			return "", nil, fmt.Errorf("'get' command takes at most one filter argument: %w", ErrTooManyArguments)
+		}
+		return subcommand, []string{*getScope, filter}, nil
 	case "init":
 		initCmd := flag.NewFlagSet("init", flag.ContinueOnError)
 		if err := initCmd.Parse(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing init flags: %v\n", err)
-			initCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("parsing init flags: %w: %v", ErrInvalidFlag, err)
 		}
 		if initCmd.NArg() > 0 {
-            fmt.Fprintf(os.Stderr, "Error: 'init' does not take any arguments\n")
-            initCmd.Usage()
-            os.Exit(1)
-        }
-        handleInitCommand(secureStore)
-    default:
-        fmt.Fprintf(os.Stderr, "Error: unknown config subcommand: %s\n", subcommand)
-        printConfigUsage()
-        os.Exit(1)
+			return "", nil, fmt.Errorf("'init' does not take any arguments: %w", ErrTooManyArguments)
+		}
+		return subcommand, nil, nil
+	default:
+		return "", nil, fmt.Errorf("'%s': %w", subcommand, ErrUnknownSubcommand)
 	}
 }
+
