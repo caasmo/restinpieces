@@ -153,12 +153,15 @@ func TestCreateApplication(t *testing.T) {
 		}
 		defer pool.Put(conn)
 		var count int
-		sqlitex.Execute(conn, "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users';", &sqlitex.ExecOptions{
+		err = sqlitex.Execute(conn, "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users';", &sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
 				count = stmt.ColumnInt(0)
 				return nil
 			},
 		})
+		if err != nil {
+			t.Fatalf("failed to query for users table: %v", err)
+		}
 		if count != 1 {
 			t.Error("expected migrations to be run, but users table not found")
 		}
