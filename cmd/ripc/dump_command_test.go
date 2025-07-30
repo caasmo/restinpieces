@@ -94,13 +94,6 @@ func TestDumpConfig_Failure_StoreReadError(t *testing.T) {
 	}
 }
 
-// failingWriter is an io.Writer that always returns an error.
-type failingWriter struct{}
-
-func (fw *failingWriter) Write(p []byte) (n int, err error) {
-	return 0, errors.New("forced write error")
-}
-
 // TestDumpConfig_Failure_OutputWriteError tests failure on output write error.
 func TestDumpConfig_Failure_OutputWriteError(t *testing.T) {
 	mockStore := NewMockDumpSecureStore(map[string][]byte{
@@ -116,4 +109,11 @@ func TestDumpConfig_Failure_OutputWriteError(t *testing.T) {
 	if !errors.Is(err, ErrWriteOutput) {
 		t.Errorf("dumpConfig() error = %v, want error wrapping %v", err, ErrWriteOutput)
 	}
+}
+
+// failingWriter is an io.Writer that always returns an error.
+type failingWriter struct{}
+
+func (fw *failingWriter) Write(p []byte) (n int, err error) {
+	return 0, errors.New("forced write error")
 }
