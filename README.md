@@ -6,6 +6,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/caasmo/restinpieces)](https://goreportcard.com/report/github.com/caasmo/restinpieces)
 [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/caasmo/restinpieces/master/.github/badges/coverage.json)](https://github.com/caasmo/restinpieces/actions/workflows/test.yml)
 [![sloc](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/caasmo/restinpieces/master/.github/badges/sloc.json)](https://github.com/caasmo/restinpieces/actions/workflows/sloc.yml)
+[![deps](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/caasmo/restinpieces/master/.github/badges/deps.json)](https://github.com/caasmo/restinpieces/actions/workflows/dependencies.yml)
 [![GitHub Release](https://img.shields.io/github/v/release/caasmo/restinpieces?style=flat)]() 
 [![Built Go](https://img.shields.io/badge/built_with-Go-00ADD8.svg?style=flat)]()
 
