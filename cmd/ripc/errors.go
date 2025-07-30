@@ -12,4 +12,10 @@ var (
 	ErrDbConnection    = errors.New("database connection error")
 	ErrQueryPrepare    = errors.New("failed to prepare query")
 	ErrWriteOutput     = errors.New("failed to write output")
+
+	// command parsing errors
+	ErrMissingArgument  = errors.New("missing required argument")
+	ErrTooManyArguments = errors.New("too many arguments")
+	ErrInvalidFlag      = errors.New("invalid flag provided")
+	ErrNotANumber       = errors.New("argument must be a number")
 )

@@ -14,10 +14,6 @@ import (
 
 var (
 	ErrUnknownSubcommand = errors.New("unknown config subcommand")
-	ErrMissingArgument   = errors.New("missing required argument")
-	ErrTooManyArguments  = errors.New("too many arguments")
-	ErrInvalidFlag       = errors.New("invalid flag provided")
-	ErrNotANumber        = errors.New("argument must be a number")
 )
 
 func printConfigUsage() {
