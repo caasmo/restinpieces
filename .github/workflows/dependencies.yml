@@ -47,7 +47,7 @@ jobs:
           cat > .github/badges/deps.json << EOF
           {
             "schemaVersion": 1,
-            "label": "deps",
+            "label": "direct deps",
             "message": "${DIRECT_DEPS}",
             "color": "${COLOR}"
           }
