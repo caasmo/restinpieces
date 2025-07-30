@@ -34,46 +34,31 @@ jobs:
           echo "LINES_OF_CODE=$LINES_OF_CODE" >> $GITHUB_ENV
           echo "FORMATTED_LINES=$FORMATTED_LINES" >> $GITHUB_ENV
 
-      - name: Generate SLOC badge
+      - name: Generate SLOC endpoint
         run: |
           # Create badge directory
           mkdir -p .github/badges
 
-          # Generate SVG badge using the same conventions as the coverage badge
-          cat > .github/badges/sloc.svg << EOF
-          <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100" height="20" role="img">
-            <title>total lines: ${{ env.FORMATTED_LINES }}</title>
-            <linearGradient id="s" x2="0" y2="100%">
-              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
-              <stop offset="1" stop-opacity=".1"/>
-            </linearGradient>
-            <clipPath id="r">
-              <rect width="100" height="20" rx="3" fill="#fff"/>
-            </clipPath>
-            <g clip-path="url(#r)">
-              <rect width="73" height="20" fill="#555"/>
-              <rect x="73" width="27" height="20" fill="#4c1"/>
-              <rect width="100" height="20" fill="url(#s)"/>
-            </g>
-            <g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110">
-              <text aria-hidden="true" x="375" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="630">total lines</text>
-              <text x="375" y="140" transform="scale(.1)" fill="#fff" textLength="630">total lines</text>
-              <text aria-hidden="true" x="865" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">${{ env.FORMATTED_LINES }}</text>
-              <text x="865" y="140" transform="scale(.1)" fill="#fff">${{ env.FORMATTED_LINES }}</text>
-            </g>
-          </svg>
+          # Create a JSON endpoint for shields.io
+          cat > .github/badges/sloc.json << EOF
+          {
+            "schemaVersion": 1,
+            "label": "total lines",
+            "message": "${{ env.FORMATTED_LINES }}",
+            "color": "brightgreen"
+          }
           EOF
 
-      - name: Commit SLOC badge
+      - name: Commit SLOC endpoint
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          if git diff --quiet HEAD -- .github/badges/sloc.svg; then
-            echo "No changes to SLOC badge"
+          if git diff --quiet HEAD -- .github/badges/sloc.json; then
+            echo "No changes to SLOC endpoint"
           else
-            git add .github/badges/sloc.svg
-            git commit -m "Update total lines badge: ${{ env.LINES_OF_CODE }}"
+            git add .github/badges/sloc.json
+            git commit -m "Update total lines endpoint: ${{ env.LINES_OF_CODE }}"
             git pull --rebase
             git push
           fi
