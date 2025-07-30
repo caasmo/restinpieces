@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/caasmo/restinpieces"
@@ -10,83 +12,101 @@ import (
 	dbz "github.com/caasmo/restinpieces/db/zombiezen"
 )
 
-func main() {
-	// Global flags
-	ageIdentityPathFlag := flag.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
-	dbPathFlag := flag.String("dbpath", "", "Path to the SQLite database file")
+var (
+	// main application errors
+	ErrMissingFlag         = errors.New("missing required global flag")
+	ErrMissingCommand      = errors.New("missing command")
+	ErrUnknownCommand      = errors.New("unknown command")
+	ErrDBNotFound          = errors.New("database file not found")
+	ErrDBAlreadyExists     = errors.New("database file already exists")
+	ErrCreateDbPool        = errors.New("failed to create database pool")
+	ErrCreateDbImpl        = errors.New("failed to instantiate zombiezen db from pool")
+	ErrCreateSecureStore   = errors.New("failed to instantiate secure store")
+)
 
-	originalUsage := flag.Usage
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [global options] <command> [command-specific options]\n\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "Manages securely stored configurations.\n\n")
-		fmt.Fprintf(os.Stderr, "Global Options:\n")
+func main() {
+	if err := run(os.Args[1:], os.Stderr); err != nil {
+		os.Exit(1)
+	}
+}
+
+func run(args []string, output io.Writer) error {
+	// We need a new flag set for each run
+	fs := flag.NewFlagSet("ripc", flag.ContinueOnError)
+	fs.SetOutput(output)
+
+	// Global flags
+	ageIdentityPathFlag := fs.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
+	dbPathFlag := fs.String("dbpath", "", "Path to the SQLite database file")
+
+	originalUsage := fs.Usage
+	fs.Usage = func() {
+		fmt.Fprintf(output, "Usage: ripc [global options] <command> [command-specific options]\n\n")
+		fmt.Fprintf(output, "Manages securely stored configurations.\n\n")
+		fmt.Fprintf(output, "Global Options:\n")
 		originalUsage() // Prints the global flags
-		fmt.Fprintf(os.Stderr, "\nAvailable Commands:\n")
-		fmt.Fprintf(os.Stderr, "  app <subcommand> [options]       Manage application lifecycle (create)\n")
-		fmt.Fprintf(os.Stderr, "  config <subcommand> [options]    Manage configuration (set, list, dump, etc.)\n")
-		fmt.Fprintf(os.Stderr, "  auth <subcommand> [options]      Manage authentication (rotate-jwt-secrets, add-oauth2, etc.)\n")
-		fmt.Fprintf(os.Stderr, "  job <subcommand> [options]       Manage background jobs (add, list, rm)\n")
-		fmt.Fprintf(os.Stderr, "  log <subcommand> [options]       Manage the log database (init)\n")
+		fmt.Fprintf(output, "\nAvailable Commands:\n")
+		fmt.Fprintf(output, "  app <subcommand> [options]       Manage application lifecycle (create)\n")
+		fmt.Fprintf(output, "  config <subcommand> [options]    Manage configuration (set, list, dump, etc.)\n")
+		fmt.Fprintf(output, "  auth <subcommand> [options]      Manage authentication (rotate-jwt-secrets, add-oauth2, etc.)\n")
+		fmt.Fprintf(output, "  job <subcommand> [options]       Manage background jobs (add, list, rm)\n")
+		fmt.Fprintf(output, "  log <subcommand> [options]       Manage the log database (init)\n")
 	}
 
-	flag.Parse()
+	if err := fs.Parse(args); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidFlag, err)
+	}
 
 	if *ageIdentityPathFlag == "" {
-		fmt.Fprintf(os.Stderr, "Error: missing required global flag: -age-key\n")
-		flag.Usage()
-		os.Exit(1)
+		fs.Usage()
+		return fmt.Errorf("%w: -age-key", ErrMissingFlag)
 	}
 	if *dbPathFlag == "" {
-		fmt.Fprintf(os.Stderr, "Error: missing required global flag: -dbpath\n")
-		flag.Usage()
-		os.Exit(1)
+		fs.Usage()
+		return fmt.Errorf("%w: -dbpath", ErrMissingFlag)
 	}
 
-	args := flag.Args()
-	if len(args) < 1 {
-		fmt.Fprintf(os.Stderr, "Error: missing command\n")
-		flag.Usage()
-		os.Exit(1)
+	cmdArgs := fs.Args()
+	if len(cmdArgs) < 1 {
+		fs.Usage()
+		return ErrMissingCommand
 	}
 
-	command := args[0]
-	commandArgs := args[1:]
+	command := cmdArgs[0]
+	commandArgs := cmdArgs[1:]
 
 	isAppCreate := command == "app" && len(commandArgs) > 0 && commandArgs[0] == "create"
 	if !isAppCreate {
 		if _, err := os.Stat(*dbPathFlag); os.IsNotExist(err) {
-			fmt.Fprintf(os.Stderr, "Error: database file not found: %s\n", *dbPathFlag)
-			fmt.Fprintf(os.Stderr, "Please create it first using 'ripc app create'.\n")
-			os.Exit(1)
+			fmt.Fprintf(output, "Error: database file not found: %s\n", *dbPathFlag)
+			fmt.Fprintf(output, "Please create it first using 'ripc app create'.\n")
+			return ErrDBNotFound
 		}
 	} else { // for app create, the database must NOT exist
 		if _, err := os.Stat(*dbPathFlag); err == nil {
-			fmt.Fprintf(os.Stderr, "Error: database file already exists: %s\n", *dbPathFlag)
-			os.Exit(1)
+			fmt.Fprintf(output, "Error: database file already exists: %s\n", *dbPathFlag)
+			return ErrDBAlreadyExists
 		}
 	}
 
 	pool, err := restinpieces.NewZombiezenPool(*dbPathFlag)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to create database pool (db_path: %s): %v\n", *dbPathFlag, err)
-		os.Exit(1)
+		return fmt.Errorf("%w (db_path: %s): %v", ErrCreateDbPool, *dbPathFlag, err)
 	}
 	defer func() {
 		if err := pool.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: error closing database pool: %v\n", err)
+			fmt.Fprintf(output, "Error: error closing database pool: %v\n", err)
 		}
 	}()
 
 	dbImpl, err := dbz.New(pool)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to instantiate zombiezen db from pool: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("%w: %v", ErrCreateDbImpl, err)
 	}
 
 	secureStore, err := config.NewSecureStoreAge(dbImpl, *ageIdentityPathFlag)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to instantiate secure store (age, age_key_path: %s): %v\n", *ageIdentityPathFlag, err)
-		os.Exit(1)
+		return fmt.Errorf("%w (age, age_key_path: %s): %v", ErrCreateSecureStore, *ageIdentityPathFlag, err)
 	}
 
 	switch command {
@@ -101,10 +121,10 @@ func main() {
 	case "log":
 		handleLogCommand(secureStore, *dbPathFlag, commandArgs)
 	case "help":
-		handleHelpCommand(commandArgs, flag.Usage)
+		handleHelpCommand(commandArgs, fs.Usage)
 	default:
-		fmt.Fprintf(os.Stderr, "Error: unknown command: %s\n", command)
-		flag.Usage()
-		os.Exit(1)
+		fs.Usage()
+		return fmt.Errorf("%w: %s", ErrUnknownCommand, command)
 	}
+	return nil
 }
