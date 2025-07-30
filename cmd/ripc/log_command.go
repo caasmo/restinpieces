@@ -1,10 +1,15 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/caasmo/restinpieces/config"
+)
+
+var (
+	ErrUnknownLogSubcommand = errors.New("unknown log subcommand")
 )
 
 func printLogUsage() {
@@ -20,20 +25,35 @@ func handleLogCommand(secureStore config.SecureStore, dbPath string, commandArgs
 		os.Exit(1)
 	}
 
+	subcommand, _, err := parseLogSubcommand(commandArgs)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		printLogUsage()
+		os.Exit(1)
+	}
+
+	switch subcommand {
+	case "init":
+		handleLogInitCommand(secureStore, dbPath)
+	default:
+		// This case should ideally not be reached if parseLogSubcommand is correct
+		fmt.Fprintf(os.Stderr, "Error: unknown log subcommand: %s\n", subcommand)
+		printLogUsage()
+		os.Exit(1)
+	}
+}
+
+func parseLogSubcommand(commandArgs []string) (string, []string, error) {
 	subcommand := commandArgs[0]
 	subcommandArgs := commandArgs[1:]
 
 	switch subcommand {
 	case "init":
 		if len(subcommandArgs) > 0 {
-			fmt.Fprintf(os.Stderr, "Error: 'init' does not take any arguments\n")
-			printLogUsage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("'init' does not take any arguments: %w", ErrTooManyArguments)
 		}
-		handleLogInitCommand(secureStore, dbPath)
+		return subcommand, nil, nil
 	default:
-		fmt.Fprintf(os.Stderr, "Error: unknown log subcommand: %s\n", subcommand)
-		printLogUsage()
-		os.Exit(1)
+		return "", nil, fmt.Errorf("'%s': %w", subcommand, ErrUnknownLogSubcommand)
 	}
 }
