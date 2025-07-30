@@ -201,7 +201,11 @@ func TestLogInit(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to open created log db: %v", err)
 		}
-		defer pool.Close()
+		defer func() {
+			if err := pool.Close(); err != nil {
+				t.Errorf("failed to close pool: %v", err)
+			}
+		}()
 		conn, err := pool.Take(context.Background())
 		if err != nil {
 			t.Fatal(err)
