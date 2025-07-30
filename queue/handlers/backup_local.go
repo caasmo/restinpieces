@@ -96,18 +96,6 @@ func (h *Handler) Handle(ctx context.Context, job db.Job) error {
 	return nil
 }
 
-// validateOnlineConfig checks if the configuration for the online strategy is valid.
-func (h *Handler) validateOnlineConfig() error {
-	backupCfg := h.configProvider.Get().BackupLocal
-	if backupCfg.PagesPerStep <= 0 {
-		return fmt.Errorf("invalid configuration for online backup: pages_per_step must be a positive value, but was %d", backupCfg.PagesPerStep)
-	}
-	if backupCfg.SleepInterval.Duration < 0 {
-		return fmt.Errorf("invalid configuration for online backup: sleep_interval cannot be negative, but was %v", backupCfg.SleepInterval)
-	}
-	return nil
-}
-
 // vacuumInto creates a clean, defragmented copy of the database.
 func (h *Handler) vacuumInto(sourcePath, destPath string) error {
 	sourceConn, err := zombiezen.NewConn(sourcePath)
@@ -138,10 +126,6 @@ func (h *Handler) vacuumInto(sourcePath, destPath string) error {
 
 // onlineBackup performs a live backup using the SQLite Online Backup API.
 func (h *Handler) onlineBackup(sourcePath, destPath string) error {
-	if err := h.validateOnlineConfig(); err != nil {
-		return err
-	}
-
 	backupCfg := h.configProvider.Get().BackupLocal
 	pagesPerStep := backupCfg.PagesPerStep
 	sleepInterval := backupCfg.SleepInterval.Duration

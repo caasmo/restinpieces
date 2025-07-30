@@ -47,6 +47,34 @@ func Validate(cfg *Config) error {
 	if err := validateCache(&cfg.Cache); err != nil {
 		return fmt.Errorf("cache config validation failed: %w", err)
 	}
+	if err := validateBackupLocal(&cfg.BackupLocal); err != nil {
+		return fmt.Errorf("backup_local config validation failed: %w", err)
+	}
+	return nil
+}
+
+// validateBackupLocal checks the BackupLocal configuration section.
+func validateBackupLocal(backup *BackupLocal) error {
+	// The backup feature is considered enabled if the source path is set.
+	if backup.SourcePath == "" {
+		return nil // Not configured, no validation needed.
+	}
+
+	// If the strategy is online, pages_per_step must be positive.
+	if backup.Strategy == "online" {
+		if backup.PagesPerStep <= 0 {
+			return fmt.Errorf("pages_per_step must be positive for online strategy")
+		}
+		if backup.SleepInterval.Duration < 0 {
+			return fmt.Errorf("sleep_interval cannot be negative for online strategy")
+		}
+	}
+
+	// The backup directory must be configured.
+	if backup.BackupDir == "" {
+		return fmt.Errorf("backup_dir cannot be empty")
+	}
+
 	return nil
 }
 
