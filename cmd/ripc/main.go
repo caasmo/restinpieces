@@ -39,36 +39,56 @@ func run(args []string, output io.Writer) error {
 	ageIdentityPathFlag := fs.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
 	dbPathFlag := fs.String("dbpath", "", "Path to the SQLite database file")
 
+	var usageWriteErr error
+	writeUsage := func(format string, a ...interface{}) {
+		if usageWriteErr != nil {
+			return
+		}
+		_, usageWriteErr = fmt.Fprintf(output, format, a...)
+	}
+
 	originalUsage := fs.Usage
 	fs.Usage = func() {
-		fmt.Fprintf(output, "Usage: ripc [global options] <command> [command-specific options]\n\n")
-		fmt.Fprintf(output, "Manages securely stored configurations.\n\n")
-		fmt.Fprintf(output, "Global Options:\n")
+		writeUsage("Usage: ripc [global options] <command> [command-specific options]\n\n")
+		writeUsage("Manages securely stored configurations.\n\n")
+		writeUsage("Global Options:\n")
 		originalUsage() // Prints the global flags
-		fmt.Fprintf(output, "\nAvailable Commands:\n")
-		fmt.Fprintf(output, "  app <subcommand> [options]       Manage application lifecycle (create)\n")
-		fmt.Fprintf(output, "  config <subcommand> [options]    Manage configuration (set, list, dump, etc.)\n")
-		fmt.Fprintf(output, "  auth <subcommand> [options]      Manage authentication (rotate-jwt-secrets, add-oauth2, etc.)\n")
-		fmt.Fprintf(output, "  job <subcommand> [options]       Manage background jobs (add, list, rm)\n")
-		fmt.Fprintf(output, "  log <subcommand> [options]       Manage the log database (init)\n")
+		writeUsage("\nAvailable Commands:\n")
+		writeUsage("  app <subcommand> [options]       Manage application lifecycle (create)\n")
+		writeUsage("  config <subcommand> [options]    Manage configuration (set, list, dump, etc.)\n")
+		writeUsage("  auth <subcommand> [options]      Manage authentication (rotate-jwt-secrets, add-oauth2, etc.)\n")
+		writeUsage("  job <subcommand> [options]       Manage background jobs (add, list, rm)\n")
+		writeUsage("  log <subcommand> [options]       Manage the log database (init)\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
+		if usageWriteErr != nil {
+			return usageWriteErr
+		}
 		return fmt.Errorf("%w: %v", ErrInvalidFlag, err)
 	}
 
 	if *ageIdentityPathFlag == "" {
 		fs.Usage()
+		if usageWriteErr != nil {
+			return usageWriteErr
+		}
 		return fmt.Errorf("%w: -age-key", ErrMissingFlag)
 	}
 	if *dbPathFlag == "" {
 		fs.Usage()
+		if usageWriteErr != nil {
+			return usageWriteErr
+		}
 		return fmt.Errorf("%w: -dbpath", ErrMissingFlag)
 	}
 
 	cmdArgs := fs.Args()
 	if len(cmdArgs) < 1 {
 		fs.Usage()
+		if usageWriteErr != nil {
+			return usageWriteErr
+		}
 		return ErrMissingCommand
 	}
 
@@ -78,13 +98,14 @@ func run(args []string, output io.Writer) error {
 	isAppCreate := command == "app" && len(commandArgs) > 0 && commandArgs[0] == "create"
 	if !isAppCreate {
 		if _, err := os.Stat(*dbPathFlag); os.IsNotExist(err) {
-			fmt.Fprintf(output, "Error: database file not found: %s\n", *dbPathFlag)
-			fmt.Fprintf(output, "Please create it first using 'ripc app create'.\n")
+			// Not using the writeUsage helper here as this is a specific error message, not part of the general usage.
+			_, _ = fmt.Fprintf(output, "Error: database file not found: %s\n", *dbPathFlag)
+			_, _ = fmt.Fprintf(output, "Please create it first using 'ripc app create'.\n")
 			return ErrDBNotFound
 		}
 	} else { // for app create, the database must NOT exist
 		if _, err := os.Stat(*dbPathFlag); err == nil {
-			fmt.Fprintf(output, "Error: database file already exists: %s\n", *dbPathFlag)
+			_, _ = fmt.Fprintf(output, "Error: database file already exists: %s\n", *dbPathFlag)
 			return ErrDBAlreadyExists
 		}
 	}
@@ -95,7 +116,7 @@ func run(args []string, output io.Writer) error {
 	}
 	defer func() {
 		if err := pool.Close(); err != nil {
-			fmt.Fprintf(output, "Error: error closing database pool: %v\n", err)
+			_, _ = fmt.Fprintf(output, "Error: error closing database pool: %v\n", err)
 		}
 	}()
 
@@ -124,6 +145,9 @@ func run(args []string, output io.Writer) error {
 		handleHelpCommand(commandArgs, fs.Usage)
 	default:
 		fs.Usage()
+		if usageWriteErr != nil {
+			return usageWriteErr
+		}
 		return fmt.Errorf("%w: %s", ErrUnknownCommand, command)
 	}
 	return nil
