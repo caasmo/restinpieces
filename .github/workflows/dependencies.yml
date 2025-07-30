@@ -28,13 +28,13 @@ jobs:
           DIRECT_DEPS=$(go list -m -json all | jq -r 'select(.Main != true and .Indirect != true) | .Path' | wc -l | tr -d ' ')
           
           # Determine badge color based on dependency count
-          if [ "$DIRECT_DEPS" -eq 0 ]; then
+          if [ "$DIRECT_DEPS" -le 5 ]; then
             COLOR="brightgreen"
-          elif [ "$DIRECT_DEPS" -le 3 ]; then
-            COLOR="green"
-          elif [ "$DIRECT_DEPS" -le 7 ]; then
-            COLOR="yellowgreen"
           elif [ "$DIRECT_DEPS" -le 15 ]; then
+            COLOR="green"
+          elif [ "$DIRECT_DEPS" -le 25 ]; then
+            COLOR="yellow"
+          elif [ "$DIRECT_DEPS" -le 40 ]; then
             COLOR="orange"
           else
             COLOR="red"
