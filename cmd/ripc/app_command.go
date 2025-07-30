@@ -1,12 +1,17 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 
 	"github.com/caasmo/restinpieces/config"
 	"zombiezen.com/go/sqlite/sqlitex"
+)
+
+var (
+	ErrUnknownAppSubcommand = errors.New("unknown app subcommand")
 )
 
 func printAppUsage() {
@@ -22,31 +27,39 @@ func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPa
 		os.Exit(1)
 	}
 
+	subcommand, _, err := parseAppSubcommand(commandArgs)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		printAppUsage()
+		os.Exit(1)
+	}
+
+	switch subcommand {
+	case "create":
+		handleAppCreateCommand(secureStore, dbPool, dbPath)
+	default:
+		// This case should ideally not be reached if parseAppSubcommand is correct
+		fmt.Fprintf(os.Stderr, "Error: unknown app subcommand: %s\n", subcommand)
+		printAppUsage()
+		os.Exit(1)
+	}
+}
+
+func parseAppSubcommand(commandArgs []string) (string, []string, error) {
 	subcommand := commandArgs[0]
 	subcommandArgs := commandArgs[1:]
 
 	switch subcommand {
 	case "create":
-		createCmd := flag.NewFlagSet("create", flag.ExitOnError)
-		createCmd.Usage = func() {
-			fmt.Fprintf(os.Stderr, "Usage: %s app create\n\n", os.Args[0])
-			fmt.Fprintf(os.Stderr, "Creates a new application instance (database and initial config).\n")
-			fmt.Fprintf(os.Stderr, "Relies on the global -dbpath and -age-key flags.\n")
-		}
+		createCmd := flag.NewFlagSet("create", flag.ContinueOnError)
 		if err := createCmd.Parse(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error parsing create flags: %v\n", err)
-			createCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("parsing create flags: %w: %v", ErrInvalidFlag, err)
 		}
 		if createCmd.NArg() > 0 {
-			fmt.Fprintf(os.Stderr, "Error: 'create' does not take any arguments\n")
-			createCmd.Usage()
-			os.Exit(1)
+			return "", nil, fmt.Errorf("'create' does not take any arguments: %w", ErrTooManyArguments)
 		}
-		handleAppCreateCommand(secureStore, dbPool, dbPath)
+		return subcommand, nil, nil
 	default:
-		fmt.Fprintf(os.Stderr, "Error: unknown app subcommand: %s\n", subcommand)
-		printAppUsage()
-		os.Exit(1)
+		return "", nil, fmt.Errorf("'%s': %w", subcommand, ErrUnknownAppSubcommand)
 	}
 }
