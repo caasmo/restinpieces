@@ -1,13 +1,21 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 
 	"github.com/caasmo/restinpieces/db"
 )
 
+var (
+	ErrDeleteJobFailed = errors.New("failed to delete job")
+)
+
+// handleJobRm is the command-level wrapper. It handles parsing command-line
+// arguments and calls the core logic.
 func handleJobRm(dbConn db.DbQueueAdmin, args []string) {
 	if len(args) < 1 {
 		fmt.Fprintln(os.Stderr, "Error: 'rm' command requires a job ID")
@@ -20,11 +28,21 @@ func handleJobRm(dbConn db.DbQueueAdmin, args []string) {
 		os.Exit(1)
 	}
 
-	err = dbConn.DeleteJob(jobID)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to delete job: %v\n", err)
+	if err := removeJob(os.Stdout, dbConn, jobID); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+}
 
-	fmt.Printf("Successfully deleted job %d\n", jobID)
+// removeJob contains the testable core logic for removing a job from the queue.
+func removeJob(stdout io.Writer, dbConn db.DbQueueAdmin, jobID int64) error {
+	err := dbConn.DeleteJob(jobID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", ErrDeleteJobFailed, err)
+	}
+
+	if _, err := fmt.Fprintf(stdout, "Successfully deleted job %d\n", jobID); err != nil {
+		return fmt.Errorf("%w: %v", ErrWriteOutput, err)
+	}
+	return nil
 }
