@@ -76,16 +76,27 @@ func (s *mockSmtpServer) serve(t *testing.T) {
 		}
 		return
 	}
-	defer conn.Close()
+	// handleConnection will close the connection.
+	s.handleConnection(t, conn)
+}
+
+// handleConnection processes a single client connection.
+func (s *mockSmtpServer) handleConnection(t *testing.T, conn net.Conn) {
+	defer func() {
+		if err := conn.Close(); err != nil {
+			t.Logf("error closing mock smtp server connection: %v", err)
+		}
+	}()
 
 	reader := bufio.NewReader(conn)
 	// Respond to the client's initial connection.
-	fmt.Fprint(conn, "220 mock-server ESMTP\r\n")
+	if _, err := fmt.Fprint(conn, "220 mock-server ESMTP\r\n"); err != nil {
+		return
+	}
 
 	for {
 		line, err := reader.ReadString('\n')
 		if err != nil {
-			// Connection closed by client is not an error for the server.
 			return
 		}
 
@@ -96,19 +107,28 @@ func (s *mockSmtpServer) serve(t *testing.T) {
 
 		switch {
 		case strings.HasPrefix(cmd, "HELO"):
-			fmt.Fprint(conn, "250 mock-server\r\n")
+			if _, err := fmt.Fprint(conn, "250 mock-server\r\n"); err != nil {
+				return
+			}
 		case strings.HasPrefix(cmd, "EHLO"):
-			// Respond with capabilities, but explicitly omit STARTTLS.
-			// This tells the client not to attempt a TLS upgrade.
-			fmt.Fprint(conn, "250-mock-server\r\n")
-			fmt.Fprint(conn, "250 AUTH PLAIN\r\n")
+			if _, err := fmt.Fprint(conn, "250-mock-server\r\n"); err != nil {
+				return
+			}
+			if _, err := fmt.Fprint(conn, "250 AUTH PLAIN\r\n"); err != nil {
+				return
+			}
 		case strings.HasPrefix(cmd, "AUTH PLAIN"):
-			fmt.Fprint(conn, "235 2.7.0 Authentication Succeeded\r\n")
+			if _, err := fmt.Fprint(conn, "235 2.7.0 Authentication Succeeded\r\n"); err != nil {
+				return
+			}
 		case strings.HasPrefix(cmd, "MAIL FROM:"), strings.HasPrefix(cmd, "RCPT TO:"):
-			fmt.Fprint(conn, "250 OK\r\n")
+			if _, err := fmt.Fprint(conn, "250 OK\r\n"); err != nil {
+				return
+			}
 		case strings.HasPrefix(cmd, "DATA"):
-			fmt.Fprint(conn, "354 End data with <CR><LF>.<CR><LF>\r\n")
-			// Read the email body until the terminating dot.
+			if _, err := fmt.Fprint(conn, "354 End data with <CR><LF>.<CR><LF>\r\n"); err != nil {
+				return
+			}
 			for {
 				bodyLine, err := reader.ReadString('\n')
 				if err != nil {
@@ -119,9 +139,13 @@ func (s *mockSmtpServer) serve(t *testing.T) {
 				}
 				s.data += bodyLine
 			}
-			fmt.Fprint(conn, "250 OK: queued as 12345\r\n")
+			if _, err := fmt.Fprint(conn, "250 OK: queued as 12345\r\n"); err != nil {
+				return
+			}
 		case strings.HasPrefix(cmd, "QUIT"):
-			fmt.Fprint(conn, "221 Bye\r\n")
+			if _, err := fmt.Fprint(conn, "221 Bye\r\n"); err != nil {
+				return
+			}
 			return
 		}
 	}
@@ -129,7 +153,7 @@ func (s *mockSmtpServer) serve(t *testing.T) {
 
 // Close stops the listener and cleans up the server.
 func (s *mockSmtpServer) Close() {
-	s.listener.Close()
+	_ = s.listener.Close()
 }
 
 func setupTest(t *testing.T) (*mockSmtpServer, *Mailer, *config.Config) {
