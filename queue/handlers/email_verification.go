@@ -27,11 +27,11 @@ type PayloadEmailVerification struct {
 type EmailVerificationHandler struct {
 	dbAuth         db.DbAuth
 	configProvider *config.Provider
-	mailer         *mail.Mailer
+	mailer         mail.MailerInterface
 }
 
 // NewEmailVerificationHandler creates a new EmailVerificationHandler
-func NewEmailVerificationHandler(dbAuth db.DbAuth, provider *config.Provider, mailer *mail.Mailer) *EmailVerificationHandler {
+func NewEmailVerificationHandler(dbAuth db.DbAuth, provider *config.Provider, mailer mail.MailerInterface) *EmailVerificationHandler {
 	return &EmailVerificationHandler{
 		dbAuth:         dbAuth,
 		configProvider: provider,

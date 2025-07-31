@@ -26,11 +26,11 @@ type PayloadEmailChangeExtra struct {
 type EmailChangeHandler struct {
 	dbAuth         db.DbAuth
 	configProvider *config.Provider
-	mailer         *mail.Mailer
+	mailer         mail.MailerInterface
 }
 
 // NewEmailChangeHandler creates a new EmailChangeHandler
-func NewEmailChangeHandler(dbAuth db.DbAuth, provider *config.Provider, mailer *mail.Mailer) *EmailChangeHandler {
+func NewEmailChangeHandler(dbAuth db.DbAuth, provider *config.Provider, mailer mail.MailerInterface) *EmailChangeHandler {
 	return &EmailChangeHandler{
 		dbAuth:         dbAuth,
 		configProvider: provider,

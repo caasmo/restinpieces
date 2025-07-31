@@ -10,13 +10,20 @@ import (
 	"github.com/domodwyer/mailyak/v3"
 )
 
+// MailerInterface defines the methods for sending emails.
+type MailerInterface interface {
+	SendVerificationEmail(ctx context.Context, email, callbackURL string) error
+	SendEmailChangeNotification(ctx context.Context, oldEmail, newEmail string, hasOauth2Login bool, callbackURL string) error
+	SendPasswordResetEmail(ctx context.Context, email, callbackURL string) error
+}
+
 // Mailer handles sending emails using configuration from a provider.
 type Mailer struct {
 	configProvider *config.Provider
 }
 
 // New creates a new Mailer instance using a config provider.
-func New(provider *config.Provider) (*Mailer, error) {
+func New(provider *config.Provider) (MailerInterface, error) {
 	if provider == nil {
 		return nil, fmt.Errorf("config provider cannot be nil")
 	}
@@ -26,6 +33,9 @@ func New(provider *config.Provider) (*Mailer, error) {
 		configProvider: provider,
 	}, nil
 }
+
+var _ MailerInterface = (*Mailer)(nil)
+
 
 // createMailClient creates a new mailyak instance using current config from provider.
 func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {

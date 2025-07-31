@@ -156,7 +156,7 @@ func (s *mockSmtpServer) Close() {
 	_ = s.listener.Close()
 }
 
-func setupTest(t *testing.T) (*mockSmtpServer, *Mailer, *config.Config) {
+func setupTest(t *testing.T) (*mockSmtpServer, MailerInterface, *config.Config) {
 	t.Helper()
 
 	server, err := newMockSmtpServer(t)

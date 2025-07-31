@@ -27,11 +27,11 @@ type PayloadPasswordResetExtra struct {
 type PasswordResetHandler struct {
 	dbAuth         db.DbAuth
 	configProvider *config.Provider
-	mailer         *mail.Mailer
+	mailer         mail.MailerInterface
 }
 
 // NewPasswordResetHandler creates a new PasswordResetHandler
-func NewPasswordResetHandler(dbAuth db.DbAuth, provider *config.Provider, mailer *mail.Mailer) *PasswordResetHandler {
+func NewPasswordResetHandler(dbAuth db.DbAuth, provider *config.Provider, mailer mail.MailerInterface) *PasswordResetHandler {
 	return &PasswordResetHandler{
 		dbAuth:         dbAuth,
 		configProvider: provider,
