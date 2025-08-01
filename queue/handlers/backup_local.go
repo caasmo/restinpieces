@@ -28,6 +28,7 @@ const (
 type Handler struct {
 	configProvider *config.Provider
 	logger         *slog.Logger
+	now            func() time.Time
 }
 
 // NewHandler creates a new Handler
@@ -38,6 +39,7 @@ func NewHandler(provider *config.Provider, logger *slog.Logger) *Handler {
 	return &Handler{
 		configProvider: provider,
 		logger:         logger.With("job_handler", "sqlite_backup"),
+		now:            time.Now,
 	}
 }
 
@@ -49,7 +51,7 @@ func (h *Handler) Handle(ctx context.Context, job db.Job) error {
 	// --- Define Paths and Filenames ---
 	sourceDbPath := backupCfg.SourcePath
 	backupDir := backupCfg.BackupDir
-	tempBackupPath := filepath.Join(os.TempDir(), fmt.Sprintf("backup-%d.db", time.Now().UnixNano()))
+	tempBackupPath := filepath.Join(os.TempDir(), fmt.Sprintf("backup-%d.db", h.now().UnixNano()))
 
 	strategyForFilename := backupCfg.Strategy
 	if strategyForFilename == "" {
@@ -58,7 +60,7 @@ func (h *Handler) Handle(ctx context.Context, job db.Job) error {
 
 	baseName := filepath.Base(sourceDbPath)
 	fileNameOnly := strings.TrimSuffix(baseName, filepath.Ext(baseName))
-	timestamp := time.Now().UTC().Format("2006-01-02T15-04-05Z")
+	timestamp := h.now().UTC().Format("20060102T150405Z")
 	finalBackupName := fmt.Sprintf("%s-%s-%s.bck.gz", fileNameOnly, timestamp, strategyForFilename)
 
 	finalBackupPath := filepath.Join(backupDir, finalBackupName)
