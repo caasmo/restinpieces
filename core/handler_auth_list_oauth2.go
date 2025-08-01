@@ -1,14 +1,9 @@
 package core
 
 import (
-	"context"
-	"encoding/json"
 	"net/http"
-	"time"
 
-	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
-	oauth2provider "github.com/caasmo/restinpieces/oauth2"
 	"golang.org/x/oauth2"
 )
 
