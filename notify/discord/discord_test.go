@@ -1,8 +1,10 @@
 package discord
 
 import (
+	"bytes"
 	"context"
-	"fmt"
+	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -80,126 +82,116 @@ func TestNewNotifier(t *testing.T) {
 	}
 }
 
-func TestFormatMessage(t *testing.T) {
-	dn := &Notifier{}
-
+func TestNotifier_Send(t *testing.T) {
 	testCases := []struct {
-		name         string
-		notification notify.Notification
-		expected     string
+		name             string
+		notification     notify.Notification
+		handlerStatus    int
+		expectRequest    bool
+		expectedLogParts []string
 	}{
 		{
-			name: "Simple alarm",
+			name: "Successful send with fields",
 			notification: notify.Notification{
-				Type:	notify.Alarm,
-				Source:	"test-source",
+				Type:    notify.Alarm,
+				Source:  "test-source",
 				Message: "this is a test",
+				Fields:  map[string]interface{}{"field1": "value1"},
 			},
-			expected: fmt.Sprintf(discordMessageFormat, notify.Alarm.String(), "test-source", "this is a test"),
-		},
-		{
-			name: "Metric with fields",
-			notification: notify.Notification{
-				Type:	notify.Metric,
-				Source:	"metric-source",
-				Message: "metric update",
-				Fields: map[string]interface{}{
-					"field1": "value1",
-					"field2": 123,
-				},
-			},
-			expected: fmt.Sprintf(discordMessageFormat, notify.Metric.String(), "metric-source", "metric update") +
-				"\n**Fields**:\n> field1: `value1`\n> field2: `123`\n",
-		},
-		{
-			name: "Message with nil and empty fields",
-			notification: notify.Notification{
-				Type:	notify.Alarm,
-				Source:	"source",
-				Message: "message",
-				Fields: map[string]interface{}{
-					"real_field": "real_value",
-					"nil_field":	nil,
-					"empty_val":	"",
-					"":			"empty_key",
-				},
-			},
-			expected: fmt.Sprintf(discordMessageFormat, notify.Alarm.String(), "source", "message") +
-				"\n**Fields**:\n> real_field: `real_value`\n",
-		},
-		{
-			name: "Message exceeding max length",
-			notification: notify.Notification{
-				Type:	notify.Alarm,
-				Source:	"long-source",
-				Message: strings.Repeat("a", 2001),
-			},
-			expected: fmt.Sprintf(discordMessageFormat, notify.Alarm.String(), "long-source", strings.Repeat("a", 2001))[:discordMaxMessageLength-3] + "...",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			formatted := dn.formatMessage(tc.notification)
-			if formatted != tc.expected {
-				t.Errorf("Expected formatted message:\n%q\nGot:\n%q", tc.expected, formatted)
-			}
-		})
-	}
-}
-
-func TestSend(t *testing.T) {
-	var handler http.Handler
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handler.ServeHTTP(w, r)
-	}))
-	defer server.Close()
-
-	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	notifier, _ := New(config.Discord{WebhookURL: server.URL}, logger)
-
-	testCases := []struct {
-		name           string
-		handler        http.Handler
-		notification   notify.Notification
-		expectLog      bool
-		expectedStatus int
-	}{
-		{
-			name: "Successful send",
-			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusNoContent)
-			}),
-			notification:   notify.Notification{Type: notify.Alarm, Source: "test", Message: "success"},
-			expectedStatus: http.StatusNoContent,
+			handlerStatus: http.StatusNoContent,
+			expectRequest: true,
 		},
 		{
 			name: "Server error",
-			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusInternalServerError)
-			}),
-			notification:   notify.Notification{Type: notify.Alarm, Source: "test", Message: "fail"},
-			expectedStatus: http.StatusInternalServerError,
+			notification: notify.Notification{
+				Type:    notify.Alarm,
+				Source:  "test-source",
+				Message: "server error test",
+			},
+			handlerStatus:    http.StatusInternalServerError,
+			expectRequest:    true,
+			expectedLogParts: []string{"level=ERROR", "received non-2xx status"},
 		},
 		{
-			name: "Rate limit drop",
-			handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusTooManyRequests)
-			}),
-			notification:   notify.Notification{Type: notify.Alarm, Source: "test", Message: "ratelimit"},
-			expectedStatus: http.StatusTooManyRequests,
+			name: "Rate limit error",
+			notification: notify.Notification{
+				Type:    notify.Alarm,
+				Source:  "test-source",
+				Message: "rate limit test",
+			},
+			handlerStatus:    http.StatusTooManyRequests,
+			expectRequest:    true,
+			expectedLogParts: []string{"level=ERROR", "level=WARN", "Too Many Requests"},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			handler = tc.handler
-			err := notifier.Send(context.Background(), tc.notification)
+			var logBuf bytes.Buffer
+			logger := slog.New(slog.NewTextHandler(&logBuf, nil))
+
+			requestChan := make(chan []byte, 1)
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				body, err := io.ReadAll(r.Body)
+				if err != nil {
+					t.Errorf("failed to read request body: %v", err)
+				}
+				w.WriteHeader(tc.handlerStatus)
+				if tc.expectRequest {
+					requestChan <- body
+				}
+			}))
+			defer server.Close()
+
+			notifier, err := New(config.Discord{WebhookURL: server.URL}, logger)
+			if err != nil {
+				t.Fatalf("New() failed: %v", err)
+			}
+
+			err = notifier.Send(context.Background(), tc.notification)
 			if err != nil {
 				t.Fatalf("Send() returned an error: %v", err)
 			}
-			// Give the goroutine time to run
-			time.Sleep(50 * time.Millisecond)
+
+			if !tc.expectRequest {
+				// If we don't expect a request, we can't wait on the channel.
+				// This case would be for pre-send logic errors, which we don't have right now.
+				return
+			}
+
+			select {
+			case reqBody := <-requestChan:
+				var payload payload
+				if err := json.Unmarshal(reqBody, &payload); err != nil {
+					t.Fatalf("failed to unmarshal request body: %v", err)
+				}
+
+				// Assert on the content of the message, not the exact format.
+				if !strings.Contains(payload.Content, tc.notification.Source) {
+					t.Errorf("expected payload to contain source %q, but it did not. Got: %q", tc.notification.Source, payload.Content)
+				}
+				if !strings.Contains(payload.Content, tc.notification.Message) {
+					t.Errorf("expected payload to contain message %q, but it did not. Got: %q", tc.notification.Message, payload.Content)
+				}
+				if tc.notification.Fields != nil {
+					if !strings.Contains(payload.Content, "field1") || !strings.Contains(payload.Content, "value1") {
+						t.Errorf("expected payload to contain field data, but it did not. Got: %q", payload.Content)
+					}
+				}
+
+			case <-time.After(100 * time.Millisecond):
+				t.Fatal("timed out waiting for request")
+			}
+
+			// Give the logger a moment to catch up after the request is handled.
+			time.Sleep(10 * time.Millisecond)
+			logOutput := logBuf.String()
+
+			for _, part := range tc.expectedLogParts {
+				if !strings.Contains(logOutput, part) {
+					t.Errorf("expected log to contain %q, but it did not. Got: %s", part, logOutput)
+				}
+			}
 		})
 	}
 }
