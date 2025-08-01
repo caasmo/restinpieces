@@ -42,46 +42,46 @@ func mockOAuth2Server(t *testing.T, tokenHandler http.HandlerFunc, userInfoHandl
 // specify an unknown provider, all before attempting any external communication.
 func TestAuthWithOAuth2Handler_Validation(t *testing.T) {
 	testCases := []struct {
-		name         string
-		contentType  string
-		requestBody  string
+		name          string
+		contentType   string
+		requestBody   string
 		providerInCfg bool
-		wantError    jsonResponse
+		wantError     jsonResponse
 	}{
 		{
-			name:        "invalid content type",
-			contentType: "text/plain",
-			requestBody: `{} `,
+			name:          "invalid content type",
+			contentType:   "text/plain",
+			requestBody:   `{} `,
 			providerInCfg: true,
-			wantError:   errorInvalidContentType,
+			wantError:     errorInvalidContentType,
 		},
 		{
-			name:        "malformed json",
-			contentType: "application/json",
-			requestBody: `{"provider": "google",`,
+			name:          "malformed json",
+			contentType:   "application/json",
+			requestBody:   `{"provider": "google",`,
 			providerInCfg: true,
-			wantError:   errorInvalidRequest,
+			wantError:     errorInvalidRequest,
 		},
 		{
-			name:        "missing provider field",
-			contentType: "application/json",
-			requestBody: `{"code": "c", "code_verifier": "cv", "redirect_uri": "ru"}`,
+			name:          "missing provider field",
+			contentType:   "application/json",
+			requestBody:   `{"code": "c", "code_verifier": "cv", "redirect_uri": "ru"}`,
 			providerInCfg: true,
-			wantError:   errorMissingFields,
+			wantError:     errorMissingFields,
 		},
 		{
-			name:        "missing code field",
-			contentType: "application/json",
-			requestBody: `{"provider": "p", "code_verifier": "cv", "redirect_uri": "ru"}`,
+			name:          "missing code field",
+			contentType:   "application/json",
+			requestBody:   `{"provider": "p", "code_verifier": "cv", "redirect_uri": "ru"}`,
 			providerInCfg: true,
-			wantError:   errorMissingFields,
+			wantError:     errorMissingFields,
 		},
 		{
-			name:        "unknown provider",
-			contentType: "application/json",
-			requestBody: `{"provider": "unknown", "code": "c", "code_verifier": "cv", "redirect_uri": "ru"}`,
+			name:          "unknown provider",
+			contentType:   "application/json",
+			requestBody:   `{"provider": "unknown", "code": "c", "code_verifier": "cv", "redirect_uri": "ru"}`,
 			providerInCfg: false, // The key for this test
-			wantError:   errorInvalidOAuth2Provider,
+			wantError:     errorInvalidOAuth2Provider,
 		},
 	}
 
@@ -309,7 +309,7 @@ func TestAuthWithOAuth2Handler_DependencyFailures(t *testing.T) {
 		},
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{ "sub": "user123", "email": "test@example.com", "email_verified": true, }),
+			json.NewEncoder(w).Encode(map[string]interface{}{"sub": "user123", "email": "test@example.com", "email_verified": true})
 		},
 	)
 
@@ -402,4 +402,3 @@ func TestAuthWithOAuth2Handler_DependencyFailures(t *testing.T) {
 		})
 	}
 }
-
