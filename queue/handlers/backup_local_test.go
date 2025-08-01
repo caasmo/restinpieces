@@ -38,7 +38,11 @@ func setupTest(t *testing.T, withData bool) (cfg *config.Config, sourceDbPath, b
 	if err != nil {
 		t.Fatalf("Failed to open source db connection: %v", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			t.Logf("Failed to close source db connection: %v", err)
+		}
+	}()
 
 	// Apply all schemas
 	schemaFS := migrations.Schema()
@@ -88,20 +92,32 @@ func verifyBackup(t *testing.T, backupPath string, expectData bool) {
 	if err != nil {
 		t.Fatalf("Failed to open gzipped backup file: %v", err)
 	}
-	defer gzFile.Close()
+	defer func() {
+		if err := gzFile.Close(); err != nil {
+			t.Logf("Failed to close gzipped backup file: %v", err)
+		}
+	}()
 
 	gzReader, err := gzip.NewReader(gzFile)
 	if err != nil {
 		t.Fatalf("Failed to create gzip reader: %v", err)
 	}
-	defer gzReader.Close()
+	defer func() {
+		if err := gzReader.Close(); err != nil {
+			t.Logf("Failed to close gzip reader: %v", err)
+		}
+	}()
 
 	decompressedPath := backupPath + ".db"
 	destFile, err := os.Create(decompressedPath)
 	if err != nil {
 		t.Fatalf("Failed to create decompressed destination file: %v", err)
 	}
-	defer destFile.Close()
+	defer func() {
+		if err := destFile.Close(); err != nil {
+			t.Logf("Failed to close decompressed destination file: %v", err)
+		}
+	}()
 
 	if _, err := io.Copy(destFile, gzReader); err != nil {
 		t.Fatalf("Failed to decompress file: %v", err)
@@ -112,7 +128,11 @@ func verifyBackup(t *testing.T, backupPath string, expectData bool) {
 	if err != nil {
 		t.Fatalf("Failed to open decompressed database: %v", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			t.Logf("Failed to close decompressed database connection: %v", err)
+		}
+	}()
 
 	var count int
 	err = sqlitex.Execute(conn, "SELECT count(*) FROM users", &sqlitex.ExecOptions{
