@@ -155,13 +155,17 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 			},
 			tokenHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"})
+				if err := json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"}); err != nil {
+					t.Fatalf("failed to write mock token response: %v", err)
+				}
 			},
 			userInfoHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]interface{}{
+				if err := json.NewEncoder(w).Encode(map[string]interface{}{
 					"sub": "user123", "name": "Test User", "picture": "", "email": "test@example.com", "email_verified": true,
-				})
+				}); err != nil {
+					t.Fatalf("failed to write mock user info response: %v", err)
+				}
 			},
 			wantStatus:   http.StatusOK,
 			wantCode:     CodeOkAuthentication,
@@ -178,13 +182,17 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 			},
 			tokenHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"})
+				if err := json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"}); err != nil {
+					t.Fatalf("failed to write mock token response: %v", err)
+				}
 			},
 			userInfoHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]interface{}{
+				if err := json.NewEncoder(w).Encode(map[string]interface{}{
 					"sub": "user123", "email": "test@example.com", "email_verified": true,
-				})
+				}); err != nil {
+					t.Fatalf("failed to write mock user info response: %v", err)
+				}
 			},
 			wantStatus:   http.StatusOK,
 			wantCode:     CodeOkAuthentication,
@@ -195,7 +203,9 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 			dbSetup: func(m *mock.Db) {},
 			tokenHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
-				json.NewEncoder(w).Encode(map[string]string{"error": "invalid_grant"})
+				if err := json.NewEncoder(w).Encode(map[string]string{"error": "invalid_grant"}); err != nil {
+					t.Fatalf("failed to write mock token response: %v", err)
+				}
 			},
 			userInfoHandler: func(w http.ResponseWriter, r *http.Request) {},
 			wantStatus:      http.StatusBadRequest,
@@ -206,12 +216,16 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 			dbSetup: func(m *mock.Db) {},
 			tokenHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"})
+				if err := json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"}); err != nil {
+					t.Fatalf("failed to write mock token response: %v", err)
+				}
 			},
 			userInfoHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
-				json.NewEncoder(w).Encode(map[string]string{"error": "server error"})
+				if err := json.NewEncoder(w).Encode(map[string]string{"error": "server error"}); err != nil {
+					t.Fatalf("failed to write mock user info response: %v", err)
+				}
 			},
 			wantStatus: http.StatusBadRequest,
 			wantCode:   CodeErrorOAuth2UserInfoProcessingFailed,
@@ -221,13 +235,17 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 			dbSetup: func(m *mock.Db) {},
 			tokenHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"})
+				if err := json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"}); err != nil {
+					t.Fatalf("failed to write mock token response: %v", err)
+				}
 			},
 			userInfoHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]interface{}{
+				if err := json.NewEncoder(w).Encode(map[string]interface{}{
 					"sub": "user123", "name": "Test User", "email_verified": true,
-				})
+				}); err != nil {
+					t.Fatalf("failed to write mock user info response: %v", err)
+				}
 			},
 			wantStatus: http.StatusBadRequest,
 			wantCode:   CodeErrorInvalidRequest,
@@ -305,11 +323,15 @@ func TestAuthWithOAuth2Handler_DependencyFailures(t *testing.T) {
 	server, tokenURL, userInfoURL := mockOAuth2Server(t,
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"})
+			if err := json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"}); err != nil {
+				t.Fatalf("failed to write mock token response: %v", err)
+			}
 		},
 		func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{"sub": "user123", "email": "test@example.com", "email_verified": true})
+			if err := json.NewEncoder(w).Encode(map[string]interface{}{"sub": "user123", "email": "test@example.com", "email_verified": true}); err != nil {
+				t.Fatalf("failed to write mock user info response: %v", err)
+			}
 		},
 	)
 
