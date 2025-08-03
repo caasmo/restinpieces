@@ -116,8 +116,14 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 					t.Fatalf("Failed to unmarshal response: %v", err)
 				}
 
-				data, _ := resp.Data.(map[string]interface{})
-				providersData, _ := data["providers"]
+				data, ok := resp.Data.(map[string]interface{})
+				if !ok {
+					t.Fatal("Data field is not a map")
+				}
+				providersData, ok := data["providers"]
+				if !ok {
+					t.Fatal("Missing 'providers' key in data")
+				}
 				var providers []OAuth2ProviderInfo
 				providersBytes, _ := json.Marshal(providersData)
 				if err := json.Unmarshal(providersBytes, &providers); err != nil {
@@ -170,8 +176,14 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 					t.Fatalf("Failed to unmarshal response: %v", err)
 				}
 
-				data, _ := resp.Data.(map[string]interface{})
-				providersData, _ := data["providers"]
+				data, ok := resp.Data.(map[string]interface{})
+				if !ok {
+					t.Fatal("Data field is not a map")
+				}
+				providersData, ok := data["providers"]
+				if !ok {
+					t.Fatal("Missing 'providers' key in data")
+				}
 				var providers []OAuth2ProviderInfo
 				providersBytes, _ := json.Marshal(providersData)
 				if err := json.Unmarshal(providersBytes, &providers); err != nil {
