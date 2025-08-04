@@ -29,6 +29,7 @@ type Db struct {
 	// --- Mock DbConfig Methods ---
 	GetConfigFunc    func(scope string, generation int) ([]byte, string, error)
 	InsertConfigFunc func(scope string, contentData []byte, format string, description string) error
+	PathFunc         func() string
 
 	// DbLifecycle methods removed
 }
@@ -130,6 +131,9 @@ func (m *Db) InsertConfig(scope string, contentData []byte, format string, descr
 
 // Path implements db.DbConfig for testing purposes.
 func (m *Db) Path() string {
+	if m.PathFunc != nil {
+		return m.PathFunc()
+	}
 	return "/tmp/mock.db"
 }
 
