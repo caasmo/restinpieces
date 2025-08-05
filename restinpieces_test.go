@@ -309,7 +309,11 @@ func TestNew_WithUserLogger(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create setup db connection: %v", err)
 	}
-	defer setupConn.Close()
+	defer func() {
+		if err := setupConn.Close(); err != nil {
+			t.Logf("Failed to close setup db connection: %v", err)
+		}
+	}()
 
 	if err := zombiezen.ApplyMigrations(setupConn, migrations.Schema()); err != nil {
 		t.Fatalf("Failed to apply migrations to app db: %v", err)
@@ -336,14 +340,19 @@ func TestNew_WithUserLogger(t *testing.T) {
 	if err := secureStore.Save(config.ScopeApplication, tomlBytes, "toml", "initial test config"); err != nil {
 		t.Fatalf("Failed to save config to secure store: %v", err)
 	}
-	tempPool.Close() // Close the temporary pool after seeding
+	// We explicitly ignore the error here because we're in a test and the consequences are minimal.
+	_ = tempPool.Close() // Close the temporary pool after seeding
 
 	// 4. Execute with a fresh, real pool
 	realPool, err := NewZombiezenPool(appDbPath)
 	if err != nil {
 		t.Fatalf("Failed to create real pool for New(): %v", err)
 	}
-	defer realPool.Close()
+	defer func() {
+		if err := realPool.Close(); err != nil {
+			t.Logf("Failed to close real pool: %v", err)
+		}
+	}()
 
 	app, srv, err := New(
 		WithZombiezenPool(realPool),
