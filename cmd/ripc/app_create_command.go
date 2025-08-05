@@ -5,20 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
-	"path/filepath"
 
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 var (
-	ErrReadMigrations = errors.New("failed to read migrations")
-	ErrExecMigration  = errors.New("failed to execute migration")
+	ErrExecMigration = errors.New("failed to execute migration")
 )
 
 // handleAppCreateCommand is the command-level wrapper that executes the core app creation logic.
@@ -63,33 +61,13 @@ func runMigrations(stdout io.Writer, pool *sqlitex.Pool) error {
 	}
 	defer pool.Put(conn)
 
+	if _, err := fmt.Fprintln(stdout, "Applying migrations..."); err != nil {
+		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
+	}
+
 	schemaFS := migrations.Schema()
-	// Use WalkDir to recursively find all .sql files
-	err = fs.WalkDir(schemaFS, ".", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err // Propagate errors from WalkDir
-		}
-		if d.IsDir() || filepath.Ext(path) != ".sql" {
-			return nil // Skip directories and non-sql files
-		}
-
-		sqlBytes, err := fs.ReadFile(schemaFS, path)
-		if err != nil {
-			return fmt.Errorf("%w: could not read embedded migration file %s: %w", ErrReadMigrations, path, err)
-		}
-
-		if _, err := fmt.Fprintf(stdout, "Applying migration: %s\n", path); err != nil {
-			return fmt.Errorf("%w: %w", ErrWriteOutput, err)
-		}
-		if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
-			return fmt.Errorf("%w: failed to execute migration file %s: %w", ErrExecMigration, path, err)
-		}
-		return nil
-	})
-
-	if err != nil {
-		// Wrap any error from WalkDir to provide context
-		return fmt.Errorf("migration process failed: %w", err)
+	if err := zombiezen.ApplyMigrations(conn, schemaFS); err != nil {
+		return fmt.Errorf("%w: migration process failed: %w", ErrExecMigration, err)
 	}
 
 	return nil
