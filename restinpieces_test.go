@@ -1,3 +1,4 @@
+
 package restinpieces
 
 import (
@@ -297,12 +298,11 @@ func TestSetupConfig(t *testing.T) {
 	})
 }
 
-// TestNew_Unit validates the New function's initialization logic in a controlled environment.
-func TestNew_Unit(t *testing.T) {
+// TestNew_WithUserLogger validates the New function's initialization logic when a custom logger is provided.
+func TestNew_WithUserLogger(t *testing.T) {
 	// 1. Setup a Test Environment
 	tempDir := t.TempDir()
 	appDbPath := filepath.Join(tempDir, "app.db")
-	logDbPath := filepath.Join(tempDir, "logs.db")
 	_, ageKeyPath := newTestAgeIdentity(t)
 
 	// 2. Initialize App Database for Setup
@@ -316,28 +316,7 @@ func TestNew_Unit(t *testing.T) {
 		t.Fatalf("Failed to apply migrations to app db: %v", err)
 	}
 
-	// 3. Initialize Log Database
-	logSql, err := migrations.Schema().Open("log/logs.sql")
-	if err != nil {
-		t.Fatalf("Failed to open log schema file: %v", err)
-	}
-	defer logSql.Close()
-	logSqlBytes, err := io.ReadAll(logSql)
-	if err != nil {
-		t.Fatalf("Failed to read log schema file: %v", err)
-	}
-	logConn, err := zombiezen.NewConn(logDbPath)
-	if err != nil {
-		t.Fatalf("Failed to create log db connection: %v", err)
-	}
-	if err := sqlitex.ExecuteScript(logConn, string(logSqlBytes), nil); err != nil {
-		t.Fatalf("Failed to apply migrations to log db: %v", err)
-	}
-	if err := logConn.Close(); err != nil {
-		t.Fatalf("Failed to close log db connection: %v", err)
-	}
-
-	// 4. Seed Encrypted Config using a temporary pool
+	// 3. Seed Encrypted Config using a temporary pool
 	tempPool, err := sqlitex.NewPool(appDbPath, sqlitex.PoolOptions{PoolSize: 1})
 	if err != nil {
 		t.Fatalf("Failed to create temp pool for seeding: %v", err)
@@ -351,7 +330,6 @@ func TestNew_Unit(t *testing.T) {
 		t.Fatalf("Failed to create secure store: %v", err)
 	}
 	cfg := config.NewDefaultConfig()
-	cfg.Log.Batch.DbPath = logDbPath // Point to our temp log db
 	tomlBytes, err := toml.Marshal(cfg)
 	if err != nil {
 		t.Fatalf("Failed to marshal config: %v", err)
@@ -361,7 +339,7 @@ func TestNew_Unit(t *testing.T) {
 	}
 	tempPool.Close() // Close the temporary pool after seeding
 
-	// 5. Execute with a fresh, real pool
+	// 4. Execute with a fresh, real pool
 	realPool, err := NewZombiezenPool(appDbPath)
 	if err != nil {
 		t.Fatalf("Failed to create real pool for New(): %v", err)
@@ -374,7 +352,7 @@ func TestNew_Unit(t *testing.T) {
 		WithLogger(newTestLogger()), // Provide a custom logger to prevent daemon start
 	)
 
-	// 6. Assertions
+	// 5. Assertions
 	if err != nil {
 		t.Fatalf("New() returned an unexpected error: %v", err)
 	}
