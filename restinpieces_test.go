@@ -372,3 +372,25 @@ func TestNew_WithUserLogger(t *testing.T) {
 	}
 }
 
+// TestNew_MissingDB validates that New returns an error when the database is not provided.
+func TestNew_MissingDB(t *testing.T) {
+	_, ageKeyPath := newTestAgeIdentity(t)
+
+	// Attempt to create a new app without providing the database
+	_, _, err := New(
+		WithAgeKeyPath(ageKeyPath),
+		WithLogger(newTestLogger()),
+	)
+
+	// Assert that an error is returned
+	if err == nil {
+		t.Fatal("New() did not return an error when the database was not provided")
+	}
+
+	// Optional: Check for a specific error message to make the test more robust
+	expectedError := "DbAuth is required but was not provided (use WithDbApp)"
+	if err.Error() != expectedError {
+		t.Errorf("New() returned an unexpected error. Got: %v, Want: %v", err, expectedError)
+	}
+}
+
