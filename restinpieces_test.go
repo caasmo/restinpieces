@@ -1,4 +1,3 @@
-
 package restinpieces
 
 import (
@@ -363,3 +362,4 @@ func TestNew_WithUserLogger(t *testing.T) {
 		t.Fatal("New() returned a nil server")
 	}
 }
+
