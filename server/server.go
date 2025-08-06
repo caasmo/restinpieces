@@ -179,25 +179,15 @@ func (s *Server) Run() {
 
 	// --- Start Daemons Sequentially ---
 	s.logger.Info("Starting daemons sequentially...")
-	var startupFailed bool
 	for _, daemon := range s.daemons {
 		s.logger.Info("Starting daemon", "daemon_name", daemon.Name())
 		if err := daemon.Start(); err != nil {
-			s.logger.Error("Failed to start daemon, initiating shutdown",
-				"daemon_name", daemon.Name(),
-				"error", err)
-			// Send the specific error that caused the failure
-			serverError <- fmt.Errorf("daemon %q failed to start: %w", daemon.Name(), err)
-			startupFailed = true
-			break // Stop starting other daemons if one fails
+			s.logger.Error("Failed to start daemon, initiating shutdown", "daemon_name", daemon.Name(), "error", err)
+            serverError <- fmt.Errorf("daemon %q failed to start: %w", daemon.Name(), err)
+			break // Stop starting other daemons
 		}
 		s.logger.Info("Daemon started successfully", "daemon_name", daemon.Name())
 	}
-
-	if !startupFailed {
-		s.logger.Info("All daemons started successfully.")
-	}
-	// If startupFailed is true, an error was already sent to serverError
 
 	// Channel for all signals we want to handle
 	sigChan := make(chan os.Signal, 1)
@@ -208,6 +198,7 @@ func (s *Server) Run() {
 	)
 
 	// Wait for signals or server error
+	var serverErr error
 	running := true
 	for running {
 		select {
@@ -215,13 +206,14 @@ func (s *Server) Run() {
 			switch sig {
 			case syscall.SIGINT, syscall.SIGQUIT:
 				s.logger.Info("Received termination signal - gracefully shutting down", "signal", sig)
-				running = false
+				running = false // Normal shutdown, serverErr remains nil
 			case syscall.SIGHUP:
 				s.handleSIGHUP()
 			}
 		case err := <-serverError:
-			s.logger.Error("Server error - initiating shutdown", "err", err)
-			running = false // Exit the loop
+            s.logger.Error("Server error - initiating shutdown", "err", err)
+            serverErr = err
+            running = false
 		}
 	}
 
@@ -279,14 +271,21 @@ func (s *Server) Run() {
 		})
 	}
 
-	// Wait for all shutdown tasks (HTTP servers + daemons)
-	if err := shutdownGroup.Wait(); err != nil {
-		s.logger.Error("Error during shutdown", "err", err)
-		s.exitFunc(1)
+	// Wait for all shutdown tasks and check for errors.
+	shutdownErr := shutdownGroup.Wait()
+	if shutdownErr != nil {
+		s.logger.Error("Error during graceful shutdown", "err", shutdownErr)
 	}
 
-	s.logger.Info("All systems stopped gracefully")
-	s.exitFunc(0)
+	// Determine the final exit code.
+	// Exit with 1 if a server startup error occurred OR if the shutdown process itself failed.
+	if serverErr != nil || shutdownErr != nil {
+		s.logger.Info("Shutdown finished with errors.")
+		s.exitFunc(1)
+	} else {
+		s.logger.Info("All systems stopped gracefully.")
+		s.exitFunc(0)
+	}
 }
 
 // logServerConfig logs server configuration with consistent "Server:" prefix
