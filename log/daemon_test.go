@@ -127,7 +127,11 @@ func TestDaemon_FlushOnBatchSize(t *testing.T) {
 	if err := daemon.Start(); err != nil {
 		t.Fatalf("daemon.Start() failed: %v", err)
 	}
-	defer daemon.Stop(context.Background()) // Guarantees cleanup
+	defer func() {
+		if err := daemon.Stop(context.Background()); err != nil {
+			t.Logf("daemon.Stop() failed during cleanup: %v", err)
+		}
+	}()
 
 	// 3. Action
 	recordChan, _ := daemon.Chan()
@@ -176,7 +180,11 @@ func TestDaemon_FlushOnInterval(t *testing.T) {
 	if err := daemon.Start(); err != nil {
 		t.Fatalf("daemon.Start() failed: %v", err)
 	}
-	defer daemon.Stop(context.Background())
+	defer func() {
+		if err := daemon.Stop(context.Background()); err != nil {
+			t.Logf("daemon.Stop() failed during cleanup: %v", err)
+		}
+	}()
 
 	// 3. Action
 	recordChan, _ := daemon.Chan()
@@ -269,7 +277,11 @@ func TestDaemon_SurvivesDbError(t *testing.T) {
 	if err := daemon.Start(); err != nil {
 		t.Fatalf("daemon.Start() failed: %v", err)
 	}
-	defer daemon.Stop(context.Background())
+	defer func() {
+		if err := daemon.Stop(context.Background()); err != nil {
+			t.Logf("daemon.Stop() failed during cleanup: %v", err)
+		}
+	}()
 
 	// 3. Action & Verify First Batch (which will fail)
 	recordChan, _ := daemon.Chan()
@@ -325,7 +337,11 @@ func aTestDaemon_SkipsUnserializableRecord(t *testing.T) {
 	if err := daemon.Start(); err != nil {
 		t.Fatalf("daemon.Start() failed: %v", err)
 	}
-	defer daemon.Stop(context.Background())
+	defer func() {
+		if err := daemon.Stop(context.Background()); err != nil {
+			t.Logf("daemon.Stop() failed during cleanup: %v", err)
+		}
+	}()
 
 	// 3. Action
 	recordChan, _ := daemon.Chan()
