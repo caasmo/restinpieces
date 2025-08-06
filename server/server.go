@@ -30,6 +30,7 @@ type Server struct {
 	logger         *slog.Logger
 	daemons        []Daemon     // Collection of managed daemons
 	reloadFunc     func() error // Function to execute for configuration reload
+	exitFunc       func(int)    // Function to call for exiting, defaults to os.Exit
 }
 
 func (s *Server) handleSIGHUP() {
@@ -53,6 +54,7 @@ func NewServer(provider *config.Provider, handler http.Handler, logger *slog.Log
 		logger:         logger,
 		daemons:        make([]Daemon, 0), // Initialize empty slice
 		reloadFunc:     reloadFunc,
+		exitFunc:       os.Exit,           // Default to the real os.Exit
 	}
 }
 
@@ -280,11 +282,11 @@ func (s *Server) Run() {
 	// Wait for all shutdown tasks (HTTP servers + daemons)
 	if err := shutdownGroup.Wait(); err != nil {
 		s.logger.Error("Error during shutdown", "err", err)
-		os.Exit(1)
+		s.exitFunc(1)
 	}
 
 	s.logger.Info("All systems stopped gracefully")
-	os.Exit(0)
+	s.exitFunc(0)
 }
 
 // logServerConfig logs server configuration with consistent "Server:" prefix
