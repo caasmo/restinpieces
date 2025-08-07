@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"net/http/httptest"
 	"syscall"
 	"testing"
 	"time"
@@ -273,5 +274,55 @@ func TestServer_Run_HttpAndDaemonStartFailure(t *testing.T) {
 		// If we receive an exit code, it means the server did not deadlock.
 	case <-time.After(500 * time.Millisecond): // Timeout longer than shutdown timeout
 		t.Fatal("timed out waiting for server to exit, potential deadlock detected")
+	}
+}
+
+func TestAddDaemon_Nil(t *testing.T) {
+	server, _ := newTestServer(t, nil)
+	// Adding a nil daemon should not panic and should be logged.
+	// Since we discard logs, we just check that it doesn't panic.
+	server.AddDaemon(nil)
+	if len(server.daemons) != 0 {
+		t.Error("expected daemon list to be empty after adding nil")
+	}
+}
+
+func TestRedirectToHTTPS(t *testing.T) {
+	// 1. Setup
+	server, provider := newTestServer(t, nil)
+	cfg := provider.Get()
+	// Configure the server's BaseURL by setting the relevant fields in the config.
+	cfg.Server.EnableTLS = true
+	cfg.Server.Addr = "secure.example.com:8443" // This will be used by BaseURL()
+	provider.Update(cfg)
+
+	handler := server.redirectToHTTPS()
+
+	// Create a test request with a path and query string.
+	req, err := http.NewRequest("GET", "/test/path?query=val", nil)
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	// The redirectToHTTPS handler uses `r.URL.RequestURI()` which is derived
+	// from the original request line.
+	req.RequestURI = "/test/path?query=val"
+
+	rr := httptest.NewRecorder()
+
+	// 2. Action
+	handler.ServeHTTP(rr, req)
+
+	// 3. Verification
+	if status := rr.Code; status != http.StatusMovedPermanently {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusMovedPermanently)
+	}
+
+	// The BaseURL() function will construct this from the config.
+	// Note: We assume sanitizeAddrEmptyHost in config.go correctly handles this.
+	expectedURL := "https://secure.example.com:8443/test/path?query=val"
+	if location := rr.Header().Get("Location"); location != expectedURL {
+		t.Errorf("handler returned wrong redirect location: got %q want %q",
+			location, expectedURL)
 	}
 }
