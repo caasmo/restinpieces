@@ -7,11 +7,15 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/queue/executor"
+	scl "github.com/caasmo/restinpieces/queue/scheduler"
 )
 
 // --- Test Fakes and Mocks ---
@@ -46,6 +50,28 @@ func (fd *fakeDaemon) Start() error {
 func (fd *fakeDaemon) Stop(ctx context.Context) error {
 	fd.stopCalledChan <- true
 	return fd.stopShouldError
+}
+
+// mockJobExecutor is a spy for the JobExecutor interface.
+type mockJobExecutor struct {
+	registeredJobType string
+	registeredHandler executor.JobHandler
+}
+
+func (m *mockJobExecutor) Register(jobType string, handler executor.JobHandler) {
+	m.registeredJobType = jobType
+	m.registeredHandler = handler
+}
+
+func (m *mockJobExecutor) Execute(ctx context.Context, job db.Job) error {
+	return nil // Not used in these tests
+}
+
+// mockJobHandler is a placeholder JobHandler.
+type mockJobHandler struct{}
+
+func (m *mockJobHandler) Handle(ctx context.Context, job db.Job) error {
+	return nil // Not used in these tests
 }
 
 // --- Test Helper Functions ---
@@ -324,5 +350,92 @@ func TestRedirectToHTTPS(t *testing.T) {
 	if location := rr.Header().Get("Location"); location != expectedURL {
 		t.Errorf("handler returned wrong redirect location: got %q want %q",
 			location, expectedURL)
+	}
+}
+
+func TestAddJobHandler_Success(t *testing.T) {
+	// 1. Setup
+	server, provider := newTestServer(t, nil)
+	mockExec := &mockJobExecutor{}
+	// Create a real scheduler, but inject our mock executor.
+	// This satisfies the type assertion while letting us spy on the Register call.
+	scheduler := scl.NewScheduler(provider, nil, mockExec, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	server.AddDaemon(scheduler)
+
+	handler := &mockJobHandler{}
+	jobType := "test-job"
+
+	// 2. Action
+	err := server.AddJobHandler(jobType, handler)
+
+	// 3. Verification
+	if err != nil {
+		t.Fatalf("AddJobHandler returned an unexpected error: %v", err)
+	}
+	if mockExec.registeredJobType != jobType {
+		t.Errorf("handler registered with wrong job type: got %q want %q", mockExec.registeredJobType, jobType)
+	}
+	if mockExec.registeredHandler != handler {
+		t.Error("handler registered was not the one provided")
+	}
+}
+
+func TestAddJobHandler_SchedulerNotFound(t *testing.T) {
+	// 1. Setup
+	server, _ := newTestServer(t, nil) // No daemons added
+	handler := &mockJobHandler{}
+
+	// 2. Action
+	err := server.AddJobHandler("any-job", handler)
+
+	// 3. Verification
+	if err == nil {
+		t.Fatal("AddJobHandler should have returned an error, but did not")
+	}
+	expectedErr := "scheduler daemon not found"
+	if !strings.Contains(err.Error(), expectedErr) {
+		t.Errorf("error message mismatch: got %q, want to contain %q", err.Error(), expectedErr)
+	}
+}
+
+func TestAddJobHandler_IncorrectDaemonType(t *testing.T) {
+	// 1. Setup
+	server, _ := newTestServer(t, nil)
+	// Add a daemon with the correct name, but wrong type.
+	wrongDaemon := newFakeDaemon("Scheduler")
+	server.AddDaemon(wrongDaemon)
+	handler := &mockJobHandler{}
+
+	// 2. Action
+	err := server.AddJobHandler("any-job", handler)
+
+	// 3. Verification
+	if err == nil {
+		t.Fatal("AddJobHandler should have returned an error, but did not")
+	}
+	expectedErr := "unexpected type"
+	if !strings.Contains(err.Error(), expectedErr) {
+		t.Errorf("error message mismatch: got %q, want to contain %q", err.Error(), expectedErr)
+	}
+}
+
+func TestAddJobHandler_NilExecutor(t *testing.T) {
+	// 1. Setup
+	server, provider := newTestServer(t, nil)
+	// Create a real scheduler, but with a nil executor.
+	scheduler := scl.NewScheduler(provider, nil, nil, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	server.AddDaemon(scheduler)
+	handler := &mockJobHandler{}
+
+	// 2. Action
+	err := server.AddJobHandler("any-job", handler)
+
+	// 3. Verification
+	if err == nil {
+		t.Fatal("AddJobHandler should have returned an error, but did not")
+	}
+	expectedErr := "executor is nil"
+	if !strings.Contains(err.Error(), expectedErr) {
+		t.Errorf("error message mismatch: got %q, want to contain %q", err.Error(), expectedErr)
 	}
 }
