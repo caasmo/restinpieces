@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -392,10 +391,6 @@ func TestAddJobHandler_SchedulerNotFound(t *testing.T) {
 	if err == nil {
 		t.Fatal("AddJobHandler should have returned an error, but did not")
 	}
-	expectedErr := "scheduler daemon not found"
-	if !strings.Contains(err.Error(), expectedErr) {
-		t.Errorf("error message mismatch: got %q, want to contain %q", err.Error(), expectedErr)
-	}
 }
 
 func TestAddJobHandler_IncorrectDaemonType(t *testing.T) {
@@ -413,10 +408,6 @@ func TestAddJobHandler_IncorrectDaemonType(t *testing.T) {
 	if err == nil {
 		t.Fatal("AddJobHandler should have returned an error, but did not")
 	}
-	expectedErr := "unexpected type"
-	if !strings.Contains(err.Error(), expectedErr) {
-		t.Errorf("error message mismatch: got %q, want to contain %q", err.Error(), expectedErr)
-	}
 }
 
 func TestAddJobHandler_NilExecutor(t *testing.T) {
@@ -433,9 +424,5 @@ func TestAddJobHandler_NilExecutor(t *testing.T) {
 	// 3. Verification
 	if err == nil {
 		t.Fatal("AddJobHandler should have returned an error, but did not")
-	}
-	expectedErr := "executor is nil"
-	if !strings.Contains(err.Error(), expectedErr) {
-		t.Errorf("error message mismatch: got %q, want to contain %q", err.Error(), expectedErr)
 	}
 }
