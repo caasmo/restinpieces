@@ -132,7 +132,11 @@ func (s *Server) Run() {
 	var redirectServer *http.Server
 
 	// Start servers
-	serverError := make(chan error, 1)
+	// The channel is buffered to 2 to prevent deadlocks. Two goroutines can
+	// potentially send an error concurrently during startup:
+	// 1. The HTTP server goroutine (if TLS config or ListenAndServe fails).
+	// 2. The main goroutine (if a daemon fails to start).
+	serverError := make(chan error, 2)
 	go func() {
 		if serverCfg.EnableTLS {
 			// Start HTTPS server
