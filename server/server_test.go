@@ -612,7 +612,11 @@ func TestServer_Run_TLS_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HTTPS request failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			t.Errorf("failed to close response body: %v", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected status OK, got %s", resp.Status)
@@ -672,7 +676,11 @@ func TestServer_Run_TLS_WithRedirect_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("HTTP request to redirect server failed: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			t.Errorf("failed to close response body: %v", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusMovedPermanently {
 		t.Errorf("expected status 301, got %d", resp.StatusCode)
