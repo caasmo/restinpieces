@@ -11,8 +11,10 @@ import (
 	"encoding/pem"
 	"errors"
 	"io"
+	"fmt"
 	"log/slog"
 	"math/big"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"syscall"
@@ -116,6 +118,7 @@ func generateTestCert(t *testing.T) (certPEM, keyPEM []byte) {
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
+		DNSNames:              []string{"localhost"},
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
@@ -543,5 +546,242 @@ func TestCreateTLSConfig_MissingData(t *testing.T) {
 				t.Errorf("createTLSConfig should have returned an error but did not")
 			}
 		})
+	}
+}
+
+// getFreePort asks the kernel for a free open port that is ready to use.
+func getFreePort(t *testing.T) int {
+	t.Helper()
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		t.Fatalf("Failed to resolve TCP address: %v", err)
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		t.Fatalf("Failed to listen on TCP port: %v", err)
+	}
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port
+}
+
+// newTLSClient creates an http.Client that trusts the given self-signed certificate.
+func newTLSClient(t *testing.T, certPEM []byte) *http.Client {
+	t.Helper()
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(certPEM) {
+		t.Fatal("Failed to add server certificate to pool")
+	}
+
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				RootCAs: certPool,
+			},
+		},
+	}
+}
+
+func TestServer_Run_TLS_Success(t *testing.T) {
+	// 1. Setup
+	server, provider := newTestServer(t, nil)
+	certPEM, keyPEM := generateTestCert(t)
+	port := getFreePort(t)
+
+	cfg := provider.Get()
+	cfg.Server.EnableTLS = true
+	cfg.Server.Addr = fmt.Sprintf("localhost:%d", port)
+	cfg.Server.CertData = string(certPEM)
+	cfg.Server.KeyData = string(keyPEM)
+	provider.Update(cfg)
+
+	exitCalledChan := make(chan int, 1)
+	server.exitFunc = func(code int) {
+		exitCalledChan <- code
+	}
+
+	// 2. Action
+	go server.Run()
+
+	// Give server time to start
+	time.Sleep(50 * time.Millisecond)
+
+	// 3. Verification (Request)
+	client := newTLSClient(t, certPEM)
+	resp, err := client.Get("https://" + cfg.Server.Addr)
+	if err != nil {
+		t.Fatalf("HTTPS request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected status OK, got %s", resp.Status)
+	}
+
+	// 4. Action (Shutdown)
+	if err := syscall.Kill(syscall.Getpid(), syscall.SIGINT); err != nil {
+		t.Fatalf("Failed to send SIGINT: %v", err)
+	}
+
+	// 5. Verification (Shutdown)
+	select {
+	case code := <-exitCalledChan:
+		if code != 0 {
+			t.Errorf("expected exit code 0, got %d", code)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for server to exit")
+	}
+}
+
+func TestServer_Run_TLS_WithRedirect_Success(t *testing.T) {
+	// 1. Setup
+	server, provider := newTestServer(t, nil)
+	certPEM, keyPEM := generateTestCert(t)
+	httpsPort := getFreePort(t)
+	httpPort := getFreePort(t)
+
+	cfg := provider.Get()
+	cfg.Server.EnableTLS = true
+	cfg.Server.Addr = fmt.Sprintf("localhost:%d", httpsPort)
+	cfg.Server.RedirectAddr = fmt.Sprintf("localhost:%d", httpPort)
+	cfg.Server.CertData = string(certPEM)
+	cfg.Server.KeyData = string(keyPEM)
+	provider.Update(cfg)
+
+	exitCalledChan := make(chan int, 1)
+	server.exitFunc = func(code int) {
+		exitCalledChan <- code
+	}
+
+	// 2. Action
+	go server.Run()
+	time.Sleep(50 * time.Millisecond) // Give servers time to start
+
+	// 3. Verification (Request)
+	tlsClient := newTLSClient(t, certPEM)
+	// Create a client that does NOT follow redirects automatically
+	noRedirectClient := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	// Make request to the HTTP redirect server
+	resp, err := noRedirectClient.Get("http://" + cfg.Server.RedirectAddr + "/test")
+	if err != nil {
+		t.Fatalf("HTTP request to redirect server failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusMovedPermanently {
+		t.Errorf("expected status 301, got %d", resp.StatusCode)
+	}
+	expectedLocation := "https://" + cfg.Server.Addr + "/test"
+	if loc := resp.Header.Get("Location"); loc != expectedLocation {
+		t.Errorf("expected redirect location %q, got %q", expectedLocation, loc)
+	}
+
+	// Follow the redirect manually with the TLS client
+	finalResp, err := tlsClient.Get(expectedLocation)
+	if err != nil {
+		t.Fatalf("Follow-up HTTPS request failed: %v", err)
+	}
+	defer finalResp.Body.Close()
+	if finalResp.StatusCode != http.StatusOK {
+		t.Errorf("expected status OK after redirect, got %s", finalResp.Status)
+	}
+
+	// 4. Shutdown
+	if err := syscall.Kill(syscall.Getpid(), syscall.SIGINT); err != nil {
+		t.Fatalf("Failed to send SIGINT: %v", err)
+	}
+	select {
+	case code := <-exitCalledChan:
+		if code != 0 {
+			t.Errorf("expected exit code 0, got %d", code)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for server to exit")
+	}
+}
+
+func TestServer_Run_TLS_ListenAndServeTLSError(t *testing.T) {
+	// 1. Setup
+	port := getFreePort(t)
+	// Occupy the port
+	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
+	if err != nil {
+		t.Fatalf("Failed to listen on port: %v", err)
+	}
+	defer listener.Close()
+
+	server, provider := newTestServer(t, nil)
+	certPEM, keyPEM := generateTestCert(t)
+
+	cfg := provider.Get()
+	cfg.Server.EnableTLS = true
+	cfg.Server.Addr = fmt.Sprintf("localhost:%d", port) // Use the busy port
+	cfg.Server.CertData = string(certPEM)
+	cfg.Server.KeyData = string(keyPEM)
+	provider.Update(cfg)
+
+	exitCalledChan := make(chan int, 1)
+	server.exitFunc = func(code int) {
+		exitCalledChan <- code
+	}
+
+	// 2. Action
+	go server.Run()
+
+	// 3. Verification
+	select {
+	case code := <-exitCalledChan:
+		if code == 0 {
+			t.Error("expected non-zero exit code for server startup failure, got 0")
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for server to exit")
+	}
+}
+
+func TestServer_Run_TLS_RedirectServerFail(t *testing.T) {
+	// 1. Setup
+	redirectPort := getFreePort(t)
+	// Occupy the redirect port
+	listener, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", redirectPort))
+	if err != nil {
+		t.Fatalf("Failed to listen on port: %v", err)
+	}
+	defer listener.Close()
+
+	server, provider := newTestServer(t, nil)
+	certPEM, keyPEM := generateTestCert(t)
+	httpsPort := getFreePort(t)
+
+	cfg := provider.Get()
+	cfg.Server.EnableTLS = true
+	cfg.Server.Addr = fmt.Sprintf("localhost:%d", httpsPort)
+	cfg.Server.RedirectAddr = fmt.Sprintf("localhost:%d", redirectPort) // Use busy port
+	cfg.Server.CertData = string(certPEM)
+	cfg.Server.KeyData = string(keyPEM)
+	provider.Update(cfg)
+
+	exitCalledChan := make(chan int, 1)
+	server.exitFunc = func(code int) {
+		exitCalledChan <- code
+	}
+
+	// 2. Action
+	go server.Run()
+
+	// 3. Verification
+	select {
+	case code := <-exitCalledChan:
+		if code == 0 {
+			t.Error("expected non-zero exit code for redirect server startup failure, got 0")
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for server to exit")
 	}
 }
