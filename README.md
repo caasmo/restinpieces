@@ -16,13 +16,24 @@ RestInPieces is a Go framework for building secure, high-performance API servers
 
 To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which walks you through the initial setup of a new application.
 
-## Core Philosophy: One Process Paradigm
+## Core Philosophy: One Process Application
 
-This framework is built on the principle of "one process programming," a design philosophy that prioritizes simplicity and effectiveness by leveraging a single server instead of a complex distributed system. The core idea is straightforward: **don't use N computers when 1 will do.**
+This framework is built on the philosophy of One Process Application
+architectural approach that consolidates an entire application and its core
+dependencies into a single, self-contained binary.
 
-By running a single Go binary with an embedded SQLite database on one VM, this approach dramatically simplifies development, deployment, and maintenance. It provides a robust and high-performance foundation that can serve thousands of concurrent requests and support a growing business for years.
+The central idea is to "absorb" the typical components of a modern web
+service—such as the database, cache, and job queue—into one application
+binary. Instead of managing a complex stack of separate services (e.g., a
+database server, a Redis instance, a reverse proxy), you deploy a single
+binary. This dramatically simplifies development, deployment, and maintenance.
 
-This model embraces the idea that most services never reach the scaling limits of a large, modern server. It allows developers to focus on building features and responding to customer needs rather than managing complex infrastructure. When the time comes to scale beyond a single process, the business will have the resources and clarity to do so effectively.
+By running a single Go binary with an embedded SQLite database on one VM, it
+allows developers to focus on building features rather than managing
+distributed systems, providing a high-performance foundation that can serve a
+growing business for years. When the time comes to scale beyond what a single
+large server can offer, the business will have the resources and clarity to do
+so effectively.
 
 This approach is heavily inspired by the ideas in [One Process Programming Notes](https://crawshaw.io/blog/one-process-programming-notes).
 
