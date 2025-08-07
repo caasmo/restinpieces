@@ -2,9 +2,17 @@ package server
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
 	"errors"
 	"io"
 	"log/slog"
+	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"syscall"
@@ -87,6 +95,43 @@ func newTestServer(t *testing.T, reloadFunc func() error) (*Server, *config.Prov
 		reloadFunc = func() error { return nil }
 	}
 	return NewServer(provider, handler, logger, reloadFunc), provider
+}
+
+// generateTestCert creates a self-signed certificate and key for testing.
+func generateTestCert(t *testing.T) (certPEM, keyPEM []byte) {
+	t.Helper()
+
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatalf("Failed to generate private key: %v", err)
+	}
+
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Test Co"},
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Hour),
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
+	if err != nil {
+		t.Fatalf("Failed to create certificate: %v", err)
+	}
+
+	certPEM = pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
+
+	keyBytes, err := x509.MarshalECPrivateKey(privateKey)
+	if err != nil {
+		t.Fatalf("Failed to marshal private key: %v", err)
+	}
+	keyPEM = pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyBytes})
+
+	return certPEM, keyPEM
 }
 
 // --- Test Cases ---
@@ -424,5 +469,79 @@ func TestAddJobHandler_NilExecutor(t *testing.T) {
 	// 3. Verification
 	if err == nil {
 		t.Fatal("AddJobHandler should have returned an error, but did not")
+	}
+}
+
+func TestCreateTLSConfig_Success(t *testing.T) {
+	certPEM, keyPEM := generateTestCert(t)
+	cfg := &config.Server{
+		CertData: string(certPEM),
+		KeyData:  string(keyPEM),
+	}
+
+	tlsConfig, err := createTLSConfig(cfg)
+
+	if err != nil {
+		t.Fatalf("createTLSConfig returned an unexpected error: %v", err)
+	}
+	if tlsConfig == nil {
+		t.Fatal("createTLSConfig returned a nil config")
+	}
+	if len(tlsConfig.Certificates) != 1 {
+		t.Errorf("expected 1 certificate, got %d", len(tlsConfig.Certificates))
+	}
+	if tlsConfig.MinVersion != tls.VersionTLS13 {
+		t.Errorf("expected MinVersion to be TLS 1.3, got %d", tlsConfig.MinVersion)
+	}
+}
+
+func TestCreateTLSConfig_InvalidKeyPair(t *testing.T) {
+	certPEM, _ := generateTestCert(t)
+	_, keyPEM2 := generateTestCert(t) // Mismatched key
+	cfg := &config.Server{
+		CertData: string(certPEM),
+		KeyData:  string(keyPEM2),
+	}
+
+	_, err := createTLSConfig(cfg)
+
+	if err == nil {
+		t.Fatal("createTLSConfig should have returned an error for mismatched key pair, but did not")
+	}
+}
+
+func TestCreateTLSConfig_MissingData(t *testing.T) {
+	certPEM, keyPEM := generateTestCert(t)
+
+	testCases := []struct {
+		name     string
+		cfg      *config.Server
+		expected bool
+	}{
+		{
+			name: "Missing CertData",
+			cfg: &config.Server{
+				KeyData: string(keyPEM),
+			},
+		},
+		{
+			name: "Missing KeyData",
+			cfg: &config.Server{
+				CertData: string(certPEM),
+			},
+		},
+		{
+			name: "Missing Both",
+			cfg:  &config.Server{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := createTLSConfig(tc.cfg)
+			if err == nil {
+				t.Errorf("createTLSConfig should have returned an error but did not")
+			}
+		})
 	}
 }
