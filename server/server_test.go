@@ -695,7 +695,11 @@ func TestServer_Run_TLS_WithRedirect_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Follow-up HTTPS request failed: %v", err)
 	}
-	defer finalResp.Body.Close()
+	defer func() {
+		if err := finalResp.Body.Close(); err != nil {
+			t.Errorf("failed to close response body: %v", err)
+		}
+	}()
 	if finalResp.StatusCode != http.StatusOK {
 		t.Errorf("expected status OK after redirect, got %s", finalResp.Status)
 	}
@@ -722,7 +726,11 @@ func TestServer_Run_TLS_ListenAndServeTLSError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to listen on port: %v", err)
 	}
-	defer listener.Close()
+	defer func() {
+		if err := listener.Close(); err != nil {
+			t.Logf("failed to close listener (non-fatal): %v", err)
+		}
+	}()
 
 	server, provider := newTestServer(t, nil)
 	certPEM, keyPEM := generateTestCert(t)
@@ -761,7 +769,11 @@ func TestServer_Run_TLS_RedirectServerFail(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to listen on port: %v", err)
 	}
-	defer listener.Close()
+	defer func() {
+		if err := listener.Close(); err != nil {
+			t.Logf("failed to close listener (non-fatal): %v", err)
+		}
+	}()
 
 	server, provider := newTestServer(t, nil)
 	certPEM, keyPEM := generateTestCert(t)
