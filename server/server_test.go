@@ -213,6 +213,26 @@ func TestServer_Run_HandlesSIGHUP(t *testing.T) {
 	}
 }
 
+// TestServer_Run_HttpAndDaemonStartFailure is a regression test to ensure the
+// server does not deadlock during startup if both the HTTP server and a daemon
+// fail concurrently.
+//
+// Original Problem:
+// The `serverError` channel was buffered to 1. If the HTTP server goroutine
+// failed and sent an error, the channel would be full. If a daemon subsequently
+// failed in the main goroutine, its attempt to send a second error would block
+// indefinitely, causing a deadlock.
+//
+// Fix:
+// The `serverError` channel buffer was increased to 2.
+//
+// How this test works:
+// 1. It configures the HTTP server to fail immediately (by enabling TLS without certs).
+// 2. It uses a `fakeDaemon` with a small `startDelay` to ensure the HTTP server
+//    error is sent first. The daemon is also configured to fail.
+// 3. The test verifies that the server can receive both errors without
+//    deadlocking and proceeds to a graceful shutdown, exiting with a non-zero
+//    code. A timeout in this test would indicate a regression of the deadlock bug.
 func TestServer_Run_HttpAndDaemonStartFailure(t *testing.T) {
 	// 1. Setup
 	// Create a server config that will cause an error during HTTP server setup
