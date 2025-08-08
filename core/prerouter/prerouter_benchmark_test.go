@@ -269,7 +269,9 @@ func BenchmarkBlockRequestBody_Allowed(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		// We must reset the body for each iteration
-		body.Seek(0, io.SeekStart)
+		if _, err := body.Seek(0, io.SeekStart); err != nil {
+			b.Fatalf("Failed to seek body: %v", err)
+		}
 		middleware.ServeHTTP(httptest.NewRecorder(), req)
 	}
 }
@@ -296,7 +298,9 @@ func BenchmarkBlockRequestBody_Blocked(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		body.Seek(0, io.SeekStart)
+		if _, err := body.Seek(0, io.SeekStart); err != nil {
+			b.Fatalf("Failed to seek body: %v", err)
+		}
 		middleware.ServeHTTP(httptest.NewRecorder(), req)
 	}
 }
@@ -363,8 +367,12 @@ func BenchmarkChain_HappyPath(b *testing.B) {
 		cfg.Maintenance.Activated = false
 	})
 	handler := buildFullChain(app)
+
+	// Use a single request object and modify its RemoteAddr in the loop.
+	// This avoids a large upfront allocation and the high overhead of calling
+	// b.StopTimer/b.StartTimer in a tight loop. The tiny, constant cost of
+	// updating the IP is the most acceptable form of measurement noise.
 	req := httptest.NewRequest("GET", "/", nil)
-	req.RemoteAddr = "192.0.2.1:12345"
 	req.Host = "example.com"
 	req.Header.Set("User-Agent", "GoodBot/1.0")
 
@@ -372,6 +380,7 @@ func BenchmarkChain_HappyPath(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
+		req.RemoteAddr = monotonicIP(i) + ":12345"
 		handler.ServeHTTP(httptest.NewRecorder(), req)
 	}
 }
@@ -379,16 +388,26 @@ func BenchmarkChain_HappyPath(b *testing.B) {
 // BenchmarkChain_Blocked_Maintenance measures an early exit due to maintenance mode.
 func BenchmarkChain_Blocked_Maintenance(b *testing.B) {
 	app := newBenchmarkApp(b, func(cfg *config.Config) {
-		// Only maintenance mode needs to be active for this test
+		// Enable all preceding middleware to create a realistic chain.
+		cfg.BlockIp.Enabled = true
+		cfg.BlockIp.Activated = true
+		cfg.BlockHost.Activated = true
+		cfg.BlockHost.AllowedHosts = []string{"example.com"}
+		// Finally, activate maintenance mode, which is what we want to measure.
 		cfg.Maintenance.Activated = true
 	})
 	handler := buildFullChain(app)
+
+	// Use a single request object, modifying the IP inside the loop to ensure
+	// no preceding middleware blocks the request before the maintenance check.
 	req := httptest.NewRequest("GET", "/", nil)
+	req.Host = "example.com"
 
 	b.ReportAllocs()
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
+		req.RemoteAddr = monotonicIP(i) + ":12345"
 		handler.ServeHTTP(httptest.NewRecorder(), req)
 	}
 }
@@ -398,8 +417,14 @@ func BenchmarkChain_Blocked_Host(b *testing.B) {
 	app := newBenchmarkApp(b, func(cfg *config.Config) {
 		cfg.BlockHost.Activated = true
 		cfg.BlockHost.AllowedHosts = []string{"example.com"}
+		// Also enable BlockIp so the chain is realistic.
+		cfg.BlockIp.Enabled = true
+		cfg.BlockIp.Activated = true
 	})
 	handler := buildFullChain(app)
+
+	// Use a single request object, modifying the IP inside the loop to ensure
+	// the IP blocker does not fire before the host blocker.
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Host = "blocked.com"
 
@@ -407,6 +432,7 @@ func BenchmarkChain_Blocked_Host(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
+		req.RemoteAddr = monotonicIP(i) + ":12345"
 		handler.ServeHTTP(httptest.NewRecorder(), req)
 	}
 }
