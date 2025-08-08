@@ -1,0 +1,63 @@
+name: Benchmark
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Run benchmark and create report
+        id: benchmark
+        run: |
+          mkdir -p .github/benchmarks
+          go test -bench=./... -benchmem -json > benchmark_stream.json
+          
+          if [ ! -s benchmark_stream.json ]; then
+            echo "No benchmark results generated."
+            echo "skipped=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Process the stream into a valid JSON array
+          jq -s '.' benchmark_stream.json > temp_benchmark.json
+          
+          # Create the final filename
+          FILENAME=".github/benchmarks/benchmark-$(date -u +'%Y%m%d%H%M%S')-$(git rev-parse --short HEAD).json"
+          mv temp_benchmark.json "$FILENAME"
+          
+          echo "filename=${FILENAME}" >> $GITHUB_OUTPUT
+          echo "Benchmark report generated at ${FILENAME}"
+
+      - name: Commit benchmark report
+        if: steps.benchmark.outputs.skipped != 'true'
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          git add ${{ steps.benchmark.outputs.filename }}
+          
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "Benchmark report already exists or is unchanged."
+          else
+            git commit -m "chore(benchmark): Add report for ${{ github.sha }}"
+            git pull --rebase
+            git push
+          fi
