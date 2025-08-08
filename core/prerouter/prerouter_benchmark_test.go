@@ -1,12 +1,13 @@
 package prerouter
 
 import (
+	"encoding/binary"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -105,6 +106,17 @@ func BenchmarkRequestLog_Inactive(b *testing.B) {
 	}
 }
 
+// monotonicIP generates a unique, ascending 4-byte IP address for a given integer i.
+// This is used in benchmarks to ensure that each request comes from a unique source,
+// preventing rate-limiting or blocking logic from contaminating the results of
+// "happy path" tests. It uses the standard library to convert a uint32 directly
+// into an IP string, starting from 0.0.0.0.
+func monotonicIP(i int) string {
+	ipBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(ipBytes, uint32(i))
+	return net.IP(ipBytes).String()
+}
+
 // BenchmarkBlockIp_Process measures the "happy path" for BlockIp: a new IP is processed by the sketch.
 // It generates a unique IP for each request to ensure the sketch never triggers a block,
 // thus providing a pure measurement of the process path's runtime performance.
@@ -128,8 +140,7 @@ func BenchmarkBlockIp_Process(b *testing.B) {
 		req := httptest.NewRequest("GET", "/", nil)
 		// Generate a unique IP for every single request to guarantee the blocking
 		// threshold is never met. This provides a pure test of the process path.
-		// The IP address format is contrived but sufficient for the test.
-		req.RemoteAddr = fmt.Sprintf("192.0.%d.%d:12345", i/256, i%256)
+		req.RemoteAddr = monotonicIP(i) + ":12345"
 		reqs[i] = req
 	}
 
