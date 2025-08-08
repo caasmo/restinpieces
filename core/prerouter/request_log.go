@@ -93,14 +93,15 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		// Get duration from recorder
 		duration := rec.Duration()
 
-		// Build log attributes efficiently with cached values and length limits
-		attrs := make([]any, 0, 17)
-		attrs = append(attrs, logType)
-		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method))) // Ensure uppercase method
+		// Build log attributes efficiently using a pre-sized slog.Attr slice
+		// and optimized attribute constructors to minimize allocations.
 		limits := r.app.Config().Log.Request.Limits
+		attrs := make([]slog.Attr, 0, 14)
+		attrs = append(attrs, logType)
+		attrs = append(attrs, slog.String("method", strings.ToUpper(req.Method)))
 		attrs = append(attrs, slog.String("uri", cutStr(req.URL.RequestURI(), limits.URILength)))
 		attrs = append(attrs, slog.Int("status", rec.Status))
-		attrs = append(attrs, slog.String("duration", duration.String()))
+		attrs = append(attrs, slog.Duration("duration", duration))
 		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), limits.RemoteIPLength)))
 		attrs = append(attrs, slog.String("user_agent", cutStr(req.UserAgent(), limits.UserAgentLength)))
 		attrs = append(attrs, slog.String("referer", cutStr(req.Referer(), limits.RefererLength)))
@@ -111,7 +112,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.Int64("response_content_length", rec.BytesWritten))
 		attrs = append(attrs, emptyAuth)
 
-		r.app.Logger().Info(logMessage, attrs...)
-
+		// Use the high-performance LogAttrs method to avoid variadic allocations.
+		r.app.Logger().LogAttrs(req.Context(), slog.LevelInfo, logMessage, attrs...)
 	})
 }
