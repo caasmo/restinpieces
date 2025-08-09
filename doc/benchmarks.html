@@ -50,11 +50,16 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            table-layout: fixed;
         }
         th, td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #ddd;
+            overflow-wrap: break-word;
+        }
+        th:first-child, td:first-child {
+            width: 30%;
         }
         th {
             background-color: #f9f9f9;
@@ -185,7 +190,7 @@
                     }
 
                     row.innerHTML = `
-                        <td>${name}</td>
+                        <td>${name.replace(/^Benchmark/, '')}</td>
                         <td class="bg-base">${b1 ? b1.ns_per_op.toFixed(2) : 'N/A'}</td>
                         <td class="bg-compare">${b2 ? b2.ns_per_op.toFixed(2) : 'N/A'}</td>
                         <td>${formatDelta(b1?.ns_per_op, b2?.ns_per_op)}</td>
