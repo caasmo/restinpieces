@@ -23,7 +23,7 @@ jobs:
       - name: Run benchmark and create report
         id: benchmark
         run: |
-          go install golang.org/x/perf/cmd/benchstat@latest
+          go install github.com/caasmo/gobench2json/cmd/gobench2json@latest
           mkdir -p .github/benchmarks
           go test -bench=. -run=^$ -benchmem ./... > benchmark.txt
 
@@ -35,8 +35,8 @@ jobs:
 
           # Create the final filename
           FILENAME=".github/benchmarks/benchmark-$(date -u +'%Y%m%d%H%M%S')-$(git rev-parse --short HEAD).json"
-          # benchstat is installed in ~/go/bin by default, which is in the PATH
-          benchstat -json benchmark.txt > "$FILENAME"
+          # gobench2json is installed in ~/go/bin by default, which is in the PATH
+          cat benchmark.txt | gobench2json > "$FILENAME"
 
           echo "filename=${FILENAME}" >> $GITHUB_OUTPUT
           echo "Benchmark report generated at ${FILENAME}"
