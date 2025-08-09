@@ -20,28 +20,24 @@ jobs:
         with:
           go-version: stable
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
       - name: Run benchmark and create report
         id: benchmark
         run: |
+          go install golang.org/x/perf/cmd/benchstat@latest
           mkdir -p .github/benchmarks
-          go test -bench=./... -benchmem -json > benchmark_stream.json
-          
-          if [ ! -s benchmark_stream.json ]; then
+          go test -bench=. -run=^$ -benchmem ./... > benchmark.txt
+
+          if [ ! -s benchmark.txt ]; then
             echo "No benchmark results generated."
             echo "skipped=true" >> $GITHUB_OUTPUT
             exit 0
           fi
-          
-          # Process the stream into a valid JSON array
-          jq -s '.' benchmark_stream.json > temp_benchmark.json
-          
+
           # Create the final filename
           FILENAME=".github/benchmarks/benchmark-$(date -u +'%Y%m%d%H%M%S')-$(git rev-parse --short HEAD).json"
-          mv temp_benchmark.json "$FILENAME"
-          
+          # benchstat is installed in ~/go/bin by default, which is in the PATH
+          benchstat -json benchmark.txt > "$FILENAME"
+
           echo "filename=${FILENAME}" >> $GITHUB_OUTPUT
           echo "Benchmark report generated at ${FILENAME}"
 
