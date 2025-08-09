@@ -1,0 +1,457 @@
+[
+  {
+    "Time": "2025-08-09T00:22:57.85250898Z",
+    "Action": "start",
+    "Package": "github.com/caasmo/restinpieces"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856265216Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856281516Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath",
+    "Output": "=== RUN   TestGetLogDbPath\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856304209Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_from_config"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856311242Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_from_config",
+    "Output": "=== RUN   TestGetLogDbPath/Path_from_config\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856319116Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_from_config",
+    "Output": "--- PASS: TestGetLogDbPath/Path_from_config (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856326711Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_from_config",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856336359Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_derived_from_main_db_path"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856341308Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_derived_from_main_db_path",
+    "Output": "=== RUN   TestGetLogDbPath/Path_derived_from_main_db_path\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856348742Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_derived_from_main_db_path",
+    "Output": "--- PASS: TestGetLogDbPath/Path_derived_from_main_db_path (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856354723Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_derived_from_main_db_path",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856359973Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_derived_from_main_db_path_in_same_directory"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856365203Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_derived_from_main_db_path_in_same_directory",
+    "Output": "=== RUN   TestGetLogDbPath/Path_derived_from_main_db_path_in_same_directory\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.85637452Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_derived_from_main_db_path_in_same_directory",
+    "Output": "--- PASS: TestGetLogDbPath/Path_derived_from_main_db_path_in_same_directory (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856380351Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Path_derived_from_main_db_path_in_same_directory",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856386803Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Error_when_main_db_path_is_missing"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856392494Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Error_when_main_db_path_is_missing",
+    "Output": "=== RUN   TestGetLogDbPath/Error_when_main_db_path_is_missing\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856398505Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Error_when_main_db_path_is_missing",
+    "Output": "--- PASS: TestGetLogDbPath/Error_when_main_db_path_is_missing (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.85640654Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath/Error_when_main_db_path_is_missing",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.85641176Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath",
+    "Output": "--- PASS: TestGetLogDbPath (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856416138Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestGetLogDbPath",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856420576Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultRouter"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856424714Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultRouter",
+    "Output": "=== RUN   TestSetupDefaultRouter\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856508511Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultRouter",
+    "Output": "--- PASS: TestSetupDefaultRouter (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856518269Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultRouter",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856525402Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.85652933Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache",
+    "Output": "=== RUN   TestSetupDefaultCache\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856536543Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache/Successful_cache_creation"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.856540771Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache/Successful_cache_creation",
+    "Output": "=== RUN   TestSetupDefaultCache/Successful_cache_creation\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.857484426Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache/Successful_cache_creation",
+    "Output": "--- PASS: TestSetupDefaultCache/Successful_cache_creation (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.857498282Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache/Successful_cache_creation",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.857503772Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache/Failure_on_invalid_cache_level"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.85750809Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache/Failure_on_invalid_cache_level",
+    "Output": "=== RUN   TestSetupDefaultCache/Failure_on_invalid_cache_level\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.857597357Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache/Failure_on_invalid_cache_level",
+    "Output": "--- PASS: TestSetupDefaultCache/Failure_on_invalid_cache_level (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.857606855Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache/Failure_on_invalid_cache_level",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.857615161Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache",
+    "Output": "--- PASS: TestSetupDefaultCache (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.857620491Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupDefaultCache",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.8576255Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.857629297Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig",
+    "Output": "=== RUN   TestSetupConfig\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.857907828Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Successful_config_loading"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.857916013Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Successful_config_loading",
+    "Output": "=== RUN   TestSetupConfig/Successful_config_loading\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.858880808Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Successful_config_loading",
+    "Output": "--- PASS: TestSetupConfig/Successful_config_loading (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.858894954Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Successful_config_loading",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.858902017Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_db_GetConfig_error"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.858906796Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_db_GetConfig_error",
+    "Output": "=== RUN   TestSetupConfig/Failure_on_db_GetConfig_error\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.858920913Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_db_GetConfig_error",
+    "Output": "--- PASS: TestSetupConfig/Failure_on_db_GetConfig_error (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.858950889Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_db_GetConfig_error",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.859000842Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_invalid_TOML_data"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.859007785Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_invalid_TOML_data",
+    "Output": "=== RUN   TestSetupConfig/Failure_on_invalid_TOML_data\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.859615041Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_invalid_TOML_data",
+    "Output": "--- PASS: TestSetupConfig/Failure_on_invalid_TOML_data (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.859625891Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_invalid_TOML_data",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.859632744Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_invalid_config_validation"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.859636872Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_invalid_config_validation",
+    "Output": "=== RUN   TestSetupConfig/Failure_on_invalid_config_validation\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.860486611Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_invalid_config_validation",
+    "Output": "--- PASS: TestSetupConfig/Failure_on_invalid_config_validation (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.860500878Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig/Failure_on_invalid_config_validation",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.860640108Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig",
+    "Output": "--- PASS: TestSetupConfig (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.860650407Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestSetupConfig",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.86065711Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestNew_WithUserLogger"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.860661208Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestNew_WithUserLogger",
+    "Output": "=== RUN   TestNew_WithUserLogger\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.884539028Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestNew_WithUserLogger",
+    "Output": "--- PASS: TestNew_WithUserLogger (0.02s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.884558695Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestNew_WithUserLogger",
+    "Elapsed": 0.02
+  },
+  {
+    "Time": "2025-08-09T00:22:57.884586857Z",
+    "Action": "run",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestNew_MissingDB"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.884590745Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestNew_MissingDB",
+    "Output": "=== RUN   TestNew_MissingDB\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.884888993Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestNew_MissingDB",
+    "Output": "--- PASS: TestNew_MissingDB (0.00s)\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.884897028Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Test": "TestNew_MissingDB",
+    "Elapsed": 0
+  },
+  {
+    "Time": "2025-08-09T00:22:57.88549177Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Output": "PASS\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.886361207Z",
+    "Action": "output",
+    "Package": "github.com/caasmo/restinpieces",
+    "Output": "ok  \tgithub.com/caasmo/restinpieces\t0.034s\n"
+  },
+  {
+    "Time": "2025-08-09T00:22:57.886378559Z",
+    "Action": "pass",
+    "Package": "github.com/caasmo/restinpieces",
+    "Elapsed": 0.034
+  }
+]
