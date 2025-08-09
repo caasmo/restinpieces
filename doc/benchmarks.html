@@ -152,6 +152,13 @@
                 };
             }
 
+            function formatTimestamp(ts) {
+                const match = ts.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/);
+                if (!match) return ts;
+                const [, year, month, day, hour, minute, second] = match;
+                return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+            }
+
             function renderTable(packageData1, packageData2, packageName) {
                 const benchmarks1 = new Map(packageData1.map(b => [b.name, b]));
                 const benchmarks2 = new Map(packageData2.map(b => [b.name, b]));
@@ -279,8 +286,8 @@
                     for (const file of benchmarkFiles) {
                         const fileData = files.find(f => f.name === file.filename);
                         if (fileData) {
-                            const option1 = new Option(`${file.timestamp} (${file.sha})`, fileData.download_url);
-                            const option2 = new Option(`${file.timestamp} (${file.sha})`, fileData.download_url);
+                            const option1 = new Option(`${formatTimestamp(file.timestamp)} (${file.sha})`, fileData.download_url);
+                            const option2 = new Option(`${formatTimestamp(file.timestamp)} (${file.sha})`, fileData.download_url);
                             file1Select.add(option1);
                             file2Select.add(option2);
                         }
