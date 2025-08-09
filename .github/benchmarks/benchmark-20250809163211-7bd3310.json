@@ -1,0 +1,190 @@
+{
+  "github.com/caasmo/restinpieces/core": [
+    {
+      "name": "BenchmarkAuthenticator_HappyPath-4",
+      "runs": 132963,
+      "ns_per_op": 9080,
+      "b_per_op": 4848,
+      "allocs_per_op": 100
+    },
+    {
+      "name": "BenchmarkAuthenticator_NoAuthHeader-4",
+      "runs": 21774493,
+      "ns_per_op": 53.6,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidFormat_NoBearer-4",
+      "runs": 18385611,
+      "ns_per_op": 63.99,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_MalformedToken-4",
+      "runs": 2188470,
+      "ns_per_op": 510,
+      "b_per_op": 368,
+      "allocs_per_op": 9
+    },
+    {
+      "name": "BenchmarkAuthenticator_ExpiredToken_UnverifiedCheck-4",
+      "runs": 312544,
+      "ns_per_op": 3552,
+      "b_per_op": 1640,
+      "allocs_per_op": 39
+    },
+    {
+      "name": "BenchmarkAuthenticator_UserNotFound-4",
+      "runs": 326356,
+      "ns_per_op": 3531,
+      "b_per_op": 1656,
+      "allocs_per_op": 40
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidSignature-4",
+      "runs": 121346,
+      "ns_per_op": 9660,
+      "b_per_op": 4937,
+      "allocs_per_op": 104
+    }
+  ],
+  "github.com/caasmo/restinpieces/core/prerouter": [
+    {
+      "name": "BenchmarkRecorder-4",
+      "runs": 5568110,
+      "ns_per_op": 209.3,
+      "b_per_op": 240,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkRequestLog_Active-4",
+      "runs": 396666,
+      "ns_per_op": 2729,
+      "b_per_op": 640,
+      "allocs_per_op": 6
+    },
+    {
+      "name": "BenchmarkRequestLog_Inactive-4",
+      "runs": 10675795,
+      "ns_per_op": 110.6,
+      "b_per_op": 160,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockIp_Process-4",
+      "runs": 1000000,
+      "ns_per_op": 1091,
+      "b_per_op": 216,
+      "allocs_per_op": 6
+    },
+    {
+      "name": "BenchmarkBlockIp_Blocked-4",
+      "runs": 1867700,
+      "ns_per_op": 648.4,
+      "b_per_op": 263,
+      "allocs_per_op": 7
+    },
+    {
+      "name": "BenchmarkBlockUaList_NoMatch-4",
+      "runs": 5557664,
+      "ns_per_op": 212.4,
+      "b_per_op": 160,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockUaList_Match-4",
+      "runs": 3371461,
+      "ns_per_op": 349.7,
+      "b_per_op": 208,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockHost_Allowed-4",
+      "runs": 7267844,
+      "ns_per_op": 157.1,
+      "b_per_op": 192,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockHost_Blocked-4",
+      "runs": 4998397,
+      "ns_per_op": 232.4,
+      "b_per_op": 240,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkBlockRequestBody_Allowed-4",
+      "runs": 4836505,
+      "ns_per_op": 238.7,
+      "b_per_op": 224,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockRequestBody_Blocked-4",
+      "runs": 4068720,
+      "ns_per_op": 314.8,
+      "b_per_op": 272,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkChain_HappyPath-4",
+      "runs": 273831,
+      "ns_per_op": 4828,
+      "b_per_op": 835,
+      "allocs_per_op": 14
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Maintenance-4",
+      "runs": 234801,
+      "ns_per_op": 5389,
+      "b_per_op": 1586,
+      "allocs_per_op": 19
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Host-4",
+      "runs": 285223,
+      "ns_per_op": 4631,
+      "b_per_op": 818,
+      "allocs_per_op": 14
+    }
+  ],
+  "github.com/caasmo/restinpieces/crypto": [
+    {
+      "name": "BenchmarkNewJwtSigningKey-4",
+      "runs": 1702455,
+      "ns_per_op": 702.7,
+      "b_per_op": 657,
+      "allocs_per_op": 10
+    },
+    {
+      "name": "BenchmarkNewJwt-4",
+      "runs": 390928,
+      "ns_per_op": 2922,
+      "b_per_op": 2184,
+      "allocs_per_op": 35
+    },
+    {
+      "name": "BenchmarkParseJwt_Valid-4",
+      "runs": 256843,
+      "ns_per_op": 4532,
+      "b_per_op": 2584,
+      "allocs_per_op": 51
+    },
+    {
+      "name": "BenchmarkParseJwt_InvalidSignature-4",
+      "runs": 235238,
+      "ns_per_op": 4939,
+      "b_per_op": 2656,
+      "allocs_per_op": 55
+    },
+    {
+      "name": "BenchmarkParseJwtUnverified-4",
+      "runs": 363658,
+      "ns_per_op": 3125,
+      "b_per_op": 1624,
+      "allocs_per_op": 38
+    }
+  ]
+}
