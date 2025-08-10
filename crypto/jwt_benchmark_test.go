@@ -62,7 +62,7 @@ func BenchmarkParseJwt_Valid(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = ParseJwt(token, signingKey)
+		_, _ = ParseJwt(token, signingKey, jwt.MapClaims{})
 	}
 }
 
@@ -80,7 +80,7 @@ func BenchmarkParseJwt_InvalidSignature(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = ParseJwt(token, invalidKey)
+		_, _ = ParseJwt(token, invalidKey, jwt.MapClaims{})
 	}
 }
 
@@ -96,6 +96,6 @@ func BenchmarkParseJwtUnverified(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = ParseJwtUnverified(token)
+		_, _ = ParseJwtUnverified(token, jwt.MapClaims{})
 	}
 }

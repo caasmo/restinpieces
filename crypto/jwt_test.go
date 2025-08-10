@@ -20,7 +20,7 @@ func TestCreateAndParseValidToken(t *testing.T) {
 		t.Fatalf("Create() error = %v", err)
 	}
 
-	parsedClaims, err := ParseJwt(tokenString, secret)
+	parsedClaims, err := ParseJwt(tokenString, secret, jwt.MapClaims{})
 	if err != nil {
 		t.Fatalf("Parse() error = %v", err)
 	}
@@ -65,7 +65,7 @@ func TestParseInvalidToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := ParseJwt(tc.tokenString, tc.secret)
+			_, err := ParseJwt(tc.tokenString, tc.secret, jwt.MapClaims{})
 			if !errors.Is(err, tc.wantError) {
 				t.Errorf("Parse() error = %v, want %v", err, tc.wantError)
 			}
@@ -130,7 +130,7 @@ func TestParseJwtUnverified(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			claims, err := ParseJwtUnverified(tc.tokenString)
+			claims, err := ParseJwtUnverified(tc.tokenString, jwt.MapClaims{})
 
 			// Check error expectations
 			if (err != nil && tc.wantError == nil) || (err == nil && tc.wantError != nil) {
@@ -338,7 +338,7 @@ func TestNewTypedTokens(t *testing.T) {
 				t.Fatalf("failed to create signing key: %v", err)
 			}
 
-			claims, err := ParseJwt(tokenString, signingKey)
+			claims, err := ParseJwt(tokenString, signingKey, jwt.MapClaims{})
 			if err != nil {
 				t.Fatalf("failed to parse token: %v", err)
 			}
