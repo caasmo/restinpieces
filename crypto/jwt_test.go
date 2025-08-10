@@ -150,8 +150,8 @@ func TestParseJwtUnverified(t *testing.T) {
 						t.Errorf("expected claim %q = %v, got %v", k, v, claims[k])
 					}
 				}
-			} else if claims != nil {
-				t.Error("expected nil claims, got non-nil")
+			} else if len(claims) != 0 {
+				t.Errorf("expected empty claims, but got %v", claims)
 			}
 		})
 	}
