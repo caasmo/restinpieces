@@ -16,15 +16,21 @@ const (
 	// to provide sufficient security against brute force attacks.
 	MinKeyLength = 32
 
-	// ClaimVerificationValue is the value for the "type" claim for email verification tokens.
-	ClaimVerificationValue = "verification"
-	// ClaimPasswordResetValue is the value for the "type" claim for password reset tokens.
-	ClaimPasswordResetValue = "password_reset"
-	// ClaimEmailChangeValue is the value for the "type" claim for email change tokens.
-	ClaimEmailChangeValue = "email_change"
+	// JWT claim constants
+	ClaimIssuedAt  = "iat"     // JWT Issued At claim key
+	ClaimExpiresAt = "exp"     // JWT Expiration Time claim key
+	ClaimUserID    = "user_id" // JWT User ID claim key
 
-	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old.
-	MaxTokenAge = 7 * 24 * time.Hour
+	// Email verification specific claims
+	ClaimEmail              = "email"          // Email address being verified
+	ClaimType               = "type"           // Verification type claim
+	ClaimVerificationValue  = "verification"   // Value for verification type claim
+	ClaimPasswordResetValue = "password_reset" // Value for password reset type claim
+	ClaimEmailChangeValue   = "email_change"   // Value for email change type claim
+	ClaimNewEmail           = "new_email"      // New email address for email change claims
+
+	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)
+	MaxTokenAge = 7 * 24 * 60 * 60
 )
 
 var (
@@ -78,29 +84,24 @@ func translateJWTError(err error) error {
 	switch {
 	case err == nil:
 		return nil
+	// Use errors.Is to check for sentinel errors, which works even if they are wrapped.
 	case errors.Is(err, jwt.ErrTokenExpired):
 		return ErrJwtTokenExpired
 	case errors.Is(err, jwt.ErrTokenUsedBeforeIssued):
 		return ErrTokenUsedBeforeIssued
 	case errors.Is(err, jwt.ErrTokenNotValidYet):
-		return ErrTokenUsedBeforeIssued // Treat "not valid yet" as "used before issued"
+		return ErrTokenUsedBeforeIssued
 	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
 		return ErrJwtInvalidSigningMethod
-	// This catches a broad range of validation errors (e.g., malformed, invalid claims)
 	case errors.Is(err, jwt.ErrTokenInvalidClaims):
 		return ErrInvalidClaimFormat
+	// If none of the specific known errors match, wrap the original error.
 	default:
-		// Check for specific validation errors wrapped in the main error
-		if expired := new(jwt.ErrTokenExpired); errors.As(err, &expired) {
-			return ErrJwtTokenExpired
-		}
-		// Return a generic invalid token error for all other cases.
 		return fmt.Errorf("%w: %v", ErrJwtInvalidToken, err)
 	}
 }
 
 // ParseJwt verifies and parses a JWT string into the provided claims struct.
-// It uses generics to allow parsing into any struct that satisfies jwt.Claims.
 func ParseJwt[T jwt.Claims](tokenString string, verificationKey []byte, claims T) (T, error) {
 	parser := jwt.NewParser(
 		jwt.WithValidMethods([]string{"HS256"}),
@@ -109,10 +110,6 @@ func ParseJwt[T jwt.Claims](tokenString string, verificationKey []byte, claims T
 	)
 
 	_, err := parser.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (any, error) {
-		// Ensure the token's signing method is what we expect.
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("%w: %v", ErrJwtInvalidSigningMethod, t.Header["alg"])
-		}
 		return verificationKey, nil
 	})
 
@@ -124,7 +121,6 @@ func ParseJwt[T jwt.Claims](tokenString string, verificationKey []byte, claims T
 }
 
 // ParseJwtUnverified parses a JWT without verifying its signature.
-// NOTE: This should only be used when the token's authenticity is already trusted or not required.
 func ParseJwtUnverified[T jwt.Claims](tokenString string, claims T) (T, error) {
 	_, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
 	if err != nil {
@@ -133,109 +129,140 @@ func ParseJwtUnverified[T jwt.Claims](tokenString string, claims T) (T, error) {
 	return claims, nil
 }
 
-// NewJwtSessionToken creates a new JWT session token for a user.
+// NewJwtSessionToken creates a new JWT session token for a user
 func NewJwtSessionToken(userID, email, passwordHash, secret string, duration time.Duration) (string, error) {
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
 		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
-	now := time.Now()
-	claims := SessionClaims{
-		UserID: userID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
-		},
+	// Set up claims
+	claims := jwt.MapClaims{
+		ClaimUserID: userID,
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(signingKey)
+	// Generate and return token
+	return NewJwt(claims, signingKey, duration)
 }
 
-// NewJwtEmailChangeToken creates a JWT for changing a user's email.
+// NewJwtPasswordResetToken creates a JWT specifically for password reset
 func NewJwtEmailChangeToken(userID, oldEmail, newEmail, passwordHash, secret string, duration time.Duration) (string, error) {
+	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(oldEmail, passwordHash, secret)
 	if err != nil {
 		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
-	now := time.Now()
-	claims := EmailChangeClaims{
-		UserID:   userID,
-		Email:    oldEmail,
-		NewEmail: newEmail,
-		Type:     ClaimEmailChangeValue,
-		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
-		},
+	// Set up email change-specific claims
+	claims := jwt.MapClaims{
+		ClaimUserID:   userID,
+		ClaimEmail:    oldEmail,
+		ClaimNewEmail: newEmail,
+		ClaimType:     ClaimEmailChangeValue,
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(signingKey)
+	// Generate and return token
+	return NewJwt(claims, signingKey, duration)
 }
 
-// NewJwtPasswordResetToken creates a JWT for password reset.
 func NewJwtPasswordResetToken(userID, email, passwordHash, secret string, duration time.Duration) (string, error) {
+	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
 		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
-	now := time.Now()
-	claims := VerificationClaims{
-		UserID: userID,
-		Email:  email,
-		Type:   ClaimPasswordResetValue,
-		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
-		},
+	// Set up password reset-specific claims
+	claims := jwt.MapClaims{
+		ClaimUserID: userID,
+		ClaimEmail:  email,
+		ClaimType:   ClaimPasswordResetValue,
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(signingKey)
+	// Generate and return token
+	return NewJwt(claims, signingKey, duration)
 }
 
-// NewJwtEmailVerificationToken creates a JWT for email verification.
+// NewJwtEmailVerificationToken creates a JWT specifically for email verification
+// It includes additional claims needed for verification
 func NewJwtEmailVerificationToken(userID, email, passwordHash, secret string, duration time.Duration) (string, error) {
+	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
 		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
-	now := time.Now()
-	claims := VerificationClaims{
-		UserID: userID,
-		Email:  email,
-		Type:   ClaimVerificationValue,
-		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(duration)),
-		},
+	// Set up verification-specific claims
+	claims := jwt.MapClaims{
+		ClaimUserID: userID,
+		ClaimEmail:  email,
+		ClaimType:   ClaimVerificationValue,
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(signingKey)
+	// Generate and return token
+	return NewJwt(claims, signingKey, duration)
+}
+
+func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (string, error) {
+	if len(signingKey) < MinKeyLength {
+		return "", ErrJwtInvalidSecretLength
+	}
+
+	// Set standard claims
+	now := time.Now()
+	expirationTime := now.Add(duration)
+	payload[ClaimIssuedAt] = now.Unix()
+	payload[ClaimExpiresAt] = expirationTime.Unix()
+
+	// Create and sign the token
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
+	tokenString, err := token.SignedString(signingKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign token: %w", err)
+	}
+
+	return tokenString, nil
 }
 
 // NewJwtSigningKeyWithCredentials creates a JWT signing key using HMAC-SHA256.
+
 // It derives a unique key by combining user-specific data (email, passwordHash)
-// with a server secret (JWT_SECRET).
+// with a server secret (JWT_SECRET). Tokens are invalidated when the user's
+// email or password changes, or globally by rotating JWT_SECRET.
+//
+// The passwordHash parameter can be empty to support passwordless authentication
+// methods like OAuth2. In this case, the signing key is derived only from the
+// email and server secret.
+//
+// Using HMAC prevents length-extension attacks, unlike simple hash concatenation.
+//
+// The function uses a null byte (\x00) as a delimiter to prevent collisions
+// between the email and passwordHash inputs. It returns the key as a byte slice,
+// suitable for use with github.com/golang-jwt/jwt/v5's SignedString method,
+// and an error if the server secret is unset or inputs are invalid.
+//
+// Note: JWT_SECRET should be a strong, random value (e.g., 32+ bytes).
 func NewJwtSigningKeyWithCredentials(email, passwordHash, secret string) ([]byte, error) {
+	// Validate inputs
 	if email == "" {
 		return nil, ErrInvalidSigningKeyParts
 	}
+
+	// Validate server secret length
 	if len(secret) < MinKeyLength {
 		return nil, ErrJwtInvalidSecretLength
 	}
 
+	// Create HMAC hasher with server secret as key
 	h := hmac.New(sha256.New, []byte(secret))
+
+	// Add user-specific data, handle empty passwordHash
 	h.Write([]byte(email))
-	h.Write([]byte{0}) // Null byte delimiter
+	h.Write([]byte{0}) // Null byte to avoid collisions
 	if passwordHash != "" {
 		h.Write([]byte(passwordHash))
 	}
+
+	// Return the HMAC sum as a raw byte slice
 	return h.Sum(nil), nil
 }
