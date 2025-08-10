@@ -62,8 +62,16 @@ type SessionClaims struct {
 	jwt.RegisteredClaims
 }
 
-// VerificationClaims defines the claims for email verification or password reset tokens.
-type VerificationClaims struct {
+// PasswordResetClaims defines the claims for a password reset token.
+type PasswordResetClaims struct {
+	UserID string `json:"user_id"`
+	Email  string `json:"email"`
+	Type   string `json:"type"`
+	jwt.RegisteredClaims
+}
+
+// EmailVerificationClaims defines the claims for an email verification token.
+type EmailVerificationClaims struct {
 	UserID string `json:"user_id"`
 	Email  string `json:"email"`
 	Type   string `json:"type"`
@@ -80,22 +88,18 @@ type EmailChangeClaims struct {
 }
 
 // translateJWTError converts errors from the jwt library into application-specific errors.
+// It is designed to match the exact error handling behavior of the original ParseJwt function.
 func translateJWTError(err error) error {
 	switch {
 	case err == nil:
 		return nil
-	// Use errors.Is to check for sentinel errors, which works even if they are wrapped.
+	// Explicitly handle only the errors that were handled in the original code.
 	case errors.Is(err, jwt.ErrTokenExpired):
 		return ErrJwtTokenExpired
-	case errors.Is(err, jwt.ErrTokenUsedBeforeIssued):
-		return ErrTokenUsedBeforeIssued
-	case errors.Is(err, jwt.ErrTokenNotValidYet):
-		return ErrTokenUsedBeforeIssued
 	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
 		return ErrJwtInvalidSigningMethod
-	case errors.Is(err, jwt.ErrTokenInvalidClaims):
-		return ErrInvalidClaimFormat
-	// If none of the specific known errors match, wrap the original error.
+	// All other errors from the jwt library will be wrapped in our generic ErrJwtInvalidToken.
+	// This matches the behavior of the original ParseJwt function.
 	default:
 		return fmt.Errorf("%w: %v", ErrJwtInvalidToken, err)
 	}
@@ -106,7 +110,6 @@ func ParseJwt[T jwt.Claims](tokenString string, verificationKey []byte, claims T
 	parser := jwt.NewParser(
 		jwt.WithValidMethods([]string{"HS256"}),
 		jwt.WithExpirationRequired(),
-		jwt.WithIssuedAt(),
 	)
 
 	_, err := parser.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (any, error) {
