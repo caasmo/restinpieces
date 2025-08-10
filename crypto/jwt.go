@@ -106,6 +106,11 @@ func translateJWTError(err error) error {
 }
 
 // ParseJwt verifies and parses a JWT string into the provided claims struct.
+// The underlying `jwt.ParseWithClaims` function performs the following steps:
+// 1. Unmarshals the token's JSON payload into your struct.
+// 2. Validates standard timing fields (exp, nbf, iat) based on the parser's options.
+// 3. Calls your struct's custom `Valid()` method, if it exists.
+// 4. Returns an error if the signature is invalid or if ANY of the validation steps fail.
 func ParseJwt[T jwt.Claims](tokenString string, verificationKey []byte, claims T) (T, error) {
 	parser := jwt.NewParser(
 		jwt.WithValidMethods([]string{"HS256"}),
