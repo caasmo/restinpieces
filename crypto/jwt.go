@@ -4,9 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"strings"
-	"encoding/base64"
-	"regexp"
 
 	"crypto/hmac"
 	"crypto/sha256"
@@ -42,9 +39,6 @@ const (
 
 var (
 
-	// Pre-compiled regex for user_id pattern matching
-	// Matches: r followed by exactly 14 hex characters (lowercase)
-	userIDRegex = regexp.MustCompile(`(r[0-9a-f]{14})`)
 
 	// ErrJwtTokenExpired is returned when the token has expired
 	ErrJwtTokenExpired = errors.New("token expired")
@@ -70,55 +64,17 @@ var (
 	ErrTokenTooOld = errors.New("token too old")
 )
 
-// Implement only the validation you need rather than using the full validator
-//func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
-//	claims := make(jwt.MapClaims)
-//
-//	_, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return claims, nil
-//}
+// Implement only the validation rather than using the full validator
+// but this is not lightweight either, 60% so expensive as full. 
+func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
+	claims := make(jwt.MapClaims)
 
-// FastParseJwtUserID extracts only the user_id from a JWT token without full verification.
-// Uses regex to find the user_id pattern directly in the decoded payload.
-//
-// Expected user_id format: r{14 hex chars} (e.g., "r2e4d72d378c747")
-func FastParseJwtUserID(tokenString string) (string, error) {
-	// Split token into parts (header.payload.signature)
-	parts := strings.SplitN(tokenString, ".", 3)
-	if len(parts) != 3 {
-		return "", ErrJwtInvalidToken
-	}
-
-	// Decode only the payload (middle part)
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
-	if err != nil {
-		return "", ErrJwtInvalidToken
-	}
-
-	// Find user_id pattern directly: r followed by 14 hex chars
-	matches := userIDRegex.FindStringSubmatch(string(payload))
-	if len(matches) != 2 {
-		return "", ErrJwtInvalidToken
-	}
-
-	return matches[1], nil
-}
-
-// Legacy wrapper to maintain compatibility with existing code
-func ParseJwtUnverified(tokenString string) (map[string]interface{}, error) {
-	userID, err := FastParseJwtUserID(tokenString)
+	_, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
 	if err != nil {
 		return nil, err
 	}
-	
-	// Return minimal claims map for compatibility
-	return map[string]interface{}{
-		ClaimUserID: userID,
-	}, nil
+
+	return claims, nil
 }
 
 

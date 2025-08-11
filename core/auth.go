@@ -11,6 +11,10 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
+// Pre-compiled regex for user_id pattern matching
+// Matches: r followed by exactly 14 hex characters (lowercase)
+var userIDRegex = regexp.MustCompile(`(r[0-9a-f]{14})`)
+
 // Authenticator defines the interface for authentication operations
 type Authenticator interface {
 	Authenticate(r *http.Request) (*db.User, jsonResponse, error)
@@ -47,28 +51,20 @@ func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResp
 		return nil, errorInvalidTokenFormat, errAuth
 	}
 
-	// Parse unverified token to get claims
-	claims, err := crypto.ParseJwtUnverified(tokenString)
+	// make a cheap regexp for the userId
+	// before we had crypto.ParseJwtUnverified but is was almost as expensive as full verification
+	userId, err := parseJwtUserID(tokenString)
 	if err != nil {
 		return nil, errorJwtInvalidToken, errAuth
 	}
 
-	// Validate session claims before fetching user
-	if err := crypto.ValidateSessionClaims(claims); err != nil {
-		if err == crypto.ErrJwtTokenExpired {
-			return nil, errorJwtTokenExpired, errAuth
-		}
-		return nil, errorJwtInvalidToken, errAuth
-	}
-
-	userID := claims[crypto.ClaimUserID].(string)
-	user, err := a.dbAuth.GetUserById(userID)
+	user, err := a.dbAuth.GetUserById(userId)
 	if err != nil || user == nil {
 		return nil, errorJwtInvalidToken, errors.New("Auth error")
 	}
 
 	// Generate signing key using user credentials
-	// Use user.Email and user.Password which are confirmed to belong to userID
+	// Use user.Email and user.Password which are confirmed to belong to userId
 	cfg := a.configProvider.Get() // Get the current config
 	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(user.Email, user.Password, cfg.Jwt.AuthSecret)
 	if err != nil {
@@ -77,7 +73,7 @@ func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResp
 		return nil, errorTokenGeneration, errAuth
 	}
 
-	// Verify token signature and standard claims (like expiry)
+	// Verify full token signature and standard claims (like expiry)
 	_, err = crypto.ParseJwt(tokenString, signingKey)
 	if err != nil {
 		// Map specific JWT errors to our precomputed responses
@@ -93,4 +89,30 @@ func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResp
 
 	// If all checks pass, return the authenticated user with empty response
 	return user, jsonResponse{}, nil
+}
+
+// ParseJwtUserID extracts only the user_id from a JWT token without full verification.
+// Uses regex to find the user_id pattern directly in the decoded payload.
+//
+// Expected user_id format: r{14 hex chars} (e.g., "r2e4d72d378c747")
+func parseJwtUserID(tokenString string) (string, error) {
+	// Split token into parts (header.payload.signature)
+	parts := strings.SplitN(tokenString, ".", 3)
+	if len(parts) != 3 {
+		return "", ErrJwtInvalidToken
+	}
+
+	// Decode only the payload (middle part)
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", ErrJwtInvalidToken
+	}
+
+	// Find user_id pattern directly: r followed by 14 hex chars
+	matches := userIDRegex.FindStringSubmatch(string(payload))
+	if len(matches) != 2 {
+		return "", ErrJwtInvalidToken
+	}
+
+	return matches[1], nil
 }
