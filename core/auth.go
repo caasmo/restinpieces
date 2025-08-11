@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"encoding/base64"
+	"regexp"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
@@ -99,19 +101,19 @@ func parseJwtUserID(tokenString string) (string, error) {
 	// Split token into parts (header.payload.signature)
 	parts := strings.SplitN(tokenString, ".", 3)
 	if len(parts) != 3 {
-		return "", ErrJwtInvalidToken
+		return "", errors.New("Parse user id error")
 	}
 
 	// Decode only the payload (middle part)
 	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		return "", ErrJwtInvalidToken
+		return "", errors.New("Parse user id error")
 	}
 
 	// Find user_id pattern directly: r followed by 14 hex chars
 	matches := userIDRegex.FindStringSubmatch(string(payload))
 	if len(matches) != 2 {
-		return "", ErrJwtInvalidToken
+		return "", errors.New("Parse user id error")
 	}
 
 	return matches[1], nil
