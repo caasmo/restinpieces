@@ -4,6 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
+	"strings"
+	"encoding/base64"
+	"regexp"
 
 	"crypto/hmac"
 	"crypto/sha256"
@@ -18,6 +21,7 @@ const (
 	// 32 bytes (256 bits) is the minimum recommended length for HMAC-SHA256 keys
 	// to provide sufficient security against brute force attacks.
 	MinKeyLength = 32
+
 
 	// JWT claim constants
 	ClaimIssuedAt  = "iat"     // JWT Issued At claim key
@@ -37,6 +41,11 @@ const (
 )
 
 var (
+
+	// Pre-compiled regex for user_id pattern matching
+	// Matches: r followed by exactly 14 hex characters (lowercase)
+	userIDRegex = regexp.MustCompile(`(r[0-9a-f]{14})`)
+
 	// ErrJwtTokenExpired is returned when the token has expired
 	ErrJwtTokenExpired = errors.New("token expired")
 	// ErrJwtInvalidToken is returned when the token is invalid
@@ -62,16 +71,56 @@ var (
 )
 
 // Implement only the validation you need rather than using the full validator
-func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
-	claims := make(jwt.MapClaims)
+//func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
+//	claims := make(jwt.MapClaims)
+//
+//	_, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return claims, nil
+//}
 
-	_, _, err := jwt.NewParser().ParseUnverified(tokenString, claims)
+// FastParseJwtUserID extracts only the user_id from a JWT token without full verification.
+// Uses regex to find the user_id pattern directly in the decoded payload.
+//
+// Expected user_id format: r{14 hex chars} (e.g., "r2e4d72d378c747")
+func FastParseJwtUserID(tokenString string) (string, error) {
+	// Split token into parts (header.payload.signature)
+	parts := strings.SplitN(tokenString, ".", 3)
+	if len(parts) != 3 {
+		return "", ErrJwtInvalidToken
+	}
+
+	// Decode only the payload (middle part)
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", ErrJwtInvalidToken
+	}
+
+	// Find user_id pattern directly: r followed by 14 hex chars
+	matches := userIDRegex.FindStringSubmatch(string(payload))
+	if len(matches) != 2 {
+		return "", ErrJwtInvalidToken
+	}
+
+	return matches[1], nil
+}
+
+// Legacy wrapper to maintain compatibility with existing code
+func ParseJwtUnverified(tokenString string) (map[string]interface{}, error) {
+	userID, err := FastParseJwtUserID(tokenString)
 	if err != nil {
 		return nil, err
 	}
-
-	return claims, nil
+	
+	// Return minimal claims map for compatibility
+	return map[string]interface{}{
+		ClaimUserID: userID,
+	}, nil
 }
+
 
 // ParseJwt verifies and parses JWT and returns its claims.
 // returns a map map[string]any that you can access like any other Go map.
