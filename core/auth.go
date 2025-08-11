@@ -48,20 +48,27 @@ func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResp
 	}
 
 	// Parse unverified token to get claims
-	claims, err := crypto.ParseJwtUnverified(tokenString)
+	claims := &crypto.SessionClaims{}
+	_, err := crypto.ParseJwtUnverified(tokenString, claims)
 	if err != nil {
+		// This catches malformed tokens, but not expired ones since we don't verify yet.
 		return nil, errorJwtInvalidToken, errAuth
 	}
 
-	// Validate session claims before fetching user
-	if err := crypto.ValidateSessionClaims(claims); err != nil {
-		if err == crypto.ErrJwtTokenExpired {
-			return nil, errorJwtTokenExpired, errAuth
-		}
+	// The 'exp' claim is validated by the final ParseJwt call.
+	// The custom validation logic (like checking 'iat' and 'user_id' presence)
+	// is handled by the Valid() method on the SessionClaims struct, which is
+	// automatically called by ParseJwt. Therefore, an explicit call to a
+	// separate validation function is no longer needed.
+
+	userID := claims.UserID
+	if userID == "" {
+		// If the user ID is missing, the token is invalid. This check is technically
+		// redundant if the token is later parsed with ParseJwt (which calls the Valid
+		// method), but it's a good practice to fail early before a DB call.
 		return nil, errorJwtInvalidToken, errAuth
 	}
 
-	userID := claims[crypto.ClaimUserID].(string)
 	user, err := a.dbAuth.GetUserById(userID)
 	if err != nil || user == nil {
 		return nil, errorJwtInvalidToken, errors.New("Auth error")
@@ -77,8 +84,9 @@ func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResp
 		return nil, errorTokenGeneration, errAuth
 	}
 
-	// Verify token signature and standard claims (like expiry)
-	_, err = crypto.ParseJwt(tokenString, signingKey)
+	// Verify token signature and all claims (including standard ones like expiry
+	// and custom ones in the Valid() method).
+	_, err = crypto.ParseJwt(tokenString, signingKey, &crypto.SessionClaims{})
 	if err != nil {
 		// Map specific JWT errors to our precomputed responses
 		if err == crypto.ErrJwtTokenExpired {
