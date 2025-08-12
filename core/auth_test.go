@@ -86,7 +86,7 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 
 func TestAuthenticateToken(t *testing.T) {
 	testUser := &db.User{
-		ID:       "r1a2b3c4d5e6f7",
+		ID:       "r1a2b3c4d5e6f70",
 		Email:    "test@example.com",
 		Password: "hashed_password",
 	}
@@ -267,7 +267,7 @@ func generateToken(email, passwordHash string, secret string, expiresIn time.Dur
 	}
 
 	// Generate token with derived signing key
-	claims := map[string]any{crypto.ClaimUserID: "r1a2b3c4d5e6f7"} // Use fixed test user ID
+	claims := map[string]any{crypto.ClaimUserID: "r1a2b3c4d5e6f70"} // Use fixed test user ID
 	token, err := crypto.NewJwt(claims, signingKey, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate test token: %w", err)
@@ -296,7 +296,7 @@ func TestNewDefaultAuthenticator(t *testing.T) {
 
 func TestAuthenticateErrorCases(t *testing.T) {
 	testUser := &db.User{
-		ID:       "r1a2b3c4d5e6f7",
+		ID:       "r1a2b3c4d5e6f70",
 		Email:    "test@example.com",
 		Password: "hashed_password",
 	}
@@ -320,7 +320,7 @@ func TestAuthenticateErrorCases(t *testing.T) {
 			userSetup: nil,
 			token: func() string {
 				claims := jwtv5.MapClaims{
-					crypto.ClaimUserID: "user123",
+					crypto.ClaimUserID: "r1a2b3c4d5e6f70",
 					// Missing iat and exp
 				}
 				token, _ := crypto.NewJwt(claims, []byte("test_secret_32_bytes_long_xxxxxx"), 15*time.Minute)
@@ -377,6 +377,69 @@ func TestAuthenticateErrorCases(t *testing.T) {
 			}
 			if string(resp.body) != string(tc.wantError.body) {
 				t.Errorf("expected error response body %q, got %q", string(tc.wantError.body), string(resp.body))
+			}
+		})
+	}
+}
+
+
+func TestParseJwtUserID(t *testing.T) {
+	testCases := []struct {
+		name          string
+		tokenString   string
+		expectedID    string
+		expectError   bool
+	}{
+		{
+			name: "valid token",
+			// Payload: {"user_id":"r1a2b3c4d5e6f70"}
+			tokenString: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoicjFhMmIzYzRkNWU2ZjcwIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyMzkwMjJ9.signature",
+			expectedID:  "r1a2b3c4d5e6f70",
+			expectError: false,
+		},
+		{
+			name: "invalid token format",
+			tokenString: "invalid.token",
+			expectedID:  "",
+			expectError: true,
+		},
+		{
+			name: "invalid base64 payload",
+			tokenString: "header.invalid-payload.signature",
+			expectedID:  "",
+			expectError: true,
+		},
+		{
+			name: "user_id not found",
+			// Payload: {"some_other_claim":"value"}
+			tokenString: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lX290aGVyX2NsYWltIjoidmFsdWUifQ.signature",
+			expectedID:  "",
+			expectError: true,
+		},
+		{
+			name: "user_id wrong format",
+			// Payload: {"user_id":"invalid-id-format"}
+			tokenString: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiaW52YWxpZC1pZC1mb3JtYXQifQ.signature",
+			expectedID:  "",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			userID, err := parseJwtUserID(tc.tokenString)
+
+			if tc.expectError {
+				if err == nil {
+					t.Error("expected an error but got nil")
+				}
+			} else {
+				if err != nil {
+					t.Errorf("did not expect an error but got: %v", err)
+				}
+				if userID != tc.expectedID {
+					t.Errorf("expected user ID %q, got %q", tc.expectedID, userID)
+				}
 			}
 		})
 	}
