@@ -86,7 +86,7 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 
 func TestAuthenticateToken(t *testing.T) {
 	testUser := &db.User{
-		ID:       "testuser123",
+		ID:       "r1a2b3c4d5e6f7",
 		Email:    "test@example.com",
 		Password: "hashed_password",
 	}
@@ -267,7 +267,7 @@ func generateToken(email, passwordHash string, secret string, expiresIn time.Dur
 	}
 
 	// Generate token with derived signing key
-	claims := map[string]any{crypto.ClaimUserID: "testuser123"} // Use fixed test user ID
+	claims := map[string]any{crypto.ClaimUserID: "r1a2b3c4d5e6f7"} // Use fixed test user ID
 	token, err := crypto.NewJwt(claims, signingKey, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate test token: %w", err)
@@ -296,7 +296,7 @@ func TestNewDefaultAuthenticator(t *testing.T) {
 
 func TestAuthenticateErrorCases(t *testing.T) {
 	testUser := &db.User{
-		ID:       "testuser123",
+		ID:       "r1a2b3c4d5e6f7",
 		Email:    "test@example.com",
 		Password: "hashed_password",
 	}
