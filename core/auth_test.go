@@ -382,6 +382,109 @@ func TestAuthenticateErrorCases(t *testing.T) {
 	}
 }
 
+func TestAuthenticateSessionClaimsValidation(t *testing.T) {
+	testUser := &db.User{
+		ID:       "r1a2b3c4d5e6f70",
+		Email:    "test@example.com",
+		Password: "hashed_password",
+	}
+	secret := "test_secret_32_bytes_long_xxxxxx"
+
+	// Helper to generate a token with custom claims
+	generateTestToken := func(claims jwtv5.MapClaims) string {
+		signingKey, err := crypto.NewJwtSigningKeyWithCredentials(testUser.Email, testUser.Password, secret)
+		if err != nil {
+			t.Fatalf("failed to create signing key: %v", err)
+		}
+		token := jwtv5.NewWithClaims(jwtv5.SigningMethodHS256, claims)
+		tokenString, err := token.SignedString(signingKey)
+		if err != nil {
+			t.Fatalf("failed to sign token: %v", err)
+		}
+		return tokenString
+	}
+
+	testCases := []struct {
+		name   string
+		claims jwtv5.MapClaims
+	}{
+		{
+			name: "missing user_id claim",
+			claims: jwtv5.MapClaims{
+				"iat": time.Now().Unix(),
+				"exp": time.Now().Add(15 * time.Minute).Unix(),
+			},
+		},
+		{
+			name: "empty user_id claim",
+			claims: jwtv5.MapClaims{
+				crypto.ClaimUserID: "",
+				"iat":              time.Now().Unix(),
+				"exp":              time.Now().Add(15 * time.Minute).Unix(),
+			},
+		},
+		{
+			name: "missing iat claim",
+			claims: jwtv5.MapClaims{
+				crypto.ClaimUserID: "r1a2b3c4d5e6f70",
+				"exp":              time.Now().Add(15 * time.Minute).Unix(),
+			},
+		},
+		{
+			name: "missing exp claim",
+			claims: jwtv5.MapClaims{
+				crypto.ClaimUserID: "r1a2b3c4d5e6f70",
+				"iat":              time.Now().Unix(),
+			},
+		},
+		{
+			name: "iat in the future",
+			claims: jwtv5.MapClaims{
+				crypto.ClaimUserID: "r1a2b3c4d5e6f70",
+				"iat":              time.Now().Add(10 * time.Minute).Unix(),
+				"exp":              time.Now().Add(25 * time.Minute).Unix(),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockDB := &mock.Db{
+				GetUserByIdFunc: func(id string) (*db.User, error) {
+					return testUser, nil
+				},
+			}
+			cfg := &config.Config{
+				Jwt: config.Jwt{
+					AuthSecret:        secret,
+					AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
+				},
+			}
+			configProvider := config.NewProvider(cfg)
+			auth := NewDefaultAuthenticator(mockDB, slog.Default(), configProvider)
+
+			req := httptest.NewRequest("GET", "/protected", nil)
+			token := generateTestToken(tc.claims)
+			req.Header.Set("Authorization", "Bearer "+token)
+
+			user, resp, authErr := auth.Authenticate(req)
+
+			if user != nil {
+				t.Errorf("expected user to be nil, got %v", user)
+			}
+			if authErr == nil {
+				t.Fatal("expected an authentication error, got nil")
+			}
+			// All session validation errors should map to errorJwtInvalidToken
+			if resp.status != errorJwtInvalidToken.status {
+				t.Errorf("expected status %d, got %d", errorJwtInvalidToken.status, resp.status)
+			}
+			if string(resp.body) != string(errorJwtInvalidToken.body) {
+				t.Errorf("expected error response body %q, got %q", string(errorJwtInvalidToken.body), string(resp.body))
+			}
+		})
+	}
+}
 
 func TestParseJwtUserID(t *testing.T) {
 	testCases := []struct {
