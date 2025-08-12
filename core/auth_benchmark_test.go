@@ -166,7 +166,8 @@ func BenchmarkAuthenticator_InvalidSignature(b *testing.B) {
 		return nil, db.ErrUserNotFound
 	}
 
-	// After generating the token, change the secret for verification.
+	// After generating the token, change the secret for verification. This will
+	// modify the signing key, making the previously created token invalid.
 	cfg.Jwt.AuthSecret = "a-different-secret-for-verification"
 
 	b.ReportAllocs()
