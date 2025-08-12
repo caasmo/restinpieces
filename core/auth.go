@@ -76,16 +76,21 @@ func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResp
 	}
 
 	// Verify full token signature and standard claims (like expiry)
-	_, err = crypto.ParseJwt(tokenString, signingKey)
+	claims, err := crypto.ParseJwt(tokenString, signingKey)
 	if err != nil {
 		// Map specific JWT errors to our precomputed responses
-		if err == crypto.ErrJwtTokenExpired {
+		if errors.Is(err, crypto.ErrJwtTokenExpired) {
 			return nil, errorJwtTokenExpired, errAuth
 		}
-		if err == crypto.ErrJwtInvalidSigningMethod {
+		if errors.Is(err, crypto.ErrJwtInvalidSigningMethod) {
 			return nil, errorJwtInvalidSignMethod, errAuth
 		}
 		// Treat all other verification errors as an invalid token
+		return nil, errorJwtInvalidToken, errAuth
+	}
+
+	// Final validation of claims after signature is confirmed
+	if err := crypto.ValidateSessionClaims(claims); err != nil {
 		return nil, errorJwtInvalidToken, errAuth
 	}
 
