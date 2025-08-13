@@ -97,6 +97,8 @@ The system supports multiple authentication and account management workflows thr
 ### Security
 The "one process" paradigm simplifies deployment by running a single binary on a single VM, but it also means the application is directly exposed to the internet without a reverse proxy like Nginx acting as a first line of defense. This necessitates a defensive approach to security. The framework addresses this with a suite of built-in middleware designed to protect the server from common threats. These include dynamic IP blocking (`BlockIp`) to mitigate traffic spikes, hostname validation against a whitelist (`BlockHost`), request body size limitation (`BlockRequestBody`), and `User-Agent` filtering (`BlockUaList`). The framework also helps secure client communications by automatically setting security headers like `Strict-Transport-Security`.
 
+No CORS support is provided as it contradicts the One Process philosophy. If you need cross-origin requests, you'll need to implement CORS middleware yourself.
+
 ### Core Infrastructure
 - Uses middleware and handler standard Go patterns
 - Discoverable API endpoints (/api/refresh-auth, /api/auth-with-oauth2, etc.)
