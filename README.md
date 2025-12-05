@@ -12,7 +12,7 @@
 
 # REST in pieces
 
-RestInPieces is a Go framework for building secure, high-performance API servers. It is designed to be extended and customized, providing a solid foundation for your own applications while remaining lightweight and focused. The framework uses SQLite as its default database and [minimizes reliance on third-party packages](https://github.com/caasmo/restinpieces/actions/workflows/dependencies.yml), emphasizing simplicity and performance.
+RestInPieces is a Go framework for building secure, high-performance servers. It is designed to be extended and customized, providing a solid foundation for your own applications while remaining lightweight and focused. The framework uses SQLite as its default database and [minimizes reliance on third-party packages](https://github.com/caasmo/restinpieces/actions/workflows/dependencies.yml), emphasizing simplicity and performance.
 
 To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which walks you through the initial setup of a new application.
 
