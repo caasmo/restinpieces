@@ -37,6 +37,16 @@ func saveConfigFromFile(stdout io.Writer, secureStore config.SecureStore, scope,
 // saveConfigFromData contains the testable core logic for saving a config from a file.
 // It accepts io.Writer for output, making it easy to test.
 func saveConfigFromData(stdout io.Writer, secureStore config.SecureStore, scope, filename string, data []byte, format, desc string) error {
+	resolvedFormat := format // Start with format from flag
+	if resolvedFormat == "" {
+		// No format flag, so derive from extension.
+		extension := filepath.Ext(filename)
+		if extension != "" {
+			// Trim the leading dot.
+			resolvedFormat = strings.TrimPrefix(extension, ".")
+		}
+	}
+
 	if scope == "" {
 		scope = config.ScopeApplication
 	}
@@ -46,7 +56,7 @@ func saveConfigFromData(stdout io.Writer, secureStore config.SecureStore, scope,
 		description = fmt.Sprintf("Inserted from file: %s", filepath.Base(filename))
 	}
 
-	err := secureStore.Save(scope, data, format, description)
+	err := secureStore.Save(scope, data, resolvedFormat, description)
 	if err != nil {
 		return fmt.Errorf("%w: failed to save config to database for scope '%s': %w", ErrSecureStoreSave, scope, err)
 	}

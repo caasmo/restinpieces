@@ -138,7 +138,7 @@ func TestParseConfigSubcommand(t *testing.T) {
 			name:         "SaveSuccess",
 			args:         []string{"save", "--scope", "test", "file.toml"},
 			expectedCmd:  "save",
-			expectedArgs: []string{"test", "toml", "", "file.toml"},
+			expectedArgs: []string{"test", "", "", "file.toml"},
 			expectedErr:  nil,
 		},
 		{

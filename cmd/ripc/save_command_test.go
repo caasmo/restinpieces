@@ -122,3 +122,74 @@ func TestSaveConfig_Failure_SaveError(t *testing.T) {
 		t.Error("data should not have been saved to the store on failure")
 	}
 }
+
+func TestSaveConfigFromData_FormatResolution(t *testing.T) {
+	testCases := []struct {
+		name           string
+		filenameIn     string
+		formatIn       string
+		expectedFormat string
+	}{
+		{
+			name:           "FlagOverridesExtension",
+			filenameIn:     "file.json",
+			formatIn:       "toml",
+			expectedFormat: "toml",
+		},
+		{
+			name:           "AutoDetectJSON",
+			filenameIn:     "file.json",
+			formatIn:       "",
+			expectedFormat: "json",
+		},
+		{
+			name:           "AutoDetectTOML",
+			filenameIn:     "config.toml",
+			formatIn:       "",
+			expectedFormat: "toml",
+		},
+		{
+			name:           "AutoDetectArbitraryExtension",
+			filenameIn:     "archive.zip",
+			formatIn:       "",
+			expectedFormat: "zip",
+		},
+		{
+			name:           "NoExtensionNoFlag",
+			filenameIn:     "myfile",
+			formatIn:       "",
+			expectedFormat: "",
+		},
+		{
+			name:           "DotfileWithExtension",
+			filenameIn:     ".config.json",
+			formatIn:       "",
+			expectedFormat: "json",
+		},
+		{
+			name:           "DotfileNoExtension",
+			filenameIn:     ".bashrc",
+			formatIn:       "",
+			expectedFormat: "bashrc",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// --- Setup ---
+			mockStore := NewMockSaveSecureStore()
+			var stdout bytes.Buffer
+
+			// --- Execute ---
+			err := saveConfigFromData(&stdout, mockStore, "scope", tc.filenameIn, []byte("data"), tc.formatIn, "desc")
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			// --- Assert ---
+			if mockStore.format != tc.expectedFormat {
+				t.Errorf("expected format to be %q, but got %q", tc.expectedFormat, mockStore.format)
+			}
+		})
+	}
+}
