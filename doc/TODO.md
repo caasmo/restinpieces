@@ -1,5 +1,13 @@
 ### TODOs
 
+- systemd file with 
+
+        [Service]
+        User=
+        Group=
+        CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+        AmbientCapabilities=CAP_NET_BIND_SERVICE
+        NoNewPrivileges=true
 - integrate local backup in main framework
     - handler receives conn to app file? no better create two more. ones for source one for destiny they are harcoded zombiezen
         - we can not use app.DBQueue etc.

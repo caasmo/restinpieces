@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	dbPath := flag.String("db", "", "Path to the SQLite database file (required)")
+	dbPath := flag.String("dbpath", "", "Path to the SQLite database file (required)")
 	ageKeyPath := flag.String("age-key", "", "Path to the age identity (private key) file (required)")
 
 	flag.Usage = func() {

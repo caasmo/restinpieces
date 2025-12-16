@@ -77,6 +77,7 @@ func loadAndParseIdentities(keyPath string, operation string) ([]age.Identity, e
 
 // Latest implements the SecureStore interface for age.
 // It reads the key file and parses identities on demand for decryption.
+// TODO document return values
 func (s *secureStoreAge) Get(scope string, generation int) ([]byte, string, error) {
 	if generation < 0 {
 		return nil, "", fmt.Errorf("generation cannot be negative")
