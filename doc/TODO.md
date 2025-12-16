@@ -1,5 +1,20 @@
 ### TODOs
 
+- BUG
+    - if there is a error in initializing (restinpieces) and we are alrady activated the batch handler logger, it will not Flush 
+    on error,  
+        - last error should flush all log message 
+        - or at least do not use the the app.Logger in entry points
+        - bug ocurred in restinpieces-litestream
+            - we do not have litestream.yml uet in sqlite
+            - litestream init fail with error
+            - we had in case of error app.Logger().Error("failed to init Litestream", "error", err)
+            - that message is batched in the default logger
+            - we do exit(1), no log, message in terminal or sqlite3 
+            - changing to slog.Error: 2025/12/16 16:51:17 ERROR failed to init litestream error="failed to load Litestream config from DB: securestore: decrypt failed: failed to read header: parsing age header: failed to read intro: EOF"
+
+            - DO NOT use app.Logger for restinpieces.New(), document
+
 - systemd file with 
 
         [Service]
