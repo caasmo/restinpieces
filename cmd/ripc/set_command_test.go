@@ -216,3 +216,14 @@ func TestSetConfigValue_Failure_MalformedTOML(t *testing.T) {
 		t.Errorf("expected error to wrap ErrConfigUnmarshal, got %v", err)
 	}
 }
+
+func TestSetConfigValue_Failure_UnsupportedFormat(t *testing.T) {
+	mockStore := NewMockSetSecureStore(nil)
+	var stdout bytes.Buffer
+
+	err := setConfigValue(&stdout, mockStore, "app", "json", "", "any.path", "any_value")
+
+	if !errors.Is(err, ErrUnsupportedFormat) {
+		t.Fatalf("expected error to wrap ErrUnsupportedFormat, got %v", err)
+	}
+}

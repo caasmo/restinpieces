@@ -172,7 +172,7 @@ func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 	case "save":
 		saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
 		saveScope := saveCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
-		formatFlag := saveCmd.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
+		formatFlag := saveCmd.String("format", "", "Format of the configuration file (e.g., 'toml', 'json'). Auto-detected if omitted.")
 		descFlag := saveCmd.String("desc", "", "Optional description for this configuration version")
 		if err := saveCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)

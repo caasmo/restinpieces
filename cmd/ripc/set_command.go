@@ -17,6 +17,7 @@ var (
 	ErrPathNotFound        = errors.New("configuration path does not exist")
 	ErrReadFile            = errors.New("failed to read value from file")
 	ErrParseValue          = errors.New("failed to parse value")
+	ErrUnsupportedFormat   = errors.New("unsupported format")
 )
 
 // handleSetCommand is the command-level wrapper. It executes the core logic
@@ -53,6 +54,19 @@ func setConfigValue(
 	description string,
 	configPath string,
 	rawValue string) error {
+
+	supportedFormats := []string{"toml"}
+	isSupported := false
+	for _, supported := range supportedFormats {
+		if format == supported {
+			isSupported = true
+			break
+		}
+	}
+
+	if !isSupported {
+		return fmt.Errorf("%w: '%s'. Supported formats are: %s", ErrUnsupportedFormat, format, strings.Join(supportedFormats, ", "))
+	}
 
 	if scope == "" {
 		scope = config.ScopeApplication
