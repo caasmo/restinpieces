@@ -70,7 +70,7 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		gen, _ := strconv.Atoi(subcommandArgs[1])
 		handleRollbackCommand(secureStore, subcommandArgs[0], gen)
 	case "save":
-		handleSaveCommand(secureStore, subcommandArgs[0], subcommandArgs[1])
+		handleSaveCommand(secureStore, subcommandArgs[0], subcommandArgs[1], subcommandArgs[2], subcommandArgs[3])
 	case "get":
 		handleGetCommand(secureStore, subcommandArgs[0], subcommandArgs[1])
 	case "init":
@@ -172,6 +172,8 @@ func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 	case "save":
 		saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
 		saveScope := saveCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		formatFlag := saveCmd.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
+		descFlag := saveCmd.String("desc", "", "Optional description for this configuration version")
 		if err := saveCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)
 		}
@@ -181,7 +183,7 @@ func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 		if saveCmd.NArg() > 1 {
 			return "", nil, fmt.Errorf("'save' command takes at most one filename argument: %w", ErrTooManyArguments)
 		}
-		return subcommand, []string{*saveScope, saveCmd.Arg(0)}, nil
+		return subcommand, append([]string{*saveScope, *formatFlag, *descFlag}, saveCmd.Args()...), nil
 	case "get":
 		getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
 		getScope := getCmd.String("scope", config.ScopeApplication, "Scope for the configuration")

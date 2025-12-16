@@ -1,5 +1,6 @@
 ### TODOs
 
+
 - BUG
     - if there is a error in initializing (restinpieces) and we are alrady activated the batch handler logger, it will not Flush 
     on error,  
@@ -14,6 +15,7 @@
             - changing to slog.Error: 2025/12/16 16:51:17 ERROR failed to init litestream error="failed to load Litestream config from DB: securestore: decrypt failed: failed to read header: parsing age header: failed to read intro: EOF"
 
             - DO NOT use app.Logger for restinpieces.New(), document
+   - maybe activate the logger only after initalization?
 
 - systemd file with 
 

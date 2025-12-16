@@ -70,7 +70,7 @@ func TestSaveConfigFromData(t *testing.T) {
 			data := []byte("[server]\naddr = \":8080\"")
 
 			// --- Execute ---
-			err := saveConfigFromData(&stdout, mockStore, tc.scopeIn, filename, data)
+			err := saveConfigFromData(&stdout, mockStore, tc.scopeIn, filename, data, "toml", "")
 
 			// --- Assert ---
 			if err != nil {
@@ -109,7 +109,7 @@ func TestSaveConfig_Failure_SaveError(t *testing.T) {
 	var stdout bytes.Buffer
 
 	// --- Execute ---
-	err := saveConfigFromData(&stdout, mockStore, "scope", "file.toml", []byte("data"))
+	err := saveConfigFromData(&stdout, mockStore, "scope", "file.toml", []byte("data"), "toml", "")
 
 	// --- Assert ---
 	if err == nil {
