@@ -258,7 +258,7 @@ func parseConfigSubcommand(commandArgs []string, output io.Writer) (string, []st
 		formatOpt := commandConfig.Options["format"]
 		descOpt := commandConfig.Options["desc"]
 		saveScope := saveCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-		formatFlag := saveCmd.String("format", formatOpt.DefaultValue, formatOpt.Usage)
+		formatFlag := saveCmd.String("format", "", formatOpt.Usage) // Corrected default value
 		descFlag := saveCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
 
 		if err := saveCmd.Parse(subcommandArgs); err != nil {

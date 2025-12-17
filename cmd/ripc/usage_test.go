@@ -2,14 +2,14 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"strings"
 	"testing"
 )
 
 func TestCommandHelp_Print(t *testing.T) {
-	fs := flag.NewFlagSet("test", flag.ContinueOnError)
-	fs.String("option", "default", "a test option")
+	optionsMap := map[string]Option{
+		"option": {DefaultValue: "default", Usage: "a test option"},
+	}
 
 	help := CommandHelp{
 		Usage:       "test-usage",
@@ -22,8 +22,8 @@ func TestCommandHelp_Print(t *testing.T) {
 				},
 			},
 		},
-		Options:       fs,
-		GlobalOptions: fs,
+		Options:       optionsMap,
+		GlobalOptions: optionsMap,
 		Examples: []string{
 			"example 1",
 		},
