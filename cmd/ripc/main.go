@@ -14,14 +14,15 @@ import (
 
 var (
 	// main application errors
-	ErrMissingFlag         = errors.New("missing required global flag")
-	ErrMissingCommand      = errors.New("missing command")
-	ErrUnknownCommand      = errors.New("unknown command")
-	ErrDBNotFound          = errors.New("database file not found")
-	ErrDBAlreadyExists     = errors.New("database file already exists")
-	ErrCreateDbPool        = errors.New("failed to create database pool")
-	ErrCreateDbImpl        = errors.New("failed to instantiate zombiezen db from pool")
-	ErrCreateSecureStore   = errors.New("failed to instantiate secure store")
+	ErrInvalidFlag        = errors.New("invalid flag")
+	ErrMissingFlag        = errors.New("missing required global flag")
+	ErrMissingCommand     = errors.New("missing command")
+	ErrUnknownCommand     = errors.New("unknown command")
+	ErrDBNotFound         = errors.New("database file not found")
+	ErrDBAlreadyExists    = errors.New("database file already exists")
+	ErrCreateDbPool       = errors.New("failed to create database pool")
+	ErrCreateDbImpl       = errors.New("failed to instantiate zombiezen db from pool")
+	ErrCreateSecureStore  = errors.New("failed to instantiate secure store")
 )
 
 func main() {
@@ -95,6 +96,8 @@ func run(args []string, output io.Writer) error {
 		if usageWriteErr != nil {
 			return usageWriteErr
 		}
+		// The flag package already printed the error to output
+		// Don't print usage again, just return the error
 		return fmt.Errorf("%w: %v", ErrInvalidFlag, err)
 	}
 
