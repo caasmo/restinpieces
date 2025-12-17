@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/caasmo/restinpieces/config"
@@ -27,7 +28,7 @@ func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPa
 		os.Exit(1)
 	}
 
-	subcommand, _, err := parseAppSubcommand(commandArgs)
+	subcommand, _, err := parseAppSubcommand(os.Stderr, commandArgs)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		printAppUsage()
@@ -45,13 +46,14 @@ func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPa
 	}
 }
 
-func parseAppSubcommand(commandArgs []string) (string, []string, error) {
+func parseAppSubcommand(output io.Writer, commandArgs []string) (string, []string, error) {
 	subcommand := commandArgs[0]
 	subcommandArgs := commandArgs[1:]
 
 	switch subcommand {
 	case "create":
 		createCmd := flag.NewFlagSet("create", flag.ContinueOnError)
+		createCmd.SetOutput(output)
 		if err := createCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing create flags: %w: %v", ErrInvalidFlag, err)
 		}
