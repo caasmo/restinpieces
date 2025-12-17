@@ -14,7 +14,6 @@ import (
 
 var (
 	// main application errors
-	ErrInvalidFlag        = errors.New("invalid flag")
 	ErrMissingFlag        = errors.New("missing required global flag")
 	ErrMissingCommand     = errors.New("missing command")
 	ErrUnknownCommand     = errors.New("unknown command")
@@ -96,8 +95,6 @@ func run(args []string, output io.Writer) error {
 		if usageWriteErr != nil {
 			return usageWriteErr
 		}
-		// The flag package already printed the error to output
-		// Don't print usage again, just return the error
 		return fmt.Errorf("%w: %v", ErrInvalidFlag, err)
 	}
 
