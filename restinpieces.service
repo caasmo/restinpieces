@@ -14,7 +14,7 @@ WorkingDirectory=/opt/restinpieces
 
 # Command to start the service
 # Adjust arguments as needed. TODO 
-ExecStart=/opt/restinpieces/restinpieces -dbpath app.db -age-key age_key.txt 
+ExecStart=/opt/restinpieces/restinpieces -dbpath app.db -agekey age_key.txt 
 
 # Capabilities:
 # This grants the ability to bind to privileged ports (<1024)

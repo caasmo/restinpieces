@@ -1,5 +1,8 @@
 ### TODOs
 
+- BUG
+    - if no scope default is applciation, is that right?
+        - empty string instead?
 
 - BUG
     - if there is a error in initializing (restinpieces) and we are alrady activated the batch handler logger, it will not Flush 
@@ -265,7 +268,7 @@
 - wraper activated flag 
 	- metrics and request logger check for existence rec, ok := w.(core.ResponseRecorder)
 - bug
-⤷ ../restinpieces/configstore -age-key age_key.txt -db app.db set log.batch.level info
+⤷ ../restinpieces/configstore -agekey age_key.txt -db app.db set log.batch.level info
 Error: failed to parse value as TOML (value: info): (1, 15): parsing error: no value can start with 
 - regression performance hey -n 100000 "https://localhost:8080/refresh-auth"
 	- no egression !!

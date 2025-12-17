@@ -11,10 +11,10 @@ import (
 
 func main() {
 	dbPath := flag.String("dbpath", "", "Path to the SQLite database file (required)")
-	ageKeyPath := flag.String("age-key", "", "Path to the age identity (private key) file (required)")
+	ageKeyPath := flag.String("agekey", "", "Path to the age identity (private key) file (required)")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s -db <database-path> -age-key <identity-file-path>\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s -db <database-path> -agekey <identity-file-path>\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Start the restinpieces application server.\n\n")
 		fmt.Fprintf(os.Stderr, "Flags:\n")
 		flag.PrintDefaults()

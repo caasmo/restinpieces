@@ -63,7 +63,7 @@ func TestRun(t *testing.T) {
 			name: "MissingDbPathFlag",
 			setup: func(t *testing.T, dir string) []string {
 				ageKeyPath := createDummyAgeKeyFile(t, dir)
-				return []string{"-age-key", ageKeyPath}
+				return []string{"-agekey", ageKeyPath}
 			},
 			expectedErr: ErrMissingFlag,
 		},
@@ -72,7 +72,7 @@ func TestRun(t *testing.T) {
 			setup: func(t *testing.T, dir string) []string {
 				ageKeyPath := createDummyAgeKeyFile(t, dir)
 				dbPath := createDummyDB(t, dir)
-				return []string{"-age-key", ageKeyPath, "-dbpath", dbPath}
+				return []string{"-agekey", ageKeyPath, "-dbpath", dbPath}
 			},
 			expectedErr: ErrMissingCommand,
 		},
@@ -81,7 +81,7 @@ func TestRun(t *testing.T) {
 			setup: func(t *testing.T, dir string) []string {
 				ageKeyPath := createDummyAgeKeyFile(t, dir)
 				dbPath := createDummyDB(t, dir)
-				return []string{"-age-key", ageKeyPath, "-dbpath", dbPath, "nonexistent-command"}
+				return []string{"-agekey", ageKeyPath, "-dbpath", dbPath, "nonexistent-command"}
 			},
 			expectedErr: ErrUnknownCommand,
 		},
@@ -90,7 +90,7 @@ func TestRun(t *testing.T) {
 			setup: func(t *testing.T, dir string) []string {
 				ageKeyPath := createDummyAgeKeyFile(t, dir)
 				dbPath := filepath.Join(dir, "nonexistent.db") // Does not exist
-				return []string{"-age-key", ageKeyPath, "-dbpath", dbPath, "config", "list"}
+				return []string{"-agekey", ageKeyPath, "-dbpath", dbPath, "config", "list"}
 			},
 			expectedErr: ErrDBNotFound,
 		},
@@ -99,7 +99,7 @@ func TestRun(t *testing.T) {
 			setup: func(t *testing.T, dir string) []string {
 				ageKeyPath := createDummyAgeKeyFile(t, dir)
 				dbPath := createDummyFile(t, dir) // Exists, can be any file
-				return []string{"-age-key", ageKeyPath, "-dbpath", dbPath, "app", "create"}
+				return []string{"-agekey", ageKeyPath, "-dbpath", dbPath, "app", "create"}
 			},
 			expectedErr: ErrDBAlreadyExists,
 		},
@@ -108,7 +108,7 @@ func TestRun(t *testing.T) {
 			setup: func(t *testing.T, dir string) []string {
 				ageKeyPath := createDummyAgeKeyFile(t, dir)
 				dbPath := createDummyDB(t, dir)
-				return []string{"-age-key", ageKeyPath, "-dbpath", dbPath, "help"}
+				return []string{"-agekey", ageKeyPath, "-dbpath", dbPath, "help"}
 			},
 			expectedErr: nil,
 		},

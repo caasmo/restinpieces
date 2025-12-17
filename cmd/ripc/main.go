@@ -36,7 +36,7 @@ func run(args []string, output io.Writer) error {
 	fs.SetOutput(output)
 
 	// Global flags
-	ageIdentityPathFlag := fs.String("age-key", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
+	ageIdentityPathFlag := fs.String("agekey", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
 	dbPathFlag := fs.String("dbpath", "", "Path to the SQLite database file")
 
 	var usageWriteErr error
@@ -47,12 +47,11 @@ func run(args []string, output io.Writer) error {
 		_, usageWriteErr = fmt.Fprintf(output, format, a...)
 	}
 
-	originalUsage := fs.Usage
 	fs.Usage = func() {
 		writeUsage("Usage: ripc [global options] <command> [command-specific options]\n\n")
 		writeUsage("Manages securely stored configurations.\n\n")
 		writeUsage("Global Options:\n")
-		originalUsage() // Prints the global flags
+		fs.PrintDefaults()
 		writeUsage("\nAvailable Commands:\n")
 		writeUsage("  app <subcommand> [options]       Manage application lifecycle (create)\n")
 		writeUsage("  config <subcommand> [options]    Manage configuration (set, list, dump, etc.)\n")
@@ -73,7 +72,7 @@ func run(args []string, output io.Writer) error {
 		if usageWriteErr != nil {
 			return usageWriteErr
 		}
-		return fmt.Errorf("%w: -age-key", ErrMissingFlag)
+		return fmt.Errorf("%w: -agekey", ErrMissingFlag)
 	}
 	if *dbPathFlag == "" {
 		fs.Usage()
