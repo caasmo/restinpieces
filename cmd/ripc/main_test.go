@@ -68,13 +68,13 @@ func TestRun(t *testing.T) {
 			expectedErr: ErrMissingFlag,
 		},
 		{
-			name: "MissingCommand",
+			name: "MissingCommandShouldShowUsage",
 			setup: func(t *testing.T, dir string) []string {
 				ageKeyPath := createDummyAgeKeyFile(t, dir)
 				dbPath := createDummyDB(t, dir)
 				return []string{"-agekey", ageKeyPath, "-dbpath", dbPath}
 			},
-			expectedErr: ErrMissingCommand,
+			expectedErr: nil, // No error is returned, usage is shown instead.
 		},
 		{
 			name: "UnknownCommand",
