@@ -44,7 +44,7 @@ func TestParseAppSubcommand(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd, args, err := parseAppSubcommand(io.Discard, tc.args)
+			cmd, args, err := parseAppSubcommand(tc.args, io.Discard)
 
 			if tc.expectedErr != nil {
 				if err == nil {

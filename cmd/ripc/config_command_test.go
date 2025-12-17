@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"io"
 	"reflect"
 	"testing"
 
@@ -157,7 +158,7 @@ func TestParseConfigSubcommand(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd, args, err := parseConfigSubcommand(tc.args)
+			cmd, args, err := parseConfigSubcommand(tc.args, io.Discard)
 
 			if tc.expectedErr != nil {
 				if err == nil {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 
@@ -40,7 +41,7 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		os.Exit(1)
 	}
 
-	subcommand, subcommandArgs, err := parseConfigSubcommand(commandArgs)
+	subcommand, subcommandArgs, err := parseConfigSubcommand(commandArgs, os.Stderr)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		// Potentially print usage for the specific subcommand if flags were involved
@@ -83,13 +84,14 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 	}
 }
 
-func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
+func parseConfigSubcommand(commandArgs []string, output io.Writer) (string, []string, error) {
 	subcommand := commandArgs[0]
 	subcommandArgs := commandArgs[1:]
 
 	switch subcommand {
 	case "set":
 		setCmd := flag.NewFlagSet("set", flag.ContinueOnError)
+		setCmd.SetOutput(output)
 		setScope := setCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		formatFlag := setCmd.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
 		descFlag := setCmd.String("desc", "", "Optional description for this configuration version")
@@ -113,6 +115,7 @@ func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 		return subcommand, subcommandArgs, nil
 	case "paths":
 		pathsCmd := flag.NewFlagSet("paths", flag.ContinueOnError)
+		pathsCmd.SetOutput(output)
 		pathsScope := pathsCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := pathsCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing paths flags: %w: %v", ErrInvalidFlag, err)
@@ -127,6 +130,7 @@ func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 		return subcommand, []string{*pathsScope, filter}, nil
 	case "dump":
 		dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
+		dumpCmd.SetOutput(output)
 		dumpScope := dumpCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := dumpCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
@@ -137,6 +141,7 @@ func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 		return subcommand, []string{*dumpScope}, nil
 	case "diff":
 		diffCmd := flag.NewFlagSet("diff", flag.ContinueOnError)
+		diffCmd.SetOutput(output)
 		diffScope := diffCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := diffCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing diff flags: %w: %v", ErrInvalidFlag, err)
@@ -154,6 +159,7 @@ func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 		return subcommand, []string{*diffScope, diffCmd.Arg(0)}, nil
 	case "rollback":
 		rollbackCmd := flag.NewFlagSet("rollback", flag.ContinueOnError)
+		rollbackCmd.SetOutput(output)
 		rollbackScope := rollbackCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := rollbackCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing rollback flags: %w: %v", ErrInvalidFlag, err)
@@ -171,6 +177,7 @@ func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 		return subcommand, []string{*rollbackScope, rollbackCmd.Arg(0)}, nil
 	case "save":
 		saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
+		saveCmd.SetOutput(output)
 		saveScope := saveCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		formatFlag := saveCmd.String("format", "", "Format of the configuration file (e.g., 'toml', 'json'). Auto-detected if omitted.")
 		descFlag := saveCmd.String("desc", "", "Optional description for this configuration version")
@@ -186,6 +193,7 @@ func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 		return subcommand, append([]string{*saveScope, *formatFlag, *descFlag}, saveCmd.Args()...), nil
 	case "get":
 		getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
+		getCmd.SetOutput(output)
 		getScope := getCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
 		if err := getCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing get flags: %w: %v", ErrInvalidFlag, err)
@@ -200,6 +208,7 @@ func parseConfigSubcommand(commandArgs []string) (string, []string, error) {
 		return subcommand, []string{*getScope, filter}, nil
 	case "init":
 		initCmd := flag.NewFlagSet("init", flag.ContinueOnError)
+		initCmd.SetOutput(output)
 		if err := initCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing init flags: %w: %v", ErrInvalidFlag, err)
 		}

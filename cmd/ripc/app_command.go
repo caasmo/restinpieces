@@ -28,7 +28,7 @@ func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPa
 		os.Exit(1)
 	}
 
-	subcommand, _, err := parseAppSubcommand(os.Stderr, commandArgs)
+	subcommand, _, err := parseAppSubcommand(commandArgs, os.Stderr)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		printAppUsage()
@@ -46,7 +46,7 @@ func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPa
 	}
 }
 
-func parseAppSubcommand(output io.Writer, commandArgs []string) (string, []string, error) {
+func parseAppSubcommand(commandArgs []string, output io.Writer) (string, []string, error) {
 	subcommand := commandArgs[0]
 	subcommandArgs := commandArgs[1:]
 
