@@ -212,7 +212,9 @@ func TestRunDiscovery(t *testing.T) {
 			if err := os.Chdir(tempDir); err != nil {
 				t.Fatalf("Failed to change to temp directory: %v", err)
 			}
-			defer os.Chdir(originalWD)
+			defer func() {
+				_ = os.Chdir(originalWD)
+			}()
 
 			args := tc.setup(t)
 			var output bytes.Buffer
