@@ -74,7 +74,10 @@ func run(args []string, output io.Writer) error {
 		help := CommandHelp{
 			Usage:       "ripc [global options] <command> [command-specific options]",
 			Description: "A tool for managing the Rip application, including configuration, authentication, and jobs.",
-			GlobalOptions: fs,
+			GlobalOptions: map[string]Option{
+				"agekey": {Usage: "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')"},
+				"dbpath": {Usage: "Path to the SQLite database file"},
+			},
 			Subcommands: []SubcommandGroup{
 				{
 					Subcommands: []Subcommand{

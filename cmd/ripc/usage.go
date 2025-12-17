@@ -2,20 +2,25 @@ package main
 
 import (
 	"bufio"
-	"bytes"
-	"flag"
 	"fmt"
 	"io"
+	"sort"
 	"strings"
 )
+
+// Option defines a command-line option for documentation.
+type Option struct {
+	DefaultValue string
+	Usage        string
+}
 
 // CommandHelp represents the information needed to generate help output.
 type CommandHelp struct {
 	Usage         string
 	Description   string
 	Subcommands   []SubcommandGroup
-	Options       *flag.FlagSet
-	GlobalOptions *flag.FlagSet
+	Options       map[string]Option
+	GlobalOptions map[string]Option
 	Examples      []string
 }
 
@@ -46,17 +51,43 @@ func (h *CommandHelp) Print(writer io.Writer, parentCommands ...string) {
 		firstSectionPrinted = true
 	}
 
-	printFlags := func(fs *flag.FlagSet) {
-		var buf bytes.Buffer
-		fs.SetOutput(&buf)
-		fs.PrintDefaults()
+	printOptions := func(title string, options map[string]Option) {
+		if len(options) == 0 {
+			return
+		}
+		printSectionSeparator()
+		if err != nil {
+			return
+		}
+		_, err = fmt.Fprintln(writer, title)
+		if err != nil {
+			return
+		}
 
-		scanner := bufio.NewScanner(&buf)
-		for scanner.Scan() {
+		// Sort keys for consistent output order
+		keys := make([]string, 0, len(options))
+		for k := range options {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		// Mimic the formatting of flag.PrintDefaults
+		for _, name := range keys {
+			opt := options[name]
 			if err != nil {
 				return
 			}
-			_, err = fmt.Fprintf(writer, "  %s\n", scanner.Text())
+			// Assuming string type for all flags as per current implementation
+			line := fmt.Sprintf("  -%s string", name)
+			_, err = fmt.Fprintln(writer, line)
+			if err != nil {
+				return
+			}
+			usage := opt.Usage
+			if opt.DefaultValue != "" {
+				usage = fmt.Sprintf("%s (default: %q)", usage, opt.DefaultValue)
+			}
+			_, err = fmt.Fprintf(writer, "    	%s\n", usage)
 		}
 	}
 
@@ -122,29 +153,8 @@ func (h *CommandHelp) Print(writer io.Writer, parentCommands ...string) {
 		}
 	}
 
-	if h.Options != nil {
-		printSectionSeparator()
-		if err != nil {
-			return
-		}
-		_, err = fmt.Fprintln(writer, "Options:")
-		if err != nil {
-			return
-		}
-		printFlags(h.Options)
-	}
-
-	if h.GlobalOptions != nil {
-		printSectionSeparator()
-		if err != nil {
-			return
-		}
-		_, err = fmt.Fprintln(writer, "Global Options:")
-		if err != nil {
-			return
-		}
-		printFlags(h.GlobalOptions)
-	}
+	printOptions("Options:", h.Options)
+	printOptions("Global Options:", h.GlobalOptions)
 
 	if len(h.Examples) > 0 {
 		printSectionSeparator()

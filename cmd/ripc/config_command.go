@@ -15,38 +15,42 @@ import (
 
 var (
 	ErrUnknownSubcommand = errors.New("unknown config subcommand")
-)
 
-func printConfigUsage() {
-	help := CommandHelp{
-		Usage:       "ripc config <subcommand> [options]",
-		Description: "Manages the application's secure configuration.",
+	// commandConfig is the single source of truth for the 'ripc config' command's definition and help text.
+	commandConfig = CommandHelp{
+		Usage:       fmt.Sprintf("%s config <subcommand> [options]", os.Args[0]),
+		Description: "Manages the application configuration.",
 		Subcommands: []SubcommandGroup{
 			{
-				Title: "Configuration Management",
+				Title: "Reading Configuration",
 				Subcommands: []Subcommand{
-					{"set", "Set a configuration value"},
-					{"get", "Get configuration values by path"},
-					{"save", "Save file contents to the configuration"},
+					{"get [filter]", "Get configuration values by path"},
+					{"paths [filter]", "List all keys in the configuration"},
+					{"dump", "Dump the configuration"},
+					{"scopes", "List all configuration scopes"},
+				},
+			},
+			{
+				Title: "Modifying Configuration",
+				Subcommands: []Subcommand{
+					{"set <path> <value>", "Set a configuration value"},
+					{"save <file>", "Save file contents to the configuration"},
 					{"init", "Initialize the configuration with default values"},
 				},
 			},
 			{
-				Title: "History and Versioning",
+				Title: "Version Control",
 				Subcommands: []Subcommand{
-					{"list", "List configuration versions"},
-					{"scopes", "List all configuration scopes"},
-					{"diff", "Compare configuration versions"},
-					{"rollback", "Restore a previous configuration version"},
+					{"list [scope]", "List configuration versions"},
+					{"diff <generation>", "Compare configuration versions"},
+					{"rollback <generation>", "Restore a previous configuration version"},
 				},
 			},
-			{
-				Title: "Inspection",
-				Subcommands: []Subcommand{
-					{"paths", "List all keys in the configuration"},
-					{"dump", "Dump the full configuration"},
-				},
-			},
+		},
+		Options: map[string]Option{
+			"scope":  {DefaultValue: config.ScopeApplication, Usage: "Scope for the configuration (affects: set, get, paths, dump, diff, rollback, save)"},
+			"format": {DefaultValue: "toml", Usage: "Format of the configuration file (affects: set, save)"},
+			"desc":   {Usage: "Optional description for this configuration version (affects: set, save)"},
 		},
 		Examples: []string{
 			"ripc config set --scope my-app server.port 8080",
@@ -54,19 +58,21 @@ func printConfigUsage() {
 			"ripc config rollback --scope my-app 3",
 		},
 	}
-	help.Print(os.Stderr, "ripc", "config")
+)
+
+func printConfigUsage() {
+	commandConfig.Print(os.Stderr, "ripc", "config")
 }
 
 func printConfigSetUsage() {
-	fs := flag.NewFlagSet("set", flag.ContinueOnError)
-	fs.String("scope", config.ScopeApplication, "Scope for the configuration")
-	fs.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
-	fs.String("desc", "", "Optional description for this configuration version")
-
 	help := CommandHelp{
 		Usage:       "ripc config set [options] <path> <value>",
 		Description: "Sets a configuration value at a specified path.",
-		Options:     fs,
+		Options: map[string]Option{
+			"scope":  commandConfig.Options["scope"],
+			"format": commandConfig.Options["format"],
+			"desc":   commandConfig.Options["desc"],
+		},
 		Examples: []string{
 			`ripc config set server.host localhost`,
 			`ripc config set --scope webapp features.beta true --desc "Enable beta feature"`,
@@ -151,16 +157,19 @@ func parseConfigSubcommand(commandArgs []string, output io.Writer) (string, []st
 	case "set":
 		setCmd := flag.NewFlagSet("set", flag.ContinueOnError)
 		setCmd.SetOutput(output)
-		setScope := setCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
-		formatFlag := setCmd.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
-		descFlag := setCmd.String("desc", "", "Optional description for this configuration version")
+		scopeOpt := commandConfig.Options["scope"]
+		formatOpt := commandConfig.Options["format"]
+		descOpt := commandConfig.Options["desc"]
+		setScope := setCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+		formatFlag := setCmd.String("format", formatOpt.DefaultValue, formatOpt.Usage)
+		descFlag := setCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
+
 		if err := setCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing set flags: %w: %v", ErrInvalidFlag, err)
 		}
 		if setCmd.NArg() < 2 {
 			return "", nil, fmt.Errorf("'set' requires path and value arguments: %w", ErrMissingArgument)
 		}
-		// Return flags and args in a specific order
 		return subcommand, append([]string{*setScope, *formatFlag, *descFlag}, setCmd.Args()...), nil
 	case "scopes":
 		if len(subcommandArgs) > 0 {
@@ -175,7 +184,9 @@ func parseConfigSubcommand(commandArgs []string, output io.Writer) (string, []st
 	case "paths":
 		pathsCmd := flag.NewFlagSet("paths", flag.ContinueOnError)
 		pathsCmd.SetOutput(output)
-		pathsScope := pathsCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		scopeOpt := commandConfig.Options["scope"]
+		pathsScope := pathsCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
 		if err := pathsCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing paths flags: %w: %v", ErrInvalidFlag, err)
 		}
@@ -190,7 +201,9 @@ func parseConfigSubcommand(commandArgs []string, output io.Writer) (string, []st
 	case "dump":
 		dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
 		dumpCmd.SetOutput(output)
-		dumpScope := dumpCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		scopeOpt := commandConfig.Options["scope"]
+		dumpScope := dumpCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
 		if err := dumpCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
 		}
@@ -201,7 +214,9 @@ func parseConfigSubcommand(commandArgs []string, output io.Writer) (string, []st
 	case "diff":
 		diffCmd := flag.NewFlagSet("diff", flag.ContinueOnError)
 		diffCmd.SetOutput(output)
-		diffScope := diffCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		scopeOpt := commandConfig.Options["scope"]
+		diffScope := diffCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
 		if err := diffCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing diff flags: %w: %v", ErrInvalidFlag, err)
 		}
@@ -219,7 +234,9 @@ func parseConfigSubcommand(commandArgs []string, output io.Writer) (string, []st
 	case "rollback":
 		rollbackCmd := flag.NewFlagSet("rollback", flag.ContinueOnError)
 		rollbackCmd.SetOutput(output)
-		rollbackScope := rollbackCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		scopeOpt := commandConfig.Options["scope"]
+		rollbackScope := rollbackCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
 		if err := rollbackCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing rollback flags: %w: %v", ErrInvalidFlag, err)
 		}
@@ -237,9 +254,13 @@ func parseConfigSubcommand(commandArgs []string, output io.Writer) (string, []st
 	case "save":
 		saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
 		saveCmd.SetOutput(output)
-		saveScope := saveCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
-		formatFlag := saveCmd.String("format", "", "Format of the configuration file (e.g., 'toml', 'json'). Auto-detected if omitted.")
-		descFlag := saveCmd.String("desc", "", "Optional description for this configuration version")
+		scopeOpt := commandConfig.Options["scope"]
+		formatOpt := commandConfig.Options["format"]
+		descOpt := commandConfig.Options["desc"]
+		saveScope := saveCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+		formatFlag := saveCmd.String("format", formatOpt.DefaultValue, formatOpt.Usage)
+		descFlag := saveCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
+
 		if err := saveCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)
 		}
@@ -253,7 +274,9 @@ func parseConfigSubcommand(commandArgs []string, output io.Writer) (string, []st
 	case "get":
 		getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
 		getCmd.SetOutput(output)
-		getScope := getCmd.String("scope", config.ScopeApplication, "Scope for the configuration")
+		scopeOpt := commandConfig.Options["scope"]
+		getScope := getCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
 		if err := getCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing get flags: %w: %v", ErrInvalidFlag, err)
 		}
