@@ -70,32 +70,33 @@ func run(args []string, output io.Writer) error {
 	ageIdentityPathFlag := fs.String("agekey", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
 	dbPathFlag := fs.String("dbpath", "", "Path to the SQLite database file")
 
-	var usageWriteErr error
-	writeUsage := func(format string, a ...interface{}) {
-		if usageWriteErr != nil {
-			return
-		}
-		_, usageWriteErr = fmt.Fprintf(output, format, a...)
-	}
-
 	fs.Usage = func() {
-		writeUsage("Usage:\n\n  ripc [global options] <command> [command-specific options]\n\n")
-		writeUsage("Manages securely stored configurations.\n\n")
-		writeUsage("Global Options:\n")
-		fs.PrintDefaults()
-		writeUsage("\nAvailable Commands:\n")
-		writeUsage("  app <subcommand> [options]       Manage application lifecycle (create)\n")
-		writeUsage("  config <subcommand> [options]    Manage configuration (set, list, dump, etc.)\n")
-		writeUsage("  auth <subcommand> [options]      Manage authentication (rotate-jwt-secrets, add-oauth2, etc.)\n")
-		writeUsage("  job <subcommand> [options]       Manage background jobs (add, list, rm)\n")
-		writeUsage("  log <subcommand> [options]       Manage the log database (init)\n")
-		writeUsage("  help [topic]             Show help for ripc or a specific topic\n")
+		help := CommandHelp{
+			Usage:       "ripc [global options] <command> [command-specific options]",
+			Description: "A tool for managing the Rip application, including configuration, authentication, and jobs.",
+			GlobalOptions: fs,
+			Subcommands: []SubcommandGroup{
+				{
+					Subcommands: []Subcommand{
+						{"app", "Manage application lifecycle (e.g., creating the database)"},
+						{"config", "Manage the application's secure configuration"},
+						{"auth", "Manage authentication settings (e.g., JWT secrets, OAuth2 providers)"},
+						{"job", "Manage background jobs"},
+						{"log", "Manage the log database"},
+						{"help", "Show help for a specific command"},
+					},
+				},
+			},
+			Examples: []string{
+				"ripc app create",
+				"ripc config set server.port 8080",
+				"ripc auth rotate-jwt-secrets",
+			},
+		}
+		help.Print(output, "ripc")
 	}
 
 	if err := fs.Parse(args); err != nil {
-		if usageWriteErr != nil {
-			return usageWriteErr
-		}
 		return fmt.Errorf("%w: %v", ErrInvalidFlag, err)
 	}
 
@@ -116,11 +117,7 @@ func run(args []string, output io.Writer) error {
 	cmdArgs := fs.Args()
 	if len(cmdArgs) < 1 {
 		fs.Usage()
-		if usageWriteErr != nil {
-			return usageWriteErr
-		}
-		writeUsage("\n")
-		return ErrMissingCommand
+		return nil // Successfully show usage and exit.
 	}
 
 	command := cmdArgs[0]
@@ -176,9 +173,6 @@ func run(args []string, output io.Writer) error {
 		handleHelpCommand(commandArgs, fs.Usage)
 	default:
 		fs.Usage()
-		if usageWriteErr != nil {
-			return usageWriteErr
-		}
 		return fmt.Errorf("%w: %s", ErrUnknownCommand, command)
 	}
 	return nil

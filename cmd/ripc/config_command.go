@@ -18,33 +18,61 @@ var (
 )
 
 func printConfigUsage() {
-// ... (rest of the file is unchanged)
-
-	fmt.Fprintf(os.Stderr, "Usage:\n\n %s config <subcommand> [options]\n\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "Manages the application configuration.\n\n")
-	fmt.Fprintf(os.Stderr, "Subcommands:\n")
-	fmt.Fprintf(os.Stderr, "  set <path> <value>    Set a configuration value\n")
-	fmt.Fprintf(os.Stderr, "  scopes                List all configuration scopes\n")
-	fmt.Fprintf(os.Stderr, "  list [scope]          List configuration versions\n")
-	fmt.Fprintf(os.Stderr, "  paths [filter]        List all keys in the configuration\n")
-	fmt.Fprintf(os.Stderr, "  dump                  Dump the configuration\n")
-	fmt.Fprintf(os.Stderr, "  diff <generation>     Compare configuration versions\n")
-	fmt.Fprintf(os.Stderr, "  rollback <generation> Restore a previous configuration version\n")
-	fmt.Fprintf(os.Stderr, "  save <file>           Save file contents to the configuration\n")
-	fmt.Fprintf(os.Stderr, "  get [filter]          Get configuration values by path\n")
-	fmt.Fprintf(os.Stderr, "  init                  Initialize the configuration with default values\n")
+	help := CommandHelp{
+		Usage:       "ripc config <subcommand> [options]",
+		Description: "Manages the application's secure configuration.",
+		Subcommands: []SubcommandGroup{
+			{
+				Title: "Configuration Management",
+				Subcommands: []Subcommand{
+					{"set", "Set a configuration value"},
+					{"get", "Get configuration values by path"},
+					{"save", "Save file contents to the configuration"},
+					{"init", "Initialize the configuration with default values"},
+				},
+			},
+			{
+				Title: "History and Versioning",
+				Subcommands: []Subcommand{
+					{"list", "List configuration versions"},
+					{"scopes", "List all configuration scopes"},
+					{"diff", "Compare configuration versions"},
+					{"rollback", "Restore a previous configuration version"},
+				},
+			},
+			{
+				Title: "Inspection",
+				Subcommands: []Subcommand{
+					{"paths", "List all keys in the configuration"},
+					{"dump", "Dump the full configuration"},
+				},
+			},
+		},
+		Examples: []string{
+			"ripc config set --scope my-app server.port 8080",
+			"ripc config list --scope my-app",
+			"ripc config rollback --scope my-app 3",
+		},
+	}
+	help.Print(os.Stderr, "ripc", "config")
 }
 
 func printConfigSetUsage() {
-	fmt.Fprintf(os.Stderr, "Usage:\n\n   %s config set [options] <path> <value>\n\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "Sets a configuration value at a specified path.\n\n")
-	fmt.Fprintf(os.Stderr, "Options:\n")
-	// Create a temporary FlagSet to reuse the flag definitions for printing.
 	fs := flag.NewFlagSet("set", flag.ContinueOnError)
 	fs.String("scope", config.ScopeApplication, "Scope for the configuration")
 	fs.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
 	fs.String("desc", "", "Optional description for this configuration version")
-	fs.PrintDefaults()
+
+	help := CommandHelp{
+		Usage:       "ripc config set [options] <path> <value>",
+		Description: "Sets a configuration value at a specified path.",
+		Options:     fs,
+		Examples: []string{
+			`ripc config set server.host localhost`,
+			`ripc config set --scope webapp features.beta true --desc "Enable beta feature"`,
+		},
+	}
+	help.Print(os.Stderr, "ripc", "config", "set")
 }
 
 func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, commandArgs []string) {
@@ -57,18 +85,19 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 	if commandArgs[0] == "help" {
 		if len(commandArgs) < 2 {
 			printConfigUsage()
-			os.Exit(1)
+			os.Exit(0) // Successful exit for general help
 		}
 		subcommandToHelp := commandArgs[1]
 		switch subcommandToHelp {
 		case "set":
 			printConfigSetUsage()
-		// Add cases for other subcommands here
+		// Add cases for other subcommands here as they get their own usage functions
 		default:
-			fmt.Fprintf(os.Stderr, "Error: unknown command '%s' for 'ripc config help'\n", subcommandToHelp)
+			// For any other subcommand, show the main config usage.
+			// This is helpful if they don't have a dedicated help page yet.
 			printConfigUsage()
 		}
-		os.Exit(1)
+		os.Exit(0) // Successful exit for help display
 	}
 
 	subcommand, subcommandArgs, err := parseConfigSubcommand(commandArgs, os.Stderr)
