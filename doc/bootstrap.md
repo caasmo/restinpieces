@@ -26,11 +26,13 @@ This will create `age.key` containing your private key and print the correspondi
 
 Next, use the `ripc` tool to create the core application database. This command initializes the database file, applies the necessary schema (for users, jobs, etc.), and saves a default configuration, which is encrypted at rest using your `age` key.
 
+If `age.key` is in the current directory, you can simply run:
 ```bash
-ripc -agekey age.key -dbpath ./myapp.db app create
+ripc -dbpath ./myapp.db app create
 ```
+The `-dbpath` is specified here to create `myapp.db` instead of the default `app.db`.
 
-*   **Result:** A `myapp.db` file is created. This single file contains your application's core tables and its first encrypted configuration entry. The database must not exist before running this command.
+*   **Result:** A `myapp.db` file is created. This single file contains your application's core tables and its first encrypted configuration entry. The database must not exist before running this command. After creation, you can rename `myapp.db` to `app.db` to avoid using the `-dbpath` flag in subsequent commands.
 
 ### 3. Customize the Configuration
 
@@ -46,20 +48,20 @@ To discover what settings are available, you can use the `paths` subcommand. It 
 
 ```bash
 # List all available configuration paths
-ripc -agekey age.key -dbpath ./myapp.db config paths
+ripc config paths
 
 # You can also filter the list
-ripc -agekey age.key -dbpath ./myapp.db config paths server
+ripc config paths server
 ```
 
 Once you know the path, you can retrieve its current value with `get` or modify it with `set`.
 
 ```bash
 # Get the current server port
-ripc -agekey age.key -dbpath ./myapp.db config get server.http_port
+ripc config get server.http_port
 
 # Change the server port
-ripc -agekey age.key -dbpath ./myapp.db config set server.http_port 8081
+ripc config set server.http_port 8081
 ```
 
 #### Handling Complex Values
@@ -72,10 +74,10 @@ For example, to set the TLS certificate and key:
 # For example: localhost.pem and localhost-key.pem
 
 # Set the certificate
-ripc -agekey age.key -dbpath ./myapp.db config set server.tls_cert @/path/to/localhost.pem
+ripc config set server.tls_cert @/path/to/localhost.pem
 
 # Set the private key
-ripc -agekey age.key -dbpath ./myapp.db config set server.tls_key @/path/to/localhost-key.pem
+ripc config set server.tls_key @/path/to/localhost-key.pem
 ```
 This method is robust and script-friendly, making it ideal for automated deployments and managing sensitive information.
 
@@ -83,7 +85,7 @@ This method is robust and script-friendly, making it ideal for automated deploym
 
 If you still prefer to edit the entire configuration at once, you can dump it to a file:
 ```bash
-ripc -agekey age.key -dbpath ./myapp.db config dump > config.toml
+ripc config dump > config.toml
 ```
 After editing `config.toml`, you will save it back using the `config save` command as described in the next step.
 
@@ -92,18 +94,18 @@ After editing `config.toml`, you will save it back using the `config save` comma
 After editing `config.toml`, save it back into the secure store. This creates a new, versioned entry in the configuration table, which will now be considered the "latest".
 
 ```bash
-ripc -agekey age.key -dbpath ./myapp.db config save config.toml
+ripc config save config.toml
 ```
 
 You can view the history of configuration changes at any time:
 ```bash
-ripc -agekey age.key -dbpath ./myapp.db config list
+ripc config list
 ```
 
 Should you need to revert to a previous configuration, the `rollback` command allows you to restore any historical version by its generation number (obtained from `config list`). This provides a safety net for configuration changes.
 
 ```bash
-ripc -agekey age.key -dbpath ./myapp.db config rollback 3
+ripc config rollback 3
 ```
 
 ### 5. Initialize the Logger Database
@@ -113,7 +115,7 @@ The framework accepts any logger that complies with the standard `log/slog` inte
 Use the `ripc log init` command to perform this one-time setup. The command is idempotent, meaning you can run it multiple times without causing issues.
 
 ```bash
-ripc -agekey age.key -dbpath ./myapp.db log init
+ripc log init
 ```
 
 This command reads the `log.batch.db_path` from your configuration, creates the database file (e.g., `logs.db`) if it doesn't exist, and applies the necessary table schema. If you have not configured a path, it will default to creating a `logs.db` file in the same directory as your main application database.
@@ -140,7 +142,7 @@ import (
 func main() {
 	// Define and parse command-line flags for required paths
 	dbPath := flag.String("dbpath", "", "Path to the application's SQLite database file.")
-	ageKeyPath := flag.String("age-key", "", "Path to the age identity file (private key).")
+	ageKeyPath := flag.String("agekey", "", "Path to the age identity file (private key).")
 	flag.Parse()
 
 	if *dbPath == "" || *ageKeyPath == "" {
@@ -200,30 +202,30 @@ The `ripc` tool is also used for managing the application after it has been boot
 
 *   **Updating a single config value:**
     ```bash
-    ripc -agekey age.key -dbpath ./myapp.db config set server.http_port 8081
+    ripc config set server.http_port 8081
     ```
 *   **Rotating JWT secrets for security:**
     ```bash
-    ripc -agekey age.key -dbpath ./myapp.db auth rotate-jwt-secrets
+    ripc auth rotate-jwt-secrets
     ```
 *   **Adding a recurring database backup job:**
     ```bash
-    ripc -agekey age.key -dbpath ./myapp.db job add-backup --interval 24h
+    ripc job add-backup --interval 24h
     ```
 
 The `ripc` tool is also used for managing the application after it has been bootstrapped. Some common operations include:
 
 *   **Updating a single config value:**
     ```bash
-    ripc -agekey age.key -dbpath ./myapp.db config set server.http_port 8081
+    ripc config set server.http_port 8081
     ```
 *   **Rotating JWT secrets for security:**
     ```bash
-    ripc -agekey age.key -dbpath ./myapp.db auth rotate-jwt-secrets
+    ripc auth rotate-jwt-secrets
     ```
 *   **Adding a recurring database backup job:**
     ```bash
-    ripc -agekey age.key -dbpath ./myapp.db job add-backup --interval 24h
+    ripc job add-backup --interval 24h
     ```
 
 For a complete list of commands and in-depth documentation, refer to the **[`ripc` README](cmd/ripc/README.md)** or use the `ripc help` command.

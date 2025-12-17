@@ -26,8 +26,39 @@ var (
 
 func main() {
 	if err := run(os.Args[1:], os.Stderr); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+// discoverAgeKey checks for an age key, using a provided path or searching default locations.
+func discoverAgeKey(providedKey string) (string, error) {
+	if providedKey != "" {
+		return providedKey, nil
+	}
+	defaultKeys := []string{"age_key.txt", "age.key"}
+	for _, keyFile := range defaultKeys {
+		if _, err := os.Stat(keyFile); err == nil {
+			return keyFile, nil
+		} else if !os.IsNotExist(err) {
+			return "", fmt.Errorf("error checking for default key file %s: %w", keyFile, err)
+		}
+	}
+	return "", fmt.Errorf("%w: -agekey flag must be provided, or 'age_key.txt' or 'age.key' must exist in the current directory", ErrMissingFlag)
+}
+
+// discoverDBPath checks for a database file, using a provided path or a default name.
+func discoverDBPath(providedDB string) (string, error) {
+	if providedDB != "" {
+		return providedDB, nil
+	}
+	const defaultDB = "app.db"
+	if _, err := os.Stat(defaultDB); err == nil {
+		return defaultDB, nil
+	} else if !os.IsNotExist(err) {
+		return "", fmt.Errorf("error checking for default database file %s: %w", defaultDB, err)
+	}
+	return "", fmt.Errorf("%w: -dbpath flag must be provided, or 'app.db' must exist in the current directory", ErrMissingFlag)
 }
 
 func run(args []string, output io.Writer) error {
@@ -67,20 +98,19 @@ func run(args []string, output io.Writer) error {
 		return fmt.Errorf("%w: %v", ErrInvalidFlag, err)
 	}
 
-	if *ageIdentityPathFlag == "" {
+	finalAgeKeyPath, err := discoverAgeKey(*ageIdentityPathFlag)
+	if err != nil {
 		fs.Usage()
-		if usageWriteErr != nil {
-			return usageWriteErr
-		}
-		return fmt.Errorf("%w: -agekey", ErrMissingFlag)
+		return err
 	}
-	if *dbPathFlag == "" {
+	*ageIdentityPathFlag = finalAgeKeyPath
+
+	finalDBPath, err := discoverDBPath(*dbPathFlag)
+	if err != nil {
 		fs.Usage()
-		if usageWriteErr != nil {
-			return usageWriteErr
-		}
-		return fmt.Errorf("%w: -dbpath", ErrMissingFlag)
+		return err
 	}
+	*dbPathFlag = finalDBPath
 
 	cmdArgs := fs.Args()
 	if len(cmdArgs) < 1 {
