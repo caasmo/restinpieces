@@ -79,7 +79,7 @@ func run(args []string, output io.Writer) error {
 	}
 
 	fs.Usage = func() {
-		writeUsage("Usage: ripc [global options] <command> [command-specific options]\n\n")
+		writeUsage("Usage:\n\n  ripc [global options] <command> [command-specific options]\n\n")
 		writeUsage("Manages securely stored configurations.\n\n")
 		writeUsage("Global Options:\n")
 		fs.PrintDefaults()

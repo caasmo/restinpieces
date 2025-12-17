@@ -20,7 +20,7 @@ var (
 func printConfigUsage() {
 // ... (rest of the file is unchanged)
 
-	fmt.Fprintf(os.Stderr, "Usage: %s config <subcommand> [options]\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage:\n\n %s config <subcommand> [options]\n\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "Manages the application configuration.\n\n")
 	fmt.Fprintf(os.Stderr, "Subcommands:\n")
 	fmt.Fprintf(os.Stderr, "  set <path> <value>    Set a configuration value\n")
@@ -36,7 +36,7 @@ func printConfigUsage() {
 }
 
 func printConfigSetUsage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s config set [options] <path> <value>\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage:\n\n   %s config set [options] <path> <value>\n\n", os.Args[0])
 	fmt.Fprintf(os.Stderr, "Sets a configuration value at a specified path.\n\n")
 	fmt.Fprintf(os.Stderr, "Options:\n")
 	// Create a temporary FlagSet to reuse the flag definitions for printing.
