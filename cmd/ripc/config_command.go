@@ -35,9 +35,39 @@ func printConfigUsage() {
 	fmt.Fprintf(os.Stderr, "  init                  Initialize the configuration with default values\n")
 }
 
+func printConfigSetUsage() {
+	fmt.Fprintf(os.Stderr, "Usage: %s config set [options] <path> <value>\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Sets a configuration value at a specified path.\n\n")
+	fmt.Fprintf(os.Stderr, "Options:\n")
+	// Create a temporary FlagSet to reuse the flag definitions for printing.
+	fs := flag.NewFlagSet("set", flag.ContinueOnError)
+	fs.String("scope", config.ScopeApplication, "Scope for the configuration")
+	fs.String("format", "toml", "Format of the configuration file (e.g., 'toml', 'json')")
+	fs.String("desc", "", "Optional description for this configuration version")
+	fs.PrintDefaults()
+}
+
 func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, commandArgs []string) {
 	if len(commandArgs) < 1 {
 		printConfigUsage()
+		os.Exit(1)
+	}
+
+	// Check for "help" subcommand
+	if commandArgs[0] == "help" {
+		if len(commandArgs) < 2 {
+			printConfigUsage()
+			os.Exit(1)
+		}
+		subcommandToHelp := commandArgs[1]
+		switch subcommandToHelp {
+		case "set":
+			printConfigSetUsage()
+		// Add cases for other subcommands here
+		default:
+			fmt.Fprintf(os.Stderr, "Error: unknown command '%s' for 'ripc config help'\n", subcommandToHelp)
+			printConfigUsage()
+		}
 		os.Exit(1)
 	}
 

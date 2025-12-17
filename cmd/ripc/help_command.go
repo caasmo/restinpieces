@@ -11,9 +11,11 @@ var ErrUnknownHelpTopic = errors.New("unknown help topic")
 
 // Stored as variables to allow for easy mocking in tests.
 var (
+	printAppUsageFunc    = printAppUsage
 	printJobUsageFunc    = printJobUsage
 	printConfigUsageFunc = printConfigUsage
 	printAuthUsageFunc   = printAuthUsage
+	printLogUsageFunc    = printLogUsage
 )
 
 // handleHelpCommand is the command-level wrapper. It executes the core logic
@@ -38,12 +40,16 @@ func handleHelpCommand(args []string, mainUsage func()) {
 // correct help printer. It returns an error if the topic is not recognized.
 func runHelpTopic(topic string) error {
 	switch topic {
+	case "app":
+		printAppUsageFunc()
 	case "job":
 		printJobUsageFunc()
 	case "config":
 		printConfigUsageFunc()
 	case "auth":
 		printAuthUsageFunc()
+	case "log":
+		printLogUsageFunc()
 	default:
 		return ErrUnknownHelpTopic
 	}

@@ -89,6 +89,7 @@ func run(args []string, output io.Writer) error {
 		writeUsage("  auth <subcommand> [options]      Manage authentication (rotate-jwt-secrets, add-oauth2, etc.)\n")
 		writeUsage("  job <subcommand> [options]       Manage background jobs (add, list, rm)\n")
 		writeUsage("  log <subcommand> [options]       Manage the log database (init)\n")
+		writeUsage("  help [topic]             Show help for ripc or a specific topic\n")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -118,6 +119,7 @@ func run(args []string, output io.Writer) error {
 		if usageWriteErr != nil {
 			return usageWriteErr
 		}
+		writeUsage("\n")
 		return ErrMissingCommand
 	}
 
