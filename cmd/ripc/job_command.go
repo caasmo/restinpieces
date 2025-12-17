@@ -2,9 +2,12 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/caasmo/restinpieces/db/zombiezen"
 )
@@ -30,7 +33,7 @@ func handleJobCommand(dbConn *zombiezen.Db, args []string) {
 		os.Exit(1)
 	}
 
-	subcommand, subcommandArgs, err := parseJobSubcommand(args)
+	subcommand, subcommandArgs, err := parseJobSubcommand(args, os.Stderr)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		printJobUsage()
@@ -39,7 +42,7 @@ func handleJobCommand(dbConn *zombiezen.Db, args []string) {
 
 	switch subcommand {
 	case "add-backup":
-		handleJobAddBackup(dbConn, subcommandArgs)
+		handleJobAddBackupCommand(dbConn, subcommandArgs[0], subcommandArgs[1], subcommandArgs[2])
 	case "list":
 		handleJobList(dbConn, subcommandArgs)
 	case "rm":
@@ -52,13 +55,30 @@ func handleJobCommand(dbConn *zombiezen.Db, args []string) {
 	}
 }
 
-func parseJobSubcommand(commandArgs []string) (string, []string, error) {
+func parseJobSubcommand(commandArgs []string, output io.Writer) (string, []string, error) {
 	subcommand := commandArgs[0]
 	subcommandArgs := commandArgs[1:]
 
 	switch subcommand {
 	case "add-backup":
-		return subcommand, subcommandArgs, nil
+		addBackupCmd := flag.NewFlagSet("add-backup", flag.ContinueOnError)
+		addBackupCmd.SetOutput(output)
+		interval := addBackupCmd.String("interval", "24h", "Interval for the recurrent backup job (e.g., '24h', '1h30m')")
+		scheduledFor := addBackupCmd.String("scheduled-for", time.Now().Format(time.RFC3339), "Start time in RFC3339 format for the first job")
+		maxAttempts := addBackupCmd.Int("max-attempts", 3, "Maximum number of attempts for the job")
+		if err := addBackupCmd.Parse(subcommandArgs); err != nil {
+			return "", nil, fmt.Errorf("parsing add-backup flags: %w: %v", ErrInvalidFlag, err)
+		}
+		if *interval == "" {
+			return "", nil, fmt.Errorf("-interval is a required flag for 'job add-backup': %w", ErrMissingArgument)
+		}
+		if _, err := time.ParseDuration(*interval); err != nil {
+			return "", nil, fmt.Errorf("invalid -interval format: %w", err)
+		}
+		if _, err := time.Parse(time.RFC3339, *scheduledFor); err != nil {
+			return "", nil, fmt.Errorf("invalid -scheduled-for format: %w", err)
+		}
+		return subcommand, []string{*interval, *scheduledFor, strconv.Itoa(*maxAttempts)}, nil
 	case "list":
 		if len(subcommandArgs) > 1 {
 			return "", nil, fmt.Errorf("'list' command takes at most one limit argument: %w", ErrTooManyArguments)
@@ -86,3 +106,4 @@ func parseJobSubcommand(commandArgs []string) (string, []string, error) {
 		return "", nil, fmt.Errorf("'%s': %w", subcommand, ErrUnknownJobSubcommand)
 	}
 }
+

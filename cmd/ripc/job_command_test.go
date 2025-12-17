@@ -2,11 +2,17 @@ package main
 
 import (
 	"errors"
+	"io"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestParseJobSubcommand(t *testing.T) {
+	// A timestamp that we can predictably parse
+	testTime := time.Now()
+	testTimeStr := testTime.Format(time.RFC3339)
+
 	testCases := []struct {
 		name         string
 		args         []string
@@ -24,10 +30,15 @@ func TestParseJobSubcommand(t *testing.T) {
 		// 'add-backup' subcommand
 		{
 			name:         "AddBackupSuccess",
-			args:         []string{"add-backup", "--some-flag", "value"},
+			args:         []string{"add-backup", "--interval", "1h", "--scheduled-for", testTimeStr, "--max-attempts", "5"},
 			expectedCmd:  "add-backup",
-			expectedArgs: []string{"--some-flag", "value"},
+			expectedArgs: []string{"1h", testTimeStr, "5"},
 			expectedErr:  nil,
+		},
+		{
+			name:        "AddBackupMissingInterval",
+			args:        []string{"add-backup", "--interval", ""},
+			expectedErr: ErrMissingArgument,
 		},
 
 		// 'list' subcommand
@@ -83,7 +94,7 @@ func TestParseJobSubcommand(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd, args, err := parseJobSubcommand(tc.args)
+			cmd, args, err := parseJobSubcommand(tc.args, io.Discard)
 
 			if tc.expectedErr != nil {
 				if err == nil {

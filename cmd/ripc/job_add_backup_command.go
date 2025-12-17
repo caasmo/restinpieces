@@ -2,10 +2,10 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/caasmo/restinpieces/db"
@@ -16,47 +16,28 @@ var (
 	ErrInsertJobFailed = errors.New("failed to insert job")
 )
 
-// handleJobAddBackup handles the "job add-backup" subcommand. It's the command-line wrapper.
-func handleJobAddBackup(dbConn db.DbQueue, args []string) {
-	addBackupCmd := flag.NewFlagSet("add-backup", flag.ContinueOnError)
-
-	interval := addBackupCmd.String("interval", "24h", "Interval for the recurrent backup job (e.g., '24h', '1h30m')")
-	scheduledFor := addBackupCmd.String("scheduled-for", time.Now().Format(time.RFC3339), "Start time in RFC3339 format for the first job")
-	maxAttempts := addBackupCmd.Int("max-attempts", 3, "Maximum number of attempts for the job")
-
-	addBackupCmd.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: ripconf job add-backup [options]\n\n")
-		fmt.Fprintf(os.Stderr, "Adds a new recurrent backup job to the queue.\n\n")
-		fmt.Fprintf(os.Stderr, "Options:\n")
-		addBackupCmd.PrintDefaults()
-	}
-
-	if err := addBackupCmd.Parse(args); err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing add-backup flags: %v\n", err)
-		addBackupCmd.Usage()
-		os.Exit(1)
-	}
-
+// handleJobAddBackupCommand handles the "job add-backup" subcommand. It's the command-line wrapper.
+func handleJobAddBackupCommand(dbConn db.DbQueue, interval, scheduledFor, maxAttemptsStr string) {
 	// --- Parse and validate flags ---
-	if *interval == "" {
-		fmt.Fprintln(os.Stderr, "Error: -interval is a required flag for 'job add-backup'")
-		addBackupCmd.Usage()
-		os.Exit(1)
-	}
-
-	intervalDuration, err := time.ParseDuration(*interval)
+	intervalDuration, err := time.ParseDuration(interval)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: Invalid -interval format: %v\n", err)
 		os.Exit(1)
 	}
 
-	scheduledTime, err := time.Parse(time.RFC3339, *scheduledFor)
+	scheduledTime, err := time.Parse(time.RFC3339, scheduledFor)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: Invalid -scheduled-for format: %v\n", err)
 		os.Exit(1)
 	}
 
-	if err := addBackupJob(os.Stdout, dbConn, intervalDuration, scheduledTime, *maxAttempts); err != nil {
+	maxAttempts, err := strconv.Atoi(maxAttemptsStr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: Invalid -max-attempts format: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := addBackupJob(os.Stdout, dbConn, intervalDuration, scheduledTime, maxAttempts); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
