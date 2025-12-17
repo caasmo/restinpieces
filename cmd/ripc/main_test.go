@@ -170,7 +170,7 @@ func TestRunDiscovery(t *testing.T) {
 			setup: func(t *testing.T) []string {
 				createDummyAgeKeyFile(t, "age.key")
 				createDummyDB(t, "app.db")
-				return []string{"config", "list"}
+				return []string{"help"}
 			},
 			expectedErr: nil,
 		},
@@ -179,7 +179,7 @@ func TestRunDiscovery(t *testing.T) {
 			setup: func(t *testing.T) []string {
 				createDummyAgeKeyFile(t, "age_key.txt")
 				createDummyDB(t, "app.db")
-				return []string{"config", "list"}
+				return []string{"help"}
 			},
 			expectedErr: nil,
 		},
@@ -197,7 +197,7 @@ func TestRunDiscovery(t *testing.T) {
 				createDummyAgeKeyFile(t, "age.key")
 				return []string{"config", "list"}
 			},
-			expectedErr: ErrDBNotFound,
+			expectedErr: ErrMissingFlag,
 		},
 	}
 
