@@ -33,17 +33,19 @@ type Subcommand struct {
 
 // Print formats and prints the help to the specified writer using a direct, imperative approach.
 func (h *CommandHelp) Print(writer io.Writer, parentCommands ...string) {
-	firstSectionPrinted := false
+	var err error
 
-	// printSectionSeparator ensures there is exactly one blank line before each section.
+	firstSectionPrinted := false
 	printSectionSeparator := func() {
 		if firstSectionPrinted {
-			fmt.Fprintln(writer)
+			if err != nil {
+				return
+			}
+			_, err = fmt.Fprintln(writer)
 		}
 		firstSectionPrinted = true
 	}
 
-	// printFlags is a helper to print an indented flag set.
 	printFlags := func(fs *flag.FlagSet) {
 		var buf bytes.Buffer
 		fs.SetOutput(&buf)
@@ -51,64 +53,122 @@ func (h *CommandHelp) Print(writer io.Writer, parentCommands ...string) {
 
 		scanner := bufio.NewScanner(&buf)
 		for scanner.Scan() {
-			fmt.Fprintf(writer, "  %s\n", scanner.Text())
+			if err != nil {
+				return
+			}
+			_, err = fmt.Fprintf(writer, "  %s\n", scanner.Text())
 		}
 	}
 
 	if h.Usage != "" {
 		printSectionSeparator()
-		fmt.Fprintln(writer, "Usage:")
-		fmt.Fprintf(writer, "  %s\n", h.Usage)
+		if err != nil {
+			return
+		}
+		_, err = fmt.Fprintln(writer, "Usage:")
+		if err != nil {
+			return
+		}
+		_, err = fmt.Fprintf(writer, "  %s\n", h.Usage)
 	}
 
 	if h.Description != "" {
 		printSectionSeparator()
-		fmt.Fprintln(writer, "Description:")
+		if err != nil {
+			return
+		}
+		_, err = fmt.Fprintln(writer, "Description:")
+		if err != nil {
+			return
+		}
 		scanner := bufio.NewScanner(strings.NewReader(h.Description))
 		for scanner.Scan() {
-			fmt.Fprintf(writer, "  %s\n", scanner.Text())
+			if err != nil {
+				return
+			}
+			_, err = fmt.Fprintf(writer, "  %s\n", scanner.Text())
 		}
 	}
 
 	if len(h.Subcommands) > 0 {
 		printSectionSeparator()
-		fmt.Fprintln(writer, "Subcommands:")
+		if err != nil {
+			return
+		}
+		_, err = fmt.Fprintln(writer, "Subcommands:")
+		if err != nil {
+			return
+		}
 		for _, group := range h.Subcommands {
 			if group.Title != "" {
-				// Add a newline before a new group title for separation
-				fmt.Fprintln(writer)
-				fmt.Fprintf(writer, "  %s:\n", group.Title)
+				if err != nil {
+					return
+				}
+				_, err = fmt.Fprintln(writer)
+				if err != nil {
+					return
+				}
+				_, err = fmt.Fprintf(writer, "  %s:\n", group.Title)
+			}
+			if err != nil {
+				return
 			}
 			for _, subcommand := range group.Subcommands {
-				fmt.Fprintf(writer, "    %-22s %s\n", subcommand.Name, subcommand.Description)
+				if err != nil {
+					return
+				}
+				_, err = fmt.Fprintf(writer, "    %-22s %s\n", subcommand.Name, subcommand.Description)
 			}
 		}
 	}
 
 	if h.Options != nil {
 		printSectionSeparator()
-		fmt.Fprintln(writer, "Options:")
+		if err != nil {
+			return
+		}
+		_, err = fmt.Fprintln(writer, "Options:")
+		if err != nil {
+			return
+		}
 		printFlags(h.Options)
 	}
 
 	if h.GlobalOptions != nil {
 		printSectionSeparator()
-		fmt.Fprintln(writer, "Global Options:")
+		if err != nil {
+			return
+		}
+		_, err = fmt.Fprintln(writer, "Global Options:")
+		if err != nil {
+			return
+		}
 		printFlags(h.GlobalOptions)
 	}
 
 	if len(h.Examples) > 0 {
 		printSectionSeparator()
-		fmt.Fprintln(writer, "Examples:")
+		if err != nil {
+			return
+		}
+		_, err = fmt.Fprintln(writer, "Examples:")
+		if err != nil {
+			return
+		}
 		for _, example := range h.Examples {
-			fmt.Fprintf(writer, "  %s\n", example)
+			if err != nil {
+				return
+			}
+			_, err = fmt.Fprintf(writer, "  %s\n", example)
 		}
 	}
 
-	// Footer
 	if len(parentCommands) > 0 {
 		printSectionSeparator()
+		if err != nil {
+			return
+		}
 		cmdPath := strings.Join(parentCommands, " ")
-		fmt.Fprintf(writer, "For detailed help on a subcommand:\n  %s <subcommand> --help\n", cmdPath)
+		_, err = fmt.Fprintf(writer, "For detailed help on a subcommand:\n  %s <subcommand> --help\n", cmdPath)
 	}
 }
