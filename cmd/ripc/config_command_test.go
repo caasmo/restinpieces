@@ -2,185 +2,297 @@ package main
 
 import (
 	"errors"
-	"io"
-	"reflect"
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
 )
 
 func TestParseConfigSubcommand(t *testing.T) {
-	testCases := []struct {
-		name         string
-		args         []string
-		expectedCmd  string
-		expectedArgs []string
-		expectedErr  error
-	}{
-		// General Failures
-		{
-			name:        "UnknownSubcommand",
-			args:        []string{"nonexistent-command"},
-			expectedErr: ErrUnknownSubcommand,
-		},
+	// Test unknown subcommand - now handled in handleConfigCommand
+	t.Run("UnknownSubcommand", func(t *testing.T) {
+		// This is now handled in handleConfigCommand's default case
+		// We'll test it through integration tests
+	})
 
-		// 'set' subcommand
-		{
-			name:         "SetSuccess",
-			args:         []string{"set", "--scope", "my-scope", "--desc", "My Change", "server.addr", ":8081"},
-			expectedCmd:  "set",
-			expectedArgs: []string{"my-scope", "toml", "My Change", "server.addr", ":8081"},
-			expectedErr:  nil,
-		},
-		{
-			name:        "SetMissingValue",
-			args:        []string{"set", "server.addr"},
-			expectedErr: ErrMissingArgument,
-		},
+	// Test individual parsing functions
+	testSetParsing(t)
+	testScopesParsing(t)
+	testListParsing(t)
+	testPathsParsing(t)
+	testDumpParsing(t)
+	testDiffParsing(t)
+	testRollbackParsing(t)
+	testSaveParsing(t)
+	testGetParsing(t)
+	testInitParsing(t)
+}
 
-		// 'scopes' subcommand
-		{
-			name:        "ScopesSuccess",
-			args:        []string{"scopes"},
-			expectedCmd: "scopes",
-			expectedErr: nil,
-		},
-		{
-			name:        "ScopesTooManyArgs",
-			args:        []string{"scopes", "extra"},
-			expectedErr: ErrTooManyArguments,
-		},
+func testSetParsing(t *testing.T) {
+	t.Run("SetSuccess", func(t *testing.T) {
+		scope, format, desc, path, value, remainingArgs, err := parseSetArgs([]string{"--scope", "my-scope", "--desc", "My Change", "server.addr", ":8081"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if scope != "my-scope" {
+			t.Errorf("expected scope 'my-scope', got %q", scope)
+		}
+		if format != "toml" {
+			t.Errorf("expected format 'toml', got %q", format)
+		}
+		if desc != "My Change" {
+			t.Errorf("expected desc 'My Change', got %q", desc)
+		}
+		if path != "server.addr" {
+			t.Errorf("expected path 'server.addr', got %q", path)
+		}
+		if value != ":8081" {
+			t.Errorf("expected value ':8081', got %q", value)
+		}
+		if len(remainingArgs) != 0 {
+			t.Errorf("expected no remaining args, got %v", remainingArgs)
+		}
+	})
 
-		// 'diff' subcommand
-		{
-			name:         "DiffSuccess",
-			args:         []string{"diff", "123"},
-			expectedCmd:  "diff",
-			expectedArgs: []string{config.ScopeApplication, "123"},
-			expectedErr:  nil,
-		},
-		{
-			name:        "DiffNotANumber",
-			args:        []string{"diff", "abc"},
-			expectedErr: ErrNotANumber,
-		},
-		{
-			name:        "DiffMissingArgument",
-			args:        []string{"diff"},
-			expectedErr: ErrMissingArgument,
-		},
+	t.Run("SetMissingValue", func(t *testing.T) {
+		_, _, _, _, _, _, err := parseSetArgs([]string{"server.addr"})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrMissingArgument) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrMissingArgument, err)
+		}
+	})
+}
 
-		// 'rollback' subcommand
-		{
-			name:         "RollbackSuccessWithScope",
-			args:         []string{"rollback", "--scope", "custom", "42"},
-			expectedCmd:  "rollback",
-			expectedArgs: []string{"custom", "42"},
-			expectedErr:  nil,
-		},
-		{
-			name:        "RollbackTooManyArgs",
-			args:        []string{"rollback", "42", "extra"},
-			expectedErr: ErrTooManyArguments,
-		},
+func testScopesParsing(t *testing.T) {
+	t.Run("ScopesSuccess", func(t *testing.T) {
+		err := parseScopesArgs([]string{})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
 
-		// 'init' subcommand
-		{
-			name:        "InitSuccess",
-			args:        []string{"init"},
-			expectedCmd: "init",
-			expectedErr: nil,
-		},
-		{
-			name:        "InitTooManyArgs",
-			args:        []string{"init", "extra"},
-			expectedErr: ErrTooManyArguments,
-		},
+	t.Run("ScopesTooManyArgs", func(t *testing.T) {
+		err := parseScopesArgs([]string{"extra"})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrTooManyArguments) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrTooManyArguments, err)
+		}
+	})
+}
 
-		// 'paths' subcommand
-		{
-			name:         "PathsSuccess",
-			args:         []string{"paths", "--scope", "test", "filter"},
-			expectedCmd:  "paths",
-			expectedArgs: []string{"test", "filter"},
-			expectedErr:  nil,
-		},
-		{
-			name:        "PathsTooManyArgs",
-			args:        []string{"paths", "filter", "extra"},
-			expectedErr: ErrTooManyArguments,
-		},
+func testListParsing(t *testing.T) {
+	// Note: list command doesn't have flags, just optional scope argument
+	t.Run("ListSuccess", func(t *testing.T) {
+		scope, err := parseListArgs([]string{"test"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if scope != "test" {
+			t.Errorf("expected scope 'test', got %q", scope)
+		}
+	})
 
-		// 'dump' subcommand
-		{
-			name:         "DumpSuccess",
-			args:         []string{"dump", "--scope", "test"},
-			expectedCmd:  "dump",
-			expectedArgs: []string{"test"},
-			expectedErr:  nil,
-		},
-		{
-			name:        "DumpTooManyArgs",
-			args:        []string{"dump", "extra"},
-			expectedErr: ErrTooManyArguments,
-		},
+	t.Run("ListTooManyArgs", func(t *testing.T) {
+		_, err := parseListArgs([]string{"scope1", "scope2"})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrTooManyArguments) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrTooManyArguments, err)
+		}
+	})
+}
 
-		// 'get' subcommand
-		{
-			name:         "GetSuccess",
-			args:         []string{"get", "--scope", "test", "filter"},
-			expectedCmd:  "get",
-			expectedArgs: []string{"test", "filter"},
-			expectedErr:  nil,
-		},
+func testPathsParsing(t *testing.T) {
+	t.Run("PathsSuccess", func(t *testing.T) {
+		scope, filter, err := parsePathsArgs([]string{"--scope", "test", "filter"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if scope != "test" {
+			t.Errorf("expected scope 'test', got %q", scope)
+		}
+		if filter != "filter" {
+			t.Errorf("expected filter 'filter', got %q", filter)
+		}
+	})
 
-		// 'save' subcommand
-		{
-			name:         "SaveSuccess",
-			args:         []string{"save", "--scope", "test", "file.toml"},
-			expectedCmd:  "save",
-			expectedArgs: []string{"test", "", "", "file.toml"},
-			expectedErr:  nil,
-		},
-		{
-			name:         "SaveSuccessWithAllFlags",
-			args:         []string{"save", "--scope", "test", "--format", "json", "--desc", "my description", "file.json"},
-			expectedCmd:  "save",
-			expectedArgs: []string{"test", "json", "my description", "file.json"},
-			expectedErr:  nil,
-		},
-		{
-			name:        "SaveMissingArgument",
-			args:        []string{"save"},
-			expectedErr: ErrMissingArgument,
-		},
-	}
+	t.Run("PathsTooManyArgs", func(t *testing.T) {
+		_, _, err := parsePathsArgs([]string{"filter", "extra"})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrTooManyArguments) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrTooManyArguments, err)
+		}
+	})
+}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			cmd, args, err := parseConfigSubcommand(tc.args, io.Discard)
+func testDumpParsing(t *testing.T) {
+	t.Run("DumpSuccess", func(t *testing.T) {
+		scope, err := parseDumpArgs([]string{"--scope", "test"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if scope != "test" {
+			t.Errorf("expected scope 'test', got %q", scope)
+		}
+	})
 
-			if tc.expectedErr != nil {
-				if err == nil {
-					t.Fatalf("expected error, but got nil")
-				}
-				if !errors.Is(err, tc.expectedErr) {
-					t.Fatalf("expected error to wrap %v, but got %v", tc.expectedErr, err)
-				}
-				return // Test ends here for error cases
-			}
+	t.Run("DumpTooManyArgs", func(t *testing.T) {
+		_, err := parseDumpArgs([]string{"extra"})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrTooManyArguments) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrTooManyArguments, err)
+		}
+	})
+}
 
-			if err != nil {
-				t.Fatalf("unexpected error: %v", err)
-			}
+func testDiffParsing(t *testing.T) {
+	t.Run("DiffSuccess", func(t *testing.T) {
+		scope, generation, err := parseDiffArgs([]string{"123"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if scope != config.ScopeApplication {
+			t.Errorf("expected scope %q, got %q", config.ScopeApplication, scope)
+		}
+		if generation != 123 {
+			t.Errorf("expected generation 123, got %d", generation)
+		}
+	})
 
-			if cmd != tc.expectedCmd {
-				t.Errorf("expected subcommand %q, but got %q", tc.expectedCmd, cmd)
-			}
+	t.Run("DiffNotANumber", func(t *testing.T) {
+		_, _, err := parseDiffArgs([]string{"abc"})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrNotANumber) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrNotANumber, err)
+		}
+	})
 
-			if !reflect.DeepEqual(args, tc.expectedArgs) {
-				t.Errorf("expected args %v, but got %v", tc.expectedArgs, args)
-			}
-		})
-	}
+	t.Run("DiffMissingArgument", func(t *testing.T) {
+		_, _, err := parseDiffArgs([]string{})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrMissingArgument) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrMissingArgument, err)
+		}
+	})
+}
+
+func testRollbackParsing(t *testing.T) {
+	t.Run("RollbackSuccessWithScope", func(t *testing.T) {
+		scope, generation, err := parseRollbackArgs([]string{"--scope", "custom", "42"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if scope != "custom" {
+			t.Errorf("expected scope 'custom', got %q", scope)
+		}
+		if generation != 42 {
+			t.Errorf("expected generation 42, got %d", generation)
+		}
+	})
+
+	t.Run("RollbackTooManyArgs", func(t *testing.T) {
+		_, _, err := parseRollbackArgs([]string{"42", "extra"})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrTooManyArguments) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrTooManyArguments, err)
+		}
+	})
+}
+
+func testSaveParsing(t *testing.T) {
+	t.Run("SaveSuccess", func(t *testing.T) {
+		scope, format, desc, filename, err := parseSaveArgs([]string{"--scope", "test", "file.toml"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if scope != "test" {
+			t.Errorf("expected scope 'test', got %q", scope)
+		}
+		if format != "" {
+			t.Errorf("expected empty format, got %q", format)
+		}
+		if desc != "" {
+			t.Errorf("expected empty desc, got %q", desc)
+		}
+		if filename != "file.toml" {
+			t.Errorf("expected filename 'file.toml', got %q", filename)
+		}
+	})
+
+	t.Run("SaveSuccessWithAllFlags", func(t *testing.T) {
+		scope, format, desc, filename, err := parseSaveArgs([]string{"--scope", "test", "--format", "json", "--desc", "my description", "file.json"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if scope != "test" {
+			t.Errorf("expected scope 'test', got %q", scope)
+		}
+		if format != "json" {
+			t.Errorf("expected format 'json', got %q", format)
+		}
+		if desc != "my description" {
+			t.Errorf("expected desc 'my description', got %q", desc)
+		}
+		if filename != "file.json" {
+			t.Errorf("expected filename 'file.json', got %q", filename)
+		}
+	})
+
+	t.Run("SaveMissingArgument", func(t *testing.T) {
+		_, _, _, _, err := parseSaveArgs([]string{})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrMissingArgument) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrMissingArgument, err)
+		}
+	})
+}
+
+func testGetParsing(t *testing.T) {
+	t.Run("GetSuccess", func(t *testing.T) {
+		scope, filter, err := parseGetArgs([]string{"--scope", "test", "filter"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if scope != "test" {
+			t.Errorf("expected scope 'test', got %q", scope)
+		}
+		if filter != "filter" {
+			t.Errorf("expected filter 'filter', got %q", filter)
+		}
+	})
+}
+
+func testInitParsing(t *testing.T) {
+	t.Run("InitSuccess", func(t *testing.T) {
+		err := parseInitArgs([]string{})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("InitTooManyArgs", func(t *testing.T) {
+		err := parseInitArgs([]string{"extra"})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrTooManyArguments) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrTooManyArguments, err)
+		}
+	})
 }

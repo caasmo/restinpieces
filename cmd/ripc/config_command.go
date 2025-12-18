@@ -106,200 +106,262 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		os.Exit(0) // Successful exit for help display
 	}
 
-	subcommand, subcommandArgs, err := parseConfigSubcommand(commandArgs, os.Stderr)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		// Potentially print usage for the specific subcommand if flags were involved
-		printConfigUsage()
-		os.Exit(1)
-	}
+	subcommand := commandArgs[0]
+	subcommandArgs := commandArgs[1:]
 
 	switch subcommand {
 	case "set":
-		handleSetCommand(secureStore, subcommandArgs[0], subcommandArgs[1], subcommandArgs[2], subcommandArgs[3:])
+		scope, format, desc, path, value, remainingArgs, err := parseSetArgs(subcommandArgs)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printConfigUsage()
+			os.Exit(1)
+		}
+		handleSetCommand(secureStore, scope, format, desc, append([]string{path, value}, remainingArgs...))
 	case "scopes":
+		if err := parseScopesArgs(subcommandArgs); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printConfigUsage()
+			os.Exit(1)
+		}
 		handleScopesCommand(dbPool)
 	case "list":
-		scopeToList := ""
-		if len(subcommandArgs) > 0 {
-			scopeToList = subcommandArgs[0]
+		scope, err := parseListArgs(subcommandArgs)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printConfigUsage()
+			os.Exit(1)
 		}
-		handleListCommand(dbPool, scopeToList)
+		handleListCommand(dbPool, scope)
 	case "paths":
-		handlePathsCommand(secureStore, subcommandArgs[0], subcommandArgs[1])
+		scope, filter, err := parsePathsArgs(subcommandArgs)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printConfigUsage()
+			os.Exit(1)
+		}
+		handlePathsCommand(secureStore, scope, filter)
 	case "dump":
-		handleDumpCommand(secureStore, subcommandArgs[0])
+		scope, err := parseDumpArgs(subcommandArgs)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printConfigUsage()
+			os.Exit(1)
+		}
+		handleDumpCommand(secureStore, scope)
 	case "diff":
-		gen, _ := strconv.Atoi(subcommandArgs[1])
-		handleDiffCommand(secureStore, subcommandArgs[0], gen)
+		scope, generation, err := parseDiffArgs(subcommandArgs)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printConfigUsage()
+			os.Exit(1)
+		}
+		handleDiffCommand(secureStore, scope, generation)
 	case "rollback":
-		gen, _ := strconv.Atoi(subcommandArgs[1])
-		handleRollbackCommand(secureStore, subcommandArgs[0], gen)
+		scope, generation, err := parseRollbackArgs(subcommandArgs)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printConfigUsage()
+			os.Exit(1)
+		}
+		handleRollbackCommand(secureStore, scope, generation)
 	case "save":
-		handleSaveCommand(secureStore, subcommandArgs[0], subcommandArgs[1], subcommandArgs[2], subcommandArgs[3])
+		scope, format, desc, filename, err := parseSaveArgs(subcommandArgs)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printConfigUsage()
+			os.Exit(1)
+		}
+		handleSaveCommand(secureStore, scope, format, desc, filename)
 	case "get":
-		handleGetCommand(secureStore, subcommandArgs[0], subcommandArgs[1])
+		scope, filter, err := parseGetArgs(subcommandArgs)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printConfigUsage()
+			os.Exit(1)
+		}
+		handleGetCommand(secureStore, scope, filter)
 	case "init":
+		if err := parseInitArgs(subcommandArgs); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printConfigUsage()
+			os.Exit(1)
+		}
 		handleInitCommand(secureStore)
 	default:
-		// This case should ideally not be reached if parseConfigSubcommand is correct
 		fmt.Fprintf(os.Stderr, "Error: unknown config subcommand: %s\n", subcommand)
 		printConfigUsage()
 		os.Exit(1)
 	}
 }
 
-func parseConfigSubcommand(commandArgs []string, output io.Writer) (string, []string, error) {
-	subcommand := commandArgs[0]
-	subcommandArgs := commandArgs[1:]
 
-	switch subcommand {
-	case "set":
-		setCmd := flag.NewFlagSet("set", flag.ContinueOnError)
-		setCmd.SetOutput(output)
-		scopeOpt := commandConfig.Options["scope"]
-		formatOpt := commandConfig.Options["format"]
-		descOpt := commandConfig.Options["desc"]
-		setScope := setCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-		formatFlag := setCmd.String("format", formatOpt.DefaultValue, formatOpt.Usage)
-		descFlag := setCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
+// Individual parsing functions for each subcommand
 
-		if err := setCmd.Parse(subcommandArgs); err != nil {
-			return "", nil, fmt.Errorf("parsing set flags: %w: %v", ErrInvalidFlag, err)
-		}
-		if setCmd.NArg() < 2 {
-			return "", nil, fmt.Errorf("'set' requires path and value arguments: %w", ErrMissingArgument)
-		}
-		return subcommand, append([]string{*setScope, *formatFlag, *descFlag}, setCmd.Args()...), nil
-	case "scopes":
-		if len(subcommandArgs) > 0 {
-			return "", nil, fmt.Errorf("'scopes' command does not take any arguments: %w", ErrTooManyArguments)
-		}
-		return subcommand, nil, nil
-	case "list":
-		if len(subcommandArgs) > 1 {
-			return "", nil, fmt.Errorf("'list' command takes at most one scope argument: %w", ErrTooManyArguments)
-		}
-		return subcommand, subcommandArgs, nil
-	case "paths":
-		pathsCmd := flag.NewFlagSet("paths", flag.ContinueOnError)
-		pathsCmd.SetOutput(output)
-		scopeOpt := commandConfig.Options["scope"]
-		pathsScope := pathsCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+func parseSetArgs(args []string) (scope, format, desc, path, value string, remainingArgs []string, err error) {
+	setCmd := flag.NewFlagSet("set", flag.ContinueOnError)
+	setCmd.SetOutput(io.Discard) // Output not needed for parsing
+	scopeOpt := commandConfig.Options["scope"]
+	formatOpt := commandConfig.Options["format"]
+	descOpt := commandConfig.Options["desc"]
+	setScope := setCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	formatFlag := setCmd.String("format", formatOpt.DefaultValue, formatOpt.Usage)
+	descFlag := setCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
 
-		if err := pathsCmd.Parse(subcommandArgs); err != nil {
-			return "", nil, fmt.Errorf("parsing paths flags: %w: %v", ErrInvalidFlag, err)
-		}
-		filter := ""
-		if pathsCmd.NArg() > 0 {
-			filter = pathsCmd.Arg(0)
-		}
-		if pathsCmd.NArg() > 1 {
-			return "", nil, fmt.Errorf("'paths' command takes at most one filter argument: %w", ErrTooManyArguments)
-		}
-		return subcommand, []string{*pathsScope, filter}, nil
-	case "dump":
-		dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
-		dumpCmd.SetOutput(output)
-		scopeOpt := commandConfig.Options["scope"]
-		dumpScope := dumpCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-
-		if err := dumpCmd.Parse(subcommandArgs); err != nil {
-			return "", nil, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
-		}
-		if dumpCmd.NArg() > 0 {
-			return "", nil, fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
-		}
-		return subcommand, []string{*dumpScope}, nil
-	case "diff":
-		diffCmd := flag.NewFlagSet("diff", flag.ContinueOnError)
-		diffCmd.SetOutput(output)
-		scopeOpt := commandConfig.Options["scope"]
-		diffScope := diffCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-
-		if err := diffCmd.Parse(subcommandArgs); err != nil {
-			return "", nil, fmt.Errorf("parsing diff flags: %w: %v", ErrInvalidFlag, err)
-		}
-		if diffCmd.NArg() < 1 {
-			return "", nil, fmt.Errorf("'diff' requires generation number argument: %w", ErrMissingArgument)
-		}
-		if diffCmd.NArg() > 1 {
-			return "", nil, fmt.Errorf("'diff' command takes at most one generation argument: %w", ErrTooManyArguments)
-		}
-		_, err := strconv.Atoi(diffCmd.Arg(0))
-		if err != nil {
-			return "", nil, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
-		}
-		return subcommand, []string{*diffScope, diffCmd.Arg(0)}, nil
-	case "rollback":
-		rollbackCmd := flag.NewFlagSet("rollback", flag.ContinueOnError)
-		rollbackCmd.SetOutput(output)
-		scopeOpt := commandConfig.Options["scope"]
-		rollbackScope := rollbackCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-
-		if err := rollbackCmd.Parse(subcommandArgs); err != nil {
-			return "", nil, fmt.Errorf("parsing rollback flags: %w: %v", ErrInvalidFlag, err)
-		}
-		if rollbackCmd.NArg() < 1 {
-			return "", nil, fmt.Errorf("'rollback' requires generation number argument: %w", ErrMissingArgument)
-		}
-		if rollbackCmd.NArg() > 1 {
-			return "", nil, fmt.Errorf("'rollback' command takes at most one generation argument: %w", ErrTooManyArguments)
-		}
-		_, err := strconv.Atoi(rollbackCmd.Arg(0))
-		if err != nil {
-			return "", nil, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
-		}
-		return subcommand, []string{*rollbackScope, rollbackCmd.Arg(0)}, nil
-	case "save":
-		saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
-		saveCmd.SetOutput(output)
-		scopeOpt := commandConfig.Options["scope"]
-		formatOpt := commandConfig.Options["format"]
-		descOpt := commandConfig.Options["desc"]
-		saveScope := saveCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-		formatFlag := saveCmd.String("format", "", formatOpt.Usage) // Corrected default value
-		descFlag := saveCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
-
-		if err := saveCmd.Parse(subcommandArgs); err != nil {
-			return "", nil, fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)
-		}
-		if saveCmd.NArg() < 1 {
-			return "", nil, fmt.Errorf("'save' requires filename argument: %w", ErrMissingArgument)
-		}
-		if saveCmd.NArg() > 1 {
-			return "", nil, fmt.Errorf("'save' command takes at most one filename argument: %w", ErrTooManyArguments)
-		}
-		return subcommand, append([]string{*saveScope, *formatFlag, *descFlag}, saveCmd.Args()...), nil
-	case "get":
-		getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
-		getCmd.SetOutput(output)
-		scopeOpt := commandConfig.Options["scope"]
-		getScope := getCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-
-		if err := getCmd.Parse(subcommandArgs); err != nil {
-			return "", nil, fmt.Errorf("parsing get flags: %w: %v", ErrInvalidFlag, err)
-		}
-		filter := ""
-		if getCmd.NArg() > 0 {
-			filter = getCmd.Arg(0)
-		}
-		if getCmd.NArg() > 1 {
-			return "", nil, fmt.Errorf("'get' command takes at most one filter argument: %w", ErrTooManyArguments)
-		}
-		return subcommand, []string{*getScope, filter}, nil
-	case "init":
-		initCmd := flag.NewFlagSet("init", flag.ContinueOnError)
-		initCmd.SetOutput(output)
-		if err := initCmd.Parse(subcommandArgs); err != nil {
-			return "", nil, fmt.Errorf("parsing init flags: %w: %v", ErrInvalidFlag, err)
-		}
-		if initCmd.NArg() > 0 {
-			return "", nil, fmt.Errorf("'init' does not take any arguments: %w", ErrTooManyArguments)
-		}
-		return subcommand, nil, nil
-	default:
-		return "", nil, fmt.Errorf("'%s': %w", subcommand, ErrUnknownSubcommand)
+	if err := setCmd.Parse(args); err != nil {
+		return "", "", "", "", "", nil, fmt.Errorf("parsing set flags: %w: %v", ErrInvalidFlag, err)
 	}
+	if setCmd.NArg() < 2 {
+		return "", "", "", "", "", nil, fmt.Errorf("'set' requires path and value arguments: %w", ErrMissingArgument)
+	}
+	return *setScope, *formatFlag, *descFlag, setCmd.Arg(0), setCmd.Arg(1), setCmd.Args()[2:], nil
+}
+
+func parseScopesArgs(args []string) error {
+	if len(args) > 0 {
+		return fmt.Errorf("'scopes' command does not take any arguments: %w", ErrTooManyArguments)
+	}
+	return nil
+}
+
+func parseListArgs(args []string) (scope string, err error) {
+	if len(args) > 1 {
+		return "", fmt.Errorf("'list' command takes at most one scope argument: %w", ErrTooManyArguments)
+	}
+	if len(args) > 0 {
+		return args[0], nil
+	}
+	return "", nil
+}
+
+func parsePathsArgs(args []string) (scope, filter string, err error) {
+	pathsCmd := flag.NewFlagSet("paths", flag.ContinueOnError)
+	pathsCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	pathsScope := pathsCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	if err := pathsCmd.Parse(args); err != nil {
+		return "", "", fmt.Errorf("parsing paths flags: %w: %v", ErrInvalidFlag, err)
+	}
+	filter = ""
+	if pathsCmd.NArg() > 0 {
+		filter = pathsCmd.Arg(0)
+	}
+	if pathsCmd.NArg() > 1 {
+		return "", "", fmt.Errorf("'paths' command takes at most one filter argument: %w", ErrTooManyArguments)
+	}
+	return *pathsScope, filter, nil
+}
+
+func parseDumpArgs(args []string) (scope string, err error) {
+	dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
+	dumpCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	dumpScope := dumpCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	if err := dumpCmd.Parse(args); err != nil {
+		return "", fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if dumpCmd.NArg() > 0 {
+		return "", fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
+	}
+	return *dumpScope, nil
+}
+
+func parseDiffArgs(args []string) (scope string, generation int, err error) {
+	diffCmd := flag.NewFlagSet("diff", flag.ContinueOnError)
+	diffCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	diffScope := diffCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	if err := diffCmd.Parse(args); err != nil {
+		return "", 0, fmt.Errorf("parsing diff flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if diffCmd.NArg() < 1 {
+		return "", 0, fmt.Errorf("'diff' requires generation number argument: %w", ErrMissingArgument)
+	}
+	if diffCmd.NArg() > 1 {
+		return "", 0, fmt.Errorf("'diff' command takes at most one generation argument: %w", ErrTooManyArguments)
+	}
+	gen, err := strconv.Atoi(diffCmd.Arg(0))
+	if err != nil {
+		return "", 0, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
+	}
+	return *diffScope, gen, nil
+}
+
+func parseRollbackArgs(args []string) (scope string, generation int, err error) {
+	rollbackCmd := flag.NewFlagSet("rollback", flag.ContinueOnError)
+	rollbackCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	rollbackScope := rollbackCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	if err := rollbackCmd.Parse(args); err != nil {
+		return "", 0, fmt.Errorf("parsing rollback flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if rollbackCmd.NArg() < 1 {
+		return "", 0, fmt.Errorf("'rollback' requires generation number argument: %w", ErrMissingArgument)
+	}
+	if rollbackCmd.NArg() > 1 {
+		return "", 0, fmt.Errorf("'rollback' command takes at most one generation argument: %w", ErrTooManyArguments)
+	}
+	gen, err := strconv.Atoi(rollbackCmd.Arg(0))
+	if err != nil {
+		return "", 0, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
+	}
+	return *rollbackScope, gen, nil
+}
+
+func parseSaveArgs(args []string) (scope, format, desc, filename string, err error) {
+	saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
+	saveCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	formatOpt := commandConfig.Options["format"]
+	descOpt := commandConfig.Options["desc"]
+	saveScope := saveCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	formatFlag := saveCmd.String("format", "", formatOpt.Usage) // Corrected default value
+	descFlag := saveCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
+
+	if err := saveCmd.Parse(args); err != nil {
+		return "", "", "", "", fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if saveCmd.NArg() < 1 {
+		return "", "", "", "", fmt.Errorf("'save' requires filename argument: %w", ErrMissingArgument)
+	}
+	if saveCmd.NArg() > 1 {
+		return "", "", "", "", fmt.Errorf("'save' command takes at most one filename argument: %w", ErrTooManyArguments)
+	}
+	return *saveScope, *formatFlag, *descFlag, saveCmd.Arg(0), nil
+}
+
+func parseGetArgs(args []string) (scope, filter string, err error) {
+	getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
+	getCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	getScope := getCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	if err := getCmd.Parse(args); err != nil {
+		return "", "", fmt.Errorf("parsing get flags: %w: %v", ErrInvalidFlag, err)
+	}
+	filter = ""
+	if getCmd.NArg() > 0 {
+		filter = getCmd.Arg(0)
+	}
+	if getCmd.NArg() > 1 {
+		return "", "", fmt.Errorf("'get' command takes at most one filter argument: %w", ErrTooManyArguments)
+	}
+	return *getScope, filter, nil
+}
+
+func parseInitArgs(args []string) error {
+	initCmd := flag.NewFlagSet("init", flag.ContinueOnError)
+	initCmd.SetOutput(io.Discard)
+	if err := initCmd.Parse(args); err != nil {
+		return fmt.Errorf("parsing init flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if initCmd.NArg() > 0 {
+		return fmt.Errorf("'init' does not take any arguments: %w", ErrTooManyArguments)
+	}
+	return nil
 }
 
