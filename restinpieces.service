@@ -1,20 +1,19 @@
 [Unit]
-Description=restinpieces server
+Description=restinpieces app server
 Documentation=https://github.com/caasmo/restinpieces
 After=network-online.target
 Wants=network-online.target # Ensures network is fully up
 
 [Service]
 # User and Group
-User=restinpieces
-Group=restinpieces
+User=${RESTINPIECES_APP}
+Group=${RESTINPIECES_APP}
 
 # Working Directory
-WorkingDirectory=/opt/restinpieces
+WorkingDirectory=/home/${RESTINPIECES_APP}
 
 # Command to start the service
-# Adjust arguments as needed. TODO 
-ExecStart=/opt/restinpieces/restinpieces -dbpath app.db -agekey age_key.txt 
+ExecStart=/home/${RESTINPIECES_APP}/bin/${RESTINPIECES_APP} -dbpath data/app.db -agekey age.key
 
 # Capabilities:
 # This grants the ability to bind to privileged ports (<1024)
