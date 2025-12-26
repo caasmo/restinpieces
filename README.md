@@ -48,6 +48,7 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
   - [Security](#security)
   - [Core Infrastructure](#core-infrastructure)
   - [Configuration Management](#configuration-management)
+  - [Deployment & Operations](#deployment--operations)
   - [Frontend Integration](#frontend-integration)
   - [Job Framework](#job-framework)
   - [Performance](#performance)
@@ -107,6 +108,15 @@ No CORS support is provided as it contradicts the One Process philosophy. If you
 The framework's configuration is securely managed within the SQLite database. The configuration is stored as encrypted, TOML-formatted content in the `app_config` table, the schema for which is detailed in `migrations/schema/app/app_config.sql`. Management is performed using the `ripc` command-line tool, which supports versioning, diffing, and rollbacks. Beyond managing the core application's settings, `ripc` can be extended to handle custom configuration scopes for your own modules. For more details on the tool, see the [`ripc` documentation](doc/ripc.md).
 
 A key feature is support for dynamic updates. The server listens for the `SIGHUP` signal to trigger a hot-reload of the configuration, allowing most settings to be changed in real-time without service interruption. While the majority of parameters can be updated on-the-fly, critical changes like modifications to TLS certificates require a full server reload to be applied.
+
+### Deployment & Operations
+To streamline the transition from development to production, the framework provides **`ripdep`**, a comprehensive CLI tool designed to manage the full lifecycle of your application. It acts as a high-level wrapper around the `ripc` binary, orchestrating complex DevOps tasks and remote operations via SSH directly from your local developer machine.
+
+-   **Lifecycle Automation**: Automates the build, package, and deploy pipeline, ensuring reproducible releases.
+-   **Remote DevOps**: Wraps low-level `ripc` commands to handle configuration, maintenance modes, and log monitoring without needing manual server access.
+-   **Disaster Recovery**: Simplifies the process of bootstrapping new servers and recovering from backups (including Litestream integration) through dedicated commands like `build-bootstrap` and `build-recovery`.
+
+This tool encourages a workflow where most configuration and operational decisions are made locally, then securely applied to the remote environment. For detailed usage, see the **[Deployment Guide](doc/ripdep.md)**.
 
 ### Frontend Integration
 - JavaScript SDK for seamless frontend-backend interaction
