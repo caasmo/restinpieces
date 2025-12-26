@@ -92,7 +92,7 @@ PrivateTmp=true               # Service gets its own /tmp and /var/tmp
 # It stops rootkits. If an attacker gains root access inside the service, they
 # might try to load a malicious kernel module to hide their presence or control
 # the server at the hardware level. This blocks that.
-ProtectKernelModules=true         # Can't load kernel modules
+ProtectKernelModules=true         
 
 # It mounts kernel tuning directories (like /proc/sys and /sys) as read-only.
 # It prevents the service from changing OS-level settings, such as enabling IP
@@ -100,23 +100,62 @@ ProtectKernelModules=true         # Can't load kernel modules
 # behavior. Example: An attacker cannot execute echo 1 >
 # /proc/sys/net/ipv4/ip_forward to turn your server into a router for their
 # traffic.
-ProtectKernelTunables=true        # Can't modify kernel tunables
+ProtectKernelTunables=true        
 
-ProtectKernelLogs=true            # Can't read kernel logs
-ProtectControlGroups=true         # cgroups read-only
+# It prevents the service from reading the kernel log buffer (output usually
+# seen via dmesg).  Kernel logs often contain memory addresses of kernel
+# structures. Attackers use these addresses to bypass ASLR (Address Space
+# Layout Randomization) to craft sophisticated buffer overflow exploits.
+# Example: If the process tries to run the command dmesg, it will be denied
+# permission.
+ProtectKernelLogs=true            
+
+# It mounts the cgroup hierarchy (/sys/fs/cgroup) as read-only.  It prevents
+# the service from modifying its own resource limits (CPU/Memory quotas) or
+# escaping the cgroup sandbox.  Example: The process cannot increase its own
+# CPU priority or disable its memory limits.
+ProtectControlGroups=true         
+
+# === PROCESS VISIBILITY ===
+
+# It modifies the /proc filesystem so that the service can only see its own
+# process and its children. It cannot see any other processes running on the
+# system. It prevents information gathering. An attacker cannot run ps aux to
+# see if an Antivirus, SSH daemon, or database is running on the same server.
+# Example: If the service runs ps aux, it will look like it is the only program
+# running on the entire computer.
+ProtectProc=invisible
+
+# It restricts the contents of /proc to only contain numerical process ID
+# folders. It hides system status files like /proc/cpuinfo, /proc/meminfo, or
+# /proc/uptime.  It hides hardware details and system uptime (which can help an
+# attacker guess unpatched kernel vulnerabilities based on how long the system
+# has been running).  Example: Running cat /proc/cpuinfo to determine the
+# processor type will fail.
+ProcSubset=pid
+
+# === NAMESPACE RESTRICTIONS ===
+
+# === NETWORK ===
+
+# === RESTART ===
 
 # Restart behavior
 Restart=on-failure
 RestartSec=5s       # Time to wait before restarting
 
+# === LOGGING ===
+
 # Standard output and error logging
 # 'journal' sends logs to the systemd journal
 StandardOutput=journal
 StandardError=journal
+
 # Alternatively, to append to files (ensure mygoappuser has write permissions):
 # StandardOutput=append:/var/log/mygoapp/app.log
 # StandardError=append:/var/log/mygoapp/error.log
 
+# === LOGGING ===
 # Environment variables (optional)
 # Environment="GIN_MODE=release"
 # Environment="PORT=80"
