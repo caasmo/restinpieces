@@ -22,15 +22,88 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 # It's good practice to set this to the same as AmbientCapabilities or a superset if needed.
 CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 
-# Security Hardening (Highly Recommended)
-NoNewPrivileges=true          # Prevents the service from gaining more privileges
-ProtectSystem=full            # Makes /usr, /boot, /etc read-only (except /etc/mygoapp if specified in ReadWritePaths)
-ProtectHome=true              # Makes user home directories inaccessible
+# === FILESYSTEM HARDENING ===
+
+# What it does: It ensures that the service process and any of its children can
+# never gain more privileges than they had at startup. Specifically, it ignores
+# the "Set-User-ID" (SUID) and "Set-Group-ID" (SGID) bits on binaries.
+#
+# Why use it: It prevents privilege escalation attacks. Even if an attacker
+# finds a way to run a shell, they cannot run sudo or use binaries like passwd
+# to gain root access.
+NoNewPrivileges=true
+
+# What it does: It mounts the entire file system hierarchy as Read-Only for
+# this service, with very few exceptions (usually /dev, /proc, and /sys).
+#
+# Why use it: It prevents an attacker from modifying system files, installing
+# permanent malware, or tampering with configuration files in /etc.
+#
+# ProtectSystem=full            
+ProtectSystem=strict
+
+# What it does: It mounts a temporary, empty filesystem (tmpfs) over /home,
+# /root, and /run/user.
+#
+# Why use it: It protects user data. The service sees an empty /home directory.
+# This ensures the service cannot steal SSH keys, documents, or personal data
+# from real users on the server.
+#
+# Example: If your service tries to list /home/ubuntu/.ssh/id_rsa, it will
+# likely see an empty directory or "file not found," protecting your SSH keys.
+#
+# - The Host Layer (Real Disk): On your actual hard drive,
+# /home/myapp/data/db.sqlite exists physically.
+# - The Protection Layer (ProtectHome=tmpfs): When the service starts, systemd
+# creates a "sandbox" (a namespace). Inside this sandbox, it mounts a tmpfs
+# (RAM disk) over /home. To the app, /home now looks empty. The real hard drive
+# underneath is effectively covered by a blanket.
+# The Exception Layer (ReadWritePaths): This is the crucial step.
+# ReadWritePaths doesn't just grant permission; it creates a Bind Mount.
+# How the Bind Mount works
+# When systemd sees ReadWritePaths=/home/myapp/data, it performs the following
+# logic sequence during startup: Mount tmpfs: It covers the real /home with the
+# empty temporary filesystem.  Punch the Hole: It looks at the real host system,
+# finds the actual folder /home/myapp/data, and mounts it on top of the temporary
+# /home/myapp/data inside the sandbox.
+#
+#ProtectHome=true              # Makes user home directories inaccessible
+ProtectHome=tmpfs
+
+ReadWritePaths=/home/${RESTINPIECES_APP}/data
+
+BindReadOnlyPaths=/home/${RESTINPIECES_APP}/age.key
+BindReadOnlyPaths=/home/${RESTINPIECES_APP}/bin
+
+# What it does: It gives the service its own isolated /tmp and /var/tmp
+# directories. These are separate from the host system's /tmp.
+#
+# Why use it: Security: Prevents "tmp race" attacks where one user guesses the
+# filename of another user's temp file to inject malicious data.  Privacy:
+# Other users cannot see the temporary files this service creates.
 PrivateTmp=true               # Service gets its own /tmp and /var/tmp
-# If your app needs to write to specific paths (e.g., logs, data), uncomment and adjust:
-# ReadWritePaths=/var/log/mygoapp /var/lib/mygoapp
+
 # If your app doesn't need network access *after* binding, you can restrict it further.
 # RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 # Allow common socket types
+
+# === KERNEL PROTECTION ===
+
+# It prevents the service from loading or unloading kernel modules (drivers).
+# It stops rootkits. If an attacker gains root access inside the service, they
+# might try to load a malicious kernel module to hide their presence or control
+# the server at the hardware level. This blocks that.
+ProtectKernelModules=true         # Can't load kernel modules
+
+# It mounts kernel tuning directories (like /proc/sys and /sys) as read-only.
+# It prevents the service from changing OS-level settings, such as enabling IP
+# forwarding, changing memory management logic, or altering network stack
+# behavior. Example: An attacker cannot execute echo 1 >
+# /proc/sys/net/ipv4/ip_forward to turn your server into a router for their
+# traffic.
+ProtectKernelTunables=true        # Can't modify kernel tunables
+
+ProtectKernelLogs=true            # Can't read kernel logs
+ProtectControlGroups=true         # cgroups read-only
 
 # Restart behavior
 Restart=on-failure
