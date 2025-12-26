@@ -42,15 +42,12 @@ NoNewPrivileges=true
 # ProtectSystem=full            
 ProtectSystem=strict
 
-# What it does: It mounts a temporary, empty filesystem (tmpfs) over /home,
-# /root, and /run/user.
-#
-# Why use it: It protects user data. The service sees an empty /home directory.
+# It mounts a temporary, empty filesystem (tmpfs) over /home, /root, and
+# /run/user. It protects user data. The service sees an empty /home directory.
 # This ensures the service cannot steal SSH keys, documents, or personal data
-# from real users on the server.
-#
-# Example: If your service tries to list /home/ubuntu/.ssh/id_rsa, it will
-# likely see an empty directory or "file not found," protecting your SSH keys.
+# from real users on the server.  Example: If your service tries to list
+# /home/ubuntu/.ssh/id_rsa, it will likely see an empty directory or "file not
+# found," protecting your SSH keys.
 #
 # - The Host Layer (Real Disk): On your actual hard drive,
 # /home/myapp/data/db.sqlite exists physically.
@@ -67,11 +64,16 @@ ProtectSystem=strict
 # finds the actual folder /home/myapp/data, and mounts it on top of the temporary
 # /home/myapp/data inside the sandbox.
 #
-#ProtectHome=true              # Makes user home directories inaccessible
+#ProtectHome=true
 ProtectHome=tmpfs
 
+# Systemd takes the real file. Mounts it inside the sandbox. Sets flags: RW
 ReadWritePaths=/home/${RESTINPIECES_APP}/data
 
+# This directive does exactly what you are asking for. It creates the "tunnel"
+# from the real hard drive into the sandbox (just like ReadWritePaths), but it
+# mounts that specific path as Read-Only.
+# Systemd takes the real file. Mounts it inside the sandbox. Sets flags: RO
 BindReadOnlyPaths=/home/${RESTINPIECES_APP}/age.key
 BindReadOnlyPaths=/home/${RESTINPIECES_APP}/bin
 
@@ -83,8 +85,6 @@ BindReadOnlyPaths=/home/${RESTINPIECES_APP}/bin
 # Other users cannot see the temporary files this service creates.
 PrivateTmp=true               # Service gets its own /tmp and /var/tmp
 
-# If your app doesn't need network access *after* binding, you can restrict it further.
-# RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 # Allow common socket types
 
 # === KERNEL PROTECTION ===
 
@@ -136,7 +136,42 @@ ProcSubset=pid
 
 # === NAMESPACE RESTRICTIONS ===
 
+# It prevents the service from creating new Linux Namespaces (using unshare or
+# clone).
+# Namespaces are complex and often have security vulnerabilities. Attackers
+# often use them to create a new user namespace where they gain "fake" root
+# privileges to exploit the kernel.
+# Example: The application cannot launch a Docker container or create a
+# chroot-like environment within itself.
+RestrictNamespaces=true
+
+# It prevents the process from requesting "Real-time" scheduling priority. This
+# is an Anti-DoS (Denial of Service) measure. If a process gets Real-time
+# priority and goes into an infinite loop, it can freeze the entire CPU, making
+# the server unresponsive to even SSH login attempts.  Example: The process
+# cannot use chrt to set its priority to SCHED_RR.
+RestrictRealtime=true
+
+# It prevents the service from creating files that have the SUID or SGID bit
+# set.  Even if ReadWritePaths allows writing to a folder, an attacker might
+# try to create a file there, give it SUID root permissions, and execute it
+# later to become root. This directive stops the creation of such files.
+# Example: chmod u+s malicious_script will fail.
+RestrictSUIDSGID=true
+
 # === NETWORK ===
+
+# It restricts which type of network sockets the application can use. Here, it
+# allows only IPv4 (AF_INET) and IPv6 (AF_INET6).  It reduces the attack
+# surface of the kernel networking stack.  It blocks AF_PACKET (used for packet
+# sniffing/Wireshark).  It blocks AF_NETLINK (used to communicate deeply with
+# the kernel/configure network interfaces).  It blocks AF_UNIX (unless added),
+# preventing the app from talking to local sockets like /var/run/docker.sock.
+# Example: If an attacker tries to open a raw socket to sniff traffic passing
+# through the server, the kernel will block the request because AF_PACKET is
+# not in the allowed list.
+# RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 
+RestrictAddressFamilies=AF_INET AF_INET6 
 
 # === RESTART ===
 
