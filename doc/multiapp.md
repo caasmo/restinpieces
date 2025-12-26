@@ -55,27 +55,42 @@ scrape_configs:
 ```
 This allows you to aggregate metrics from all applications into a single dashboard while keeping the applications themselves completely separate.
 
+### Accessing Metrics Remotely
+If your Prometheus scraper is running on a different machine, or if you want to view an application's metrics endpoint from your local browser, you can use an SSH tunnel to securely forward the port.
+
+```bash
+# From your local machine, forward the server's port 9091 to your local port 9091
+ssh -L 9091:localhost:9091 user@your-server.com
+```
+You can now browse to `http://localhost:9091/metrics` on your local machine to view the metrics. The same technique can be used to configure a remote Prometheus instance to scrape the tunneled port.
+
 ## Litestream (Database Backups)
 
-The `ripdep` tool configures Litestream based on a per-application configuration file. To manage backups for multiple applications on the same host, each application's `litestream.yml` must specify a unique database path and, critically, a unique remote replica URL (e.g., a different sub-path in an S3 bucket).
+The recommended strategy for a multi-app environment is to use a **single, centralized Litestream service** that manages backups for all applications on the host. This approach is significantly more resource-efficient than running a separate `litestream` process for each application.
 
-**Example for App 1 (`app1/litestream.yml`):**
+### Centralized Configuration
+
+A single `litestream.service` unit should be configured to run on the host, pointing to a central configuration file (e.g., `/etc/litestream.yml`). This file will contain an entry for every database you want to replicate.
+
+When a new application is deployed via `ripdep`, the `install` command should be responsible for automatically adding a new entry to this central configuration file.
+
+**Example Central `/etc/litestream.yml`:**
 ```yaml
+# This file is managed automatically by ripdep
 dbs:
+  # Entry for App 1
   - path: /home/app1/data/app.db
     replicas:
       - type: s3
         bucket: my-app-backups
-        path: app1/db
-```
+        path: app1/db # Must be a unique path in the bucket
 
-**Example for App 2 (`app2/litestream.yml`):**
-```yaml
-dbs:
+  # Entry for App 2, added by a subsequent deployment
   - path: /home/app2/data/app.db
     replicas:
       - type: s3
         bucket: my-app-backups
-        path: app2/db
+        path: app2/db # Must be a unique path in the bucket
 ```
-This ensures that each application's database is backed up to its own isolated location, preventing data from being overwritten.
+
+With this model, individual application services no longer need to execute Litestream. Their `systemd` service files are simplified to run only the application binary, fully decoupling the application's lifecycle from the backup process.
