@@ -79,6 +79,9 @@ ReadWritePaths=/home/${RESTINPIECES_APP}/data
 # from the real hard drive into the sandbox (just like ReadWritePaths), but it
 # mounts that specific path as Read-Only.
 # Systemd takes the real file. Mounts it inside the sandbox. Sets flags: RO
+# 
+# Use ProtectSystem=strict + ReadWritePaths=/home/${RESTINPIECES_APP}/data, no
+# need for BindReadOnlyPaths
 #BindReadOnlyPaths=/home/${RESTINPIECES_APP}/age.key
 #BindReadOnlyPaths=/home/${RESTINPIECES_APP}/bin
 
