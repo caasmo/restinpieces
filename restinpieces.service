@@ -33,11 +33,16 @@ CapabilityBoundingSet=CAP_NET_BIND_SERVICE
 # to gain root access.
 NoNewPrivileges=true
 
-# What it does: It mounts the entire file system hierarchy as Read-Only for
+# It mounts the entire file system hierarchy as Read-Only for
 # this service, with very few exceptions (usually /dev, /proc, and /sys).
-#
-# Why use it: It prevents an attacker from modifying system files, installing
+# It prevents an attacker from modifying system files, installing
 # permanent malware, or tampering with configuration files in /etc.
+#
+# ProtectHome for services running from their own home is redundant with
+# ProtectSystem 
+#
+# Use ProtectSystem=strict + ReadWritePaths=/home/${RESTINPIECES_APP}/data, no
+# need for BindReadOnlyPaths
 #
 # ProtectSystem=full            
 ProtectSystem=strict
@@ -65,7 +70,7 @@ ProtectSystem=strict
 # /home/myapp/data inside the sandbox.
 #
 #ProtectHome=true
-ProtectHome=tmpfs
+#ProtectHome=tmpfs
 
 # Systemd takes the real file. Mounts it inside the sandbox. Sets flags: RW
 ReadWritePaths=/home/${RESTINPIECES_APP}/data
@@ -74,16 +79,15 @@ ReadWritePaths=/home/${RESTINPIECES_APP}/data
 # from the real hard drive into the sandbox (just like ReadWritePaths), but it
 # mounts that specific path as Read-Only.
 # Systemd takes the real file. Mounts it inside the sandbox. Sets flags: RO
-BindReadOnlyPaths=/home/${RESTINPIECES_APP}/age.key
-BindReadOnlyPaths=/home/${RESTINPIECES_APP}/bin
+#BindReadOnlyPaths=/home/${RESTINPIECES_APP}/age.key
+#BindReadOnlyPaths=/home/${RESTINPIECES_APP}/bin
 
-# What it does: It gives the service its own isolated /tmp and /var/tmp
-# directories. These are separate from the host system's /tmp.
-#
-# Why use it: Security: Prevents "tmp race" attacks where one user guesses the
-# filename of another user's temp file to inject malicious data.  Privacy:
-# Other users cannot see the temporary files this service creates.
-PrivateTmp=true               # Service gets its own /tmp and /var/tmp
+# It gives the service its own isolated /tmp and /var/tmp directories. These
+# are separate from the host system's /tmp. Prevents "tmp race" attacks where
+# one user guesses the filename of another user's temp file to inject malicious
+# data. Other users cannot see the temporary files this service
+# creates.
+PrivateTmp=true
 
 
 # === KERNEL PROTECTION ===
