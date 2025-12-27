@@ -822,9 +822,9 @@ deploy_binaries() {
     for binary in "${source_dir}"/bin/*; do
         if [ -f "$binary" ]; then
             local basename=$(basename "$binary")
-            install -m 700 -o "${SERVICE_NAME}" -g "${SERVICE_NAME}" \
-                "$binary" "/home/${SERVICE_NAME}/bin/${basename}"
-            log_success "Installed binary: ${basename} to /home/${SERVICE_NAME}/bin/${basename}"
+            install -m 700 -o "${project_name}" -g "${project_name}" \
+                "$binary" "/home/${project_name}/bin/${basename}"
+            log_success "Installed binary: ${basename} to /home/${project_name}/bin/${basename}"
         fi
     done
 }
@@ -835,8 +835,8 @@ deploy_data_files() {
     
     # Deploy age key if present
     if [ -f "${source_dir}/age.key" ]; then
-        local dest_key="/home/${SERVICE_NAME}/age.key"
-        install -m 600 -o "${SERVICE_NAME}" -g "${SERVICE_NAME}" \
+        local dest_key="/home/${project_name}/age.key"
+        install -m 600 -o "${project_name}" -g "${project_name}" \
             "${source_dir}/age.key" "$dest_key"
         log_success "Installed age.key to $dest_key"
     fi
@@ -849,9 +849,9 @@ deploy_data_files() {
     do
         if [ -f "$datafile" ]; then
             local basename=$(basename "$datafile")
-            local dest="/home/${SERVICE_NAME}/data/${basename}"
+            local dest="/home/${project_name}/data/${basename}"
             
-            install -m 600 -o "${SERVICE_NAME}" -g "${SERVICE_NAME}" \
+            install -m 600 -o "${project_name}" -g "${project_name}" \
                 "$datafile" "$dest"
             log_success "Installed data file: ${basename} to $dest"
         fi
@@ -863,16 +863,16 @@ deploy_systemd_service() {
     log_info "Deploying systemd service..."
     
     # Find generated service file
-    local service_file=$(find "${source_dir}" -name "systemd-${SERVICE_NAME}.service" | head -n 1)
+    local service_file=$(find "${source_dir}" -name "systemd-${project_name}.service" | head -n 1)
     
     if [ -z "$service_file" ]; then
         log_error "Service file not found in ${source_dir}"
         exit 1
     fi
     
-    cp "$service_file" "/etc/systemd/system/${SERVICE_NAME}.service"
+    cp "$service_file" "/etc/systemd/system/${project_name}.service"
     systemctl daemon-reload
-    log_success "Deployed ${SERVICE_NAME}.service to /etc/systemd/system/${SERVICE_NAME}.service"
+    log_success "Deployed ${project_name}.service to /etc/systemd/system/${project_name}.service"
 }
 
 handle_database() {
@@ -921,7 +921,7 @@ cmd_install() {
     handle_database
     
     log_success "Installation complete!"
-    log_info "To start service: systemctl enable --now ${SERVICE_NAME}"
+    log_info "To start service: systemctl enable --now ${project_name}"
 }
 
 cmd_deploy() {
