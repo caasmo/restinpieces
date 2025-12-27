@@ -64,33 +64,48 @@ ssh -L 9091:localhost:9091 user@your-server.com
 ```
 You can now browse to `http://localhost:9091/metrics` on your local machine to view the metrics. The same technique can be used to configure a remote Prometheus instance to scrape the tunneled port.
 
-## Litestream (Database Backups)
+## Backups
 
-The recommended strategy for a multi-app environment is to use a **single, centralized Litestream service** that manages backups for all applications on the host. This approach is significantly more resource-efficient than running a separate `litestream` process for each application.
+When running multiple applications, you have two primary strategies for database backups, which can be used independently or together for a defense-in-depth approach.
 
-### Centralized Configuration
+### 1. Local Backups
 
-A single `litestream.service` unit should be configured to run on the host, pointing to a central configuration file (e.g., `/etc/litestream.yml`). This file will contain an entry for every database you want to replicate.
+The framework has a built-in job to perform periodic local backups of the SQLite database. In a multi-app environment, each application manages its own backup schedule independently. This requires no special configuration beyond what is already handled within each application's settings. It is simple, robust, and provides a baseline of data safety.
 
-When a new application is deployed via `ripdep`, the `install` command should be responsible for automatically adding a new entry to this central configuration file.
+### 2. Real-Time Replication (Litestream)
 
-**Example Central `/etc/litestream.yml`:**
-```yaml
-# This file is managed automatically by ripdep
-dbs:
-  # Entry for App 1
-  - path: /home/app1/data/app.db
-    replicas:
-      - type: s3
-        bucket: my-app-backups
-        path: app1/db # Must be a unique path in the bucket
+For continuous, real-time replication to offsite storage like Amazon S3, the framework integrates with Litestream. In a multi-app context, you can run Litestream in two ways: embedded within each application service or as a single, centralized daemon.
 
-  # Entry for App 2, added by a subsequent deployment
-  - path: /home/app2/data/app.db
-    replicas:
-      - type: s3
-        bucket: my-app-backups
-        path: app2/db # Must be a unique path in the bucket
-```
+**Our strong recommendation is to use the embedded Litestream model.** This approach aligns best with the framework's philosophy of creating simple, secure, and self-contained services.
 
-With this model, individual application services no longer need to execute Litestream. Their `systemd` service files are simplified to run only the application binary, fully decoupling the application's lifecycle from the backup process.
+#### Comparison: Embedded vs. Centralized
+
+##### Embedded Litestream (Recommended)
+
+Each application's `systemd` service runs its own `litestream` process alongside the application binary.
+
+| Pros                               | Cons                                       |
+| ---------------------------------- | ------------------------------------------ |
+| ✅ **True Isolation**                | Marginally higher memory usage             |
+| ✅ **Enhanced Reliability**          | S3 credentials configured per-application  |
+| ✅ **Operational Simplicity**        |                                            |
+| ✅ **Superior Security**             |                                            |
+
+-   **Isolation & Security**: This is the cleanest approach. Since each application runs its own replication process under its own user, no cross-app file access is needed. You don't need to create shared Unix groups or relax file permissions, preserving the strict user-level isolation.
+-   **Reliability**: The application and its backup process share the same lifecycle. If the app restarts, its Litestream process restarts with it, ensuring replication is always running when the app is.
+-   **Simplicity**: There is no separate daemon to manage. `ripdep` already configures this out of the box, fitting perfectly with the hardened `systemd` setup.
+
+##### Centralized Litestream Daemon
+
+A single, system-wide `litestream` service monitors and replicates all application databases.
+
+| Pros                               | Cons                                       |
+| ---------------------------------- | ------------------------------------------ |
+| Centralized monitoring & logging   | ❌ **Increased Complexity**                |
+| Single place for S3 credentials    | ❌ **Weakened Security**                   |
+| Slightly lower memory footprint    | ❌ **Reduced Reliability**                   |
+
+-   **Complexity & Security**: While it offers central management, a separate daemon is more complex to maintain. More importantly, it requires weakening the security model. The central `litestream` user would need read access to every application's private database files, typically forcing the use of shared groups and breaking the "one user, one app" isolation principle.
+-   **Reliability**: Because the backup process is decoupled, a failure in the central daemon could silently halt backups for all applications.
+
+**Conclusion:** For an architecture focused on security and simplicity, the **embedded Litestream model is the clear winner.** The small cost in memory is a worthwhile trade-off for the significant gains in isolation, reliability, and operational simplicity.
