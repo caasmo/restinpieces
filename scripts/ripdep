@@ -504,6 +504,12 @@ cmd_pack() {
     local size
     size=$(du -h "$output_path" | cut -f1)
     log_success "Created release artifact: ${output_path} (${size})"
+
+    if [ -z "${CMD_DEPLOY_CALLER:-}" ]; then
+        echo "" # Add a blank line for readability
+        log_info "Next step: Push the artifact to a remote host:"
+        log_info "    $0 push <host> ${output_path}"
+    fi
 }
 
 # cmd_unpack: Extracts a release tarball into a directory.
@@ -932,7 +938,7 @@ cmd_deploy() {
 
     # --- Step 1: Pack the application ---
     log_info "Step 1: Packing application locally..."
-    cmd_pack "$build_dir"
+    CMD_DEPLOY_CALLER=true cmd_pack "$build_dir"
 
     # --- Step 2: Determine the tarball path ---
     local build_name
