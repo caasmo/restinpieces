@@ -1115,8 +1115,8 @@ cmd_undeploy() {
     fi
 
     if [[ "$force" != "-y" && "$force" != "--force" ]]; then
-        log_warning "This will create a backup of '${service_name}' from '${host}', download it,"
-        log_warning "and then PERMANENTLY DELETE the service, user, and all files."
+        log_warning "This will PERMANENTLY DELETE the service '${service_name}', its user, and all associated files from '${host}'."
+        log_warning "This action cannot be undone. Consider creating a backup first with the 'backup' command."
         read -p "Are you sure you want to continue? (yes/no) " -r
         echo
         if [[ ! "$REPLY" =~ ^[Yy][Ee][Ss]$ ]]; then
@@ -1125,12 +1125,7 @@ cmd_undeploy() {
         fi
     fi
 
-    log_info "Step 1: Backing up remote data..."
-    if ! backup_remote_service "$host" "$service_name"; then
-        exit 1
-    fi
-
-    log_info "Step 2: Uninstalling application on ${host}..."
+    log_info "Uninstalling application on ${host}..."
     local deployed_script_path="/home/${service_name}/bin/ripdep"
     local remote_tmp_script_path="/tmp/ripdep-uninstall-$"
     log_info "→ Orchestrating remote uninstall using the deployed script..."
