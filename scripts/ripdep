@@ -975,52 +975,18 @@ cmd_deploy() {
 
 cmd_uninstall() {
     require_root
-    local service_name=${1:-}
+    local service_name=${1:-} # Used by helpers
 
     if [ -z "$service_name" ]; then
-        log_error "Usage: $0 uninstall <service-name>"
+        show_uninstall_help
         exit 1
     fi
 
     log_info "Uninstalling service '${service_name}'..."
 
-    # 1. Stop and disable the service
-    log_info "Stopping and disabling service '${service_name}'..."
-    if systemctl list-unit-files "${service_name}.service" >/dev/null 2>&1; then
-        if systemctl is-active --quiet "${service_name}"; then
-            echo "→ Service is active. Stopping..." >&2
-            systemctl stop "${service_name}"
-        fi
-        if systemctl is-enabled --quiet "${service_name}"; then
-            echo "→ Service is enabled. Disabling..." >&2
-            systemctl disable "${service_name}"
-        fi
-    else
-        echo "→ Service ${service_name}.service not found, skipping stop/disable." >&2
-    fi
-    log_success "Service cleanup phase finished."
-
-    # 2. Delete the systemd service file
-    local service_path="/etc/systemd/system/${service_name}.service"
-    log_info "Deleting systemd service file for '${service_name}'..."
-    if [ -f "${service_path}" ]; then
-        echo "→ Removing systemd service file..." >&2
-        rm -f "${service_path}"
-        systemctl daemon-reload
-    else
-        echo "→ Service file ${service_path} already gone." >&2
-    fi
-    log_success "Remote service file cleanup finished."
-
-    # 3. Delete the user and all their files
-    log_info "Deleting user and all files for '${service_name}'..."
-    if id "${service_name}" &>/dev/null; then
-        echo "→ Deleting user and all associated files..." >&2
-        userdel -r "${service_name}"
-    else
-        echo "→ User ${service_name} already gone." >&2
-    fi
-    log_success "Remote user and files cleanup finished."
+    stop_service
+    remove_systemd_service
+    delete_service_user
 
     log_success "Successfully uninstalled '${service_name}'."
 }
@@ -1060,36 +1026,28 @@ cleanup_remote_backup() {
     ssh -t -o LogLevel=ERROR "${host}" "sudo rm -f '${remote_path}'"
 }
 
-delete_remote_service_file() {
-    local host=$1
-    local service_name=$2
+remove_systemd_service() {
     local service_path="/etc/systemd/system/${service_name}.service"
-    log_info "Deleting systemd service file for '${service_name}' on '${host}'..."
-    ssh -t -o LogLevel=ERROR "${host}" "
-        if [ -f '${service_path}' ]; then
-            echo 'Removing systemd service file...' >&2
-            sudo rm -f '${service_path}'
-            sudo systemctl daemon-reload
-        else
-            echo 'Service file ${service_path} already gone.' >&2
-        fi
-    "
-    log_success "Remote service file cleanup finished."
+    log_info "Deleting systemd service file for '${service_name}'..."
+    if [ -f "${service_path}" ]; then
+        log_info "→ Removing systemd service file: ${service_path}"
+        rm -f "${service_path}"
+        systemctl daemon-reload
+    else
+        log_warning "→ Service file ${service_path} not found."
+    fi
+    log_success "Systemd file cleanup finished."
 }
 
-delete_remote_user() {
-    local host=$1
-    local service_name=$2
-    log_info "Deleting user and all files for '${service_name}' on '${host}'..."
-    ssh -t -o LogLevel=ERROR "${host}" "
-        if id '${service_name}' &>/dev/null; then
-            echo 'Deleting user and all associated files...' >&2
-            sudo userdel -r '${service_name}'
-        else
-            echo 'User ${service_name} already gone.' >&2
-        fi
-    "
-    log_success "Remote user and files cleanup finished."
+delete_service_user() {
+    log_info "Deleting user and all files for '${service_name}'..."
+    if id "${service_name}" &>/dev/null; then
+        log_info "→ Deleting user '${service_name}' and home directory..."
+        userdel -r "${service_name}"
+    else
+        log_warning "→ User ${service_name} not found."
+    fi
+    log_success "User and files cleanup finished."
 }
 
 cmd_undeploy() {
