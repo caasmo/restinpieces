@@ -1342,6 +1342,15 @@ Options:
 EOF
 }
 
+show_uninstall_help() {
+    cat <<EOF
+${GREEN}ripdep uninstall${NC} - Uninstall the service on a VM.
+
+Usage: $0 uninstall <service-name>
+
+EOF
+}
+
 # get_project_name_from_project_path: Determines project name from the project path argument.
 get_project_name_from_project_path() {
     local with_project="$1"
@@ -1613,6 +1622,7 @@ main() {
         pack) cmd_pack "$@" ;; 
         push) cmd_push "$@" ;; 
         install) cmd_install "$@" ;; 
+        uninstall) cmd_uninstall "$@" ;; 
         deploy) cmd_deploy "$@" ;; 
         undeploy) cmd_undeploy "$@" ;;
         maintenance) cmd_maintenance "$@" ;; 
