@@ -1,5 +1,7 @@
 ### TODOs
 
+- ripdep undeploy unistall is ugly, rethink
+- ripdep backup is ugly, rethink
 - ripc rotate -agekeynew  
 
 - BUG
