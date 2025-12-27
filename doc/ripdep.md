@@ -10,6 +10,26 @@ complex remote operations over SSH by wrapping the lower-level, on-server
 configuration tool, `ripc`. For most use cases, you should only need to
 interact with `ripdep`.
 
+# Content
+
+- [Use Cases](#use-cases)
+  - [First-Time Application Bootstrap](#1-first-time-application-bootstrap)
+  - [Update Application Binary Version](#2-update-application-binary-version)
+  - [Restore Application from Backup](#3-restore-application-from-backup)
+  - [Sync Database to a Standby Server](#4-sync-database-to-a-standby-server)
+- [Commands](#commands)
+  - [build-release](#build-release)
+  - [build-bootstrap](#build-bootstrap)
+  - [build-recovery](#build-recovery)
+  - [pack](#pack)
+  - [push](#push)
+  - [install (Remote)](#install-remote)
+  - [deploy](#deploy)
+- [Debugging on a Remote Server](#debugging-on-a-remote-server)
+  - [Check Status and Logs](#1-check-status-and-logs)
+  - [Log in and Run Manually](#2-log-in-and-run-manually)
+  - [Debugging the Systemd Sandbox](#3-debugging-the-systemd-sandbox)
+
 ## Use Cases
 
 This section provides concrete, step-by-step instructions for common operational scenarios.
