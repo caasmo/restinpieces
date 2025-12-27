@@ -11,9 +11,6 @@ set -euo pipefail
 
 # Base directory on remote hosts for staging deployments.
 REMOTE_BASE_DIR="/tmp"
-# Base directory for creating local build artifacts.
-BUILD_BASE_DIR="/tmp"
-
 # Local directory for storing final release artifacts (tarballs).
 RELEASES_BASE_DIR="${HOME}/src/backup/releases"
 # Local directory containing project-specific configuration files.
