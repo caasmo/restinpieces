@@ -217,3 +217,61 @@ A high-level orchestrator that automates the `pack`, `push`, and `install` seque
 # Deploys the build located in /tmp/my-app
 ./ripdep deploy user@server.com /tmp/my-app
 ```
+
+## Debugging on a Remote Server
+
+Once a service is installed on a remote machine, you may need to debug it. The `restinpieces.service` unit is heavily sandboxed for security, which can sometimes make troubleshooting tricky. Here’s a guide to effective debugging.
+
+### 1. Check Status and Logs
+
+The first step is always to check what `systemd` is reporting.
+
+-   **Check Service Status:** Get a quick overview of the service's state (e.g., active, failed) and see the latest log entries.
+    ```bash
+    # On the remote machine
+    sudo systemctl status my-app.service
+
+    # Or via the ripdep wrapper
+    ./scripts/ripdep status <host> my-app
+    ```
+
+-   **Inspect the Full Logs:** The service logs all its output to the systemd journal. This is the primary source of truth for errors.
+    ```bash
+    # On the remote machine, to view and follow logs
+    sudo journalctl -u my-app.service -f
+
+    # Or via the ripdep wrapper
+    ./scripts/ripdep logs <host> my-app
+    ```
+
+### 2. Log in and Run Manually
+
+If the logs aren't clear, the most effective technique is to become the service user and run the start command directly. This bypasses the systemd sandbox and helps you determine if the issue is with the application itself or its environment.
+
+1.  **Become the Service User:** The `install` command creates the service user with `/bin/bash` as its shell precisely to enable this kind of debugging.
+    ```bash
+    # On the remote machine
+    sudo su - my-app
+    ```
+    This drops you into a shell as `my-app` in its home directory (`/home/my-app`).
+
+2.  **Run the `ExecStart` Command:** From there, execute the `ExecStart` command found in the `.service` file.
+    ```bash
+    # You are now the 'my-app' user in /home/my-app
+    ./bin/my-app -dbpath data/app.db -agekey age.key
+    ```
+    Any application panics, configuration errors, or file permission issues will now print directly to your terminal.
+
+### 3. Debugging the Systemd Sandbox
+
+If the application runs perfectly when executed manually (Step 2) but fails when started via `systemctl`, the problem is almost certainly one of the security restrictions in the `.service` file.
+
+-   **Common Cause:** The service is trying to access a file or directory path that it's not allowed to. The `restinpieces.service` uses `ProtectSystem=strict`, which makes most of the filesystem read-only. Only paths listed in `ReadWritePaths` (like `/home/my-app/data`) are writable.
+
+-   **The Strategy:** To find the offending directive, temporarily disable the security settings.
+    1.  SSH into the remote machine and edit the service file: `sudo nano /etc/systemd/system/my-app.service`.
+    2.  Comment out a block of security settings (e.g., all directives under `=== FILESYSTEM HARDENING ===`).
+    3.  Tell systemd to reload the configuration: `sudo systemctl daemon-reload`.
+    4.  Try restarting the service: `sudo systemctl restart my-app.service`.
+
+If the service starts, you've confirmed the issue is in the block you commented out. You can then re-enable the directives one by one (repeating steps 3 and 4) to pinpoint the exact setting causing the problem.
