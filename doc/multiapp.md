@@ -38,31 +38,6 @@ The narrative that "real production requires containers" is primarily driven by 
 
 With the hardened `systemd` approach, you are using kernel isolation primitives directly, achieving strong security without the overhead and complexity of a container runtime.
 
-## Prometheus Monitoring
-
-For monitoring multiple applications on the same VM, each application can expose its own `/metrics` endpoint on a different port. A single Prometheus instance (running on the host or elsewhere) can then be configured to scrape all of these endpoints.
-
-Example `prometheus.yml` scrape configuration:
-```yaml
-scrape_configs:
-  - job_name: 'restinpieces-apps'
-    static_configs:
-      - targets:
-          - 'localhost:9091'  # App 1
-          - 'localhost:9092'  # App 2
-          - 'localhost:9093'  # App 3
-```
-This allows you to aggregate metrics from all applications into a single dashboard while keeping the applications themselves completely separate.
-
-### Accessing Metrics Remotely
-If your Prometheus scraper is running on a different machine, or if you want to view an application's metrics endpoint from your local browser, you can use an SSH tunnel to securely forward the port.
-
-```bash
-# From your local machine, forward the server's port 9091 to your local port 9091
-ssh -L 9091:localhost:9091 user@your-server.com
-```
-You can now browse to `http://localhost:9091/metrics` on your local machine to view the metrics. The same technique can be used to configure a remote Prometheus instance to scrape the tunneled port.
-
 ## Backups
 
 When running `restinpieces` applications, you have two supported strategies for database backups, which can be used independently or together for a defense-in-depth approach.
@@ -193,4 +168,29 @@ In this model, a single, system-wide `litestream` process runs as a separate dae
 -   **Increased Security Complexity:** Requires the central daemon to have read access to all application databases, which typically involves relaxing file permissions with shared groups.
 -   **Decoupled Lifecycle:** The replication process can fail independently of the applications, potentially leading to unmonitored backup failures.
 -   **Increased Operational Overhead:** Requires managing and monitoring an additional system-wide daemon.
+
+## Prometheus Monitoring
+
+For monitoring multiple applications on the same VM, each application can expose its own `/metrics` endpoint on a different port. A single Prometheus instance (running on the host or elsewhere) can then be configured to scrape all of these endpoints.
+
+Example `prometheus.yml` scrape configuration:
+```yaml
+scrape_configs:
+  - job_name: 'restinpieces-apps'
+    static_configs:
+      - targets:
+          - 'localhost:9091'  # App 1
+          - 'localhost:9092'  # App 2
+          - 'localhost:9093'  # App 3
+```
+This allows you to aggregate metrics from all applications into a single dashboard while keeping the applications themselves completely separate.
+
+### Accessing Metrics Remotely
+If your Prometheus scraper is running on a different machine, or if you want to view an application's metrics endpoint from your local browser, you can use an SSH tunnel to securely forward the port.
+
+```bash
+# From your local machine, forward the server's port 9091 to your local port 9091
+ssh -L 9091:localhost:9091 user@your-server.com
+```
+You can now browse to `http://localhost:9091/metrics` on your local machine to view the metrics. The same technique can be used to configure a remote Prometheus instance to scrape the tunneled port.
 
