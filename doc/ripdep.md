@@ -1,8 +1,14 @@
 # Restinpieces Deployment & Operations Tool (ripdep)
 
-This script, `ripdep`, is a comprehensive tool for building, packaging, and deploying [RestInPieces](https://github.com/caasmo/restinpieces) framework applications.
+`ripdep` is a CLI tool for building, packaging, and deploying
+[RestInPieces](https://github.com/caasmo/restinpieces) framework applications.
+It also orquestates high level dev ops operatios, like server migrations.
 
-It is designed to be run from a developer's local machine and acts as a high-level, user-friendly facade for all operational tasks. It orchestrates complex remote operations over SSH by wrapping the lower-level, on-server configuration tool, `ripc`. For most use cases, you should only need to interact with `ripdep`.
+It is designed to be run from a developer's local machine and acts as a
+high-level, user-friendly facade for all operational tasks. It orchestrates
+complex remote operations over SSH by wrapping the lower-level, on-server
+configuration tool, `ripc`. For most use cases, you should only need to
+interact with `ripdep`.
 
 ## Use Cases
 
@@ -28,7 +34,8 @@ HOST="user@target-server.com"
 ./ripdep deploy "$HOST" "${BUILD_BASE}/my-app"
 ```
 
-#### Low-Level Breakdown (Educational)
+#### Low-Level Breakdown
+
 The `deploy` command automates the following manual steps:
 
 ```bash
