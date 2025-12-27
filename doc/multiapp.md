@@ -9,7 +9,7 @@ Our approach focuses on:
 
 ## Systemd Hardening
 
-Our `systemd` setup provides robust security and isolation, leveraging the same underlying Linux kernel features that containers use.
+Our `systemd` setup, based on the provided [`restinpieces.service`](https://github.com/caasmo/restinpieces/blob/master/restinpieces.service) template, provides robust security and isolation, leveraging the same underlying Linux kernel features that containers use.
 
 ### Your Current Setup is 90% There
 
@@ -23,8 +23,6 @@ This is a genuinely secure foundation. If one application is compromised, the at
 *   They **cannot** read other applications' data due to Unix user permissions.
 *   They **cannot** escalate privileges on the system.
 *   They have **limited** access to the host filesystem.
-
-You can view the base template used for this hardened service unit directly on GitHub: [`restinpieces.service`](https://github.com/caasmo/restinpieces/blob/master/restinpieces.service).
 
 ### Systemd vs. Containers
 
