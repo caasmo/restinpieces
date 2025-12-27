@@ -1088,107 +1088,52 @@ backup_remote_service() {
 }
 
 cmd_undeploy() {
-
     local host=${1:-}
-
     local service_name=${2:-}
-
     local force=${3:-} # for -y or --force
 
-
-
     if [ -z "$host" ] || [ -z "$service_name" ]; then
-
         log_error "Usage: $0 undeploy <host> <service-name> [-y|--force]"
-
         exit 1
-
     fi
-
-
 
     if [[ "$force" != "-y" && "$force" != "--force" ]]; then
-
         log_warning "This will create a backup of '${service_name}' from '${host}', download it,"
-
         log_warning "and then PERMANENTLY DELETE the service, user, and all files."
-
         read -p "Are you sure you want to continue? (yes/no) " -r
-
         echo
-
         if [[ ! "$REPLY" =~ ^[Yy][Ee][Ss]$ ]]; then
-
             log_info "Undeploy cancelled."
-
             exit 1
-
         fi
-
     fi
-
-
 
     log_info "Step 1: Backing up remote data..."
-
     if ! backup_remote_service "$host" "$service_name"; then
-
         exit 1
-
     fi
-
-
 
     log_info "Step 2: Uninstalling application on ${host}..."
-
     local deployed_script_path="/home/${service_name}/bin/ripdep"
-
     local remote_tmp_script_path="/tmp/ripdep-uninstall-$"
-
-
-
     log_info "→ Orchestrating remote uninstall using the deployed script..."
 
-
-
-    local uninstall_script="
-
-        set -e
-
-        echo '→ Copying deployed uninstaller to a temporary location...'
-
-        sudo cp ${deployed_script_path} ${remote_tmp_script_path}
-
-        sudo chmod +x ${remote_tmp_script_path}
-
-        echo '→ Executing uninstaller...'
-
-        sudo ${remote_tmp_script_path} uninstall ${service_name}
-
-        
-
-        echo '→ Cleaning up uninstaller...'
-
-        sudo rm -f ${remote_tmp_script_path}
-
-    "
-
+    local uninstall_script="set -e
+echo '→ Copying deployed uninstaller to a temporary location...'
+sudo cp ${deployed_script_path} ${remote_tmp_script_path}
+sudo chmod +x ${remote_tmp_script_path}
+echo '→ Executing uninstaller...'
+sudo ${remote_tmp_script_path} uninstall ${service_name}
+echo '→ Cleaning up uninstaller...'
+sudo rm -f ${remote_tmp_script_path}"
     
-
     if ! ssh -t -o LogLevel=ERROR "${host}" "$uninstall_script"; then
-
         log_warning "Remote uninstall script failed. The server may be in an inconsistent state."
-
         log_warning "A temporary uninstaller may be left at ${remote_tmp_script_path} on the remote host."
-
         exit 1
-
     fi
-
     
-
     log_success "Successfully undeployed '${service_name}' from '${host}'."
-
 }
 
 # ============================================ 
