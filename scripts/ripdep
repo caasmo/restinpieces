@@ -776,15 +776,15 @@ cmd_push() {
 # ============================================ 
 
 create_service_user() {
-    log_info "Setting up service user: ${SERVICE_NAME}..."
+    log_info "Setting up service user: ${project_name}..."
     
-    if id "${SERVICE_NAME}" &>/dev/null; then
-        log_success "User ${SERVICE_NAME} already exists"
+    if id "${project_name}" &>/dev/null; then
+        log_success "User ${project_name} already exists"
         return 0
     fi
     
-    useradd -r -m -d "/home/${SERVICE_NAME}" -s /bin/bash "${SERVICE_NAME}"
-    log_success "Created user ${SERVICE_NAME}"
+    useradd -r -m -d "/home/${project_name}" -s /bin/bash "${project_name}"
+    log_success "Created user ${project_name}"
 }
 
 create_directory_structure() {
