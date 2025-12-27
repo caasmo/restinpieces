@@ -9,11 +9,17 @@ set -euo pipefail
 # CONFIGURATION
 # ============================================ 
 
+# Base directory on remote hosts for staging deployments.
 REMOTE_BASE_DIR="/tmp"
+# Base directory for creating local build artifacts.
 BUILD_BASE_DIR="/tmp"
 
+# Local directory for storing final release artifacts (tarballs).
 RELEASES_BASE_DIR="${HOME}/src/backup/releases"
+# Local directory containing project-specific configuration files.
 CONFIG_BASE_DIR="${HOME}/src/restinpieces-litestream"
+# Directory for hook scripts that can be run at different stages.
+HOOKS_DIR="${CONFIG_BASE_DIR}/hooks"
 
 # External Tool Configurations
 REPO_LITESTREAM="benbjohnson/litestream"
