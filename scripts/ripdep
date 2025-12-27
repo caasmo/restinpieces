@@ -1,7 +1,7 @@
 #!/bin/bash
 # ripdep - Deployment and operations tool
 # Primary location: Local dev machine
-# Copied to VMs during deployment for 'install' command
+# Orchestrates operations on remote servers via a dedicated remote script
 
 set -euo pipefail
 
@@ -11,6 +11,7 @@ set -euo pipefail
 
 # Base directory on remote hosts for staging deployments.
 REMOTE_BASE_DIR="/tmp"
+
 # Local directory for storing final release artifacts (tarballs).
 RELEASES_BASE_DIR="${HOME}/src/backup/releases"
 # Local directory containing project-specific configuration files.
@@ -67,8 +68,6 @@ log_error() {
     echo -e "${RED}✗${NC} $1" >&2
 }
 
-
-
 require_root() {
     if [ $EUID -ne 0 ]; then
         log_error "This command must run as root (use sudo)"
@@ -77,23 +76,16 @@ require_root() {
 }
 
 # Get the latest release tag from a GitHub repository
-#
-# proper robust fuctnion
-# return 1 for Function Errors
-# Variable Declaration Separation, this ensures exit codes are properly captured.
-# Explicit Error Checking Where Needed
 get_latest_release() {
     local repo=$1
     local url="https://api.github.com/repos/${repo}/releases/latest"
     local version
     
-    # Fetch version from GitHub API
     if ! version=$(curl -sSf "$url" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'); then
         log_error "Failed to fetch latest release for $repo"
         return 1
     fi
     
-    # Validate we got a version
     if [[ -z "$version" ]]; then
         log_error "Empty version returned for $repo"
         return 1
@@ -103,8 +95,6 @@ get_latest_release() {
 }
 
 # get_latest_tag: Returns the latest git tag if available, otherwise the short commit hash.
-# Echos the tag/hash on success and returns 0.
-# On failure, logs an error and returns 1.
 get_latest_tag() {
     if ! git rev-parse --git-dir > /dev/null 2>&1; then
         log_error "Not a git repository. Cannot determine version."
@@ -128,56 +118,36 @@ get_latest_tag() {
 }
 
 get_project_name_from_file_base() {
-    # This function extracts the project name from a string like "my-project-v1.0".
-    # It assumes the format is "<project-name>-<version>".
-    #
-    # The magic is "%-*" (Shortest Suffix Removal). It finds the LAST hyphen
-    # and removes it and everything after it, leaving the project name.
-    # Example: "my-project-with--v0.1" % "-*" --> "my-project-with-"
     local input_string="$1"
     echo "${input_string%-*}"
 }
 
 get_version_from_file_base() {
-    # This function extracts the version from a string like "my-project-v1.0".
-    # It assumes the format is "<project-name>-<version>".
-    #
-    # The magic is "##*-" (Longest Prefix Removal). It finds everything from
-    # the start of the string up to and including the LAST hyphen. It removes
-    # this prefix, leaving only the version string.
-    # Example: "my-project-with--v0.1" ## "*-" --> "v0.1"
     local input_string="$1"
     echo "${input_string##*-}"
 }
 
 get_remote_dir_from_tarball_path() {
     local tarball_path=$1
-    local tarball_name
-    tarball_name=$(basename "$tarball_path")
+    local tarball_name=$(basename "$tarball_path")
     local tar_base="${tarball_name%.tar.gz}"
 
-    local project_name
-    project_name=$(get_project_name_from_file_base "$tar_base")
-    local version
-    version=$(get_version_from_file_base "$tar_base")
+    local project_name=$(get_project_name_from_file_base "$tar_base")
+    local version=$(get_version_from_file_base "$tar_base")
 
     if [ -z "$project_name" ] || [ -z "$version" ]; then
         log_error "Could not parse project name and version from tarball: ${tarball_name}"
-        log_error "Expected format: <project-name>-<version>.tar.gz"
         return 1
     fi
 
     echo "${REMOTE_BASE_DIR}/${project_name}/${version}"
 }
 
-# seems_build_dir: returns 0 if the directory has bin/ and data/ subdirs.
 seems_build_dir() {
     local dir=$1
     [ -d "${dir}/bin" ] && [ -d "${dir}/data" ]
 }
 
-# is_go_project: Checks if a given path is a valid Go project for this script.
-# Returns 0 if it is, 1 otherwise.
 is_go_project() {
     local project_path=$1
     if [ ! -d "$project_path" ]; then
@@ -188,7 +158,6 @@ is_go_project() {
         log_error "Not a Go project (missing go.mod): ${project_path}"
         return 1
     fi
-    # The build logic relies on a cmd/ dir.
     if [ ! -d "${project_path}/cmd" ]; then
         log_error "No cmd/ directory found in project: ${project_path}"
         return 1
@@ -201,1325 +170,267 @@ is_go_project() {
 # ============================================ 
 
 setup_build_dir() {
-    local build_dir=$1
-    local bin_dir=$2
-    local data_dir=$3
-    
-    # Clean and create
+    local build_dir=$1 bin_dir=$2 data_dir=$3
     if [ -d "$build_dir" ]; then
         log_info "Deleting old build directory: $build_dir"
         rm -rf "$build_dir"
     fi
     mkdir -p "$bin_dir"
     mkdir -p "$data_dir"
-    
-    log_info "Build directory created: $build_dir"
 }
 
 build_project_binary() {
     local bin_dir=$1 project_path=$2 binary_name=$3
-    local project_name
-    project_name=$(basename "$project_path")
+    local project_name=$(basename "$project_path")
     log_info "Building Go restinpieces app binaries from project: $project_path"
 
-    local num_commands
-    num_commands=$(ls -d "$project_path"/cmd/*/ 2>/dev/null | wc -l)
+    local num_commands=$(ls -d "$project_path"/cmd/*/ 2>/dev/null | wc -l)
     local src=""
 
     if [ -d "$project_path/cmd/$project_name" ]; then
         src="./cmd/$project_name"
     elif [ "$num_commands" -eq 1 ]; then
-        # Get the single cmd subdirectory
-        local full_path
-        full_path=$(ls -d "$project_path"/cmd/*/ 2>/dev/null)
-        local cmd_name
-        cmd_name=$(basename "$full_path")
+        local full_path=$(ls -d "$project_path"/cmd/*/ 2>/dev/null)
+        local cmd_name=$(basename "$full_path")
         src="./cmd/$cmd_name"
     else
         log_error "Build failed: Multiple dirs in cmd/ but none match '${project_name}', or cmd/ is empty."
         exit 1
     fi
     
-    # Build from the project directory.
-    # We use a subshell (...) to change into the project dir for the build (so go.mod is found)
-    # without affecting the current working directory of this script.
     (cd "$project_path" && go build -ldflags="-s -w" -trimpath -o "${bin_dir}/${binary_name}" "$src")
     log_success "Built ${binary_name} in ${bin_dir}"
 }
 
-# Download and install Litestream binary
 download_litestream() {
-    local bin_dir=$1
-    local ls_version
-    local ls_version_num
-    local url_ls
-    
-    # Get latest version
-    if ! ls_version=$(get_latest_release "$REPO_LITESTREAM"); then
-        log_error "Failed to fetch latest Litestream version."
-        return 1
-    fi
-    
+    local bin_dir=$1 ls_version ls_version_num url_ls
+    if ! ls_version=$(get_latest_release "$REPO_LITESTREAM"); then return 1; fi
     log_info "Downloading Litestream ${ls_version}..."
-    
-    # Strip 'v' prefix if present
     ls_version_num=${ls_version#v}
-    
-    # Build download URL
     printf -v url_ls "$URL_TEMPLATE_LITESTREAM" "$REPO_LITESTREAM" "$ls_version" "$ls_version_num"
-    
-    # Download and extract (pipefail ensures curl failures are caught)
-    if ! curl -sSLf "$url_ls" | tar -xz -C "${bin_dir}" litestream; then
-        log_error "Failed to download or extract Litestream from $url_ls" >&2
-        return 1
-    fi
-    
-    # Make executable
+    if ! curl -sSLf "$url_ls" | tar -xz -C "${bin_dir}" litestream; then return 1; fi
     chmod +x "${bin_dir}/litestream"
-    
-    log_success "Litestream binary placed in ${bin_dir}/litestream"
 }
 
-# Download and install Age encryption binaries
 download_age() {
-    local bin_dir=$1
-    local age_version
-    local url_age
-    
-    # Get latest version
-    if ! age_version=$(get_latest_release "$REPO_AGE"); then
-        log_error "Failed to fetch latest Age version."
-        return 1
-    fi
-    
+    local bin_dir=$1 age_version url_age
+    if ! age_version=$(get_latest_release "$REPO_AGE"); then return 1; fi
     log_info "Downloading Age ${age_version}..."
-    
-    # Build download URL
     printf -v url_age "$URL_TEMPLATE_AGE" "$REPO_AGE" "$age_version" "$age_version"
-    
-    # Download and extract
-    if ! curl -sSLf "$url_age" | tar -xz -C "${bin_dir}" --strip-components=1 "age/age-keygen" "age/age"; then
-        log_error "Failed to download or extract Age from $url_age" >&2
-        return 1
-    fi
-    
-    log_success "Age binaries placed in ${bin_dir}"
+    if ! curl -sSLf "$url_age" | tar -xz -C "${bin_dir}" --strip-components=1 "age/age-keygen" "age/age"; then return 1; fi
 }
 
-# Download and install Ripc binary
 download_ripc() {
-    local bin_dir=$1
-    local ripc_version
-    local url_ripc
-    
-    # Get latest version
-    if ! ripc_version=$(get_latest_release "$REPO_RIPC"); then
-        log_error "Failed to fetch latest Ripc version."
-        return 1
-    fi
-    
+    local bin_dir=$1 ripc_version url_ripc
+    if ! ripc_version=$(get_latest_release "$REPO_RIPC"); then return 1; fi
     log_info "Downloading Ripc ${ripc_version}..."
-    
-    # Build download URL
     printf -v url_ripc "$URL_TEMPLATE_RIPC" "$REPO_RIPC" "$ripc_version" "$ripc_version"
-    
-    # Download and extract
-    if ! curl -sSLf "$url_ripc" | tar -xz -C "${bin_dir}" --strip-components=1 ripc/ripc; then
-        log_error "Failed to download or extract Ripc from $url_ripc" >&2
-        return 1
-    fi
-    
-    log_success "Ripc binary placed in ${bin_dir}/ripc"
+    if ! curl -sSLf "$url_ripc" | tar -xz -C "${bin_dir}" --strip-components=1 ripc/ripc; then return 1; fi
 }
 
-# Download and install SQLite tools
 download_sqlite() {
-    local bin_dir=$1
-    local tmp_zip
-    
-    log_info "Downloading SQLite tools from $URL_SQLITE_TOOLS..."
-    
-    # Create temporary file
+    local bin_dir=$1 tmp_zip
+    log_info "Downloading SQLite tools..."
     tmp_zip=$(mktemp --suffix=.zip)
-    
-    # Download SQLite tools
-    if ! curl -sSLf "$URL_SQLITE_TOOLS" -o "$tmp_zip"; then
-        log_error "Failed to download SQLite tools from $URL_SQLITE_TOOLS" >&2
-        return 1
-    fi
-    
-    # Extract sqlite3 binary to bin_dir
-    if ! unzip -p "$tmp_zip" "sqlite3" > "${bin_dir}/sqlite3"; then
-        log_error "Failed to extract sqlite3 from archive" >&2
-        return 1
-    fi
-    
-    # Make executable
+    if ! curl -sSLf "$URL_SQLITE_TOOLS" -o "$tmp_zip"; then return 1; fi
+    if ! unzip -p "$tmp_zip" "sqlite3" > "${bin_dir}/sqlite3"; then return 1; fi
     chmod +x "${bin_dir}/sqlite3"
-    
-    # Clean up temp file
     rm -f "$tmp_zip"
-    
-    log_success "SQLite tools downloaded to ${bin_dir}/sqlite3"
 }
 
 generate_age_key() {
-    local bin_dir=$1
-    local build_dir=$2
-    
+    local bin_dir=$1 build_dir=$2
     log_info "Generating Age key..."
     "${bin_dir}/age-keygen" -o "${build_dir}/age.key"
-    log_success "Generated age.key in ${build_dir}/age.key"
 }
 
 create_app_db() {
-    local bin_dir=$1
-    local build_dir=$2
-    local data_dir=$3
-    
+    local bin_dir=$1 build_dir=$2 data_dir=$3
     log_info "Creating app.db..."
-    if [ -f "${data_dir}/app.db" ]; then
-        log_warning "app.db already exists in build dir"
-        exit 1
-    fi
-    
+    if [ -f "${data_dir}/app.db" ]; then exit 1; fi
     "${bin_dir}/ripc" -agekey "${build_dir}/age.key" -dbpath "${data_dir}/app.db" app create
-    log_success "Created app.db in ${data_dir}/app.db"
 }
-
-create_logs_db() {
-    log_warning "log.db not activated, TODO"
-}
-
 
 add_litestream_configuration() {
-    local project_name=$1
-    local bin_dir=$2
-    local build_dir=$3
-    local data_dir=$4
-    
+    local project_name=$1 bin_dir=$2 build_dir=$3 data_dir=$4
     local config_file="${CONFIG_BASE_DIR}/${project_name}/litestream.yml"
-
-    log_info "Checking Litestream configuration..."
     if [ -f "$config_file" ]; then
-        log_info "Importing Litestream config from: $config_file"
+        log_info "Importing Litestream config..."
         "${bin_dir}/ripc" -agekey "${build_dir}/age.key" -dbpath "${data_dir}/app.db" config save -scope litestream "$config_file"
-        log_success "Added ${config_file} to config store in ${data_dir}/app.db"
-    else
-        log_warning "Build has no litestream support (config file not found at $config_file)"
     fi
 }
 
 add_systemd_configuration() {
-    local project_name=$1
-    local build_dir=$2
-    
+    local project_name=$1 build_dir=$2
     log_info "Adding Systemd configuration..."
-    
     local dest_service_file="${build_dir}/systemd-${project_name}.service"
     local local_service_path="${CONFIG_BASE_DIR}/${project_name}/${project_name}.service"
 
-    # Check for a local service file first
     if [ -f "$local_service_path" ]; then
-        log_info "Found local systemd service file template at: $local_service_path"
         cp "$local_service_path" "$dest_service_file"
-        log_success "Copied local service file template to $dest_service_file"
     else
-        log_warning "Local systemd service file template not found at $local_service_path"
-        log_info "Downloading service template from $URL_SERVICE_TEMPLATE..."
-        if curl -sSLf "$URL_SERVICE_TEMPLATE" -o "$dest_service_file"; then
-             log_success "Downloaded service template to $dest_service_file"
-        else
-             log_error "Failed to download service template from $URL_SERVICE_TEMPLATE"
-             exit 1
-        fi
+        curl -sSLf "$URL_SERVICE_TEMPLATE" -o "$dest_service_file"
     fi
-    
-    # Substitute variable
     sed -i "s#\${RESTINPIECES_APP}#${project_name}#g" "$dest_service_file"
-
-    # The binary is now named after the project, which matches the systemd template's
-    # expectation of /bin/${project_name}. No substitution is needed.
-    
-    # Validation: Ensure the service name appears in the file
-    if ! grep -q "${project_name}" "$dest_service_file"; then
-        log_error "Validation failed: Service name '${project_name}' not found in prepared service file ${dest_service_file}"
-        exit 1
-    fi
-    
-    log_success "Service name '${project_name}' substituted into systemd unit file at $dest_service_file"
+    if ! grep -q "${project_name}" "$dest_service_file"; then exit 1; fi
 }
 
 generate_remote_script() {
     local output_path=$1
-    
-    # NOTE: Using a fully quoted heredoc ('EOF') is critical. It prevents the
-    # local shell from expanding variables like $1, ensuring they are preserved
-    # literally in the generated script for remote execution.
     cat > "$output_path" <<'REMOTE_SCRIPT_EOF'
 #!/bin/bash
 set -euo pipefail
 
-# ============================================ 
-# UTILITY FUNCTIONS (Remote)
-# ============================================ 
-
-# Colors for output
-RED=$'\033[0;31m'
-GREEN=$'\033[0;32m'
-YELLOW=$'\033[1;33m'
-BLUE=$'\033[0;34m'
-NC=$'\033[0m' # No Color
-
-log_info() {
-    echo -e "${BLUE}→${NC} $1"
-}
-
-log_success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}✗${NC} $1" >&2
-}
-
-# ============================================
-# INSTALLATION FUNCTIONS (Remote)
-# ============================================
+RED=$'\033[0;31m'; GREEN=$'\033[0;32m'; YELLOW=$'\033[1;33m'; BLUE=$'\033[0;34m'; NC=$'\033[0m'
+log_info() { echo -e "${BLUE}→${NC} $1"; }
+log_success() { echo -e "${GREEN}✓${NC} $1"; }
+log_warning() { echo -e "${YELLOW}⚠${NC} $1"; }
+log_error() { echo -e "${RED}✗${NC} $1" >&2; }
+require_root() { if [ $EUID -ne 0 ]; then log_error "Must run as root"; exit 1; fi; }
 
 create_service_user() {
-    log_info "Setting up service user: ${project_name}"
-    
-    if id "${project_name}" &>/dev/null; then
-        log_success "User ${project_name} already exists"
-        return 0
-    fi
-    
+    log_info "Setting up user: ${project_name}"
+    if id "${project_name}" &>/dev/null; then return 0; fi
     useradd -r -m -d "/home/${project_name}" -s /bin/bash "${project_name}"
-    log_success "Created user ${project_name}"
 }
 
 create_directory_structure() {
-    log_info "Creating directory structure..."
-    
     local data_dir="/home/${project_name}/data"
-    local dirs=(
-        "/home/${project_name}/bin"
-        "$data_dir"
-        "/home/${project_name}/logs"
-    )
-    
-    for dir in "${dirs[@]}"; do
-        if [ ! -d "$dir" ]; then
-            mkdir -p "$dir"
-            log_success "Created $dir"
-        fi
-    done
-    
+    mkdir -p "/home/${project_name}/bin" "$data_dir" "/home/${project_name}/logs"
     chmod 700 "$data_dir"
-    log_success "Set permissions for ${data_dir} to 700"
-    
     chown -R "${project_name}:${project_name}" "/home/${project_name}"
 }
 
 deploy_binaries() {
     local source_dir=$1
-    log_info "Deploying binaries from ${source_dir}/bin..."
-    
-    if [ ! -d "${source_dir}/bin" ]; then
-        log_error "No bin/ directory found in ${source_dir}"
-        exit 1
-    fi
-
     for binary in "${source_dir}"/bin/*; do
         if [ -f "$binary" ]; then
-            local basename=$(basename "$binary")
-            install -m 700 -o "${project_name}" -g "${project_name}" \
-                "$binary" "/home/${project_name}/bin/${basename}"
-            log_success "Installed binary: ${basename} to /home/${project_name}/bin/${basename}"
+            local base=$(basename "$binary")
+            install -m 700 -o "${project_name}" -g "${project_name}" "$binary" "/home/${project_name}/bin/${base}"
         fi
     done
 }
 
 deploy_data_files() {
     local source_dir=$1
-    log_info "Deploying data files from ${source_dir}/data..."
-    
-    # Deploy age key if present
     if [ -f "${source_dir}/age.key" ]; then
-        local dest_key="/home/${project_name}/age.key"
-        install -m 600 -o "${project_name}" -g "${project_name}" \
-            "${source_dir}/age.key" "$dest_key"
-        log_success "Installed age.key to $dest_key"
+        install -m 600 -o "${project_name}" -g "${project_name}" "${source_dir}/age.key" "/home/${project_name}/age.key"
     fi
-
-    if [ ! -d "${source_dir}/data" ]; then
-        return 0
-    fi
-    
-    for datafile in "${source_dir}"/data/*;
-    do
+    if [ ! -d "${source_dir}/data" ]; then return 0; fi
+    for datafile in "${source_dir}"/data/*; do
         if [ -f "$datafile" ]; then
-            local basename=$(basename "$datafile")
-            local dest="/home/${project_name}/data/${basename}"
-            
-            install -m 600 -o "${project_name}" -g "${project_name}" \
-                "$datafile" "$dest"
-            log_success "Installed data file: ${basename} to $dest"
+            local base=$(basename "$datafile")
+            install -m 600 -o "${project_name}" -g "${project_name}" "$datafile" "/home/${project_name}/data/${base}"
         fi
     done
 }
 
 deploy_systemd_service() {
     local source_dir=$1
-    log_info "Deploying systemd service..."
-    
-    # Find generated service file
     local service_file=$(find "${source_dir}" -name "systemd-${project_name}.service" | head -n 1)
-    
-    if [ -z "$service_file" ]; then
-        log_error "Service file not found in ${source_dir}"
-        exit 1
-    }
-    
     cp "$service_file" "/etc/systemd/system/${project_name}.service"
     systemctl daemon-reload
-    log_success "Deployed ${project_name}.service to /etc/systemd/system/${project_name}.service"
-}
-
-handle_database() {
-    # Placeholder for future logic
-    :
 }
 
 cmd_install() {
     require_root
-    
     local script_path=$(realpath "$0")
     local source_dir=$(dirname "$(dirname "$script_path")")
     local project_name=$(basename "$(dirname "$source_dir")")
-
-    log_info "Installing service '${project_name}' from source '${source_dir}'..."
-
-    local restore_from_backup=false
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --restore-from-backup)
-                restore_from_backup=true
-                shift
-                ;; 
-            *)
-                shift
-                ;; 
-        esac
-    done
-    
+    log_info "Installing service '${project_name}'..."
     create_service_user
     create_directory_structure
     deploy_binaries "$source_dir"
     deploy_data_files "$source_dir"
     deploy_systemd_service "$source_dir"
-    handle_database
-    
-    log_success "Installation complete!"
-    log_info "To start service: systemctl enable --now ${project_name}"
-}
-
-# ============================================ 
-# UNINSTALLATION FUNCTIONS (Remote)
-# ============================================ 
-
-generate_remote_script() {
-    local output_path=$1
-    
-    # NOTE: Using a fully quoted heredoc ('EOF') is critical. It prevents the
-    # local shell from expanding variables like $1, ensuring they are preserved
-    # literally in the generated script for remote execution.
-    cat > "$output_path" <<'REMOTE_SCRIPT_EOF'
-#!/bin/bash
-set -euo pipefail
-
-# ============================================ 
-# UTILITY FUNCTIONS (Remote)
-# ============================================ 
-
-# Colors for output
-RED=$'\033[0;31m'
-GREEN=$'\033[0;32m'
-YELLOW=$'\033[1;33m'
-BLUE=$'\033[0;34m'
-NC=$'\033[0m' # No Color
-
-log_info() {
-    echo -e "${BLUE}→${NC} $1"
-}
-
-log_success() {
-    echo -e "${GREEN}✓${NC} $1"
-}
-
-log_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
-}
-
-log_error() {
-    echo -e "${RED}✗${NC} $1" >&2
-}
-
-require_root() {
-    if [ $EUID -ne 0 ]; then
-        log_error "This command must run as root (use sudo)"
-        exit 1
-    fi
-}
-
-# ============================================
-# INSTALLATION FUNCTIONS (Remote)
-# ============================================
-
-create_service_user() {
-    log_info "Setting up service user: ${project_name}..."
-    
-    if id "${project_name}" &>/dev/null; then
-        log_success "User ${project_name} already exists"
-        return 0
-    fi
-    
-    useradd -r -m -d "/home/${project_name}" -s /bin/bash "${project_name}"
-    log_success "Created user ${project_name}"
-}
-
-create_directory_structure() {
-    log_info "Creating directory structure..."
-    
-    local data_dir="/home/${project_name}/data"
-    local dirs=(
-        "/home/${project_name}/bin"
-        "$data_dir"
-        "/home/${project_name}/logs"
-    )
-    
-    for dir in "${dirs[@]}"; do
-        if [ ! -d "$dir" ]; then
-            mkdir -p "$dir"
-            log_success "Created $dir"
-        fi
-    done
-    
-    chmod 700 "$data_dir"
-    log_success "Set permissions for ${data_dir} to 700"
-    
-    chown -R "${project_name}:${project_name}" "/home/${project_name}"
-}
-
-deploy_binaries() {
-    local source_dir=$1
-    log_info "Deploying binaries from ${source_dir}/bin..."
-    
-    if [ ! -d "${source_dir}/bin" ]; then
-        log_error "No bin/ directory found in ${source_dir}"
-        exit 1
-    fi
-
-    for binary in "${source_dir}"/bin/*; do
-        if [ -f "$binary" ]; then
-            local basename=$(basename "$binary")
-            install -m 700 -o "${project_name}" -g "${project_name}" \
-                "$binary" "/home/${project_name}/bin/${basename}"
-            log_success "Installed binary: ${basename} to /home/${project_name}/bin/${basename}"
-        fi
-    done
-}
-
-deploy_data_files() {
-    local source_dir=$1
-    log_info "Deploying data files from ${source_dir}/data..."
-    
-    # Deploy age key if present
-    if [ -f "${source_dir}/age.key" ]; then
-        local dest_key="/home/${project_name}/age.key"
-        install -m 600 -o "${project_name}" -g "${project_name}" \
-            "${source_dir}/age.key" "$dest_key"
-        log_success "Installed age.key to $dest_key"
-    fi
-
-    if [ ! -d "${source_dir}/data" ]; then
-        return 0
-    fi
-    
-    for datafile in "${source_dir}"/data/*;
-    do
-        if [ -f "$datafile" ]; then
-            local basename=$(basename "$datafile")
-            local dest="/home/${project_name}/data/${basename}"
-            
-            install -m 600 -o "${project_name}" -g "${project_name}" \
-                "$datafile" "$dest"
-            log_success "Installed data file: ${basename} to $dest"
-        fi
-    done
-}
-
-deploy_systemd_service() {
-    local source_dir=$1
-    log_info "Deploying systemd service..."
-    
-    # Find generated service file
-    local service_file=$(find "${source_dir}" -name "systemd-${project_name}.service" | head -n 1)
-    
-    if [ -z "$service_file" ]; then
-        log_error "Service file not found in ${source_dir}"
-        exit 1
-    fi
-    
-    cp "$service_file" "/etc/systemd/system/${project_name}.service"
-    systemctl daemon-reload
-    log_success "Deployed ${project_name}.service to /etc/systemd/system/${project_name}.service"
-}
-
-handle_database() {
-    # Placeholder for future logic
-    :
-}
-
-cmd_install() {
-    require_root
-    
-    local script_path=$(realpath "$0")
-    local source_dir=$(dirname "$(dirname "$script_path")")
-    local project_name=$(basename "$(dirname "$source_dir")")
-
-    log_info "Installing service '${project_name}' from source '${source_dir}'..."
-
-    local restore_from_backup=false
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --restore-from-backup)
-                restore_from_backup=true
-                shift
-                ;; 
-            *)
-                shift
-                ;; 
-        esac
-    done
-    
-    create_service_user
-    create_directory_structure
-    deploy_binaries "$source_dir"
-    deploy_data_files "$source_dir"
-    deploy_systemd_service "$source_dir"
-    handle_database
-    
-    log_success "Installation complete!"
-    log_info "To start service: systemctl enable --now ${project_name}"
-}
-
-# ============================================ 
-# UNINSTALLATION FUNCTIONS (Remote)
-# ============================================ 
-
-stop_service() {
-    log_info "Stopping and disabling service '${service_name}'..."
-    if systemctl list-unit-files "${service_name}.service" >/dev/null 2>&1; then
-        if systemctl is-active --quiet "${service_name}"; then
-            log_info "→ Service is active. Stopping..."
-            systemctl stop "${service_name}"
-        fi
-        if systemctl is-enabled --quiet "${service_name}"; then
-            log_info "→ Service is enabled. Disabling..."
-            systemctl disable "${service_name}"
-        fi
-    else
-        log_warning "→ Service ${service_name}.service not found, skipping stop/disable."
-    fi
-    log_success "Service stop/disable phase finished."
-}
-
-remove_systemd_service() {
-    local service_path="/etc/systemd/system/${service_name}.service"
-    log_info "Deleting systemd service file for '${service_name}'..."
-    if [ -f "${service_path}" ]; then
-        log_info "→ Removing systemd service file: ${service_path}"
-        rm -f "${service_path}"
-        systemctl daemon-reload
-    else
-        log_warning "→ Service file ${service_path} not found."
-    fi
-    log_success "Systemd file cleanup finished."
-}
-
-delete_service_user() {
-    log_info "Deleting user and all files for '${service_name}'..."
-    if id "${service_name}" &>/dev/null; then
-        log_info "→ Deleting user '${service_name}' and home directory..."
-        userdel -r "${service_name}"
-    else
-        log_warning "→ User ${service_name} not found."
-    fi
-    log_success "User and files cleanup finished."
+    log_success "Installation complete! To start: systemctl enable --now ${project_name}"
 }
 
 cmd_uninstall() {
     require_root
-    local service_name=${1:-} # Used by helpers
-
-    if [ -z "$service_name" ]; then
-        echo "Usage: $0 uninstall <service-name>"
-        exit 1
+    local service_name=${1:-}
+    if [ -z "$service_name" ]; then echo "Usage: $0 uninstall <name>"; exit 1; fi
+    log_info "Uninstalling '${service_name}'..."
+    if systemctl list-unit-files "${service_name}.service" >/dev/null 2>&1; then
+        if systemctl is-active --quiet "${service_name}"; then systemctl stop "${service_name}"; fi
+        if systemctl is-enabled --quiet "${service_name}"; then systemctl disable "${service_name}"; fi
     fi
-
-    log_info "Uninstalling service '${service_name}'..."
-
-    stop_service
-    remove_systemd_service
-    delete_service_user
-
-    log_success "Successfully uninstalled '${service_name}'."
+    rm -f "/etc/systemd/system/${service_name}.service"
+    systemctl daemon-reload
+    if id "${service_name}" &>/dev/null; then userdel -r "${service_name}"; fi
+    log_success "Uninstalled '${service_name}'."
 }
 
-
-# ============================================ 
-# MAIN (Remote)
-# ============================================ 
 main() {
     local cmd=${1:-}
-    if [ -z "$cmd" ]; then
-        log_error "No command provided to remote script."
-        exit 1
-    fi
     shift
-    
     case "$cmd" in
         install) cmd_install "$@" ;;
         uninstall) cmd_uninstall "$@" ;;
-        *) 
-            log_error "Unknown remote command: $cmd"
-            exit 1 
-            ;; 
+        *) exit 1 ;;
     esac
 }
-
 main "$@"
 REMOTE_SCRIPT_EOF
-
     chmod +x "$output_path"
-    log_success "Generated remote execution script at ${output_path}"
-}
-
-cmd_uninstall() {
-    require_root
-    local service_name=${1:-} # Used by helpers
-
-    if [ -z "$service_name" ]; then
-        show_uninstall_help
-        exit 1
-    fi
-
-    log_info "Uninstalling service '${service_name}'..."
-
-    stop_service
-    remove_systemd_service
-    delete_service_user
-
-    log_success "Successfully uninstalled '${service_name}'."
-}
-
-
-# ============================================ 
-# MAIN (Remote)
-# ============================================ 
-main() {
-    local cmd=${1:-}
-    if [ -z "$cmd" ]; then
-        log_error "No command provided to remote script."
-        exit 1
-    fi
-    shift
-    
-    case "$cmd" in
-        install) cmd_install "$@" ;;
-        uninstall) cmd_uninstall "$@" ;;
-        *) 
-            log_error "Unknown remote command: $cmd"
-            exit 1 
-            ;; 
-    esac
-}main "$@"
-REMOTE_SCRIPT_EOF
-
-    chmod +x "$output_path"
-    log_success "Generated remote execution script at ${output_path}"
-}
-
-
-
-# cmd_pack: Packages a build directory into a release tarball.
-#
-# General Purpose:
-# This function takes a completed build directory and creates a compressed tarball (.tar.gz).
-# The resulting tarball is placed in the standard releases directory, defined by
-# the RELEASES_BASE_DIR variable (e.g., ~/src/backup/releases/<project_name>/).
-#
-# Tarball Naming:
-# The name of the output tarball is primarily determined by the main project binary found
-# in the build directory's 'bin/' subfolder. It includes the project name and the Git tag version.
-# The tarball overwrites any existing file with the same name.
-#
-# Example Tarball Name:
-# myproject-v1.2.3.tar.gz
-cmd_pack() {
-    local build_dir=$1
-
-    if [ -z "$build_dir" ] || [ ! -d "$build_dir" ]; then
-        log_error "Usage: $0 pack <build_dir>"
-        log_error "A valid build directory must be provided."
-        exit 1
-    fi
-
-    if ! seems_build_dir "$build_dir"; then
-        log_error "Directory '${build_dir}' does not appear to be a valid build directory. Missing 'bin' or 'data'."
-        exit 1
-    fi
-    
-    log_info "Packing build directory: ${build_dir}"
-
-    local build_name
-    build_name=$(basename "$build_dir") 
-
-    local project_name
-    project_name=$(get_project_name_from_file_base "$build_name")
-
-    local tarball_name="${build_name}.tar.gz"
-    
-    local output_dir="${RELEASES_BASE_DIR}/${project_name}"
-    mkdir -p "$output_dir"
-    
-    local output_path="${output_dir}/${tarball_name}"
-    
-    log_info "Creating tarball: ${output_path}"
-    if ! tar -czf "$output_path" -C "$build_dir" .; then
-         log_error "Failed to create tarball."
-         exit 1
-    fi
-    
-    local size
-    size=$(du -h "$output_path" | cut -f1)
-    log_success "Created release artifact: ${output_path} (${size})"
-
-    if [ -z "${CMD_DEPLOY_CALLER:-}" ]; then
-        echo "" # Add a blank line for readability
-        log_info "Next step: Push the artifact to a remote host:"
-        log_info "    $0 push <host> ${output_path}"
-    fi
-}
-
-# cmd_unpack: Extracts a release tarball into a directory.
-cmd_unpack() {
-    local tarball_path=$1
-    local target_dir=$2
-
-    if [ -z "$tarball_path" ] || [ -z "$target_dir" ]; then
-        log_error "Usage: $0 unpack <tarball_path> <target_dir>"
-        exit 1
-    fi
-
-    if [ ! -f "$tarball_path" ]; then
-        log_error "Release tarball not found: $tarball_path"
-        exit 1
-    fi
-
-    mkdir -p "$target_dir"
-    log_info "Unpacking ${tarball_path} to ${target_dir}..."
-    
-    if ! tar -xzf "$tarball_path" -C "$target_dir"; then
-        log_error "Failed to unpack tarball."
-        exit 1
-    fi
-    
-    log_success "Unpacked release to ${target_dir}"
-}
-
-# cmd_restore-db: Restores a database from a source into a directory.
-cmd_restore-db() {
-    local source=$1
-    local target_dir=$2
-
-    if [ -z "$source" ] || [ -z "$target_dir" ]; then
-        log_error "Usage: $0 restore-db <source> <target_dir>"
-        exit 1
-    fi
-
-    local tmp_tools=""
-    # The trap will cleanup the tmp_tools dir on function exit.
-    trap 'cleanup_temp_dirs "$tmp_tools"' RETURN
-
-    local data_dir="${target_dir}/data"
-    mkdir -p "$data_dir"
-
-    if [[ "$source" == *.yml ]] || [[ "$source" == *.yaml ]]; then
-        log_info "Restoring database from Litestream config: ${source}..."
-        
-        tmp_tools=$(mktemp -d)
-        log_info "Created temporary directory for tools: $tmp_tools"
-        download_litestream "$tmp_tools"
-
-        if ! "${tmp_tools}/litestream" restore -config "$source" "${data_dir}/app.db"; then
-            log_error "Litestream restore failed."
-            exit 1
-        fi
-    elif [[ "$source" == *.db ]]; then
-        log_info "Copying database file: ${source}..."
-        cp "$source" "${data_dir}/app.db"
-    elif [[ "$source" == *.tar.gz ]]; then
-        log_info "Unpacking database snapshot: ${source}..."
-        if ! tar -xzf "$source" -C "$data_dir"; then
-            log_error "Failed to unpack database snapshot."
-            exit 1
-        fi
-    else
-        log_error "Unknown database source type: ${source}"
-        log_error "Supported types: .yml, .yaml, .db, .tar.gz"
-        exit 1
-    fi
-
-    log_success "Database restored to ${data_dir}/app.db"
-}
-
-# cmd_build-recovery: Assembles a build directory for recovery.
-cmd_build-recovery() {
-    # Check for help first
-    if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
-        show_build_recovery_help
-        exit 0
-    fi
-
-    local build_base_dir=$1
-    shift
-
-    if [ -z "$build_base_dir" ]; then
-        log_error "Usage: $0 build-recovery <build_base_dir> [options]"
-        exit 1
-    fi
-
-    local with_release=""
-    local with_db=""
-
-    # Parse flags manually
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --with-release) with_release="$2"; shift 2 ;;
-            --with-db) with_db="$2"; shift 2 ;;
-            *) shift ;;
-        esac
-    done
-
-    if [ -z "$with_release" ] && [ -z "$with_db" ]; then
-        log_error "At least --with-release or --with-db must be specified."
-        exit 1
-    fi
-
-    local tmp_tools=""
-    # The trap will cleanup the tmp_tools dir on function exit.
-    trap 'cleanup_temp_dirs "$tmp_tools"' RETURN
-
-    local project_name
-    if ! project_name=$(get_project_name_from_recovery_flags "$with_release" "$with_db"); then
-        log_error "Aborting recovery build: Could not determine project name."
-        exit 1
-    fi
-
-    local version="recovery-$(date +%Y%m%d)" # Default version if not discoverable
-    if [ -n "$with_release" ]; then
-        local tarball_name=$(basename "$with_release")
-        local tar_base="${tarball_name%.tar.gz}"
-        version=$(get_version_from_file_base "$tar_base")
-    fi
-
-    local build_dir="${build_base_dir}/${project_name}-${version}"
-    local bin_dir="${build_dir}/bin"
-    local data_dir="${build_dir}/data"
-
-    log_info "Recovery Build for project: ${GREEN}${project_name}${NC} version: ${GREEN}${version}${NC}"
-    setup_build_dir "$build_dir" "$bin_dir" "$data_dir"
-
-    # 1. Handle Release Unpacking
-    if [ -n "$with_release" ]; then
-        cmd_unpack "$with_release" "$build_dir"
-    fi
-
-    # 2. Handle Database Restoration
-    if [ -n "$with_db" ]; then
-        cmd_restore-db "$with_db" "$build_dir"
-        
-        # Look for age.key in the same dir as the db source
-        local source_dir=$(dirname "$with_db")
-        if [ -f "${source_dir}/age.key" ]; then
-            log_info "Found age.key in database source directory. Copying..."
-            cp "${source_dir}/age.key" "$build_dir/"
-            log_success "Copied age.key to ${build_dir}/age.key"
-        fi
-    fi
-
-    # ---------------------------------------------------------
-    # DB Integrity Check
-    # ---------------------------------------------------------
-    if ls "${data_dir}"/*.db >/dev/null 2>&1; then
-        log_info "Performing integrity check on databases in data/ directory..."
-        
-        # Ensure we have a clean tools directory for sqlite
-        tmp_tools=$(mktemp -d)
-        download_sqlite "$tmp_tools"
-
-        for db_file in "${data_dir}"/*.db; do
-            [ -e "$db_file" ] || continue
-            log_info "Checking integrity of: $(basename "$db_file")"
-            local check_result
-            check_result=$("${tmp_tools}/sqlite3" "$db_file" "PRAGMA integrity_check;")
-            echo "$check_result"
-            if [[ "$check_result" != "ok" ]]; then
-                log_error "Database integrity check failed for ${db_file}!"
-                exit 1
-            fi
-        done
-        log_success "All database integrity checks passed."
-    fi
-
-    # 3. Ensure self-contained script
-    cp "$0" "${bin_dir}/ripdep"
-    chmod +x "${bin_dir}/ripdep"
-    log_info "Copied deploy script to ${bin_dir}/ripdep"
-
-    log_success "Recovery build completed successfully in: ${GREEN}${build_dir}${NC}"
 }
 
 # ============================================ 
 # DEPLOYMENT FUNCTIONS - REMOTE TRANSFER
 # ============================================ 
 
-# cmd_push: Transfers and extracts a release tarball to a remote host.
-#
-# Design Insight:
-# This function is the transport layer of the deployment pipeline. It takes a local
-# tarball created by 'pack' and places it on a remote server, preparing it for
-# installation.
-#
-# The core design is to stage the release in a temporary, version-specific
-# directory on the remote host (e.g., /tmp/my-project/v1.2.3). This is a deliberate
-# choice to ensure that the push operation is non-destructive and isolated from any
-# currently running version of the service. The actual "go-live" switch happens
-# later during the 'install' step, which allows this 'push' step to be safe to run
-# and re-run.
-#
-# It can be used as a standalone command for manual, step-by-step deployments, in
-# which case it provides helpful instructions for the next step ('install'). It
-# can also be used as a building block by the parent 'deploy' command, which
-# suppresses the instructional output for a cleaner, fully-automated workflow.
-cmd_push() {
-    local host=${1:-}
-    local tarball_path=${2:-}
-
-    if [ -z "$host" ] || [ -z "$tarball_path" ]; then
-        log_error "Usage: $0 push <host> <tarball_path>"
-        exit 1
-    fi
-
-    if [ ! -f "$tarball_path" ]; then
-        log_error "Tarball not found at: ${tarball_path}"
-        exit 1
-    fi
-    
-    local remote_dir
-    if ! remote_dir=$(get_remote_dir_from_tarball_path "$tarball_path"); then
-        log_error "Aborting push: Could not determine remote directory."
-        exit 1
-    fi
-    local tarball_name
-    tarball_name=$(basename "$tarball_path")
-
-    log_info "Uploading ${tarball_path} to ${host}:${remote_dir}..."
-    
-    # Create remote directory
-    ssh -o LogLevel=ERROR "${host}" "mkdir -p ${remote_dir}"
-    
-    # Upload tarball
-    scp "$tarball_path" "${host}:${remote_dir}/"
-    
-    # Extract on remote
-    log_info "Extracting on remote..."
-
-	#maybe delete the tarball after succesful extract?
-	# rm -f ${remote_dir}/${tarball_name}
-
-	if ! ssh -o LogLevel=ERROR "${host}" "
-        if tar -xzf ${remote_dir}/${tarball_name} -C ${remote_dir}; then
-            exit 0
-        else
-            echo 'Extraction failed, cleaning up...' >&2
-            exit 1
-        fi
-    "; then
-        log_error "Failed to extract tarball on remote host"
-        exit 1
-    fi
-    
-    log_success "Uploaded and extracted to ${remote_dir}"
-    
+cmd_pack() {
+    local build_dir=$1
+    if [ -z "$build_dir" ] || [ ! -d "$build_dir" ]; then exit 1; fi
+    if ! seems_build_dir "$build_dir"; then exit 1; fi
+    local build_name=$(basename "$build_dir") 
+    local project_name=$(get_project_name_from_file_base "$build_name")
+    local output_path="${RELEASES_BASE_DIR}/${project_name}/${build_name}.tar.gz"
+    mkdir -p "$(dirname "$output_path")"
+    tar -czf "$output_path" -C "$build_dir" .
+    log_success "Created release artifact: ${output_path}"
     if [ -z "${CMD_DEPLOY_CALLER:-}" ]; then
-        echo "" # Add a blank line for readability
-        log_info "Next step: Log in to the remote machine and run the installer:"
-        log_info "    ssh ${host}"
-        log_info "    sudo ${remote_dir}/bin/ripdep install"
+        log_info "Next step: ripdep push <host> ${output_path}"
     fi
 }
 
-# ============================================ 
-# INSTALLATION FUNCTIONS - ON VM
-# ============================================ 
-
-create_service_user() {
-    log_info "Setting up service user: ${project_name}..."
-    
-    if id "${project_name}" &>/dev/null; then
-        log_success "User ${project_name} already exists"
-        return 0
+cmd_push() {
+    local host=${1:-} tarball_path=${2:-}
+    if [ -z "$host" ] || [ -z "$tarball_path" ]; then exit 1; fi
+    local remote_dir=$(get_remote_dir_from_tarball_path "$tarball_path")
+    local tarball_name=$(basename "$tarball_path")
+    ssh "${host}" "mkdir -p ${remote_dir}"
+    scp "$tarball_path" "${host}:${remote_dir}/"
+    ssh "${host}" "tar -xzf ${remote_dir}/${tarball_name} -C ${remote_dir}"
+    log_success "Uploaded to ${remote_dir}"
+    if [ -z "${CMD_DEPLOY_CALLER:-}" ]; then
+        log_info "Next step: ssh ${host} sudo ${remote_dir}/bin/rip-remote install"
     fi
-    
-    useradd -r -m -d "/home/${project_name}" -s /bin/bash "${project_name}"
-    log_success "Created user ${project_name}"
-}
-
-create_directory_structure() {
-    log_info "Creating directory structure..."
-    
-    local data_dir="/home/${project_name}/data"
-    local dirs=(
-        "/home/${project_name}/bin"
-        "$data_dir"
-        "/home/${project_name}/logs"
-    )
-    
-    for dir in "${dirs[@]}"; do
-        if [ ! -d "$dir" ]; then
-            mkdir -p "$dir"
-            log_success "Created $dir"
-        fi
-    done
-    
-    chmod 700 "$data_dir"
-    log_success "Set permissions for ${data_dir} to 700"
-    
-    chown -R "${project_name}:${project_name}" "/home/${project_name}"
-}
-
-deploy_binaries() {
-    local source_dir=$1
-    log_info "Deploying binaries from ${source_dir}/bin..."
-    
-    if [ ! -d "${source_dir}/bin" ]; then
-        log_error "No bin/ directory found in ${source_dir}"
-        exit 1
-    fi
-
-    for binary in "${source_dir}"/bin/*; do
-        if [ -f "$binary" ]; then
-            local basename=$(basename "$binary")
-            install -m 700 -o "${project_name}" -g "${project_name}" \
-                "$binary" "/home/${project_name}/bin/${basename}"
-            log_success "Installed binary: ${basename} to /home/${project_name}/bin/${basename}"
-        fi
-    done
-}
-
-deploy_data_files() {
-    local source_dir=$1
-    log_info "Deploying data files from ${source_dir}/data..."
-    
-    # Deploy age key if present
-    if [ -f "${source_dir}/age.key" ]; then
-        local dest_key="/home/${project_name}/age.key"
-        install -m 600 -o "${project_name}" -g "${project_name}" \
-            "${source_dir}/age.key" "$dest_key"
-        log_success "Installed age.key to $dest_key"
-    fi
-
-    if [ ! -d "${source_dir}/data" ]; then
-        return 0
-    fi
-    
-    for datafile in "${source_dir}"/data/*;
-    do
-        if [ -f "$datafile" ]; then
-            local basename=$(basename "$datafile")
-            local dest="/home/${project_name}/data/${basename}"
-            
-            install -m 600 -o "${project_name}" -g "${project_name}" \
-                "$datafile" "$dest"
-            log_success "Installed data file: ${basename} to $dest"
-        fi
-    done
-}
-
-deploy_systemd_service() {
-    local source_dir=$1
-    log_info "Deploying systemd service..."
-    
-    # Find generated service file
-    local service_file=$(find "${source_dir}" -name "systemd-${project_name}.service" | head -n 1)
-    
-    if [ -z "$service_file" ]; then
-        log_error "Service file not found in ${source_dir}"
-        exit 1
-    fi
-    
-    cp "$service_file" "/etc/systemd/system/${project_name}.service"
-    systemctl daemon-reload
-    log_success "Deployed ${project_name}.service to /etc/systemd/system/${project_name}.service"
-}
-
-handle_database() {
-    # Placeholder for future logic
-    :
-}
-
-cmd_install() {
-    require_root
-    
-    # --- CONTEXT INTROSPECTION ---
-    # The script determines its context from its own execution path ($0),
-    # which is expected to be inside the extracted archive.
-    # e.g., /tmp/myproject/v1.2.0/bin/ripdep
-    local script_path
-    script_path=$(realpath "$0")
-
-    # The source dir is the root of the extracted archive, two levels above /bin/
-    local source_dir
-    source_dir=$(dirname "$(dirname "$script_path")")
-
-    # The service name is the name of the parent directory of our versioned source dir
-    local project_name
-    project_name=$(basename "$(dirname "$source_dir")")
-
-    log_info "Installing service '${project_name}' from source '${source_dir}'..."
-
-    local restore_from_backup=false
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --restore-from-backup)
-                restore_from_backup=true
-                shift
-                ;; 
-            *)
-                shift
-                ;; 
-        esac
-    done
-    
-    create_service_user
-    create_directory_structure
-    deploy_binaries "$source_dir"
-    deploy_data_files "$source_dir"
-    deploy_systemd_service "$source_dir"
-    handle_database
-    
-    log_success "Installation complete!"
-    log_info "To start service: systemctl enable --now ${project_name}"
 }
 
 cmd_deploy() {
-    local host=${1:-}
-    local build_dir=${2:-}
-
-    if [ -z "$host" ] || [ -z "$build_dir" ]; then
-        log_error "Usage: $0 deploy <host> <build_dir> [install-options...]"
-        exit 1
-    fi
-
-    shift 2 # Consume the host and build_dir arguments
-    local install_args="$*" # The rest are options for the remote install command
-
-    # --- Step 1: Pack the application ---
-    log_info "Step 1: Packing application locally..."
+    local host=${1:-} build_dir=${2:-}
+    if [ -z "$host" ] || [ -z "$build_dir" ]; then exit 1; fi
+    shift 2; local install_args="$*"
     CMD_DEPLOY_CALLER=true cmd_pack "$build_dir"
-
-    # --- Step 2: Determine the tarball path ---
-    local build_name
-    build_name=$(basename "$build_dir")
-    
-    local project_name
-    project_name=$(get_project_name_from_file_base "$build_name")
-    
-    local tarball_name="${build_name}.tar.gz"
-    local tarball_path="${RELEASES_BASE_DIR}/${project_name}/${tarball_name}"
-    log_info "Determined tarball path: $tarball_path"
-    
-    # --- Step 3: Push the application ---
-    log_info "Step 3: Pushing application to ${host}..."
+    local build_name=$(basename "$build_dir")
+    local project_name=$(get_project_name_from_file_base "$build_name")
+    local tarball_path="${RELEASES_BASE_DIR}/${project_name}/${build_name}.tar.gz"
     CMD_DEPLOY_CALLER=true cmd_push "$host" "$tarball_path"
-
-    # --- Step 4: Install on the remote server ---
-    log_info "Step 4: Installing application on ${host}..."
-    
-    local remote_dir
-    if ! remote_dir=$(get_remote_dir_from_tarball_path "$tarball_path"); then
-        log_error "Aborting deployment: Could not determine remote directory."
-        exit 1
-    fi
-
-    ssh -t -o LogLevel=ERROR "${host}" "sudo ${remote_dir}/bin/ripdep install ${install_args}"
-    
+    local remote_dir=$(get_remote_dir_from_tarball_path "$tarball_path")
+    ssh -t "${host}" "sudo ${remote_dir}/bin/rip-remote install ${install_args}"
     log_success "Deployment complete on ${host}!"
 }
 
-# ============================================ 
-# UNDEPLOYMENT FUNCTIONS
-# ============================================ 
-
 cmd_undeploy() {
-    local host=${1:-}
-    local service_name=${2:-}
-    local force=${3:-} # for -y or --force
-
-    if [ -z "$host" ] || [ -z "$service_name" ]; then
-        log_error "Usage: $0 undeploy <host> <service-name> [-y|--force]"
-        exit 1
-    fi
-
+    local host=${1:-} service_name=${2:-} force=${3:-}
+    if [ -z "$host" ] || [ -z "$service_name" ]; then exit 1; fi
     if [[ "$force" != "-y" && "$force" != "--force" ]]; then
-        log_warning "This will PERMANENTLY DELETE the service '${service_name}', its user, and all associated files from '${host}'."
-        log_warning "This action cannot be undone. Consider creating a backup first with the 'backup' command."
-        read -p "Are you sure you want to continue? (yes/no) " -r
-        echo
-        if [[ ! "$REPLY" =~ ^[Yy][Ee][Ss]$ ]]; then
-            log_info "Undeploy cancelled."
-            exit 1
-        fi
+        log_warning "PERMANENTLY DELETE '${service_name}' from '${host}'?"
+        read -p "(yes/no) " -r; if [[ ! "$REPLY" =~ ^[Yy][Ee][Ss]$ ]]; then exit 1; fi
     fi
-
-    log_info "Uninstalling application on ${host}..."
-    local deployed_script_path="/home/${service_name}/bin/ripdep"
-    local remote_tmp_script_path="/tmp/ripdep-uninstall-$"
-    log_info "→ Orchestrating remote uninstall using the deployed script..."
-
-    local uninstall_script="set -e
-echo '→ Copying deployed uninstaller to a temporary location...'
-sudo cp ${deployed_script_path} ${remote_tmp_script_path}
-sudo chmod +x ${remote_tmp_script_path}
-echo '→ Executing uninstaller...'
-sudo ${remote_tmp_script_path} uninstall ${service_name}
-echo '→ Cleaning up uninstaller...'
-sudo rm -f ${remote_tmp_script_path}"
-    
-    if ! ssh -t -o LogLevel=ERROR "${host}" "$uninstall_script"; then
-        log_warning "Remote uninstall script failed. The server may be in an inconsistent state."
-        log_warning "A temporary uninstaller may be left at ${remote_tmp_script_path} on the remote host."
-        exit 1
-    fi
-    
+    local remote_tmp="/tmp/rip-remote-uninstall-$$"
+    ssh -t "${host}" "sudo cp /home/${service_name}/bin/rip-remote ${remote_tmp} && sudo ${remote_tmp} uninstall ${service_name} && sudo rm -f ${remote_tmp}"
     log_success "Successfully undeployed '${service_name}' from '${host}'."
 }
 
@@ -1527,484 +438,93 @@ sudo rm -f ${remote_tmp_script_path}"
 # OPERATIONAL COMMANDS
 # ============================================ 
 
-cmd_maintenance() {
-    require_local
-    local host=${1:-}
-    local mode=${2:-}
-    
-    if [ -z "$host" ] || [ -z "$mode" ]; then
-        log_error "Usage: $0 maintenance <host> <on|off>"
-        exit 1
+remote_dir_exists() { ssh "${1}" "[ -d '${2}' ]"; }
+create_remote_backup() { ssh "${1}" "sudo tar -czf '/tmp/${3}' -C '/home/${2}' ."; }
+download_remote_backup() { scp "${1}:${2}" "${3}"; }
+cleanup_remote_backup() { ssh "${1}" "sudo rm -f '${2}'"; }
+
+backup_remote_service() {
+    local host=$1 service_name=$2
+    local bkp="${service_name}-bkp-$(date +%Y%m%d).tar.gz"
+    if remote_dir_exists "$host" "/home/${service_name}"; then
+        create_remote_backup "$host" "$service_name" "$bkp"
+        download_remote_backup "$host" "/tmp/${bkp}" "."
+        cleanup_remote_backup "$host" "/tmp/${bkp}"
+        log_success "Backup saved locally: ${bkp}"
     fi
-    
-    if [ "$mode" == "on" ]; then
-        log_info "Stopping service (maintenance mode ON)..."
-        ssh -t -o LogLevel=ERROR "${host}" "sudo systemctl stop ${SERVICE_NAME}"
-        log_success "Service stopped (maintenance ON)"
-    elif [ "$mode" == "off" ]; then
-        log_info "Starting service (maintenance mode OFF)..."
-        ssh -t -o LogLevel=ERROR "${host}" "sudo systemctl start ${SERVICE_NAME}"
-        log_success "Service started (maintenance OFF)"
-    else
-        log_error "Invalid maintenance action: $mode. Use 'on' or 'off'."
-        exit 1
-    fi
-}
-
-cmd_config() {
-    require_local
-    local host=${1:-}
-    shift
-    local args="$*"
-    
-    ssh -t -o LogLevel=ERROR "${host}" "sudo -u ${SERVICE_NAME} /home/${SERVICE_NAME}/bin/ripc $args"
-}
-
-cmd_status() {
-    require_local
-    local host=${1:-}
-    ssh -t -o LogLevel=ERROR "${host}" "systemctl status ${SERVICE_NAME} --no-pager"
-}
-
-cmd_logs() {
-    require_local
-    local host=${1:-}
-    local lines=${2:-50}
-    ssh -t -o LogLevel=ERROR "${host}" "journalctl -u ${SERVICE_NAME} -n $lines -f"
-}
-
-cmd_restart() {
-    require_local
-    local host=${1:-}
-    ssh -t -o LogLevel=ERROR "${host}" "sudo systemctl restart ${SERVICE_NAME}"
-    log_success "Restart command sent"
-}
-
-cmd_db_backup() {
-    require_local
-    local host=${1:-}
-    # Litestream config is now likely managed differently or needs to be retrieved
-    # Assuming standard path based on previous usage, but we removed 'etc'.
-    # Litestream config is injected into app.db now.
-    # So we might need to invoke ripc to run litestream or export config?
-    # TODO says "all configuration is inside the app.db encrypted".
-    # Litestream might need to be run via a wrapper that extracts config?
-    # Or maybe we skip this command for now as it wasn't explicitly redefined in TODO?
-    # Leaving it with a warning.
-    log_warning "db-backup: Litestream config is now internal. Manual backup command needs update."
-}
-
-cmd_db_status() {
-    require_local
-    local host=${1:-}
-    log_info "Checking database status on ${host}..."
-    ssh -t -o LogLevel=ERROR "${host}" "ls -lh /home/${project_name}/data/*.db"
 }
 
 cmd_backup() {
-    local host=${1:-}
-    local service_name=${2:-}
-
-    if [ -z "$host" ] || [ -z "$service_name" ]; then
-        log_error "Usage: $0 backup <host> <service-name>"
-        exit 1
-    fi
-
-    log_info "Starting backup for '${service_name}' from '${host}'..."
-    if ! backup_remote_service "$host" "$service_name"; then
-        exit 1
-    fi
-    log_success "Backup command finished."
+    if [ -z "${1:-}" ] || [ -z "${2:-}" ]; then exit 1; fi
+    backup_remote_service "$1" "$2"
 }
+
+cmd_maintenance() {
+    local host=$1 mode=$2
+    ssh -t "${host}" "sudo systemctl $([ "$mode" == "on" ] && echo "stop" || echo "start") ${service_name}"
+}
+
+cmd_config() { ssh -t "${1}" "sudo -u ${project_name} /home/${project_name}/bin/ripc ${@:2}"; }
+cmd_status() { ssh -t "${1}" "systemctl status ${project_name} --no-pager"; }
+cmd_logs() { ssh -t "${1}" "journalctl -u ${project_name} -n ${2:-50} -f"; }
+cmd_restart() { ssh -t "${1}" "sudo systemctl restart ${project_name}"; }
+cmd_db_status() { ssh -t "${1}" "ls -lh /home/${project_name}/data/*.db"; }
 
 # ============================================ 
-# HELP AND MAIN ENTRY POINT
+# MAIN ENTRY POINT
 # ============================================ 
 
-show_help() {
-    cat <<EOF
-${GREEN}ripdep${NC} - Deployment and operations tool
-
-Usage: $0 <COMMAND> [ARGS...]
-
-Commands:
-  build-release <build_dir> <project_path>   Build a release artifact from source code.
-  build-bootstrap <build_dir> <project_path> Build a bootstrap artifact from source code.
-  build-recovery <build_dir> [opts]          Build an artifact from backups (recovery).
-  unpack <tarball> <dir>                     Extract a release tarball into a directory.
-  restore <source> <dir>                     Restore a database into a directory.
-  pack <build_dir>                           Package a build directory into a tarball.
-  push <host> <tarball_path>                 Upload a specific tarball to a VM.
-  install [opts]                             Install on VM (run remotely).
-  deploy <host> <build_dir> [opts]           Build, pack, push, and install in one command.
-  undeploy <host> <service-name>             Permanently remove a service and all its data from a host.
-  backup <host> <service-name>               Creates and downloads a backup of a service.
-  maintenance <host> <on|off>                Toggle maintenance mode for a service.
-  config <host> [args]                       Run ripc commands on a remote host.
-  status <host>                              Check service status on a remote host.
-  logs <host> [lines]                        Tail service logs from a remote host.
-  restart <host>                             Restart the service on a remote host.
-
-EOF
-}
-
-show_build_release_help() {
-    cat <<EOF
-${GREEN}ripdep build-release${NC} - Build a release artifact from source.
-
-Usage: $0 build-release <build-base-dir> <project-path>
-
-Arguments:
-  <build-base-dir>  The base directory where the build output will be created.
-  <project-path>     Path to the project source code to compile.
-
-EOF
-}
-
-show_build_bootstrap_help() {
-    cat <<EOF
-${GREEN}ripdep build-bootstrap${NC} - Build a bootstrap artifact from source.
-
-Usage: $0 build-bootstrap <build-base-dir> <project-path>
-
-Arguments:
-  <build-base-dir>  The base directory where the build output will be created.
-  <project-path>     Path to the project source code to compile.
-
-Description:
-  Similar to build-release, but also generates a new encryption key,
-  a fresh database, and initializes service configurations.
-
-EOF
-}
-
-show_build_recovery_help() {
-    cat <<EOF
-${GREEN}ripdep build-recovery${NC} - Build an artifact from backups.
-
-Usage: $0 build-recovery <build-dir> [options]
-
-Options:
-  --with-release <path>      Path to an existing release tarball (.tar.gz).
-  --with-db <source>         Database source (.yml, .yaml, .db, or .tar.gz).
-                             If a .yml is provided, litestream restore is used.
-
-EOF
-}
-
-show_install_help() {
-    cat <<EOF
-${GREEN}ripdep install${NC} - Install the service on a VM.
-
-Usage: $0 install [options]
-
-Options:
-  --restore-from-backup      (Legacy flag, placeholder for future logic).
-
-EOF
-}
-
-show_uninstall_help() {
-    cat <<EOF
-${GREEN}ripdep uninstall${NC} - Uninstall the service on a VM.
-
-Usage: $0 uninstall <service-name>
-
-EOF
-}
-
-# get_project_name_from_project_path: Determines project name from the project path argument.
-get_project_name_from_project_path() {
-    local with_project="$1"
-
-    if [ -n "$with_project" ]; then
-        echo "$(basename "$with_project")"
-        return 0
-    fi
-
-    log_error "Could not determine project name; project path argument is missing."
-    return 1
-}
-
-# get_project_name_from_recovery_flags: Determines project name from recovery arguments
-get_project_name_from_recovery_flags() {
-    local with_release="$1"
-    local with_db="$2"
-
-    if [ -n "$with_release" ]; then
-        local tarball_name=$(basename "$with_release")
-        local tar_base="${tarball_name%.tar.gz}"
-        echo "$(get_project_name_from_file_base "$tar_base")"
-        return 0
-    fi
-
-    if [ -n "$with_db" ]; then
-        echo "$(basename "$(dirname "$with_db")")"
-        return 0
-    fi
-
-    log_error "Could not determine project name from recovery flags."
-    return 1
-}
-
-
-cleanup_temp_dirs() {
-    local exit_code=$?
-    log_info "Cleanup triggered from trap call (exit code: $exit_code)"
-
-    # Log incoming parameters
-    local param_count=$#
-    log_info "  Received $param_count parameter(s)"
-
-    if [ $param_count -eq 0 ]; then
-        log_info "  No directories to clean up"
-    fi
-
-    # Clean up directories
-    for dir in "$@"; do
-        if [ -n "$dir" ] && [ -d "$dir" ]; then
-            rm -rf "$dir"
-            log_success "  Cleaned up: $dir"
-        fi
-    done
-
-    return $exit_code
-}
-
-# cmd_build-release: Builds a standard release artifact from source code.
-#
-# This command is used for updating an existing application with a new version of the code.
-# It compiles the Go binary and includes the necessary tools (`ripc`, `ripdep`)
-# but does *not* create a new database or encryption keys, ensuring that existing data is preserved on deployment.
 cmd_build-release() {
-    # Check for help first
-    if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
-        show_build_release_help
-        exit 0
-    fi
-
-    if [ "$#" -ne 2 ]; then
-        log_error "Usage: $0 build-release <build-base-dir> <project-path>"
-        exit 1
-    fi
-    local build_base_dir=$1
-    local project_path=$2
-
-    log_info "Creating a new release build..."
-
-    if ! is_go_project "$project_path"; then
-        log_error "Validation failed: Not a valid Go project."
-        exit 1
-    fi
-    
-    local project_name
-    if ! project_name=$(get_project_name_from_project_path "$project_path"); then
-        log_error "Aborting build: Could not determine project name."
-        exit 1
-    fi
-
-    local version
-    if ! version=$(cd "$project_path" && get_latest_tag); then
-        log_error "Could not determine version for project: ${project_path}"
-        exit 1
-    fi
-
-    local build_dir="${build_base_dir}/${project_name}-${version}"
-    local bin_dir="${build_dir}/bin"
-    local data_dir="${build_dir}/data"
-    setup_build_dir "$build_dir" "$bin_dir" "$data_dir"
-
-    log_info "Build configuration:"
-    log_info "  Build base directory       : $build_base_dir"
-    log_info "  Build project directory    : $build_dir"
-    log_info "  Project path               : ${project_path}"
-    log_info "  Project name               : ${GREEN}$project_name${NC}"
-    log_info "  Project version            : ${GREEN}$version${NC}"
-    log_info ""
-    
-    # Build project binary, naming it after the project
-    build_project_binary "$bin_dir" "$project_path" "$project_name"
-
-    # Generate the remote execution script
-    generate_remote_script "${bin_dir}/rip-remote"
-
-    log_info "Downloading release tools (ripc)..."
-    download_ripc "$bin_dir"
-
-    log_success "Release build completed successfully in: ${GREEN}${build_dir}${NC}"
+    local build_base=$1 proj_path=$2
+    is_go_project "$proj_path" || exit 1
+    local name=$(basename "$proj_path")
+    local ver=$(cd "$proj_path" && get_latest_tag)
+    local build_dir="${build_base}/${name}-${ver}"
+    setup_build_dir "$build_dir" "${build_dir}/bin" "${build_dir}/data"
+    build_project_binary "${build_dir}/bin" "$proj_path" "$name"
+    generate_remote_script "${build_dir}/bin/rip-remote"
+    download_ripc "${build_dir}/bin"
+    log_success "Release build: ${build_dir}"
 }
 
 cmd_build-bootstrap() {
-    # Check for help first
-    if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
-        show_build_bootstrap_help
-        exit 0
-    fi
-
-    if [ "$#" -ne 2 ]; then
-        log_error "Usage: $0 build-bootstrap <build-base-dir> <project-path>"
-        exit 1
-    fi
-    local build_base_dir=$1
-    local project_path=$2
-
-    local tmp_tools_dir
-    tmp_tools_dir=$(mktemp -d)
-
-    # The trap will cleanup the tmp_tools dir on function exit.
- 	# very tricky behavior of trap:
-	#
-    # - In bash, when you set multiple trap commands for the same signal (in
-    # this case RETURN), each new trap overwrites the previous one rather than
-    # adding to it. Make sure to have one trap call
-	# 
-    # - quotes:
-    #   Single quotes - variable expands when trap FIRES
-	#       trap 'cleanup_temp_dirs "$release_source_dir" "$tmp_tools"' RETURN
-    #   Double quotes - variable expands when trap is SET
-    #       trap "rm -rf \"$tmp_tools\"" RETURN  
-    #       # Becomes literally: trap "rm -rf \"/tmp/tmp.abc123\"" RETURN
-    #
-    # - the most tricky thing: trap ... RETURN bubbles up through the call
-    # stack like an uncaught exception, that means it triggers after each
-    # funcion ends:
-    # if Set in cmd_build → fires when cmd_build returns ✅ but Trap persists
-    # bubbling → fires AGAIN when main returns ❌ At that point, tmp_tools and
-    # release_source_dir are local variables from cmd_build which no longer
-    # exist
-    #
-    # - Best practices  
-    #   - always check you have one trap per signal in the function
-    #   - always stop bubbling up in the caller of the function with trap
-    #       trap - RETURN
-    trap 'cleanup_temp_dirs "$tmp_tools_dir"' RETURN
-
-    log_info "Creating a new bootstrap build..."
-
-    if ! is_go_project "$project_path"; then
-        log_error "Validation failed: Not a valid Go project."
-        exit 1
-    fi
-
-    local project_name
-    if ! project_name=$(get_project_name_from_project_path "$project_path"); then
-        log_error "Aborting bootstrap: Could not determine project name."
-        exit 1
-    fi
-
-    local version
-    if ! version=$(cd "$project_path" && get_latest_tag); then
-        log_error "Could not determine version for project: ${project_path}"
-        exit 1
-    fi
-
-    local build_dir="${build_base_dir}/${project_name}-${version}"
-    local bin_dir="${build_dir}/bin"
-    local data_dir="${build_dir}/data"
-    setup_build_dir "$build_dir" "$bin_dir" "$data_dir"
-
-    log_info "Build configuration:"
-    log_info "  Build base directory       : $build_base_dir"
-    log_info "  Build project directory    : $build_dir"
-    log_info "  Project path               : ${project_path}"
-    log_info "  Project name               : ${GREEN}$project_name${NC}"
-    log_info "  Project version            : ${GREEN}$version${NC}"
-    log_info "  Config base directory      : $CONFIG_BASE_DIR"
-    log_info "  Config project directory   : $CONFIG_BASE_DIR/$project_name"
-    log_info ""
-    
-    # Build project binary, naming it after the project
-    build_project_binary "$bin_dir" "$project_path" "$project_name"
-
-    # Generate the remote execution script
-    generate_remote_script "${bin_dir}/rip-remote"
-
-    log_info "Downloading bootstrap tools (ripc, age)..."
-    download_ripc "$bin_dir"
-    download_age "$tmp_tools_dir"
-
-    log_info "Bootstrapping application data..."
-    generate_age_key "$tmp_tools_dir" "$build_dir"
-    create_app_db "$bin_dir" "$build_dir" "$data_dir"
-    
-    add_litestream_configuration "$project_name" "$bin_dir" "$build_dir" "$data_dir"
-    add_systemd_configuration "$project_name" "$build_dir"
-
-    log_success "Bootstrap build completed successfully in: ${GREEN}${build_dir}${NC}"
+    local build_base=$1 proj_path=$2
+    is_go_project "$proj_path" || exit 1
+    local name=$(basename "$proj_path")
+    local ver=$(cd "$proj_path" && get_latest_tag)
+    local build_dir="${build_base}/${name}-${ver}"
+    local tmp=$(mktemp -d); trap 'rm -rf "$tmp"' RETURN
+    setup_build_dir "$build_dir" "${build_dir}/bin" "${build_dir}/data"
+    build_project_binary "${build_dir}/bin" "$proj_path" "$name"
+    generate_remote_script "${build_dir}/bin/rip-remote"
+    download_ripc "${build_dir}/bin"
+    download_age "$tmp"
+    generate_age_key "$tmp" "$build_dir"
+    create_app_db "${build_dir}/bin" "$build_dir" "${build_dir}/data"
+    add_litestream_configuration "$name" "${build_dir}/bin" "$build_dir" "${build_dir}/data"
+    add_systemd_configuration "$name" "$build_dir"
+    log_success "Bootstrap build: ${build_dir}"
 }
 
-# ============================================ 
-# HOOKS 
-# ============================================ 
-# Usage:
-# 	exec_hook "dns-update" "_dns_update_noop" "$source" "$target" "$domain"
-# No fallback needed - hook is required
-# 	exec_hook "db-replicate" "" "$source" "$target" || exit 1
-exec_hook() {
-    local hook_name=$1
-    local fallback_func=$2
-    shift 2
-    
-    if [ -x "${HOOKS_DIR}/${hook_name}" ]; then
-        "${HOOKS_DIR}/${hook_name}" "$@"
-        return $?
-    fi
-    
-    if [ -n "$fallback_func" ] && declare -f "$fallback_func" > /dev/null 2>&1; then
-        "$fallback_func" "$@"
-        return $?
-    fi
-    
-    return 0
+show_help() {
+    cat <<EOF
+ripdep - Operations tool
+Commands: build-release, build-bootstrap, pack, push, deploy, undeploy, backup, status, logs, restart
+EOF
 }
 
-
-
-# Update the main function's case statement to include build:
-# build dir are ephemeral
-# backup dirs are authoritative
-# project files are authoritative
-# install just copies and validates agains requird state at the end, it fails if invalud
 main() {
     local cmd=${1:-}
-    
-    if [ -z "$cmd" ]; then show_help; exit 0; fi
-    shift
-    
+    shift || true
     case "$cmd" in
         build-release) cmd_build-release "$@" ;;
         build-bootstrap) cmd_build-bootstrap "$@" ;;
-        build-recovery) cmd_build-recovery "$@" ;;
-        unpack) cmd_unpack "$@" ;;
-        restore) cmd_restore-db "$@" ;;
-        pack) cmd_pack "$@" ;; 
-        push) cmd_push "$@" ;; 
-        install) cmd_install "$@" ;; 
-        uninstall) cmd_uninstall "$@" ;; 
-        deploy) cmd_deploy "$@" ;; 
-        undeploy) cmd_undeploy "$@" ;;
-        backup) cmd_backup "$@" ;;
-        maintenance) cmd_maintenance "$@" ;; 
-        config) cmd_config "$@" ;; 
-        status) cmd_status "$@" ;; 
-        logs) cmd_logs "$@" ;; 
-        restart) cmd_restart "$@" ;; 
-        db-backup) cmd_db_backup "$@" ;; 
-        db-status) cmd_db_status "$@" ;; 
-        help|--help|-h) show_help ;; 
-        *) log_error "Unknown command: $cmd"; show_help; exit 1 ;; 
+        pack) cmd_pack "$@" ;; push) cmd_push "$@" ;;
+        deploy) cmd_deploy "$@" ;; undeploy) cmd_undeploy "$@" ;;
+        backup) cmd_backup "$@" ;; status) cmd_status "$@" ;;
+        logs) cmd_logs "$@" ;; restart) cmd_restart "$@" ;;
+        help|--help|-h) show_help ;;
+        *) show_help; exit 1 ;;
     esac
-
-	# Unset traps so it doesn't fire again when main() returns
-    #
-    # trap RETURN bubbles up through the call stack like an uncaught exception,
-    # that means it triggers after each funcion ends:
-    #
-    # - Best practices  
-    #   - always check one trap per signal
-    #   - always stop bubbling up in the caller of the function with the trap
-    #       trap - RETURN
-    trap - RETURN
 }
-
 main "$@"
