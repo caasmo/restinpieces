@@ -1043,6 +1043,23 @@ stop_service() {
     log_success "Service stop/disable phase finished."
 }
 
+stop_service() {
+    log_info "Stopping and disabling service '${service_name}'..."
+    if systemctl list-unit-files "${service_name}.service" >/dev/null 2>&1; then
+        if systemctl is-active --quiet "${service_name}"; then
+            log_info "→ Service is active. Stopping..."
+            systemctl stop "${service_name}"
+        fi
+        if systemctl is-enabled --quiet "${service_name}"; then
+            log_info "→ Service is enabled. Disabling..."
+            systemctl disable "${service_name}"
+        fi
+    else
+        log_warning "→ Service ${service_name}.service not found, skipping stop/disable."
+    fi
+    log_success "Service stop/disable phase finished."
+}
+
 remove_systemd_service() {
     local service_path="/etc/systemd/system/${service_name}.service"
     log_info "Deleting systemd service file for '${service_name}'..."
