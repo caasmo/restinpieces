@@ -633,6 +633,196 @@ cmd_install() {
 # UNINSTALLATION FUNCTIONS (Remote)
 # ============================================ 
 
+generate_remote_script() {
+    local output_path=$1
+    
+    # NOTE: Using a fully quoted heredoc ('EOF') is critical. It prevents the
+    # local shell from expanding variables like $1, ensuring they are preserved
+    # literally in the generated script for remote execution.
+    cat > "$output_path" <<'REMOTE_SCRIPT_EOF'
+#!/bin/bash
+set -euo pipefail
+
+# ============================================ 
+# UTILITY FUNCTIONS (Remote)
+# ============================================ 
+
+# Colors for output
+RED=$'\033[0;31m'
+GREEN=$'\033[0;32m'
+YELLOW=$'\033[1;33m'
+BLUE=$'\033[0;34m'
+NC=$'\033[0m' # No Color
+
+log_info() {
+    echo -e "${BLUE}→${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+log_warning() {
+    echo -e "${YELLOW}⚠${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}✗${NC} $1" >&2
+}
+
+require_root() {
+    if [ $EUID -ne 0 ]; then
+        log_error "This command must run as root (use sudo)"
+        exit 1
+    fi
+}
+
+# ============================================
+# INSTALLATION FUNCTIONS (Remote)
+# ============================================
+
+create_service_user() {
+    log_info "Setting up service user: ${project_name}..."
+    
+    if id "${project_name}" &>/dev/null; then
+        log_success "User ${project_name} already exists"
+        return 0
+    fi
+    
+    useradd -r -m -d "/home/${project_name}" -s /bin/bash "${project_name}"
+    log_success "Created user ${project_name}"
+}
+
+create_directory_structure() {
+    log_info "Creating directory structure..."
+    
+    local data_dir="/home/${project_name}/data"
+    local dirs=(
+        "/home/${project_name}/bin"
+        "$data_dir"
+        "/home/${project_name}/logs"
+    )
+    
+    for dir in "${dirs[@]}"; do
+        if [ ! -d "$dir" ]; then
+            mkdir -p "$dir"
+            log_success "Created $dir"
+        fi
+    done
+    
+    chmod 700 "$data_dir"
+    log_success "Set permissions for ${data_dir} to 700"
+    
+    chown -R "${project_name}:${project_name}" "/home/${project_name}"
+}
+
+deploy_binaries() {
+    local source_dir=$1
+    log_info "Deploying binaries from ${source_dir}/bin..."
+    
+    if [ ! -d "${source_dir}/bin" ]; then
+        log_error "No bin/ directory found in ${source_dir}"
+        exit 1
+    fi
+
+    for binary in "${source_dir}"/bin/*; do
+        if [ -f "$binary" ]; then
+            local basename=$(basename "$binary")
+            install -m 700 -o "${project_name}" -g "${project_name}" \
+                "$binary" "/home/${project_name}/bin/${basename}"
+            log_success "Installed binary: ${basename} to /home/${project_name}/bin/${basename}"
+        fi
+    done
+}
+
+deploy_data_files() {
+    local source_dir=$1
+    log_info "Deploying data files from ${source_dir}/data..."
+    
+    # Deploy age key if present
+    if [ -f "${source_dir}/age.key" ]; then
+        local dest_key="/home/${project_name}/age.key"
+        install -m 600 -o "${project_name}" -g "${project_name}" \
+            "${source_dir}/age.key" "$dest_key"
+        log_success "Installed age.key to $dest_key"
+    fi
+
+    if [ ! -d "${source_dir}/data" ]; then
+        return 0
+    fi
+    
+    for datafile in "${source_dir}"/data/*;
+    do
+        if [ -f "$datafile" ]; then
+            local basename=$(basename "$datafile")
+            local dest="/home/${project_name}/data/${basename}"
+            
+            install -m 600 -o "${project_name}" -g "${project_name}" \
+                "$datafile" "$dest"
+            log_success "Installed data file: ${basename} to $dest"
+        fi
+    done
+}
+
+deploy_systemd_service() {
+    local source_dir=$1
+    log_info "Deploying systemd service..."
+    
+    # Find generated service file
+    local service_file=$(find "${source_dir}" -name "systemd-${project_name}.service" | head -n 1)
+    
+    if [ -z "$service_file" ]; then
+        log_error "Service file not found in ${source_dir}"
+        exit 1
+    fi
+    
+    cp "$service_file" "/etc/systemd/system/${project_name}.service"
+    systemctl daemon-reload
+    log_success "Deployed ${project_name}.service to /etc/systemd/system/${project_name}.service"
+}
+
+handle_database() {
+    # Placeholder for future logic
+    :
+}
+
+cmd_install() {
+    require_root
+    
+    local script_path=$(realpath "$0")
+    local source_dir=$(dirname "$(dirname "$script_path")")
+    local project_name=$(basename "$(dirname "$source_dir")")
+
+    log_info "Installing service '${project_name}' from source '${source_dir}'..."
+
+    local restore_from_backup=false
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --restore-from-backup)
+                restore_from_backup=true
+                shift
+                ;; 
+            *)
+                shift
+                ;; 
+        esac
+    done
+    
+    create_service_user
+    create_directory_structure
+    deploy_binaries "$source_dir"
+    deploy_data_files "$source_dir"
+    deploy_systemd_service "$source_dir"
+    handle_database
+    
+    log_success "Installation complete!"
+    log_info "To start service: systemctl enable --now ${project_name}"
+}
+
+# ============================================ 
+# UNINSTALLATION FUNCTIONS (Remote)
+# ============================================ 
+
 stop_service() {
     log_info "Stopping and disabling service '${service_name}'..."
     if systemctl list-unit-files "${service_name}.service" >/dev/null 2>&1; then
@@ -672,6 +862,53 @@ delete_service_user() {
         log_warning "→ User ${service_name} not found."
     fi
     log_success "User and files cleanup finished."
+}
+
+cmd_uninstall() {
+    require_root
+    local service_name=${1:-} # Used by helpers
+
+    if [ -z "$service_name" ]; then
+        echo "Usage: $0 uninstall <service-name>"
+        exit 1
+    fi
+
+    log_info "Uninstalling service '${service_name}'..."
+
+    stop_service
+    remove_systemd_service
+    delete_service_user
+
+    log_success "Successfully uninstalled '${service_name}'."
+}
+
+
+# ============================================ 
+# MAIN (Remote)
+# ============================================ 
+main() {
+    local cmd=${1:-}
+    if [ -z "$cmd" ]; then
+        log_error "No command provided to remote script."
+        exit 1
+    fi
+    shift
+    
+    case "$cmd" in
+        install) cmd_install "$@" ;;
+        uninstall) cmd_uninstall "$@" ;;
+        *) 
+            log_error "Unknown remote command: $cmd"
+            exit 1 
+            ;; 
+    esac
+}
+
+main "$@"
+REMOTE_SCRIPT_EOF
+
+    chmod +x "$output_path"
+    log_success "Generated remote execution script at ${output_path}"
 }
 
 cmd_uninstall() {
@@ -1588,10 +1825,8 @@ cmd_build-release() {
     # Build project binary, naming it after the project
     build_project_binary "$bin_dir" "$project_path" "$project_name"
 
-    # Copy self to make the artifact self-contained
-    cp "$0" "${bin_dir}/ripdep"
-    chmod +x "${bin_dir}/ripdep"
-    log_info "Copied deploy script to ${bin_dir}/ripdep"
+    # Generate the remote execution script
+    generate_remote_script "${bin_dir}/rip-remote"
 
     log_info "Downloading release tools (ripc)..."
     download_ripc "$bin_dir"
@@ -1681,10 +1916,8 @@ cmd_build-bootstrap() {
     # Build project binary, naming it after the project
     build_project_binary "$bin_dir" "$project_path" "$project_name"
 
-    # Copy self to make the artifact self-contained
-    cp "$0" "${bin_dir}/ripdep"
-    chmod +x "${bin_dir}/ripdep"
-    log_info "Copied deploy script to ${bin_dir}/ripdep"
+    # Generate the remote execution script
+    generate_remote_script "${bin_dir}/rip-remote"
 
     log_info "Downloading bootstrap tools (ripc, age)..."
     download_ripc "$bin_dir"
