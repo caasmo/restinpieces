@@ -895,10 +895,10 @@ cmd_install() {
     source_dir=$(dirname "$(dirname "$script_path")")
 
     # The service name is the name of the parent directory of our versioned source dir
-    local SERVICE_NAME
-    SERVICE_NAME=$(basename "$(dirname "$source_dir")")
+    local project_name
+    project_name=$(basename "$(dirname "$source_dir")")
 
-    log_info "Installing service '${SERVICE_NAME}' from source '${source_dir}'..."
+    log_info "Installing service '${project_name}' from source '${source_dir}'..."
 
     local restore_from_backup=false
     while [[ $# -gt 0 ]]; do
