@@ -790,11 +790,11 @@ create_service_user() {
 create_directory_structure() {
     log_info "Creating directory structure..."
     
-    local data_dir="/home/${SERVICE_NAME}/data"
+    local data_dir="/home/${project_name}/data"
     local dirs=(
-        "/home/${SERVICE_NAME}/bin"
+        "/home/${project_name}/bin"
         "$data_dir"
-        "/home/${SERVICE_NAME}/logs"
+        "/home/${project_name}/logs"
     )
     
     for dir in "${dirs[@]}"; do
@@ -807,7 +807,7 @@ create_directory_structure() {
     chmod 700 "$data_dir"
     log_success "Set permissions for ${data_dir} to 700"
     
-    chown -R "${SERVICE_NAME}:${SERVICE_NAME}" "/home/${SERVICE_NAME}"
+    chown -R "${project_name}:${project_name}" "/home/${project_name}"
 }
 
 deploy_binaries() {
