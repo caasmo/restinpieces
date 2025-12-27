@@ -1223,7 +1223,23 @@ cmd_db_status() {
     require_local
     local host=${1:-}
     log_info "Checking database status on ${host}..."
-    ssh -t -o LogLevel=ERROR "${host}" "ls -lh /home/${SERVICE_NAME}/data/*.db"
+    ssh -t -o LogLevel=ERROR "${host}" "ls -lh /home/${project_name}/data/*.db"
+}
+
+cmd_backup() {
+    local host=${1:-}
+    local service_name=${2:-}
+
+    if [ -z "$host" ] || [ -z "$service_name" ]; then
+        log_error "Usage: $0 backup <host> <service-name>"
+        exit 1
+    fi
+
+    log_info "Starting backup for '${service_name}' from '${host}'..."
+    if ! backup_remote_service "$host" "$service_name"; then
+        exit 1
+    fi
+    log_success "Backup command finished."
 }
 
 # ============================================ 
@@ -1246,7 +1262,8 @@ Commands:
   push <host> <tarball_path>                 Upload a specific tarball to a VM.
   install [opts]                             Install on VM (run remotely).
   deploy <host> <build_dir> [opts]           Build, pack, push, and install in one command.
-  undeploy <host> <service-name>             Back up and fully remove a service from a host.
+  undeploy <host> <service-name>             Permanently remove a service and all its data from a host.
+  backup <host> <service-name>               Creates and downloads a backup of a service.
   maintenance <host> <on|off>                Toggle maintenance mode for a service.
   config <host> [args]                       Run ripc commands on a remote host.
   status <host>                              Check service status on a remote host.
@@ -1595,6 +1612,7 @@ main() {
         uninstall) cmd_uninstall "$@" ;; 
         deploy) cmd_deploy "$@" ;; 
         undeploy) cmd_undeploy "$@" ;;
+        backup) cmd_backup "$@" ;;
         maintenance) cmd_maintenance "$@" ;; 
         config) cmd_config "$@" ;; 
         status) cmd_status "$@" ;; 
