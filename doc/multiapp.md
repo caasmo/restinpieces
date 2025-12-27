@@ -70,7 +70,37 @@ When running multiple applications, you have two primary strategies for database
 
 ### 1. Local Backups
 
-The framework has a built-in job to perform periodic local backups of the SQLite database. In a multi-app environment, each application manages its own backup schedule independently. This requires no special configuration beyond what is already handled within each application's settings. It is simple, robust, and provides a baseline of data safety.
+The framework's built-in local backup system offers a simple and robust pull-based alternative to real-time replication. It is a two-part process that prioritizes security and simplicity.
+
+**On-Server Process:**
+1.  Each application, running under its hardened `systemd` service, executes a built-in background job at a configurable interval (e.g., every 15 or 60 minutes).
+2.  This job creates a compressed backup of its database in a dedicated subdirectory, such as `/home/${APP_USER}/data/backups/`.
+3.  File permissions are kept strict (`0600`), ensuring only the application user can read or write the backup.
+
+**External Pull Process:**
+1.  An external script, running on a developer's machine or a dedicated backup server, is triggered by a cron job.
+2.  The script connects to the production server via SSH as a dedicated, restricted `backup` user. This user has read-only access to the backup directories of each application.
+3.  Using `rsync` or a similar tool, the script securely downloads any new backup files it finds.
+4.  Once downloaded, the script can push the backups to long-term storage (S3, B2, etc.), validate their integrity, and send alerts if backups for any application are stale.
+
+#### Comparison: Local Backup vs. Litestream Replication
+
+| Factor                       | Periodic Local Backup (Pull-Based)       | Real-Time Replication (Litestream)       |
+| ---------------------------- | ---------------------------------------- | ---------------------------------------- |
+| **Binary Size**              | ~5-8MB                                   | ~28MB+                                   |
+| **Recovery Point Objective** | Periodic (e.g., 15-60 minutes)           | Continuous (typically <1 second)         |
+| **S3 Credentials on Server** | No (handled by external script)          | Yes (required for replication)           |
+| **Architecture**             | Self-contained app, external pull script | Self-contained app with replication logic  |
+| **Security Model**           | Clean user isolation, pull-based access  | Clean user isolation, push-based access  |
+| **Flexibility**              | Per-app backup intervals                 | Fixed real-time interval                 |
+
+**Recommendation:**
+
+Both approaches are valid and secure. The choice depends on the Recovery Point Objective (RPO) for each specific application.
+-   For applications where a potential data loss of 15-60 minutes is acceptable, the **local backup method** is often superior. It produces slimmer application binaries and avoids storing cloud credentials on the production server.
+-   For critical applications requiring a near-zero RPO, **embedded Litestream** is the appropriate choice, as it provides continuous, real-time data replication.
+
+This allows for a hybrid strategy, giving you the security and simplicity of local backups for most applications, while reserving the overhead of real-time replication for only the most critical services.
 
 ### 2. Real-Time Replication (Litestream)
 
