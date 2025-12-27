@@ -1025,27 +1025,6 @@ cmd_uninstall() {
     log_success "Successfully uninstalled '${service_name}'."
 }
 
-stop_remote_service() {
-    local host=$1
-    local service_name=$2
-    log_info "Stopping and disabling service '${service_name}' on '${host}'..."
-    ssh -t -o LogLevel=ERROR "${host}" "
-        if systemctl list-unit-files '${service_name}.service' >/dev/null 2>&1; then
-            if sudo systemctl is-active --quiet '${service_name}'; then
-                echo '→ Service is active. Stopping...' >&2
-                sudo systemctl stop '${service_name}'
-            fi
-            if sudo systemctl is-enabled --quiet '${service_name}'; then
-                echo '→ Service is enabled. Disabling...' >&2
-                sudo systemctl disable '${service_name}'
-            fi
-        else
-            echo '→ Service ${service_name}.service not found, skipping stop/disable.' >&2
-        fi
-    "
-    log_success "Service cleanup phase finished."
-}
-
 remote_dir_exists() {
     local host=$1
     local path=$2
@@ -1134,9 +1113,6 @@ cmd_undeploy() {
         fi
     fi
 
-    log_info "Step 1: Stopping remote service..."
-    stop_remote_service "$host" "$service_name"
-
     log_info "Step 2: Checking for remote data to back up..."
     local backup_name="${service_name}-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
     local remote_backup_path="/tmp/${backup_name}"
@@ -1169,12 +1145,17 @@ cmd_undeploy() {
         log_info "Step 3 & 4: Skipping backup download and cleanup."
     fi
 
-    log_info "Step 5: Deleting remote service file..."
-    delete_remote_service_file "$host" "$service_name"
-
-    log_info "Step 6: Deleting remote user and files..."
-    delete_remote_user "$host" "$service_name"
-
+    log_info "Step 5: Uninstalling application on ${host}..."
+    local remote_script_path="/tmp/ripdep-uninstall-$$"
+    
+    log_info "→ Uploading uninstaller script to ${host}:${remote_script_path}..."
+    scp "$0" "${host}:${remote_script_path}"
+    
+    ssh -t -o LogLevel=ERROR "${host}" "
+        chmod +x ${remote_script_path}
+        sudo ${remote_script_path} uninstall ${service_name}
+        rm -f ${remote_script_path}
+    "
     log_success "Successfully undeployed '${service_name}' from '${host}'."
 }
 
