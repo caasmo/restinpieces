@@ -82,30 +82,31 @@ For continuous, real-time replication to offsite storage like Amazon S3, the fra
 
 ##### Embedded Litestream (Recommended)
 
-Each application's `systemd` service runs its own `litestream` process alongside the application binary.
+In this model, Litestream is imported as a library and runs in a background goroutine within the main application process.
 
-| Pros                               | Cons                                       |
-| ---------------------------------- | ------------------------------------------ |
-| ✅ **True Isolation**                | Marginally higher memory usage             |
-| ✅ **Enhanced Reliability**          | S3 credentials configured per-application  |
-| ✅ **Operational Simplicity**        |                                            |
-| ✅ **Superior Security**             |                                            |
+**Advantages:**
+-   **Self-Contained Architecture:** Each application is a truly self-contained unit, aligning with the project's core philosophy.
+-   **Simplified Security:** No cross-application file access is needed, avoiding the complexity of shared group permissions.
+-   **Reliability:** The application and its replication process share the same lifecycle and fail/restart together.
+-   **Simplified Operations:** No separate daemon needs to be installed, configured, or monitored.
+-   **Systemd Integration:** Works seamlessly with the existing hardened `systemd` configuration.
 
--   **Isolation & Security**: This is the cleanest approach. Since each application runs its own replication process under its own user, no cross-app file access is needed. You don't need to create shared Unix groups or relax file permissions, preserving the strict user-level isolation.
--   **Reliability**: The application and its backup process share the same lifecycle. If the app restarts, its Litestream process restarts with it, ensuring replication is always running when the app is.
--   **Simplicity**: There is no separate daemon to manage. `ripdep` already configures this out of the box, fitting perfectly with the hardened `systemd` setup.
+**Disadvantages:**
+-   **Larger App Binaries:** Including the Litestream library increases the size of each application binary.
+-   **Decentralized Management:** Replication status, S3 credentials, and Litestream versions are managed on a per-application basis.
 
 ##### Centralized Litestream Daemon
 
-A single, system-wide `litestream` service monitors and replicates all application databases.
+In this model, a single, system-wide `litestream` process runs as a separate daemon and is configured to manage replication for all applications.
 
-| Pros                               | Cons                                       |
-| ---------------------------------- | ------------------------------------------ |
-| Centralized monitoring & logging   | ❌ **Increased Complexity**                |
-| Single place for S3 credentials    | ❌ **Weakened Security**                   |
-| Slightly lower memory footprint    | ❌ **Reduced Reliability**                   |
+**Advantages:**
+-   **Slimmer App Binaries:** Application binaries are smaller as they do not need to include the Litestream library.
+-   **Centralized Management:** Provides a single place to manage S3 configuration, monitor replication status, and standardize the Litestream version across all apps.
+-   **Lower Memory Footprint:** A single daemon process consumes less memory than multiple embedded instances.
 
--   **Complexity & Security**: While it offers central management, a separate daemon is more complex to maintain. More importantly, it requires weakening the security model. The central `litestream` user would need read access to every application's private database files, typically forcing the use of shared groups and breaking the "one user, one app" isolation principle.
--   **Reliability**: Because the backup process is decoupled, a failure in the central daemon could silently halt backups for all applications.
+**Disadvantages:**
+-   **Violates Self-Contained Architecture:** Introduces a shared, external dependency, moving away from the "one process" philosophy.
+-   **Increased Security Complexity:** Requires the central daemon to have read access to all application databases, which typically involves relaxing file permissions with shared groups.
+-   **Decoupled Lifecycle:** The replication process can fail independently of the applications, potentially leading to unmonitored backup failures.
+-   **Increased Operational Overhead:** Requires managing and monitoring an additional system-wide daemon.
 
-**Conclusion:** For an architecture focused on security and simplicity, the **embedded Litestream model is the clear winner.** The small cost in memory is a worthwhile trade-off for the significant gains in isolation, reliability, and operational simplicity.
