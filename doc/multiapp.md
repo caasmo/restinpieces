@@ -24,6 +24,8 @@ This is a genuinely secure foundation. If one application is compromised, the at
 *   They **cannot** escalate privileges on the system.
 *   They have **limited** access to the host filesystem.
 
+You can view the base template used for this hardened service unit directly on GitHub: [`restinpieces.service`](https://github.com/caasmo/restinpieces/blob/master/restinpieces.service).
+
 ### Systemd vs. Containers
 
 For a solo developer or small team running self-contained Go applications on a single server, `systemd` is often simpler, more transparent, and just as secure as a container-based setup.
@@ -77,11 +79,66 @@ The framework's built-in local backup system offers a simple and robust pull-bas
 2.  This job creates a compressed backup of its database in a dedicated subdirectory, such as `/home/${APP_USER}/data/backups/`.
 3.  File permissions are kept strict (`0600`), ensuring only the application user can read or write the backup.
 
-**External Pull Process:**
-1.  An external script, running on a developer's machine or a dedicated backup server, is triggered by a cron job.
-2.  The script connects to the production server via SSH as a dedicated, restricted `backup` user. This user has read-only access to the backup directories of each application.
-3.  Using `rsync` or a similar tool, the script securely downloads any new backup files it finds.
-4.  Once downloaded, the script can push the backups to long-term storage (S3, B2, etc.), validate their integrity, and send alerts if backups for any application are stale.
+**External Pull Process (Recommended Secure Workflow):**
+
+Instead of pulling backups as a privileged user, the recommended best practice is to create a dedicated, low-privilege `backup` user on the server whose sole purpose is to retrieve backup files. This adheres to the principle of least privilege.
+
+Here is a step-by-step guide to setting up this secure workflow:
+
+**1. Create a Dedicated `backup` User**
+
+First, create a system user named `backup`. This user will not own any applications but will be granted specific read-only access to the backup files.
+```bash
+# Create the backup system user
+sudo useradd -r -m -s /bin/bash backup
+```
+
+**2. Configure SSH Key Authentication**
+
+Set up SSH key-based authentication for the `backup` user. This allows your external backup server or script to log in securely without a password.
+```bash
+# On your backup server or laptop, generate a new SSH key
+ssh-keygen -t ed25519 -f ~/.ssh/backup_key
+
+# On the application server, install the public key for the backup user
+sudo mkdir -p /home/backup/.ssh
+# Copy the content of ~/.ssh/backup_key.pub and paste it here:
+sudo tee /home/backup/.ssh/authorized_keys > /dev/null
+sudo chown -R backup:backup /home/backup/.ssh
+sudo chmod 700 /home/backup/.ssh
+sudo chmod 600 /home/backup/.ssh/authorized_keys
+```
+
+**3. Grant Read Access via Group Membership**
+
+To allow the `backup` user to read files owned by different application users (e.g., `app1`, `app2`), add the `backup` user to each application's primary group. `ripdep` creates a unique user and group for each application (e.g., user `app1` is in group `app1`).
+```bash
+# Add the 'backup' user to each application's group
+sudo usermod -a -G app1 backup
+sudo usermod -a -G app2 backup
+# ...and so on for each application
+```
+
+**4. Adjust Backup File Permissions in the Application**
+
+For the group permissions to be effective, the application must ensure its backup files are group-readable. This requires a small change in the application's backup job logic to set the file mode to `0640` (owner: `rw-`, group: `r--`, other: `---`).
+```go
+// Example in your Go application's backup creation code:
+// After creating the backup file, set its permissions.
+// The file's group ownership is correctly inherited from the parent directory.
+err := os.Chmod(backupFilePath, 0640)
+```
+
+**5. Implement the External Pull Script**
+
+Finally, your external cron job can now securely connect and pull the backups using the SSH key.
+```bash
+# Example rsync command in your external pull script
+rsync -avz -e "ssh -i /path/to/your/backup_key" \
+  backup@your-server.com:/home/*/data/backups/ \
+  /local/backup/destination/
+```
+This setup provides a robust and secure system for managing backups. The `backup` user has just enough permission to do its job and cannot read or modify any other application data.
 
 #### Comparison: Local Backup vs. Litestream Replication
 
