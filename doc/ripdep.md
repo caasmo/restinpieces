@@ -10,8 +10,29 @@ complex remote operations over SSH by wrapping the lower-level, on-server
 configuration tool, `ripc`. For most use cases, you should only need to
 interact with `ripdep`.
 
+# Standard Application Layout
+
+`ripdep` follows a strict directory layout convention for both local build
+artifacts and remote installations. This structure is essential for the security
+hardening and operational assumptions made by the tool.
+
+```text
+├── age.key
+├── bin
+│   ├── <app-name> (e.g. restinpieces-litestream)
+│   ├── ripc
+│   └── ripdep-remote
+├── data
+│   └── app.db
+```
+
+*   **`age.key`**: The primary encryption key for the application's secure configuration.
+*   **`bin/`**: Contains the main application binary, the `ripc` CLI for on-server management, and `ripdep-remote` which handles the server-side installation logic.
+*   **`data/`**: The persistent storage directory containing the SQLite database (`app.db`).
+
 # Content
 
+- [Standard Application Layout](#standard-application-layout)
 - [Use Cases](#use-cases)
   - [First-Time Application Bootstrap](#1-first-time-application-bootstrap)
   - [Update Application Binary Version](#2-update-application-binary-version)
