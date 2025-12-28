@@ -798,10 +798,10 @@ BLUE=$'\033[0;34m'
 NC=$'\033[0m' # No Color
 
 # --- Utility Functions ---
-log_info() { echo -e "${BLUE}→${NC} $1"; }
-log_success() { echo -e "${GREEN}✓${NC} $1"; }
-log_warning() { echo -e "${YELLOW}⚠${NC} $1"; }
-log_error() { echo -e "${RED}✗${NC} $1" >&2; }
+log_info() { echo -e "🌐 ${BLUE}→${NC} $1"; }
+log_success() { echo -e "🌐 ${GREEN}✓${NC} $1"; }
+log_warning() { echo -e "🌐 ${YELLOW}⚠${NC} $1"; }
+log_error() { echo -e "🌐 ${RED}✗${NC} $1" >&2; }
 
 require_root() {
     if [ $EUID -ne 0 ]; then
