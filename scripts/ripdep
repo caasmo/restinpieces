@@ -684,9 +684,8 @@ cmd_build-recovery() {
     fi
 
     # 3. Ensure self-contained script
-    cp "$0" "${bin_dir}/ripdep"
-    chmod +x "${bin_dir}/ripdep"
-    log_info "Copied deploy script to ${bin_dir}/ripdep"
+    generate_remote_script "${bin_dir}/ripdep"
+    log_info "Generated remote deploy script to ${bin_dir}/ripdep"
 
     log_success "Recovery build completed successfully in: ${GREEN}${build_dir}${NC}"
 }
@@ -949,12 +948,22 @@ handle_database() {
 
 cmd_install() {
     require_root
+    
+    # --- CONTEXT INTROSPECTION ---
+    # The script determines its context from its own execution path ($0),
+    # which is expected to be inside the extracted archive.
+    # e.g., /tmp/myproject/v1.2.0/bin/ripdep
     local script_path
     script_path=$(realpath "$0")
+
+    # The source dir is the root of the extracted archive, two levels above /bin/
     local source_dir
     source_dir=$(dirname "$(dirname "$script_path")")
+
+    # The service name is the name of the parent directory of our versioned source dir
     local project_name
     project_name=$(basename "$(dirname "$source_dir")")
+
     log_info "Installing service '${project_name}' from source '${source_dir}'..."
 
     local restore_from_backup=false
@@ -1698,10 +1707,9 @@ cmd_build-release() {
     # Build project binary, naming it after the project
     build_project_binary "$bin_dir" "$project_path" "$project_name"
 
-    # Copy self to make the artifact self-contained
-    cp "$0" "${bin_dir}/ripdep"
-    chmod +x "${bin_dir}/ripdep"
-    log_info "Copied deploy script to ${bin_dir}/ripdep"
+    # Generate the remote script to make the artifact self-contained
+    generate_remote_script "${bin_dir}/ripdep"
+    log_info "Generated remote deploy script to ${bin_dir}/ripdep"
 
     log_info "Downloading release tools (ripc)..."
     download_ripc "$bin_dir"
@@ -1791,10 +1799,9 @@ cmd_build-bootstrap() {
     # Build project binary, naming it after the project
     build_project_binary "$bin_dir" "$project_path" "$project_name"
 
-    # Copy self to make the artifact self-contained
-    cp "$0" "${bin_dir}/ripdep"
-    chmod +x "${bin_dir}/ripdep"
-    log_info "Copied deploy script to ${bin_dir}/ripdep"
+    # Generate the remote script to make the artifact self-contained
+    generate_remote_script "${bin_dir}/ripdep"
+    log_info "Generated remote deploy script to ${bin_dir}/ripdep"
 
     log_info "Downloading bootstrap tools (ripc, age)..."
     download_ripc "$bin_dir"
