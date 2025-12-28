@@ -175,6 +175,18 @@ func TestRunDiscovery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
+			name: "SuccessDiscoverDBInDataDir",
+			setup: func(t *testing.T) []string {
+				createDummyAgeKeyFile(t, "age.key")
+				if err := os.Mkdir("data", 0755); err != nil {
+					t.Fatalf("Failed to create data directory: %v", err)
+				}
+				createDummyDB(t, "data/app.db")
+				return []string{"help"}
+			},
+			expectedErr: nil,
+		},
+		{
 			name: "SuccessDiscoverAgeKeyTxtAndDB",
 			setup: func(t *testing.T) []string {
 				createDummyAgeKeyFile(t, "age_key.txt")

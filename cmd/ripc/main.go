@@ -47,18 +47,20 @@ func discoverAgeKey(providedKey string) (string, error) {
 	return "", fmt.Errorf("%w: -agekey flag must be provided, or 'age_key.txt' or 'age.key' must exist in the current directory", ErrMissingFlag)
 }
 
-// discoverDBPath checks for a database file, using a provided path or a default name.
+// discoverDBPath checks for a database file, using a provided path or searching default locations.
 func discoverDBPath(providedDB string) (string, error) {
 	if providedDB != "" {
 		return providedDB, nil
 	}
-	const defaultDB = "app.db"
-	if _, err := os.Stat(defaultDB); err == nil {
-		return defaultDB, nil
-	} else if !os.IsNotExist(err) {
-		return "", fmt.Errorf("error checking for default database file %s: %w", defaultDB, err)
+	defaultPaths := []string{"data/app.db", "app.db"}
+	for _, path := range defaultPaths {
+		if _, err := os.Stat(path); err == nil {
+			return path, nil
+		} else if !os.IsNotExist(err) {
+			return "", fmt.Errorf("error checking for default database file %s: %w", path, err)
+		}
 	}
-	return "", fmt.Errorf("%w: -dbpath flag must be provided, or 'app.db' must exist in the current directory", ErrMissingFlag)
+	return "", fmt.Errorf("%w: -dbpath flag must be provided, or 'data/app.db' or 'app.db' must exist", ErrMissingFlag)
 }
 
 func run(args []string, output io.Writer) error {
