@@ -7,6 +7,7 @@ It also orquestates high level dev ops operatios, like server migrations.
 # Content
 
 - [Relationship with ripc](#relationship-with-ripc)
+- [Installation](#installation)
 - [Standard Application Layout](#standard-application-layout)
 - [Use Cases](#use-cases)
   - [First-Time Application Bootstrap](#1-first-time-application-bootstrap)
@@ -34,6 +35,15 @@ It also orquestates high level dev ops operatios, like server migrations.
 -   **ripdep (Orchestrator):** Focuses on user-facing workflows and operational tasks. It combines multiple primitives, performs pre-flight checks, and orchestrates actions across server fleets.
 
 This architecture ensures that `ripc` remains a stable foundation for CI/CD while `ripdep` can rapidly evolve to support new deployment use cases.
+
+## Installation
+
+Download the `ripdep` script and make it executable:
+
+```bash
+curl -O https://raw.githubusercontent.com/caasmo/restinpieces/refs/heads/master/scripts/ripdep
+chmod +x ripdep
+```
 
 # Standard Application Layout
 
