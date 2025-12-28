@@ -14,6 +14,7 @@ WorkingDirectory=/home/${RESTINPIECES_APP}
 
 # Command to start the service
 ExecStart=/home/${RESTINPIECES_APP}/bin/${RESTINPIECES_APP} -dbpath data/app.db -agekey age.key
+ExecReload=/bin/kill -HUP $MAINPID
 
 # Capabilities:
 # This grants the ability to bind to privileged ports (<1024)

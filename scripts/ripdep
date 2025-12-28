@@ -1117,27 +1117,55 @@ sudo ${deployed_script_path} uninstall ${service_name}"
 # ============================================ 
 
 cmd_maintenance() {
-    require_local
     local host=${1:-}
-    local mode=${2:-}
-    
-    if [ -z "$host" ] || [ -z "$mode" ]; then
-        log_error "Usage: $0 maintenance <host> <on|off>"
+    local service_name=${2:-}
+    local state=${3:-} # true | false
+
+    if [ -z "$host" ] || [ -z "$service_name" ] || [ -z "$state" ]; then
+        log_error "Usage: $0 maintenance <host> <service-name> <true|false>"
+        exit 1
+    fi
+
+    if [[ "$state" != "true" && "$state" != "false" ]]; then
+        log_error "Invalid maintenance state: '${state}'. Use 'true' or 'false'."
+        exit 1
+    fi
+
+    log_info "Setting maintenance mode to '${state}' on host '${host}' for service '${service_name}'..."
+
+    # Header with variable substitution
+    local remote_script_header
+    remote_script_header=$(cat <<EOF
+service_name="$service_name"
+activated_value="$state"
+EOF
+)
+
+    # Body with strict quotes to prevent local expansion
+    local remote_script_body
+    remote_script_body=$(cat <<'EOF'
+set -e
+db_path="/home/$service_name/data/app.db"
+key_path="/home/$service_name/age.key"
+ripc_bin="/home/$service_name/bin/ripc"
+
+echo "→ Updating maintenance.activated to $activated_value..."
+sudo -u "$service_name" "$ripc_bin" -dbpath "$db_path" -agekey "$key_path" config set maintenance.activated "$activated_value"
+
+echo "→ Reloading service $service_name to apply changes..."
+sudo systemctl reload "$service_name"
+
+echo "✓ Reload signal sent."
+EOF
+)
+
+    # Execute the combined script on the remote host
+    if ! ssh -t -o LogLevel=ERROR "${host}" "$remote_script_header"$'\n'"$remote_script_body"; then
+        log_error "Failed to set maintenance mode on ${host}."
         exit 1
     fi
     
-    if [ "$mode" == "on" ]; then
-        log_info "Stopping service (maintenance mode ON)..."
-        ssh -t -o LogLevel=ERROR "${host}" "sudo systemctl stop ${SERVICE_NAME}"
-        log_success "Service stopped (maintenance ON)"
-    elif [ "$mode" == "off" ]; then
-        log_info "Starting service (maintenance mode OFF)..."
-        ssh -t -o LogLevel=ERROR "${host}" "sudo systemctl start ${SERVICE_NAME}"
-        log_success "Service started (maintenance OFF)"
-    else
-        log_error "Invalid maintenance action: $mode. Use 'on' or 'off'."
-        exit 1
-    fi
+    log_success "Successfully set maintenance mode to '${state}' for '${service_name}' on '${host}'."
 }
 
 cmd_config() {
@@ -1259,7 +1287,7 @@ Commands:
   deploy <host> <build_dir> [opts]           Build, pack, push, and install in one command.
   undeploy <host> <service-name>             Permanently remove a service and all its data from a host.
   backup <host> <service-name>               Creates and downloads a backup of a service.
-  maintenance <host> <on|off>                Toggle maintenance mode for a service.
+  maintenance <host> <service-name> <true|false> Toggle maintenance mode for a service.
   config <host> [args]                       Run ripc commands on a remote host.
   status <host>                              Check service status on a remote host.
   logs <host> [lines]                        Tail service logs from a remote host.
