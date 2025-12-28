@@ -18,10 +18,13 @@ This architecture ensures that `ripc` remains a stable foundation for CI/CD whil
 # Standard Application Layout
 
 `ripdep` follows a strict directory layout convention for both local build
-artifacts and remote installations. This structure is essential for the security
-hardening and operational assumptions made by the tool.
+artifacts and remote installations. On the remote server, this structure is
+rooted in the application user's home directory: `/home/<app-name>`.
+This structure is essential for the security hardening and operational
+assumptions made by the tool.
 
 ```text
+/home/<app-name>/
 ├── age.key
 ├── bin
 │   ├── <app-name> (e.g. restinpieces-litestream)
