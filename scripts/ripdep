@@ -892,10 +892,8 @@ deploy_binaries() {
     for binary in "${source_dir}"/bin/*; do
         if [ -f "$binary" ]; then
             local basename=$(basename "$binary")
-            # Do not overwrite self, the ripdep script
-            if [ "$basename" == "ripdep-remote" ]; then
-                continue
-            fi
+            # This loop now also installs the ripdep-remote script itself,
+            # making it available for future undeploy commands.
             install -m 700 -o "${project_name}" -g "${project_name}" \
                 "$binary" "/home/${project_name}/bin/${basename}"
             log_success "Installed binary: ${basename} to /home/${project_name}/bin/${basename}"
@@ -988,6 +986,15 @@ cmd_install() {
     
     log_success "Installation complete!"
     log_info "To start service: systemctl enable --now ${project_name}"
+
+    # --- FINAL CLEANUP ---
+    # As the final step, securely remove the temporary source directory.
+    # This is safe for two reasons:
+    # 1. On Unix-like systems, a script's contents are read into memory by the
+    #    shell, which can continue executing even after the source file is deleted.
+    # 2. The script's current working directory is /root (from sudo), not the
+    #    source directory being deleted.
+    rm -rf "$source_dir"
 }
 
 cmd_uninstall() {
