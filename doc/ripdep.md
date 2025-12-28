@@ -6,7 +6,7 @@ It also orquestates high level dev ops operatios, like server migrations.
 
 ## Relationship with `ripc`
 
-`ripdep` acts as a high-level orchestrator that wraps the **low-level primitive**, `ripc`. This separation follows a tiered design:
+`ripdep` acts as a high-level orchestrator that wraps the **low-level primitive**, [`ripc`](ripc.md) ([source](../cmd/ripc)). This separation follows a tiered design:
 
 -   **ripc (Primitive):** Direct, unopinionated access to configuration and state. It provides a stable, composable interface intended for automation and scripting.
 -   **ripdep (Orchestrator):** Focuses on user-facing workflows and operational tasks. It combines multiple primitives, performs pre-flight checks, and orchestrates actions across server fleets.

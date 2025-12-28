@@ -4,7 +4,7 @@
 
 ## Relationship with `ripdep`
 
-`ripc` is a **low-level primitive**, whereas `ripdep` is a high-level orchestrator.
+`ripc` is a **low-level primitive**, whereas [`ripdep`](ripdep.md) ([source](../scripts/ripdep)) is a high-level orchestrator.
 
 -   **Unopinionated:** `ripc` provides direct configuration and state manipulation without enforcing workflows.
 -   **Composable:** It is designed with a stable interface meant to be called by other tools, CI/CD, or custom scripts.
