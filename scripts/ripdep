@@ -986,15 +986,6 @@ cmd_install() {
     
     log_success "Installation complete!"
     log_info "To start service: systemctl enable --now ${project_name}"
-
-    # --- FINAL CLEANUP ---
-    # As the final step, securely remove the temporary source directory.
-    # This is safe for two reasons:
-    # 1. On Unix-like systems, a script's contents are read into memory by the
-    #    shell, which can continue executing even after the source file is deleted.
-    # 2. The script's current working directory is /root (from sudo), not the
-    #    source directory being deleted.
-    rm -rf "$source_dir"
 }
 
 cmd_uninstall() {
@@ -1079,6 +1070,13 @@ cmd_deploy() {
 
     ssh -t -o LogLevel=ERROR "${host}" "sudo ${remote_dir}/bin/ripdep-remote install ${install_args}"
     
+    # --- Step 5: Cleanup ---
+    # We perform cleanup from the deployment script (running as the SSH user)
+    # rather than the installer (running as root). This avoids the risk of 
+    # running 'rm -rf' with elevated privileges on a potentially miscalculated path.
+    log_info "Step 5: Cleaning up installation artifacts..."
+    ssh -o LogLevel=ERROR "${host}" "rm -rf ${remote_dir}"
+
     log_success "Deployment complete on ${host}!"
 }
 
@@ -1181,21 +1179,16 @@ cmd_undeploy() {
 
     log_info "Uninstalling application on ${host}..."
     local deployed_script_path="/home/${service_name}/bin/ripdep-remote"
-    local remote_tmp_script_path="/tmp/ripdep-uninstall-$"
     log_info "→ Orchestrating remote uninstall using the deployed script..."
 
+    # The script can safely delete itself (via userdel -r inside the uninstall command)
+    # because the shell reads the script into memory upon execution.
     local uninstall_script="set -e
-echo '→ Copying deployed uninstaller to a temporary location...'
-sudo cp ${deployed_script_path} ${remote_tmp_script_path}
-sudo chmod +x ${remote_tmp_script_path}
 echo '→ Executing uninstaller...'
-sudo ${remote_tmp_script_path} uninstall ${service_name}
-echo '→ Cleaning up uninstaller...'
-sudo rm -f ${remote_tmp_script_path}"
+sudo ${deployed_script_path} uninstall ${service_name}"
     
     if ! ssh -t -o LogLevel=ERROR "${host}" "$uninstall_script"; then
         log_warning "Remote uninstall script failed. The server may be in an inconsistent state."
-        log_warning "A temporary uninstaller may be left at ${remote_tmp_script_path} on the remote host."
         exit 1
     fi
     
