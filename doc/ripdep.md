@@ -1,4 +1,4 @@
-# Restinpieces Deployment & Operations Tool (ripdep)
+# `ripdep` - Restinpieces Deployment & Operations Tool
 
 `ripdep` is a CLI tool for building, packaging, and deploying
 [RestInPieces](https://github.com/caasmo/restinpieces) framework applications.
@@ -12,8 +12,6 @@ It also orquestates high level dev ops operatios, like server migrations.
 -   **ripdep (Orchestrator):** Focuses on user-facing workflows and operational tasks. It combines multiple primitives, performs pre-flight checks, and orchestrates actions across server fleets.
 
 This architecture ensures that `ripc` remains a stable foundation for CI/CD while `ripdep` can rapidly evolve to support new deployment use cases.
-
-**Design Goal:** `ripdep` answers "Does this represent a real operational task?", while `ripc` answers "Can I script this easily?"
 
 # Standard Application Layout
 

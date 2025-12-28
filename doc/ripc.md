@@ -10,8 +10,6 @@
 -   **Composable:** It is designed with a stable interface meant to be called by other tools, CI/CD, or custom scripts.
 -   **Stable Foundation:** `ripc` is versioned conservatively. This allows `ripdep` to iterate on new workflows and user-facing features without modifying the core server-side tool.
 
-**Design Goal:** `ripc` answers "Can I script this easily?", while `ripdep` answers "Does this represent a real operational task?"
-
 ## Installation
 
 ```bash
