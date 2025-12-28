@@ -12,6 +12,8 @@
 
 ## Installation
 
+You can download pre-built binaries from the [GitHub Releases](https://github.com/caasmo/restinpieces/releases) page, or install it using Go:
+
 ```bash
 go install github.com/caasmo/restinpieces/cmd/ripc
 ```

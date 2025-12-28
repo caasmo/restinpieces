@@ -4,6 +4,28 @@
 [RestInPieces](https://github.com/caasmo/restinpieces) framework applications.
 It also orquestates high level dev ops operatios, like server migrations.
 
+# Content
+
+- [Relationship with ripc](#relationship-with-ripc)
+- [Standard Application Layout](#standard-application-layout)
+- [Use Cases](#use-cases)
+  - [First-Time Application Bootstrap](#1-first-time-application-bootstrap)
+  - [Update Application Binary Version](#2-update-application-binary-version)
+  - [Restore Application from Backup](#3-restore-application-from-backup)
+  - [Sync Database to a Standby Server](#4-sync-database-to-a-standby-server)
+- [Commands](#commands)
+  - [build-release](#build-release)
+  - [build-bootstrap](#build-bootstrap)
+  - [build-recovery](#build-recovery)
+  - [pack](#pack)
+  - [push](#push)
+  - [install (Remote)](#install-remote)
+  - [deploy](#deploy)
+- [Debugging on a Remote Server](#debugging-on-a-remote-server)
+  - [Check Status and Logs](#1-check-status-and-logs)
+  - [Log in and Run Manually](#2-log-in-and-run-manually)
+  - [Debugging the Systemd Sandbox](#3-debugging-the-systemd-sandbox)
+
 ## Relationship with `ripc`
 
 `ripdep` acts as a high-level orchestrator that wraps the **low-level primitive**, [`ripc`](ripc.md) ([source](../cmd/ripc)). This separation follows a tiered design:
@@ -35,27 +57,6 @@ assumptions made by the tool.
 *   **`age.key`**: The primary encryption key for the application's secure configuration.
 *   **`bin/`**: Contains the main application binary, the `ripc` CLI for on-server management, and `ripdep-remote` which handles the server-side installation logic.
 *   **`data/`**: The persistent storage directory containing the SQLite database (`app.db`).
-
-# Content
-
-- [Standard Application Layout](#standard-application-layout)
-- [Use Cases](#use-cases)
-  - [First-Time Application Bootstrap](#1-first-time-application-bootstrap)
-  - [Update Application Binary Version](#2-update-application-binary-version)
-  - [Restore Application from Backup](#3-restore-application-from-backup)
-  - [Sync Database to a Standby Server](#4-sync-database-to-a-standby-server)
-- [Commands](#commands)
-  - [build-release](#build-release)
-  - [build-bootstrap](#build-bootstrap)
-  - [build-recovery](#build-recovery)
-  - [pack](#pack)
-  - [push](#push)
-  - [install (Remote)](#install-remote)
-  - [deploy](#deploy)
-- [Debugging on a Remote Server](#debugging-on-a-remote-server)
-  - [Check Status and Logs](#1-check-status-and-logs)
-  - [Log in and Run Manually](#2-log-in-and-run-manually)
-  - [Debugging the Systemd Sandbox](#3-debugging-the-systemd-sandbox)
 
 ## Use Cases
 
