@@ -3,12 +3,46 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
 )
+
+// MockPathsSecureStore is a test-only implementation of the config.SecureStore.
+type MockPathsSecureStore struct {
+	data          map[string][]byte
+	ForceGetError bool
+}
+
+// NewMockPathsSecureStore creates a new mock store.
+func NewMockPathsSecureStore(initialData map[string][]byte) *MockPathsSecureStore {
+	if initialData == nil {
+		initialData = make(map[string][]byte)
+	}
+	return &MockPathsSecureStore{
+		data: initialData,
+	}
+}
+
+// Get retrieves the configuration for a scope.
+func (m *MockPathsSecureStore) Get(scope string, generation int) ([]byte, string, error) {
+	if m.ForceGetError {
+		return nil, "", fmt.Errorf("%w: forced get error", ErrSecureStoreGet)
+	}
+	data, ok := m.data[scope]
+	if !ok {
+		return []byte{}, "toml", nil
+	}
+	return data, "toml", nil
+}
+
+// Save is a no-op for paths tests.
+func (m *MockPathsSecureStore) Save(scope string, data []byte, format string, description string) error {
+	return nil
+}
 
 const sampleTomlConfig = `
 [server]
@@ -44,7 +78,7 @@ func TestListPaths_Success(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// --- Setup ---
-			mockStore := NewMockSecureStore(map[string][]byte{
+			mockStore := NewMockPathsSecureStore(map[string][]byte{
 				config.ScopeApplication: []byte(sampleTomlConfig),
 			})
 			var stdout bytes.Buffer
@@ -93,7 +127,7 @@ func TestListPaths_Success_NoPathsFound(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// --- Setup ---
-			mockStore := NewMockSecureStore(map[string][]byte{
+			mockStore := NewMockPathsSecureStore(map[string][]byte{
 				config.ScopeApplication: tc.config,
 			})
 
@@ -110,7 +144,7 @@ func TestListPaths_Success_NoPathsFound(t *testing.T) {
 
 func TestListPaths_Failure_SecureStoreError(t *testing.T) {
 	// --- Setup ---
-	mockStore := NewMockSecureStore(nil)
+	mockStore := NewMockPathsSecureStore(nil)
 	mockStore.ForceGetError = true
 
 	// --- Execute ---
@@ -128,7 +162,7 @@ func TestListPaths_Failure_SecureStoreError(t *testing.T) {
 func TestListPaths_Failure_MalformedToml(t *testing.T) {
 	// --- Setup ---
 	malformedConfig := `[server` // Intentionally broken TOML
-	mockStore := NewMockSecureStore(map[string][]byte{
+	mockStore := NewMockPathsSecureStore(map[string][]byte{
 		config.ScopeApplication: []byte(malformedConfig),
 	})
 

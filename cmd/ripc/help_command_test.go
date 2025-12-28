@@ -13,20 +13,17 @@ func TestRunHelpTopic_Success(t *testing.T) {
 	originalPrintApp := printAppUsageFunc
 	originalPrintJob := printJobUsageFunc
 	originalPrintConfig := printConfigUsageFunc
-	originalPrintAuth := printAuthUsageFunc
 	originalPrintLog := printLogUsageFunc
 	defer func() {
 		printAppUsageFunc = originalPrintApp
 		printJobUsageFunc = originalPrintJob
 		printConfigUsageFunc = originalPrintConfig
-		printAuthUsageFunc = originalPrintAuth
 		printLogUsageFunc = originalPrintLog
 	}()
 
 	printAppUsageFunc = func() { calledTopic = "app" }
 	printJobUsageFunc = func() { calledTopic = "job" }
 	printConfigUsageFunc = func() { calledTopic = "config" }
-	printAuthUsageFunc = func() { calledTopic = "auth" }
 	printLogUsageFunc = func() { calledTopic = "log" }
 
 	testCases := []struct {
@@ -36,7 +33,6 @@ func TestRunHelpTopic_Success(t *testing.T) {
 		{topic: "app", expectTopic: "app"},
 		{topic: "job", expectTopic: "job"},
 		{topic: "config", expectTopic: "config"},
-		{topic: "auth", expectTopic: "auth"},
 		{topic: "log", expectTopic: "log"},
 	}
 

@@ -85,7 +85,6 @@ func run(args []string, output io.Writer) error {
 					Subcommands: []Subcommand{
 						{"app", "Manage application lifecycle (e.g., creating the database)"},
 						{"config", "Manage the application's secure configuration"},
-						{"auth", "Manage authentication settings (e.g., JWT secrets, OAuth2 providers)"},
 						{"job", "Manage background jobs"},
 						{"log", "Manage the log database"},
 						{"help", "Show help for a specific command"},
@@ -95,7 +94,6 @@ func run(args []string, output io.Writer) error {
 			Examples: []string{
 				"ripc app create",
 				"ripc config set server.port 8080",
-				"ripc auth rotate-jwt-secrets",
 			},
 		}
 		help.Print(output, "ripc")
@@ -168,8 +166,6 @@ func run(args []string, output io.Writer) error {
 		handleAppCommand(secureStore, pool, *dbPathFlag, commandArgs)
 	case "config":
 		handleConfigCommand(secureStore, pool, commandArgs)
-	case "auth":
-		handleAuthCommand(secureStore, commandArgs)
 	case "job":
 		handleJobCommand(dbImpl, commandArgs)
 	case "log":

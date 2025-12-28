@@ -14,7 +14,6 @@ var (
 	printAppUsageFunc    = printAppUsage
 	printJobUsageFunc    = printJobUsage
 	printConfigUsageFunc = printConfigUsage
-	printAuthUsageFunc   = printAuthUsage
 	printLogUsageFunc    = printLogUsage
 )
 
@@ -46,8 +45,6 @@ func runHelpTopic(topic string) error {
 		printJobUsageFunc()
 	case "config":
 		printConfigUsageFunc()
-	case "auth":
-		printAuthUsageFunc()
 	case "log":
 		printLogUsageFunc()
 	default:

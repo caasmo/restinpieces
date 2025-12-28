@@ -76,17 +76,6 @@ Manages the secure configuration store.
 -   **`diff <generation>`**: Shows differences between the latest configuration and a previous version.
     -   `ripc  config diff -scope myapp 1`
 
-### `auth`
-
-Manages authentication settings. These commands operate on the `application` scope.
-
--   **`add-oauth2 <provider>`**: Adds a new, empty OAuth2 provider configuration.
-    -   `ripc  auth add-oauth2 github`
--   **`rm-oauth2 <provider>`**: Removes an OAuth2 provider configuration.
-    -   `ripc  auth rm-oauth2 github`
--   **`rotate-jwt-secrets`**: Generates new random secrets for all JWTs.
-    -   `ripc  auth rotate-jwt-secrets`
-
 ### `job`
 
 Manages background jobs in the queue.
@@ -106,5 +95,4 @@ Shows usage information for a specific command.
 
 ```bash
 ripc help config
-ripc help auth
 ```
