@@ -963,19 +963,6 @@ cmd_install() {
     project_name=$(basename "$(dirname "$source_dir")")
 
     log_info "Installing service '${project_name}' from source '${source_dir}'..."
-
-    local restore_from_backup=false
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --restore-from-backup)
-                restore_from_backup=true
-                shift
-                ;; 
-            *)
-                shift
-                ;; 
-        esac
-    done
     
     create_service_user
     create_directory_structure
