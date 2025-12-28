@@ -1061,7 +1061,7 @@ cmd_deploy() {
     # We perform cleanup from the deployment script (running as the SSH user)
     # rather than the installer (running as root). This avoids the risk of 
     # running 'rm -rf' with elevated privileges on a potentially miscalculated path.
-    log_info "Step 5: Cleaning up installation artifacts..."
+    log_info "Step 5: Cleaning up installation artifacts in ${remote_dir}..."
     ssh -o LogLevel=ERROR "${host}" "rm -rf ${remote_dir}"
 
     log_success "Deployment complete on ${host}!"
