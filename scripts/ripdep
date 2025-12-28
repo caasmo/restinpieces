@@ -684,8 +684,8 @@ cmd_build-recovery() {
     fi
 
     # 3. Ensure self-contained script
-    generate_remote_script "${bin_dir}/ripdep"
-    log_info "Generated remote deploy script to ${bin_dir}/ripdep"
+    generate_remote_script "${bin_dir}/ripdep-remote"
+    log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
     log_success "Recovery build completed successfully in: ${GREEN}${build_dir}${NC}"
 }
@@ -893,7 +893,7 @@ deploy_binaries() {
         if [ -f "$binary" ]; then
             local basename=$(basename "$binary")
             # Do not overwrite self, the ripdep script
-            if [ "$basename" == "ripdep" ]; then
+            if [ "$basename" == "ripdep-remote" ]; then
                 continue
             fi
             install -m 700 -o "${project_name}" -g "${project_name}" \
@@ -1070,7 +1070,7 @@ cmd_deploy() {
         exit 1
     fi
 
-    ssh -t -o LogLevel=ERROR "${host}" "sudo ${remote_dir}/bin/ripdep install ${install_args}"
+    ssh -t -o LogLevel=ERROR "${host}" "sudo ${remote_dir}/bin/ripdep-remote install ${install_args}"
     
     log_success "Deployment complete on ${host}!"
 }
@@ -1173,7 +1173,7 @@ cmd_undeploy() {
     fi
 
     log_info "Uninstalling application on ${host}..."
-    local deployed_script_path="/home/${service_name}/bin/ripdep"
+    local deployed_script_path="/home/${service_name}/bin/ripdep-remote"
     local remote_tmp_script_path="/tmp/ripdep-uninstall-$"
     log_info "→ Orchestrating remote uninstall using the deployed script..."
 
@@ -1498,8 +1498,8 @@ cmd_build-release() {
     build_project_binary "$bin_dir" "$project_path" "$project_name"
 
     # Generate the remote script to make the artifact self-contained
-    generate_remote_script "${bin_dir}/ripdep"
-    log_info "Generated remote deploy script to ${bin_dir}/ripdep"
+    generate_remote_script "${bin_dir}/ripdep-remote"
+    log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
     log_info "Downloading release tools (ripc)..."
     download_ripc "$bin_dir"
@@ -1590,8 +1590,8 @@ cmd_build-bootstrap() {
     build_project_binary "$bin_dir" "$project_path" "$project_name"
 
     # Generate the remote script to make the artifact self-contained
-    generate_remote_script "${bin_dir}/ripdep"
-    log_info "Generated remote deploy script to ${bin_dir}/ripdep"
+    generate_remote_script "${bin_dir}/ripdep-remote"
+    log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
     log_info "Downloading bootstrap tools (ripc, age)..."
     download_ripc "$bin_dir"

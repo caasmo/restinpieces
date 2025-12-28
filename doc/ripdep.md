@@ -74,7 +74,7 @@ TARBALL_PATH=$(find ~/src/backup/releases/my-app -name "*.tar.gz" -print -quit)
 ./ripdep push "$HOST" "$TARBALL_PATH"
 
 # 4. SSH to the host and run the remote installer
-REMOTE_INSTALL_PATH=$(./ripdep get_remote_dir_from_tarball_path "$TARBALL_PATH")/bin/ripdep 
+REMOTE_INSTALL_PATH=$(./ripdep get_remote_dir_from_tarball_path "$TARBALL_PATH")/bin/ripdep-remote 
 ssh -t "$HOST" "sudo $REMOTE_INSTALL_PATH install"
 ```
 
@@ -222,7 +222,7 @@ It also establishes a secure file structure with strict permissions:
 **Example:**
 ```bash
 # Run this on the remote server after a 'push'
-sudo /tmp/my-app/v1.0.0/bin/ripdep install
+sudo /tmp/my-app/v1.0.0/bin/ripdep-remote install
 ```
 
 ### `deploy`
