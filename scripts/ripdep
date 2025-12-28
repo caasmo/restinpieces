@@ -1085,6 +1085,35 @@ remote_dir_exists() {
     ssh -o LogLevel=ERROR "${host}" "[ -d '${path}' ]"
 }
 
+create_remote_backup() {
+    local host=$1
+    local service_name=$2
+    local backup_name=$3
+    local remote_path="/tmp/${backup_name}"
+
+    log_info "Creating remote tarball at ${remote_path}..."
+    ssh -t -o LogLevel=ERROR "${host}" "sudo tar -czf '${remote_path}' -C '/home/${service_name}' ."
+}
+
+download_remote_backup() {
+    local host=$1
+    local remote_path=$2
+    local local_dest=$3
+    
+    log_info "Downloading backup from ${host}:${remote_path} to ${local_dest}..."
+    if ! scp "${host}:${remote_path}" "${local_dest}"; then
+        log_error "Download failed."
+        exit 1
+    fi
+}
+
+cleanup_remote_backup() {
+    local host=$1
+    local remote_path=$2
+    log_info "Cleaning up remote backup file: ${remote_path}"
+    ssh -t -o LogLevel=ERROR "${host}" "sudo rm -f '${remote_path}'"
+}
+
 backup_remote_service() {
     local host=$1
     local service_name=$2
