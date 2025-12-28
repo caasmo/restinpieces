@@ -2,6 +2,18 @@
 
 `ripc` is a CLI tool for managing RestInPieces application instances. It handles the creation of new application databases and provides tools for managing the secure configuration store, authentication settings, and background jobs.
 
+# Content
+
+- [Relationship with ripdep](#relationship-with-ripdep)
+- [Installation](#installation)
+- [Global Options](#global-options)
+- [Usage](#usage)
+- [Commands](#commands)
+  - [app](#app)
+  - [config](#config)
+  - [job](#job)
+  - [help](#help)
+
 ## Relationship with `ripdep`
 
 `ripc` is a **low-level primitive**, whereas [`ripdep`](ripdep.md) ([source](../scripts/ripdep)) is a high-level orchestrator.
