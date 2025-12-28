@@ -688,6 +688,13 @@ cmd_build-recovery() {
     log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
     log_success "Recovery build completed successfully in: ${GREEN}${build_dir}${NC}"
+
+    echo "" # Add a blank line for readability
+    log_info "Next steps:"
+    log_info "  To package this build into a release artifact:"
+    log_info "    $0 pack ${build_dir}"
+    log_info "  To deploy this build to a remote host (includes packing):"
+    log_info "    $0 deploy <host> ${build_dir}"
 }
 
 # ============================================ 
@@ -1481,6 +1488,13 @@ cmd_build-release() {
     download_ripc "$bin_dir"
 
     log_success "Release build completed successfully in: ${GREEN}${build_dir}${NC}"
+
+    echo "" # Add a blank line for readability
+    log_info "Next steps:"
+    log_info "  To package this build into a release artifact:"
+    log_info "    $0 pack ${build_dir}"
+    log_info "  To deploy this build to a remote host (includes packing):"
+    log_info "    $0 deploy <host> ${build_dir}"
 }
 
 cmd_build-bootstrap() {
@@ -1581,6 +1595,13 @@ cmd_build-bootstrap() {
     add_systemd_configuration "$project_name" "$build_dir"
 
     log_success "Bootstrap build completed successfully in: ${GREEN}${build_dir}${NC}"
+
+    echo "" # Add a blank line for readability
+    log_info "Next steps:"
+    log_info "  To package this build into a release artifact:"
+    log_info "    $0 pack ${build_dir}"
+    log_info "  To deploy this build to a remote host (includes packing):"
+    log_info "    $0 deploy <host> ${build_dir}"
 }
 
 # ============================================ 
