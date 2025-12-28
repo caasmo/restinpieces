@@ -4,11 +4,16 @@
 [RestInPieces](https://github.com/caasmo/restinpieces) framework applications.
 It also orquestates high level dev ops operatios, like server migrations.
 
-It is designed to be run from a developer's local machine and acts as a
-high-level, user-friendly facade for all operational tasks. It orchestrates
-complex remote operations over SSH by wrapping the lower-level, on-server
-configuration tool, `ripc`. For most use cases, you should only need to
-interact with `ripdep`.
+## Relationship with `ripc`
+
+`ripdep` acts as a high-level orchestrator that wraps the **low-level primitive**, `ripc`. This separation follows a tiered design:
+
+-   **ripc (Primitive):** Direct, unopinionated access to configuration and state. It provides a stable, composable interface intended for automation and scripting.
+-   **ripdep (Orchestrator):** Focuses on user-facing workflows and operational tasks. It combines multiple primitives, performs pre-flight checks, and orchestrates actions across server fleets.
+
+This architecture ensures that `ripc` remains a stable foundation for CI/CD while `ripdep` can rapidly evolve to support new deployment use cases.
+
+**Design Goal:** `ripdep` answers "Does this represent a real operational task?", while `ripc` answers "Can I script this easily?"
 
 # Standard Application Layout
 
