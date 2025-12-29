@@ -25,8 +25,13 @@ REPO_RIPC="caasmo/restinpieces"
 REPO_AGE="FiloSottile/age"
 URL_SQLITE_TOOLS="https://sqlite.org/2025/sqlite-tools-linux-x64-3510100.zip"
 
-# Binary naming convention
-# Binary is now named after the project.
+# Host architecture (actual build machine - always correct)
+HOST_GOOS=$(go env GOHOSTOS)
+HOST_GOARCH=$(go env GOHOSTARCH)
+
+# Target architecture (deployment machine - where binaries will run)
+TARGET_GOOS=${GOOS:-$HOST_GOOS}
+TARGET_GOARCH=${GOARCH:-$HOST_GOARCH}
 
 # Toold URL Templates
 # Litestream: %s=repo, %s=tag, %s=version_num
@@ -34,7 +39,7 @@ URL_TEMPLATE_LITESTREAM="https://github.com/%s/releases/download/%s/litestream-%
 # Age: %s=repo, %s=tag, %s=tag
 URL_TEMPLATE_AGE="https://github.com/%s/releases/download/%s/age-%s-linux-amd64.tar.gz"
 # Ripc: %s=repo, %s=tag, %s=tag
-URL_TEMPLATE_RIPC="https://github.com/%s/releases/download/%s/ripc-%s-linux-amd64.tar.gz"
+URL_TEMPLATE_RIPC="https://github.com/%s/releases/download/%s/ripc-%s-${TARGET_GOOS}-${TARGET_GOARCH}.tar.gz"
 URL_SERVICE_TEMPLATE="https://raw.githubusercontent.com/caasmo/restinpieces/master/restinpieces.service"
 
 # Filename template for the tarball
@@ -220,7 +225,8 @@ build_project_binary() {
     local bin_dir=$1 project_path=$2 binary_name=$3
     local project_name
     project_name=$(basename "$project_path")
-    log_info "Building Go restinpieces app binaries from project: $project_path"
+
+    log_info "Building Go restinpieces app binaries ${GREEN}${TARGET_GOOS}/${TARGET_GOARCH}${NC} from project: $project_path"
 
     local num_commands
     num_commands=$(ls -d "$project_path"/cmd/*/ 2>/dev/null | wc -l)
@@ -1475,6 +1481,8 @@ cmd_build-release() {
     log_info "  Project path               : ${project_path}"
     log_info "  Project name               : ${GREEN}$project_name${NC}"
     log_info "  Project version            : ${GREEN}$version${NC}"
+	log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"                                                                             │
+	log_info "  Target OS/Arch             : ${GREEN}$TARGET_GOOS/$TARGET_GOARCH${NC}"                                                                             │
     log_info ""
     
     # Build project binary, naming it after the project
@@ -1572,6 +1580,8 @@ cmd_build-bootstrap() {
     log_info "  Project path               : ${project_path}"
     log_info "  Project name               : ${GREEN}$project_name${NC}"
     log_info "  Project version            : ${GREEN}$version${NC}"
+	log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"                                                                             │
+	log_info "  Target OS/Arch             : ${GREEN}$TARGET_GOOS/$TARGET_GOARCH${NC}"                                                                             │
     log_info "  Config base directory      : $CONFIG_BASE_DIR"
     log_info "  Config project directory   : $CONFIG_BASE_DIR/$project_name"
     log_info ""
