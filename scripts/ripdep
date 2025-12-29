@@ -34,12 +34,12 @@ TARGET_GOOS=${GOOS:-$HOST_GOOS}
 TARGET_GOARCH=${GOARCH:-$HOST_GOARCH}
 
 # Toold URL Templates
-# Litestream: %s=repo, %s=tag, %s=version_num
-URL_TEMPLATE_LITESTREAM="https://github.com/%s/releases/download/%s/litestream-%s-linux-x86_64.tar.gz"
-# Age: %s=repo, %s=tag, %s=tag
-URL_TEMPLATE_AGE="https://github.com/%s/releases/download/%s/age-%s-linux-amd64.tar.gz"
-# Ripc: %s=repo, %s=tag, %s=tag
-URL_TEMPLATE_RIPC="https://github.com/%s/releases/download/%s/ripc-%s-${TARGET_GOOS}-${TARGET_GOARCH}.tar.gz"
+# Litestream: %s=repo, %s=tag, %s=version_num, %s=os, %s=arch
+URL_TEMPLATE_LITESTREAM="https://github.com/%s/releases/download/%s/litestream-%s-%s-%s.tar.gz"
+# Age: %s=repo, %s=tag, %s=tag, %s=os, %s=arch
+URL_TEMPLATE_AGE="https://github.com/%s/releases/download/%s/age-%s-%s-%s.tar.gz"
+# Ripc: %s=repo, %s=tag, %s=tag, %s=os, %s=arch
+URL_TEMPLATE_RIPC="https://github.com/%s/releases/download/%s/ripc-%s-%s-%s.tar.gz"
 URL_SERVICE_TEMPLATE="https://raw.githubusercontent.com/caasmo/restinpieces/master/restinpieces.service"
 
 # Filename template for the tarball
@@ -256,6 +256,12 @@ build_project_binary() {
 # Download and install Litestream binary
 download_litestream() {
     local bin_dir=$1
+    local os=${2:-$TARGET_GOOS}
+    local arch=${3:-$TARGET_GOARCH}
+    
+    # Rename arch for litestream if needed (amd64 -> x86_64)
+    if [ "$arch" == "amd64" ]; then arch="x86_64"; fi
+
     local ls_version
     local ls_version_num
     local url_ls
@@ -266,13 +272,13 @@ download_litestream() {
         return 1
     fi
     
-    log_info "Downloading Litestream ${ls_version}..."
+    log_info "Downloading Litestream ${ls_version} for ${os}/${arch}..."
     
     # Strip 'v' prefix if present
     ls_version_num=${ls_version#v}
     
     # Build download URL
-    printf -v url_ls "$URL_TEMPLATE_LITESTREAM" "$REPO_LITESTREAM" "$ls_version" "$ls_version_num"
+    printf -v url_ls "$URL_TEMPLATE_LITESTREAM" "$REPO_LITESTREAM" "$ls_version" "$ls_version_num" "$os" "$arch"
     
     # Download and extract (pipefail ensures curl failures are caught)
     if ! curl -sSLf "$url_ls" | tar -xz -C "${bin_dir}" litestream; then
@@ -289,6 +295,9 @@ download_litestream() {
 # Download and install Age encryption binaries
 download_age() {
     local bin_dir=$1
+    local os=${2:-$HOST_GOOS}     # Default to Host
+    local arch=${3:-$HOST_GOARCH} # Default to Host
+    
     local age_version
     local url_age
     
@@ -298,10 +307,10 @@ download_age() {
         return 1
     fi
     
-    log_info "Downloading Age ${age_version}..."
+    log_info "Downloading Age ${age_version} for ${os}/${arch}..."
     
     # Build download URL
-    printf -v url_age "$URL_TEMPLATE_AGE" "$REPO_AGE" "$age_version" "$age_version"
+    printf -v url_age "$URL_TEMPLATE_AGE" "$REPO_AGE" "$age_version" "$age_version" "$os" "$arch"
     
     # Download and extract
     if ! curl -sSLf "$url_age" | tar -xz -C "${bin_dir}" --strip-components=1 "age/age-keygen" "age/age"; then
@@ -315,6 +324,9 @@ download_age() {
 # Download and install Ripc binary
 download_ripc() {
     local bin_dir=$1
+    local os=${2:-$TARGET_GOOS}
+    local arch=${3:-$TARGET_GOARCH}
+
     local ripc_version
     local url_ripc
     
@@ -324,10 +336,10 @@ download_ripc() {
         return 1
     fi
     
-    log_info "Downloading Ripc ${ripc_version}..."
+    log_info "Downloading Ripc ${ripc_version} for ${os}/${arch}..."
     
     # Build download URL
-    printf -v url_ripc "$URL_TEMPLATE_RIPC" "$REPO_RIPC" "$ripc_version" "$ripc_version"
+    printf -v url_ripc "$URL_TEMPLATE_RIPC" "$REPO_RIPC" "$ripc_version" "$ripc_version" "$os" "$arch"
     
     # Download and extract
     if ! curl -sSLf "$url_ripc" | tar -xz -C "${bin_dir}" --strip-components=1 ripc/ripc; then
@@ -370,27 +382,27 @@ download_sqlite() {
 }
 
 generate_age_key() {
-    local bin_dir=$1
-    local build_dir=$2
+    local keygen_bin=$1
+    local output_path=$2
     
     log_info "Generating Age key..."
-    "${bin_dir}/age-keygen" -o "${build_dir}/age.key"
-    log_success "Generated age.key in ${build_dir}/age.key"
+    "$keygen_bin" -o "$output_path"
+    log_success "Generated age.key in $output_path"
 }
 
 create_app_db() {
-    local bin_dir=$1
-    local build_dir=$2
-    local data_dir=$3
+    local ripc_bin=$1
+    local key_path=$2
+    local db_path=$3
     
     log_info "Creating app.db..."
-    if [ -f "${data_dir}/app.db" ]; then
-        log_warning "app.db already exists in build dir"
+    if [ -f "$db_path" ]; then
+        log_warning "app.db already exists: $db_path"
         exit 1
     fi
     
-    "${bin_dir}/ripc" -agekey "${build_dir}/age.key" -dbpath "${data_dir}/app.db" app create
-    log_success "Created app.db in ${data_dir}/app.db"
+    "$ripc_bin" -agekey "$key_path" -dbpath "$db_path" app create
+    log_success "Created app.db in $db_path"
 }
 
 create_logs_db() {
@@ -400,17 +412,17 @@ create_logs_db() {
 
 add_litestream_configuration() {
     local project_name=$1
-    local bin_dir=$2
-    local build_dir=$3
-    local data_dir=$4
+    local ripc_bin=$2
+    local key_path=$3
+    local db_path=$4
     
     local config_file="${CONFIG_BASE_DIR}/${project_name}/litestream.yml"
 
     log_info "Checking Litestream configuration..."
     if [ -f "$config_file" ]; then
         log_info "Importing Litestream config from: $config_file"
-        "${bin_dir}/ripc" -agekey "${build_dir}/age.key" -dbpath "${data_dir}/app.db" config save -scope litestream "$config_file"
-        log_success "Added ${config_file} to config store in ${data_dir}/app.db"
+        "$ripc_bin" -agekey "$key_path" -dbpath "$db_path" config save -scope litestream "$config_file"
+        log_success "Added ${config_file} to config store in $db_path"
     else
         log_warning "Build has no litestream support (config file not found at $config_file)"
     fi
@@ -565,8 +577,10 @@ cmd_restore-db() {
         log_info "Restoring database from Litestream config: ${source}..."
         
         tmp_tools=$(mktemp -d)
-        log_info "Created temporary directory for tools: $tmp_tools"
-        download_litestream "$tmp_tools"
+        log_info "Created temporary directory for host tools: $tmp_tools"
+        
+        # We need to run litestream LOCALLY to restore, so download for HOST
+        download_litestream "$tmp_tools" "$HOST_GOOS" "$HOST_GOARCH"
 
         if ! "${tmp_tools}/litestream" restore -config "$source" "${data_dir}/app.db"; then
             log_error "Litestream restore failed."
@@ -671,7 +685,7 @@ cmd_build-recovery() {
     if ls "${data_dir}"/*.db >/dev/null 2>&1; then
         log_info "Performing integrity check on databases in data/ directory..."
         
-        # Ensure we have a clean tools directory for sqlite
+        # Ensure we have a clean tools directory for sqlite (HOST tools)
         tmp_tools=$(mktemp -d)
         download_sqlite "$tmp_tools"
 
@@ -1586,6 +1600,28 @@ cmd_build-bootstrap() {
     log_info "  Config project directory   : $CONFIG_BASE_DIR/$project_name"
     log_info ""
     
+    # -------------------------------------------------------------
+    # 1. Prepare Host Tools (for local initialization)
+    # -------------------------------------------------------------
+    log_info "Downloading host tools for initialization ($HOST_GOOS/$HOST_GOARCH)..."
+    download_ripc "$tmp_tools_dir" "$HOST_GOOS" "$HOST_GOARCH"
+    download_age "$tmp_tools_dir" "$HOST_GOOS" "$HOST_GOARCH"
+
+    # -------------------------------------------------------------
+    # 2. Run Initialization (using host tools)
+    # -------------------------------------------------------------
+    log_info "Bootstrapping application data..."
+    generate_age_key "$tmp_tools_dir/age-keygen" "$build_dir/age.key"
+    create_app_db "$tmp_tools_dir/ripc" "$build_dir/age.key" "$data_dir/app.db"
+    
+    add_litestream_configuration "$project_name" "$tmp_tools_dir/ripc" "$build_dir/age.key" "$data_dir/app.db"
+    add_systemd_configuration "$project_name" "$build_dir"
+
+    # -------------------------------------------------------------
+    # 3. Assemble Target Payload (for remote deployment)
+    # -------------------------------------------------------------
+    log_info "Building and assembling target artifacts ($TARGET_GOOS/$TARGET_GOARCH)..."
+    
     # Build project binary, naming it after the project
     build_project_binary "$bin_dir" "$project_path" "$project_name"
 
@@ -1593,16 +1629,8 @@ cmd_build-bootstrap() {
     generate_remote_script "${bin_dir}/ripdep-remote"
     log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
-    log_info "Downloading bootstrap tools (ripc, age)..."
-    download_ripc "$bin_dir"
-    download_age "$tmp_tools_dir"
-
-    log_info "Bootstrapping application data..."
-    generate_age_key "$tmp_tools_dir" "$build_dir"
-    create_app_db "$bin_dir" "$build_dir" "$data_dir"
-    
-    add_litestream_configuration "$project_name" "$bin_dir" "$build_dir" "$data_dir"
-    add_systemd_configuration "$project_name" "$build_dir"
+    log_info "Downloading target release tools (ripc)..."
+    download_ripc "$bin_dir" "$TARGET_GOOS" "$TARGET_GOARCH"
 
     log_success "Bootstrap build completed successfully in: ${GREEN}${build_dir}${NC}"
 
