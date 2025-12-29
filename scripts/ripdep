@@ -367,13 +367,12 @@ download_sqlite() {
     
     log_info "Downloading SQLite tools from $url_sqlite..."
     
-    # Create temporary file
-    tmp_zip=$(mktemp --suffix=.zip)
+    # Create temporary file inside the given destination directory
+    tmp_zip=$(TMPDIR=${dest_dir} mktemp --suffix=.zip)
     
     # Download SQLite tools
     if ! curl -sSLf "$url_sqlite" -o "$tmp_zip"; then
         log_error "Failed to download SQLite tools from $url_sqlite" >&2
-        rm -f "$tmp_zip"
         return 1
     fi
     
@@ -385,9 +384,6 @@ download_sqlite() {
     
     # Make executable
     chmod +x "${dest_dir}/sqlite3"
-    
-    # Clean up temp file
-    rm -f "$tmp_zip"
     
     log_success "SQLite tools downloaded to ${dest_dir}/sqlite3"
 }
