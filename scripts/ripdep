@@ -23,7 +23,9 @@ REPO_LITESTREAM="benbjohnson/litestream"
 REPO_RIPC="caasmo/restinpieces"
 # just for build process
 REPO_AGE="FiloSottile/age"
-URL_SQLITE_TOOLS="https://sqlite.org/2025/sqlite-tools-linux-x64-3510100.zip"
+# SQLite: %s=os, %s=arch, %s=version
+URL_TEMPLATE_SQLITE="https://sqlite.org/2025/sqlite-tools-%s-%s-3510100.zip"
+
 
 # Host architecture (actual build machine - always correct)
 HOST_GOOS=$(go env GOHOSTOS)
@@ -352,33 +354,54 @@ download_ripc() {
 
 # Download and install SQLite tools
 download_sqlite() {
-    local bin_dir=$1
+    local dest_dir=$1
+    local os=${2:-$HOST_GOOS}
+    local arch=${3:-$HOST_GOARCH}
     local tmp_zip
+
+    # SQLite uses 'x64' for 'amd64'
+    if [ "$arch" == "amd64" ]; then arch="x64"; fi
+
+    local url_sqlite
+    printf -v url_sqlite "$URL_TEMPLATE_SQLITE" "$os" "$arch"
     
-    log_info "Downloading SQLite tools from $URL_SQLITE_TOOLS..."
+    log_info "Downloading SQLite tools from $url_sqlite..."
     
     # Create temporary file
     tmp_zip=$(mktemp --suffix=.zip)
     
     # Download SQLite tools
-    if ! curl -sSLf "$URL_SQLITE_TOOLS" -o "$tmp_zip"; then
-        log_error "Failed to download SQLite tools from $URL_SQLITE_TOOLS" >&2
+    if ! curl -sSLf "$url_sqlite" -o "$tmp_zip"; then
+        log_error "Failed to download SQLite tools from $url_sqlite" >&2
+        rm -f "$tmp_zip" # Clean up on failure
         return 1
     fi
     
-    # Extract sqlite3 binary to bin_dir
-    if ! unzip -p "$tmp_zip" "sqlite3" > "${bin_dir}/sqlite3"; then
+    # Extract sqlite3 binary to dest_dir
+    # The archive contains a directory like 'sqlite-tools-linux-x64-3510100', so we need to know the name.
+    # A safer way is to find the sqlite3 binary inside the zip and extract it directly.
+    local zip_entry
+    zip_entry=$(unzip -Z1 "$tmp_zip" | grep '/sqlite3$')
+
+    if [ -z "$zip_entry" ]; then
+        log_error "Could not find 'sqlite3' binary in the downloaded archive."
+        rm -f "$tmp_zip"
+        return 1
+    fi
+
+    if ! unzip -p "$tmp_zip" "$zip_entry" > "${dest_dir}/sqlite3"; then
         log_error "Failed to extract sqlite3 from archive" >&2
+        rm -f "$tmp_zip"
         return 1
     fi
     
     # Make executable
-    chmod +x "${bin_dir}/sqlite3"
+    chmod +x "${dest_dir}/sqlite3"
     
     # Clean up temp file
     rm -f "$tmp_zip"
     
-    log_success "SQLite tools downloaded to ${bin_dir}/sqlite3"
+    log_success "SQLite tools downloaded to ${dest_dir}/sqlite3"
 }
 
 generate_age_key() {
