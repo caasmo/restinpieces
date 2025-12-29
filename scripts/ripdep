@@ -1200,13 +1200,17 @@ cmd_config() {
     local project_name=${2:-}
 
     if [ -z "$host" ] || [ -z "$project_name" ]; then
-        log_error "Usage: $0 config <host> <project-name> [ripc-args...]"
+        log_error "Usage: $0 config <host> <project-name> [ripc-config-args...]"
         exit 1
     fi
     shift 2
     local args="$*"
+
+    local key_path="/home/${project_name}/age.key"
+    local db_path="/home/${project_name}/data/app.db"
+    local ripc_bin="/home/${project_name}/bin/ripc"
     
-    ssh -t -o LogLevel=ERROR "${host}" "sudo -u ${project_name} /home/${project_name}/bin/ripc $args"
+    ssh -t -o LogLevel=ERROR "${host}" "sudo -u ${project_name} ${ripc_bin} -agekey ${key_path} -dbpath ${db_path} config $args"
 }
 
 cmd_status() {
