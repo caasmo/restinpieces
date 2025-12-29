@@ -834,33 +834,33 @@ require_root() {
 
 show_uninstall_help() {
     cat <<HELPEOF
-${GREEN}ripdep uninstall${NC} - Uninstall the service on a VM.
+${GREEN}ripdep uninstall${NC} - Uninstall the project on a VM.
 
-Usage: $0 uninstall <service-name>
+Usage: $0 uninstall <project-name>
 
 HELPEOF
 }
 
 stop_service() {
-    log_info "Stopping and disabling service '${service_name}'..."
-    if systemctl list-unit-files "${service_name}.service" >/dev/null 2>&1; then
-        if systemctl is-active --quiet "${service_name}"; then
+    log_info "Stopping and disabling service '${project_name}'..."
+    if systemctl list-unit-files "${project_name}.service" >/dev/null 2>&1; then
+        if systemctl is-active --quiet "${project_name}"; then
             log_info "→ Service is active. Stopping..."
-            systemctl stop "${service_name}"
+            systemctl stop "${project_name}"
         fi
-        if systemctl is-enabled --quiet "${service_name}"; then
+        if systemctl is-enabled --quiet "${project_name}"; then
             log_info "→ Service is enabled. Disabling..."
-            systemctl disable "${service_name}"
+            systemctl disable "${project_name}"
         fi
     else
-        log_warning "→ Service ${service_name}.service not found, skipping stop/disable."
+        log_warning "→ Service ${project_name}.service not found, skipping stop/disable."
     fi
     log_success "Service stop/disable phase finished."
 }
 
 remove_systemd_service() {
-    local service_path="/etc/systemd/system/${service_name}.service"
-    log_info "Deleting systemd service file for '${service_name}'..."
+    local service_path="/etc/systemd/system/${project_name}.service"
+    log_info "Deleting systemd service file for '${project_name}'..."
     if [ -f "${service_path}" ]; then
         log_info "→ Removing systemd service file: ${service_path}"
         rm -f "${service_path}"
@@ -872,12 +872,12 @@ remove_systemd_service() {
 }
 
 delete_service_user() {
-    log_info "Deleting user and all files for '${service_name}'..."
-    if id "${service_name}" &>/dev/null; then
-        log_info "→ Deleting user '${service_name}' and home directory..."
-        userdel -r "${service_name}"
+    log_info "Deleting user and all files for '${project_name}'..."
+    if id "${project_name}" &>/dev/null; then
+        log_info "→ Deleting user '${project_name}' and home directory..."
+        userdel -r "${project_name}"
     else
-        log_warning "→ User ${service_name} not found."
+        log_warning "→ User ${project_name} not found."
     fi
     log_success "User and files cleanup finished."
 }
@@ -1004,16 +1004,16 @@ cmd_install() {
 
 cmd_uninstall() {
     require_root
-    local service_name=${1:-} # Used by helpers
-    if [ -z "$service_name" ]; then
+    local project_name=${1:-} # Used by helpers
+    if [ -z "$project_name" ]; then
         show_uninstall_help
         exit 1
     fi
-    log_info "Uninstalling service '${service_name}'..."
+    log_info "Uninstalling service '${project_name}'..."
     stop_service
     remove_systemd_service
     delete_service_user
-    log_success "Successfully uninstalled '${service_name}'."
+    log_success "Successfully uninstalled '${project_name}'."
 }
 
 # --- Main Entry Point for Remote Script ---
@@ -1102,16 +1102,16 @@ cmd_deploy() {
 
 cmd_undeploy() {
     local host=${1:-}
-    local service_name=${2:-}
+    local project_name=${2:-}
     local force=${3:-} # for -y or --force
 
-    if [ -z "$host" ] || [ -z "$service_name" ]; then
-        log_error "Usage: $0 undeploy <host> <service-name> [-y|--force]"
+    if [ -z "$host" ] || [ -z "$project_name" ]; then
+        log_error "Usage: $0 undeploy <host> <project-name> [-y|--force]"
         exit 1
     fi
 
     if [[ "$force" != "-y" && "$force" != "--force" ]]; then
-        log_warning "This will PERMANENTLY DELETE the service '${service_name}', its user, and all associated files from '${host}'."
+        log_warning "This will PERMANENTLY DELETE the service '${project_name}', its user, and all associated files from '${host}'."
         log_warning "This action cannot be undone. Consider creating a backup first with the 'backup' command."
         read -p "Are you sure you want to continue? (yes/no) " -r
         echo
@@ -1122,21 +1122,21 @@ cmd_undeploy() {
     fi
 
     log_info "Uninstalling application on ${host}..."
-    local deployed_script_path="/home/${service_name}/bin/ripdep-remote"
+    local deployed_script_path="/home/${project_name}/bin/ripdep-remote"
     log_info "→ Orchestrating remote uninstall using the deployed script..."
 
     # The script can safely delete itself (via userdel -r inside the uninstall command)
     # because the shell reads the script into memory upon execution.
     local uninstall_script="set -e
 echo '→ Executing uninstaller...'
-sudo ${deployed_script_path} uninstall ${service_name}"
+sudo ${deployed_script_path} uninstall ${project_name}"
     
     if ! ssh -t -o LogLevel=ERROR "${host}" "$uninstall_script"; then
         log_warning "Remote uninstall script failed. The server may be in an inconsistent state."
         exit 1
     fi
     
-    log_success "Successfully undeployed '${service_name}' from '${host}'."
+    log_success "Successfully undeployed '${project_name}' from '${host}'."
 }
 
 # ============================================ 
@@ -1252,32 +1252,32 @@ cmd_db_status() {
 
 cmd_backup() {
     local host=${1:-}
-    local service_name=${2:-}
+    local project_name=${2:-}
 
-    if [ -z "$host" ] || [ -z "$service_name" ]; then
-        log_error "Usage: $0 backup <host> <service-name>"
+    if [ -z "$host" ] || [ -z "$project_name" ]; then
+        log_error "Usage: $0 backup <host> <project-name>"
         exit 1
     fi
 
-    local backup_name="${service_name}-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
+    local backup_name="${project_name}-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
     local remote_backup_path="/tmp/${backup_name}"
 
-    log_info "Starting backup for '${service_name}' from '${host}'..."
+    log_info "Starting backup for '${project_name}' from '${host}'..."
     log_info "Creating remote tarball at ${remote_backup_path}..."
 
     # Consolidate remote operations: check, create, chown
     # We chown to the current user ($USER) so scp can read it without root
     if ! ssh -t -o LogLevel=ERROR "${host}" "
-        if [ ! -d '/home/${service_name}' ]; then
+        if [ ! -d '/home/${project_name}' ]; then
             echo 'Home directory not found' >&2
             exit 2
         fi
-        sudo tar -czf '${remote_backup_path}' -C '/home/${service_name}' . && \
+        sudo tar -czf '${remote_backup_path}' -C '/home/${project_name}' . && \
         sudo chown \$(whoami) '${remote_backup_path}'
     "; then
         local exit_code=$?
         if [ $exit_code -eq 2 ]; then
-            log_info "No data or logs found in /home/${service_name}, skipping backup."
+            log_info "No data or logs found in /home/${project_name}, skipping backup."
             return 0
         else
             log_error "Failed to create remote backup. Aborting."
@@ -1317,9 +1317,9 @@ Commands:
   push <host> <tarball_path>                 Upload a specific tarball to a VM.
   install [opts]                             Install on VM (run remotely).
   deploy <host> <build_dir> [opts]           Build, pack, push, and install in one command.
-  undeploy <host> <service-name>             Permanently remove a service and all its data from a host.
-  backup <host> <service-name>               Creates and downloads a backup of a service.
-  maintenance <host> <service-name> <true|false> Toggle maintenance mode for a service.
+  undeploy <host> <project-name>             Permanently remove a project and all its data from a host.
+  backup <host> <project-name>               Creates and downloads a backup of a project.
+  maintenance <host> <project-name> <true|false> Toggle maintenance mode for a project.
   config <host> <project-name> [args]        Run ripc commands on a remote host.
   status <host>                              Check service status on a remote host.
   logs <host> [lines]                        Tail service logs from a remote host.
@@ -1388,7 +1388,7 @@ show_uninstall_help() {
     cat <<EOF
 ${GREEN}ripdep uninstall${NC} - Uninstall the service on a VM.
 
-Usage: $0 uninstall <service-name>
+Usage: $0 uninstall <project-name>
 
 EOF
 }
