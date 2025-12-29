@@ -1145,11 +1145,11 @@ sudo ${deployed_script_path} uninstall ${service_name}"
 
 cmd_maintenance() {
     local host=${1:-}
-    local service_name=${2:-}
+    local project_name=${2:-}
     local state=${3:-} # true | false
 
-    if [ -z "$host" ] || [ -z "$service_name" ] || [ -z "$state" ]; then
-        log_error "Usage: $0 maintenance <host> <service-name> <true|false>"
+    if [ -z "$host" ] || [ -z "$project_name" ] || [ -z "$state" ]; then
+        log_error "Usage: $0 maintenance <host> <project-name> <true|false>"
         exit 1
     fi
 
@@ -1158,12 +1158,12 @@ cmd_maintenance() {
         exit 1
     fi
 
-    log_info "Setting maintenance mode to '${state}' on host '${host}' for service '${service_name}'..."
+    log_info "Setting maintenance mode to '${state}' on host '${host}' for project '${project_name}'..."
 
     # Header with variable substitution
     local remote_script_header
     remote_script_header=$(cat <<EOF
-service_name="$service_name"
+project_name="$project_name"
 activated_value="$state"
 EOF
 )
@@ -1172,15 +1172,15 @@ EOF
     local remote_script_body
     remote_script_body=$(cat <<'EOF'
 set -e
-db_path="/home/$service_name/data/app.db"
-key_path="/home/$service_name/age.key"
-ripc_bin="/home/$service_name/bin/ripc"
+db_path="/home/$project_name/data/app.db"
+key_path="/home/$project_name/age.key"
+ripc_bin="/home/$project_name/bin/ripc"
 
 echo "→ Updating maintenance.activated to $activated_value..."
-sudo -u "$service_name" "$ripc_bin" -dbpath "$db_path" -agekey "$key_path" config set maintenance.activated "$activated_value"
+sudo -u "$project_name" "$ripc_bin" -dbpath "$db_path" -agekey "$key_path" config set maintenance.activated "$activated_value"
 
-echo "→ Reloading service $service_name to apply changes..."
-sudo systemctl reload "$service_name"
+echo "→ Reloading service $project_name to apply changes..."
+sudo systemctl reload "$project_name"
 
 echo "✓ Reload signal sent."
 EOF
@@ -1192,16 +1192,21 @@ EOF
         exit 1
     fi
     
-    log_success "Successfully set maintenance mode to '${state}' for '${service_name}' on '${host}'."
+    log_success "Successfully set maintenance mode to '${state}' for '${project_name}' on '${host}'."
 }
 
 cmd_config() {
-    require_local
     local host=${1:-}
-    shift
+    local project_name=${2:-}
+
+    if [ -z "$host" ] || [ -z "$project_name" ]; then
+        log_error "Usage: $0 config <host> <project-name> [ripc-args...]"
+        exit 1
+    fi
+    shift 2
     local args="$*"
     
-    ssh -t -o LogLevel=ERROR "${host}" "sudo -u ${SERVICE_NAME} /home/${SERVICE_NAME}/bin/ripc $args"
+    ssh -t -o LogLevel=ERROR "${host}" "sudo -u ${project_name} /home/${project_name}/bin/ripc $args"
 }
 
 cmd_status() {
@@ -1315,7 +1320,7 @@ Commands:
   undeploy <host> <service-name>             Permanently remove a service and all its data from a host.
   backup <host> <service-name>               Creates and downloads a backup of a service.
   maintenance <host> <service-name> <true|false> Toggle maintenance mode for a service.
-  config <host> [args]                       Run ripc commands on a remote host.
+  config <host> <project-name> [args]        Run ripc commands on a remote host.
   status <host>                              Check service status on a remote host.
   logs <host> [lines]                        Tail service logs from a remote host.
   restart <host>                             Restart the service on a remote host.
