@@ -373,25 +373,13 @@ download_sqlite() {
     # Download SQLite tools
     if ! curl -sSLf "$url_sqlite" -o "$tmp_zip"; then
         log_error "Failed to download SQLite tools from $url_sqlite" >&2
-        rm -f "$tmp_zip" # Clean up on failure
+        rm -f "$tmp_zip"
         return 1
     fi
     
-    # Extract sqlite3 binary to dest_dir
-    # The archive contains a directory like 'sqlite-tools-linux-x64-3510100', so we need to know the name.
-    # A safer way is to find the sqlite3 binary inside the zip and extract it directly.
-    local zip_entry
-    zip_entry=$(unzip -Z1 "$tmp_zip" | grep '/sqlite3$')
-
-    if [ -z "$zip_entry" ]; then
-        log_error "Could not find 'sqlite3' binary in the downloaded archive."
-        rm -f "$tmp_zip"
-        return 1
-    fi
-
-    if ! unzip -p "$tmp_zip" "$zip_entry" > "${dest_dir}/sqlite3"; then
+    # Extract sqlite3 binary to bin_dir
+    if ! unzip -p "$tmp_zip" "sqlite3" > "${dest_dir}/sqlite3"; then
         log_error "Failed to extract sqlite3 from archive" >&2
-        rm -f "$tmp_zip"
         return 1
     fi
     
