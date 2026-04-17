@@ -249,7 +249,7 @@ func (m *Mailer) SendOtpEmail(ctx context.Context, email, otp string) error {
 
 	cfg := m.configProvider.Get()
 	smtpCfg := cfg.Smtp
-	expirationMinutes := int(cfg.Jwt.VerificationEmailOtpTokenDuration.Duration.Minutes())
+	expirationMinutes := int(cfg.Jwt.VerificationEmailOtpTokenDuration.Minutes())
 
 	mail.To(email)
 	mail.FromName(smtpCfg.FromName)
