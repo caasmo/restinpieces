@@ -11,6 +11,14 @@ type mailerMock struct {
 	SendEmailChangeNotificationFunc func(ctx context.Context, oldEmail, newEmail string, hasOauth2Login bool, callbackURL string) error
 	SendPasswordResetEmailFunc      func(ctx context.Context, email, callbackURL string) error
 	SendVerificationEmailFunc       func(ctx context.Context, email, callbackURL string) error
+	SendOtpEmailFunc                func(ctx context.Context, email, otp string) error
+}
+
+func (m *mailerMock) SendOtpEmail(ctx context.Context, email, otp string) error {
+	if m.SendOtpEmailFunc != nil {
+		return m.SendOtpEmailFunc(ctx, email, otp)
+	}
+	return nil
 }
 
 func (m *mailerMock) SendEmailChangeNotification(ctx context.Context, oldEmail, newEmail string, hasOauth2Login bool, callbackURL string) error {
