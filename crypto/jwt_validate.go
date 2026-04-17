@@ -190,3 +190,43 @@ func ValidateEmailChangeClaims(claims jwt.MapClaims) error {
 
 	return nil
 }
+
+func ValidateOtpClaims(claims jwt.MapClaims) error {
+	if err := validateClaimIssuedAt(claims[ClaimIssuedAt]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
+	}
+
+	if err := validateClaimExpiresAt(claims[ClaimExpiresAt]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
+	}
+
+	if err := validateClaimEmail(claims[ClaimEmail]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
+	}
+
+	if err := validateClaimType(claims[ClaimType], ClaimOtpValue); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
+	}
+
+	if err := validateClaimOtpHash(claims[ClaimOtpHash]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
+	}
+
+	return nil
+}
+
+func validateClaimOtpHash(otpHash any) error {
+	if otpHash == nil {
+		return ErrClaimNotFound
+	}
+
+	hashStr, ok := otpHash.(string)
+	if !ok {
+		return ErrInvalidClaimFormat
+	}
+	if hashStr == "" {
+		return ErrInvalidClaimFormat
+	}
+	return nil
+}
+

@@ -1,5 +1,24 @@
 ### TODOs
 
+
+- deprecate email verification for register
+- dbAuth, verifyEmail naming is bad => Setverification or something
+- payload and payloadextra -> maybe create struct to be more clear and explicit about uniqueness
+    PayloadBuilder.BuildPayloadUnique, BuildPayloadExtra???
+- PayloadEmailVerification in db/types? remove
+- https://github.com/ai-robots-txt/ai.robots.txt
+    plugin for ripdep to add 
+    plugin to ripc
+- DFA regexp compression https://github.com/coregx/coregex?tab=readme-ov-file
+- hyperscan,  Aho-Corasick for literal substrings ⭐ most practical for user agents
+- "github.com/cloudflare/ahocorasick"
+
+- subscribe button banner/
+    - https://ideasai.com/ 
+    - has a banner (like cokie) where you give email 
+        join 98000 person to receive a 
+        get (per javascript)
+            Check your email and click the link to confirm your email!
 - ripdep undeploy unistall is ugly, rethink
 - ripdep backup is ugly, rethink
 - ripc rotate -agekeynew  

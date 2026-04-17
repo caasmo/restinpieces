@@ -33,6 +33,10 @@ const (
 	ClaimEmailChangeValue   = "email_change"   // Value for email change type claim
 	ClaimNewEmail           = "new_email"      // New email address for email change claims
 
+	// OTP verification specific claims
+	ClaimOtpHash  = "otp_hash" // SHA256 hash of the OTP code
+	ClaimOtpValue = "otp"      // Value for OTP verification type claim
+
 	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)
 	MaxTokenAge = 7 * 24 * 60 * 60
 )
@@ -44,6 +48,8 @@ var (
 	ErrJwtTokenExpired = errors.New("token expired")
 	// ErrJwtInvalidToken is returned when the token is invalid
 	ErrJwtInvalidToken = errors.New("invalid token")
+	// ErrInvalidOtpToken is returned when OTP verification token is invalid
+	ErrInvalidOtpToken = errors.New("invalid otp token")
 	// ErrInvalidVerificationToken is returned when verification token is invalid
 	ErrInvalidVerificationToken = errors.New("invalid verification token")
 	// ErrJwtInvalidSigningMethod is returned when the signing method is not HS256
@@ -183,6 +189,53 @@ func NewJwtEmailVerificationToken(userID, email, passwordHash, secret string, du
 
 	// Generate and return token
 	return NewJwt(claims, signingKey, duration)
+}
+
+func NewJwtOtpToken(email, secret string, duration time.Duration) (otp string, token string, err error) {
+	if len(secret) < MinKeyLength {
+		return "", "", ErrJwtInvalidSecretLength
+	}
+
+	otp = RandomNumericOTP()
+	otpHash := HashOtp(otp, secret)
+
+	claims := jwt.MapClaims{
+		ClaimEmail:   email,
+		ClaimOtpHash: otpHash,
+		ClaimType:    ClaimOtpValue,
+	}
+
+	token, err = NewJwt(claims, []byte(secret), duration)
+	if err != nil {
+		return "", "", err
+	}
+
+	return otp, token, nil
+}
+
+func VerifyOtpToken(userOtp, tokenString, secret string) (string, error) {
+	if len(secret) < MinKeyLength {
+		return "", ErrJwtInvalidSecretLength
+	}
+
+	claims, err := ParseJwt(tokenString, []byte(secret))
+	if err != nil {
+		return "", err
+	}
+
+	if err := ValidateOtpClaims(claims); err != nil {
+		return "", err
+	}
+
+	expectedHash, _ := claims[ClaimOtpHash].(string)
+	userHash := HashOtp(userOtp, secret)
+
+	if !hmac.Equal([]byte(userHash), []byte(expectedHash)) {
+		return "", ErrInvalidOtpToken
+	}
+
+	email, _ := claims[ClaimEmail].(string)
+	return email, nil
 }
 
 func NewJwt(payload jwt.MapClaims, signingKey []byte, duration time.Duration) (string, error) {

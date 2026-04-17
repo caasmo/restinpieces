@@ -15,6 +15,7 @@ type MailerInterface interface {
 	SendVerificationEmail(ctx context.Context, email, callbackURL string) error
 	SendEmailChangeNotification(ctx context.Context, oldEmail, newEmail string, hasOauth2Login bool, callbackURL string) error
 	SendPasswordResetEmail(ctx context.Context, email, callbackURL string) error
+	SendOtpEmail(ctx context.Context, email, otp string) error
 }
 
 // Mailer handles sending emails using configuration from a provider.
@@ -237,5 +238,45 @@ func (m *Mailer) SendPasswordResetEmail(ctx context.Context, email, callbackURL 
 	}
 
 	//app.Logger.Info("Successfully sent password reset email", "email", email)
+	return nil
+}
+
+func (m *Mailer) SendOtpEmail(ctx context.Context, email, otp string) error {
+	mail, err := m.createMailClient()
+	if err != nil {
+		return fmt.Errorf("failed to create mail client: %w", err)
+	}
+
+	cfg := m.configProvider.Get()
+	smtpCfg := cfg.Smtp
+	expirationMinutes := int(cfg.Jwt.OtpTokenDuration.Duration.Minutes())
+
+	mail.To(email)
+	mail.FromName(smtpCfg.FromName)
+	mail.From(smtpCfg.FromAddress)
+	mail.Subject(fmt.Sprintf("Your %s verification code", smtpCfg.FromName))
+	mail.HTML().Set(fmt.Sprintf(`
+		<p>Hello,</p>
+		<p>Your verification code is:</p>
+		<p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0; color: #007bff;">%s</p>
+		<p>This code expires in %d minutes.</p>
+		<p>If you didn't request this code, you can safely ignore this email.</p>
+		<p>Thanks,<br>%s team</p>
+	`, otp, expirationMinutes, smtpCfg.FromName))
+
+	done := make(chan error, 1)
+	go func() {
+		done <- mail.Send()
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-done:
+		if err != nil {
+			return fmt.Errorf("failed to send OTP email: %w", err)
+		}
+	}
+
 	return nil
 }

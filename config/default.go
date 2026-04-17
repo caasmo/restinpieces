@@ -22,6 +22,8 @@ func NewDefaultConfig() *Config {
 			PasswordResetTokenDuration:     Duration{Duration: 1 * time.Hour},
 			EmailChangeSecret:              crypto.RandomString(32, crypto.AlphanumericAlphabet),
 			EmailChangeTokenDuration:       Duration{Duration: 1 * time.Hour},
+			OtpSecret:                      crypto.RandomString(32, crypto.AlphanumericAlphabet),
+			OtpTokenDuration:               Duration{Duration: 15 * time.Minute},
 		},
 		Scheduler: Scheduler{
 			Interval:              Duration{Duration: 60 * time.Second},
@@ -63,6 +65,7 @@ func NewDefaultConfig() *Config {
 			PasswordResetCooldown:     Duration{Duration: 2 * time.Hour},
 			EmailVerificationCooldown: Duration{Duration: 1 * time.Hour},
 			EmailChangeCooldown:       Duration{Duration: 1 * time.Hour},
+			OtpRequestCooldown:        Duration{Duration: 2 * time.Minute},
 		},
 		OAuth2Providers: map[string]OAuth2Provider{
 			"google": {
@@ -105,6 +108,8 @@ func NewDefaultConfig() *Config {
 			ConfirmPasswordReset:     "POST /api/confirm-password-reset",
 			RequestEmailChange:       "POST /api/request-email-change",
 			ConfirmEmailChange:       "POST /api/confirm-email-change",
+			RequestOtp:               "POST /api/request-otp",
+			ConfirmOtp:               "POST /api/confirm-otp",
 		},
 		BlockIp: BlockIp{
 			Enabled:   true,

@@ -325,6 +325,10 @@ func (i *initializer) setupScheduler(configProvider *config.Provider) (*scl.Sche
 		emailChangeHandler := handlers.NewEmailChangeHandler(i.app.DbAuth(), configProvider, mailer)
 		hdls[handlers.JobTypeEmailChange] = emailChangeHandler
 		logger.Info(ft.Ok("registered email change handler"))
+
+		emailVerificationOtpHandler := handlers.NewEmailVerificationOtpHandler(mailer)
+		hdls[handlers.JobTypeEmailVerificationOtp] = emailVerificationOtpHandler
+		logger.Info(ft.Ok("registered email verification otp handler"))
 	}
 
 	backupLocalHandler := handlers.NewHandler(configProvider, logger)

@@ -2,10 +2,20 @@ package crypto
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
 )
 
 const AlphanumericAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+
+func RandomNumericOTP() string {
+	max := big.NewInt(1000000)
+	n, err := rand.Int(rand.Reader, max)
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%06d", n.Int64())
+}
 
 func RandomString(length int, alphabet string) string {
 

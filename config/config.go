@@ -227,6 +227,10 @@ type Jwt struct {
 	EmailChangeSecret string `toml:"email_change_secret" comment:"Secret key for email change tokens"`
 	// Duration for which email change confirmation tokens are valid.
 	EmailChangeTokenDuration Duration `toml:"email_change_token_duration" comment:"Duration email change tokens remain valid"`
+	// Secret key for OTP verification tokens.
+	OtpSecret string `toml:"otp_secret" comment:"Secret key for OTP verification tokens"`
+	// Duration for which OTP verification tokens are valid.
+	OtpTokenDuration Duration `toml:"otp_token_duration" comment:"Duration OTP verification tokens remain valid"`
 }
 
 // Scheduler defines settings for the background job processing queue.
@@ -294,6 +298,8 @@ type RateLimits struct {
 	EmailVerificationCooldown Duration `toml:"email_verification_cooldown" comment:"Min time between email verification requests"`
 	// Minimum time a user must wait between requesting email address changes.
 	EmailChangeCooldown Duration `toml:"email_change_cooldown" comment:"Min time between email change requests"`
+	// Minimum time a user must wait between requesting OTPs.
+	OtpRequestCooldown Duration `toml:"otp_request_cooldown" comment:"Min time between OTP requests"`
 }
 
 type OAuth2Provider struct {
@@ -363,6 +369,10 @@ type Endpoints struct {
 	RequestEmailChange string `toml:"request_email_change" json:"request_email_change" comment:"Request email change endpoint"`
 	// ConfirmEmailChange is the endpoint for confirming an email address change using a token.
 	ConfirmEmailChange string `toml:"confirm_email_change" json:"confirm_email_change" comment:"Confirm email change endpoint"`
+	// RequestOtp is the endpoint for requesting a new OTP code via email.
+	RequestOtp string `toml:"request_otp" json:"request_otp" comment:"Request OTP endpoint"`
+	// ConfirmOtp is the endpoint for confirming an OTP code.
+	ConfirmOtp string `toml:"confirm_otp" json:"confirm_otp" comment:"Confirm OTP endpoint"`
 }
 
 // Path extracts just the path portion from an endpoint string (removes method prefix)

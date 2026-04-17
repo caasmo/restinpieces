@@ -1,5 +1,4 @@
 package handlers
-
 import (
 	"context"
 	"encoding/json"

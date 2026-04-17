@@ -34,6 +34,7 @@ const (
 	// oks for non precomputed, dynamic auth responses
 	CodeOkAuthentication      = "ok_authentication"        // Standard success code for auth
 	CodeOkOAuth2ProvidersList = "ok_oauth2_providers_list" // Success code for OAuth2 providers list
+	CodeOkOtpTokenIssued      = "ok_otp_token_issued"
 )
 
 // AuthRecord represents the user record in authentication responses
@@ -75,6 +76,24 @@ func writeAuthResponse(w http.ResponseWriter, token string, user *db.User) {
 			Message: "Authentication successful",
 		},
 		Data: authData,
+	}
+	WriteJsonWithData(w, response)
+}
+
+type OtpData struct {
+	VerificationToken string `json:"verification_token"`
+}
+
+func writeOtpResponse(w http.ResponseWriter, verificationToken string) {
+	response := JsonWithData{
+		JsonBasic: JsonBasic{
+			Status:  http.StatusOK,
+			Code:    CodeOkOtpTokenIssued,
+			Message: "Verification code sent",
+		},
+		Data: &OtpData{
+			VerificationToken: verificationToken,
+		},
 	}
 	WriteJsonWithData(w, response)
 }

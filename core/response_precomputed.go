@@ -15,6 +15,7 @@ const (
 	CodeOkPasswordResetRequested = "ok_password_reset_requested"  // Success code for password reset request
 	CodeOkEmailChange            = "ok_email_change"              // Success code for completed email change
 	CodeOkEmailChangeRequested   = "ok_email_change_requested"    // Success code for email change request
+	CodeOkOtpVerified            = "ok_otp_verified"
 	CodeOkPasswordResetNotNeeded = "ok_password_reset_not_needed" // Success code when password reset is not needed
 	CodeOkPasswordNotRequired    = "ok_password_not_required"     // Success code when password is not required for auth
 
@@ -43,6 +44,8 @@ const (
 	CodeErrorAlreadyVerified                   = "err_already_verified"
 	CodeErrorJwtInvalidToken                   = "err_invalid_token"
 	CodeErrorJwtInvalidVerificationToken       = "err_invalid_verification_token"
+	CodeErrorInvalidOtp                        = "err_invalid_otp"
+	CodeErrorOtpFailed                         = "err_otp_failed"
 	CodeErrorInvalidOAuth2Provider             = "err_invalid_oauth2_provider"
 	CodeErrorOAuth2TokenExchangeFailed         = "err_oauth2_token_exchange_failed"
 	CodeErrorOAuth2UserInfoFailed              = "err_oauth2_user_info_failed"
@@ -95,6 +98,8 @@ var (
 	errorJwtTokenExpired                   = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
 	errorJwtInvalidToken                   = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidToken, "Invalid authentication token")
 	errorJwtInvalidVerificationToken       = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidVerificationToken, "Invalid verification token")
+	errorInvalidOtp                        = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidOtp, "Invalid or expired verification code")
+	errorOtpFailed                         = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorOtpFailed, "OTP verification process failed")
 	errorEmailVerificationFailed           = PrecomputeBasicResponse(http.StatusInternalServerError, "err_email_verification_failed", "Email verification process failed")
 	errorInvalidOAuth2Provider             = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
 	errorOAuth2TokenExchangeFailed         = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
@@ -112,6 +117,7 @@ var (
 	okVerificationRequested  = PrecomputeBasicResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
 	okPasswordResetRequested = PrecomputeBasicResponse(http.StatusAccepted, CodeOkPasswordResetRequested, "Password reset instructions will be sent to your email if it exists in our system")
 	okEmailChangeRequested   = PrecomputeBasicResponse(http.StatusAccepted, CodeOkEmailChangeRequested, "Email change instructions will be sent to your new email address")
+	okOtpVerified            = PrecomputeBasicResponse(http.StatusOK, CodeOkOtpVerified, "OTP verified successfully")
 	okEmailChange            = PrecomputeBasicResponse(http.StatusOK, CodeOkEmailChange, "Email change was completed")
 	okPasswordResetNotNeeded = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordResetNotNeeded, "Password reset is not needed")
 	okPasswordNotRequired    = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordNotRequired, "Current authentication does not require password")
