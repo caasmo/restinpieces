@@ -191,31 +191,31 @@ func ValidateEmailChangeClaims(claims jwt.MapClaims) error {
 	return nil
 }
 
-func ValidateOtpClaims(claims jwt.MapClaims) error {
+func ValidateEmailOtpVerificationClaims(claims jwt.MapClaims) error {
 	if err := validateClaimIssuedAt(claims[ClaimIssuedAt]); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
+		return fmt.Errorf("%w: %v", ErrInvalidEmailOtpVerificationToken, err)
 	}
 
 	if err := validateClaimExpiresAt(claims[ClaimExpiresAt]); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
+		return fmt.Errorf("%w: %v", ErrInvalidEmailOtpVerificationToken, err)
 	}
 
 	if err := validateClaimEmail(claims[ClaimEmail]); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
+		return fmt.Errorf("%w: %v", ErrInvalidEmailOtpVerificationToken, err)
 	}
 
-	if err := validateClaimType(claims[ClaimType], ClaimOtpValue); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
+	if err := validateClaimType(claims[ClaimType], ClaimEmailOtpVerificationValue); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidEmailOtpVerificationToken, err)
 	}
 
-	if err := validateClaimOtpHash(claims[ClaimOtpHash]); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
+	if err := validateClaimEmailOtpVerificationHash(claims[ClaimEmailOtpVerificationHash]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidEmailOtpVerificationToken, err)
 	}
 
 	return nil
 }
 
-func validateClaimOtpHash(otpHash any) error {
+func validateClaimEmailOtpVerificationHash(otpHash any) error {
 	if otpHash == nil {
 		return ErrClaimNotFound
 	}
