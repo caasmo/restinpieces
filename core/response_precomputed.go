@@ -18,6 +18,7 @@ const (
 	CodeOkOtpVerified            = "ok_otp_verified"
 	CodeOkPasswordResetNotNeeded = "ok_password_reset_not_needed" // Success code when password reset is not needed
 	CodeOkPasswordNotRequired    = "ok_password_not_required"     // Success code when password is not required for auth
+	CodeOkPendingEmailOtpVerification          = "ok_pending_email_otp_verification"
 
 	//errors
 	CodeErrorTokenGeneration                   = "err_token_generation"
@@ -55,6 +56,7 @@ const (
 	CodeErrorIpBlocked                         = "err_ip_blocked"
 	CodeErrorInvalidContentType                = "err_invalid_content_type"
 	CodeErrorUnverifiedEmail                   = "err_unverified_email"
+	CodeErrorRequiredEmailOtpVerification      = "err_required_email_otp_verification"
 	// oks
 )
 
@@ -109,6 +111,7 @@ var (
 	errorAuthDatabaseError                 = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
 	errorInvalidContentType                = PrecomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type")
 	errorUnverifiedEmail                   = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorUnverifiedEmail, "Email must be verified before changing it")
+	errorRequiredEmailOtpVerification      = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorRequiredEmailOtpVerification, "Email verification is required")
 
 	// oks
 	okPasswordReset          = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")
@@ -121,6 +124,7 @@ var (
 	okEmailChange            = PrecomputeBasicResponse(http.StatusOK, CodeOkEmailChange, "Email change was completed")
 	okPasswordResetNotNeeded = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordResetNotNeeded, "Password reset is not needed")
 	okPasswordNotRequired    = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordNotRequired, "Current authentication does not require password")
+	okPendingEmailOtpVerification     = PrecomputeBasicResponse(http.StatusAccepted, CodeOkPendingEmailOtpVerification, "Registration successful, email verification is required")
 )
 
 // For successful precomputed responses

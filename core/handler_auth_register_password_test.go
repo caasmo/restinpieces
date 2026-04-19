@@ -3,13 +3,10 @@ package core
 import (
 	"encoding/json"
 	"errors"
-	"io"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
@@ -136,14 +133,10 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 					newUser.Password = user.Password
 					return &newUser, nil
 				}
-				m.InsertJobFunc = func(job db.Job) error {
-					*jobInserted = true
-					return nil
-				}
 			},
-			wantStatus:        http.StatusOK,
-			wantCode:          CodeOkAuthentication,
-			expectJobInserted: true,
+			wantStatus:        http.StatusAccepted,
+			wantCode:          CodeOkPendingEmailOtpVerification,
+			expectJobInserted: false,
 		},
 		{
 			name:        "registration attempt with existing email",
@@ -166,9 +159,9 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 					return &existingVerifiedUserNoPassword, nil
 				}
 			},
-			wantStatus:        http.StatusOK,
-			wantCode:          CodeOkAuthentication,
-			expectJobInserted: false, // User is already verified
+			wantStatus:        http.StatusAccepted,
+			wantCode:          CodeOkPendingEmailOtpVerification,
+			expectJobInserted: false,
 		},
 	}
 
@@ -186,13 +179,6 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 				validator: &DefaultValidator{},
 				dbAuth:    mockDb,
 				dbQueue:   mockDb,
-				logger:    slog.New(slog.NewTextHandler(io.Discard, nil)),
-				configProvider: config.NewProvider(&config.Config{
-					Jwt: config.Jwt{
-						AuthSecret:        "test_secret_32_bytes_long_xxxxxx",
-						AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
-					},
-				}),
 			}
 
 			app.RegisterWithPasswordHandler(rr, req)
@@ -218,16 +204,9 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 }
 
 // TestRegisterWithPasswordHandler_DependencyFailures tests how the handler responds to
-// failures in its dependencies, such as the database, queue, or token generation logic.
+// failures in its dependencies, such as the database.
 func TestRegisterWithPasswordHandler_DependencyFailures(t *testing.T) {
 	requestBody := `{"identity":"test@example.com", "password":"password123", "password_confirm":"password123"}`
-	hashedPassword, _ := crypto.GenerateHash("password123")
-	newUser := db.User{
-		ID:       "user123",
-		Email:    "test@example.com",
-		Password: string(hashedPassword),
-		Verified: false,
-	}
 
 	testCases := []struct {
 		name      string
@@ -245,34 +224,6 @@ func TestRegisterWithPasswordHandler_DependencyFailures(t *testing.T) {
 			config:    config.NewDefaultConfig(),
 			wantError: errorAuthDatabaseError,
 		},
-		{
-			name: "queue failure on verification job",
-			dbSetup: func(m *mock.Db) {
-				m.CreateUserWithPasswordFunc = func(user db.User) (*db.User, error) {
-					newUser.Password = user.Password
-					return &newUser, nil
-				}
-				m.InsertJobFunc = func(job db.Job) error {
-					return errors.New("queue is down")
-				}
-			},
-			config:    config.NewDefaultConfig(),
-			wantError: errorServiceUnavailable,
-		},
-		{
-			name: "jwt generation failure",
-			dbSetup: func(m *mock.Db) {
-				m.CreateUserWithPasswordFunc = func(user db.User) (*db.User, error) {
-					newUser.Password = user.Password
-					return &newUser, nil
-				}
-				m.InsertJobFunc = func(job db.Job) error { return nil }
-			},
-			config: &config.Config{
-				Jwt: config.Jwt{AuthSecret: "short"}, // Invalid secret
-			},
-			wantError: errorTokenGeneration,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -288,7 +239,6 @@ func TestRegisterWithPasswordHandler_DependencyFailures(t *testing.T) {
 				validator:      &DefaultValidator{},
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
-				logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
 				configProvider: config.NewProvider(tc.config),
 			}
 

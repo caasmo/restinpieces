@@ -7,7 +7,6 @@ import (
 
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue/handlers"
 )
 
 // RegisterWithPasswordHandler handles password-based user registration with validation
@@ -85,31 +84,6 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// If user is not verified, add verification job to queue
-	if !retrievedUser.Verified {
-		payload, _ := json.Marshal(handlers.PayloadEmailVerification{Email: retrievedUser.Email})
-		job := db.Job{
-			JobType: handlers.JobTypeEmailVerification,
-			Payload: payload,
-		}
-
-		err = a.DbQueue().InsertJob(job)
-		if err != nil {
-			a.Logger().Error("Failed to insert verification job", "error", err, "job", job)
-			WriteJsonError(w, errorServiceUnavailable)
-			return
-		}
-	}
-
-	// Generate JWT session token for immediate authentication
-	cfg := a.Config() // Get the current config
-	token, err := crypto.NewJwtSessionToken(retrievedUser.ID, retrievedUser.Email, retrievedUser.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration.Duration)
-	if err != nil {
-		WriteJsonError(w, errorTokenGeneration)
-		return
-	}
-
-	// Return standardized authentication response
-	writeAuthResponse(w, token, retrievedUser)
+	WriteJsonOk(w, okPendingEmailOtpVerification)
 }
 

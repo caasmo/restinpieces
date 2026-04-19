@@ -50,6 +50,11 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !user.Verified {
+		WriteJsonError(w, errorRequiredEmailOtpVerification)
+		return
+	}
+
 	// Generate JWT session token
 	cfg := a.Config() // Get the current config
 	token, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration.Duration)

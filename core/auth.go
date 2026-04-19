@@ -96,6 +96,10 @@ func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResp
 		return nil, errorJwtInvalidToken, errAuth
 	}
 
+	if !user.Verified {
+		return nil, errorRequiredEmailOtpVerification, errAuth
+	}
+
 	// If all checks pass, return the authenticated user with empty response
 	return user, jsonResponse{}, nil
 }

@@ -168,6 +168,22 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 			wantStatus: http.StatusUnauthorized,
 			wantCode:   CodeErrorInvalidCredentials,
 		},
+		{
+			name:        "unverified user login",
+			requestBody: `{"identity":"test@example.com", "password":"password123"}`,
+			dbSetup: func(m *mock.Db) {
+				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					return &db.User{
+						ID:       "user123",
+						Email:    "test@example.com",
+						Password: string(hashedPassword),
+						Verified: false,
+					}, nil
+				}
+			},
+			wantStatus: http.StatusForbidden,
+			wantCode:   CodeErrorRequiredEmailOtpVerification,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -247,9 +263,10 @@ func TestAuthWithPasswordHandler_DependencyFailures(t *testing.T) {
 				hashedPassword, _ := crypto.GenerateHash("password123")
 				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
 					return &db.User{
-						ID: "user123",
-						Email: "test@example.com",
+						ID:       "user123",
+						Email:    "test@example.com",
 						Password: string(hashedPassword),
+						Verified: true,
 					}, nil
 				}
 			},
