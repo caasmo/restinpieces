@@ -143,5 +143,15 @@ func (a *App) ConfirmEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	WriteJsonOk(w, okOtpVerified)
+	user.Verified = true
+
+	// Generate JWT session token
+	token, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration.Duration)
+	if err != nil {
+		WriteJsonError(w, errorTokenGeneration)
+		return
+	}
+
+	// Return standardized authentication response
+	writeAuthResponse(w, token, user)
 }

@@ -15,7 +15,6 @@ const (
 	CodeOkPasswordResetRequested = "ok_password_reset_requested"  // Success code for password reset request
 	CodeOkEmailChange            = "ok_email_change"              // Success code for completed email change
 	CodeOkEmailChangeRequested   = "ok_email_change_requested"    // Success code for email change request
-	CodeOkOtpVerified            = "ok_otp_verified"
 	CodeOkPasswordResetNotNeeded = "ok_password_reset_not_needed" // Success code when password reset is not needed
 	CodeOkPasswordNotRequired    = "ok_password_not_required"     // Success code when password is not required for auth
 	CodeOkPendingEmailOtpVerification          = "ok_pending_email_otp_verification"
