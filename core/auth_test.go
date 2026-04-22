@@ -131,27 +131,6 @@ func TestAuthenticateToken(t *testing.T) {
 			wantError: jsonResponse{},
 		},
 		{
-			name: "unverified user",
-			userSetup: func(mockDB *mock.Db) {
-				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) {
-					return &db.User{
-						ID:       "r1a2b3c4d5e6f70",
-						Email:    "test@example.com",
-						Password: "hashed_password",
-						Verified: false,
-					}, nil
-				}
-			},
-			tokenSetup: func(t *testing.T) string {
-				token, err := generateToken("test@example.com", "hashed_password", "test_secret_32_bytes_long_xxxxxx", 15*time.Minute)
-				if err != nil {
-					t.Fatalf("failed to generate token: %v", err)
-				}
-				return token
-			},
-			wantError: errorJwtInvalidToken,
-		},
-		{
 			name: "expired token",
 			userSetup: func(mockDB *mock.Db) {
 				mockDB.GetUserByIdFunc = func(id string) (*db.User, error) { // Use func field

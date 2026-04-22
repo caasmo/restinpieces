@@ -96,17 +96,6 @@ func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResp
 		return nil, errorJwtInvalidToken, errAuth
 	}
 
-    // To reach this line, the JWT must have passed full signature verification
-    // — which requires knowing the signing key, which includes the user's
-    // password and the server secret. An attacker can't craft a valid JWT
-    // without credentials. So this is a very limited surface, but it's still a
-    // different response from errorJwtInvalidToken. 
-    // Just return errorJwtInvalidToken here too. Unverified is
-    // unauthenticated, same response.
-	if !user.Verified {
-		return nil, errorJwtInvalidToken, errAuth
-	}
-
 	// If all checks pass, return the authenticated user with empty response
 	return user, jsonResponse{}, nil
 }
