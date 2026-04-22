@@ -179,7 +179,7 @@ func TestUser_EdgeCases(t *testing.T) {
 		}
 	})
 
-	t.Run("CreateConflict", func(t *testing.T) {
+	t.Run("CreateUserWithPassword_ConflictProtection", func(t *testing.T) {
 		// 1. Create a user via OAuth, which results in an empty password
 		_, err := testDB.CreateUserWithOauth2(db.User{
 			Name:  "Conflict User",
@@ -189,29 +189,29 @@ func TestUser_EdgeCases(t *testing.T) {
 			t.Fatalf("OAuth user creation failed: %v", err)
 		}
 
-		// 2. Now, call CreateUserWithPassword to set the password for the first time
+		// 2. Now, call CreateUserWithPassword. It should NOT set the password.
 		userWithPassword, err := testDB.CreateUserWithPassword(db.User{
 			Email:    "conflict@example.com",
 			Password: "password1",
 		})
 		if err != nil {
-			t.Fatalf("Setting initial password failed: %v", err)
+			t.Fatalf("Registration attempt failed: %v", err)
 		}
-		if userWithPassword.Password != "password1" {
-			t.Errorf("expected password to be set to 'password1', got %q", userWithPassword.Password)
+		if userWithPassword.Password != "" {
+			t.Errorf("expected password to remain empty, got %q", userWithPassword.Password)
 		}
 
-		// 3. Attempt to change the password using the same function
+		// 3. Attempt to change the password again using the same function
 		userWithUnchangedPwd, err := testDB.CreateUserWithPassword(db.User{
 			Email:    "conflict@example.com",
-			Password: "password2", // This should be ignored
+			Password: "password2", // This should also be ignored
 		})
 		if err != nil {
-			t.Fatalf("Attempting to change password failed: %v", err)
+			t.Fatalf("Attempting to register again failed: %v", err)
 		}
-		// Verify the password was NOT changed
-		if userWithUnchangedPwd.Password != "password1" {
-			t.Errorf("expected password to remain 'password1', but got %q", userWithUnchangedPwd.Password)
+		// Verify the password remains empty
+		if userWithUnchangedPwd.Password != "" {
+			t.Errorf("expected password to remain empty, but got %q", userWithUnchangedPwd.Password)
 		}
 	})
 

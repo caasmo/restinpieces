@@ -146,8 +146,8 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 					return &existingUserWithPassword, nil
 				}
 			},
-			wantStatus:        http.StatusConflict,
-			wantCode:          CodeErrorEmailConflict,
+			wantStatus:        http.StatusAccepted,
+			wantCode:          CodeOkPendingEmailOtpVerification,
 			expectJobInserted: false,
 		},
 		{

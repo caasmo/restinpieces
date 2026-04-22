@@ -149,7 +149,7 @@ func TestAuthenticateToken(t *testing.T) {
 				}
 				return token
 			},
-			wantError: errorRequiredEmailOtpVerification,
+			wantError: errorJwtInvalidToken,
 		},
 		{
 			name: "expired token",

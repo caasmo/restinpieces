@@ -1,5 +1,23 @@
 ### TODOs
 
+- register, login security audit
+- bug handler_auth_login_password.go
+    receive 503, maybe because no cooldown in the config yet for 
+    but only happens ocasianally, not always
+- register and login handler, those are email, 
+    - in register remove confirm???
+- register login handler form errors with fields etc 
+- resend otp
+    - we need a little more sofisticated emial rate limit
+        - allow not one per period
+        - do not overcomplicated
+        - hidden payload in 
+        - err = a.DbQueue().InsertJob(job)
+            naming is bad, it shoudl be unique or something
+            we could select write in a transaction meh
+            exponential too complex
+            4 per 5 min,    
+            1 per minute 5 hour 2 periods 
 - create a middleware prerouter for error capabilitymitmatch
     - present examples of other middleware 
     - show restinpieces.js

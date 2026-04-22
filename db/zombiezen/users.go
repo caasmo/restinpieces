@@ -3,7 +3,6 @@ package zombiezen
 import (
 	"context"
 	"fmt"
-	// "time" // Removed unused import
 	"github.com/caasmo/restinpieces/db"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
@@ -84,7 +83,6 @@ func (d *Db) VerifyEmail(userId string) error {
 			Args: []interface{}{userId},
 		})
 	if err != nil {
-		// Wrap error to match crawshaw behavior
 		return fmt.Errorf("failed to verify email: %w", err)
 	}
 	return nil
@@ -117,6 +115,25 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 	return user, nil
 }
 
+// CreateUserWithPassword inserts a new user with a password.
+//
+// # Security: Password Protection on Conflict
+//
+// On email conflict, this method intentionally does NOT update the password.
+// Only the updated timestamp is touched.
+//
+// This prevents account takeover via the unauthenticated registration endpoint:
+// an attacker who knows a valid email — whether the account was created with
+// a password or OAuth2 — cannot overwrite the real user's credentials.
+// OAuth2 users have password='' in the DB; without this protection the IIF
+// trick used previously (IIF(password='', excluded.password, password)) would
+// still allow overwriting their empty password with an attacker-chosen one.
+//
+// Changing a password is an authenticated action and belongs in a dedicated
+// settings endpoint, not here.
+//
+// The caller (RegisterWithPasswordHandler) always returns the same response
+// regardless of conflict, so no information about email existence is leaked.
 func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
@@ -129,15 +146,13 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 		`INSERT INTO users (name, password, verified, oauth2, avatar, email, emailVisibility) 
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(email) DO UPDATE SET
-			password = IIF(password = '', excluded.password, password),
 			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-		RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`, // Match crawshaw RETURNING
+		RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
-				// Use a temporary variable to avoid modifying the outer createdUser directly on error
 				tempUser, err := newUserFromStmt(stmt)
 				if err == nil && tempUser != nil {
-					createdUser = *tempUser // Assign if successful
+					createdUser = *tempUser
 				}
 				return err
 			},
@@ -153,7 +168,7 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 		})
 
 	if err != nil {
-		return nil, err // Return nil user on error, matching crawshaw
+		return nil, err
 	}
 	return &createdUser, nil
 }
@@ -165,8 +180,6 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 	}
 	defer d.pool.Put(conn)
 
-	// Removed unused 'now' variable
-
 	var createdUser db.User
 	err = sqlitex.Execute(conn,
 		`INSERT INTO users (name, password, verified, oauth2, avatar, email, emailVisibility) 
@@ -174,19 +187,18 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 		ON CONFLICT(email) DO UPDATE SET
 			oauth2 = true,
 			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-		RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`, // Match crawshaw RETURNING
+		RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
-				// Use a temporary variable to avoid modifying the outer createdUser directly on error
 				tempUser, err := newUserFromStmt(stmt)
 				if err == nil && tempUser != nil {
-					createdUser = *tempUser // Assign if successful
+					createdUser = *tempUser
 				}
 				return err
 			},
 			Args: []interface{}{
 				user.Name,            // 1. name
-				"",                   // 2. password
+				"",                   // 2. password — OAuth2 users have no password
 				user.Verified,        // 3. verified
 				true,                 // 4. oauth2
 				user.Avatar,          // 5. avatar
@@ -196,7 +208,7 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 		})
 
 	if err != nil {
-		return nil, err // Return nil user on error, matching crawshaw
+		return nil, err
 	}
 	return &createdUser, nil
 }
@@ -208,7 +220,6 @@ func (d *Db) UpdatePassword(userId string, newPassword string) error {
 	}
 	defer d.pool.Put(conn)
 
-	// Update password and timestamp
 	err = sqlitex.Execute(conn,
 		`UPDATE users 
 		SET password = ?,
@@ -231,7 +242,6 @@ func (d *Db) UpdateEmail(userId string, newEmail string) error {
 	}
 	defer d.pool.Put(conn)
 
-	// Update email and timestamp
 	err = sqlitex.Execute(conn,
 		`UPDATE users 
 		SET email = ?,

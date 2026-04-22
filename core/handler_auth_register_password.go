@@ -9,14 +9,42 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-// RegisterWithPasswordHandler handles password-based user registration with validation
+// RegisterWithPasswordHandler handles password-based user registration.
 // Endpoint: POST /register-with-password
 // Authenticated: No
 // Allowed Mimetype: application/json
-// TODO we allow register with password after the user has oauth, we just
-// update the password and do not require validated email as we trust the oauth2
-// provider
-// if password exist CreateUserWithPassword will succeed but the password will be not updated.
+//
+// # Security: Email Enumeration and Timing Attack Prevention
+//
+// This handler always returns the same response (okPendingEmailOtpVerification)
+// regardless of whether the email already exists in the database, and regardless
+// of whether the existing account used password or OAuth2 signup.
+//
+// This is intentional. Revealing different responses per case would allow an
+// attacker to enumerate valid emails by observing response bodies.
+//
+// Timing attacks are also mitigated: crypto.GenerateHash (bcrypt/argon2) is
+// always executed before the DB write, so the response time is dominated by
+// the hash cost in all code paths. An attacker cannot infer email existence
+// from response latency.
+//
+// # Password Protection on Conflict
+//
+// On email conflict, CreateUserWithPassword never updates the existing password.
+// This prevents account takeover: an attacker who knows a valid email cannot
+// overwrite the real user's password via this unauthenticated endpoint,
+// regardless of whether the account was created with password or OAuth2.
+// Changing a password requires authentication (dedicated settings endpoint).
+//
+// # Flow
+//
+// 1. Validate input.
+// 2. Hash password (always, every code path).
+// 3. Upsert user: insert on new email, no-op on conflict (password untouched).
+// 4. Always return okPendingEmailOtpVerification.
+//
+// The SDK then calls RequestEmailOtpVerification. Email ownership proof via OTP
+// is the gate. Whatever happened in the DB is irrelevant to the response here.
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	if resp, err := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
 		WriteJsonError(w, resp)
@@ -24,8 +52,8 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	var req struct {
-		Identity        string `json:"identity"`
-		Password        string `json:"password"`
+		Identity string `json:"identity"`
+		Password string `json:"password"`
 		PasswordConfirm string `json:"password_confirm"`
 	}
 
@@ -34,7 +62,6 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Validate required fields
 	req.Identity = strings.TrimSpace(req.Identity)
 	req.Password = strings.TrimSpace(req.Password)
 	if req.Identity == "" || req.Password == "" || req.PasswordConfirm == "" {
@@ -54,36 +81,33 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Hash password before storage
+	// Always hash, every code path — including when the email already exists.
+	// Skipping the hash on conflict would make that path faster, leaking
+	// email existence via response timing.
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
 		WriteJsonError(w, errorTokenGeneration)
 		return
 	}
 
-	// Prepare user data
 	newUser := db.User{
 		Email:           req.Identity,
 		Password:        string(hashedPassword),
-		Name:            "", // Optional field TODO
 		Verified:        false,
 		Oauth2:          false,
 		EmailVisibility: false,
 	}
 
-	retrievedUser, err := a.DbAuth().CreateUserWithPassword(newUser)
-	if err != nil {
+	// On email conflict, CreateUserWithPassword leaves the existing password
+	// untouched (see SQL: ON CONFLICT DO UPDATE does not SET password).
+	// We do not inspect the returned user — the response is always the same.
+	if _, err := a.DbAuth().CreateUserWithPassword(newUser); err != nil {
 		WriteJsonError(w, errorAuthDatabaseError)
 		return
 	}
 
-	// If passwords are different CreateUserWithPassword did not write the new
-	// password on conflict because the user had already a password.
-	if retrievedUser.Password != newUser.Password {
-		WriteJsonError(w, errorEmailConflict)
-		return
-	}
-
+	// Always returned: new user, existing password user, existing OAuth2 user.
+	// The SDK proceeds to OTP verification in all cases. Email ownership is
+	// the only gate that matters.
 	WriteJsonOk(w, okPendingEmailOtpVerification)
 }
-
