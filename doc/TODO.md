@@ -1,5 +1,6 @@
 ### TODOs
 
+- login refactor for enumeration attack!!! sdk!!
 - register, login security audit
 - bug handler_auth_login_password.go
     receive 503, maybe because no cooldown in the config yet for 
