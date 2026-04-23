@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -32,12 +34,12 @@ func TestAuthenticateRequestValidation(t *testing.T) {
 		{
 			name:       "invalid token format",
 			authHeader: "InvalidToken",
-			wantError:  errorInvalidTokenFormat,
+			wantError:  errorNoAuthHeader,
 		},
 		{
 			name:       "invalid bearer prefix",
 			authHeader: "Basic abc123",
-			wantError:  errorInvalidTokenFormat,
+			wantError:  errorNoAuthHeader,
 		},
 	}
 
@@ -244,11 +246,14 @@ func generateES256Token(userID string) (string, error) {
 	}
 
 	// Create token with ES256 signing method and proper claims
+	// Including uid_mac so it passes the MAC gatekeeper before being
+	// rejected at the signature verification step.
 	now := time.Now()
 	token := jwtv5.NewWithClaims(jwtv5.SigningMethodES256, jwtv5.MapClaims{
-		"user_id": userID,
-		"iat":     now.Unix(),
-		"exp":     now.Add(15 * time.Minute).Unix(),
+		crypto.ClaimUserID: userID,
+		crypto.ClaimUidMac: crypto.GenerateUserMac(userID, "test_secret_32_bytes_long_xxxxxx"),
+		"iat":              now.Unix(),
+		"exp":              now.Add(15 * time.Minute).Unix(),
 	})
 
 	// Sign the token
@@ -268,7 +273,10 @@ func generateToken(email, passwordHash string, secret string, expiresIn time.Dur
 	}
 
 	// Generate token with derived signing key
-	claims := map[string]any{crypto.ClaimUserID: "r1a2b3c4d5e6f70"} // Use fixed test user ID
+	claims := map[string]any{
+		crypto.ClaimUserID: "r1a2b3c4d5e6f70", // Use fixed test user ID
+		crypto.ClaimUidMac: crypto.GenerateUserMac("r1a2b3c4d5e6f70", secret),
+	}
 	token, err := crypto.NewJwt(claims, signingKey, expiresIn)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate test token: %w", err)
@@ -303,21 +311,21 @@ func TestAuthenticateErrorCases(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		userSetup  func(*mock.Db)
-		token      string
-		secret     string
-		wantError  jsonResponse
+		name      string
+		userSetup func(*mock.Db)
+		token     string
+		secret    string
+		wantError jsonResponse
 	}{
 		{
-			name:       "unverified parse error",
-			userSetup:  nil,
-			token:      "invalid.token.string",
-			secret:     "test_secret_32_bytes_long_xxxxxx",
-			wantError:  errorJwtInvalidToken,
+			name:      "unverified parse error",
+			userSetup: nil,
+			token:     "invalid.token.string",
+			secret:    "test_secret_32_bytes_long_xxxxxx",
+			wantError: errorJwtInvalidToken,
 		},
 		{
-			name: "session validation error",
+			name:      "session validation error",
 			userSetup: nil,
 			token: func() string {
 				claims := jwtv5.MapClaims{
@@ -341,8 +349,8 @@ func TestAuthenticateErrorCases(t *testing.T) {
 				token, _ := generateToken(testUser.Email, testUser.Password, "a_different_secret_that_is_long_enough", 15*time.Minute)
 				return token
 			}(),
-			secret:    "short", // This will cause NewJwtSigningKeyWithCredentials to fail
-			wantError: errorTokenGeneration,
+			secret:    "short", // MAC check fails (different secret) → errorJwtInvalidToken
+			wantError: errorJwtInvalidToken,
 		},
 	}
 
@@ -487,43 +495,91 @@ func TestAuthenticateSessionClaimsValidation(t *testing.T) {
 	}
 }
 
-func TestParseJwtUserID(t *testing.T) {
+func TestExtractAndVerifyUserID(t *testing.T) {
+	secret := "test_secret_32_bytes_long_xxxxxx"
+	validUserID := "r1a2b3c4d5e6f70"
+
+	// buildToken constructs a JWT-like string with the given claims in the payload.
+	// The header and signature are placeholders — extractAndVerifyUserID only reads
+	// the payload (middle segment) and never verifies the signature.
+	buildToken := func(claims map[string]string) string {
+		payload := make(map[string]any)
+		for k, v := range claims {
+			payload[k] = v
+		}
+		jsonBytes, _ := json.Marshal(payload)
+		encoded := base64.RawURLEncoding.EncodeToString(jsonBytes)
+		return "header." + encoded + ".signature"
+	}
+
+	validMac := crypto.GenerateUserMac(validUserID, secret)
+
 	testCases := []struct {
-		name          string
-		tokenString   string
-		expectedID    string
-		expectError   bool
+		name        string
+		tokenString string
+		expectedID  string
+		expectError bool
 	}{
 		{
-			name: "valid token",
-			// Payload: {"user_id":"r1a2b3c4d5e6f70"}
-			tokenString: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoicjFhMmIzYzRkNWU2ZjcwIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MTYyMzkwMjJ9.signature",
-			expectedID:  "r1a2b3c4d5e6f70",
+			name: "valid token with valid mac",
+			tokenString: buildToken(map[string]string{
+				"user_id": validUserID,
+				"uid_mac": validMac,
+			}),
+			expectedID:  validUserID,
 			expectError: false,
 		},
 		{
-			name: "invalid token format",
+			name:        "invalid token format",
 			tokenString: "invalid.token",
 			expectedID:  "",
 			expectError: true,
 		},
 		{
-			name: "invalid base64 payload",
+			name:        "invalid base64 payload",
 			tokenString: "header.invalid-payload.signature",
 			expectedID:  "",
 			expectError: true,
 		},
 		{
-			name: "user_id not found",
-			// Payload: {"some_other_claim":"value"}
-			tokenString: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb21lX290aGVyX2NsYWltIjoidmFsdWUifQ.signature",
+			name: "missing user_id and uid_mac",
+			tokenString: buildToken(map[string]string{
+				"some_other_claim": "value",
+			}),
 			expectedID:  "",
 			expectError: true,
 		},
 		{
-			name: "user_id wrong format",
-			// Payload: {"user_id":"invalid-id-format"}
-			tokenString: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiaW52YWxpZC1pZC1mb3JtYXQifQ.signature",
+			name: "missing uid_mac",
+			tokenString: buildToken(map[string]string{
+				"user_id": validUserID,
+			}),
+			expectedID:  "",
+			expectError: true,
+		},
+		{
+			name: "missing user_id",
+			tokenString: buildToken(map[string]string{
+				"uid_mac": validMac,
+			}),
+			expectedID:  "",
+			expectError: true,
+		},
+		{
+			name: "invalid mac format",
+			tokenString: buildToken(map[string]string{
+				"user_id": validUserID,
+				"uid_mac": "not-a-valid-mac",
+			}),
+			expectedID:  "",
+			expectError: true,
+		},
+		{
+			name: "wrong mac for user_id",
+			tokenString: buildToken(map[string]string{
+				"user_id": "different_user_id",
+				"uid_mac": validMac,
+			}),
 			expectedID:  "",
 			expectError: true,
 		},
@@ -531,7 +587,7 @@ func TestParseJwtUserID(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			userID, err := parseJwtUserID(tc.tokenString)
+			userID, err := extractAndVerifyUserID(tc.tokenString, secret)
 
 			if tc.expectError {
 				if err == nil {

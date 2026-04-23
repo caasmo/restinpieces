@@ -277,8 +277,8 @@ func TestNewTypedTokens(t *testing.T) {
 	duration := 15 * time.Minute
 
 	testCases := []struct {
-		name        string
-		tokenFunc   func() (string, error)
+		name           string
+		tokenFunc      func() (string, error)
 		expectedClaims map[string]any
 	}{
 		{
@@ -288,6 +288,7 @@ func TestNewTypedTokens(t *testing.T) {
 			},
 			expectedClaims: map[string]any{
 				ClaimUserID: userID,
+				ClaimUidMac: GenerateUserMac(userID, secret),
 			},
 		},
 		{
@@ -297,6 +298,7 @@ func TestNewTypedTokens(t *testing.T) {
 			},
 			expectedClaims: map[string]any{
 				ClaimUserID:   userID,
+				ClaimUidMac:   GenerateUserMac(userID, secret),
 				ClaimEmail:    email,
 				ClaimNewEmail: newEmail,
 				ClaimType:     ClaimEmailChangeValue,
@@ -309,6 +311,7 @@ func TestNewTypedTokens(t *testing.T) {
 			},
 			expectedClaims: map[string]any{
 				ClaimUserID: userID,
+				ClaimUidMac: GenerateUserMac(userID, secret),
 				ClaimEmail:  email,
 				ClaimType:   ClaimPasswordResetValue,
 			},
@@ -320,6 +323,7 @@ func TestNewTypedTokens(t *testing.T) {
 			},
 			expectedClaims: map[string]any{
 				ClaimUserID: userID,
+				ClaimUidMac: GenerateUserMac(userID, secret),
 				ClaimEmail:  email,
 				ClaimType:   ClaimVerificationValue,
 			},
