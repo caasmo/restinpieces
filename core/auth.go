@@ -1,23 +1,22 @@
 package core
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
-	"encoding/base64"
-	"regexp"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 )
 
-// Pre-compiled regex for user_id pattern matching
-// Matches: r followed by exactly 14 hex characters (lowercase)
-var userIDRegex = regexp.MustCompile(`(r[0-9a-f]{14})`)
-
-var errParseUserID = errors.New("parse user id error")
+var (
+	errParseUserID = errors.New("parse user id error")
+	errInvalidMac  = errors.New("invalid user id mac")
+)
 
 // Authenticator defines the interface for authentication operations
 type Authenticator interface {
@@ -29,6 +28,13 @@ type DefaultAuthenticator struct {
 	dbAuth         db.DbAuth
 	logger         *slog.Logger
 	configProvider *config.Provider
+}
+
+// fastJwtPayload is used to quickly unmarshal only the fields we care about
+// from the unverified JWT payload.
+type fastJwtPayload struct {
+	UserID string `json:"user_id"`
+	UidMac string `json:"uid_mac"`
 }
 
 // NewDefaultAuthenticator creates a new DefaultAuthenticator instance
@@ -43,44 +49,38 @@ func NewDefaultAuthenticator(dbAuth db.DbAuth, logger *slog.Logger, configProvid
 // Authenticate implements the Authenticator interface
 func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResponse, error) {
 	errAuth := errors.New("Auth error")
-	// Extract token from request
 	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
+	if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
 		return nil, errorNoAuthHeader, errAuth
 	}
 
-	// Check for Bearer prefix
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-	if tokenString == authHeader {
-		return nil, errorInvalidTokenFormat, errAuth
-	}
+	cfg := a.configProvider.Get()
 
-	// make a cheap regexp for the userId
-	// before we had crypto.ParseJwtUnverified but is was almost as expensive as full verification
-	userId, err := parseJwtUserID(tokenString)
+	// STEP 1: Fast, stateless gatekeeper (CPU only, Nanoseconds/Microseconds)
+	// We extract the user_id and verify the MAC. If an attacker forged the user_id, 
+	// they won't have the correct MAC. The request dies here, saving a database hit.
+	userId, err := extractAndVerifyUserID(tokenString, cfg.Jwt.AuthSecret)
 	if err != nil {
+		// Timing attack prevented: Forged IDs fail here in constant time
 		return nil, errorJwtInvalidToken, errAuth
 	}
 
+	// STEP 2: Stateful Verification (Database, Microseconds/Milliseconds)
+	// We are now cryptographically certain the user_id was issued by us.
 	user, err := a.dbAuth.GetUserById(userId)
 	if err != nil || user == nil {
 		return nil, errorJwtInvalidToken, errors.New("Auth error")
 	}
 
-	// Generate signing key using user credentials
-	// Use user.Email and user.Password which are confirmed to belong to userId
-	cfg := a.configProvider.Get() // Get the current config
+	// STEP 3: Full Signature Verification using user credentials
 	signingKey, err := crypto.NewJwtSigningKeyWithCredentials(user.Email, user.Password, cfg.Jwt.AuthSecret)
 	if err != nil {
-		// Errors here are likely config issues (e.g., short secret) or bad user data
-		// Map to a generic server-side error for the client
 		return nil, errorTokenGeneration, errAuth
 	}
 
-	// Verify full token signature and standard claims (like expiry)
 	claims, err := crypto.ParseJwt(tokenString, signingKey)
 	if err != nil {
-		// Map specific JWT errors to our precomputed responses
 		if errors.Is(err, crypto.ErrJwtTokenExpired) {
 			return nil, errorJwtTokenExpired, errAuth
 		}
@@ -91,37 +91,41 @@ func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResp
 		return nil, errorJwtInvalidToken, errAuth
 	}
 
-	// Final validation of claims after signature is confirmed
 	if err := crypto.ValidateSessionClaims(claims); err != nil {
 		return nil, errorJwtInvalidToken, errAuth
 	}
 
-	// If all checks pass, return the authenticated user with empty response
 	return user, jsonResponse{}, nil
 }
 
-// ParseJwtUserID extracts only the user_id from a JWT token without full verification.
-// Uses regex to find the user_id pattern directly in the decoded payload.
-//
-// Expected user_id format: r{14 hex chars} (e.g., "r2e4d72d378c747")
-func parseJwtUserID(tokenString string) (string, error) {
-	// Split token into parts (header.payload.signature)
+// extractAndVerifyUserID base64-decodes the payload, extracts the ID and MAC,
+// and cryptographically verifies them before allowing the process to continue.
+func extractAndVerifyUserID(tokenString, serverSecret string) (string, error) {
 	parts := strings.SplitN(tokenString, ".", 3)
 	if len(parts) != 3 {
 		return "", errParseUserID
 	}
 
-	// Decode only the payload (middle part)
-	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
+	// Decode the payload
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
 		return "", errParseUserID
 	}
 
-	// Find user_id pattern directly: r followed by 14 hex chars
-	matches := userIDRegex.FindStringSubmatch(string(payload))
-	if len(matches) != 2 {
+	// Use fast struct unmarshaling (only pulls the 2 fields we need)
+	var payload fastJwtPayload
+	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
 		return "", errParseUserID
 	}
 
-	return matches[1], nil
+	if payload.UserID == "" || payload.UidMac == "" {
+		return "", errParseUserID
+	}
+
+	// SECURE VERIFICATION: Constant-time MAC check
+	if !crypto.VerifyUserMac(payload.UserID, payload.UidMac, serverSecret) {
+		return "", errInvalidMac
+	}
+
+	return payload.UserID, nil
 }

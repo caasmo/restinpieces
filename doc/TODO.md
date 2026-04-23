@@ -1,5 +1,7 @@
 ### TODOs
 
+- with the chage in acess_token payload can we refine signup login time attaact enumeration
+- ClaimUidMac is added to many jwt, do we need all, Check!!!!!!
 - login refactor for enumeration attack!!! sdk!!
 - register, login security audit
 - bug handler_auth_login_password.go

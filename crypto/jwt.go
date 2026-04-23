@@ -1,12 +1,11 @@
 package crypto
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"time"
-
-	"crypto/hmac"
-	"crypto/sha256"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -19,11 +18,12 @@ const (
 	// to provide sufficient security against brute force attacks.
 	MinKeyLength = 32
 
-
 	// JWT claim constants
 	ClaimIssuedAt  = "iat"     // JWT Issued At claim key
 	ClaimExpiresAt = "exp"     // JWT Expiration Time claim key
 	ClaimUserID    = "user_id" // JWT User ID claim key
+	// Stateless cryptographic proof of the user_id
+	ClaimUidMac    = "uid_mac" // JWT User ID MAC claim key
 
 	// Email verification specific claims
 	ClaimEmail              = "email"          // Email address being verified
@@ -42,8 +42,6 @@ const (
 )
 
 var (
-
-
 	// ErrJwtTokenExpired is returned when the token has expired
 	ErrJwtTokenExpired = errors.New("token expired")
 	// ErrJwtInvalidToken is returned when the token is invalid
@@ -70,6 +68,12 @@ var (
 	ErrTokenTooOld = errors.New("token too old")
 )
 
+
+
+// ====================================================================================
+// JWT PARSING & VALIDATION
+// ====================================================================================
+
 // Implement only the validation rather than using the full validator
 // but this is not lightweight either, 60% so expensive as full. 
 func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
@@ -83,11 +87,8 @@ func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-
 // ParseJwt verifies and parses JWT and returns its claims.
 // returns a map map[string]any that you can access like any other Go map.
-//
-//	exp := claims["exp"].(float64)
 func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 	parser := jwt.NewParser(jwt.WithValidMethods([]string{"HS256"}))
 
@@ -112,82 +113,75 @@ func ParseJwt(token string, verificationKey []byte) (jwt.MapClaims, error) {
 	return nil, ErrJwtInvalidToken
 }
 
+// ====================================================================================
+// JWT GENERATION
+// ====================================================================================
+
 // NewJwtSession creates a new JWT session token for a user
-// It handles the complete token generation process including:
-// - Creating the signing key from user credentials
-// - Setting up standard claims
-// - Generating and signing the token
 func NewJwtSessionToken(userID, email, passwordHash, secret string, duration time.Duration) (string, error) {
-	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
 		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
-	// Set up claims
+	// Set up claims AND inject the cryptographic MAC
 	claims := jwt.MapClaims{
 		ClaimUserID: userID,
+		ClaimUidMac: GenerateUserMac(userID, secret),
 	}
 
-	// Generate and return token
 	return NewJwt(claims, signingKey, duration)
 }
 
-// NewJwtPasswordResetToken creates a JWT specifically for password reset
+// NewJwtEmailChangeToken creates a JWT specifically for email change
 func NewJwtEmailChangeToken(userID, oldEmail, newEmail, passwordHash, secret string, duration time.Duration) (string, error) {
-	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(oldEmail, passwordHash, secret)
 	if err != nil {
 		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
-	// Set up email change-specific claims
 	claims := jwt.MapClaims{
 		ClaimUserID:   userID,
+		ClaimUidMac:   GenerateUserMac(userID, secret), // Inject MAC
 		ClaimEmail:    oldEmail,
 		ClaimNewEmail: newEmail,
 		ClaimType:     ClaimEmailChangeValue,
 	}
 
-	// Generate and return token
 	return NewJwt(claims, signingKey, duration)
 }
 
+// NewJwtPasswordResetToken creates a JWT specifically for password reset
 func NewJwtPasswordResetToken(userID, email, passwordHash, secret string, duration time.Duration) (string, error) {
-	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
 		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
-	// Set up password reset-specific claims
 	claims := jwt.MapClaims{
 		ClaimUserID: userID,
+		ClaimUidMac: GenerateUserMac(userID, secret), // Inject MAC
 		ClaimEmail:  email,
 		ClaimType:   ClaimPasswordResetValue,
 	}
 
-	// Generate and return token
 	return NewJwt(claims, signingKey, duration)
 }
 
 // NewJwtEmailVerificationToken creates a JWT specifically for email verification
-// It includes additional claims needed for verification
 func NewJwtEmailVerificationToken(userID, email, passwordHash, secret string, duration time.Duration) (string, error) {
-	// Create signing key from email and secret
 	signingKey, err := NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	if err != nil {
 		return "", fmt.Errorf("failed to create signing key: %w", err)
 	}
 
-	// Set up verification-specific claims
 	claims := jwt.MapClaims{
 		ClaimUserID: userID,
+		ClaimUidMac: GenerateUserMac(userID, secret), // Inject MAC
 		ClaimEmail:  email,
 		ClaimType:   ClaimVerificationValue,
 	}
 
-	// Generate and return token
 	return NewJwt(claims, signingKey, duration)
 }
 
@@ -199,6 +193,7 @@ func NewJwtEmailOtpVerificationToken(email, secret string, duration time.Duratio
 	otp = RandomNumericOTP()
 	otpHash := HashOtp(otp, secret)
 
+	// Note: OTP tokens do not contain a UserID, so we do not generate a UidMac here.
 	claims := jwt.MapClaims{
 		ClaimEmail:                    email,
 		ClaimEmailOtpVerificationHash: otpHash,
