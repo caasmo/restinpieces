@@ -69,6 +69,11 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	if err := a.Validator().Email(req.Identity); err != nil {
+		WriteJsonError(w, errorInvalidRequest)
+		return
+	}
+
 	// Validate password match
 	if req.Password != req.PasswordConfirm {
 		WriteJsonError(w, errorPasswordMismatch)

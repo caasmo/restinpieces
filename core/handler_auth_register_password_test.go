@@ -54,6 +54,11 @@ func TestRegisterWithPasswordHandler_Validation(t *testing.T) {
 			requestBody: `{"identity":"test@example.com", "password":"short", "password_confirm":"short"}`,
 			wantError:   errorPasswordComplexity,
 		},
+		{
+			name:        "invalid email format",
+			requestBody: `{"identity":"not-an-email", "password":"password123", "password_confirm":"password123"}`,
+			wantError:   errorInvalidRequest,
+		},
 	}
 
 	for _, tc := range testCases {
