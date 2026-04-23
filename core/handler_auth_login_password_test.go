@@ -119,6 +119,8 @@ func TestAuthWithPasswordHandler_Validation(t *testing.T) {
 
 // TestAuthWithPasswordHandler_Authentication tests the core authentication logic,
 // including successful login, user not found, and incorrect password scenarios.
+// These tests verify anti-enumeration and timing attack hardening by ensuring
+// uniform response codes for different failure paths.
 func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 	hashedPassword, _ := crypto.GenerateHash("password123")
 	testUser := &db.User{
@@ -169,7 +171,7 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 			wantCode:   CodeErrorInvalidCredentials,
 		},
 		{
-			name:        "unverified user login",
+			name:        "unverified user login with correct password",
 			requestBody: `{"identity":"test@example.com", "password":"password123"}`,
 			dbSetup: func(m *mock.Db) {
 				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
@@ -183,6 +185,22 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 			},
 			wantStatus: http.StatusForbidden,
 			wantCode:   CodeErrorRequiredEmailOtpVerification,
+		},
+		{
+			name:        "unverified user login with wrong password",
+			requestBody: `{"identity":"test@example.com", "password":"wrongpassword"}`,
+			dbSetup: func(m *mock.Db) {
+				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					return &db.User{
+						ID:       "user123",
+						Email:    "test@example.com",
+						Password: string(hashedPassword),
+						Verified: false,
+					}, nil
+				}
+			},
+			wantStatus: http.StatusUnauthorized,
+			wantCode:   CodeErrorInvalidCredentials,
 		},
 	}
 
