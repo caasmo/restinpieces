@@ -79,6 +79,9 @@ func TestAuthWithPasswordHandler_Validation(t *testing.T) {
 				m.ContentTypeFunc = func(r *http.Request, allowedType string) (jsonResponse, error) {
 					return jsonResponse{}, nil
 				}
+				m.EmailFunc = func(email string) error {
+					return errors.New("invalid email format")
+				}
 			},
 		},
 	}
@@ -92,8 +95,11 @@ func TestAuthWithPasswordHandler_Validation(t *testing.T) {
 			mockValidator := &MockValidator{}
 			tc.setupValidator(mockValidator)
 
+			// mockDbApp is a mock for db.DbApp (defined in mock_test.go)
+			// we use it to avoid nil pointer dereference if validation fails to stop execution
 			app := &App{
 				validator: mockValidator,
+				dbAuth:    &mockDbApp{},
 			}
 
 			app.AuthWithPasswordHandler(rr, req)

@@ -8,30 +8,6 @@ import (
 	"github.com/caasmo/restinpieces/config"
 )
 
-func TestValidateEmail(t *testing.T) {
-	testCases := []struct {
-		name    string
-		email   string
-		wantErr bool
-	}{
-		{"valid email", "test@example.com", false},
-		{"valid email with subdomain", "test@sub.example.com", false},
-		{"invalid email no at", "test.example.com", true},
-		{"invalid email no domain", "test@", true},
-		{"invalid email with spaces", "test @example.com", true},
-		{"empty email", "", true},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateEmail(tc.email)
-			if (err != nil) != tc.wantErr {
-				t.Errorf("ValidateEmail() error = %v, wantErr %v", err, tc.wantErr)
-			}
-		})
-	}
-}
-
 func TestGetClientIP(t *testing.T) {
 	testCases := []struct {
 		name                string

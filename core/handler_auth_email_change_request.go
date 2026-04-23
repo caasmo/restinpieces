@@ -54,7 +54,7 @@ func (a *App) RequestEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Validate email format
-	if err := ValidateEmail(req.NewEmail); err != nil {
+	if err := a.Validator().Email(req.NewEmail); err != nil {
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}

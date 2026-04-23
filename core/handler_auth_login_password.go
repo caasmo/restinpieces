@@ -70,7 +70,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := ValidateEmail(req.Identity); err != nil {
+	if err := a.Validator().Email(req.Identity); err != nil {
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}

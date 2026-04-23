@@ -130,7 +130,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
-	if err := ValidateEmail(oauthUser.Email); err != nil {
+	if err := a.Validator().Email(oauthUser.Email); err != nil {
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}

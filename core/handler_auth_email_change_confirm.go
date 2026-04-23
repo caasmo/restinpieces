@@ -78,7 +78,7 @@ func (a *App) ConfirmEmailChangeHandler(w http.ResponseWriter, r *http.Request) 
 	newEmail := claims["new_email"].(string)
 
 	// Validate new email format (even though claims were validated, this is an extra check)
-	if err := ValidateEmail(newEmail); err != nil {
+	if err := a.Validator().Email(newEmail); err != nil {
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}

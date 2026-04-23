@@ -58,7 +58,7 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
-	if err := ValidateEmail(req.Email); err != nil {
+	if err := a.Validator().Email(req.Email); err != nil {
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
