@@ -90,7 +90,7 @@ func (a *App) ConfirmPasswordResetHandler(w http.ResponseWriter, r *http.Request
 	// Hash new password before storage
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
-		WriteJsonError(w, errorTokenGeneration)
+		WriteJsonError(w, errorPasswordHashingFailed)
 		return
 	}
 

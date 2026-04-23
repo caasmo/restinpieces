@@ -33,6 +33,7 @@ const (
 	CodeErrorPasswordResetAlreadyRequested     = "err_password_reset_already_requested"
 	CodeErrorEmailChangeAlreadyRequested       = "err_email_change_already_requested"
 	CodeErrorPasswordResetFailed               = "err_password_reset_failed"
+	CodeErrorPasswordHashingFailed             = "err_password_hashing_failed"
 	CodeOkPasswordReset                        = "ok_password_reset"
 	CodeErrorRegistrationFailed                = "err_registration_failed"
 	CodeErrorTooManyRequests                   = "err_too_many_requests"
@@ -91,6 +92,7 @@ var (
 	errorPasswordResetAlreadyRequested     = PrecomputeBasicResponse(http.StatusConflict, CodeErrorPasswordResetAlreadyRequested, "Password reset already requested")
 	errorEmailChangeAlreadyRequested       = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailChangeAlreadyRequested, "Email change already requested")
 	errorPasswordResetFailed               = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordResetFailed, "Password reset process failed")
+	errorPasswordHashingFailed             = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordHashingFailed, "Failed to hash password")
 	errorServiceUnavailable                = PrecomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
 	errorNoAuthHeader                      = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")
 	errorJwtInvalidSignMethod              = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidSignMethod, "Invalid JWT signing method")

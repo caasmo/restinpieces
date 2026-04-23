@@ -134,6 +134,16 @@ func TestPrecomputedVariables(t *testing.T) {
 				Message: "The request contains invalid data",
 			},
 		},
+		{
+			name:         "errorPasswordHashingFailed",
+			variable:     errorPasswordHashingFailed,
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: JsonBasic{
+				Status:  http.StatusInternalServerError,
+				Code:    CodeErrorPasswordHashingFailed,
+				Message: "Failed to hash password",
+			},
+		},
 	}
 
 	for _, tc := range testCases {

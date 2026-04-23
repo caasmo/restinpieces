@@ -91,7 +91,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// email existence via response timing.
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {
-		WriteJsonError(w, errorTokenGeneration)
+		WriteJsonError(w, errorPasswordHashingFailed)
 		return
 	}
 
