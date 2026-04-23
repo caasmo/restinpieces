@@ -121,7 +121,35 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 	writeOtpResponse(w, verificationToken)
 }
 
-// ConfirmEmailOtpVerificationHandler handles email OTP verification code confirmation
+// ConfirmEmailOtpVerificationHandler handles email OTP verification code confirmation.
+// Endpoint: POST /confirm-email-otp-verification
+// Authenticated: No
+// Allowed Mimetype: application/json
+//
+// # Security: Enumeration hardening
+//
+// This handler returns exactly two states to the caller:
+//
+//   - Success: account is now verified, session token issued via writeAuthResponse.
+//   - Failure: errorInvalidOtp, for every other case without exception.
+//
+// Failure is intentionally opaque. The following distinct internal conditions
+// all map to errorInvalidOtp:
+//
+//   - OTP or verification token is cryptographically invalid or expired.
+//   - Email extracted from the token does not match any account (errorNotFound
+//     in the original — removed because RequestEmailOtpVerificationHandler
+//     deliberately issues valid tokens for non-existent emails on silent-failure
+//     paths; leaking the distinction here would undo that hardening).
+//   - Account is already verified (okAlreadyVerified in the original — same
+//     reasoning: a token issued on an already-verified silent-failure path must
+//     not reveal account state when presented here).
+//
+// The only way to obtain a valid signed token is from our own request handler,
+// so the enumeration surface here is narrower than at the request step. But
+// since we now issue real tokens on all request paths regardless of account
+// state, the confirm step must be equally opaque or the front-door hardening
+// is bypassed.
 func (a *App) ConfirmEmailOtpVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	resp, err := a.Validator().ContentType(r, MimeTypeJSON)
 	if err != nil {
@@ -145,6 +173,10 @@ func (a *App) ConfirmEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 	}
 
 	cfg := a.Config()
+
+	// Cryptographic gate. An invalid or expired token — including tokens that
+	// were legitimately issued by the request handler for non-existent or
+	// already-verified accounts — is rejected here uniformly.
 	email, err := crypto.VerifyEmailOtpVerificationToken(req.Otp, req.VerificationToken, cfg.Jwt.VerificationEmailOtpSecret)
 	if err != nil {
 		WriteJsonError(w, errorInvalidOtp)
@@ -153,30 +185,36 @@ func (a *App) ConfirmEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 
 	user, err := a.DbAuth().GetUserByEmail(email)
 	if err != nil || user == nil {
-		WriteJsonError(w, errorNotFound)
+		// Silent failure: maps to the same errorInvalidOtp as a bad token.
+		// See handler-level doc for why errorNotFound must not be surfaced.
+		WriteJsonError(w, errorInvalidOtp)
 		return
 	}
 
 	if user.Verified {
-		WriteJsonOk(w, okAlreadyVerified)
+		// Silent failure: maps to the same errorInvalidOtp as a bad token.
+		// See handler-level doc for why okAlreadyVerified must not be surfaced.
+		WriteJsonError(w, errorInvalidOtp)
 		return
 	}
 
-	err = a.DbAuth().VerifyEmail(user.ID)
-	if err != nil {
+	if err = a.DbAuth().VerifyEmail(user.ID); err != nil {
 		WriteJsonError(w, errorServiceUnavailable)
 		return
 	}
 
 	user.Verified = true
 
-	// Generate JWT session token
+	// Theoretical failure: VerifyEmail has already committed to the DB, so the
+	// account is verified regardless of what happens here. If token generation
+	// fails the user receives errorTokenGeneration but is not locked out — they
+	// can obtain a session via the normal login flow. No corrective action is
+	// needed; the inconsistency is transient.
 	token, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration.Duration)
 	if err != nil {
 		WriteJsonError(w, errorTokenGeneration)
 		return
 	}
 
-	// Return standardized authentication response
 	writeAuthResponse(w, token, user)
 }
