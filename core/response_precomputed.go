@@ -38,7 +38,6 @@ const (
 	CodeErrorTooManyRequests                   = "err_too_many_requests"
 	CodeErrorServiceUnavailable                = "err_service_unavailable"
 	CodeErrorNoAuthHeader                      = "err_no_auth_header"
-	CodeErrorInvalidTokenFormat                = "err_invalid_token_format"
 	CodeErrorJwtInvalidSignMethod              = "err_invalid_sign_method"
 	CodeErrorJwtTokenExpired                   = "err_token_expired"
 	CodeErrorAlreadyVerified                   = "err_already_verified"
@@ -94,7 +93,6 @@ var (
 	errorPasswordResetFailed               = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordResetFailed, "Password reset process failed")
 	errorServiceUnavailable                = PrecomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
 	errorNoAuthHeader                      = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")
-	errorInvalidTokenFormat                = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidTokenFormat, "Invalid authorization token format")
 	errorJwtInvalidSignMethod              = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidSignMethod, "Invalid JWT signing method")
 	errorJwtTokenExpired                   = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
 	errorJwtInvalidToken                   = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidToken, "Invalid authentication token")
