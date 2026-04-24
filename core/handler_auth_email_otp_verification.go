@@ -149,13 +149,22 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 
 	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.EmailOtpVerificationCooldown.Duration, time.Now())
 
-	payload, _ := json.Marshal(handlers.PayloadEmailVerificationOtp{
+	payload, err := json.Marshal(handlers.PayloadEmailVerificationOtp{
 		Email:          req.Email,
 		CooldownBucket: cooldownBucket,
 	})
-	payloadExtra, _ := json.Marshal(handlers.PayloadEmailVerificationOtpExtra{
+	if err != nil {
+		WriteJsonError(w, errorServiceUnavailable)
+		return
+	}
+
+	payloadExtra, err := json.Marshal(handlers.PayloadEmailVerificationOtpExtra{
 		Otp: otp,
 	})
+	if err != nil {
+		WriteJsonError(w, errorServiceUnavailable)
+		return
+	}
 
 	job := db.Job{
 		JobType:      handlers.JobTypeEmailVerificationOtp,
