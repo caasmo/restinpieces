@@ -169,6 +169,26 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 			wantCode:          CodeOkPendingEmailOtpVerification,
 			expectJobInserted: false,
 		},
+		{
+			name:        "successful registration with whitespace trimming",
+			requestBody: `{"identity":"  trimmed@example.com  ", "password":"  password123  ", "password_confirm":"  password123  "}`,
+			dbSetup: func(m *mock.Db, jobInserted *bool) {
+				m.CreateUserWithPasswordFunc = func(user db.User) (*db.User, error) {
+					if user.Email != "trimmed@example.com" {
+						t.Errorf("expected email to be trimmed, got %q", user.Email)
+					}
+					// We can't easily check the plaintext password because it's hashed,
+					// but we can verify it hashes correctly against the trimmed version.
+					if !crypto.CheckPassword("password123", user.Password) {
+						t.Error("password was not trimmed correctly before hashing")
+					}
+					return &newUser, nil
+				}
+			},
+			wantStatus:        http.StatusAccepted,
+			wantCode:          CodeOkPendingEmailOtpVerification,
+			expectJobInserted: false,
+		},
 	}
 
 	for _, tc := range testCases {

@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/caasmo/restinpieces/crypto"
 )
@@ -64,6 +65,13 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
+
+    // What NIST SP 800-63B §5.1.1.2 says about spaces
+    // "Verifiers SHOULD permit claimants to use any printable ASCII characters as well as the space character in memorized secrets."
+    // "Verifiers MAY remove leading and trailing whitespace prior to verification."
+    // we consistently add the same to the register handler
+    req.Identity = strings.TrimSpace(req.Identity)
+    req.Password = strings.TrimSpace(req.Password)
 
 	if req.Identity == "" || req.Password == "" {
 		WriteJsonError(w, errorInvalidRequest)

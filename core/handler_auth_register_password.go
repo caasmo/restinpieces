@@ -63,7 +63,13 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	req.Identity = strings.TrimSpace(req.Identity)
+    // What NIST SP 800-63B §5.1.1.2 says about spaces
+    // "Verifiers SHOULD permit claimants to use any printable ASCII characters as well as the space character in memorized secrets."
+    // "Verifiers MAY remove leading and trailing whitespace prior to verification."
+    // we consistently add the same to the login handler
 	req.Password = strings.TrimSpace(req.Password)
+    req.PasswordConfirm = strings.TrimSpace(req.PasswordConfirm)
+
 	if req.Identity == "" || req.Password == "" || req.PasswordConfirm == "" {
 		WriteJsonError(w, errorMissingFields)
 		return

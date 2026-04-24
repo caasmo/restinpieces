@@ -208,6 +208,20 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 			wantStatus: http.StatusUnauthorized,
 			wantCode:   CodeErrorInvalidCredentials,
 		},
+		{
+			name:        "successful login with whitespace trimming",
+			requestBody: `{"identity":"  test@example.com  ", "password":"  password123  "}`,
+			dbSetup: func(m *mock.Db) {
+				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					if email != "test@example.com" {
+						t.Errorf("expected email to be trimmed, got %q", email)
+					}
+					return testUser, nil
+				}
+			},
+			wantStatus: http.StatusOK,
+			wantCode:   CodeOkAuthentication,
+		},
 	}
 
 	for _, tc := range testCases {
