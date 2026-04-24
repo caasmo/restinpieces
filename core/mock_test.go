@@ -62,6 +62,7 @@ func (m *MockAuth) Authenticate(r *http.Request) (*db.User, jsonResponse, error)
 type MockValidator struct {
 	ContentTypeFunc func(r *http.Request, allowedType string) (jsonResponse, error)
 	EmailFunc       func(email string) error
+	PasswordFunc    func(password string) error
 }
 
 func (m *MockValidator) ContentType(r *http.Request, allowedType string) (jsonResponse, error) {
@@ -74,6 +75,13 @@ func (m *MockValidator) ContentType(r *http.Request, allowedType string) (jsonRe
 func (m *MockValidator) Email(email string) error {
 	if m.EmailFunc != nil {
 		return m.EmailFunc(email)
+	}
+	return nil
+}
+
+func (m *MockValidator) Password(password string) error {
+	if m.PasswordFunc != nil {
+		return m.PasswordFunc(password)
 	}
 	return nil
 }

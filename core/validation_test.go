@@ -117,3 +117,32 @@ func TestEmailValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestPasswordValidation(t *testing.T) {
+	testCases := []struct {
+		name     string
+		password string
+		wantErr  bool
+	}{
+		{"valid password", "secure-password-123", false},
+		{"too short", "short", true},
+		{"exactly 8 chars", "1234567a", false},
+		{"exactly 72 bytes", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrtu", false},
+		{"too long (73 bytes)", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrtuv", true},
+		{"too long with multi-byte (73 bytes)", "世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界!", true},
+		{"contains null byte", "pass\x00word", true},
+		{"common password", "password", true},
+		{"common password case insensitive", "Password", true},
+	}
+
+	validator := NewValidator()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validator.Password(tc.password)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("Password(%q) error = %v, wantErr %v", tc.password, err, tc.wantErr)
+			}
+		})
+	}
+}

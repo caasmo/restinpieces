@@ -135,20 +135,15 @@ func (v *DefaultValidator) Password(password string) error {
 	return nil
 }
 
-// isCommonPassword reports whether the password appears in the known-compromised
-// list. Comparison is case-insensitive: "Password1" is as weak as "password1".
-// TODO 
-//
-//var commonPasswords = map[string]struct{}{
-//	"password":         {},
-//	"12345678":         {},
-//	"123456789":        {},
-//	"baseball":         {},
-//	"football":         {},
-//	"qwertyuiop":       {},
-//	"1234567890":       {},
 func isCommonPassword(password string) bool {
-	//_, found := commonPasswords[strings.ToLower(password)]
-	//return found
-    return false
+	// A small list of common passwords for basic validation and testing.
+	// In a real application, this should be a larger, generated list.
+	var commonPasswords = map[string]struct{}{
+		"password":   {},
+		"12345678":   {},
+		"123456789":  {},
+		"qwertyuiop": {},
+	}
+	_, found := commonPasswords[strings.ToLower(password)]
+	return found
 }

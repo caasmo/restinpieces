@@ -17,6 +17,7 @@
         - added script for generation, document an addon? like the others? 
         - no configuration, do your own validator email function
         - paswords the customBreachPasswords, app.Validator().AddPasswords(typed map)  
+    - passwords, NIST dice space allowed!!!! no trim 
 - resend otp
     - we need a little more sofisticated emial rate limit
         - allow not one per period

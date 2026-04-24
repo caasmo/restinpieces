@@ -50,10 +50,11 @@ func TestRegisterWithPasswordHandler_Validation(t *testing.T) {
 			wantError:   errorPasswordMismatch,
 		},
 		{
-			name:        "password complexity failure",
+			name:        "password_complexity_failure",
 			requestBody: `{"identity":"test@example.com", "password":"short", "password_confirm":"short"}`,
-			wantError:   errorPasswordComplexity,
+			wantError:   errorWeakPassword,
 		},
+
 		{
 			name:        "invalid email format",
 			requestBody: `{"identity":"not-an-email", "password":"password123", "password_confirm":"password123"}`,

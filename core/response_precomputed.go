@@ -26,7 +26,7 @@ const (
 	CodeErrorInvalidCredentials                = "err_invalid_credentials"
 	CodeErrorPasswordMismatch                  = "err_password_mismatch"
 	CodeErrorMissingFields                     = "err_missing_fields"
-	CodeErrorPasswordComplexity                = "err_password_complexity"
+	CodeErrorWeakPassword                      = "err_weak_password"
 	CodeErrorEmailConflict                     = "err_email_conflict"
 	CodeErrorNotFound                          = "err_not_found"
 	CodeErrorEmailVerificationAlreadyRequested = "err_email_verification_already_requested"
@@ -85,7 +85,7 @@ var (
 	errorInvalidCredentials                = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidCredentials, "Invalid credentials provided")
 	errorPasswordMismatch                  = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordMismatch, "Password and confirmation do not match")
 	errorMissingFields                     = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorMissingFields, "Required fields are missing")
-	errorPasswordComplexity                = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordComplexity, "Password must be at least 8 characters")
+	errorWeakPassword                      = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorWeakPassword, "Password is too weak or does not meet security requirements")
 	errorEmailConflict                     = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
 	errorNotFound                          = PrecomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
 	errorEmailVerificationAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationAlreadyRequested, "Email verification already requested.")

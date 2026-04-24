@@ -80,9 +80,8 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Validate password complexity TODO
-	if len(req.Password) < 8 {
-		WriteJsonError(w, errorPasswordComplexity)
+	if err := a.Validator().Password(req.Password); err != nil {
+		WriteJsonError(w, errorWeakPassword)
 		return
 	}
 

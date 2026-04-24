@@ -85,7 +85,7 @@ func TestConfirmPasswordResetHandler_Validation(t *testing.T) {
 			name:        "password complexity",
 			contentType: "application/json",
 			requestBody: `{"token":"t", "password":"short", "password_confirm":"short"}`,
-			wantError:   errorPasswordComplexity,
+			wantError:   errorWeakPassword,
 		},
 	}
 
