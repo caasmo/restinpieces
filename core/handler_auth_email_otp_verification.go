@@ -17,27 +17,64 @@ import (
 // Authenticated: No
 // Allowed Mimetype: application/json
 //
-// # Security: Enumeration hardening
+// # Flow
 //
-// This handler is deliberately opaque about account state. All three silent
-// failure cases — email not found, account already verified, and OTP already
-// requested (cooldown still active) — return an identical 200 response with a
-// real, well-formed verification_token. No status code or body field reveals
-// whether the email exists or what its state is.
+// Called by the SDK immediately after Register or Login Handler. The caller
+// must supply the same password used during registration. This is the only
+// gate that matters: a valid password proves the caller went to registration
+// and is the account owner.
 //
-// The confirm handler rejects tokens for non-existent / already-verified
-// accounts, so a token issued on a silent-failure path is harmless.
+// # Stateless OTP via verification token
 //
-// # Security: Timing
+// The 6-digit OTP is HMAC'd into a signed JWT (the verification token).
+// The server stores nothing — no DB column, no cache, no session. On success
+// the token is returned to the SDK, which holds it in memory and sends it
+// back alongside the user-entered OTP at the confirm step.
 //
-// OTP generation (JWT signing) always runs before any account-state branch,
-// so the dominant CPU cost is paid on every request regardless of outcome.
+// The password cannot replace this role: it proves identity but does not
+// contain the OTP. Without the signed token there is no stateless way to
+// verify which 6-digit code was issued. The alternative would require a
+// server-side otp_hash column, an expiration column, and a cleanup job —
+// trading the stateless design for statefulness with no security gain.
 //
-// A small residual timing difference remains: InsertJob (a DB round-trip)
-// only executes on the real path. This gap is narrow — crypto dominates the
-// total latency — but a high-precision attacker under ideal network conditions
-// could detect it. Acceptable for the current threat model; document here if
-// that changes.
+// # Security: Persistent harassment
+//
+// Requiring the correct password closes the harassment vector entirely.
+// An attacker who knows a target email but not the password receives an 
+// error and no email is ever sent. The legitimate user is the only one who can
+// trigger mail delivery — the password is proof of prior registration.
+//
+// Unlike the register endpoint, CreateUserWithPassword never overwrites an
+// existing password on conflict, so the real user's secret is always intact
+// and cannot be poisoned by an attacker registering the same email.
+//
+// # Security: Enumeration & timing attacks
+//
+// The dominant cost in this handler is crypto.CheckPassword (bcrypt, ~100ms).
+// If the user lookup fails and we return immediately — skipping CheckPassword —
+// the response time is orders of magnitude shorter than a failed password check.
+// An attacker can exploit this difference to enumerate valid emails with high
+// confidence: fast response means the email does not exist, slow response means
+// it does.
+//
+// Mitigation: crypto.CheckPassword is always called, even when the user is not
+// found. On the not-found path it runs against a static dummy hash and its
+// result is discarded. This ensures both paths pay the same bcrypt cost and
+// are indistinguishable by response time.
+//
+// # Security: errorWeakPassword response
+//
+// The password validator returns a distinct errorWeakPassword before the DB
+// lookup. This does not leak email existence — it only reveals that the input
+// violates the password policy. The policy itself is not secret (the register
+// handler exposes identical validation), so no information is gained.
+//
+// # Security: okAlreadyVerified response
+//
+// The already-verified check returns a distinct okAlreadyVerified only after
+// the password gate. An attacker who can reach this branch already has the
+// correct password and could simply log in. No information is gained that
+// the attacker does not already possess.
 func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	resp, err := a.Validator().ContentType(r, MimeTypeJSON)
 	if err != nil {
@@ -46,7 +83,8 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 	}
 
 	var req struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteJsonError(w, errorInvalidRequest)
@@ -54,25 +92,51 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 	}
 
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
-	if req.Email == "" {
+	req.Password = strings.TrimSpace(req.Password)
+
+	if req.Email == "" || req.Password == "" {
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
+
 	if err := a.Validator().Email(req.Email); err != nil {
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
+	if err := a.Validator().Password(req.Password); err != nil {
+		WriteJsonError(w, errorWeakPassword)
+		return
+	}
+
 	user, userErr := a.DbAuth().GetUserByEmail(req.Email)
+
+	passwordHash := crypto.DummyPasswordHash
+	if userErr == nil && user != nil {
+		passwordHash = user.Password
+	}
+
+	// Always runs — see timing attack doc above.
+	passwordValid := crypto.CheckPassword(req.Password, passwordHash)
+
+	if userErr != nil || user == nil {
+		WriteJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	if !passwordValid {
+		WriteJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	if user.Verified {
+		WriteJsonOk(w, okAlreadyVerified)
+		return
+	}
 
 	cfg := a.Config()
 
-	// Always generate the OTP token regardless of account state.
-	// Timing: JWT signing is the dominant cost — running it unconditionally
-	// ensures all paths pay the same price before responding.
-	// Enumeration: every caller receives a real, well-formed verification_token
-	// indistinguishable from a genuine one. Silent-failure tokens are rejected
-	// at the confirm step; no privilege is granted.
+	// Generate the OTP token.
 	otp, verificationToken, err := crypto.NewJwtEmailOtpVerificationToken(
 		req.Email,
 		cfg.Jwt.VerificationEmailOtpSecret,
@@ -80,13 +144,6 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 	)
 	if err != nil {
 		WriteJsonError(w, errorOtpFailed)
-		return
-	}
-
-	// Silent failure: email not found or account already verified.
-	// Identical response to the success path — same status, same body, real token.
-	if userErr != nil || user == nil || user.Verified {
-		writeOtpResponse(w, verificationToken)
 		return
 	}
 
@@ -107,11 +164,6 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 	}
 
 	if err := a.DbQueue().InsertJob(job); err != nil {
-		// Silent failure: ErrConstraintUnique means a request is already
-		// pending within the cooldown window — the earlier job is still
-		// delivered. Any other DB error is also swallowed. Surfacing either
-		// would let a caller distinguish a live account from a non-existent
-		// one, breaking enumeration hardening.
 		if err != db.ErrConstraintUnique {
 			WriteJsonError(w, errorServiceUnavailable)
 			return
@@ -126,6 +178,19 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 // Authenticated: No
 // Allowed Mimetype: application/json
 //
+// # Stateless OTP verification
+//
+// The request handler HMAC'd the 6-digit OTP into a signed JWT (the
+// verification token) and returned it to the SDK. This handler receives
+// the user-entered OTP and the token, verifies the JWT signature, and
+// checks that the OTP matches. The server never stored the OTP — the
+// signed token is the only proof of what was issued.
+//
+// The password is not required here and cannot replace the verification
+// token: the password proves identity, but it does not contain the OTP.
+// Identity was already proven at the request step; what remains is
+// proving possession of the email inbox (by entering the correct OTP).
+//
 // # Security: Enumeration hardening
 //
 // This handler returns exactly two states to the caller:
@@ -137,19 +202,12 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 // all map to errorInvalidOtp:
 //
 //   - OTP or verification token is cryptographically invalid or expired.
-//   - Email extracted from the token does not match any account (errorNotFound
-//     in the original — removed because RequestEmailOtpVerificationHandler
-//     deliberately issues valid tokens for non-existent emails on silent-failure
-//     paths; leaking the distinction here would undo that hardening).
-//   - Account is already verified (okAlreadyVerified in the original — same
-//     reasoning: a token issued on an already-verified silent-failure path must
-//     not reveal account state when presented here).
+//   - Email extracted from the token does not match any account.
+//   - Account is already verified.
 //
 // The only way to obtain a valid signed token is from our own request handler,
-// so the enumeration surface here is narrower than at the request step. But
-// since we now issue real tokens on all request paths regardless of account
-// state, the confirm step must be equally opaque or the front-door hardening
-// is bypassed.
+// which only issues tokens after verifying the correct password. The
+// enumeration surface here is therefore narrower than at the request step.
 func (a *App) ConfirmEmailOtpVerificationHandler(w http.ResponseWriter, r *http.Request) {
 	resp, err := a.Validator().ContentType(r, MimeTypeJSON)
 	if err != nil {
