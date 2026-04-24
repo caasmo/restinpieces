@@ -106,6 +106,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// untouched (see SQL: ON CONFLICT DO UPDATE does not SET password).
 	// We do not inspect the returned user — the response is always the same.
 	if _, err := a.DbAuth().CreateUserWithPassword(newUser); err != nil {
+        // Note: conflict is NOT an error — it's handled as nil by the DB layer.
 		WriteJsonError(w, errorAuthDatabaseError)
 		return
 	}

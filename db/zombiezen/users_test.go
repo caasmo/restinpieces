@@ -215,6 +215,43 @@ func TestUser_EdgeCases(t *testing.T) {
 		}
 	})
 
+	t.Run("CreateUserWithPassword_ConflictReturnRecord", func(t *testing.T) {
+		// 1. Create a user
+		originalUser, err := testDB.CreateUserWithPassword(db.User{
+			Name:     "Original Name",
+			Email:    "conflict_return@example.com",
+			Password: "original_password",
+		})
+		if err != nil {
+			t.Fatalf("Initial creation failed: %v", err)
+		}
+
+		// 2. Try to create again with different name and password
+		conflictUser, err := testDB.CreateUserWithPassword(db.User{
+			Name:     "New Name",
+			Email:    "conflict_return@example.com",
+			Password: "new_password",
+		})
+		if err != nil {
+			t.Fatalf("Conflict creation failed: %v", err)
+		}
+
+		if conflictUser == nil {
+			t.Fatal("expected non-nil user on conflict")
+		}
+
+		// On conflict, it should return the ORIGINAL name and ORIGINAL password
+		if conflictUser.Name != "Original Name" {
+			t.Errorf("expected original name 'Original Name', got %q", conflictUser.Name)
+		}
+		if conflictUser.Password != "original_password" {
+			t.Errorf("expected original password, got %q", conflictUser.Password)
+		}
+		if conflictUser.ID != originalUser.ID {
+			t.Errorf("expected same ID, got %q != %q", conflictUser.ID, originalUser.ID)
+		}
+	})
+
 	t.Run("UpdateNonExistentUser", func(t *testing.T) {
 		// These should be no-ops and not return errors
 		err := testDB.UpdatePassword("non-existent-id", "new-password")

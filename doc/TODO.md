@@ -1,8 +1,12 @@
 ### TODOs
 
 
+- all no auth handlers securitu enumeration time attack
 - ClaimUidMac is added to many jwt, do we need all, Check!!!!!!
 - register, login security audit
+- check conflict handling in createuserforaouth2
+    - do we still need it?
+    - state we do not support signup with password after google???? document
 - bug handler_auth_login_password.go
     receive 503, maybe because no cooldown in the config yet for 
     but only happens ocasianally, not always
