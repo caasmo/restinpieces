@@ -222,6 +222,20 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 			wantStatus: http.StatusOK,
 			wantCode:   CodeOkAuthentication,
 		},
+		{
+			name:        "successful login with normalization",
+			requestBody: `{"identity":"  NORMALIZED@Example.Com  ", "password":"password123"}`,
+			dbSetup: func(m *mock.Db) {
+				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					if email != "normalized@example.com" {
+						t.Errorf("expected email to be normalized to lowercase, got %q", email)
+					}
+					return testUser, nil
+				}
+			},
+			wantStatus: http.StatusOK,
+			wantCode:   CodeOkAuthentication,
+		},
 	}
 
 	for _, tc := range testCases {

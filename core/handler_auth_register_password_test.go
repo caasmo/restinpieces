@@ -189,6 +189,21 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 			wantCode:          CodeOkPendingEmailOtpVerification,
 			expectJobInserted: false,
 		},
+		{
+			name:        "successful registration with normalization",
+			requestBody: `{"identity":"  NORMALIZED@Example.Com  ", "password":"password123", "password_confirm":"password123"}`,
+			dbSetup: func(m *mock.Db, jobInserted *bool) {
+				m.CreateUserWithPasswordFunc = func(user db.User) (*db.User, error) {
+					if user.Email != "normalized@example.com" {
+						t.Errorf("expected email to be normalized to lowercase, got %q", user.Email)
+					}
+					return &newUser, nil
+				}
+			},
+			wantStatus:        http.StatusAccepted,
+			wantCode:          CodeOkPendingEmailOtpVerification,
+			expectJobInserted: false,
+		},
 	}
 
 	for _, tc := range testCases {

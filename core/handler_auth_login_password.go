@@ -66,11 +66,18 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+
+    // RFC 5321 technically makes the local part case-sensitive
+    // (User@example.com ≠ user@example.com), but in reality virtually every
+    // mail server treats it case-insensitively. OWASP and most auth guidance
+    // say: normalize to lowercase before storing and before lookup
+    req.Identity = strings.ToLower(strings.TrimSpace(req.Identity))
+
+
     // What NIST SP 800-63B §5.1.1.2 says about spaces
     // "Verifiers SHOULD permit claimants to use any printable ASCII characters as well as the space character in memorized secrets."
     // "Verifiers MAY remove leading and trailing whitespace prior to verification."
     // we consistently add the same to the register handler
-    req.Identity = strings.TrimSpace(req.Identity)
     req.Password = strings.TrimSpace(req.Password)
 
 	if req.Identity == "" || req.Password == "" {
