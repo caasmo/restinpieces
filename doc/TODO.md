@@ -1,8 +1,7 @@
 ### TODOs
 
-- with the chage in acess_token payload can we refine signup login time attaact enumeration
+
 - ClaimUidMac is added to many jwt, do we need all, Check!!!!!!
-- login refactor for enumeration attack!!! sdk!!
 - register, login security audit
 - bug handler_auth_login_password.go
     receive 503, maybe because no cooldown in the config yet for 
@@ -10,6 +9,14 @@
 - register and login handler, those are email, 
     - in register remove confirm???
 - register login handler form errors with fields etc 
+- validation revamp
+    - move to own package
+    - use should be able to inject map of passwords
+    - user could set own validator PART, ie the email or password validation
+        - functions? instead 
+        - added script for generation, document an addon? like the others? 
+        - no configuration, do your own validator email function
+        - paswords the customBreachPasswords, app.Validator().AddPasswords(typed map)  
 - resend otp
     - we need a little more sofisticated emial rate limit
         - allow not one per period
