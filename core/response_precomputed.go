@@ -32,6 +32,7 @@ const (
 	CodeErrorEmailVerificationAlreadyRequested = "err_email_verification_already_requested"
 	CodeErrorPasswordResetAlreadyRequested     = "err_password_reset_already_requested"
 	CodeErrorEmailChangeAlreadyRequested       = "err_email_change_already_requested"
+	CodeErrorEmailOtpVerificationAlreadyRequested = "err_email_otp_verification_already_requested"
 	CodeErrorPasswordResetFailed               = "err_password_reset_failed"
 	CodeErrorPasswordHashingFailed             = "err_password_hashing_failed"
 	CodeOkPasswordReset                        = "ok_password_reset"
@@ -91,6 +92,7 @@ var (
 	errorEmailVerificationAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationAlreadyRequested, "Email verification already requested.")
 	errorPasswordResetAlreadyRequested     = PrecomputeBasicResponse(http.StatusConflict, CodeErrorPasswordResetAlreadyRequested, "Password reset already requested")
 	errorEmailChangeAlreadyRequested       = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailChangeAlreadyRequested, "Email change already requested")
+	errorEmailOtpVerificationAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailOtpVerificationAlreadyRequested, "Email verification code already requested. Please check your inbox.")
 	errorPasswordResetFailed               = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordResetFailed, "Password reset process failed")
 	errorPasswordHashingFailed             = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordHashingFailed, "Failed to hash password")
 	errorServiceUnavailable                = PrecomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")

@@ -232,7 +232,7 @@ func TestRequestEmailOtpVerificationHandler_RequestLogic(t *testing.T) {
 			wantCode:   CodeErrorInvalidRequest,
 		},
 		{
-			name:        "job cooldown (unique constraint) still succeeds",
+			name:        "job cooldown (unique constraint) returns conflict",
 			requestBody: `{"email":"test@example.com","password":"password123"}`,
 			dbSetup: func(m *mock.Db) {
 				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
@@ -242,8 +242,8 @@ func TestRequestEmailOtpVerificationHandler_RequestLogic(t *testing.T) {
 					return db.ErrConstraintUnique
 				}
 			},
-			wantStatus: http.StatusOK,
-			wantCode:   CodeOkOtpTokenIssued,
+			wantStatus: http.StatusConflict,
+			wantCode:   CodeErrorEmailOtpVerificationAlreadyRequested,
 		},
 		{
 			name:        "successful request with whitespace trimming",
@@ -380,7 +380,7 @@ func TestRequestEmailOtpVerificationHandler_DependencyFailures(t *testing.T) {
 					return errors.New("database connection failed")
 				}
 			},
-			wantError: errorServiceUnavailable,
+			wantError: errorAuthDatabaseError,
 		},
 	}
 
@@ -710,7 +710,7 @@ func TestConfirmEmailOtpVerificationHandler_DependencyFailures(t *testing.T) {
 					return errors.New("db connection failed")
 				}
 			},
-			wantError: errorServiceUnavailable,
+			wantError: errorAuthDatabaseError,
 		},
 		{
 			name: "JWT session token generation failure (short secret)",

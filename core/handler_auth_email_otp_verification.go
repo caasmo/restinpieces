@@ -164,10 +164,12 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 	}
 
 	if err := a.DbQueue().InsertJob(job); err != nil {
-		if err != db.ErrConstraintUnique {
-			WriteJsonError(w, errorServiceUnavailable)
+		if err == db.ErrConstraintUnique {
+			WriteJsonError(w, errorEmailOtpVerificationAlreadyRequested)
 			return
 		}
+		WriteJsonError(w, errorAuthDatabaseError)
+		return
 	}
 
 	writeOtpResponse(w, verificationToken)
@@ -257,7 +259,7 @@ func (a *App) ConfirmEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 	}
 
 	if err = a.DbAuth().VerifyEmail(user.ID); err != nil {
-		WriteJsonError(w, errorServiceUnavailable)
+		WriteJsonError(w, errorAuthDatabaseError)
 		return
 	}
 
