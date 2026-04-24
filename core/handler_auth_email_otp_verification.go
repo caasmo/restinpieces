@@ -53,7 +53,7 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	req.Email = strings.TrimSpace(req.Email)
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 	if req.Email == "" {
 		WriteJsonError(w, errorInvalidRequest)
 		return
