@@ -8,21 +8,28 @@ on:
 jobs:
   sloc-badge:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        # During a release event, GitHub Actions check out the release tag,
+        # which leads to a "detached HEAD" state. To commit and push changes back
+        # to the repository (e.g., updating the SLOC badge), we must explicitly
+        # check out the persistent target branch.
+        uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: master
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
-          go-version: '1.24'
+          go-version: '1.x'
 
       - name: Install scc and jq
         run: |
           sudo apt-get update && sudo apt-get install -y jq
-          go install github.com/boyter/scc/v3@latest
+          go install github.com/boyter/scc/v3@v3.5.0
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
       - name: Run scc and format line count
@@ -54,10 +61,10 @@ jobs:
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           
-          if git diff --quiet HEAD -- .github/badges/sloc.json; then
+          git add .github/badges/sloc.json
+          if git diff --quiet --staged -- .github/badges/sloc.json; then
             echo "No changes to SLOC endpoint"
           else
-            git add .github/badges/sloc.json
             git commit -m "Update total lines endpoint: ${{ env.LINES_OF_CODE }}"
             git pull --rebase
             git push
