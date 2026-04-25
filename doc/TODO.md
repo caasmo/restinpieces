@@ -3,7 +3,6 @@
 
 - all no auth handlers securitu enumeration time attack
 - ClaimUidMac is added to many jwt, do we need all, Check!!!!!!
-- register, login security audit
 - check conflict handling in createuserforaouth2
     - do we still need it?
     - state we do not support signup with password after google???? document
@@ -13,6 +12,9 @@
 - register and login handler, those are email, 
     - in register remove confirm???
 - register login handler form errors with fields etc 
+- pow middleware, you can put there the paths -> config
+    present html with javscript, like cloudflare
+    can adjust cost in the config
 - validation revamp
     - move to own package
     - use should be able to inject map of passwords

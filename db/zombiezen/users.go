@@ -67,25 +67,38 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 	return user, nil
 }
 
-func (d *Db) VerifyEmail(userId string) error {
+func (d *Db) UpdateVerified(email string) (*db.User, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer d.pool.Put(conn)
 
+	var user db.User
+
+	// Idempotent: If already verified, it just updates the timestamp and returns the row.
+	// If email doesn't exist (token issued for non-existent account), returns 0 rows.
 	err = sqlitex.Execute(conn,
 		`UPDATE users 
-		SET verified = true,
-			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-		WHERE id = ?`,
+        SET verified = true,
+            updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+        WHERE email = ?
+        RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`,
 		&sqlitex.ExecOptions{
-			Args: []interface{}{userId},
+			Args: []interface{}{email},
+			ResultFunc: func(stmt *sqlite.Stmt) error {
+				tempUser, err := newUserFromStmt(stmt)
+				if err == nil && tempUser != nil {
+					user = *tempUser
+				}
+				return err
+			},
 		})
 	if err != nil {
-		return fmt.Errorf("failed to verify email: %w", err)
+		return nil, fmt.Errorf("failed to verify email: %w", err)
 	}
-	return nil
+
+	return &user, nil
 }
 
 func (d *Db) GetUserById(id string) (*db.User, error) {

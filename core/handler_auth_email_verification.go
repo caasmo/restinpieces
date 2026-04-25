@@ -147,7 +147,7 @@ func (a *App) ConfirmEmailVerificationHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = a.DbAuth().VerifyEmail(user.ID)
+	_, err = a.DbAuth().UpdateVerified(user.Email)
 	if err != nil {
 		WriteJsonError(w, errorServiceUnavailable)
 		return

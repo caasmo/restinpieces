@@ -252,27 +252,11 @@ func (a *App) ConfirmEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	user, err := a.DbAuth().GetUserByEmail(email)
-	if err != nil || user == nil {
-		// Silent failure: maps to the same errorInvalidOtp as a bad token.
-		// See handler-level doc for why errorNotFound must not be surfaced.
+	user, err := a.DbAuth().UpdateVerified(email)
+	if err != nil || user == nil || user.ID == "" {
 		WriteJsonError(w, errorInvalidOtp)
 		return
 	}
-
-	if user.Verified {
-		// Silent failure: maps to the same errorInvalidOtp as a bad token.
-		// See handler-level doc for why okAlreadyVerified must not be surfaced.
-		WriteJsonError(w, errorInvalidOtp)
-		return
-	}
-
-	if err = a.DbAuth().VerifyEmail(user.ID); err != nil {
-		WriteJsonError(w, errorAuthDatabaseError)
-		return
-	}
-
-	user.Verified = true
 
 	// Theoretical failure: VerifyEmail has already committed to the DB, so the
 	// account is verified regardless of what happens here. If token generation

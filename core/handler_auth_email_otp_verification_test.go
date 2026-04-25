@@ -567,11 +567,10 @@ func TestConfirmEmailOtpVerificationHandler_ConfirmationLogic(t *testing.T) {
 			name:        "successful OTP confirmation",
 			requestBody: `{"otp":"` + otp + `","verification_token":"` + validToken + `"}`,
 			dbSetup: func(m *mock.Db) {
-				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
-					return unverifiedUser, nil
-				}
-				m.VerifyEmailFunc = func(userId string) error {
-					return nil
+				m.UpdateVerifiedFunc = func(email string) (*db.User, error) {
+					u := *unverifiedUser
+					u.Verified = true
+					return &u, nil
 				}
 			},
 			wantStatus: http.StatusOK,
@@ -599,7 +598,7 @@ func TestConfirmEmailOtpVerificationHandler_ConfirmationLogic(t *testing.T) {
 			name:        "user not found after valid token",
 			requestBody: `{"otp":"` + otp + `","verification_token":"` + validToken + `"}`,
 			dbSetup: func(m *mock.Db) {
-				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+				m.UpdateVerifiedFunc = func(email string) (*db.User, error) {
 					return nil, db.ErrUserNotFound
 				}
 			},
@@ -610,7 +609,7 @@ func TestConfirmEmailOtpVerificationHandler_ConfirmationLogic(t *testing.T) {
 			name:        "already verified user",
 			requestBody: `{"otp":"` + otp + `","verification_token":"` + validToken + `"}`,
 			dbSetup: func(m *mock.Db) {
-				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+				m.UpdateVerifiedFunc = func(email string) (*db.User, error) {
 					return &db.User{
 						ID:       "user456",
 						Email:    "test@example.com",
@@ -619,8 +618,8 @@ func TestConfirmEmailOtpVerificationHandler_ConfirmationLogic(t *testing.T) {
 					}, nil
 				}
 			},
-			wantStatus: http.StatusUnauthorized,
-			wantCode:   CodeErrorInvalidOtp,
+			wantStatus: http.StatusOK,
+			wantCode:   CodeOkAuthentication,
 		},
 	}
 
@@ -695,22 +694,14 @@ func TestConfirmEmailOtpVerificationHandler_DependencyFailures(t *testing.T) {
 		wantError jsonResponse
 	}{
 		{
-			name:   "database failure on VerifyEmail",
+			name:   "database failure on UpdateVerified",
 			config: baseConfig,
 			dbSetup: func(m *mock.Db) {
-				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
-					return &db.User{
-						ID:       "user123",
-						Email:    "test@example.com",
-						Password: string(hashedPassword),
-						Verified: false,
-					}, nil
-				}
-				m.VerifyEmailFunc = func(userId string) error {
-					return errors.New("db connection failed")
+				m.UpdateVerifiedFunc = func(email string) (*db.User, error) {
+					return nil, errors.New("db connection failed")
 				}
 			},
-			wantError: errorAuthDatabaseError,
+			wantError: errorInvalidOtp,
 		},
 		{
 			name: "JWT session token generation failure (short secret)",
@@ -722,16 +713,13 @@ func TestConfirmEmailOtpVerificationHandler_DependencyFailures(t *testing.T) {
 				},
 			},
 			dbSetup: func(m *mock.Db) {
-				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+				m.UpdateVerifiedFunc = func(email string) (*db.User, error) {
 					return &db.User{
 						ID:       "user123",
 						Email:    "test@example.com",
 						Password: string(hashedPassword),
-						Verified: false,
+						Verified: true,
 					}, nil
-				}
-				m.VerifyEmailFunc = func(userId string) error {
-					return nil
 				}
 			},
 			wantError: errorTokenGeneration,

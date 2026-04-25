@@ -11,7 +11,7 @@ type DbAuth interface {
 	GetUserById(id string) (*User, error)
 	CreateUserWithPassword(user User) (*User, error)
 	CreateUserWithOauth2(user User) (*User, error)
-	VerifyEmail(userId string) error
+	UpdateVerified(email string) (*User, error)
 	UpdatePassword(userId string, newPassword string) error
 	UpdateEmail(userId string, newEmail string) error
 }

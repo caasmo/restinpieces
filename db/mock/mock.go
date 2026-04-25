@@ -15,7 +15,7 @@ type Db struct {
 	GetUserByIdFunc            func(id string) (*db.User, error)
 	CreateUserWithPasswordFunc func(user db.User) (*db.User, error)
 	CreateUserWithOauth2Func   func(user db.User) (*db.User, error)
-	VerifyEmailFunc            func(userId string) error
+	UpdateVerifiedFunc         func(email string) (*db.User, error)
 	UpdatePasswordFunc         func(userId string, newPassword string) error
 	UpdateEmailFunc            func(userId string, newEmail string) error
 
@@ -63,11 +63,11 @@ func (m *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 	user.ID = "mock-oauth-user-id" // Assign a mock ID
 	return &user, nil
 }
-func (m *Db) VerifyEmail(userId string) error {
-	if m.VerifyEmailFunc != nil {
-		return m.VerifyEmailFunc(userId)
+func (m *Db) UpdateVerified(email string) (*db.User, error) {
+	if m.UpdateVerifiedFunc != nil {
+		return m.UpdateVerifiedFunc(email)
 	}
-	return nil // Default: Success
+	return &db.User{Email: email, Verified: true}, nil // Default: Success
 }
 func (m *Db) UpdatePassword(userId string, newPassword string) error {
 	if m.UpdatePasswordFunc != nil {

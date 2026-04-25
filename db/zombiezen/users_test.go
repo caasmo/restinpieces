@@ -144,16 +144,27 @@ func TestUserLifecycle(t *testing.T) {
 		if fetchedUser.ID != userPassword.ID {
 			t.Errorf("fetched user by new email has wrong ID")
 		}
+		userPassword = fetchedUser // Update for subsequent tests
 	})
 
-	t.Run("VerifyEmail", func(t *testing.T) {
-		err := testDB.VerifyEmail(userPassword.ID)
+	t.Run("UpdateVerified", func(t *testing.T) {
+		updatedUser, err := testDB.UpdateVerified(userPassword.Email)
 		if err != nil {
-			t.Fatalf("VerifyEmail failed: %v", err)
+			t.Fatalf("UpdateVerified failed: %v", err)
 		}
+		if updatedUser == nil {
+			t.Fatal("expected non-nil user from UpdateVerified")
+		}
+		if updatedUser.ID != userPassword.ID {
+			t.Errorf("expected user ID %q, got %q", userPassword.ID, updatedUser.ID)
+		}
+		if !updatedUser.Verified {
+			t.Error("expected user to be verified in returned struct")
+		}
+
 		fetchedUser, _ := testDB.GetUserById(userPassword.ID)
 		if !fetchedUser.Verified {
-			t.Error("expected user to be verified, but they are not")
+			t.Error("expected user to be verified in database, but they are not")
 		}
 	})
 }
