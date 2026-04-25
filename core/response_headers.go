@@ -4,7 +4,7 @@ import (
 	"net/http"
 )
 
-const HeaderEndpointsHash = "X-Restinpieces-Routes-Hash"
+const HeaderEndpointsHash = "X-Restinpieces-Endpoints-Hash"
 
 // TODO consiten name
 var HeadersJson = map[string]string{

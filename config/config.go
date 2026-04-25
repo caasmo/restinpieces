@@ -535,8 +535,9 @@ type BlockRequestBody struct {
 	}
 
 	// EndpointsBlockMismatch holds configuration for the endpoints hash mismatch middleware.
-	// When activated, requests with a stale X-Restinpieces-Routes-Hash header
+	// When activated, requests with a stale X-Restinpieces-Endpoints-Hash header
 	// will receive an error response, forcing the SDK to refetch endpoints.
+
 	type EndpointsBlockMismatch struct {
 	// Activated controls whether endpoints hash checking is currently active.
 	// This can be toggled dynamically via a configuration reload.

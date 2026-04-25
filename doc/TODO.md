@@ -3,6 +3,7 @@
 
 - all no auth handlers securitu enumeration time attack
 - ClaimUidMac is added to many jwt, do we need all, Check!!!!!!
+- precomputed Errors and Ok shoudl be exportable
 - check conflict handling in createuserforaouth2
     - do we still need it?
     - state we do not support signup with password after google???? document
