@@ -1,6 +1,7 @@
 package config
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"log/slog"
 	"regexp"
@@ -66,8 +67,9 @@ type Config struct {
 	BlockIp          BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
 	BlockUaList      BlockUaList               `toml:"block_ua_list" comment:"User-Agent block list settings"`
 	BlockHost        BlockHost                 `toml:"block_host" comment:"Host blocking settings"`
-	BlockRequestBody BlockRequestBody          `toml:"block_request_body" comment:"Request body size limiting configuration"`
-	Notifier         Notifier                  `toml:"notifier"`
+	BlockRequestBody       BlockRequestBody       `toml:"block_request_body" comment:"Request body size limiting configuration"`
+	EndpointsBlockMismatch EndpointsBlockMismatch `toml:"endpoints_block_mismatch" comment:"Endpoints hash mismatch blocking settings"`
+	Notifier               Notifier               `toml:"notifier"`
 	Log              Log                       `toml:"log" comment:"Logging configuration"`
 	Metrics          Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
 	BackupLocal      BackupLocal               `toml:"backup_local" comment:"Local backup configuration"`
@@ -397,6 +399,28 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 	return path + ".html"
 }
 
+// Hash returns a deterministic hash of all endpoint values.
+// Uses hardcoded field concatenation to avoid any marshaling ambiguity.
+// The hash changes whenever any endpoint path is modified.
+func (e Endpoints) Hash() string {
+	s := e.RefreshAuth +
+		e.RequestEmailVerification +
+		e.ConfirmEmailVerification +
+		e.ListEndpoints +
+		e.AuthWithPassword +
+		e.AuthWithOAuth2 +
+		e.RegisterWithPassword +
+		e.ListOAuth2Providers +
+		e.RequestPasswordReset +
+		e.ConfirmPasswordReset +
+		e.RequestEmailChange +
+		e.ConfirmEmailChange +
+		e.RequestEmailOtpVerification +
+		e.ConfirmEmailOtpVerification
+	sum := sha256.Sum256([]byte(s))
+	return fmt.Sprintf("%x", sum[:8])
+}
+
 // BlockIp holds configuration specific to IP blocking.
 // This feature is intended to automatically block IP addresses based on
 // certain criteria, such as excessive requests, to mitigate abuse.
@@ -506,6 +530,16 @@ type BlockRequestBody struct {
 	// - Trailing slashes are significant ('/path' ≠ '/path/')
 	// - Query strings are ignored (matches path only)
 	// - Paths should start with '/' (e.g. '/api/upload')
-	// - No wildcards or pattern matching
+	// No wildcards or pattern matching
 	ExcludedPaths []string `toml:"excluded_paths" comment:"Paths that bypass size limiting"`
-}
+	}
+
+	// EndpointsBlockMismatch holds configuration for the endpoints hash mismatch middleware.
+	// When activated, requests with a stale X-Restinpieces-Routes-Hash header
+	// will receive an error response, forcing the SDK to refetch endpoints.
+	type EndpointsBlockMismatch struct {
+	// Activated controls whether endpoints hash checking is currently active.
+	// This can be toggled dynamically via a configuration reload.
+	Activated bool `toml:"activated" comment:"Activate endpoints hash mismatch blocking"`
+	}
+

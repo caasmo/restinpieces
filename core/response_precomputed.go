@@ -57,6 +57,7 @@ const (
 	CodeErrorInvalidContentType                = "err_invalid_content_type"
 	CodeErrorUnverifiedEmail                   = "err_unverified_email"
 	CodeErrorRequiredEmailOtpVerification      = "err_required_email_otp_verification"
+	CodeErrorEndpointsHashMismatch             = "err_endpoints_hash_mismatch"
 	// oks
 )
 
@@ -79,6 +80,8 @@ func PrecomputeBasicResponse(status int, code, message string) jsonResponse {
 
 // Precomputed error and ok responses with status codes
 var (
+	// TODO: export all precomputed error/ok response variables (capitalize first letter)
+	// so they can be used directly from other packages (e.g., prerouter middleware).
 
 	//errors
 	errorTokenGeneration                   = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
@@ -113,6 +116,7 @@ var (
 	errorInvalidContentType                = PrecomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type")
 	errorUnverifiedEmail                   = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorUnverifiedEmail, "Email must be verified before changing it")
 	errorRequiredEmailOtpVerification      = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorRequiredEmailOtpVerification, "Email verification is required")
+	ErrorEndpointsHashMismatch             = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEndpointsHashMismatch, "Client endpoints are outdated, please refetch endpoints")
 
 	// oks
 	okPasswordReset          = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")

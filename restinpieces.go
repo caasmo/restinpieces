@@ -281,6 +281,15 @@ func (i *initializer) setupPrerouter() http.Handler {
 		logger.Info(ft.Inactive("BlockRequestBody middleware inactive"), "activated", cfg.BlockRequestBody.Activated)
 	}
 
+	// 7. BlockEndpointsMismatch Middleware
+	blockEndpointsMismatch := prerouter.NewBlockEndpointsMismatch(i.app)
+	preRouterChain.WithMiddleware(blockEndpointsMismatch.Execute)
+	if cfg.EndpointsBlockMismatch.Activated {
+		logger.Info(ft.Active("BlockEndpointsMismatch middleware active"), "activated", cfg.EndpointsBlockMismatch.Activated)
+	} else {
+		logger.Info(ft.Inactive("BlockEndpointsMismatch middleware inactive"), "activated", cfg.EndpointsBlockMismatch.Activated)
+	}
+
 	// --- Finalize the PreRouter ---
 	preRouterHandler := preRouterChain.Handler()
 	logger.Info(ft.Complete("Prerouter Middleware Chain Setup complete"))

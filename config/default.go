@@ -137,6 +137,9 @@ func NewDefaultConfig() *Config {
 				"/api/import",
 			},
 		},
+		EndpointsBlockMismatch: EndpointsBlockMismatch{
+			Activated: true,
+		},
 		Notifier: Notifier{
 			Discord: Discord{
 				Activated:    false,

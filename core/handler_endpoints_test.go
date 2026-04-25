@@ -88,19 +88,28 @@ func TestListEndpointsHandler(t *testing.T) {
 				t.Errorf("handler returned unexpected body fields: got %+v want %+v", actualBody.JsonBasic, tc.expectedBody.JsonBasic)
 			}
 
-			// Marshal the 'Data' part of the actual response to compare it
-			var actualEndpoints config.Endpoints
+			// Unmarshal the 'Data' part of the actual response
+			var resp struct {
+				Endpoints config.Endpoints `json:"endpoints"`
+				Hash      string           `json:"hash"`
+			}
 			dataBytes, err := json.Marshal(actualBody.Data)
 			if err != nil {
 				t.Fatalf("could not marshal actual data: %v", err)
 			}
-			if err := json.Unmarshal(dataBytes, &actualEndpoints); err != nil {
-				t.Fatalf("could not unmarshal data into Endpoints struct: %v", err)
+			if err := json.Unmarshal(dataBytes, &resp); err != nil {
+				t.Fatalf("could not unmarshal data: %v", err)
 			}
 
 			// Compare the Endpoints struct
-			if !reflect.DeepEqual(actualEndpoints, tc.endpoints) {
-				t.Errorf("handler returned unexpected data:\ngot:  %+v\nwant: %+v", actualEndpoints, tc.endpoints)
+			if !reflect.DeepEqual(resp.Endpoints, tc.endpoints) {
+				t.Errorf("handler returned unexpected endpoints:\ngot:  %+v\nwant: %+v", resp.Endpoints, tc.endpoints)
+			}
+
+			// Verify hash
+			expectedHash := tc.endpoints.Hash()
+			if resp.Hash != expectedHash {
+				t.Errorf("handler returned unexpected hash: got %q, want %q", resp.Hash, expectedHash)
 			}
 		})
 	}
