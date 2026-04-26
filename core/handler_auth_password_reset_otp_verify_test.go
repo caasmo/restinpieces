@@ -47,8 +47,8 @@ func TestVerifyPasswordResetOtpHandler(t *testing.T) {
 
 		app.VerifyPasswordResetOtpHandler(rr, req)
 
-		if rr.Code != http.StatusOK {
-			t.Errorf("expected status 200, got %d", rr.Code)
+		if rr.Code != http.StatusAccepted {
+			t.Errorf("expected status 202, got %d", rr.Code)
 		}
 
 		var resp map[string]interface{}

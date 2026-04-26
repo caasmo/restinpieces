@@ -55,11 +55,11 @@ func TestWritePasswordResetOtpVerifiedResponse(t *testing.T) {
 
 	writePasswordResetOtpVerifiedResponse(w, token)
 
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status 200, got %d", w.Code)
+	if w.Code != http.StatusAccepted {
+		t.Errorf("expected status 202, got %d", w.Code)
 	}
 
-	expectedBody := `{"status":200,"code":"ok_password_reset_otp_verified","message":"OTP verified successfully","data":{"token":"reset-token"}}`
+	expectedBody := `{"status":202,"code":"ok_password_reset_otp_verified","message":"OTP verified successfully","data":{"token":"reset-token"}}`
 	actualBody := strings.TrimSpace(w.Body.String())
 	if actualBody != expectedBody {
 		t.Errorf("response body mismatch: got: %s want: %s", actualBody, expectedBody)

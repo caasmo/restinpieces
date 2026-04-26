@@ -106,7 +106,7 @@ type PasswordResetOtpVerifiedData struct {
 func writePasswordResetOtpVerifiedResponse(w http.ResponseWriter, token string) {
 	response := JsonWithData{
 		JsonBasic: JsonBasic{
-			Status:  http.StatusOK,
+			Status:  http.StatusAccepted,
 			Code:    CodeOkPasswordResetOtpVerified,
 			Message: "OTP verified successfully",
 		},
