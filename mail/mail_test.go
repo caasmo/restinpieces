@@ -320,6 +320,34 @@ func TestSendOtpEmail(t *testing.T) {
 	assertContains(t, decodedData, otp)
 }
 
+func TestSendPasswordResetOtpEmail(t *testing.T) {
+	server, mailer, cfg := setupTest(t)
+	defer server.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	email := "reset-otp@example.com"
+	otp := "654321"
+	err := mailer.SendPasswordResetOtpEmail(ctx, email, otp)
+
+	if err != nil {
+		t.Fatalf("SendPasswordResetOtpEmail should not return an error, but got: %v", err)
+	}
+
+	select {
+	case srvErr := <-server.err:
+		t.Fatalf("Mock SMTP server encountered an error: %v", srvErr)
+	default:
+	}
+
+	decodedData := decodeQuotedPrintable(t, server.data)
+	assertContains(t, decodedData, fmt.Sprintf("To: %s", email))
+	assertContains(t, decodedData, fmt.Sprintf("From: %s <%s>", cfg.Smtp.FromName, cfg.Smtp.FromAddress))
+	assertContains(t, decodedData, fmt.Sprintf("Subject: Your %s password reset code", cfg.Smtp.FromName))
+	assertContains(t, decodedData, otp)
+}
+
 // assertContains is a helper function to check if a string contains a substring.
 func assertContains(t *testing.T, s, substr string) {
 	t.Helper()

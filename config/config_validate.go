@@ -303,6 +303,12 @@ func validateJwt(jwt *Jwt) error {
 	if jwt.EmailChangeSecret == "" {
 		return fmt.Errorf("jwt.email_change_secret cannot be empty")
 	}
+	if jwt.VerificationEmailOtpSecret == "" {
+		return fmt.Errorf("jwt.verification_email_otp_secret cannot be empty")
+	}
+	if jwt.VerificationEmailOtpTokenDuration.Duration <= 0 {
+		return fmt.Errorf("jwt.verification_email_otp_token_duration must be positive")
+	}
 	return nil
 }
 

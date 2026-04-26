@@ -67,6 +67,7 @@ func newTestConfig() *Config {
 	cfg.Jwt.VerificationEmailSecret = "test_secret_2"
 	cfg.Jwt.PasswordResetSecret = "test_secret_3"
 	cfg.Jwt.EmailChangeSecret = "test_secret_4"
+	cfg.Jwt.VerificationEmailOtpSecret = "test_secret_5"
 	cfg.Smtp.Enabled = true
 	cfg.Smtp.Username = "user"
 	cfg.Smtp.Password = "pass"
@@ -270,16 +271,29 @@ func TestValidateServer(t *testing.T) {
 
 func TestValidateJwt(t *testing.T) {
 	t.Parallel()
-	valid := Jwt{AuthSecret: "a", AuthTokenDuration: Duration{Duration: 1}, VerificationEmailSecret: "b", VerificationEmailTokenDuration: Duration{Duration: 1}, PasswordResetSecret: "c", PasswordResetTokenDuration: Duration{Duration: 1}, EmailChangeSecret: "d", EmailChangeTokenDuration: Duration{Duration: 1}}
+	valid := Jwt{
+		AuthSecret:                     "a",
+		AuthTokenDuration:              Duration{Duration: 1},
+		VerificationEmailSecret:        "b",
+		VerificationEmailTokenDuration: Duration{Duration: 1},
+		PasswordResetSecret:            "c",
+		PasswordResetTokenDuration:     Duration{Duration: 1},
+		EmailChangeSecret:              "d",
+		EmailChangeTokenDuration:       Duration{Duration: 1},
+		VerificationEmailOtpSecret:     "e",
+		VerificationEmailOtpTokenDuration: Duration{Duration: 1},
+	}
 	if err := validateJwt(&valid); err != nil {
 		t.Errorf("valid case failed: %v", err)
 	}
 
 	invalidCases := []Jwt{
-		{VerificationEmailSecret: "b", PasswordResetSecret: "c", EmailChangeSecret: "d"},
-		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeSecret: "d"},
-		{AuthSecret: "a", VerificationEmailSecret: "b", EmailChangeSecret: "d"},
-		{AuthSecret: "a", VerificationEmailSecret: "b", PasswordResetSecret: "c"},
+		{VerificationEmailSecret: "b", PasswordResetSecret: "c", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e"},
+		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e"},
+		{AuthSecret: "a", VerificationEmailSecret: "b", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e"},
+		{AuthSecret: "a", VerificationEmailSecret: "b", PasswordResetSecret: "c", VerificationEmailOtpSecret: "e"},
+		{AuthSecret: "a", VerificationEmailSecret: "b", PasswordResetSecret: "c", EmailChangeSecret: "d"},
+		{AuthSecret: "a", VerificationEmailSecret: "b", PasswordResetSecret: "c", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e", VerificationEmailOtpTokenDuration: Duration{Duration: 0}},
 	}
 	for _, cfg := range invalidCases {
 		if err := validateJwt(&cfg); err == nil {
