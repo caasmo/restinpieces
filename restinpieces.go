@@ -338,6 +338,14 @@ func (i *initializer) setupScheduler(configProvider *config.Provider) (*scl.Sche
 		emailVerificationOtpHandler := handlers.NewEmailVerificationOtpHandler(mailer)
 		hdls[handlers.JobTypeEmailVerificationOtp] = emailVerificationOtpHandler
 		logger.Info(ft.Ok("registered email verification otp handler"))
+
+		passwordResetOtpHandler := handlers.NewPasswordResetOtpHandler(mailer)
+		hdls[handlers.JobTypePasswordResetOtp] = passwordResetOtpHandler
+		logger.Info(ft.Ok("registered password reset otp handler"))
+
+		dummyHandler := handlers.NewDummyHandler()
+		hdls[handlers.JobTypeDummy] = dummyHandler
+		logger.Info(ft.Ok("registered dummy handler"))
 	}
 
 	backupLocalHandler := handlers.NewHandler(configProvider, logger)

@@ -367,6 +367,12 @@ type Endpoints struct {
 	RequestPasswordReset string `toml:"request_password_reset" json:"request_password_reset" comment:"Request password reset endpoint"`
 	// ConfirmPasswordReset is the endpoint for resetting a user's password using a token.
 	ConfirmPasswordReset string `toml:"confirm_password_reset" json:"confirm_password_reset" comment:"Confirm password reset endpoint"`
+	// RequestPasswordResetOtp is the endpoint for users to request an OTP for password reset.
+	RequestPasswordResetOtp string `toml:"request_password_reset_otp" json:"request_password_reset_otp" comment:"Request password reset OTP endpoint"`
+	// VerifyPasswordResetOtp is the endpoint for verifying the OTP before resetting the password.
+	VerifyPasswordResetOtp string `toml:"verify_password_reset_otp" json:"verify_password_reset_otp" comment:"Verify password reset OTP endpoint"`
+	// ConfirmPasswordResetOtp is the endpoint for resetting a user's password using a grant token.
+	ConfirmPasswordResetOtp string `toml:"confirm_password_reset_otp" json:"confirm_password_reset_otp" comment:"Confirm password reset OTP endpoint"`
 	// RequestEmailChange is the endpoint for users to request an email address change.
 	RequestEmailChange string `toml:"request_email_change" json:"request_email_change" comment:"Request email change endpoint"`
 	// ConfirmEmailChange is the endpoint for confirming an email address change using a token.
@@ -413,6 +419,9 @@ func (e Endpoints) Hash() string {
 		e.ListOAuth2Providers +
 		e.RequestPasswordReset +
 		e.ConfirmPasswordReset +
+		e.RequestPasswordResetOtp +
+		e.VerifyPasswordResetOtp +
+		e.ConfirmPasswordResetOtp +
 		e.RequestEmailChange +
 		e.ConfirmEmailChange +
 		e.RequestEmailOtpVerification +

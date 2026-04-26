@@ -35,6 +35,7 @@ const (
 	CodeOkAuthentication      = "ok_authentication"        // Standard success code for auth
 	CodeOkOAuth2ProvidersList = "ok_oauth2_providers_list" // Success code for OAuth2 providers list
 	CodeOkOtpTokenIssued      = "ok_otp_token_issued"
+	CodeOkPasswordResetOtpVerified = "ok_password_reset_otp_verified"
 )
 
 // AuthRecord represents the user record in authentication responses
@@ -93,6 +94,24 @@ func writeOtpResponse(w http.ResponseWriter, verificationToken string) {
 		},
 		Data: &OtpData{
 			VerificationToken: verificationToken,
+		},
+	}
+	WriteJsonWithData(w, response)
+}
+
+type PasswordResetOtpVerifiedData struct {
+	Token string `json:"token"`
+}
+
+func writePasswordResetOtpVerifiedResponse(w http.ResponseWriter, token string) {
+	response := JsonWithData{
+		JsonBasic: JsonBasic{
+			Status:  http.StatusOK,
+			Code:    CodeOkPasswordResetOtpVerified,
+			Message: "OTP verified successfully",
+		},
+		Data: &PasswordResetOtpVerifiedData{
+			Token: token,
 		},
 	}
 	WriteJsonWithData(w, response)
