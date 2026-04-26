@@ -6,7 +6,7 @@ import (
 	"github.com/caasmo/restinpieces/core"
 )
 
-// BlockEndpointsMismatch blocks requests with a stale endpoints hash.
+// BlockEndpointsMismatch blocks SDK requests with a stale endpoints hash.
 type BlockEndpointsMismatch struct {
 	app *core.App
 }
@@ -36,6 +36,7 @@ func (b *BlockEndpointsMismatch) Execute(next http.Handler) http.Handler {
 
 		clientHash := r.Header.Get(core.HeaderEndpointsHash)
 
+        // this middleware is for sdk only
 		// No header: bootstrap case, let through
 		if clientHash == "" {
 			next.ServeHTTP(w, r)

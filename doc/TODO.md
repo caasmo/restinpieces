@@ -1,6 +1,12 @@
 ### TODOs
 
-
+- config: as developement make new config options, the config saved in the db diverges
+    - on startup we "merge" deafult with db config
+    - we should update the config with ripc get db config, merge with default and save!
+    - startup should fail if default not equal to db?
+    - reconcilition
+    - you can have a legacy conf in db that is update with default, you cannot update with ripc, key does not exist,
+        - 
 - all no auth handlers securitu enumeration time attack
 - ClaimUidMac is added to many jwt, do we need all, Check!!!!!!
 - precomputed Errors and Ok shoudl be exportable
