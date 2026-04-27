@@ -221,10 +221,10 @@ type Jwt struct {
 	PasswordResetSecret string `toml:"password_reset_secret" comment:"Secret key for password reset tokens"`
 	// Duration for which password reset tokens are valid.
 	PasswordResetTokenDuration Duration `toml:"password_reset_token_duration" comment:"Duration password reset tokens remain valid"`
-	// Secret key for email change tokens.
-	EmailChangeSecret string `toml:"email_change_secret" comment:"Secret key for email change tokens"`
-	// Duration for which email change confirmation tokens are valid.
-	EmailChangeTokenDuration Duration `toml:"email_change_token_duration" comment:"Duration email change tokens remain valid"`
+	// Secret key for email change OTP tokens.
+	EmailChangeOtpSecret string `toml:"email_change_otp_secret" comment:"Secret key for email change OTP tokens"`
+	// Duration for which email change OTP tokens remain valid.
+	EmailChangeOtpTokenDuration Duration `toml:"email_change_otp_token_duration" comment:"Duration email change OTP tokens remain valid"`
 	// Secret key for email OTP verification tokens.
 	VerificationEmailOtpSecret string `toml:"verification_email_otp_secret" comment:"Secret key for email OTP verification tokens"`
 	// Duration for which email OTP verification tokens are valid.
@@ -359,10 +359,10 @@ type Endpoints struct {
 	VerifyPasswordResetOtp string `toml:"verify_password_reset_otp" json:"verify_password_reset_otp" comment:"Verify password reset OTP endpoint"`
 	// ConfirmPasswordResetOtp is the endpoint for resetting a user's password using a grant token.
 	ConfirmPasswordResetOtp string `toml:"confirm_password_reset_otp" json:"confirm_password_reset_otp" comment:"Confirm password reset OTP endpoint"`
-	// RequestEmailChange is the endpoint for users to request an email address change.
-	RequestEmailChange string `toml:"request_email_change" json:"request_email_change" comment:"Request email change endpoint"`
-	// ConfirmEmailChange is the endpoint for confirming an email address change using a token.
-	ConfirmEmailChange string `toml:"confirm_email_change" json:"confirm_email_change" comment:"Confirm email change endpoint"`
+	// RequestEmailChangeOtp is the endpoint for users to request an email address change.
+	RequestEmailChangeOtp string `toml:"request_email_change_otp" json:"request_email_change_otp" comment:"Request email change OTP endpoint"`
+	// ConfirmEmailChangeOtp is the endpoint for confirming an email address change using a token.
+	ConfirmEmailChangeOtp string `toml:"confirm_email_change_otp" json:"confirm_email_change_otp" comment:"Confirm email change OTP endpoint"`
 	// RequestEmailVerificationOtp is the endpoint for requesting a new email OTP verification code.
 	RequestEmailVerificationOtp string `toml:"request_email_verification_otp" json:"request_email_verification_otp" comment:"Request email OTP verification endpoint"`
 	// ConfirmEmailVerificationOtp is the endpoint for confirming an email OTP verification code.
@@ -404,8 +404,8 @@ func (e Endpoints) Hash() string {
 		e.RequestPasswordResetOtp +
 		e.VerifyPasswordResetOtp +
 		e.ConfirmPasswordResetOtp +
-		e.RequestEmailChange +
-		e.ConfirmEmailChange +
+		e.RequestEmailChangeOtp +
+		e.ConfirmEmailChangeOtp +
 		e.RequestEmailVerificationOtp +
 		e.ConfirmEmailVerificationOtp
 	sum := sha256.Sum256([]byte(s))

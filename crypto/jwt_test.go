@@ -271,7 +271,6 @@ Vdo6H3z/uB1sD6l0HqBz1Y8e+9q9q3X7PA==
 func TestNewTypedTokens(t *testing.T) {
 	userID := "user123"
 	email := "test@example.com"
-	newEmail := "new@example.com"
 	passwordHash := "hashed_password"
 	secret := "a_very_long_and_secure_secret_key"
 	duration := 15 * time.Minute
@@ -289,19 +288,6 @@ func TestNewTypedTokens(t *testing.T) {
 			expectedClaims: map[string]any{
 				ClaimUserID: userID,
 				ClaimUidMac: GenerateUserMac(userID, secret),
-			},
-		},
-		{
-			name: "Email Change Token",
-			tokenFunc: func() (string, error) {
-				return NewJwtEmailChangeToken(userID, email, newEmail, passwordHash, secret, duration)
-			},
-			expectedClaims: map[string]any{
-				ClaimUserID:   userID,
-				ClaimUidMac:   GenerateUserMac(userID, secret),
-				ClaimEmail:    email,
-				ClaimNewEmail: newEmail,
-				ClaimType:     ClaimEmailChangeValue,
 			},
 		},
 		{
@@ -359,7 +345,6 @@ func TestNewTypedTokens(t *testing.T) {
 func TestNewTypedTokensWithInvalidSecret(t *testing.T) {
 	userID := "user123"
 	email := "test@example.com"
-	newEmail := "new@example.com"
 	passwordHash := "hashed_password"
 	secret := "short"
 	duration := 15 * time.Minute
@@ -372,12 +357,6 @@ func TestNewTypedTokensWithInvalidSecret(t *testing.T) {
 			name: "Session Token",
 			tokenFunc: func() (string, error) {
 				return NewJwtSessionToken(userID, email, passwordHash, secret, duration)
-			},
-		},
-		{
-			name: "Email Change Token",
-			tokenFunc: func() (string, error) {
-				return NewJwtEmailChangeToken(userID, email, newEmail, passwordHash, secret, duration)
 			},
 		},
 		{

@@ -135,14 +135,13 @@ func TestValidateTypedClaims(t *testing.T) {
 		ClaimExpiresAt: float64(now.Add(15 * time.Minute).Unix()),
 		ClaimUserID:    "user123",
 		ClaimEmail:     "test@example.com",
-		ClaimNewEmail:  "new@example.com",
 	}
 
 	testCases := []struct {
-		name          string
-		claims        jwt.MapClaims
+		name           string
+		claims         jwt.MapClaims
 		validationFunc func(jwt.MapClaims) error
-		wantError     error
+		wantError      error
 	}{
 		// Email Verification
 		{
@@ -153,7 +152,7 @@ func TestValidateTypedClaims(t *testing.T) {
 				return c
 			}(),
 			validationFunc: ValidateEmailVerificationClaims,
-			wantError:     nil,
+			wantError:      nil,
 		},
 		{
 			name: "Invalid Email Verification - Missing iat",
@@ -164,7 +163,7 @@ func TestValidateTypedClaims(t *testing.T) {
 				return c
 			}(),
 			validationFunc: ValidateEmailVerificationClaims,
-			wantError:     ErrInvalidVerificationToken,
+			wantError:      ErrInvalidVerificationToken,
 		},
 
 		// Password Reset
@@ -176,7 +175,7 @@ func TestValidateTypedClaims(t *testing.T) {
 				return c
 			}(),
 			validationFunc: ValidatePasswordResetClaims,
-			wantError:     nil,
+			wantError:      nil,
 		},
 
 		// Session
@@ -194,30 +193,7 @@ func TestValidateTypedClaims(t *testing.T) {
 				return c
 			}(),
 			validationFunc: ValidateSessionClaims,
-			wantError:     ErrClaimNotFound,
-		},
-
-		// Email Change
-		{
-			name: "Valid Email Change",
-			claims: func() jwt.MapClaims {
-				c := cloneClaims(validClaims)
-				c[ClaimType] = ClaimEmailChangeValue
-				return c
-			}(),
-			validationFunc: ValidateEmailChangeClaims,
-			wantError:     nil,
-		},
-		{
-			name: "Invalid Email Change - Missing new_email",
-			claims: func() jwt.MapClaims {
-				c := cloneClaims(validClaims)
-				c[ClaimType] = ClaimEmailChangeValue
-				delete(c, ClaimNewEmail)
-				return c
-			}(),
-			validationFunc: ValidateEmailChangeClaims,
-			wantError:     ErrInvalidVerificationToken,
+			wantError:      ErrClaimNotFound,
 		},
 	}
 

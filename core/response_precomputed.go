@@ -9,48 +9,46 @@ import (
 const (
 	// oks
 
-	CodeOkAlreadyVerified        = "ok_already_verified"
-	CodeOkEmailChange            = "ok_email_change"              // Success code for completed email change
-	CodeOkEmailChangeRequested   = "ok_email_change_requested"    // Success code for email change request
-	CodeOkPasswordResetNotNeeded = "ok_password_reset_not_needed" // Success code when password reset is not needed
-	CodeOkPendingEmailVerificationOtp          = "ok_pending_email_verification_otp"
-	CodeOkPasswordReset                        = "ok_password_reset"
+	CodeOkAlreadyVerified             = "ok_already_verified"
+	CodeOkEmailChange                 = "ok_email_change"              // Success code for completed email change
+	CodeOkPasswordResetNotNeeded      = "ok_password_reset_not_needed" // Success code when password reset is not needed
+	CodeOkPendingEmailVerificationOtp = "ok_pending_email_verification_otp"
+	CodeOkPasswordReset               = "ok_password_reset"
 
 	//errors
-	CodeErrorTokenGeneration                   = "err_token_generation"
-	CodeErrorClaimsNotFound                    = "err_claims_not_found"
-	CodeErrorInvalidRequest                    = "err_invalid_input"
-	CodeErrorInvalidCredentials                = "err_invalid_credentials"
-	CodeErrorPasswordMismatch                  = "err_password_mismatch"
-	CodeErrorMissingFields                     = "err_missing_fields"
-	CodeErrorWeakPassword                      = "err_weak_password"
-	CodeErrorEmailConflict                     = "err_email_conflict"
-	CodeErrorNotFound                          = "err_not_found"
-	CodeErrorEmailChangeAlreadyRequested       = "err_email_change_already_requested"
+	CodeErrorTokenGeneration                      = "err_token_generation"
+	CodeErrorClaimsNotFound                       = "err_claims_not_found"
+	CodeErrorInvalidRequest                       = "err_invalid_input"
+	CodeErrorInvalidCredentials                   = "err_invalid_credentials"
+	CodeErrorPasswordMismatch                     = "err_password_mismatch"
+	CodeErrorMissingFields                        = "err_missing_fields"
+	CodeErrorWeakPassword                         = "err_weak_password"
+	CodeErrorEmailConflict                        = "err_email_conflict"
+	CodeErrorNotFound                             = "err_not_found"
 	CodeErrorEmailVerificationOtpAlreadyRequested = "err_email_verification_otp_already_requested"
-	CodeErrorPasswordHashingFailed             = "err_password_hashing_failed"
-	CodeErrorRegistrationFailed                = "err_registration_failed"
-	CodeErrorTooManyRequests                   = "err_too_many_requests"
-	CodeErrorServiceUnavailable                = "err_service_unavailable"
-	CodeErrorNoAuthHeader                      = "err_no_auth_header"
-	CodeErrorJwtInvalidSignMethod              = "err_invalid_sign_method"
-	CodeErrorJwtTokenExpired                   = "err_token_expired"
-	CodeErrorAlreadyVerified                   = "err_already_verified"
-	CodeErrorJwtInvalidToken                   = "err_invalid_token"
-	CodeErrorJwtInvalidVerificationToken       = "err_invalid_verification_token"
-	CodeErrorInvalidOtp                        = "err_invalid_otp"
-	CodeErrorOtpFailed                         = "err_otp_failed"
-	CodeErrorInvalidOAuth2Provider             = "err_invalid_oauth2_provider"
-	CodeErrorOAuth2TokenExchangeFailed         = "err_oauth2_token_exchange_failed"
-	CodeErrorOAuth2UserInfoFailed              = "err_oauth2_user_info_failed"
-	CodeErrorOAuth2UserInfoProcessingFailed    = "err_oauth2_user_info_processing_failed"
-	CodeErrorOAuth2DatabaseError               = "err_oauth2_database_error"
-	CodeErrorAuthDatabaseError                 = "err_auth_database_error"
-	CodeErrorIpBlocked                         = "err_ip_blocked"
-	CodeErrorInvalidContentType                = "err_invalid_content_type"
-	CodeErrorUnverifiedEmail                   = "err_unverified_email"
-	CodeErrorRequiredEmailVerificationOtp      = "err_required_email_verification_otp"
-	CodeErrorEndpointsHashMismatch             = "err_endpoints_hash_mismatch"
+	CodeErrorPasswordHashingFailed                = "err_password_hashing_failed"
+	CodeErrorRegistrationFailed                   = "err_registration_failed"
+	CodeErrorTooManyRequests                      = "err_too_many_requests"
+	CodeErrorServiceUnavailable                   = "err_service_unavailable"
+	CodeErrorNoAuthHeader                         = "err_no_auth_header"
+	CodeErrorJwtInvalidSignMethod                 = "err_invalid_sign_method"
+	CodeErrorJwtTokenExpired                      = "err_token_expired"
+	CodeErrorAlreadyVerified                      = "err_already_verified"
+	CodeErrorJwtInvalidToken                      = "err_invalid_token"
+	CodeErrorJwtInvalidVerificationToken          = "err_invalid_verification_token"
+	CodeErrorInvalidOtp                           = "err_invalid_otp"
+	CodeErrorOtpFailed                            = "err_otp_failed"
+	CodeErrorInvalidOAuth2Provider                = "err_invalid_oauth2_provider"
+	CodeErrorOAuth2TokenExchangeFailed            = "err_oauth2_token_exchange_failed"
+	CodeErrorOAuth2UserInfoFailed                 = "err_oauth2_user_info_failed"
+	CodeErrorOAuth2UserInfoProcessingFailed       = "err_oauth2_user_info_processing_failed"
+	CodeErrorOAuth2DatabaseError                  = "err_oauth2_database_error"
+	CodeErrorAuthDatabaseError                    = "err_auth_database_error"
+	CodeErrorIpBlocked                            = "err_ip_blocked"
+	CodeErrorInvalidContentType                   = "err_invalid_content_type"
+	CodeErrorUnverifiedEmail                      = "err_unverified_email"
+	CodeErrorRequiredEmailVerificationOtp         = "err_required_email_verification_otp"
+	CodeErrorEndpointsHashMismatch                = "err_endpoints_hash_mismatch"
 	// oks
 )
 
@@ -77,43 +75,41 @@ var (
 	// so they can be used directly from other packages (e.g., prerouter middleware).
 
 	//errors
-	errorTokenGeneration                   = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
-	errorInvalidRequest                    = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidRequest, "The request contains invalid data")
-	errorInvalidCredentials                = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidCredentials, "Invalid credentials provided")
-	errorPasswordMismatch                  = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordMismatch, "Password and confirmation do not match")
-	errorMissingFields                     = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorMissingFields, "Required fields are missing")
-	errorWeakPassword                      = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorWeakPassword, "Password is too weak or does not meet security requirements")
-	errorEmailConflict                     = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
-	errorNotFound                          = PrecomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
-	errorEmailChangeAlreadyRequested       = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailChangeAlreadyRequested, "Email change already requested")
+	errorTokenGeneration                      = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorTokenGeneration, "Failed to generate authentication token")
+	errorInvalidRequest                       = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidRequest, "The request contains invalid data")
+	errorInvalidCredentials                   = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidCredentials, "Invalid credentials provided")
+	errorPasswordMismatch                     = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorPasswordMismatch, "Password and confirmation do not match")
+	errorMissingFields                        = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorMissingFields, "Required fields are missing")
+	errorWeakPassword                         = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorWeakPassword, "Password is too weak or does not meet security requirements")
+	errorEmailConflict                        = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
+	errorNotFound                             = PrecomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
 	errorEmailVerificationOtpAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationOtpAlreadyRequested, "Email verification code already requested. Please check your inbox.")
-	errorPasswordHashingFailed             = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordHashingFailed, "Failed to hash password")
-	errorServiceUnavailable                = PrecomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
-	errorNoAuthHeader                      = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")
-	errorJwtInvalidSignMethod              = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidSignMethod, "Invalid JWT signing method")
-	errorJwtTokenExpired                   = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
-	errorJwtInvalidToken                   = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidToken, "Invalid authentication token")
-	errorJwtInvalidVerificationToken       = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidVerificationToken, "Invalid verification token")
-	errorInvalidOtp                        = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidOtp, "Invalid or expired verification code")
-	errorOtpFailed                         = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorOtpFailed, "OTP verification process failed")
-	errorInvalidOAuth2Provider             = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
-	errorOAuth2TokenExchangeFailed         = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
-	errorOAuth2UserInfoFailed              = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
-	errorOAuth2UserInfoProcessingFailed    = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
-	errorOAuth2DatabaseError               = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorOAuth2DatabaseError, "Database error during OAuth2 authentication")
-	errorAuthDatabaseError                 = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
-	errorInvalidContentType                = PrecomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type")
-	errorUnverifiedEmail                   = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorUnverifiedEmail, "Email must be verified before changing it")
-	errorRequiredEmailVerificationOtp      = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorRequiredEmailVerificationOtp, "Email verification is required")
-	ErrorEndpointsHashMismatch             = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEndpointsHashMismatch, "Client endpoints are outdated, please refetch endpoints")
+	errorPasswordHashingFailed                = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordHashingFailed, "Failed to hash password")
+	errorServiceUnavailable                   = PrecomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
+	errorNoAuthHeader                         = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")
+	errorJwtInvalidSignMethod                 = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidSignMethod, "Invalid JWT signing method")
+	errorJwtTokenExpired                      = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
+	errorJwtInvalidToken                      = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidToken, "Invalid authentication token")
+	errorJwtInvalidVerificationToken          = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidVerificationToken, "Invalid verification token")
+	errorInvalidOtp                           = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidOtp, "Invalid or expired verification code")
+	errorOtpFailed                            = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorOtpFailed, "OTP verification process failed")
+	errorInvalidOAuth2Provider                = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
+	errorOAuth2TokenExchangeFailed            = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
+	errorOAuth2UserInfoFailed                 = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
+	errorOAuth2UserInfoProcessingFailed       = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
+	errorOAuth2DatabaseError                  = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorOAuth2DatabaseError, "Database error during OAuth2 authentication")
+	errorAuthDatabaseError                    = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
+	errorInvalidContentType                   = PrecomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type")
+	errorUnverifiedEmail                      = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorUnverifiedEmail, "Email must be verified before changing it")
+	errorRequiredEmailVerificationOtp         = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorRequiredEmailVerificationOtp, "Email verification is required")
+	ErrorEndpointsHashMismatch                = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEndpointsHashMismatch, "Client endpoints are outdated, please refetch endpoints")
 
 	// oks
-	okPasswordReset          = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")
-	okAlreadyVerified        = PrecomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
-	okEmailChangeRequested   = PrecomputeBasicResponse(http.StatusAccepted, CodeOkEmailChangeRequested, "Email change instructions will be sent to your new email address")
-	okEmailChange            = PrecomputeBasicResponse(http.StatusOK, CodeOkEmailChange, "Email change was completed")
-	okPasswordResetNotNeeded = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordResetNotNeeded, "Password reset is not needed")
-	okPendingEmailVerificationOtp     = PrecomputeBasicResponse(http.StatusAccepted, CodeOkPendingEmailVerificationOtp, "Registration successful, email verification is required")
+	okPasswordReset               = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")
+	okAlreadyVerified             = PrecomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
+	okEmailChange                 = PrecomputeBasicResponse(http.StatusOK, CodeOkEmailChange, "Email change was completed")
+	okPasswordResetNotNeeded      = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordResetNotNeeded, "Password reset is not needed")
+	okPendingEmailVerificationOtp = PrecomputeBasicResponse(http.StatusAccepted, CodeOkPendingEmailVerificationOtp, "Registration successful, email verification is required")
 )
 
 // For successful precomputed responses

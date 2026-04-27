@@ -65,7 +65,7 @@ func newTestConfig() *Config {
 	// Override secrets for deterministic tests
 	cfg.Jwt.AuthSecret = "test_secret_1"
 	cfg.Jwt.PasswordResetSecret = "test_secret_3"
-	cfg.Jwt.EmailChangeSecret = "test_secret_4"
+	cfg.Jwt.EmailChangeOtpSecret = "test_secret_4"
 	cfg.Jwt.VerificationEmailOtpSecret = "test_secret_5"
 	cfg.Smtp.Enabled = true
 	cfg.Smtp.Username = "user"
@@ -275,8 +275,8 @@ func TestValidateJwt(t *testing.T) {
 		AuthTokenDuration:              Duration{Duration: 1},
 		PasswordResetSecret:            "c",
 		PasswordResetTokenDuration:     Duration{Duration: 1},
-		EmailChangeSecret:              "d",
-		EmailChangeTokenDuration:       Duration{Duration: 1},
+		EmailChangeOtpSecret:         "d",
+		EmailChangeOtpTokenDuration:  Duration{Duration: 1},
 		VerificationEmailOtpSecret:     "e",
 		VerificationEmailOtpTokenDuration: Duration{Duration: 1},
 	}
@@ -285,11 +285,11 @@ func TestValidateJwt(t *testing.T) {
 	}
 
 	invalidCases := []Jwt{
-		{PasswordResetSecret: "c", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e"},
-		{AuthSecret: "a", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e"},
+		{PasswordResetSecret: "c", EmailChangeOtpSecret: "d", VerificationEmailOtpSecret: "e"},
+		{AuthSecret: "a", EmailChangeOtpSecret: "d", VerificationEmailOtpSecret: "e"},
 		{AuthSecret: "a", PasswordResetSecret: "c", VerificationEmailOtpSecret: "e"},
-		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeSecret: "d"},
-		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e", VerificationEmailOtpTokenDuration: Duration{Duration: 0}},
+		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeOtpSecret: "d"},
+		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeOtpSecret: "d", VerificationEmailOtpSecret: "e", VerificationEmailOtpTokenDuration: Duration{Duration: 0}},
 	}
 	for _, cfg := range invalidCases {
 		if err := validateJwt(&cfg); err == nil {

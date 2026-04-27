@@ -50,8 +50,8 @@ public_dir = "static/dist"
   # Duration for which password reset tokens are valid.
   password_reset_token_duration = "1h"
 
-  # Duration for which email change confirmation tokens are valid.
-  email_change_token_duration = "1h"
+  # Duration for which email change OTP tokens remain valid.
+  email_change_otp_token_duration = "15m"
 
   # Duration for which email OTP verification tokens are valid.
   verification_email_otp_token_duration = "15m"
@@ -62,8 +62,8 @@ public_dir = "static/dist"
   # PasswordResetSecret: Set via JWT_PASSWORD_RESET_SECRET environment variable. DO NOT STORE HERE.
   password_reset_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
-  # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable. DO NOT STORE HERE.
-  email_change_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+  # EmailChangeOtpSecret: Set via JWT_EMAIL_CHANGE_OTP_SECRET environment variable. DO NOT STORE HERE.
+  email_change_otp_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
   # VerificationEmailOtpSecret: Set via JWT_VERIFICATION_EMAIL_OTP_SECRET environment variable. DO NOT STORE HERE.
   verification_email_otp_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
@@ -172,8 +172,8 @@ public_dir = "static/dist"
   list_oauth2_providers      = "GET /api/list-oauth2-providers"
   request_password_reset     = "POST /api/request-password-reset"
   confirm_password_reset     = "POST /api/confirm-password-reset"
-  request_email_change       = "POST /api/request-email-change"
-  confirm_email_change       = "POST /api/confirm-email-change"
+  request_email_change_otp   = "POST /api/request-email-change-otp"
+  confirm_email_change_otp   = "POST /api/confirm-email-change-otp"
   request_email_verification_otp = "POST /api/request-email-verification-otp"
   confirm_email_verification_otp = "POST /api/confirm-email-verification-otp"
 

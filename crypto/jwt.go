@@ -23,15 +23,13 @@ const (
 	ClaimExpiresAt = "exp"     // JWT Expiration Time claim key
 	ClaimUserID    = "user_id" // JWT User ID claim key
 	// Stateless cryptographic proof of the user_id
-	ClaimUidMac    = "uid_mac" // JWT User ID MAC claim key
+	ClaimUidMac = "uid_mac" // JWT User ID MAC claim key
 
 	// Email verification specific claims
 	ClaimEmail              = "email"          // Email address being verified
 	ClaimType               = "type"           // Verification type claim
 	ClaimVerificationValue  = "verification"   // Value for verification type claim
 	ClaimPasswordResetValue = "password_reset" // Value for password reset type claim
-	ClaimEmailChangeValue   = "email_change"   // Value for email change type claim
-	ClaimNewEmail           = "new_email"      // New email address for email change claims
 
 	// OTP verification specific claims
 	ClaimEmailOtpHash  = "otp_hash" // SHA256 hash of the OTP code
@@ -68,14 +66,12 @@ var (
 	ErrTokenTooOld = errors.New("token too old")
 )
 
-
-
 // ====================================================================================
 // JWT PARSING & VALIDATION
 // ====================================================================================
 
 // Implement only the validation rather than using the full validator
-// but this is not lightweight either, 60% so expensive as full. 
+// but this is not lightweight either, 60% so expensive as full.
 func ParseJwtUnverified(tokenString string) (jwt.MapClaims, error) {
 	claims := make(jwt.MapClaims)
 
@@ -128,24 +124,6 @@ func NewJwtSessionToken(userID, email, passwordHash, secret string, duration tim
 	claims := jwt.MapClaims{
 		ClaimUserID: userID,
 		ClaimUidMac: GenerateUserMac(userID, secret),
-	}
-
-	return NewJwt(claims, signingKey, duration)
-}
-
-// NewJwtEmailChangeToken creates a JWT specifically for email change
-func NewJwtEmailChangeToken(userID, oldEmail, newEmail, passwordHash, secret string, duration time.Duration) (string, error) {
-	signingKey, err := NewJwtSigningKeyWithCredentials(oldEmail, passwordHash, secret)
-	if err != nil {
-		return "", fmt.Errorf("failed to create signing key: %w", err)
-	}
-
-	claims := jwt.MapClaims{
-		ClaimUserID:   userID,
-		ClaimUidMac:   GenerateUserMac(userID, secret), // Inject MAC
-		ClaimEmail:    oldEmail,
-		ClaimNewEmail: newEmail,
-		ClaimType:     ClaimEmailChangeValue,
 	}
 
 	return NewJwt(claims, signingKey, duration)

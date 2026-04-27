@@ -38,9 +38,9 @@ func route(cfg *config.Config, ap *core.App) {
 		cfg.Endpoints.VerifyPasswordResetOtp:  router.NewChain(http.HandlerFunc(ap.VerifyPasswordResetOtpHandler)),
 		cfg.Endpoints.ConfirmPasswordResetOtp: router.NewChain(http.HandlerFunc(ap.ConfirmPasswordResetOtpHandler)),
 
-		// Email Change
-		cfg.Endpoints.RequestEmailChange: router.NewChain(http.HandlerFunc(ap.RequestEmailChangeHandler)),
-		cfg.Endpoints.ConfirmEmailChange: router.NewChain(http.HandlerFunc(ap.ConfirmEmailChangeHandler)),
+		// Email Change OTP
+		cfg.Endpoints.RequestEmailChangeOtp: router.NewChain(http.HandlerFunc(ap.RequestEmailChangeOtpHandler)),
+		cfg.Endpoints.ConfirmEmailChangeOtp: router.NewChain(http.HandlerFunc(ap.ConfirmEmailChangeOtpHandler)),
 
 		// --- Example/Benchmark Routes (keep commented for now) ---
 		// "/api/admin": router.NewChain(http.HandlerFunc(ap.Admin)).WithMiddleware(ap.Auth), // Example with middleware

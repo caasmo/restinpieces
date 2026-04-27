@@ -21,23 +21,23 @@ import (
 //
 // --- Key Behaviors & Limitations ---
 //
-// 1.  **No STARTTLS:** The server intentionally does NOT advertise or support the
+//  1. **No STARTTLS:** The server intentionally does NOT advertise or support the
 //     STARTTLS command. In the EHLO response, it omits the "250-STARTTLS"
 //     capability. This is crucial because it forces the client (mailyak) to
 //     proceed with a plain, unencrypted connection, preventing the deadlocks
 //     we encountered during development.
 //
-// 2.  **Plain Authentication Only:** It advertises and accepts only the "AUTH PLAIN"
+//  2. **Plain Authentication Only:** It advertises and accepts only the "AUTH PLAIN"
 //     mechanism. When the client sends this command, the server responds with a
 //     standard success code ("235 Authentication Succeeded") without actually
 //     validating any credentials.
 //
-// 3.  **Single Connection:** The server is designed to handle exactly one
+//  3. **Single Connection:** The server is designed to handle exactly one
 //     client connection. This aligns with the testing strategy where each
 //     test or sub-test creates its own isolated server instance, ensuring
 //     a clean state for every test run.
 //
-// 4.  **Data Capture:** It captures all data sent after the "DATA" command and
+//  4. **Data Capture:** It captures all data sent after the "DATA" command and
 //     stores it in the `data` field for assertions.
 type mockSmtpServer struct {
 	listener net.Listener
@@ -189,51 +189,6 @@ func setupTest(t *testing.T) (*mockSmtpServer, MailerInterface, *config.Config) 
 	}
 
 	return server, mailer, cfg
-}
-
-func TestSendEmailChangeNotification(t *testing.T) {
-	oldEmail := "old@example.com"
-	newEmail := "new@example.com"
-	callbackURL := "https://app.com/change?token=456"
-
-	t.Run("with oauth2 login", func(t *testing.T) {
-		server, mailer, cfg := setupTest(t)
-		defer server.Close()
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		err := mailer.SendEmailChangeNotification(ctx, oldEmail, newEmail, true, callbackURL)
-		if err != nil {
-			t.Fatalf("SendEmailChangeNotification should not return an error, but got: %v", err)
-		}
-
-		decodedData := decodeQuotedPrintable(t, server.data)
-		assertContains(t, decodedData, fmt.Sprintf("To: %s", newEmail))
-		assertContains(t, decodedData, fmt.Sprintf("From: %s <%s>", cfg.Smtp.FromName, cfg.Smtp.FromAddress))
-		assertContains(t, decodedData, fmt.Sprintf("Subject: Confirm your email change to %s", newEmail))
-		assertContains(t, decodedData, "your old email is used for passwordless login")
-		assertContains(t, decodedData, fmt.Sprintf(`href="%s"`, callbackURL))
-	})
-
-	t.Run("without oauth2 login", func(t *testing.T) {
-		server, mailer, _ := setupTest(t)
-		defer server.Close()
-
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		err := mailer.SendEmailChangeNotification(ctx, oldEmail, newEmail, false, callbackURL)
-		if err != nil {
-			t.Fatalf("SendEmailChangeNotification should not return an error, but got: %v", err)
-		}
-
-		decodedData := decodeQuotedPrintable(t, server.data)
-		if strings.Contains(decodedData, "your old email is used for passwordless login") {
-			t.Error("Email data should not contain the OAuth2 warning")
-		}
-		assertContains(t, decodedData, fmt.Sprintf(`href="%s"`, callbackURL))
-	})
 }
 
 func TestSendPasswordResetEmail(t *testing.T) {

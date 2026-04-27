@@ -297,8 +297,11 @@ func validateJwt(jwt *Jwt) error {
 	if jwt.PasswordResetSecret == "" {
 		return fmt.Errorf("jwt.password_reset_secret cannot be empty")
 	}
-	if jwt.EmailChangeSecret == "" {
-		return fmt.Errorf("jwt.email_change_secret cannot be empty")
+	if jwt.EmailChangeOtpSecret == "" {
+		return fmt.Errorf("jwt.email_change_otp_secret cannot be empty")
+	}
+	if jwt.EmailChangeOtpTokenDuration.Duration <= 0 {
+		return fmt.Errorf("jwt.email_change_otp_token_duration must be positive")
 	}
 	if jwt.VerificationEmailOtpSecret == "" {
 		return fmt.Errorf("jwt.verification_email_otp_secret cannot be empty")

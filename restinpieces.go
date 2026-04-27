@@ -323,9 +323,13 @@ func (i *initializer) setupScheduler(configProvider *config.Provider) (*scl.Sche
 			return nil, fmt.Errorf("failed to create mailer: %w", err)
 		}
 
-		emailChangeHandler := handlers.NewEmailChangeHandler(i.app.DbAuth(), configProvider, mailer)
-		hdls[handlers.JobTypeEmailChange] = emailChangeHandler
-		logger.Info(ft.Ok("registered email change handler"))
+		emailChangeOtpHandler := handlers.NewEmailChangeOtpHandler(mailer)
+		hdls[handlers.JobTypeEmailChangeOtp] = emailChangeOtpHandler
+		logger.Info(ft.Ok("registered email change otp handler"))
+
+		emailChangeAlertHandler := handlers.NewEmailChangeAlertHandler(mailer)
+		hdls[handlers.JobTypeEmailChangeAlert] = emailChangeAlertHandler
+		logger.Info(ft.Ok("registered email change alert handler"))
 
 		emailVerificationOtpHandler := handlers.NewEmailVerificationOtpHandler(mailer)
 		hdls[handlers.JobTypeEmailVerificationOtp] = emailVerificationOtpHandler

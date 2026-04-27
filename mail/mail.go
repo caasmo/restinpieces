@@ -12,10 +12,11 @@ import (
 
 // MailerInterface defines the methods for sending emails.
 type MailerInterface interface {
-	SendEmailChangeNotification(ctx context.Context, oldEmail, newEmail string, hasOauth2Login bool, callbackURL string) error
 	SendPasswordResetEmail(ctx context.Context, email, callbackURL string) error
 	SendOtpEmail(ctx context.Context, email, otp string) error
 	SendPasswordResetOtpEmail(ctx context.Context, email, otp string) error
+	SendEmailChangeOtpEmail(ctx context.Context, newEmail, otp string) error
+	SendEmailChangeAlert(ctx context.Context, oldEmail, newEmail string) error
 }
 
 // Mailer handles sending emails using configuration from a provider.
@@ -36,7 +37,6 @@ func New(provider *config.Provider) (MailerInterface, error) {
 }
 
 var _ MailerInterface = (*Mailer)(nil)
-
 
 // createMailClient creates a new mailyak instance using current config from provider.
 func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
@@ -81,66 +81,6 @@ func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
 	return mail, nil
 }
 
-// SendEmailChangeNotification sends an email change notification to both old and new email addresses
-//
-// hasOauth2Login determines if we should include a warning about passwordless login being invalidated
-func (m *Mailer) SendEmailChangeNotification(ctx context.Context, oldEmail, newEmail string, hasOauth2Login bool, callbackURL string) error {
-	// Create new mail client for this email
-	mail, err := m.createMailClient()
-	if err != nil {
-		return fmt.Errorf("failed to create mail client: %w", err)
-	}
-
-	// Get current SMTP config for FromName/FromAddress
-	smtpCfg := m.configProvider.Get().Smtp
-
-	// Create warning message if user has OAuth2 login
-	warning := ""
-	if hasOauth2Login {
-		warning = `<p style="color: #d32f2f;">
-			Please consider that your old email is used for passwordless login (OAuth2). 
-			By changing your email you will invalidate that login method.
-		</p>`
-	}
-
-	// Build email - send to new email address for verification
-	mail.To(newEmail)
-	mail.FromName(smtpCfg.FromName)
-	mail.From(smtpCfg.FromAddress)
-	mail.Subject(fmt.Sprintf("Confirm your email change to %s", newEmail))
-	mail.HTML().Set(fmt.Sprintf(`
-		<p>Hello,</p>
-		<p>We received a request to change your email from %s to %s.</p>
-		%s
-		<p>Click on the button below to confirm this change:</p>
-		<p style="margin: 20px 0;">
-			<a href="%s"
-				style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-				Confirm Email Change
-			</a>
-		</p>
-		<p>If you didn't request this change, please contact support immediately.</p>
-		<p>Thanks,<br>%s team</p>
-	`, oldEmail, newEmail, warning, callbackURL, smtpCfg.FromName))
-
-	// Send email with context timeout
-	done := make(chan error, 1)
-	go func() {
-		done <- mail.Send()
-	}()
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-done:
-		if err != nil {
-			return fmt.Errorf("failed to send email change notification: %w", err)
-		}
-	}
-
-	//app.Logger.Info("Successfully sent email change notification", "old_email", oldEmail, "new_email", newEmail)
-	return nil
-}
 
 // SendPasswordResetEmail sends a password reset message to the specified email address
 // with the password reset callback URL that includes the token
@@ -266,6 +206,84 @@ func (m *Mailer) SendPasswordResetOtpEmail(ctx context.Context, email, otp strin
 	case err := <-done:
 		if err != nil {
 			return fmt.Errorf("failed to send password reset OTP email: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (m *Mailer) SendEmailChangeOtpEmail(ctx context.Context, newEmail, otp string) error {
+	mail, err := m.createMailClient()
+	if err != nil {
+		return fmt.Errorf("failed to create mail client: %w", err)
+	}
+
+	cfg := m.configProvider.Get()
+	smtpCfg := cfg.Smtp
+	expirationMinutes := int(cfg.Jwt.EmailChangeOtpTokenDuration.Minutes())
+
+	mail.To(newEmail)
+	mail.FromName(smtpCfg.FromName)
+	mail.From(smtpCfg.FromAddress)
+	mail.Subject(fmt.Sprintf("Your %s email change code", smtpCfg.FromName))
+	mail.HTML().Set(fmt.Sprintf(`
+		<p>Hello,</p>
+		<p>We received a request to change your email address. Your verification code is:</p>
+		<p style="font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0; color: #007bff;">%s</p>
+		<p>This code expires in %d minutes.</p>
+		<p>If you didn't request this change, you can safely ignore this email.</p>
+		<p>Thanks,<br>%s team</p>
+	`, otp, expirationMinutes, smtpCfg.FromName))
+
+	done := make(chan error, 1)
+	go func() {
+		done <- mail.Send()
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-done:
+		if err != nil {
+			return fmt.Errorf("failed to send email change OTP email: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (m *Mailer) SendEmailChangeAlert(ctx context.Context, oldEmail, newEmail string) error {
+	mail, err := m.createMailClient()
+	if err != nil {
+		return fmt.Errorf("failed to create mail client: %w", err)
+	}
+
+	smtpCfg := m.configProvider.Get().Smtp
+
+	mail.To(oldEmail)
+	mail.FromName(smtpCfg.FromName)
+	mail.From(smtpCfg.FromAddress)
+	mail.Subject(fmt.Sprintf("%s security alert: email address changed", smtpCfg.FromName))
+	mail.HTML().Set(fmt.Sprintf(`
+		<p>Hello,</p>
+		<p>This is a security notification to let you know that the email address
+		associated with your account has been changed to <strong>%s</strong>.</p>
+		<p>This email address (<strong>%s</strong>) is no longer used for authentication.</p>
+		<p>If you did not make this change, please contact support immediately.</p>
+		<p>Thanks,<br>%s team</p>
+	`, newEmail, oldEmail, smtpCfg.FromName))
+
+	done := make(chan error, 1)
+	go func() {
+		done <- mail.Send()
+	}()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-done:
+		if err != nil {
+			return fmt.Errorf("failed to send email change alert: %w", err)
 		}
 	}
 
