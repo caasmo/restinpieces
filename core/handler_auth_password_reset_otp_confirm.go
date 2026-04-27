@@ -122,12 +122,6 @@ func (a *App) ConfirmPasswordResetOtpHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// 5. Response (Auto-login)
-	sessionToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration.Duration)
-	if err != nil {
-		WriteJsonError(w, errorTokenGeneration)
-		return
-	}
-
-	writeAuthResponse(w, sessionToken, user)
+	// 5. Response (No Auto-login)
+	WriteJsonOk(w, okPasswordReset)
 }

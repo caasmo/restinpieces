@@ -68,8 +68,8 @@ func TestConfirmPasswordResetOtpHandler(t *testing.T) {
 		if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
 			t.Fatalf("failed to unmarshal response: %v", err)
 		}
-		if resp["code"] != CodeOkAuthentication {
-			t.Errorf("expected code %s, got %v", CodeOkAuthentication, resp["code"])
+		if resp["code"] != CodeOkPasswordReset {
+			t.Errorf("expected code %s, got %v", CodeOkPasswordReset, resp["code"])
 		}
 	})
 
