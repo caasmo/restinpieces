@@ -15,7 +15,7 @@ const (
 	CodeOkEmailChangeRequested   = "ok_email_change_requested"    // Success code for email change request
 	CodeOkPasswordResetNotNeeded = "ok_password_reset_not_needed" // Success code when password reset is not needed
 	CodeOkPasswordNotRequired    = "ok_password_not_required"     // Success code when password is not required for auth
-	CodeOkPendingEmailVerificationOtp          = "ok_pending_email_otp_verification"
+	CodeOkPendingEmailVerificationOtp          = "ok_pending_email_verification_otp"
 
 	//errors
 	CodeErrorTokenGeneration                   = "err_token_generation"
@@ -29,7 +29,7 @@ const (
 	CodeErrorNotFound                          = "err_not_found"
 	CodeErrorPasswordResetAlreadyRequested     = "err_password_reset_already_requested"
 	CodeErrorEmailChangeAlreadyRequested       = "err_email_change_already_requested"
-	CodeErrorEmailVerificationOtpAlreadyRequested = "err_email_otp_verification_already_requested"
+	CodeErrorEmailVerificationOtpAlreadyRequested = "err_email_verification_otp_already_requested"
 	CodeErrorPasswordResetFailed               = "err_password_reset_failed"
 	CodeErrorPasswordHashingFailed             = "err_password_hashing_failed"
 	CodeOkPasswordReset                        = "ok_password_reset"
@@ -53,7 +53,7 @@ const (
 	CodeErrorIpBlocked                         = "err_ip_blocked"
 	CodeErrorInvalidContentType                = "err_invalid_content_type"
 	CodeErrorUnverifiedEmail                   = "err_unverified_email"
-	CodeErrorRequiredEmailVerificationOtp      = "err_required_email_otp_verification"
+	CodeErrorRequiredEmailVerificationOtp      = "err_required_email_verification_otp"
 	CodeErrorEndpointsHashMismatch             = "err_endpoints_hash_mismatch"
 	// oks
 )
