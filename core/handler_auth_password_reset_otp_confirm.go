@@ -75,7 +75,7 @@ func (a *App) ConfirmPasswordResetOtpHandler(w http.ResponseWriter, r *http.Requ
 
 	// 2. Database Lookup & Timing Equalization
 	user, err := a.DbAuth().GetUserById(userID)
-	
+
 	passwordHash := crypto.DummyPasswordHash
 	if err == nil && user != nil {
 		passwordHash = user.Password

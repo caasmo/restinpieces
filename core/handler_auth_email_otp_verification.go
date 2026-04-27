@@ -137,7 +137,7 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 	cfg := a.Config()
 
 	// Generate the OTP token.
-	otp, verificationToken, err := crypto.NewJwtEmailOtpVerificationToken(
+	otp, verificationToken, err := crypto.NewJwtEmailOtpToken(
 		req.Email,
 		cfg.Jwt.VerificationEmailOtpSecret,
 		cfg.Jwt.VerificationEmailOtpTokenDuration.Duration,
@@ -246,7 +246,7 @@ func (a *App) ConfirmEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 	// Cryptographic gate. An invalid or expired token — including tokens that
 	// were legitimately issued by the request handler for non-existent or
 	// already-verified accounts — is rejected here uniformly.
-	email, err := crypto.VerifyEmailOtpVerificationToken(req.Otp, req.VerificationToken, cfg.Jwt.VerificationEmailOtpSecret)
+	email, err := crypto.VerifyEmailOtpToken(req.Otp, req.VerificationToken, cfg.Jwt.VerificationEmailOtpSecret)
 	if err != nil {
 		WriteJsonError(w, errorInvalidOtp)
 		return

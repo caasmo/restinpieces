@@ -68,7 +68,7 @@ func (a *App) RequestPasswordResetOtpHandler(w http.ResponseWriter, r *http.Requ
 	cfg := a.Config()
 
 	// 1. Unconditional Crypto Generation (Timing Equalizer)
-	otp, verificationToken, err := crypto.NewJwtEmailOtpVerificationToken(
+	otp, verificationToken, err := crypto.NewJwtEmailOtpToken(
 		req.Email,
 		cfg.Jwt.PasswordResetSecret, // Reusing this secret for the verification token
 		cfg.Jwt.PasswordResetTokenDuration.Duration,

@@ -51,7 +51,7 @@ func (a *App) VerifyPasswordResetOtpHandler(w http.ResponseWriter, r *http.Reque
 	cfg := a.Config()
 
 	// 1. Cryptographic Gate
-	email, err := crypto.VerifyEmailOtpVerificationToken(req.Otp, req.VerificationToken, cfg.Jwt.PasswordResetSecret)
+	email, err := crypto.VerifyEmailOtpToken(req.Otp, req.VerificationToken, cfg.Jwt.PasswordResetSecret)
 	if err != nil {
 		WriteJsonError(w, errorInvalidOtp)
 		return

@@ -21,7 +21,7 @@ func TestVerifyPasswordResetOtpHandler(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		email := "test@example.com"
-		otp, token, _ := crypto.NewJwtEmailOtpVerificationToken(email, cfg.Jwt.PasswordResetSecret, time.Minute)
+		otp, token, _ := crypto.NewJwtEmailOtpToken(email, cfg.Jwt.PasswordResetSecret, time.Minute)
 
 		mockDbAuth := &mock.Db{
 			GetUserByEmailFunc: func(e string) (*db.User, error) {
@@ -67,7 +67,7 @@ func TestVerifyPasswordResetOtpHandler(t *testing.T) {
 
 	t.Run("invalid otp", func(t *testing.T) {
 		email := "test@example.com"
-		_, token, _ := crypto.NewJwtEmailOtpVerificationToken(email, cfg.Jwt.PasswordResetSecret, time.Minute)
+		_, token, _ := crypto.NewJwtEmailOtpToken(email, cfg.Jwt.PasswordResetSecret, time.Minute)
 
 		app := &App{
 			configProvider: provider,

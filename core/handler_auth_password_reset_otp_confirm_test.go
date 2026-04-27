@@ -24,7 +24,7 @@ func TestConfirmPasswordResetOtpHandler(t *testing.T) {
 		email := "test@example.com"
 		userID := "user123"
 		passwordHash, _ := crypto.GenerateHash("old-password")
-		
+
 		token, _ := crypto.NewJwtPasswordResetToken(
 			userID,
 			email,
