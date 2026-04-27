@@ -15,10 +15,10 @@ import (
 	"github.com/caasmo/restinpieces/db/mock"
 )
 
-// TestRequestEmailOtpVerificationHandler_Validation tests input validation for
+// TestRequestEmailVerificationOtpHandler_Validation tests input validation for
 // the request-email-otp-verification handler. It covers content type errors,
 // malformed JSON, missing fields, invalid email, and weak password scenarios.
-func TestRequestEmailOtpVerificationHandler_Validation(t *testing.T) {
+func TestRequestEmailVerificationOtpHandler_Validation(t *testing.T) {
 	testCases := []struct {
 		name           string
 		contentType    string
@@ -125,7 +125,7 @@ func TestRequestEmailOtpVerificationHandler_Validation(t *testing.T) {
 				dbAuth:    &mockDbApp{},
 			}
 
-			app.RequestEmailOtpVerificationHandler(rr, req)
+			app.RequestEmailVerificationOtpHandler(rr, req)
 
 			if rr.Code != tc.wantError.status {
 				t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
@@ -146,11 +146,11 @@ func TestRequestEmailOtpVerificationHandler_Validation(t *testing.T) {
 	}
 }
 
-// TestRequestEmailOtpVerificationHandler_RequestLogic tests the core business logic
+// TestRequestEmailVerificationOtpHandler_RequestLogic tests the core business logic
 // of the request-email-otp-verification handler. It covers successful OTP
 // generation, already verified user, user not found, wrong password, DB
 // cooldown constraint, and input normalization scenarios.
-func TestRequestEmailOtpVerificationHandler_RequestLogic(t *testing.T) {
+func TestRequestEmailVerificationOtpHandler_RequestLogic(t *testing.T) {
 	hashedPassword, _ := crypto.GenerateHash("password123")
 	testUser := &db.User{
 		ID:       "user123",
@@ -243,7 +243,7 @@ func TestRequestEmailOtpVerificationHandler_RequestLogic(t *testing.T) {
 				}
 			},
 			wantStatus: http.StatusConflict,
-			wantCode:   CodeErrorEmailOtpVerificationAlreadyRequested,
+			wantCode:   CodeErrorEmailVerificationOtpAlreadyRequested,
 		},
 		{
 			name:        "successful request with whitespace trimming",
@@ -297,7 +297,7 @@ func TestRequestEmailOtpVerificationHandler_RequestLogic(t *testing.T) {
 				configProvider: config.NewProvider(testConfig),
 			}
 
-			app.RequestEmailOtpVerificationHandler(rr, req)
+			app.RequestEmailVerificationOtpHandler(rr, req)
 
 			if rr.Code != tc.wantStatus {
 				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
@@ -325,10 +325,10 @@ func TestRequestEmailOtpVerificationHandler_RequestLogic(t *testing.T) {
 	}
 }
 
-// TestRequestEmailOtpVerificationHandler_DependencyFailures tests how the
+// TestRequestEmailVerificationOtpHandler_DependencyFailures tests how the
 // request-email-otp-verification handler responds to failures in its dependencies
 // such as OTP token generation and job queue insertion.
-func TestRequestEmailOtpVerificationHandler_DependencyFailures(t *testing.T) {
+func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 	hashedPassword, _ := crypto.GenerateHash("password123")
 	testUser := &db.User{
 		ID:       "user123",
@@ -401,7 +401,7 @@ func TestRequestEmailOtpVerificationHandler_DependencyFailures(t *testing.T) {
 				configProvider: config.NewProvider(tc.config),
 			}
 
-			app.RequestEmailOtpVerificationHandler(rr, req)
+			app.RequestEmailVerificationOtpHandler(rr, req)
 
 			if rr.Code != tc.wantError.status {
 				t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)

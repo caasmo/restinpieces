@@ -46,7 +46,7 @@ import (
 // again allow email enumeration for accounts that exist but are unverified.
 // Paying the full bcrypt cost before checking verified status closes that gap.
 //
-// errorRequiredEmailOtpVerification is the intentional UX escape for users who
+// errorRequiredEmailVerificationOtp is the intentional UX escape for users who
 // registered but did not complete email verification. It confirms the email
 // exists and the password is correct — acceptable because this is functionally
 // a login success gated on a verification step, not a credential failure.
@@ -111,7 +111,7 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !user.Verified {
-		WriteJsonError(w, errorRequiredEmailOtpVerification)
+		WriteJsonError(w, errorRequiredEmailVerificationOtp)
 		return
 	}
 

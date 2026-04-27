@@ -174,8 +174,8 @@ public_dir = "static/dist"
   confirm_password_reset     = "POST /api/confirm-password-reset"
   request_email_change       = "POST /api/request-email-change"
   confirm_email_change       = "POST /api/confirm-email-change"
-  request_email_otp_verification = "POST /api/request-email-otp-verification"
-  confirm_email_otp_verification = "POST /api/confirm-email-otp-verification"
+  request_email_verification_otp = "POST /api/request-email-verification-otp"
+  confirm_email_verification_otp = "POST /api/confirm-email-verification-otp"
 
 
 # --- OAuth2 Provider Settings ---

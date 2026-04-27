@@ -16,7 +16,7 @@ import (
 //
 // # Security: Email Enumeration and Timing Attack Prevention
 //
-// This handler always returns the same response (okPendingEmailOtpVerification)
+// This handler always returns the same response (okPendingEmailVerificationOtp)
 // regardless of whether the email already exists in the database, and regardless
 // of whether the existing account used password or OAuth2 signup.
 //
@@ -41,9 +41,9 @@ import (
 // 1. Validate input.
 // 2. Hash password (always, every code path).
 // 3. Upsert user: insert on new email, no-op on conflict (password untouched).
-// 4. Always return okPendingEmailOtpVerification.
+// 4. Always return okPendingEmailVerificationOtp.
 //
-// The SDK then calls RequestEmailOtpVerification. Email ownership proof via OTP
+// The SDK then calls RequestEmailVerificationOtp. Email ownership proof via OTP
 // is the gate. Whatever happened in the DB is irrelevant to the response here.
 func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	if resp, err := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
@@ -125,5 +125,5 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// Always returned: new user, existing password user, existing OAuth2 user.
 	// The SDK proceeds to OTP verification in all cases. Email ownership is
 	// the only gate that matters.
-	WriteJsonOk(w, okPendingEmailOtpVerification)
+	WriteJsonOk(w, okPendingEmailVerificationOtp)
 }

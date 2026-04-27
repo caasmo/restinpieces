@@ -7,7 +7,7 @@ import (
 	"github.com/caasmo/restinpieces/crypto"
 )
 
-// ConfirmEmailOtpVerificationHandler handles email OTP verification code confirmation.
+// ConfirmEmailVerificationOtpHandler handles email OTP verification code confirmation.
 // Endpoint: POST /confirm-email-otp-verification
 // Authenticated: No
 // Allowed Mimetype: application/json
@@ -42,7 +42,7 @@ import (
 // The only way to obtain a valid signed token is from our own request handler,
 // which only issues tokens after verifying the correct password. The
 // enumeration surface here is therefore narrower than at the request step.
-func (a *App) ConfirmEmailOtpVerificationHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) ConfirmEmailVerificationOtpHandler(w http.ResponseWriter, r *http.Request) {
 	resp, err := a.Validator().ContentType(r, MimeTypeJSON)
 	if err != nil {
 		WriteJsonError(w, resp)

@@ -15,10 +15,10 @@ import (
 	"github.com/caasmo/restinpieces/db/mock"
 )
 
-// TestConfirmEmailOtpVerificationHandler_Validation tests input validation for
+// TestConfirmEmailVerificationOtpHandler_Validation tests input validation for
 // the confirm-email-otp-verification handler. It covers content type errors,
 // malformed JSON, and missing fields.
-func TestConfirmEmailOtpVerificationHandler_Validation(t *testing.T) {
+func TestConfirmEmailVerificationOtpHandler_Validation(t *testing.T) {
 	testCases := []struct {
 		name           string
 		contentType    string
@@ -97,7 +97,7 @@ func TestConfirmEmailOtpVerificationHandler_Validation(t *testing.T) {
 				dbAuth:    &mockDbApp{},
 			}
 
-			app.ConfirmEmailOtpVerificationHandler(rr, req)
+			app.ConfirmEmailVerificationOtpHandler(rr, req)
 
 			if rr.Code != tc.wantError.status {
 				t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
@@ -118,12 +118,12 @@ func TestConfirmEmailOtpVerificationHandler_Validation(t *testing.T) {
 	}
 }
 
-// TestConfirmEmailOtpVerificationHandler_ConfirmationLogic tests the core
+// TestConfirmEmailVerificationOtpHandler_ConfirmationLogic tests the core
 // confirmation logic of the confirm-email-otp-verification handler. It covers
 // successful verification, invalid OTP, invalid token, user not found, and
 // already verified scenarios. All failure cases uniformly return
 // errorInvalidOtp to prevent email enumeration.
-func TestConfirmEmailOtpVerificationHandler_ConfirmationLogic(t *testing.T) {
+func TestConfirmEmailVerificationOtpHandler_ConfirmationLogic(t *testing.T) {
 	secret := "test_secret_32_bytes_long_xxxxxx"
 	hashedPassword, _ := crypto.GenerateHash("password123")
 
@@ -231,7 +231,7 @@ func TestConfirmEmailOtpVerificationHandler_ConfirmationLogic(t *testing.T) {
 				configProvider: config.NewProvider(testConfig),
 			}
 
-			app.ConfirmEmailOtpVerificationHandler(rr, req)
+			app.ConfirmEmailVerificationOtpHandler(rr, req)
 
 			if rr.Code != tc.wantStatus {
 				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
@@ -259,10 +259,10 @@ func TestConfirmEmailOtpVerificationHandler_ConfirmationLogic(t *testing.T) {
 	}
 }
 
-// TestConfirmEmailOtpVerificationHandler_DependencyFailures tests how the
+// TestConfirmEmailVerificationOtpHandler_DependencyFailures tests how the
 // confirm-email-otp-verification handler responds to failures in its
 // dependencies, such as the database and token generation.
-func TestConfirmEmailOtpVerificationHandler_DependencyFailures(t *testing.T) {
+func TestConfirmEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 	secret := "test_secret_32_bytes_long_xxxxxx"
 	hashedPassword, _ := crypto.GenerateHash("password123")
 
@@ -335,7 +335,7 @@ func TestConfirmEmailOtpVerificationHandler_DependencyFailures(t *testing.T) {
 				configProvider: config.NewProvider(tc.config),
 			}
 
-			app.ConfirmEmailOtpVerificationHandler(rr, req)
+			app.ConfirmEmailVerificationOtpHandler(rr, req)
 
 			if rr.Code != tc.wantError.status {
 				t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)

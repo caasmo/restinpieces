@@ -15,7 +15,7 @@ const (
 	CodeOkEmailChangeRequested   = "ok_email_change_requested"    // Success code for email change request
 	CodeOkPasswordResetNotNeeded = "ok_password_reset_not_needed" // Success code when password reset is not needed
 	CodeOkPasswordNotRequired    = "ok_password_not_required"     // Success code when password is not required for auth
-	CodeOkPendingEmailOtpVerification          = "ok_pending_email_otp_verification"
+	CodeOkPendingEmailVerificationOtp          = "ok_pending_email_otp_verification"
 
 	//errors
 	CodeErrorTokenGeneration                   = "err_token_generation"
@@ -29,7 +29,7 @@ const (
 	CodeErrorNotFound                          = "err_not_found"
 	CodeErrorPasswordResetAlreadyRequested     = "err_password_reset_already_requested"
 	CodeErrorEmailChangeAlreadyRequested       = "err_email_change_already_requested"
-	CodeErrorEmailOtpVerificationAlreadyRequested = "err_email_otp_verification_already_requested"
+	CodeErrorEmailVerificationOtpAlreadyRequested = "err_email_otp_verification_already_requested"
 	CodeErrorPasswordResetFailed               = "err_password_reset_failed"
 	CodeErrorPasswordHashingFailed             = "err_password_hashing_failed"
 	CodeOkPasswordReset                        = "ok_password_reset"
@@ -53,7 +53,7 @@ const (
 	CodeErrorIpBlocked                         = "err_ip_blocked"
 	CodeErrorInvalidContentType                = "err_invalid_content_type"
 	CodeErrorUnverifiedEmail                   = "err_unverified_email"
-	CodeErrorRequiredEmailOtpVerification      = "err_required_email_otp_verification"
+	CodeErrorRequiredEmailVerificationOtp      = "err_required_email_otp_verification"
 	CodeErrorEndpointsHashMismatch             = "err_endpoints_hash_mismatch"
 	// oks
 )
@@ -91,7 +91,7 @@ var (
 	errorNotFound                          = PrecomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
 	errorPasswordResetAlreadyRequested     = PrecomputeBasicResponse(http.StatusConflict, CodeErrorPasswordResetAlreadyRequested, "Password reset already requested")
 	errorEmailChangeAlreadyRequested       = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailChangeAlreadyRequested, "Email change already requested")
-	errorEmailOtpVerificationAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailOtpVerificationAlreadyRequested, "Email verification code already requested. Please check your inbox.")
+	errorEmailVerificationOtpAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationOtpAlreadyRequested, "Email verification code already requested. Please check your inbox.")
 	errorPasswordResetFailed               = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordResetFailed, "Password reset process failed")
 	errorPasswordHashingFailed             = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordHashingFailed, "Failed to hash password")
 	errorServiceUnavailable                = PrecomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
@@ -110,7 +110,7 @@ var (
 	errorAuthDatabaseError                 = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
 	errorInvalidContentType                = PrecomputeBasicResponse(http.StatusUnsupportedMediaType, CodeErrorInvalidContentType, "Unsupported media type")
 	errorUnverifiedEmail                   = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorUnverifiedEmail, "Email must be verified before changing it")
-	errorRequiredEmailOtpVerification      = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorRequiredEmailOtpVerification, "Email verification is required")
+	errorRequiredEmailVerificationOtp      = PrecomputeBasicResponse(http.StatusForbidden, CodeErrorRequiredEmailVerificationOtp, "Email verification is required")
 	ErrorEndpointsHashMismatch             = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEndpointsHashMismatch, "Client endpoints are outdated, please refetch endpoints")
 
 	// oks
@@ -121,7 +121,7 @@ var (
 	okEmailChange            = PrecomputeBasicResponse(http.StatusOK, CodeOkEmailChange, "Email change was completed")
 	okPasswordResetNotNeeded = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordResetNotNeeded, "Password reset is not needed")
 	okPasswordNotRequired    = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordNotRequired, "Current authentication does not require password")
-	okPendingEmailOtpVerification     = PrecomputeBasicResponse(http.StatusAccepted, CodeOkPendingEmailOtpVerification, "Registration successful, email verification is required")
+	okPendingEmailVerificationOtp     = PrecomputeBasicResponse(http.StatusAccepted, CodeOkPendingEmailVerificationOtp, "Registration successful, email verification is required")
 )
 
 // For successful precomputed responses

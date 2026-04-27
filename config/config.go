@@ -367,10 +367,10 @@ type Endpoints struct {
 	RequestEmailChange string `toml:"request_email_change" json:"request_email_change" comment:"Request email change endpoint"`
 	// ConfirmEmailChange is the endpoint for confirming an email address change using a token.
 	ConfirmEmailChange string `toml:"confirm_email_change" json:"confirm_email_change" comment:"Confirm email change endpoint"`
-	// RequestEmailOtpVerification is the endpoint for requesting a new email OTP verification code.
-	RequestEmailOtpVerification string `toml:"request_email_otp_verification" json:"request_email_otp_verification" comment:"Request email OTP verification endpoint"`
-	// ConfirmEmailOtpVerification is the endpoint for confirming an email OTP verification code.
-	ConfirmEmailOtpVerification string `toml:"confirm_email_otp_verification" json:"confirm_email_otp_verification" comment:"Confirm email OTP verification endpoint"`
+	// RequestEmailVerificationOtp is the endpoint for requesting a new email OTP verification code.
+	RequestEmailVerificationOtp string `toml:"request_email_verification_otp" json:"request_email_verification_otp" comment:"Request email OTP verification endpoint"`
+	// ConfirmEmailVerificationOtp is the endpoint for confirming an email OTP verification code.
+	ConfirmEmailVerificationOtp string `toml:"confirm_email_verification_otp" json:"confirm_email_verification_otp" comment:"Confirm email OTP verification endpoint"`
 }
 
 // Path extracts just the path portion from an endpoint string (removes method prefix)
@@ -412,8 +412,8 @@ func (e Endpoints) Hash() string {
 		e.ConfirmPasswordResetOtp +
 		e.RequestEmailChange +
 		e.ConfirmEmailChange +
-		e.RequestEmailOtpVerification +
-		e.ConfirmEmailOtpVerification
+		e.RequestEmailVerificationOtp +
+		e.ConfirmEmailVerificationOtp
 	sum := sha256.Sum256([]byte(s))
 	return fmt.Sprintf("%x", sum[:8])
 }

@@ -190,7 +190,7 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 				}
 			},
 			wantStatus: http.StatusForbidden,
-			wantCode:   CodeErrorRequiredEmailOtpVerification,
+			wantCode:   CodeErrorRequiredEmailVerificationOtp,
 		},
 		{
 			name:        "unverified user login with wrong password",

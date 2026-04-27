@@ -106,8 +106,8 @@ func NewDefaultConfig() *Config {
 			ConfirmPasswordResetOtp:  "POST /api/confirm-password-reset-otp",
 			RequestEmailChange:       "POST /api/request-email-change",
 			ConfirmEmailChange:       "POST /api/confirm-email-change",
-			RequestEmailOtpVerification: "POST /api/request-email-otp-verification",
-			ConfirmEmailOtpVerification: "POST /api/confirm-email-otp-verification",
+			RequestEmailVerificationOtp: "POST /api/request-email-verification-otp",
+			ConfirmEmailVerificationOtp: "POST /api/confirm-email-verification-otp",
 		},
 		BlockIp: BlockIp{
 			Enabled:   true,

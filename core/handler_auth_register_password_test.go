@@ -141,7 +141,7 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 				}
 			},
 			wantStatus:        http.StatusAccepted,
-			wantCode:          CodeOkPendingEmailOtpVerification,
+			wantCode:          CodeOkPendingEmailVerificationOtp,
 			expectJobInserted: false,
 		},
 		{
@@ -153,7 +153,7 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 				}
 			},
 			wantStatus:        http.StatusAccepted,
-			wantCode:          CodeOkPendingEmailOtpVerification,
+			wantCode:          CodeOkPendingEmailVerificationOtp,
 			expectJobInserted: false,
 		},
 		{
@@ -166,7 +166,7 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 				}
 			},
 			wantStatus:        http.StatusAccepted,
-			wantCode:          CodeOkPendingEmailOtpVerification,
+			wantCode:          CodeOkPendingEmailVerificationOtp,
 			expectJobInserted: false,
 		},
 		{
@@ -186,7 +186,7 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 				}
 			},
 			wantStatus:        http.StatusAccepted,
-			wantCode:          CodeOkPendingEmailOtpVerification,
+			wantCode:          CodeOkPendingEmailVerificationOtp,
 			expectJobInserted: false,
 		},
 		{
@@ -201,7 +201,7 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 				}
 			},
 			wantStatus:        http.StatusAccepted,
-			wantCode:          CodeOkPendingEmailOtpVerification,
+			wantCode:          CodeOkPendingEmailVerificationOtp,
 			expectJobInserted: false,
 		},
 	}

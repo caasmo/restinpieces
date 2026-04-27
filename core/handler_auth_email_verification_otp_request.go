@@ -12,7 +12,7 @@ import (
 	"github.com/caasmo/restinpieces/queue/handlers"
 )
 
-// RequestEmailOtpVerificationHandler handles email OTP verification code requests.
+// RequestEmailVerificationOtpHandler handles email OTP verification code requests.
 // Endpoint: POST /request-email-otp-verification
 // Authenticated: No
 // Allowed Mimetype: application/json
@@ -75,7 +75,7 @@ import (
 // the password gate. An attacker who can reach this branch already has the
 // correct password and could simply log in. No information is gained that
 // the attacker does not already possess.
-func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) RequestEmailVerificationOtpHandler(w http.ResponseWriter, r *http.Request) {
 	resp, err := a.Validator().ContentType(r, MimeTypeJSON)
 	if err != nil {
 		WriteJsonError(w, resp)
@@ -174,7 +174,7 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 
 	if err := a.DbQueue().InsertJob(job); err != nil {
 		if err == db.ErrConstraintUnique {
-			WriteJsonError(w, errorEmailOtpVerificationAlreadyRequested)
+			WriteJsonError(w, errorEmailVerificationOtpAlreadyRequested)
 			return
 		}
 		WriteJsonError(w, errorAuthDatabaseError)

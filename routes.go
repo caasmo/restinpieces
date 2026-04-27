@@ -30,8 +30,8 @@ func route(cfg *config.Config, ap *core.App) {
 		cfg.Endpoints.ListOAuth2Providers:  router.NewChain(http.HandlerFunc(ap.ListOAuth2ProvidersHandler)),
 
 		// OTP Verification
-		cfg.Endpoints.RequestEmailOtpVerification: router.NewChain(http.HandlerFunc(ap.RequestEmailOtpVerificationHandler)),
-		cfg.Endpoints.ConfirmEmailOtpVerification: router.NewChain(http.HandlerFunc(ap.ConfirmEmailOtpVerificationHandler)),
+		cfg.Endpoints.RequestEmailVerificationOtp: router.NewChain(http.HandlerFunc(ap.RequestEmailVerificationOtpHandler)),
+		cfg.Endpoints.ConfirmEmailVerificationOtp: router.NewChain(http.HandlerFunc(ap.ConfirmEmailVerificationOtpHandler)),
 
 		// Password Reset
 		cfg.Endpoints.RequestPasswordReset: router.NewChain(http.HandlerFunc(ap.RequestPasswordResetHandler)),
