@@ -16,8 +16,6 @@ func NewDefaultConfig() *Config {
 		Jwt: Jwt{
 			AuthSecret:                     crypto.RandomString(32, crypto.AlphanumericAlphabet),
 			AuthTokenDuration:              Duration{Duration: 45 * time.Minute},
-			VerificationEmailSecret:        crypto.RandomString(32, crypto.AlphanumericAlphabet),
-			VerificationEmailTokenDuration: Duration{Duration: 24 * time.Hour},
 			PasswordResetSecret:            crypto.RandomString(32, crypto.AlphanumericAlphabet),
 			PasswordResetTokenDuration:     Duration{Duration: 1 * time.Hour},
 			EmailChangeSecret:              crypto.RandomString(32, crypto.AlphanumericAlphabet),
@@ -63,7 +61,6 @@ func NewDefaultConfig() *Config {
 		},
 		RateLimits: RateLimits{
 			PasswordResetCooldown:     Duration{Duration: 2 * time.Hour},
-			EmailVerificationCooldown: Duration{Duration: 1 * time.Hour},
 			EmailChangeCooldown:       Duration{Duration: 1 * time.Hour},
 			EmailOtpVerificationCooldown: Duration{Duration: 2 * time.Minute},
 		},
@@ -97,8 +94,6 @@ func NewDefaultConfig() *Config {
 		},
 		Endpoints: Endpoints{
 			RefreshAuth:              "POST /api/refresh-auth",
-			RequestEmailVerification: "POST /api/request-email-verification",
-			ConfirmEmailVerification: "POST /api/confirm-email-verification",
 			ListEndpoints:            "GET /api/list-endpoints",
 			AuthWithPassword:         "POST /api/auth-with-password",
 			AuthWithOAuth2:           "POST /api/auth-with-oauth2",

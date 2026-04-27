@@ -294,9 +294,6 @@ func validateJwt(jwt *Jwt) error {
 	if jwt.AuthSecret == "" {
 		return fmt.Errorf("jwt.auth_secret cannot be empty")
 	}
-	if jwt.VerificationEmailSecret == "" {
-		return fmt.Errorf("jwt.verification_email_secret cannot be empty")
-	}
 	if jwt.PasswordResetSecret == "" {
 		return fmt.Errorf("jwt.password_reset_secret cannot be empty")
 	}

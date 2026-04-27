@@ -10,8 +10,6 @@ const (
 	// oks
 
 	CodeOkAlreadyVerified        = "ok_already_verified"
-	CodeOkEmailVerified          = "ok_email_verified"
-	CodeOkVerificationRequested  = "ok_verification_requested"    // Success code for email verification request
 	CodeOkPasswordResetRequested = "ok_password_reset_requested"  // Success code for password reset request
 	CodeOkEmailChange            = "ok_email_change"              // Success code for completed email change
 	CodeOkEmailChangeRequested   = "ok_email_change_requested"    // Success code for email change request
@@ -29,7 +27,6 @@ const (
 	CodeErrorWeakPassword                      = "err_weak_password"
 	CodeErrorEmailConflict                     = "err_email_conflict"
 	CodeErrorNotFound                          = "err_not_found"
-	CodeErrorEmailVerificationAlreadyRequested = "err_email_verification_already_requested"
 	CodeErrorPasswordResetAlreadyRequested     = "err_password_reset_already_requested"
 	CodeErrorEmailChangeAlreadyRequested       = "err_email_change_already_requested"
 	CodeErrorEmailOtpVerificationAlreadyRequested = "err_email_otp_verification_already_requested"
@@ -92,7 +89,6 @@ var (
 	errorWeakPassword                      = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorWeakPassword, "Password is too weak or does not meet security requirements")
 	errorEmailConflict                     = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
 	errorNotFound                          = PrecomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
-	errorEmailVerificationAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationAlreadyRequested, "Email verification already requested.")
 	errorPasswordResetAlreadyRequested     = PrecomputeBasicResponse(http.StatusConflict, CodeErrorPasswordResetAlreadyRequested, "Password reset already requested")
 	errorEmailChangeAlreadyRequested       = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailChangeAlreadyRequested, "Email change already requested")
 	errorEmailOtpVerificationAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailOtpVerificationAlreadyRequested, "Email verification code already requested. Please check your inbox.")
@@ -106,7 +102,6 @@ var (
 	errorJwtInvalidVerificationToken       = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidVerificationToken, "Invalid verification token")
 	errorInvalidOtp                        = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorInvalidOtp, "Invalid or expired verification code")
 	errorOtpFailed                         = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorOtpFailed, "OTP verification process failed")
-	errorEmailVerificationFailed           = PrecomputeBasicResponse(http.StatusInternalServerError, "err_email_verification_failed", "Email verification process failed")
 	errorInvalidOAuth2Provider             = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
 	errorOAuth2TokenExchangeFailed         = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
 	errorOAuth2UserInfoFailed              = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
@@ -121,8 +116,6 @@ var (
 	// oks
 	okPasswordReset          = PrecomputeBasicResponse(http.StatusOK, CodeOkPasswordReset, "Password reset successfully")
 	okAlreadyVerified        = PrecomputeBasicResponse(http.StatusAccepted, CodeOkAlreadyVerified, "Email already verified - no further action needed")
-	okEmailVerified          = PrecomputeBasicResponse(http.StatusOK, CodeOkEmailVerified, "Email verified successfully")
-	okVerificationRequested  = PrecomputeBasicResponse(http.StatusAccepted, CodeOkVerificationRequested, "Verification email will be sent soon. Check your mailbox")
 	okPasswordResetRequested = PrecomputeBasicResponse(http.StatusAccepted, CodeOkPasswordResetRequested, "Password reset instructions will be sent to your email if it exists in our system")
 	okEmailChangeRequested   = PrecomputeBasicResponse(http.StatusAccepted, CodeOkEmailChangeRequested, "Email change instructions will be sent to your new email address")
 	okEmailChange            = PrecomputeBasicResponse(http.StatusOK, CodeOkEmailChange, "Email change was completed")

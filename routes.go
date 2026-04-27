@@ -29,10 +29,6 @@ func route(cfg *config.Config, ap *core.App) {
 		cfg.Endpoints.RegisterWithPassword: router.NewChain(http.HandlerFunc(ap.RegisterWithPasswordHandler)),
 		cfg.Endpoints.ListOAuth2Providers:  router.NewChain(http.HandlerFunc(ap.ListOAuth2ProvidersHandler)),
 
-		// Email Verification
-		cfg.Endpoints.RequestEmailVerification: router.NewChain(http.HandlerFunc(ap.RequestEmailVerificationHandler)),
-		cfg.Endpoints.ConfirmEmailVerification: router.NewChain(http.HandlerFunc(ap.ConfirmEmailVerificationHandler)),
-
 		// OTP Verification
 		cfg.Endpoints.RequestEmailOtpVerification: router.NewChain(http.HandlerFunc(ap.RequestEmailOtpVerificationHandler)),
 		cfg.Endpoints.ConfirmEmailOtpVerification: router.NewChain(http.HandlerFunc(ap.ConfirmEmailOtpVerificationHandler)),

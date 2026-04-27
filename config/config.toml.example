@@ -47,26 +47,26 @@ public_dir = "static/dist"
   # Duration for which standard authentication tokens are valid.
   auth_token_duration = "45m"
 
-  # Duration for which email verification tokens are valid.
-  verification_email_token_duration = "24h"
-
   # Duration for which password reset tokens are valid.
   password_reset_token_duration = "1h"
 
   # Duration for which email change confirmation tokens are valid.
   email_change_token_duration = "1h"
 
+  # Duration for which email OTP verification tokens are valid.
+  verification_email_otp_token_duration = "15m"
+
   # AuthSecret: Set via JWT_AUTH_SECRET environment variable. DO NOT STORE HERE unless absolutely necessary for local dev.
   auth_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
-
-  # VerificationEmailSecret: Set via JWT_VERIFICATION_EMAIL_SECRET environment variable. DO NOT STORE HERE.
-  verification_email_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
   # PasswordResetSecret: Set via JWT_PASSWORD_RESET_SECRET environment variable. DO NOT STORE HERE.
   password_reset_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
   # EmailChangeSecret: Set via JWT_EMAIL_CHANGE_SECRET environment variable. DO NOT STORE HERE.
   email_change_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
+
+  # VerificationEmailOtpSecret: Set via JWT_VERIFICATION_EMAIL_OTP_SECRET environment variable. DO NOT STORE HERE.
+  verification_email_otp_secret = "<secret_32_bytes_at_least_not_safe_to_put_here_x>" # Example placeholder
 
 # --- IP Blocking Settings ---
 # Settings related to automatic IP address blocking based on request frequency.
@@ -115,11 +115,11 @@ public_dir = "static/dist"
   # Minimum time a user must wait between requesting password resets for the same account.
   password_reset_cooldown = "2h"
 
-  # Minimum time a user must wait between requesting email verifications for the same email.
-  email_verification_cooldown = "1h"
-
   # Minimum time a user must wait between requesting email address changes.
   email_change_cooldown = "1h"
+
+  # Minimum time a user must wait between requesting email OTP verifications.
+  email_otp_verification_cooldown = "2m"
 
 
 
@@ -164,10 +164,8 @@ public_dir = "static/dist"
 
 # --- API Endpoint Paths ---
 [endpoints]
-  refresh_auth              = "POST /api/refresh-auth"
-  request_email_verification = "POST /api/request-email-verification"
-  confirm_email_verification = "POST /api/confirm-email-verification"
-  list_endpoints            = "GET /api/list-endpoints"
+  refresh_auth = "POST /api/refresh-auth"
+  list_endpoints = "GET /api/list-endpoints"
   auth_with_password         = "POST /api/auth-with-password"
   auth_with_oauth2           = "POST /api/auth-with-oauth2"
   register_with_password     = "POST /api/register-with-password"
@@ -176,6 +174,8 @@ public_dir = "static/dist"
   confirm_password_reset     = "POST /api/confirm-password-reset"
   request_email_change       = "POST /api/request-email-change"
   confirm_email_change       = "POST /api/confirm-email-change"
+  request_email_otp_verification = "POST /api/request-email-otp-verification"
+  confirm_email_otp_verification = "POST /api/confirm-email-otp-verification"
 
 
 # --- OAuth2 Provider Settings ---

@@ -217,10 +217,6 @@ type Jwt struct {
 	AuthSecret string `toml:"auth_secret" comment:"Secret key for auth tokens"`
 	// Duration for which standard authentication tokens are valid.
 	AuthTokenDuration Duration `toml:"auth_token_duration" comment:"Duration auth tokens remain valid"`
-	// Secret key for email verification tokens.
-	VerificationEmailSecret string `toml:"verification_email_secret" comment:"Secret key for email verification tokens"`
-	// Duration for which email verification tokens are valid.
-	VerificationEmailTokenDuration Duration `toml:"verification_email_token_duration" comment:"Duration email verification tokens remain valid"`
 	// Secret key for password reset tokens.
 	PasswordResetSecret string `toml:"password_reset_secret" comment:"Secret key for password reset tokens"`
 	// Duration for which password reset tokens are valid.
@@ -296,8 +292,6 @@ func (s *Server) BaseURL() string {
 type RateLimits struct {
 	// Minimum time a user must wait between requesting password resets for the same account.
 	PasswordResetCooldown Duration `toml:"password_reset_cooldown" comment:"Min time between password reset requests"`
-	// Minimum time a user must wait between requesting email verifications for the same email.
-	EmailVerificationCooldown Duration `toml:"email_verification_cooldown" comment:"Min time between email verification requests"`
 	// Minimum time a user must wait between requesting email address changes.
 	EmailChangeCooldown Duration `toml:"email_change_cooldown" comment:"Min time between email change requests"`
 	// Minimum time a user must wait between requesting email OTP verifications.
@@ -349,10 +343,6 @@ type Smtp struct {
 type Endpoints struct {
 	// RefreshAuth is the endpoint for refreshing an authentication token.
 	RefreshAuth string `toml:"refresh_auth" json:"refresh_auth" comment:"Refresh auth token endpoint"`
-	// RequestEmailVerification is the endpoint for users to request an email verification link.
-	RequestEmailVerification string `toml:"request_email_verification" json:"request_email_verification" comment:"Request email verification endpoint"`
-	// ConfirmEmailVerification is the endpoint for verifying a user's email address using a token.
-	ConfirmEmailVerification string `toml:"confirm_email_verification" json:"confirm_email_verification" comment:"Confirm email verification endpoint"`
 	// ListEndpoints is the endpoint that provides a list of all available API endpoints.
 	ListEndpoints string `toml:"list_endpoints" json:"list_endpoints" comment:"List available endpoints"`
 	// AuthWithPassword is the endpoint for authenticating a user with their email and password.
@@ -410,8 +400,6 @@ func (e Endpoints) ConfirmHtml(endpoint string) string {
 // The hash changes whenever any endpoint path is modified.
 func (e Endpoints) Hash() string {
 	s := e.RefreshAuth +
-		e.RequestEmailVerification +
-		e.ConfirmEmailVerification +
 		e.ListEndpoints +
 		e.AuthWithPassword +
 		e.AuthWithOAuth2 +

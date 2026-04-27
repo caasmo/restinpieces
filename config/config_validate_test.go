@@ -64,7 +64,6 @@ func newTestConfig() *Config {
 	cfg := NewDefaultConfig()
 	// Override secrets for deterministic tests
 	cfg.Jwt.AuthSecret = "test_secret_1"
-	cfg.Jwt.VerificationEmailSecret = "test_secret_2"
 	cfg.Jwt.PasswordResetSecret = "test_secret_3"
 	cfg.Jwt.EmailChangeSecret = "test_secret_4"
 	cfg.Jwt.VerificationEmailOtpSecret = "test_secret_5"
@@ -274,8 +273,6 @@ func TestValidateJwt(t *testing.T) {
 	valid := Jwt{
 		AuthSecret:                     "a",
 		AuthTokenDuration:              Duration{Duration: 1},
-		VerificationEmailSecret:        "b",
-		VerificationEmailTokenDuration: Duration{Duration: 1},
 		PasswordResetSecret:            "c",
 		PasswordResetTokenDuration:     Duration{Duration: 1},
 		EmailChangeSecret:              "d",
@@ -288,12 +285,11 @@ func TestValidateJwt(t *testing.T) {
 	}
 
 	invalidCases := []Jwt{
-		{VerificationEmailSecret: "b", PasswordResetSecret: "c", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e"},
-		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e"},
-		{AuthSecret: "a", VerificationEmailSecret: "b", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e"},
-		{AuthSecret: "a", VerificationEmailSecret: "b", PasswordResetSecret: "c", VerificationEmailOtpSecret: "e"},
-		{AuthSecret: "a", VerificationEmailSecret: "b", PasswordResetSecret: "c", EmailChangeSecret: "d"},
-		{AuthSecret: "a", VerificationEmailSecret: "b", PasswordResetSecret: "c", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e", VerificationEmailOtpTokenDuration: Duration{Duration: 0}},
+		{PasswordResetSecret: "c", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e"},
+		{AuthSecret: "a", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e"},
+		{AuthSecret: "a", PasswordResetSecret: "c", VerificationEmailOtpSecret: "e"},
+		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeSecret: "d"},
+		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeSecret: "d", VerificationEmailOtpSecret: "e", VerificationEmailOtpTokenDuration: Duration{Duration: 0}},
 	}
 	for _, cfg := range invalidCases {
 		if err := validateJwt(&cfg); err == nil {

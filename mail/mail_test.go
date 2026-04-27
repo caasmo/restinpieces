@@ -191,34 +191,6 @@ func setupTest(t *testing.T) (*mockSmtpServer, MailerInterface, *config.Config) 
 	return server, mailer, cfg
 }
 
-func TestSendVerificationEmail(t *testing.T) {
-	server, mailer, cfg := setupTest(t)
-	defer server.Close()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	email := "test@example.com"
-	callbackURL := "https://app.com/verify?token=123"
-	err := mailer.SendVerificationEmail(ctx, email, callbackURL)
-
-	if err != nil {
-		t.Fatalf("SendVerificationEmail should not return an error, but got: %v", err)
-	}
-
-	select {
-	case srvErr := <-server.err:
-		t.Fatalf("Mock SMTP server encountered an error: %v", srvErr)
-	default:
-	}
-
-	decodedData := decodeQuotedPrintable(t, server.data)
-	assertContains(t, decodedData, fmt.Sprintf("To: %s", email))
-	assertContains(t, decodedData, fmt.Sprintf("From: %s <%s>", cfg.Smtp.FromName, cfg.Smtp.FromAddress))
-	assertContains(t, decodedData, fmt.Sprintf("Subject: Verify your %s email", cfg.Smtp.FromName))
-	assertContains(t, decodedData, fmt.Sprintf(`href="%s"`, callbackURL))
-}
-
 func TestSendEmailChangeNotification(t *testing.T) {
 	oldEmail := "old@example.com"
 	newEmail := "new@example.com"

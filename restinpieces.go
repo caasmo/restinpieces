@@ -323,10 +323,6 @@ func (i *initializer) setupScheduler(configProvider *config.Provider) (*scl.Sche
 			return nil, fmt.Errorf("failed to create mailer: %w", err)
 		}
 
-		emailVerificationHandler := handlers.NewEmailVerificationHandler(i.app.DbAuth(), configProvider, mailer)
-		hdls[handlers.JobTypeEmailVerification] = emailVerificationHandler
-		logger.Info(ft.Ok("registered email verification handler"))
-
 		passwordResetHandler := handlers.NewPasswordResetHandler(i.app.DbAuth(), configProvider, mailer)
 		hdls[handlers.JobTypePasswordReset] = passwordResetHandler
 		logger.Info(ft.Ok("registered password reset handler"))

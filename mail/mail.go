@@ -12,7 +12,6 @@ import (
 
 // MailerInterface defines the methods for sending emails.
 type MailerInterface interface {
-	SendVerificationEmail(ctx context.Context, email, callbackURL string) error
 	SendEmailChangeNotification(ctx context.Context, oldEmail, newEmail string, hasOauth2Login bool, callbackURL string) error
 	SendPasswordResetEmail(ctx context.Context, email, callbackURL string) error
 	SendOtpEmail(ctx context.Context, email, otp string) error
@@ -80,55 +79,6 @@ func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
 		mail.LocalName(smtpCfg.LocalName)
 	}
 	return mail, nil
-}
-
-// SendVerificationEmail sends an email verification message to the specified email address
-// with the verification callback URL that includes the token
-func (m *Mailer) SendVerificationEmail(ctx context.Context, email, callbackURL string) error {
-	// Create new mail client for this email
-	mail, err := m.createMailClient()
-	if err != nil {
-		return fmt.Errorf("failed to create mail client: %w", err)
-	}
-
-	// Get current SMTP config for FromName/FromAddress
-	smtpCfg := m.configProvider.Get().Smtp
-
-	// Build email
-	mail.To(email)
-	mail.FromName(smtpCfg.FromName)
-	mail.From(smtpCfg.FromAddress)
-	mail.Subject(fmt.Sprintf("Verify your %s email", smtpCfg.FromName))
-	mail.HTML().Set(fmt.Sprintf(`
-		<p>Hello,</p>
-		<p>Thank you for joining us at %s.</p>
-		<p>Click on the button below to verify your email address.</p>
-		<p style="margin: 20px 0;">
-			<a href="%s" 
-				style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-				Verify
-			</a>
-		</p>
-		<p>Thanks,<br>%s team</p>
-	`, smtpCfg.FromName, callbackURL, smtpCfg.FromName))
-
-	// Send email with context timeout
-	done := make(chan error, 1)
-	go func() {
-		done <- mail.Send()
-	}()
-
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-done:
-		if err != nil {
-			return fmt.Errorf("failed to send verification email: %w", err)
-		}
-	}
-
-	//app.Logger.Info("Successfully sent verification email", "email", email)
-	return nil
 }
 
 // SendEmailChangeNotification sends an email change notification to both old and new email addresses
