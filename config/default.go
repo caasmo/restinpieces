@@ -99,8 +99,6 @@ func NewDefaultConfig() *Config {
 			AuthWithOAuth2:           "POST /api/auth-with-oauth2",
 			RegisterWithPassword:     "POST /api/register-with-password",
 			ListOAuth2Providers:      "GET /api/list-oauth2-providers",
-			RequestPasswordReset:     "POST /api/request-password-reset",
-			ConfirmPasswordReset:     "POST /api/confirm-password-reset",
 			RequestPasswordResetOtp:  "POST /api/request-password-reset-otp",
 			VerifyPasswordResetOtp:   "POST /api/verify-password-reset-otp",
 			ConfirmPasswordResetOtp:  "POST /api/confirm-password-reset-otp",

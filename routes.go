@@ -33,10 +33,6 @@ func route(cfg *config.Config, ap *core.App) {
 		cfg.Endpoints.RequestEmailVerificationOtp: router.NewChain(http.HandlerFunc(ap.RequestEmailVerificationOtpHandler)),
 		cfg.Endpoints.ConfirmEmailVerificationOtp: router.NewChain(http.HandlerFunc(ap.ConfirmEmailVerificationOtpHandler)),
 
-		// Password Reset
-		cfg.Endpoints.RequestPasswordReset: router.NewChain(http.HandlerFunc(ap.RequestPasswordResetHandler)),
-		cfg.Endpoints.ConfirmPasswordReset: router.NewChain(http.HandlerFunc(ap.ConfirmPasswordResetHandler)),
-
 		// OTP Password Reset
 		cfg.Endpoints.RequestPasswordResetOtp: router.NewChain(http.HandlerFunc(ap.RequestPasswordResetOtpHandler)),
 		cfg.Endpoints.VerifyPasswordResetOtp:  router.NewChain(http.HandlerFunc(ap.VerifyPasswordResetOtpHandler)),

@@ -353,10 +353,6 @@ type Endpoints struct {
 	RegisterWithPassword string `toml:"register_with_password" json:"register_with_password" comment:"Password registration endpoint"`
 	// ListOAuth2Providers is the endpoint for listing all configured OAuth2 providers.
 	ListOAuth2Providers string `toml:"list_oauth2_providers" json:"list_oauth2_providers" comment:"List available OAuth2 providers"`
-	// RequestPasswordReset is the endpoint for users to request a password reset link.
-	RequestPasswordReset string `toml:"request_password_reset" json:"request_password_reset" comment:"Request password reset endpoint"`
-	// ConfirmPasswordReset is the endpoint for resetting a user's password using a token.
-	ConfirmPasswordReset string `toml:"confirm_password_reset" json:"confirm_password_reset" comment:"Confirm password reset endpoint"`
 	// RequestPasswordResetOtp is the endpoint for users to request an OTP for password reset.
 	RequestPasswordResetOtp string `toml:"request_password_reset_otp" json:"request_password_reset_otp" comment:"Request password reset OTP endpoint"`
 	// VerifyPasswordResetOtp is the endpoint for verifying the OTP before resetting the password.
@@ -405,8 +401,6 @@ func (e Endpoints) Hash() string {
 		e.AuthWithOAuth2 +
 		e.RegisterWithPassword +
 		e.ListOAuth2Providers +
-		e.RequestPasswordReset +
-		e.ConfirmPasswordReset +
 		e.RequestPasswordResetOtp +
 		e.VerifyPasswordResetOtp +
 		e.ConfirmPasswordResetOtp +
