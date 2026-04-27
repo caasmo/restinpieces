@@ -147,7 +147,7 @@ func (a *App) RequestEmailOtpVerificationHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.EmailOtpVerificationCooldown.Duration, time.Now())
+	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.EmailVerificationOtpCooldown.Duration, time.Now())
 
 	payload, err := json.Marshal(handlers.PayloadEmailVerificationOtp{
 		Email:          req.Email,

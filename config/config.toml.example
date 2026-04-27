@@ -119,7 +119,7 @@ public_dir = "static/dist"
   email_change_cooldown = "1h"
 
   # Minimum time a user must wait between requesting email OTP verifications.
-  email_otp_verification_cooldown = "2m"
+  email_verification_otp_cooldown = "2m"
 
 
 

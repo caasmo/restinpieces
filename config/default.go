@@ -62,7 +62,7 @@ func NewDefaultConfig() *Config {
 		RateLimits: RateLimits{
 			PasswordResetCooldown:     Duration{Duration: 2 * time.Hour},
 			EmailChangeCooldown:       Duration{Duration: 1 * time.Hour},
-			EmailOtpVerificationCooldown: Duration{Duration: 2 * time.Minute},
+			EmailVerificationOtpCooldown: Duration{Duration: 2 * time.Minute},
 		},
 		OAuth2Providers: map[string]OAuth2Provider{
 			"google": {

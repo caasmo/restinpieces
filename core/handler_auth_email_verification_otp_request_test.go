@@ -173,7 +173,7 @@ func TestRequestEmailOtpVerificationHandler_RequestLogic(t *testing.T) {
 			VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
 		},
 		RateLimits: config.RateLimits{
-			EmailOtpVerificationCooldown: config.Duration{Duration: 2 * time.Minute},
+			EmailVerificationOtpCooldown: config.Duration{Duration: 2 * time.Minute},
 		},
 	}
 
@@ -351,7 +351,7 @@ func TestRequestEmailOtpVerificationHandler_DependencyFailures(t *testing.T) {
 					VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
 				},
 				RateLimits: config.RateLimits{
-					EmailOtpVerificationCooldown: config.Duration{Duration: 2 * time.Minute},
+					EmailVerificationOtpCooldown: config.Duration{Duration: 2 * time.Minute},
 				},
 			},
 			dbSetup: func(m *mock.Db) {
@@ -369,7 +369,7 @@ func TestRequestEmailOtpVerificationHandler_DependencyFailures(t *testing.T) {
 					VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
 				},
 				RateLimits: config.RateLimits{
-					EmailOtpVerificationCooldown: config.Duration{Duration: 2 * time.Minute},
+					EmailVerificationOtpCooldown: config.Duration{Duration: 2 * time.Minute},
 				},
 			},
 			dbSetup: func(m *mock.Db) {

@@ -295,7 +295,7 @@ type RateLimits struct {
 	// Minimum time a user must wait between requesting email address changes.
 	EmailChangeCooldown Duration `toml:"email_change_cooldown" comment:"Min time between email change requests"`
 	// Minimum time a user must wait between requesting email OTP verifications.
-	EmailOtpVerificationCooldown Duration `toml:"email_otp_verification_cooldown" comment:"Min time between email OTP verification requests"`
+	EmailVerificationOtpCooldown Duration `toml:"email_verification_otp_cooldown" comment:"Min time between email OTP verification requests"`
 }
 
 type OAuth2Provider struct {
