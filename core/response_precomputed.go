@@ -16,6 +16,7 @@ const (
 	CodeOkPasswordResetNotNeeded = "ok_password_reset_not_needed" // Success code when password reset is not needed
 	CodeOkPasswordNotRequired    = "ok_password_not_required"     // Success code when password is not required for auth
 	CodeOkPendingEmailVerificationOtp          = "ok_pending_email_verification_otp"
+	CodeOkPasswordReset                        = "ok_password_reset"
 
 	//errors
 	CodeErrorTokenGeneration                   = "err_token_generation"
@@ -32,7 +33,6 @@ const (
 	CodeErrorEmailVerificationOtpAlreadyRequested = "err_email_verification_otp_already_requested"
 	CodeErrorPasswordResetFailed               = "err_password_reset_failed"
 	CodeErrorPasswordHashingFailed             = "err_password_hashing_failed"
-	CodeOkPasswordReset                        = "ok_password_reset"
 	CodeErrorRegistrationFailed                = "err_registration_failed"
 	CodeErrorTooManyRequests                   = "err_too_many_requests"
 	CodeErrorServiceUnavailable                = "err_service_unavailable"
