@@ -2,10 +2,12 @@ package core
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
@@ -14,214 +16,361 @@ import (
 	"github.com/caasmo/restinpieces/queue/handlers"
 )
 
-func TestRequestEmailChangeOtpHandler(t *testing.T) {
-	cfg := config.NewDefaultConfig()
-	cfg.Jwt.EmailChangeOtpSecret = "a_very_long_and_secure_secret_for_testing_purposes"
-	provider := config.NewProvider(cfg)
+func TestRequestEmailChangeOtpHandler_Validation(t *testing.T) {
+	testCases := []struct {
+		name           string
+		contentType    string
+		requestBody    string
+		wantError      jsonResponse
+		setupValidator func(*MockValidator)
+	}{
+		{
+			name:        "invalid content type",
+			contentType: "text/plain",
+			requestBody: `{"new_email":"new@example.com","password":"password123"}`,
+			wantError:   errorInvalidContentType,
+			setupValidator: func(m *MockValidator) {
+				m.ContentTypeFunc = func(r *http.Request, allowedType string) (jsonResponse, error) {
+					return errorInvalidContentType, errors.New("invalid content type")
+				}
+			},
+		},
+		{
+			name:        "malformed json",
+			contentType: "application/json",
+			requestBody: `{"new_email":"new@example.com",`,
+			wantError:   errorInvalidRequest,
+			setupValidator: func(m *MockValidator) {
+				m.ContentTypeFunc = func(r *http.Request, allowedType string) (jsonResponse, error) {
+					return jsonResponse{}, nil
+				}
+			},
+		},
+		{
+			name:        "missing new_email field",
+			contentType: "application/json",
+			requestBody: `{"password":"password123"}`,
+			wantError:   errorInvalidRequest,
+			setupValidator: func(m *MockValidator) {
+				m.ContentTypeFunc = func(r *http.Request, allowedType string) (jsonResponse, error) {
+					return jsonResponse{}, nil
+				}
+			},
+		},
+		{
+			name:        "missing password field",
+			contentType: "application/json",
+			requestBody: `{"new_email":"new@example.com"}`,
+			wantError:   errorInvalidRequest,
+			setupValidator: func(m *MockValidator) {
+				m.ContentTypeFunc = func(r *http.Request, allowedType string) (jsonResponse, error) {
+					return jsonResponse{}, nil
+				}
+			},
+		},
+		{
+			name:        "invalid email format",
+			contentType: "application/json",
+			requestBody: `{"new_email":"not-an-email","password":"password123"}`,
+			wantError:   errorInvalidRequest,
+			setupValidator: func(m *MockValidator) {
+				m.ContentTypeFunc = func(r *http.Request, allowedType string) (jsonResponse, error) {
+					return jsonResponse{}, nil
+				}
+				m.EmailFunc = func(email string) error {
+					return errors.New("invalid email format")
+				}
+			},
+		},
+	}
 
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest("POST", "/api/request-email-change-otp", strings.NewReader(tc.requestBody))
+			req.Header.Set("Content-Type", tc.contentType)
+			rr := httptest.NewRecorder()
+
+			mockValidator := &MockValidator{}
+			tc.setupValidator(mockValidator)
+
+			mockAuth := &MockAuth{
+				AuthenticateFunc: func(r *http.Request) (*db.User, jsonResponse, error) {
+					return &db.User{ID: "user123", Verified: true}, jsonResponse{}, nil
+				},
+			}
+
+			app := &App{
+				validator:     mockValidator,
+				authenticator: mockAuth,
+				dbAuth:         &mock.Db{},
+			}
+
+			app.RequestEmailChangeOtpHandler(rr, req)
+
+			if rr.Code != tc.wantError.status {
+				t.Errorf("expected status %d, got %d", tc.wantError.status, rr.Code)
+			}
+		})
+	}
+}
+
+func TestRequestEmailChangeOtpHandler_Logic(t *testing.T) {
 	hashedPassword, _ := crypto.GenerateHash("password123")
+	testUser := &db.User{
+		ID:       "user123",
+		Email:    "old@example.com",
+		Password: string(hashedPassword),
+		Verified: true,
+	}
 
-	t.Run("success - user found and password correct", func(t *testing.T) {
-		mockDbAuth := &mock.Db{
-			GetUserByEmailFunc: func(email string) (*db.User, error) {
-				// New email not taken
-				return nil, nil
+	testConfig := &config.Config{
+		Jwt: config.Jwt{
+			EmailChangeOtpSecret:       "test_secret_32_bytes_long_xxxxxx",
+			EmailChangeOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
+		},
+		RateLimits: config.RateLimits{
+			EmailChangeCooldown: config.Duration{Duration: 5 * time.Minute},
+		},
+	}
+
+	testCases := []struct {
+		name        string
+		requestBody string
+		authSetup   func(*MockAuth)
+		dbSetup     func(*mock.Db)
+		wantStatus  int
+		wantCode    string
+		wantJobType string
+	}{
+		{
+			name:        "success - new email available",
+			requestBody: `{"new_email":"new@example.com","password":"password123"}`,
+			authSetup: func(m *MockAuth) {
+				m.AuthenticateFunc = func(r *http.Request) (*db.User, jsonResponse, error) {
+					return testUser, jsonResponse{}, nil
+				}
 			},
-		}
+			dbSetup: func(m *mock.Db) {
+				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					return nil, nil // Not taken
+				}
+				m.InsertJobFunc = func(job db.Job) error {
+					return nil
+				}
+			},
+			wantStatus:  http.StatusOK,
+			wantCode:    CodeOkOtpTokenIssued,
+			wantJobType: handlers.JobTypeEmailChangeOtp,
+		},
+		{
+			name:        "success - new email taken (silent path)",
+			requestBody: `{"new_email":"taken@example.com","password":"password123"}`,
+			authSetup: func(m *MockAuth) {
+				m.AuthenticateFunc = func(r *http.Request) (*db.User, jsonResponse, error) {
+					return testUser, jsonResponse{}, nil
+				}
+			},
+			dbSetup: func(m *mock.Db) {
+				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					return &db.User{ID: "other"}, nil // Taken
+				}
+				m.InsertJobFunc = func(job db.Job) error {
+					return nil
+				}
+			},
+			wantStatus:  http.StatusOK,
+			wantCode:    CodeOkOtpTokenIssued,
+			wantJobType: handlers.JobTypeDummy,
+		},
+		{
+			name:        "unauthenticated",
+			requestBody: `{"new_email":"new@example.com","password":"password123"}`,
+			authSetup: func(m *MockAuth) {
+				m.AuthenticateFunc = func(r *http.Request) (*db.User, jsonResponse, error) {
+					return nil, errorJwtInvalidToken, errors.New("auth error")
+				}
+			},
+			dbSetup:    func(m *mock.Db) {},
+			wantStatus: http.StatusUnauthorized,
+			wantCode:   CodeErrorJwtInvalidToken,
+		},
+		{
+			name:        "unverified user cannot change email",
+			requestBody: `{"new_email":"new@example.com","password":"password123"}`,
+			authSetup: func(m *MockAuth) {
+				m.AuthenticateFunc = func(r *http.Request) (*db.User, jsonResponse, error) {
+					u := *testUser
+					u.Verified = false
+					return &u, jsonResponse{}, nil
+				}
+			},
+			dbSetup:    func(m *mock.Db) {},
+			wantStatus: http.StatusForbidden,
+			wantCode:   CodeErrorUnverifiedEmail,
+		},
+		{
+			name:        "wrong password",
+			requestBody: `{"new_email":"new@example.com","password":"wrongpassword"}`,
+			authSetup: func(m *MockAuth) {
+				m.AuthenticateFunc = func(r *http.Request) (*db.User, jsonResponse, error) {
+					return testUser, jsonResponse{}, nil
+				}
+			},
+			dbSetup:    func(m *mock.Db) {},
+			wantStatus: http.StatusUnauthorized,
+			wantCode:   CodeErrorInvalidCredentials,
+		},
+		{
+			name:        "same email conflict",
+			requestBody: `{"new_email":"old@example.com","password":"password123"}`,
+			authSetup: func(m *MockAuth) {
+				m.AuthenticateFunc = func(r *http.Request) (*db.User, jsonResponse, error) {
+					return testUser, jsonResponse{}, nil
+				}
+			},
+			dbSetup:    func(m *mock.Db) {},
+			wantStatus: http.StatusConflict,
+			wantCode:   CodeErrorEmailConflict,
+		},
+	}
 
-		var jobInserted bool
-		var insertedJob db.Job
-		mockDbQueue := &mock.Db{
-			InsertJobFunc: func(job db.Job) error {
-				jobInserted = true
-				insertedJob = job
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := httptest.NewRequest("POST", "/api/request-email-change-otp", strings.NewReader(tc.requestBody))
+			req.Header.Set("Content-Type", "application/json")
+			rr := httptest.NewRecorder()
+
+			mockAuth := &MockAuth{}
+			tc.authSetup(mockAuth)
+
+			mockDb := &mock.Db{}
+			tc.dbSetup(mockDb)
+
+			var capturedJob db.Job
+			mockDb.InsertJobFunc = func(job db.Job) error {
+				capturedJob = job
 				return nil
+			}
+
+			app := &App{
+				validator:      &DefaultValidator{},
+				authenticator:  mockAuth,
+				dbAuth:         mockDb,
+				dbQueue:        mockDb,
+				configProvider: config.NewProvider(testConfig),
+			}
+
+			app.RequestEmailChangeOtpHandler(rr, req)
+
+			if rr.Code != tc.wantStatus {
+				t.Errorf("expected status %d, got %d. Body: %s", tc.wantStatus, rr.Code, rr.Body.String())
+			}
+
+			var body map[string]interface{}
+			_ = json.NewDecoder(rr.Body).Decode(&body)
+			if code, _ := body["code"].(string); code != tc.wantCode {
+				t.Errorf("expected code %q, got %q", tc.wantCode, code)
+			}
+
+			if tc.wantJobType != "" {
+				if capturedJob.JobType != tc.wantJobType {
+					t.Errorf("expected job type %q, got %q", tc.wantJobType, capturedJob.JobType)
+				}
+			}
+		})
+	}
+}
+
+func TestRequestEmailChangeOtpHandler_Failures(t *testing.T) {
+	hashedPassword, _ := crypto.GenerateHash("password123")
+	testUser := &db.User{
+		ID:       "user123",
+		Email:    "old@example.com",
+		Password: string(hashedPassword),
+		Verified: true,
+	}
+
+	testCases := []struct {
+		name       string
+		config     *config.Config
+		dbSetup    func(*mock.Db)
+		wantStatus int
+		wantCode   string
+	}{
+		{
+			name: "OTP token generation failure",
+			config: &config.Config{
+				Jwt: config.Jwt{
+					EmailChangeOtpSecret: "short", // Causes failure
+				},
 			},
-		}
-
-		mockAuth := &MockAuth{
-			AuthenticateFunc: func(r *http.Request) (*db.User, jsonResponse, error) {
-				return &db.User{
-					ID:       "user123",
-					Email:    "old@example.com",
-					Verified: true,
-					Password: string(hashedPassword),
-				}, jsonResponse{}, nil
+			dbSetup: func(m *mock.Db) {
+				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					return nil, nil
+				}
 			},
-		}
-
-		app := &App{
-			configProvider: provider,
-			validator:      &DefaultValidator{},
-			dbAuth:         mockDbAuth,
-			dbQueue:        mockDbQueue,
-			authenticator:  mockAuth,
-		}
-
-		reqBody := `{"new_email":"new@example.com", "password":"password123"}`
-		req := httptest.NewRequest("POST", "/api/request-email-change-otp", strings.NewReader(reqBody))
-		req.Header.Set("Content-Type", "application/json")
-		rr := httptest.NewRecorder()
-
-		app.RequestEmailChangeOtpHandler(rr, req)
-
-		if rr.Code != http.StatusOK {
-			t.Errorf("expected status 200, got %d. Body: %s", rr.Code, rr.Body.String())
-		}
-
-		var resp map[string]interface{}
-		if err := json.Unmarshal(rr.Body.Bytes(), &resp); err != nil {
-			t.Fatalf("failed to unmarshal response: %v", err)
-		}
-		if resp["code"] != CodeOkOtpTokenIssued {
-			t.Errorf("expected code %s, got %v", CodeOkOtpTokenIssued, resp["code"])
-		}
-
-		if !jobInserted {
-			t.Fatal("expected job to be inserted")
-		}
-
-		if insertedJob.JobType != handlers.JobTypeEmailChangeOtp {
-			t.Errorf("expected job type %s, got %s", handlers.JobTypeEmailChangeOtp, insertedJob.JobType)
-		}
-	})
-
-	t.Run("success - new email taken (silent state machine)", func(t *testing.T) {
-		mockDbAuth := &mock.Db{
-			GetUserByEmailFunc: func(email string) (*db.User, error) {
-				// New email IS taken
-				return &db.User{ID: "other-user"}, nil
+			wantStatus: http.StatusInternalServerError,
+			wantCode:   CodeErrorOtpFailed,
+		},
+		{
+			name: "queue insertion failure (logged but doesn't change response)",
+			config: &config.Config{
+				Jwt: config.Jwt{
+					EmailChangeOtpSecret:       "test_secret_32_bytes_long_xxxxxx",
+					EmailChangeOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
+				},
+				RateLimits: config.RateLimits{
+					EmailChangeCooldown: config.Duration{Duration: 5 * time.Minute},
+				},
 			},
-		}
-
-		var jobInserted bool
-		var insertedJob db.Job
-		mockDbQueue := &mock.Db{
-			InsertJobFunc: func(job db.Job) error {
-				jobInserted = true
-				insertedJob = job
-				return nil
+			dbSetup: func(m *mock.Db) {
+				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					return nil, nil
+				}
+				m.InsertJobFunc = func(job db.Job) error {
+					return errors.New("db error")
+				}
 			},
-		}
+			wantStatus: http.StatusOK,
+			wantCode:   CodeOkOtpTokenIssued,
+		},
+	}
 
-		mockAuth := &MockAuth{
-			AuthenticateFunc: func(r *http.Request) (*db.User, jsonResponse, error) {
-				return &db.User{
-					ID:       "user123",
-					Email:    "old@example.com",
-					Verified: true,
-					Password: string(hashedPassword),
-				}, jsonResponse{}, nil
-			},
-		}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			reqBody := `{"new_email":"new@example.com","password":"password123"}`
+			req := httptest.NewRequest("POST", "/api/request-email-change-otp", strings.NewReader(reqBody))
+			req.Header.Set("Content-Type", "application/json")
+			rr := httptest.NewRecorder()
 
-		app := &App{
-			configProvider: provider,
-			validator:      &DefaultValidator{},
-			dbAuth:         mockDbAuth,
-			dbQueue:        mockDbQueue,
-			authenticator:  mockAuth,
-		}
+			mockAuth := &MockAuth{
+				AuthenticateFunc: func(r *http.Request) (*db.User, jsonResponse, error) {
+					return testUser, jsonResponse{}, nil
+				},
+			}
 
-		reqBody := `{"new_email":"taken@example.com", "password":"password123"}`
-		req := httptest.NewRequest("POST", "/api/request-email-change-otp", strings.NewReader(reqBody))
-		req.Header.Set("Content-Type", "application/json")
-		rr := httptest.NewRecorder()
+			mockDb := &mock.Db{}
+			tc.dbSetup(mockDb)
 
-		app.RequestEmailChangeOtpHandler(rr, req)
+			app := &App{
+				validator:      &DefaultValidator{},
+				authenticator:  mockAuth,
+				dbAuth:         mockDb,
+				dbQueue:        mockDb,
+				configProvider: config.NewProvider(tc.config),
+			}
 
-		if rr.Code != http.StatusOK {
-			t.Errorf("expected status 200, got %d", rr.Code)
-		}
+			app.RequestEmailChangeOtpHandler(rr, req)
 
-		if !jobInserted {
-			t.Fatal("expected job to be inserted even if email taken")
-		}
+			if rr.Code != tc.wantStatus {
+				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
+			}
 
-		if insertedJob.JobType != handlers.JobTypeDummy {
-			t.Errorf("expected job type %s, got %s", handlers.JobTypeDummy, insertedJob.JobType)
-		}
-	})
-
-	t.Run("unauthorized", func(t *testing.T) {
-		mockAuth := &MockAuth{
-			AuthenticateFunc: func(r *http.Request) (*db.User, jsonResponse, error) {
-				return nil, errorJwtInvalidToken, http.ErrAbortHandler
-			},
-		}
-
-		app := &App{
-			validator:     &DefaultValidator{},
-			authenticator: mockAuth,
-		}
-
-		reqBody := `{"new_email":"new@example.com", "password":"password123"}`
-		req := httptest.NewRequest("POST", "/api/request-email-change-otp", strings.NewReader(reqBody))
-		req.Header.Set("Content-Type", "application/json")
-		rr := httptest.NewRecorder()
-
-		app.RequestEmailChangeOtpHandler(rr, req)
-
-		if rr.Code != http.StatusUnauthorized {
-			t.Errorf("expected status 401, got %d", rr.Code)
-		}
-	})
-
-	t.Run("invalid credentials (wrong password)", func(t *testing.T) {
-		mockAuth := &MockAuth{
-			AuthenticateFunc: func(r *http.Request) (*db.User, jsonResponse, error) {
-				return &db.User{
-					ID:       "user123",
-					Email:    "old@example.com",
-					Verified: true,
-					Password: string(hashedPassword),
-				}, jsonResponse{}, nil
-			},
-		}
-
-		app := &App{
-			validator:     &DefaultValidator{},
-			authenticator: mockAuth,
-		}
-
-		reqBody := `{"new_email":"new@example.com", "password":"wrong-password"}`
-		req := httptest.NewRequest("POST", "/api/request-email-change-otp", strings.NewReader(reqBody))
-		req.Header.Set("Content-Type", "application/json")
-		rr := httptest.NewRecorder()
-
-		app.RequestEmailChangeOtpHandler(rr, req)
-
-		if rr.Code != http.StatusUnauthorized {
-			t.Errorf("expected status 401, got %d", rr.Code)
-		}
-	})
-
-	t.Run("email conflict (same email)", func(t *testing.T) {
-		mockAuth := &MockAuth{
-			AuthenticateFunc: func(r *http.Request) (*db.User, jsonResponse, error) {
-				return &db.User{
-					ID:       "user123",
-					Email:    "same@example.com",
-					Verified: true,
-					Password: string(hashedPassword),
-				}, jsonResponse{}, nil
-			},
-		}
-
-		app := &App{
-			validator:     &DefaultValidator{},
-			authenticator: mockAuth,
-		}
-
-		reqBody := `{"new_email":"same@example.com", "password":"password123"}`
-		req := httptest.NewRequest("POST", "/api/request-email-change-otp", strings.NewReader(reqBody))
-		req.Header.Set("Content-Type", "application/json")
-		rr := httptest.NewRecorder()
-
-		app.RequestEmailChangeOtpHandler(rr, req)
-
-		if rr.Code != http.StatusConflict {
-			t.Errorf("expected status 409, got %d", rr.Code)
-		}
-	})
+			var body map[string]interface{}
+			_ = json.NewDecoder(rr.Body).Decode(&body)
+			if code, _ := body["code"].(string); code != tc.wantCode {
+				t.Errorf("expected code %q, got %q", tc.wantCode, code)
+			}
+		})
+	}
 }

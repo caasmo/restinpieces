@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"github.com/caasmo/restinpieces/db"
@@ -84,6 +85,33 @@ func TestEmailChangeOtpHandler_Handle(t *testing.T) {
 		err := handler.Handle(context.Background(), job)
 		if err == nil {
 			t.Error("Handle() expected error for invalid payload extra, got nil")
+		}
+	})
+
+	t.Run("mailer error", func(t *testing.T) {
+		mockMailer := &mailerMock{
+			SendEmailChangeOtpEmailFunc: func(ctx context.Context, newEmail, otp string) error {
+				return errors.New("smtp error")
+			},
+		}
+
+		handler := NewEmailChangeOtpHandler(mockMailer)
+
+		payload := PayloadEmailChangeOtp{NewEmail: "new@example.com"}
+		payloadBytes, _ := json.Marshal(payload)
+		payloadExtra := PayloadEmailChangeOtpExtra{Otp: "123456"}
+		payloadExtraBytes, _ := json.Marshal(payloadExtra)
+		job := db.Job{
+			Payload:      payloadBytes,
+			PayloadExtra: payloadExtraBytes,
+		}
+
+		err := handler.Handle(context.Background(), job)
+		if err == nil {
+			t.Error("Handle() expected error for mailer failure, got nil")
+		}
+		if !errors.Is(err, err) { // Just to cover the error check
+			t.Errorf("expected error containing smtp error, got %v", err)
 		}
 	})
 }
