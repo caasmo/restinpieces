@@ -39,3 +39,41 @@ func TestS256Challenge(t *testing.T) {
 		t.Errorf("S256Challenge() = %s, want %s", challenge, expectedChallenge)
 	}
 }
+
+func TestValidateCodeVerifier(t *testing.T) {
+	testCases := []struct {
+		name    string
+		input   string
+		wantErr bool
+	}{
+		{
+			name:    "valid 43 characters",
+			input:   strings.Repeat("a", 43),
+			wantErr: false,
+		},
+		{
+			name:    "invalid too short",
+			input:   strings.Repeat("a", 42),
+			wantErr: true,
+		},
+		{
+			name:    "invalid too long",
+			input:   strings.Repeat("a", 44),
+			wantErr: true,
+		},
+		{
+			name:    "invalid character",
+			input:   strings.Repeat("a", 42) + "!",
+			wantErr: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ValidateCodeVerifier(tc.input)
+			if (err != nil) != tc.wantErr {
+				t.Errorf("ValidateCodeVerifier(%q) error = %v, wantErr %v", tc.input, err, tc.wantErr)
+			}
+		})
+	}
+}

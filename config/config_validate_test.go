@@ -230,6 +230,7 @@ func TestValidateOAuth2Providers(t *testing.T) {
 
 	invalidCases := []map[string]OAuth2Provider{
 		{"google": {}},
+		{"google": {RedirectURL: "/cb", UserInfoURL: "http://example.com"}},
 	}
 	for _, cfg := range invalidCases {
 		if err := validateOAuth2Providers(cfg); err == nil {

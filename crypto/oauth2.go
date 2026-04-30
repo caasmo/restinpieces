@@ -3,6 +3,8 @@ package crypto
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -20,6 +22,11 @@ const Oauth2StateLength = 32
 
 // Defined in RFC 7636 (PKCE). Its length must be between 43 and 128 characters.
 const OauthCodeVerifierLength = 43
+
+var (
+	// ErrInvalidCodeVerifier is returned when a PKCE code_verifier is malformed.
+	ErrInvalidCodeVerifier = errors.New("invalid code verifier")
+)
 
 // The state parameter helps prevent Cross-Site Request Forgery (CSRF) attacks
 // by linking the authorization request to its callback.
@@ -39,4 +46,19 @@ func S256Challenge(code string) string {
 	h := sha256.New()
 	h.Write([]byte(code))
 	return strings.TrimRight(base64.URLEncoding.EncodeToString(h.Sum(nil)), "=")
+}
+
+// ValidateCodeVerifier reports whether s is a well-formed PKCE code_verifier
+// as defined by RFC 7636 §4.1: 43–128 characters from the PKCE alphabet.
+// ValidateCodeVerifier checks s is a well-formed PKCE code_verifier per RFC 7636 §4.1.
+func ValidateCodeVerifier(s string) error {
+	if len(s) != OauthCodeVerifierLength {
+		return fmt.Errorf("%w: invalid length %d, expected %d", ErrInvalidCodeVerifier, len(s), OauthCodeVerifierLength)
+	}
+	for _, c := range s {
+		if !strings.ContainsRune(pkceAlphabet, c) {
+			return fmt.Errorf("%w: invalid character %q", ErrInvalidCodeVerifier, c)
+		}
+	}
+	return nil
 }

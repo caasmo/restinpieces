@@ -36,6 +36,8 @@ func mockOAuth2Server(t *testing.T, tokenHandler http.HandlerFunc, userInfoHandl
 	return server, server.URL + "/token", server.URL + "/userinfo"
 }
 
+const validCodeVerifier = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+
 // TestAuthWithOAuth2Handler_Validation tests the initial input validation logic of the
 // AuthWithOAuth2Handler. It ensures that the handler correctly rejects requests that
 // are malformed, have an incorrect content type, are missing required fields, or
@@ -65,23 +67,30 @@ func TestAuthWithOAuth2Handler_Validation(t *testing.T) {
 		{
 			name:          "missing provider field",
 			contentType:   "application/json",
-			requestBody:   `{"code": "c", "code_verifier": "cv", "redirect_uri": "ru"}`,
+			requestBody:   `{"code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`,
 			providerInCfg: true,
 			wantError:     errorMissingFields,
 		},
 		{
 			name:          "missing code field",
 			contentType:   "application/json",
-			requestBody:   `{"provider": "p", "code_verifier": "cv", "redirect_uri": "ru"}`,
+			requestBody:   `{"provider": "p", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`,
 			providerInCfg: true,
 			wantError:     errorMissingFields,
 		},
 		{
 			name:          "unknown provider",
 			contentType:   "application/json",
-			requestBody:   `{"provider": "unknown", "code": "c", "code_verifier": "cv", "redirect_uri": "ru"}`,
+			requestBody:   `{"provider": "unknown", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`,
 			providerInCfg: false, // The key for this test
 			wantError:     errorInvalidOAuth2Provider,
+		},
+		{
+			name:          "invalid code verifier",
+			contentType:   "application/json",
+			requestBody:   `{"provider": "google", "code": "c", "code_verifier": "too-short", "redirect_uri": "ru"}`,
+			providerInCfg: true,
+			wantError:     errorInvalidRequest,
 		},
 	}
 
@@ -277,7 +286,7 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 				dbAuth:         mockDb,
 			}
 
-			body := `{"provider": "google", "code": "c", "code_verifier": "cv", "redirect_uri": "ru"}`
+			body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`
 			req := httptest.NewRequest("POST", "/auth-with-oauth2", strings.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -395,7 +404,7 @@ func TestAuthWithOAuth2Handler_DependencyFailures(t *testing.T) {
 				dbAuth:         mockDb,
 			}
 
-			body := `{"provider": "google", "code": "c", "code_verifier": "cv", "redirect_uri": "ru"}`
+			body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`
 			req := httptest.NewRequest("POST", "/auth-with-oauth2", strings.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -422,5 +431,114 @@ func TestAuthWithOAuth2Handler_DependencyFailures(t *testing.T) {
 				t.Errorf("handler returned unexpected body:\ngot:  %+v\nwant: %+v", gotBody, wantBody)
 			}
 		})
+	}
+}
+
+func TestAuthWithOAuth2Handler_Security_EmailNormalization(t *testing.T) {
+	server, tokenURL, userInfoURL := mockOAuth2Server(t,
+		func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]string{"access_token": "at", "token_type": "Bearer"})
+		},
+		func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"sub": "u1", "email": "User@Example.Com", "email_verified": true,
+			})
+		},
+	)
+
+	cfg := config.NewDefaultConfig()
+	cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
+	cfg.OAuth2Providers = map[string]config.OAuth2Provider{
+		"google": {TokenURL: tokenURL, UserInfoURL: userInfoURL, Name: config.OAuth2ProviderGoogle},
+	}
+
+	mockDb := &mock.Db{}
+	var capturedEmail string
+	mockDb.GetUserByEmailFunc = func(email string) (*db.User, error) {
+		capturedEmail = email
+		return &db.User{Email: email, Oauth2: true}, nil
+	}
+
+	app := &App{
+		configProvider: config.NewProvider(cfg),
+		validator:      &DefaultValidator{},
+		logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
+		dbAuth:         mockDb,
+	}
+
+	body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`
+	req := httptest.NewRequest("POST", "/auth-with-oauth2", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx := context.WithValue(req.Context(), oauth2.HTTPClient, server.Client())
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	app.AuthWithOAuth2Handler(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("expected status %d, got %d", http.StatusOK, rr.Code)
+	}
+
+	if capturedEmail != "user@example.com" {
+		t.Errorf("expected normalized email %q, got %q", "user@example.com", capturedEmail)
+	}
+}
+
+func TestAuthWithOAuth2Handler_Security_RedirectURI(t *testing.T) {
+	var capturedRedirectURI string
+	server, tokenURL, userInfoURL := mockOAuth2Server(t,
+		func(w http.ResponseWriter, r *http.Request) {
+			capturedRedirectURI = r.FormValue("redirect_uri")
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]string{"access_token": "at", "token_type": "Bearer"})
+		},
+		func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"sub": "u1", "email": "test@example.com", "email_verified": true,
+			})
+		},
+	)
+
+	cfg := config.NewDefaultConfig()
+	cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
+	cfg.Server.Addr = "myapp.com"
+	cfg.Server.EnableTLS = true
+	cfg.OAuth2Providers = map[string]config.OAuth2Provider{
+		"google": {
+			TokenURL: tokenURL, UserInfoURL: userInfoURL, Name: config.OAuth2ProviderGoogle,
+			RedirectURLPath: "/auth/callback",
+		},
+	}
+
+	mockDb := &mock.Db{}
+	mockDb.GetUserByEmailFunc = func(email string) (*db.User, error) {
+		return &db.User{Email: email, Oauth2: true}, nil
+	}
+
+	app := &App{
+		configProvider: config.NewProvider(cfg),
+		validator:      &DefaultValidator{},
+		logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
+		dbAuth:         mockDb,
+	}
+
+	// Client sends a malicious redirect_uri
+	body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "https://attacker.com/steal-code"}`
+	req := httptest.NewRequest("POST", "/auth-with-oauth2", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx := context.WithValue(req.Context(), oauth2.HTTPClient, server.Client())
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	app.AuthWithOAuth2Handler(rr, req)
+
+	expectedRedirectURI := "https://myapp.com/auth/callback"
+	if capturedRedirectURI != expectedRedirectURI {
+		t.Errorf("expected server-side redirect URI %q, got %q", expectedRedirectURI, capturedRedirectURI)
 	}
 }

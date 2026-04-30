@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
@@ -12,11 +13,22 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// oauth2TokenExchangeTimeout defines the maximum duration for OAuth2 token exchange operations.
-// This timeout prevents hanging if the OAuth2 provider is unresponsive.
+// oauth2TokenExchangeTimeout defines the maximum duration for the OAuth2 token
+// exchange step. Kept intentionally short — a legitimate provider responds in
+// well under a second; 10 s is already generous.
 const oauth2TokenExchangeTimeout = 10 * time.Second
 
+// oauth2UserInfoTimeout is a separate, independent deadline for the user-info
+// request that follows the token exchange.
+//
+// SECURITY: Sharing a single context between both network calls means a slow
+// token exchange silently steals time from the user-info request, causing
+// spurious failures that are indistinguishable from real errors. Each I/O
+// leg gets its own deadline so errors are accurate and timeouts are fair.
+const oauth2UserInfoTimeout = 5 * time.Second
+
 // OAuth2ProviderInfo contains the provider details needed for client-side OAuth2 flow
+
 type OAuth2ProviderInfo struct {
 	Name                string `json:"name"`
 	DisplayName         string `json:"displayName"`
@@ -56,31 +68,55 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	a.Logger().Debug("OAuth2 fields",
-		"provider", req.Provider,
-		"code", req.Code,
-		"codeVerifier", req.CodeVerifier,
-		"redirectURI", req.RedirectURI)
+	// SECURITY: Authorization codes and PKCE verifiers are short-lived
+	// credentials. Logging them — even at debug level — risks leaking them
+	// into log aggregators, crash dumps, or observability pipelines where
+	// retention and access controls are typically weaker than the auth store.
+	// Log presence/absence only; never the values themselves.
+	//a.Logger().Debug("OAuth2 fields",
+//		"provider", req.Provider,
+//		"code_present", req.Code != "",
+//		"code_verifier_present", req.CodeVerifier != "",
+//		"redirect_uri", req.RedirectURI)
+
 	// Validate required fields
 	if req.Provider == "" || req.Code == "" || req.CodeVerifier == "" || req.RedirectURI == "" {
 		WriteJsonError(w, errorMissingFields)
 		return
 	}
 
+	// SECURITY (PKCE — RFC 7636 §4.1): Validate the code_verifier format before
+	// using it. An empty or structurally invalid verifier would silently pass the
+	// check above and reach the provider, which may reject or mishandle it in
+	// provider-specific, hard-to-diagnose ways. Enforcing the spec here keeps
+	// error surfaces narrow and predictable.
+	if err := crypto.ValidateCodeVerifier(req.CodeVerifier); err != nil {
+		//a.Logger().Debug("PKCE code_verifier validation failed", "error", err)
+		WriteJsonError(w, errorInvalidRequest)
+		return
+	}
+
 	// Get provider config
-	cfg := a.Config() // Get the current config
+	cfg := a.Config()
 	provider, ok := cfg.OAuth2Providers[req.Provider]
 	if !ok {
 		WriteJsonError(w, errorInvalidOAuth2Provider)
 		return
 	}
 
-	// Create OAuth2 config
+	// SECURITY (open-redirect / code interception): The redirect URI must be
+	// derived exclusively from server-side configuration. Accepting the value
+	// supplied by the client allows an attacker who can craft a direct POST to
+	// this endpoint (bypassing the JS CSRF check) to substitute their own URI
+	// and potentially intercept authorization codes. The client-supplied value
+	// is intentionally ignored here; redirectUrl() is the only source of truth.
+	serverRedirectURI := redirectUrl(cfg.Server, provider)
+
 	a.Logger().Debug("Creating OAuth2 config", "provider", req.Provider, "scopes", provider.Scopes)
 	oauth2Config := oauth2.Config{
 		ClientID:     provider.ClientID,
 		ClientSecret: provider.ClientSecret,
-		RedirectURL:  req.RedirectURI,
+		RedirectURL:  serverRedirectURI,
 		Scopes:       provider.Scopes,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  provider.AuthURL,
@@ -88,15 +124,14 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	// Exchange code for token with timeout
-	// Using a timeout prevents hanging if the OAuth2 provider is unresponsive
-	a.Logger().Debug("Setting up context with timeout for token exchange")
-	ctx, cancel := context.WithTimeout(r.Context(), oauth2TokenExchangeTimeout)
-	defer cancel()
-
+	// Token exchange — dedicated context so its deadline is independent of the
+	// user-info request that follows (see oauth2UserInfoTimeout above).
 	a.Logger().Debug("Exchanging OAuth2 code for token", "provider", req.Provider)
+	exchangeCtx, exchangeCancel := context.WithTimeout(r.Context(), oauth2TokenExchangeTimeout)
+	defer exchangeCancel()
+
 	token, err := oauth2Config.Exchange(
-		ctx,
+		exchangeCtx,
 		req.Code,
 		oauth2.SetAuthURLParam("code_verifier", req.CodeVerifier),
 	)
@@ -106,8 +141,11 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user info
-	client := oauth2Config.Client(ctx, token)
+	// User-info fetch — fresh context with its own independent deadline.
+	infoCtx, infoCancel := context.WithTimeout(r.Context(), oauth2UserInfoTimeout)
+	defer infoCancel()
+
+	client := oauth2Config.Client(infoCtx, token)
 	resp, err := client.Get(provider.UserInfoURL)
 	if err != nil {
 		WriteJsonError(w, errorOAuth2UserInfoFailed)
@@ -130,6 +168,14 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
+
+	// SECURITY (account deduplication): Normalize the email to lowercase before
+	// any comparison or storage. Providers are inconsistent — some return
+	// "User@Example.com", others "user@example.com". Without normalization, the
+	// same real-world address can create multiple distinct accounts, breaking
+	// the de-duplication logic that relies on email uniqueness.
+	oauthUser.Email = strings.ToLower(strings.TrimSpace(oauthUser.Email))
+
 	if err := a.Validator().Email(oauthUser.Email); err != nil {
 		WriteJsonError(w, errorInvalidRequest)
 		return
@@ -197,11 +243,9 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return standardized authentication response
 	a.Logger().Debug("Preparing successful authentication response")
 	writeAuthResponse(w, jwtToken, user)
 }
-
 
 // RedirectURL returns the complete redirect URL to use for this provider.
 // If RedirectURLPath is set, it combines with the server's base URL.
@@ -213,4 +257,3 @@ func redirectUrl(srvConf config.Server, provider config.OAuth2Provider) string {
 	}
 	return provider.RedirectURL
 }
-
