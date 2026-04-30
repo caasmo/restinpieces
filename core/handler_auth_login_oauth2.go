@@ -102,7 +102,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// state signature) and Login CSRF (intercepted codes missing the client's LocalStorage verifier).
 	cfg := a.Config()
 	if err := crypto.VerifyOauth2StateToken(req.State, req.CodeVerifier, cfg.Jwt.Oauth2StateSecret); err != nil {
-		a.Logger().Warn("invalid oauth2 state token", "error", err)
+		//a.Logger().Warn("invalid oauth2 state token", "error", err)
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
@@ -122,7 +122,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// is intentionally ignored here; redirectUrl() is the only source of truth.
 	serverRedirectURI := redirectUrl(cfg.Server, provider)
 
-	a.Logger().Debug("Creating OAuth2 config", "provider", req.Provider, "scopes", provider.Scopes)
+	//a.Logger().Debug("Creating OAuth2 config", "provider", req.Provider, "scopes", provider.Scopes)
 	oauth2Config := oauth2.Config{
 		ClientID:     provider.ClientID,
 		ClientSecret: provider.ClientSecret,
@@ -136,7 +136,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	// Token exchange — dedicated context so its deadline is independent of the
 	// user-info request that follows (see oauth2UserInfoTimeout above).
-	a.Logger().Debug("Exchanging OAuth2 code for token", "provider", req.Provider)
+	//a.Logger().Debug("Exchanging OAuth2 code for token", "provider", req.Provider)
 	exchangeCtx, exchangeCancel := context.WithTimeout(r.Context(), oauth2TokenExchangeTimeout)
 	defer exchangeCancel()
 
@@ -145,7 +145,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		req.Code,
 		oauth2.SetAuthURLParam("code_verifier", req.CodeVerifier),
 	)
-	a.Logger().Debug("OAuth2 token exchange completed", "provider", req.Provider, "token", token != nil)
+	//a.Logger().Debug("OAuth2 token exchange completed", "provider", req.Provider, "token", token != nil)
 	if err != nil {
 		WriteJsonError(w, errorOAuth2TokenExchangeFailed)
 		return
@@ -163,13 +163,13 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			a.Logger().Warn("failed to close response body", "error", err)
+			//a.Logger().Warn("failed to close response body", "error", err)
 		}
 	}()
 
 	oauthUser, err := oauth2provider.UserFromUserInfoURL(resp, provider.Name)
 	if err != nil {
-		a.Logger().Debug("Failed to map provider user info", "error", err)
+		//a.Logger().Debug("Failed to map provider user info", "error", err)
 		WriteJsonError(w, errorOAuth2UserInfoProcessingFailed)
 		return
 	}
