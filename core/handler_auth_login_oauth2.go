@@ -9,7 +9,6 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
-	"github.com/caasmo/restinpieces/db"
 	oauth2provider "github.com/caasmo/restinpieces/oauth2"
 	"golang.org/x/oauth2"
 )
@@ -192,15 +191,13 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	existingUser, err := a.DbAuth().GetUserByEmail(oauthUser.Email)
+	user, err := a.DbAuth().GetUserByEmail(oauthUser.Email)
 	if err != nil {
 		WriteJsonError(w, errorOAuth2DatabaseError)
 		return
 	}
 
-	var user *User
-
-	if existingUser == nil {
+	if user == nil {
 		// Unknown email — first-time OAuth2 signup. Create the account.
 		user, err = a.DbAuth().CreateUserWithOauth2(*oauthUser)
 		if err != nil {
@@ -210,15 +207,12 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 			WriteJsonError(w, errorOAuth2DatabaseError)
 			return
 		}
-	} else if !existingUser.Oauth2 {
+	} else if !user.Oauth2 {
 		// Email exists but was registered with a password. Reject — implicit
 		// account linking inside a login endpoint is not allowed. The user
 		// must authenticate first and then explicitly link via POST /link-oauth2.
-		WriteJsonError(w, errorAccountExistsDifferentMethod)
+		WriteJsonError(w, errorEmailConflict)
 		return
-	} else {
-		// Existing OAuth2 user — no writes needed.
-		user = existingUser
 	}
 
 	// Generate JWT session token.

@@ -186,6 +186,15 @@ func (d *Db) CreateUserWithPassword(user db.User) (*db.User, error) {
 	return &createdUser, nil
 }
 
+// CreateUserWithOauth2 inserts a new user authenticated via OAuth2.
+//
+// Strict INSERT — no ON CONFLICT update. The handler upstream has already
+// established via GetUserByEmail that the email is either absent or belongs
+// to an existing OAuth2 user. Mutating an existing row here is never correct;
+// account linking belongs in the authenticated /link-oauth2 endpoint.
+//
+// On email conflict (narrow race between GetUserByEmail and this insert)
+// sqlitex returns an error which the caller surfaces as a generic DB error.
 func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 	conn, err := d.pool.Take(context.TODO())
 	if err != nil {
@@ -195,11 +204,8 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 
 	var createdUser db.User
 	err = sqlitex.Execute(conn,
-		`INSERT INTO users (name, password, verified, oauth2, avatar, email, emailVisibility) 
+		`INSERT INTO users (name, password, verified, oauth2, avatar, email, emailVisibility)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(email) DO UPDATE SET
-			oauth2 = true,
-			updated = (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
 		RETURNING id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`,
 		&sqlitex.ExecOptions{
 			ResultFunc: func(stmt *sqlite.Stmt) error {
@@ -212,7 +218,7 @@ func (d *Db) CreateUserWithOauth2(user db.User) (*db.User, error) {
 			Args: []interface{}{
 				user.Name,            // 1. name
 				"",                   // 2. password — OAuth2 users have no password
-				user.Verified,        // 3. verified
+				true,                 // 3. verified — provider has already verified the email
 				true,                 // 4. oauth2
 				user.Avatar,          // 5. avatar
 				user.Email,           // 6. email
