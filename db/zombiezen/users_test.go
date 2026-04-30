@@ -167,6 +167,27 @@ func TestUserLifecycle(t *testing.T) {
 			t.Error("expected user to be verified in database, but they are not")
 		}
 	})
+
+	t.Run("CreateWithOauth2_Conflict", func(t *testing.T) {
+		// 1. Create a user
+		_, err := testDB.CreateUserWithOauth2(db.User{
+			Name:  "Oauth User 1",
+			Email: "oauth_conflict@example.com",
+		})
+		if err != nil {
+			t.Fatalf("Initial OAuth user creation failed: %v", err)
+		}
+
+		// 2. Try to create again with the same email. It should FAIL now.
+		// (Previous behavior might have been ON CONFLICT update/no-op)
+		_, err = testDB.CreateUserWithOauth2(db.User{
+			Name:  "Oauth User 2",
+			Email: "oauth_conflict@example.com",
+		})
+		if err == nil {
+			t.Error("expected error on CreateUserWithOauth2 conflict, but got nil")
+		}
+	})
 }
 
 func TestUser_EdgeCases(t *testing.T) {

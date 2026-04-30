@@ -228,6 +228,33 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 			expectCreate: false, // Should not create a new user
 		},
 		{
+			name: "failed login - email exists with password (no linking)",
+			dbSetup: func(m *mock.Db) {
+				existingUser := testUser
+				existingUser.Oauth2 = false // Password user
+				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					return &existingUser, nil
+				}
+			},
+			tokenHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if err := json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"}); err != nil {
+					t.Fatalf("failed to write mock token response: %v", err)
+				}
+			},
+			userInfoHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if err := json.NewEncoder(w).Encode(map[string]interface{}{
+					"sub": "user123", "email": "test@example.com", "email_verified": true,
+				}); err != nil {
+					t.Fatalf("failed to write mock user info response: %v", err)
+				}
+			},
+			wantStatus:   http.StatusConflict,
+			wantCode:     CodeErrorEmailConflict,
+			expectCreate: false,
+		},
+		{
 			name: "oauth2 token exchange fails",
 			dbSetup: func(m *mock.Db) {},
 			tokenHandler: func(w http.ResponseWriter, r *http.Request) {
