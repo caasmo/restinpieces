@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/crypto"
 )
 
 // TestListOAuth2ProvidersHandler_Success tests the happy path scenarios for the
@@ -84,8 +85,13 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 				if pInfo.State == "" {
 					t.Error("State should not be empty")
 				}
-				if pInfo.CodeVerifier != "" {
-					t.Error("CodeVerifier should be empty for non-PKCE")
+				if pInfo.CodeVerifier == "" {
+					t.Error("CodeVerifier should not be empty (mandatory for cryptographic state binding)")
+				}
+
+				// Verify the cryptographic binding of the state token
+				if err := crypto.VerifyOauth2StateToken(pInfo.State, pInfo.CodeVerifier, cfg.Jwt.Oauth2StateSecret); err != nil {
+					t.Errorf("State token verification failed: %v", err)
 				}
 
 				authURL, err := url.Parse(pInfo.AuthURL)

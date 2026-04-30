@@ -22,6 +22,8 @@ func NewDefaultConfig() *Config {
 			EmailChangeOtpTokenDuration:  Duration{Duration: 15 * time.Minute},
 			VerificationEmailOtpSecret:     crypto.RandomString(32, crypto.AlphanumericAlphabet),
 			VerificationEmailOtpTokenDuration: Duration{Duration: 15 * time.Minute},
+			Oauth2StateSecret:            crypto.RandomString(32, crypto.AlphanumericAlphabet),
+			Oauth2StateTokenDuration:     Duration{Duration: 10 * time.Minute},
 		},
 		Scheduler: Scheduler{
 			Interval:              Duration{Duration: 60 * time.Second},

@@ -45,7 +45,6 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 			"provider", name,
 			"redirectURI", rUrl)
 
-		state := crypto.Oauth2State()
 		oauth2Config := oauth2.Config{
 			ClientID:     provider.ClientID,
 			ClientSecret: provider.ClientSecret,
@@ -57,26 +56,46 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 			},
 		}
 
-		// Create base provider info
-		info := OAuth2ProviderInfo{
-			Name:        name,
-			DisplayName: provider.DisplayName,
-			State:       state,
-			RedirectURL: rUrl,
+		// 1. Unconditional Code Verifier Generation
+		// We ALWAYS generate a high-entropy code_verifier (43-128 chars), regardless
+		// of whether the provider natively supports PKCE. This acts as our backend-enforced
+		// cryptographic nonce to protect our endpoint from CSRF and Confused Deputy attacks.
+		codeVerifier := crypto.Oauth2CodeVerifier()
+
+		// 2. Cryptographic State Binding
+		// The JWT state is strictly bound to the codeVerifier. The client must return
+		// BOTH the state and the exact codeVerifier to our backend to complete the login.
+		state, err := crypto.NewJwtOauth2StateToken(codeVerifier, cfg.Jwt.Oauth2StateSecret, cfg.Jwt.Oauth2StateTokenDuration.Duration)
+		if err != nil {
+			a.Logger().Error("failed to generate oauth2 state token", "error", err)
+			WriteJsonError(w, errorTokenGeneration)
+			return
 		}
 
-		// Handle PKCE if enabled
+		// Create base provider info
+		info := OAuth2ProviderInfo{
+			Name:         name,
+			DisplayName:  provider.DisplayName,
+			State:        state,
+			RedirectURL:  rUrl,
+			CodeVerifier: codeVerifier,
+		}
+
+		// 3. Provider-Specific PKCE Handling
 		if provider.PKCE {
-			codeVerifier := crypto.Oauth2CodeVerifier()
+			// If the provider supports PKCE natively, we calculate the S256 challenge
+			// and append it to the AuthURL so the provider can verify it on their end.
 			codeChallenge := crypto.S256Challenge(codeVerifier)
 			info.AuthURL = oauth2Config.AuthCodeURL(state,
 				oauth2.SetAuthURLParam("code_challenge", codeChallenge),
 				oauth2.SetAuthURLParam("code_challenge_method", crypto.PKCECodeChallengeMethod),
 			)
-			info.CodeVerifier = codeVerifier
 			info.CodeChallenge = codeChallenge
 			info.CodeChallengeMethod = crypto.PKCECodeChallengeMethod
 		} else {
+			// If the provider ignores PKCE, we simply omit the challenge from the AuthURL.
+			// The provider won't verify it, but OUR backend will still verify the
+			// state <-> code_verifier bind upon the POST return!
 			info.AuthURL = oauth2Config.AuthCodeURL(state)
 		}
 

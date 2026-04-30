@@ -229,6 +229,14 @@ type Jwt struct {
 	VerificationEmailOtpSecret string `toml:"verification_email_otp_secret" comment:"Secret key for email OTP verification tokens"`
 	// Duration for which email OTP verification tokens are valid.
 	VerificationEmailOtpTokenDuration Duration `toml:"verification_email_otp_token_duration" comment:"Duration email OTP verification tokens remain valid"`
+
+	// Secret key for OAuth2 state tokens. Used to HMAC sign the JWT containing
+	// the code_verifier hash, ensuring the state cannot be forged.
+	Oauth2StateSecret string `toml:"oauth2_state_secret" comment:"Secret key for OAuth2 state tokens"`
+
+	// Duration for which OAuth2 state tokens are valid. Keeps the window short
+	// to minimize replay risks.
+	Oauth2StateTokenDuration Duration `toml:"oauth2_state_token_duration" comment:"Duration OAuth2 state tokens remain valid"`
 }
 
 // Scheduler defines settings for the background job processing queue.

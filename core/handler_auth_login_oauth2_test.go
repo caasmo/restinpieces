@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/db/mock"
 	"golang.org/x/oauth2"
@@ -43,6 +44,10 @@ const validCodeVerifier = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 // are malformed, have an incorrect content type, are missing required fields, or
 // specify an unknown provider, all before attempting any external communication.
 func TestAuthWithOAuth2Handler_Validation(t *testing.T) {
+	cfg := config.NewDefaultConfig()
+	cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
+	vState, _ := crypto.NewJwtOauth2StateToken(validCodeVerifier, cfg.Jwt.Oauth2StateSecret, 10*time.Minute)
+
 	testCases := []struct {
 		name          string
 		contentType   string
@@ -67,28 +72,42 @@ func TestAuthWithOAuth2Handler_Validation(t *testing.T) {
 		{
 			name:          "missing provider field",
 			contentType:   "application/json",
-			requestBody:   `{"code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`,
+			requestBody:   `{"code": "c", "code_verifier": "` + validCodeVerifier + `", "state": "` + vState + `", "redirect_uri": "ru"}`,
 			providerInCfg: true,
 			wantError:     errorMissingFields,
 		},
 		{
 			name:          "missing code field",
 			contentType:   "application/json",
-			requestBody:   `{"provider": "p", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`,
+			requestBody:   `{"provider": "p", "code_verifier": "` + validCodeVerifier + `", "state": "` + vState + `", "redirect_uri": "ru"}`,
+			providerInCfg: true,
+			wantError:     errorMissingFields,
+		},
+		{
+			name:          "missing state field",
+			contentType:   "application/json",
+			requestBody:   `{"provider": "p", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`,
 			providerInCfg: true,
 			wantError:     errorMissingFields,
 		},
 		{
 			name:          "unknown provider",
 			contentType:   "application/json",
-			requestBody:   `{"provider": "unknown", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`,
-			providerInCfg: false, // The key for this test
+			requestBody:   `{"provider": "unknown", "code": "c", "code_verifier": "` + validCodeVerifier + `", "state": "` + vState + `", "redirect_uri": "ru"}`,
+			providerInCfg: false,
 			wantError:     errorInvalidOAuth2Provider,
 		},
 		{
 			name:          "invalid code verifier",
 			contentType:   "application/json",
-			requestBody:   `{"provider": "google", "code": "c", "code_verifier": "too-short", "redirect_uri": "ru"}`,
+			requestBody:   `{"provider": "google", "code": "c", "code_verifier": "too-short", "state": "` + vState + `", "redirect_uri": "ru"}`,
+			providerInCfg: true,
+			wantError:     errorInvalidRequest,
+		},
+		{
+			name:          "invalid state token",
+			contentType:   "application/json",
+			requestBody:   `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "state": "invalid-token", "redirect_uri": "ru"}`,
 			providerInCfg: true,
 			wantError:     errorInvalidRequest,
 		},
@@ -96,13 +115,14 @@ func TestAuthWithOAuth2Handler_Validation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := config.NewDefaultConfig()
+			localCfg := config.NewDefaultConfig()
+			localCfg.Jwt.Oauth2StateSecret = cfg.Jwt.Oauth2StateSecret
 			if tc.providerInCfg {
-				cfg.OAuth2Providers = map[string]config.OAuth2Provider{"google": {Name: config.OAuth2ProviderGoogle}}
+				localCfg.OAuth2Providers = map[string]config.OAuth2Provider{"google": {Name: config.OAuth2ProviderGoogle}}
 			}
 
 			app := &App{
-				configProvider: config.NewProvider(cfg),
+				configProvider: config.NewProvider(localCfg),
 				validator:      &DefaultValidator{},
 				logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
 			}
@@ -286,7 +306,8 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 				dbAuth:         mockDb,
 			}
 
-			body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`
+			state, _ := crypto.NewJwtOauth2StateToken(validCodeVerifier, cfg.Jwt.Oauth2StateSecret, 10*time.Minute)
+			body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "state": "` + state + `", "redirect_uri": "ru"}`
 			req := httptest.NewRequest("POST", "/auth-with-oauth2", strings.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -404,7 +425,8 @@ func TestAuthWithOAuth2Handler_DependencyFailures(t *testing.T) {
 				dbAuth:         mockDb,
 			}
 
-			body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`
+			state, _ := crypto.NewJwtOauth2StateToken(validCodeVerifier, cfg.Jwt.Oauth2StateSecret, 10*time.Minute)
+			body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "state": "` + state + `", "redirect_uri": "ru"}`
 			req := httptest.NewRequest("POST", "/auth-with-oauth2", strings.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -468,7 +490,8 @@ func TestAuthWithOAuth2Handler_Security_EmailNormalization(t *testing.T) {
 		dbAuth:         mockDb,
 	}
 
-	body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "ru"}`
+	state, _ := crypto.NewJwtOauth2StateToken(validCodeVerifier, cfg.Jwt.Oauth2StateSecret, 10*time.Minute)
+	body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "state": "` + state + `", "redirect_uri": "ru"}`
 	req := httptest.NewRequest("POST", "/auth-with-oauth2", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -527,7 +550,8 @@ func TestAuthWithOAuth2Handler_Security_RedirectURI(t *testing.T) {
 	}
 
 	// Client sends a malicious redirect_uri
-	body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "redirect_uri": "https://attacker.com/steal-code"}`
+	state, _ := crypto.NewJwtOauth2StateToken(validCodeVerifier, cfg.Jwt.Oauth2StateSecret, 10*time.Minute)
+	body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "state": "` + state + `", "redirect_uri": "https://attacker.com/steal-code"}`
 	req := httptest.NewRequest("POST", "/auth-with-oauth2", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 

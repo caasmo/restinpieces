@@ -50,6 +50,7 @@ type oauth2Request struct {
 	Provider     string `json:"provider"`
 	Code         string `json:"code"`
 	CodeVerifier string `json:"code_verifier"`
+	State        string `json:"state"` // Must now be explicitly received
 	RedirectURI  string `json:"redirect_uri"`
 }
 
@@ -79,8 +80,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 //		"code_verifier_present", req.CodeVerifier != "",
 //		"redirect_uri", req.RedirectURI)
 
-	// Validate required fields
-	if req.Provider == "" || req.Code == "" || req.CodeVerifier == "" || req.RedirectURI == "" {
+	// Validate required fields (now explicitly includes req.State)
+	if req.Provider == "" || req.Code == "" || req.CodeVerifier == "" || req.State == "" || req.RedirectURI == "" {
 		WriteJsonError(w, errorMissingFields)
 		return
 	}
@@ -96,8 +97,17 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get provider config
+	// Verify the JWT state is valid and cryptographically bound to the code_verifier
+	// This completely blocks Confused Deputy attacks (sending fake codes without a valid
+	// state signature) and Login CSRF (intercepted codes missing the client's LocalStorage verifier).
 	cfg := a.Config()
+	if err := crypto.VerifyOauth2StateToken(req.State, req.CodeVerifier, cfg.Jwt.Oauth2StateSecret); err != nil {
+		a.Logger().Warn("invalid oauth2 state token", "error", err)
+		WriteJsonError(w, errorInvalidRequest)
+		return
+	}
+
+	// Get provider config
 	provider, ok := cfg.OAuth2Providers[req.Provider]
 	if !ok {
 		WriteJsonError(w, errorInvalidOAuth2Provider)
