@@ -67,8 +67,9 @@ Manages the application lifecycle.
 
 Manages the secure configuration store.
 
--   **`dump`**: Outputs the latest configuration in plaintext.
-    -   `ripc  config dump -scope myapp`
+-   **`dump`**: Outputs the latest effective configuration (defaults + stored overrides) in plaintext.
+    -   `ripc  config dump --scope myapp`
+    -   `ripc  config dump --raw` (Outputs only the stored overrides)
 -   **`get [filter]`**: Retrieves configuration values by path, optionally filtered.
     -   `ripc  config get "server.http_port"`
 -   **`init`**: Creates a new configuration with default values.
