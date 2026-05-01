@@ -10,6 +10,14 @@ import (
 
 // NewDefaultConfig creates a new Config with sensible defaults.
 // All secret values are randomly generated.
+// 
+// effective = defaults ← stored_overrides
+// The key invariant is that defaults are always a complete, valid config. The
+// stored TOML is intentionally partial — it only encodes intent to deviate.
+// 
+// New fields in code always have a value, even if the stored config predates them
+// Stale fields in the stored TOML are silently ignored on unmarshal
+// No invalid config at startup
 func NewDefaultConfig() *Config {
 	return &Config{
 		PublicDir: "static/dist",

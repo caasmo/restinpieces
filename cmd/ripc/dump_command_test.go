@@ -50,7 +50,7 @@ func TestDumpConfig_Success(t *testing.T) {
 	})
 	var stdout bytes.Buffer
 
-	err := dumpConfig(&stdout, mockStore, scope)
+	err := dumpConfig(&stdout, mockStore, scope, true)
 
 	if err != nil {
 		t.Fatalf("dumpConfig() returned an unexpected error: %v", err)
@@ -68,7 +68,7 @@ func TestDumpConfig_DefaultScope(t *testing.T) {
 	})
 	var stdout bytes.Buffer
 
-	err := dumpConfig(&stdout, mockStore, "") // Empty scope triggers default
+	err := dumpConfig(&stdout, mockStore, "", true) // Empty scope triggers default
 
 	if err != nil {
 		t.Fatalf("dumpConfig() with empty scope returned an unexpected error: %v", err)
@@ -84,7 +84,7 @@ func TestDumpConfig_Failure_StoreReadError(t *testing.T) {
 	mockStore.ForceGetError = true
 	var stdout bytes.Buffer
 
-	err := dumpConfig(&stdout, mockStore, "any_scope")
+	err := dumpConfig(&stdout, mockStore, "any_scope", false)
 
 	if err == nil {
 		t.Fatal("dumpConfig() was expected to return an error, but did not")
@@ -101,7 +101,7 @@ func TestDumpConfig_Failure_OutputWriteError(t *testing.T) {
 	})
 	var failingStdout failingWriter
 
-	err := dumpConfig(&failingStdout, mockStore, "any_scope")
+	err := dumpConfig(&failingStdout, mockStore, "any_scope", true)
 
 	if err == nil {
 		t.Fatal("dumpConfig() was expected to return an error, but did not")
@@ -116,4 +116,33 @@ type failingWriter struct{}
 
 func (fw *failingWriter) Write(p []byte) (n int, err error) {
 	return 0, errors.New("forced write error")
+}
+
+// TestDumpConfig_Effective verifies that effective dump merges defaults with overrides.
+func TestDumpConfig_Effective(t *testing.T) {
+	scope := "test_app"
+	// Override server.addr from default :8080 to :9090
+	override := `[server]
+addr = ":9090"
+`
+	mockStore := NewMockDumpSecureStore(map[string][]byte{
+		scope: []byte(override),
+	})
+	var stdout bytes.Buffer
+
+	err := dumpConfig(&stdout, mockStore, scope, false) // raw = false for effective dump
+
+	if err != nil {
+		t.Fatalf("dumpConfig() returned an unexpected error: %v", err)
+	}
+
+	got := stdout.Bytes()
+	// Check if the override is present. toml.Marshal may use single or double quotes.
+	if !bytes.Contains(got, []byte(`addr = ':9090'`)) && !bytes.Contains(got, []byte(`addr = ":9090"`)) {
+		t.Errorf("dumpConfig() output missing override: got %q", string(got))
+	}
+	// Check if a default value is still present.
+	if !bytes.Contains(got, []byte(`public_dir = 'static/dist'`)) && !bytes.Contains(got, []byte(`public_dir = "static/dist"`)) {
+		t.Errorf("dumpConfig() output missing default value: got %q", string(got))
+	}
 }

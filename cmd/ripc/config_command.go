@@ -51,6 +51,7 @@ var (
 			"scope":  {DefaultValue: config.ScopeApplication, Usage: "Scope for the configuration (affects: set, get, paths, dump, diff, rollback, save)"},
 			"format": {DefaultValue: "toml", Usage: "Format of the configuration file (affects: set, save)"},
 			"desc":   {Usage: "Optional description for this configuration version (affects: set, save)"},
+			"raw":    {Usage: "Dump the raw stored configuration instead of the effective one (affects: dump)"},
 		},
 		Examples: []string{
 			"ripc config set --scope my-app server.port 8080",
@@ -142,13 +143,13 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		}
 		handlePathsCommand(secureStore, scope, filter)
 	case "dump":
-		scope, err := parseDumpArgs(subcommandArgs)
+		scope, raw, err := parseDumpArgs(subcommandArgs)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			printConfigUsage()
 			os.Exit(1)
 		}
-		handleDumpCommand(secureStore, scope)
+		handleDumpCommand(secureStore, scope, raw)
 	case "diff":
 		scope, generation, err := parseDiffArgs(subcommandArgs)
 		if err != nil {
@@ -253,19 +254,21 @@ func parsePathsArgs(args []string) (scope, filter string, err error) {
 	return *pathsScope, filter, nil
 }
 
-func parseDumpArgs(args []string) (scope string, err error) {
+func parseDumpArgs(args []string) (scope string, raw bool, err error) {
 	dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
 	dumpCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]
+	rawOpt := commandConfig.Options["raw"]
 	dumpScope := dumpCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	dumpRaw := dumpCmd.Bool("raw", false, rawOpt.Usage)
 
 	if err := dumpCmd.Parse(args); err != nil {
-		return "", fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
+		return "", false, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if dumpCmd.NArg() > 0 {
-		return "", fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
+		return "", false, fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
 	}
-	return *dumpScope, nil
+	return *dumpScope, *dumpRaw, nil
 }
 
 func parseDiffArgs(args []string) (scope string, generation int, err error) {
