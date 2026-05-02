@@ -60,7 +60,7 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
 - [Extensibility](#extensibility)
 
 ### Building on the Framework
-- [Layout Best Practices](doc/layout-best-practices.md)
+- [Layout Best Practices](#layout-best-practices)
 - [Examples](#examples)
 - [Building the Project](#building-the-project)
 - [TODO](#todo)
@@ -138,8 +138,13 @@ operations via SSH directly from your local developer machine.
 This tool encourages a workflow where most configuration and operational decisions are made locally, then securely applied to the remote environment. For detailed usage, see the **[Deployment Guide](doc/ripdep.md)**.
 
 ### Frontend Integration
-- JavaScript SDK for seamless frontend-backend interaction
-- Example usage of the SDK and authentication endpoints available at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk)
+The framework includes a comprehensive JavaScript SDK designed for seamless
+frontend-backend interaction. The SDK offers full support for all
+authentication workflows, including password-based and OAuth2 flows, ensuring a
+consistent integration experience. Beyond authentication, it provides robust
+utilities for custom error handling, local storage management, and general-purpose
+request functions to simplify API communication. 
+[restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk).
 
 ### Job Framework
 The framework includes a robust job queue system for handling asynchronous tasks, supporting both one-time and recurrent jobs. This is essential for offloading work from the request-response cycle, such as sending emails, processing data, or performing periodic maintenance.
