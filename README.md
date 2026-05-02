@@ -39,26 +39,29 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
 
 # Content
 
-- [Key Features](#key-features)
-  - [Data Durability](#data-durability)
-  - [Database Drivers](#database-drivers)
-  - [Router](#router)
-  - [Cache](#cache)
-  - [Authentication](#authentication)
-  - [Security](#security)
-  - [Core Infrastructure](#core-infrastructure)
-  - [Configuration Management](#configuration-management)
-  - [Deployment & Operations](#deployment--operations)
-  - [Frontend Integration](#frontend-integration)
-  - [Job Framework](#job-framework)
-  - [Performance](#performance)
-  - [Metrics](#metrics)
-  - [Logger](#logger)
-  - [Notifications](#notifications)
-  - [Mailer](#mailer)
-  - [Middleware](#middleware)
-- [Examples](#examples)
+### [Framework Key Features](#key-features)
+- [Data Durability](#data-durability)
+- [Database Drivers](#database-drivers)
+- [Router](#router)
+- [Cache](#cache)
+- [Authentication](#authentication)
+- [Security](#security)
+- [Core Infrastructure](#core-infrastructure)
+- [Configuration Management](#configuration-management)
+- [Deployment & Operations](#deployment--operations)
+- [Frontend Integration](#frontend-integration)
+- [Job Framework](#job-framework)
+- [Performance](#performance)
+- [Metrics](#metrics)
+- [Logger](#logger)
+- [Notifications](#notifications)
+- [Mailer](#mailer)
+- [Middleware](#middleware)
 - [Extensibility](#extensibility)
+
+### Building on the Framework
+- [Layout Best Practices](doc/layout-best-practices.md)
+- [Examples](#examples)
 - [Building the Project](#building-the-project)
 - [TODO](#todo)
 
@@ -199,6 +202,34 @@ The framework provides a collection of built-in middleware to handle common cros
 ## Extensibility
 - Embedded file server with gzip compression for serving static assets.
 - Built-in asset pipeline (minification + gzip bundling for HTML/CSS/JS) including scripts at [restinpieces-js-sdk/gen](https://github.com/caasmo/restinpieces-js-sdk/tree/master/gen).
+
+## Layout Best Practices
+
+Applications built on restinpieces follow a flat, single-package structure:
+
+```
+myapp/
+├── cmd/myapp/main.go    # entry point: flags, wiring, daemons, jobs, srv.Run()
+├── app.go               # your App wrapper — embeds *core.App, adds your state
+├── handlers.go           # HTTP handlers as methods on *App
+├── middleware.go          # custom middleware (App-aware via closure, or plain funcs)
+├── routes.go              # register framework + application routes
+├── jobs.go                # job handler implementations
+├── daemons.go             # daemon constructors
+└── web/src/, web/dist/    # frontend assets, embedded via go:embed
+```
+
+**App wrapper.** Define your own `*App` struct that embeds `*core.App` and adds project-specific state (extra DB pools, third-party clients). Handlers are methods on `*App` — no global variables, trivial to test.
+
+**Handlers and middleware.** Handlers use standard `http.HandlerFunc` signatures. Middleware closes over `*App` when it needs framework services; stateless middleware stays a plain `func(http.Handler) http.Handler`.
+
+**Routes.** All route registration lives in `routes.go`. Call `app.Router().Register()` with your chains — the framework's built-in routes are registered internally by `restinpieces.New()`, yours go on top.
+
+**Jobs and daemons.** Job handlers implement the framework's handler interface; daemons are long-running background processes. Both are constructed with the state they need and registered in `main.go` via `srv.AddJobHandler` / `srv.AddDaemon`.
+
+**Configuration.** Store secrets encrypted via [age](https://age-encryption.org/) in the shared SQLite database. Use your own config scope (never `"application"`, which the framework reserves). Generations are immutable — save always creates a new record, giving you a full audit trail.
+
+For full detail and code examples, see **[Layout Best Practices](doc/layout-best-practices.md)**.
 
 ## Building the Project
 

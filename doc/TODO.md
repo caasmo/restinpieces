@@ -1,18 +1,9 @@
 ### TODOs
 
-- config: as developement make new config options, the config saved in the db diverges
-    - on startup we "merge" deafult with db config
-    - we should update the config with ripc get db config, merge with default and save!
-    - startup should fail if default not equal to db?
-    - reconcilition
-    - you can have a legacy conf in db that is update with default, you cannot update with ripc, key does not exist,
-        - 
-- all no auth handlers securitu enumeration time attack
+- /link-oauth2 and /link-password handlers sdk, authenticated yes
+- all no auth handlers security enumeration time attack
 - ClaimUidMac is added to many jwt, do we need all, Check!!!!!!
 - precomputed Errors and Ok shoudl be exportable
-- check conflict handling in createuserforaouth2
-    - do we still need it?
-    - state we do not support signup with password after google???? document
 - bug handler_auth_login_password.go
     receive 503, maybe because no cooldown in the config yet for 
     but only happens ocasianally, not always
@@ -30,7 +21,8 @@
         - added script for generation, document an addon? like the others? 
         - no configuration, do your own validator email function
         - paswords the customBreachPasswords, app.Validator().AddPasswords(typed map)  
-    - passwords, NIST dice space allowed!!!! no trim 
+        - we leverage configstore, other scope -> ripc accepts list of words separated by \n
+            - see other scopes like litestream
 - resend otp
     - we need a little more sofisticated emial rate limit
         - allow not one per period
@@ -42,16 +34,11 @@
             exponential too complex
             4 per 5 min,    
             1 per minute 5 hour 2 periods 
-- create a middleware prerouter for error capabilitymitmatch
-    - present examples of other middleware 
-    - show restinpieces.js
-    - show response_auth, precomputesd we do not need data
-    - discuss naming of precomputed 
 - sdk shoudl wrap two calls, /register and /request-otp  some form of chain
    - we can not let user code do that??? we must i think 
    - how to make eaiseier for the user
 - TODO-Email-verification-in-registration-workflow.md
-    - TODO-sigup-login-otp-refactor.md the end is the corroboration!!!
+    - TODO-sigup-login-otp-refactor.md the end is the corroboration
 
     - **`authenticated == verified`. Full stop.**
 
@@ -79,9 +66,6 @@
     | `RequestEmailVerificationHandler` | Becomes unauthenticated — fetches user by email directly |
 
 - deprecate email verification for register
-- test for otp. follow impl-otp.md, create test skill. 
-    - from 78,2 to 75.2!!!!
-- dbAuth, verifyEmail naming is bad => Setverification or something
 - payload and payloadextra -> maybe create struct to be more clear and explicit about uniqueness
     PayloadBuilder.BuildPayloadUnique, BuildPayloadExtra???
 - PayloadEmailVerification in db/types? remove
