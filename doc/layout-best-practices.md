@@ -14,18 +14,15 @@ myapp/
 │   └── myapp/
 │       └── main.go       # entry point: flags, wiring, daemons, jobs, srv.Run()
 ├── app.go                # your App wrapper — own state + access to framework App
-├── handlers.go           # HTTP handlers as methods on *App
-├── middleware.go         # custom middleware functions
+├── handlers/             # HTTP handlers as methods on *App
+├── middleware/           # custom middleware functions
 ├── routes.go             # full route registration (framework + yours)
-├── jobs.go               # job handler implementations
-├── daemons.go            # daemon constructors and configuration
+├── jobs/                 # job handler implementations
+├── daemons/              # daemon constructors and configuration
 └── web/
     ├── src/              # frontend source
     └── dist/             # built assets, embedded via go:embed
 ```
-
-For larger applications, `handlers.go` can be split by domain (`users.go`,
-`admin.go`, `payments.go`), but the package stays at the root — no subdirectory.
 
 ---
 
@@ -77,7 +74,7 @@ Handlers are methods on `*App`. They use the standard `http.HandlerFunc` signatu
 and rely on the framework via `a.App`.
 
 ```go
-// handlers.go  (or users.go, admin.go, etc.)
+// handlers/users.go  (or admin.go, etc.)
 package myapp
 
 import (
@@ -104,7 +101,7 @@ Custom middleware follows the standard Go signature. It receives `*App` via clos
 when it needs application state.
 
 ```go
-// middleware.go
+// middleware/tenant.go
 package myapp
 
 import "net/http"
@@ -179,7 +176,7 @@ A job handler processes a single job type from the queue. Implement the interfac
 framework expects and attach it to `*App` if it needs application state.
 
 ```go
-// jobs.go
+// jobs/cert_renewal.go
 package myapp
 
 import (
@@ -217,7 +214,7 @@ A daemon is a long-running background process managed by the server lifecycle.
 Construct it with whatever state it needs, then hand it to `srv.AddDaemon`.
 
 ```go
-// daemons.go
+// daemons/litestream.go
 package myapp
 
 import (
@@ -370,14 +367,14 @@ func main() {
 
 ## Summary
 
-| Concern        | File(s)             | Receiver / Pattern                        |
+| Concern        | Directory/File      | Receiver / Pattern                        |
 |----------------|---------------------|-------------------------------------------|
 | Entry point    | `cmd/myapp/main.go` | none — wiring only                        |
 | App state      | `app.go`            | `*App` wrapping `*core.App`               |
-| Handlers       | `handlers.go` (or domain files) | methods on `*App`           |
-| Middleware     | `middleware.go`     | closure over `*App`, or plain func        |
+| Handlers       | `handlers/`         | methods on `*App`                         |
+| Middleware     | `middleware/`       | closure over `*App`, or plain func        |
 | Routes         | `routes.go`         | method on `*App`, called from main        |
-| Jobs           | `jobs.go`           | struct with `*App`, implements job iface  |
-| Daemons        | `daemons.go`        | constructor returning framework type      |
+| Jobs           | `jobs/`             | struct with `*App`, implements job iface  |
+| Daemons        | `daemons/`          | constructor returning framework type      |
 | Secrets/config | anywhere            | `app.ConfigStore()` with your own scope   |
 | Frontend       | `web/`              | embedded `fs.FS`, served from `main.go`   |

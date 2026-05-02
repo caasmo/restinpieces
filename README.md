@@ -39,7 +39,7 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
 
 # Content
 
-### [Framework Key Features](#key-features)
+### Framework Key Features
 - [Data Durability](#data-durability)
 - [Database Drivers](#database-drivers)
 - [Router](#router)
@@ -104,8 +104,11 @@ The "one process" paradigm simplifies deployment by running a single binary on a
 No CORS support is provided as it contradicts the One Process philosophy. If you need cross-origin requests, you'll need to implement CORS middleware yourself.
 
 ### Core Infrastructure
-- Uses middleware and handler standard Go patterns
-- Discoverable API endpoints (/api/refresh-auth, /api/auth-with-oauth2, etc.)
+The framework is built on standard Go patterns, utilizing middleware and handlers
+to provide a familiar and robust development experience. It features a set of
+discoverable API endpoints for essential services, such as token refreshing
+(`/api/refresh-auth`) and OAuth2 authentication (`/api/auth-with-oauth2`),
+facilitating easy integration and exploration.
 
 ### Configuration Management
 The framework's configuration is securely managed within the SQLite database.
@@ -143,7 +146,8 @@ frontend-backend interaction. The SDK offers full support for all
 authentication workflows, including password-based and OAuth2 flows, ensuring a
 consistent integration experience. Beyond authentication, it provides robust
 utilities for custom error handling, local storage management, and general-purpose
-request functions to simplify API communication. 
+request functions to simplify API communication. You can find example usage of the
+SDK and authentication endpoints at
 [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk).
 
 ### Job Framework
@@ -158,9 +162,11 @@ You can easily extend the system to run your own custom tasks. This involves two
 This design allows for a clean separation of concerns and makes it straightforward to add new background processing capabilities to your application.
 
 ### Performance
-- Optimized for high throughput (thousands of requests/second)
-- Minimal external dependencies
-- Production-ready builds with size optimization
+Engineered for high throughput, the framework is capable of handling thousands
+of requests per second while maintaining a minimal footprint by avoiding
+unnecessary external dependencies. Production-ready builds are further optimized
+for size and efficiency, ensuring rapid deployment and execution in resource-constrained
+environments.
 
 ### Metrics
 The framework provides built-in metrics collection using the `prometheus/client_golang` library. It includes a middleware that tracks the total number of HTTP requests (`http_server_requests_total`), a counter labeled by HTTP status code, allowing for detailed monitoring of server responses. Metrics collection can be toggled on or off via configuration without a server restart and is exposed on a configurable endpoint (e.g., `/metrics`) for a Prometheus server to scrape.
@@ -200,28 +206,34 @@ The framework provides a collection of built-in middleware to handle common cros
 -   **Gzip**: Serves pre-compressed static assets (`.gz` files) from a given file system (`fs.FS`) to clients that support gzip encoding. This reduces bandwidth and improves load times. If a compressed file is not found, it seamlessly falls back to the next handler.
 
 ## Examples
-
-- **JavaScript SDK Integration**: See how to integrate with the frontend using the official JavaScript SDK at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk).
-- **Custom Routers and DB Drivers**: Explore examples of using non-default routers and database drivers at [restinpieces-non-default](https://github.com/caasmo/restinpieces-non-default).
+Detailed examples and integration guides are available to help you build with the
+framework. You can explore a complete **JavaScript SDK Integration** at
+[restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk) to see how to
+connect your frontend, or review implementations of **Custom Routers and DB Drivers**
+at [restinpieces-non-default](https://github.com/caasmo/restinpieces-non-default) for
+advanced customization scenarios.
 
 ## Extensibility
-- Embedded file server with gzip compression for serving static assets.
-- Built-in asset pipeline (minification + gzip bundling for HTML/CSS/JS) including scripts at [restinpieces-js-sdk/gen](https://github.com/caasmo/restinpieces-js-sdk/tree/master/gen).
+Beyond its core features, the framework is designed to be easily extended to meet
+diverse application needs. It includes a built-in file server with gzip compression
+for efficient delivery of static assets and a dedicated asset pipeline for
+minification and bundling of HTML, CSS, and JavaScript, leveraging scripts
+available at [restinpieces-js-sdk/gen](https://github.com/caasmo/restinpieces-js-sdk/tree/master/gen).
 
 ## Layout Best Practices
 
-Applications built on restinpieces follow a flat, single-package structure:
+Applications built on restinpieces follow this structure:
 
 ```
 myapp/
 ├── cmd/myapp/main.go    # entry point: flags, wiring, daemons, jobs, srv.Run()
 ├── app.go               # your App wrapper — embeds *core.App, adds your state
-├── handlers.go           # HTTP handlers as methods on *App
-├── middleware.go          # custom middleware (App-aware via closure, or plain funcs)
-├── routes.go              # register framework + application routes
-├── jobs.go                # job handler implementations
-├── daemons.go             # daemon constructors
-└── web/src/, web/dist/    # frontend assets, embedded via go:embed
+├── handlers/            # HTTP handlers as methods on *App
+├── middleware/          # custom middleware (App-aware via closure, or plain funcs)
+├── routes.go            # register framework + application routes
+├── jobs/                # job handler implementations
+├── daemons/             # daemon constructors
+└── web/src/, web/dist/  # frontend assets, embedded via go:embed
 ```
 
 **App wrapper.** Define your own `*App` struct that embeds `*core.App` and adds project-specific state (extra DB pools, third-party clients). Handlers are methods on `*App` — no global variables, trivial to test.
