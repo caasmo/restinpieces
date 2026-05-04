@@ -1,5 +1,7 @@
 ### TODOs
 
+- expose mailer and make a developetment one
+- simple development logger
 - /link-oauth2 and /link-password handlers sdk, authenticated yes
 - all no auth handlers security enumeration time attack
 - ClaimUidMac is added to many jwt, do we need all, Check!!!!!!
