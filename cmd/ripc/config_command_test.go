@@ -133,25 +133,25 @@ func testPathsParsing(t *testing.T) {
 
 func testDumpParsing(t *testing.T) {
 	t.Run("DumpSuccess", func(t *testing.T) {
-		scope, raw, err := parseDumpArgs([]string{"--scope", "test"})
+		scope, zero, err := parseDumpArgs([]string{"--scope", "test"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if scope != "test" {
 			t.Errorf("expected scope 'test', got %q", scope)
 		}
-		if raw {
-			t.Errorf("expected raw to be false by default")
+		if zero {
+			t.Errorf("expected zero to be false by default")
 		}
 	})
 
-	t.Run("DumpRawSuccess", func(t *testing.T) {
-		_, raw, err := parseDumpArgs([]string{"--raw"})
+	t.Run("DumpZeroSuccess", func(t *testing.T) {
+		_, zero, err := parseDumpArgs([]string{"--zero"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if !raw {
-			t.Errorf("expected raw to be true when flag is set")
+		if !zero {
+			t.Errorf("expected zero to be true when flag is set")
 		}
 	})
 

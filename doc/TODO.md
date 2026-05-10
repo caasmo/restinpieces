@@ -1,5 +1,32 @@
 ### TODOs
 
+- headers, export 
+    The Common Element
+    Yes, there is one — and it's already in the framework. It's SetHeaders(w, ...map[string]string).
+    The variadic merge is the abstraction. Later maps override earlier ones. That's composability.
+    The framework's current problem isn't the function — it's that the named sets are private. The moment you export them as granular building blocks, every use case you listed is solved without adding any new concepts:
+    go// restinpieces/core — exported, documented, tested building blocks
+    var HeadersCacheImmutable   = map[string]string{ "Cache-Control": "public, max-age=31536000, immutable" }
+    var HeadersCacheHTML        = map[string]string{ "Cache-Control": "public, no-cache" }
+    var HeadersCSPStrict        = map[string]string{ "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'" }
+    var HeadersCSPPermissive    = map[string]string{ "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'..." }
+    var HeadersNoSniff          = map[string]string{ "X-Content-Type-Options": "nosniff" }
+    var HeadersReferrerStrict   = map[string]string{ "Referrer-Policy": "strict-origin-when-cross-origin" }
+    var HeadersHSTS             = map[string]string{ "Strict-Transport-Security": "max-age=63072000; includeSubDomains" }
+    Each use case you listed becomes explicit composition in the app's own middleware:
+    go// want permissive CSP?
+    core.SetHeaders(w, core.HeadersCacheHTML, core.HeadersNoSniff, core.HeadersCSPPermissive)
+
+    // want custom cache?
+    core.SetHeaders(w, myCustomCache, core.HeadersNoSniff, core.HeadersCSPStrict)
+
+    // want sha256 hash?
+    core.SetHeaders(w, core.HeadersCacheHTML, core.HeadersNoSniff, myCSPWithHash)
+    The framework can still ship StaticHeadersMiddleware as a convenience
+    default — just a thin wrapper that calls SetHeaders with a pre-chosen
+    composition. Users who are happy with opinionated defaults don't write
+    anything. Users who aren't, write their own middleware using the building
+    blocks, without reimplementing the primitives.
 - expose mailer and make a developetment one
 - simple development logger
 - /link-oauth2 and /link-password handlers sdk, authenticated yes

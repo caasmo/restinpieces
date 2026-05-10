@@ -44,9 +44,11 @@ func (m *MockDumpSecureStore) Save(scope string, data []byte, format string, des
 // TestDumpConfig_Success verifies successful writing of config data.
 func TestDumpConfig_Success(t *testing.T) {
 	scope := "test_app"
-	expectedOutput := "config_data_for_test_app"
+	storedData := `[server]
+addr = ":9090"
+`
 	mockStore := NewMockDumpSecureStore(map[string][]byte{
-		scope: []byte(expectedOutput),
+		scope: []byte(storedData),
 	})
 	var stdout bytes.Buffer
 
@@ -55,16 +57,19 @@ func TestDumpConfig_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dumpConfig() returned an unexpected error: %v", err)
 	}
-	if got := stdout.String(); got != expectedOutput {
-		t.Errorf("dumpConfig() output = %q, want %q", got, expectedOutput)
+	got := stdout.String()
+	if !bytes.Contains([]byte(got), []byte(`addr = ":9090"`)) && !bytes.Contains([]byte(got), []byte(`addr = ':9090'`)) {
+		t.Errorf("dumpConfig() output = %q, want it to contain %q", got, `addr = ":9090"`)
 	}
 }
 
 // TestDumpConfig_DefaultScope verifies use of the default application scope.
 func TestDumpConfig_DefaultScope(t *testing.T) {
-	expectedOutput := "application_specific_data"
+	storedData := `[server]
+addr = ":9090"
+`
 	mockStore := NewMockDumpSecureStore(map[string][]byte{
-		config.ScopeApplication: []byte(expectedOutput),
+		config.ScopeApplication: []byte(storedData),
 	})
 	var stdout bytes.Buffer
 
@@ -73,8 +78,9 @@ func TestDumpConfig_DefaultScope(t *testing.T) {
 	if err != nil {
 		t.Fatalf("dumpConfig() with empty scope returned an unexpected error: %v", err)
 	}
-	if got := stdout.String(); got != expectedOutput {
-		t.Errorf("dumpConfig() output = %q, want %q", got, expectedOutput)
+	got := stdout.String()
+	if !bytes.Contains([]byte(got), []byte(`addr = ":9090"`)) && !bytes.Contains([]byte(got), []byte(`addr = ':9090'`)) {
+		t.Errorf("dumpConfig() output = %q, want it to contain %q", got, `addr = ":9090"`)
 	}
 }
 
@@ -97,7 +103,7 @@ func TestDumpConfig_Failure_StoreReadError(t *testing.T) {
 // TestDumpConfig_Failure_OutputWriteError tests failure on output write error.
 func TestDumpConfig_Failure_OutputWriteError(t *testing.T) {
 	mockStore := NewMockDumpSecureStore(map[string][]byte{
-		"any_scope": []byte("some_data"),
+		"any_scope": []byte("[server]\naddr = ':8080'"),
 	})
 	var failingStdout failingWriter
 
@@ -130,7 +136,7 @@ addr = ":9090"
 	})
 	var stdout bytes.Buffer
 
-	err := dumpConfig(&stdout, mockStore, scope, false) // raw = false for effective dump
+	err := dumpConfig(&stdout, mockStore, scope, false) // zero = false for effective dump
 
 	if err != nil {
 		t.Fatalf("dumpConfig() returned an unexpected error: %v", err)

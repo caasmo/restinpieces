@@ -11,8 +11,8 @@ import (
 
 // handleDumpCommand is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
-func handleDumpCommand(secureStore config.SecureStore, scope string, raw bool) {
-	if err := dumpConfig(os.Stdout, secureStore, scope, raw); err != nil {
+func handleDumpCommand(secureStore config.SecureStore, scope string, zero bool) {
+	if err := dumpConfig(os.Stdout, secureStore, scope, zero); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
@@ -20,7 +20,7 @@ func handleDumpCommand(secureStore config.SecureStore, scope string, raw bool) {
 
 // dumpConfig contains the testable core logic for dumping configuration.
 // It accepts io.Writer for output, making it easy to test.
-func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, raw bool) error {
+func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, zero bool) error {
 	if scope == "" {
 		scope = config.ScopeApplication
 	}
@@ -29,10 +29,18 @@ func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 		return fmt.Errorf("%w: failed to retrieve latest config for scope '%s': %w", ErrSecureStoreGet, scope, err)
 	}
 
-	if raw {
-		_, err = stdout.Write(decryptedData)
+	if zero {
+		normalized := &config.Config{}
+		if err := toml.Unmarshal(decryptedData, normalized); err != nil {
+			return fmt.Errorf("failed to parse zero-default config: %w", err)
+		}
+		out, err := toml.Marshal(normalized)
 		if err != nil {
-			return fmt.Errorf("%w: failed to write raw config to stdout: %w", ErrWriteOutput, err)
+			return fmt.Errorf("failed to normalize zero-default config: %w", err)
+		}
+		_, err = stdout.Write(out)
+		if err != nil {
+			return fmt.Errorf("%w: failed to write normalized zero-default config: %w", ErrWriteOutput, err)
 		}
 		return nil
 	}
