@@ -19,32 +19,32 @@ func TestStaticHeadersMiddleware(t *testing.T) {
 		{
 			name:            "request for html file",
 			path:            "/index.html",
-			expectedHeaders: headersStaticHtml,
+			expectedHeaders: HeadersStaticHtml,
 		},
 		{
 			name:            "request for root path which should not be treated as html",
 			path:            "/",
-			expectedHeaders: headersStatic,
+			expectedHeaders: HeadersStatic,
 		},
 		{
 			name:            "request for css file",
 			path:            "/assets/style.css",
-			expectedHeaders: headersStatic,
+			expectedHeaders: HeadersStatic,
 		},
 		{
 			name:            "request for javascript file",
 			path:            "/assets/app.js",
-			expectedHeaders: headersStatic,
+			expectedHeaders: HeadersStatic,
 		},
 		{
 			name:            "request for image file",
 			path:            "/images/logo.png",
-			expectedHeaders: headersStatic,
+			expectedHeaders: HeadersStatic,
 		},
 		{
 			name:            "request with no file extension",
 			path:            "/api/data",
-			expectedHeaders: headersStatic,
+			expectedHeaders: HeadersStatic,
 		},
 	}
 

@@ -14,13 +14,13 @@ func StaticHeadersMiddleware(next http.Handler) http.Handler {
 
 		// For HTML files:
 		if strings.HasSuffix(r.URL.Path, ".html") {
-			SetHeaders(w, headersStaticHtml)
+			SetHeaders(w, HeadersStaticHtml)
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		// For CSS, JS, images, etc.
-		SetHeaders(w, headersStatic)
+		SetHeaders(w, HeadersStatic)
 
 		// Note: We intentionally avoid deprecated headers like 'Expires' and 'Pragma'.
 		// Note: For immutable assets, 'ETag' and 'Last-Modified' are redundant for

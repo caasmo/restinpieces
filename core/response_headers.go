@@ -58,9 +58,9 @@ var HeadersJson = map[string]string{
 	"Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
 }
 
-// headerCacheStatic defines cache headers for immutable static assets (CSS, JS, images).
+// HeadersStatic defines cache headers for immutable static assets (CSS, JS, images).
 // Assumes filename-based versioning for cache busting.
-var headersStatic = map[string]string{
+var HeadersStatic = map[string]string{
 	// - public: Allows caching by intermediate proxies and browsers.
 	// - max-age=31536000: Cache for 1 year.
 	// - immutable: Indicates the file content will never change. Browsers
@@ -74,8 +74,8 @@ var headersStatic = map[string]string{
 	// Adding CSP to individual static assets doesn't provide security benefits
 }
 
-// headerCacheStaticHtml defines cache headers for HTML entry point files.
-var headersStaticHtml = map[string]string{
+// HeadersStaticHtml defines cache headers for HTML entry point files.
+var HeadersStaticHtml = map[string]string{
 	// - public: Allows caching by intermediate proxies and browsers.
 	// - no-cache: Requires the cache to revalidate with the origin server
 	//             before using a cached response. Ensures the latest HTML
@@ -160,7 +160,7 @@ var HeadersMaintenancePage = map[string]string{
 	"Retry-After": "600",
 }
 
-// headersTls defines headers related to enforcing TLS usage.
+// HeadersTls defines headers related to enforcing TLS usage.
 // These should typically only be applied when the connection is actually over HTTPS.
 var HeadersTls = map[string]string{
 	// Strict-Transport-Security (HSTS): Instructs browsers to always connect
@@ -173,8 +173,9 @@ var HeadersTls = map[string]string{
 	"Strict-Transport-Security": "max-age=63072000; includeSubDomains", // Omit 'preload' unless intended
 }
 
-// setHeaders applies one or more sets of headers to the response writer.
-// Headers from later maps will overwrite headers from earlier maps if keys conflict.
+// SetHeaders applies one or more sets of headers to the response writer.
+// The variadic merge is the abstraction: headers from later maps will overwrite
+// headers from earlier maps if keys conflict, providing composability.
 func SetHeaders(w http.ResponseWriter, headers ...map[string]string) {
 	for _, headerMap := range headers {
 		for key, value := range headerMap {
