@@ -2,7 +2,7 @@ package core
 
 import (
 	"net/http"
-	"strings"
+	"path"
 )
 
 // StaticHeadersMiddleware adds cache and security related HTTP headers suitable for static assets
@@ -11,9 +11,10 @@ import (
 // and other assets like CSS, JS, images (applying long-term immutable caching).
 func StaticHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ext := path.Ext(r.URL.Path)
 
-		// For HTML files:
-		if strings.HasSuffix(r.URL.Path, ".html") {
+		// For HTML files, directory roots, and extension-less routes:
+		if ext == "" || ext == ".html" || ext == ".htm" {
 			SetHeaders(w, HeadersStaticHtml)
 			next.ServeHTTP(w, r)
 			return
