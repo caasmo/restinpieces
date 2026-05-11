@@ -167,4 +167,5 @@ func main() {
 | Routes Map  | `routes.go` (root)  | Pure function `Routes(a *app.App)`        |
 | Jobs        | `jobs/`             | Structs using `*app.App`                  |
 | Daemons     | `daemons/`          | Constructors for background processes     |
-| Frontend    | `web/`              | Embedded assets, served via routes        |
+| Frontend    | `web/`              | `embed.go` embeds `dist/` built by Vite   |
+  | `web/`              | Embedded assets, served via routes        |
