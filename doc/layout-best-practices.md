@@ -21,8 +21,9 @@ myapp/
 ├── jobs/                 # job handler implementations
 ├── daemons/              # daemon constructors and configuration
 └── web/
-    ├── src/              # frontend source
-    └── dist/             # built assets, embedded via go:embed
+    ├── embed.go          # go:embed dist/
+    ├── src/              # frontend source (React, Vue, etc.)
+    └── dist/             # built assets, bundled by Vite/Webpack
 ```
 
 ---
@@ -168,4 +169,3 @@ func main() {
 | Jobs        | `jobs/`             | Structs using `*app.App`                  |
 | Daemons     | `daemons/`          | Constructors for background processes     |
 | Frontend    | `web/`              | `embed.go` embeds `dist/` built by Vite   |
-  | `web/`              | Embedded assets, served via routes        |
