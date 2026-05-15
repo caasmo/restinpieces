@@ -96,7 +96,7 @@ func FSHandler(fsys fs.FS, explicitPath string) http.HandlerFunc {
 			http.NotFound(w, r)
 			return
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 
 		// EXACTLY ONE FS STAT 
 		// We do this after Open() to avoid TOCTOU bugs. We also use this to ensure our 
