@@ -272,13 +272,13 @@ func (i *initializer) setupPrerouter() http.Handler {
 		logger.Info(ft.Inactive("Maintenance middleware inactive"), "activated", cfg.Maintenance.Activated)
 	}
 
-	// 6. BlockRequestBody Middleware
-	blockRequestBody := prerouter.NewBlockRequestBody(i.app)
-	preRouterChain.WithMiddleware(blockRequestBody.Execute)
-	if cfg.BlockRequestBody.Activated {
-		logger.Info(ft.Active("BlockRequestBody middleware active"), "activated", cfg.BlockRequestBody.Activated)
+	// 6. BlockOversizedRequest Middleware
+	blockOversizedRequest := prerouter.NewBlockOversizedRequest(i.app)
+	preRouterChain.WithMiddleware(blockOversizedRequest.Execute)
+	if cfg.BlockOversizedRequest.Activated {
+		logger.Info(ft.Active("BlockOversizedRequest middleware active"), "activated", cfg.BlockOversizedRequest.Activated)
 	} else {
-		logger.Info(ft.Inactive("BlockRequestBody middleware inactive"), "activated", cfg.BlockRequestBody.Activated)
+		logger.Info(ft.Inactive("BlockOversizedRequest middleware inactive"), "activated", cfg.BlockOversizedRequest.Activated)
 	}
 
 	// 7. BlockEndpointsMismatch Middleware

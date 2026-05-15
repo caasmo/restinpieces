@@ -250,17 +250,17 @@ func BenchmarkBlockHost_Blocked(b *testing.B) {
 	}
 }
 
-// BenchmarkBlockRequestBody_Allowed measures allowing a request with a small body.
-func BenchmarkBlockRequestBody_Allowed(b *testing.B) {
+// BenchmarkBlockOversizedRequest_Allowed measures allowing a request with a small body.
+func BenchmarkBlockOversizedRequest_Allowed(b *testing.B) {
 	app := newBenchmarkApp(b, func(cfg *config.Config) {
-		cfg.BlockRequestBody.Activated = true
-		cfg.BlockRequestBody.Limit = 1024
+		cfg.BlockOversizedRequest.Activated = true
+		cfg.BlockOversizedRequest.BodyLimit = 1024
 	})
 	// The handler must read the body to test the middleware
 	readingHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = io.Copy(io.Discard, r.Body)
 	})
-	middleware := NewBlockRequestBody(app).Execute(readingHandler)
+	middleware := NewBlockOversizedRequest(app).Execute(readingHandler)
 	body := strings.NewReader(strings.Repeat("a", 512))
 	req := httptest.NewRequest("POST", "/", body)
 
@@ -276,21 +276,21 @@ func BenchmarkBlockRequestBody_Allowed(b *testing.B) {
 	}
 }
 
-// BenchmarkBlockRequestBody_Blocked measures blocking a request with a large body.
-func BenchmarkBlockRequestBody_Blocked(b *testing.B) {
+// BenchmarkBlockOversizedRequest_Blocked measures blocking a request with a large body.
+func BenchmarkBlockOversizedRequest_Blocked(b *testing.B) {
 	app := newBenchmarkApp(b, func(cfg *config.Config) {
-		cfg.BlockRequestBody.Activated = true
-		cfg.BlockRequestBody.Limit = 1024
+		cfg.BlockOversizedRequest.Activated = true
+		cfg.BlockOversizedRequest.BodyLimit = 1024
 	})
 	// The handler must read the body to trigger the block
 	readingHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = io.Copy(io.Discard, r.Body)
 		// In a real scenario, MaxBytesReader writes the error. Here we simulate it.
-		if r.ContentLength > app.Config().BlockRequestBody.Limit {
+		if r.ContentLength > app.Config().BlockOversizedRequest.BodyLimit {
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
 		}
 	})
-	middleware := NewBlockRequestBody(app).Execute(readingHandler)
+	middleware := NewBlockOversizedRequest(app).Execute(readingHandler)
 	body := strings.NewReader(strings.Repeat("a", 2048))
 	req := httptest.NewRequest("POST", "/", body)
 
@@ -346,8 +346,8 @@ func buildFullChain(app *core.App) http.Handler {
 	// 8. Maintenance
 	preRouterChain.WithMiddleware(NewMaintenance(app).Execute)
 
-	// 9. BlockRequestBody
-	preRouterChain.WithMiddleware(NewBlockRequestBody(app).Execute)
+	// 9. BlockOversizedRequest
+	preRouterChain.WithMiddleware(NewBlockOversizedRequest(app).Execute)
 
 	return preRouterChain.Handler()
 }

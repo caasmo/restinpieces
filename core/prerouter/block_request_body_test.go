@@ -36,10 +36,10 @@ func bodyReadingHandler() http.Handler {
 	})
 }
 
-func TestBlockRequestBody(t *testing.T) {
+func TestBlockOversizedRequest(t *testing.T) {
 	testCases := []struct {
 		name               string
-		config             config.BlockRequestBody
+		config             config.BlockOversizedRequest
 		requestURL         string
 		requestBodySize    int
 		isGetRequest       bool
@@ -47,9 +47,9 @@ func TestBlockRequestBody(t *testing.T) {
 	}{
 		{
 			name: "Case: Middleware is Inactive",
-			config: config.BlockRequestBody{
+			config: config.BlockOversizedRequest{
 				Activated: false,
-				Limit:     100,
+				BodyLimit: 100,
 			},
 			requestURL:         "/",
 			requestBodySize:    200,
@@ -57,9 +57,9 @@ func TestBlockRequestBody(t *testing.T) {
 		},
 		{
 			name: "Case: Request Body is Under the Limit",
-			config: config.BlockRequestBody{
+			config: config.BlockOversizedRequest{
 				Activated: true,
-				Limit:     100,
+				BodyLimit: 100,
 			},
 			requestURL:         "/",
 			requestBodySize:    50,
@@ -67,9 +67,9 @@ func TestBlockRequestBody(t *testing.T) {
 		},
 		{
 			name: "Case: Request Body is Exactly at the Limit",
-			config: config.BlockRequestBody{
+			config: config.BlockOversizedRequest{
 				Activated: true,
-				Limit:     100,
+				BodyLimit: 100,
 			},
 			requestURL:         "/",
 			requestBodySize:    100,
@@ -77,19 +77,37 @@ func TestBlockRequestBody(t *testing.T) {
 		},
 		{
 			name: "Case: Request Body Exceeds the Limit",
-			config: config.BlockRequestBody{
+			config: config.BlockOversizedRequest{
 				Activated: true,
-				Limit:     100,
+				BodyLimit: 100,
 			},
 			requestURL:         "/",
 			requestBodySize:    101,
 			expectedStatusCode: http.StatusRequestEntityTooLarge,
 		},
 		{
+			name: "Case: URL Path Exceeds the Limit",
+			config: config.BlockOversizedRequest{
+				Activated:    true,
+				URLPathLimit: 5,
+			},
+			requestURL:         "/toolong",
+			expectedStatusCode: http.StatusRequestURITooLong,
+		},
+		{
+			name: "Case: Query String Exceeds the Limit",
+			config: config.BlockOversizedRequest{
+				Activated:        true,
+				QueryStringLimit: 5,
+			},
+			requestURL:         "/?a=12345",
+			expectedStatusCode: http.StatusRequestURITooLong,
+		},
+		{
 			name: "Case: Request Has No Body (GET request)",
-			config: config.BlockRequestBody{
+			config: config.BlockOversizedRequest{
 				Activated: true,
-				Limit:     100,
+				BodyLimit: 100,
 			},
 			requestURL:         "/",
 			isGetRequest:       true,
@@ -97,9 +115,9 @@ func TestBlockRequestBody(t *testing.T) {
 		},
 		{
 			name: "Case: Request Path is Excluded from Limit",
-			config: config.BlockRequestBody{
+			config: config.BlockOversizedRequest{
 				Activated:     true,
-				Limit:         100,
+				BodyLimit:     100,
 				ExcludedPaths: []string{"/upload"},
 			},
 			requestURL:         "/upload",
@@ -108,9 +126,9 @@ func TestBlockRequestBody(t *testing.T) {
 		},
 		{
 			name: "Case: Request Path is Not Excluded from Limit",
-			config: config.BlockRequestBody{
+			config: config.BlockOversizedRequest{
 				Activated:     true,
-				Limit:         100,
+				BodyLimit:     100,
 				ExcludedPaths: []string{"/upload"},
 			},
 			requestURL:         "/api/data",
@@ -124,13 +142,13 @@ func TestBlockRequestBody(t *testing.T) {
 			// Setup: Create a mock app and set the configuration.
 			mockApp := &core.App{}
 			cfg := &config.Config{
-				BlockRequestBody: tc.config,
+				BlockOversizedRequest: tc.config,
 			}
 			provider := config.NewProvider(cfg)
 			mockApp.SetConfigProvider(provider)
 
 			// Setup: Create the middleware instance.
-			middleware := NewBlockRequestBody(mockApp)
+			middleware := NewBlockOversizedRequest(mockApp)
 
 			// Setup: Create the request body.
 			var reqBody io.Reader

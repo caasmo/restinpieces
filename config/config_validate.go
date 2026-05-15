@@ -32,6 +32,9 @@ func Validate(cfg *Config) error {
 	if err := validateBlockHost(&cfg.BlockHost); err != nil {
 		return fmt.Errorf("block_host config validation failed: %w", err)
 	}
+	if err := validateBlockOversizedRequest(&cfg.BlockOversizedRequest); err != nil {
+		return fmt.Errorf("block_oversized_request config validation failed: %w", err)
+	}
 	if err := validateNotifier(&cfg.Notifier); err != nil {
 		return fmt.Errorf("notifier config validation failed: %w", err)
 	}
@@ -50,6 +53,30 @@ func Validate(cfg *Config) error {
 	if err := validateBackupLocal(&cfg.BackupLocal); err != nil {
 		return fmt.Errorf("backup_local config validation failed: %w", err)
 	}
+	return nil
+}
+
+func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
+	if !cfg.Activated {
+		return nil
+	}
+
+	if cfg.URLPathLimit < 0 {
+		return fmt.Errorf("url_path_limit cannot be negative")
+	}
+	if cfg.QueryStringLimit < 0 {
+		return fmt.Errorf("query_string_limit cannot be negative")
+	}
+	if cfg.HeaderCountLimit < 0 {
+		return fmt.Errorf("header_count_limit cannot be negative")
+	}
+	if cfg.HeaderValueLimit < 0 {
+		return fmt.Errorf("header_value_limit cannot be negative")
+	}
+	if cfg.BodyLimit < 0 {
+		return fmt.Errorf("body_limit cannot be negative")
+	}
+
 	return nil
 }
 

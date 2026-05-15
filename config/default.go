@@ -135,9 +135,13 @@ func NewDefaultConfig() *Config {
 			Activated:    true,
 			AllowedHosts: []string{},
 		},
-		BlockRequestBody: BlockRequestBody{
+		BlockOversizedRequest: BlockOversizedRequest{
 			Activated: true,
-			Limit:     1024 * 1024, // 1MB default limit
+			URLPathLimit:     2048,
+			QueryStringLimit: 2048,
+			HeaderCountLimit: 100,
+			HeaderValueLimit: 4096,
+			BodyLimit:        1024 * 1024, // 1MB default limit
 			ExcludedPaths: []string{
 				"/api/upload",
 				"/api/import",

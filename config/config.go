@@ -67,7 +67,7 @@ type Config struct {
 	BlockIp          BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
 	BlockUaList      BlockUaList               `toml:"block_ua_list" comment:"User-Agent block list settings"`
 	BlockHost        BlockHost                 `toml:"block_host" comment:"Host blocking settings"`
-	BlockRequestBody       BlockRequestBody       `toml:"block_request_body" comment:"Request body size limiting configuration"`
+	BlockOversizedRequest  BlockOversizedRequest  `toml:"block_oversized_request" comment:"Request size limiting configuration"`
 	EndpointsBlockMismatch EndpointsBlockMismatch `toml:"endpoints_block_mismatch" comment:"Endpoints hash mismatch blocking settings"`
 	Notifier               Notifier               `toml:"notifier"`
 	Log              Log                       `toml:"log" comment:"Logging configuration"`
@@ -509,19 +509,27 @@ type Metrics struct {
 	AllowedIPs []string `toml:"allowed_ips" comment:"List of exact IP addresses allowed to access metrics endpoint (no CIDR ranges)"`
 }
 
-// BlockRequestBody holds configuration for limiting the size of incoming request bodies.
-// This is a security measure to prevent denial-of-service attacks using large payloads.
-type BlockRequestBody struct {
-	// Activated enables or disables the request body size limiting middleware.
+// BlockOversizedRequest holds configuration for limiting the size of various request dimensions.
+// This is a security measure to prevent denial-of-service and resource exhaustion attacks.
+type BlockOversizedRequest struct {
+	// Activated enables or disables the request size limiting middleware.
 	// This can be toggled dynamically via a configuration reload.
-	Activated bool `toml:"activated" comment:"Enable request body size limiting"`
+	Activated bool `toml:"activated" comment:"Enable request size limiting"`
 
-	// Limit is the maximum allowed request body size in bytes.
-	// Common values:
-	// - 1MB (1048576) for typical APIs
-	// - 10MB (10485760) for file uploads
-	// - 100MB (104857600) for large media uploads
-	Limit int64 `toml:"limit" comment:"Maximum allowed request body size in bytes"`
+	// URLPathLimit is the maximum allowed length for the URL path.
+	URLPathLimit int `toml:"url_path_limit" comment:"Max URL path length"`
+
+	// QueryStringLimit is the maximum allowed length for the raw query string.
+	QueryStringLimit int `toml:"query_string_limit" comment:"Max query string length"`
+
+	// HeaderCountLimit is the maximum number of distinct headers allowed.
+	HeaderCountLimit int `toml:"header_count_limit" comment:"Max number of headers"`
+
+	// HeaderValueLimit is the maximum allowed length for any single header value.
+	HeaderValueLimit int `toml:"header_value_limit" comment:"Max length of any single header value"`
+
+	// BodyLimit is the maximum allowed request body size in bytes.
+	BodyLimit int64 `toml:"body_limit" comment:"Maximum allowed request body size in bytes"`
 
 	// ExcludedPaths are URL paths that bypass the size limiting middleware.
 	// Path matching rules:
@@ -531,15 +539,14 @@ type BlockRequestBody struct {
 	// - Paths should start with '/' (e.g. '/api/upload')
 	// No wildcards or pattern matching
 	ExcludedPaths []string `toml:"excluded_paths" comment:"Paths that bypass size limiting"`
-	}
+}
 
-	// EndpointsBlockMismatch holds configuration for the endpoints hash mismatch middleware.
-	// When activated, requests with a stale X-Restinpieces-Endpoints-Hash header
-	// will receive an error response, forcing the SDK to refetch endpoints.
-
-	type EndpointsBlockMismatch struct {
+// EndpointsBlockMismatch holds configuration for the endpoints hash mismatch middleware.
+// When activated, requests with a stale X-Restinpieces-Endpoints-Hash header
+// will receive an error response, forcing the SDK to refetch endpoints.
+type EndpointsBlockMismatch struct {
 	// Activated controls whether endpoints hash checking is currently active.
 	// This can be toggled dynamically via a configuration reload.
 	Activated bool `toml:"activated" comment:"Activate endpoints hash mismatch blocking"`
-	}
+}
 
