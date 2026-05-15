@@ -176,10 +176,18 @@ var HeadersTls = map[string]string{
 // SetHeaders applies one or more sets of headers to the response writer.
 // The variadic merge is the abstraction: headers from later maps will overwrite
 // headers from earlier maps if keys conflict, providing composability.
+//
+// http.Header is map[string][]string with canonical title-cased keys (e.g.
+// "Cache-Control", not "cache-control"). Direct map assignment works only if
+// your keys are already canonical. All keys in this file happen to be, but this
+// is a silent footgun for any future key added in the wrong case. The safe
+// version costs nothing:
+// The only reason to prefer the direct assignment would be micro-optimizing
+// hot paths, which header-setting is not.
 func SetHeaders(w http.ResponseWriter, headers ...map[string]string) {
 	for _, headerMap := range headers {
 		for key, value := range headerMap {
-			w.Header()[key] = []string{value}
+            w.Header().Set(key, value) // canonicalizes the key automatically
 		}
 	}
 }

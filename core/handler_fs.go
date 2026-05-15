@@ -73,7 +73,12 @@ func FSHandler(fsys fs.FS, explicitPath string) http.HandlerFunc {
 				// Fix the Browser Relative Path Redirection Issue purely in memory.
 				// If we don't force a trailing slash, relative links in the HTML will break.
 				if !strings.HasSuffix(r.URL.Path, "/") {
-					http.Redirect(w, r, r.URL.Path+"/", http.StatusMovedPermanently)
+					// preserve query string
+					redirectURL := r.URL.Path + "/"
+					if r.URL.RawQuery != "" {
+						redirectURL += "?" + r.URL.RawQuery
+					}
+					http.Redirect(w, r, redirectURL, http.StatusMovedPermanently)
 					return // Executed with 0 filesystem calls.
 				}
 				
@@ -113,7 +118,7 @@ func FSHandler(fsys fs.FS, explicitPath string) http.HandlerFunc {
 		// Using time.Time{} (zero time) as modTime is a deliberate optimization:
 		// - Embedded assets are immutable - they don't change after compilation
 		// - The modification time is irrelevant since the content is fixed
-		// - This disables If-Modified-Since checks which is acceptable because:
+		// It prevents the header from being set, so the client never sends If-Modified-Since in the first place.
 		//   * Reduces server-side processing overhead
 		http.ServeContent(w, r, target, time.Time{}, seeker)
 	}
