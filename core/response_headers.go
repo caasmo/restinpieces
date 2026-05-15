@@ -118,13 +118,27 @@ var HeadersStaticHtml = map[string]string{
 	// been tampered with (e.g., a compromised CDN or MITM attack). Inline code
 	// lacks this safeguard
 	// <script src="/script.js" integrity="sha256-..."></script>
+    //
+    //
+    // form-action 'self' (or 'none'):
+    //
+    // The Threat: Data Exfiltration via Form Hijacking.
+    // default-src does not govern form submissions. Form submissions are treated as navigations.
+    // if your app is a modern SPA without native HTML form submissions, go maximum strict: form-action 'none'
+    //
+    // base-uri 'self' (or 'none') The Threat: Base Tag Hijacking (Phishing & Redirection):
+    //
+    // The HTML <base> tag dictates how the browser resolves
+    // relative URLs. If an attacker can inject HTML into your page (even
+    // without executing JavaScript), they can inject: <base // href="https://evil.com/">
 	//
+    //
 	// CSP wants you to:
 	// - Serve all code as external files from trusted origins ('self', trusted CDNs).
 	// - Avoid inline code entirely (no 'unsafe-inline' exceptions).
 	// - Use SRI to ensure file integrity
-	"Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
-	//"Content-Security-Policy": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'",
+	//"Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
+    "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'",
 
 	// The Referrer-Policy HTTP header controls how much referrer information
 	// browsers include when navigating from your website to another site.
