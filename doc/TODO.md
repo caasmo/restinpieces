@@ -1,5 +1,29 @@
 ### TODOs
 
+// QueryString validates the raw query string of an incoming request
+//
+// Total URL length must not exceed 2048 characters (safe cross-browser/server limit).
+//
+// null bytes (\x00), control characters (\x01–\x1F, \x7F), malformed
+// percent-encoding are rejected when ParseQuery 
+//
+// These are structural integrity checks, not application-level validation.
+// Required params, allowed values, and type coercion belong in the handler.
+func (v *DefaultValidator) QueryString(r *http.Request) error {
+	const maxURLLength = 2048
+ 
+	// Rule 1: total URL length.
+	// RequestURI includes path + query string, which is what the browser/client sends.
+	if len(r.RequestURI) > maxURLLength {
+		return fmt.Errorf("request URL exceeds maximum length of %d characters", maxURLLength)
+	}
+}
+ 
+- dump does not work for scope, shoudl check format, is crap!!! harcoded framwork! must be explicite!!!!
+- scope should be restinpieces or rip let apps have app scope
+    - config.ScopeApplication is bad ScopeRestinpieces
+- ripc should have sane defaults and env variables
+- compare ripc structure with best practices last command Put uptodate
 - headers, export 
     The Common Element
     Yes, there is one — and it's already in the framework. It's SetHeaders(w, ...map[string]string).
@@ -27,6 +51,9 @@
     composition. Users who are happy with opinionated defaults don't write
     anything. Users who aren't, write their own middleware using the building
     blocks, without reimplementing the primitives.
+- config.provider generic?
+    - users can use it to create reload of its config
+    - but is just 15 lines they can do their own by copying
 - expose mailer and make a developetment one
 - simple development logger
 - /link-oauth2 and /link-password handlers sdk, authenticated yes
