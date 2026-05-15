@@ -42,6 +42,7 @@ func TestBlockOversizedRequest(t *testing.T) {
 		config             config.BlockOversizedRequest
 		requestURL         string
 		requestBodySize    int
+		requestHeaders     http.Header
 		isGetRequest       bool
 		expectedStatusCode int
 	}{
@@ -104,6 +105,49 @@ func TestBlockOversizedRequest(t *testing.T) {
 			expectedStatusCode: http.StatusRequestURITooLong,
 		},
 		{
+			name: "Case: Header Count Exceeds the Limit",
+			config: config.BlockOversizedRequest{
+				Activated:        true,
+				HeaderCountLimit: 2,
+			},
+			requestURL: "/",
+			requestHeaders: http.Header{
+				"X-Header-1": {"v1"},
+				"X-Header-2": {"v2"},
+				"X-Header-3": {"v3"},
+			},
+			expectedStatusCode: http.StatusRequestHeaderFieldsTooLarge,
+		},
+		{
+			name: "Case: Header Value Exceeds the Limit",
+			config: config.BlockOversizedRequest{
+				Activated:        true,
+				HeaderValueLimit: 5,
+			},
+			requestURL: "/",
+			requestHeaders: http.Header{
+				"X-Header-1": {"toolongvalue"},
+			},
+			expectedStatusCode: http.StatusRequestHeaderFieldsTooLarge,
+		},
+		{
+			name: "Case: Limits Disabled (Zero Values)",
+			config: config.BlockOversizedRequest{
+				Activated:        true,
+				URLPathLimit:     0,
+				QueryStringLimit: 0,
+				HeaderCountLimit: 0,
+				HeaderValueLimit: 0,
+				BodyLimit:        0,
+			},
+			requestURL: "/verylongpath?verylongquery=true",
+			requestHeaders: http.Header{
+				"X-Long-Header": {"very long header value"},
+			},
+			requestBodySize:    1000,
+			expectedStatusCode: http.StatusOK,
+		},
+		{
 			name: "Case: Request Has No Body (GET request)",
 			config: config.BlockOversizedRequest{
 				Activated: true,
@@ -162,6 +206,11 @@ func TestBlockOversizedRequest(t *testing.T) {
 				method = "GET"
 			}
 			req := httptest.NewRequest(method, tc.requestURL, reqBody)
+
+			// Setup: Add headers if provided.
+			if tc.requestHeaders != nil {
+				req.Header = tc.requestHeaders
+			}
 
 			// Setup: Create a response recorder.
 			rr := httptest.NewRecorder()
