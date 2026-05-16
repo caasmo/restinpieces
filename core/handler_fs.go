@@ -9,89 +9,66 @@ import (
 	"time"
 )
 
+// routeAction defines the explicit instruction returned by the URL resolver.
+type routeAction int
+
+const (
+	actionServe routeAction = iota
+	actionRedirect
+	actionNotFound
+)
+
 // FSHandler is a highly optimized static file handler designed specifically for 
 // Multi-Page Applications (MPAs) with dynamic backend routing.
-//
-// WHY NOT http.FileServerFS?
-// 1. Dynamic Pages: http.FileServerFS strictly maps the HTTP Request URL to the filesystem path. 
-//    We need to map dynamic RESTful URLs (e.g., "GET /books/{id}/sentences/{idx}") to specific 
-//    static HTML bundles (e.g., "sentence-nlp/index.html").
-// 2. Performance: http.FileServerFS performs 2 to 4 filesystem operations (Open, Stat, Stat) 
-//    to resolve directories to index.html and handle redirects.
 //
 // OUR PERFORMANCE GUARANTEE:
 // This handler guarantees exactly ONE filesystem Open and ONE filesystem Stat per successful 
 // request, completely avoiding TOCTOU (Time-of-Check to Time-of-Use) issues.
 //
-// THE CLIENT CONTRACT (SDK/Frontend):
-// To achieve this performance, we enforce a strict in-memory contract based on file extensions:
-// - Files: The JS SDK/HTML must request actual files with their extensions (e.g., "/app.js").
-// - Directories (MPA Routes): Any URL path without an extension is assumed to be an MPA route, 
-//   and we append "/index.html" strictly in-memory. Extensionless files are not supported 
-//   via the catch-all (map them explicitly if needed).
-//
-// EXAMPLES OF EXECUTION:
-// 
-// 1. Dynamic Route (Explicit Path Provided)
-//    Call: PageHandler(fsys, "sentence-nlp/index.html")
-//    Req:  GET /books/123/sentences/5
-//    Exec: Opens "sentence-nlp/index.html" directly. (1 Open, 1 Stat).
-//
-// 2. Static Assets (Empty Explicit Path, resolved from URL)
-//    Call: PageHandler(fsys, "")
-//    Req:  GET /dist/app.js
-//    Exec: Has ".js" extension. Opens "dist/app.js". (1 Open, 1 Stat).
-//
-// 3. Catch-All MPA Route without Trailing Slash
-//    Call: PageHandler(fsys, "")
-//    Req:  GET /about
-//    Exec: No extension. Assumed MPA directory. Missing trailing slash. 
-//          Returns HTTP 301 Redirect to "/about/". (0 FS Opens!).
-//          Why? If we silently serve "about/index.html", the browser calculates relative 
-//          HTML links incorrectly (e.g. <img src="./logo.png"> looks at the root instead of /about/).
-//
-// 4. Catch-All MPA Route with Trailing Slash
-//    Call: PageHandler(fsys, "")
-//    Req:  GET /about/
-//    Exec: No extension. Has trailing slash. Appends index.html. 
-//          Opens "about/index.html". (1 Open, 1 Stat).
+// CONVENTIONS & RULES:
+// - Explicit Paths: Bypasses all URL resolution and serves the exact file requested.
+// - Files: Any URL with an extension (e.g., "/app.js") is served directly.
+// - Directories (MPA Routes): URLs without extensions are treated as directories. 
+//   If the trailing slash is missing, it issues a 301 Redirect. If present, it appends "index.html".
+// - Private Paths: Any file or directory starting with an underscore (e.g., "_search" or "dir/_hidden.js") 
+//   is private and will return a 404 Not Found.
 func FSHandler(fsys fs.FS, explicitPath string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		target := explicitPath
+		var action routeAction
+		var filePath string
 
-		// If no explicit path is given, we resolve it from the URL purely in-memory
-		// to avoid expensive filesystem guesswork.
-		if target == "" {
-			cleanPath := strings.TrimPrefix(path.Clean(r.URL.Path), "/")
-
-			if cleanPath == "" || cleanPath == "." {
-				// Root route -> always index.html
-				target = "index.html"
-			} else if path.Ext(cleanPath) == "" {
-				// NO EXTENSION: Assume it is an MPA route/directory.
-				
-				// Fix the Browser Relative Path Redirection Issue purely in memory.
-				// If we don't force a trailing slash, relative links in the HTML will break.
-				if !strings.HasSuffix(r.URL.Path, "/") {
-					// preserve query string
-					redirectURL := r.URL.Path + "/"
-					if r.URL.RawQuery != "" {
-						redirectURL += "?" + r.URL.RawQuery
-					}
-					http.Redirect(w, r, redirectURL, http.StatusMovedPermanently)
-					return // Executed with 0 filesystem calls.
-				}
-				
-				// Has trailing slash, safe to append index.html in-memory.
-				target = cleanPath + "/index.html"
-			} else {
-				// HAS EXTENSION (e.g. .css, .js, .png): Assume it's a direct file asset.
-				target = cleanPath
-			}
+		// 1. Gatekeeper Logic
+		// If an explicit override is provided, bypass all resolution logic.
+		if explicitPath != "" {
+			action = actionServe
+			filePath = explicitPath
+		} else {
+			action, filePath = resolveURL(r.URL.Path)
 		}
 
+		// 2. Execute Instruction
+		switch action {
+		case actionNotFound:
+			http.NotFound(w, r)
+			return
+
+		case actionRedirect:
+			// Fix the Browser Relative Path Redirection Issue.
+			// Preserve query string during the trailing slash redirect.
+			redirectURL := r.URL.Path + "/"
+			if r.URL.RawQuery != "" {
+				redirectURL += "?" + r.URL.RawQuery
+			}
+			http.Redirect(w, r, redirectURL, http.StatusMovedPermanently)
+			return // Executed with 0 filesystem calls.
+
+		case actionServe:
+			// Proceed to filesystem operations below.
+		}
+
+		// 3. Filesystem Operations
 		// EXACTLY ONE FS OPEN
-		f, err := fsys.Open(target)
+		f, err := fsys.Open(filePath)
 		if err != nil {
 			http.NotFound(w, r)
 			return
@@ -99,8 +76,7 @@ func FSHandler(fsys fs.FS, explicitPath string) http.HandlerFunc {
 		defer func() { _ = f.Close() }()
 
 		// EXACTLY ONE FS STAT 
-		// We do this after Open() to avoid TOCTOU bugs. We also use this to ensure our 
-		// in-memory guess didn't accidentally target a real directory (which would leak or panic).
+		// Done after Open() to avoid TOCTOU bugs. Ensures we didn't target a directory.
 		stat, err := f.Stat()
 		if err != nil || stat.IsDir() {
 			http.NotFound(w, r)
@@ -108,18 +84,46 @@ func FSHandler(fsys fs.FS, explicitPath string) http.HandlerFunc {
 		}
 
 		// Type assert the file to a ReadSeeker, which http.ServeContent requires.
-		// standard os.File and embed.FS files both implement this.
 		seeker, ok := f.(io.ReadSeeker)
 		if !ok {
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
 
-		// Using time.Time{} (zero time) as modTime is a deliberate optimization:
-		// - Embedded assets are immutable - they don't change after compilation
-		// - The modification time is irrelevant since the content is fixed
-		// It prevents the header from being set, so the client never sends If-Modified-Since in the first place.
-		//   * Reduces server-side processing overhead
-		http.ServeContent(w, r, target, time.Time{}, seeker)
+		// Zero-time optimization prevents If-Modified-Since overhead for embedded assets.
+		http.ServeContent(w, r, filePath, time.Time{}, seeker)
 	}
+}
+
+// resolveURL is a pure, deterministic function that translates a raw URL path 
+// into an actionable routing command and a filesystem path.
+// It has no knowledge of the HTTP request, response, or filesystem state.
+func resolveURL(requestPath string) (routeAction, string) {
+	// Clean the path to standard format and remove the leading slash for fs.FS
+	cleanPath := strings.TrimPrefix(path.Clean(requestPath), "/")
+
+	// PRIVATE PATH RULE: If any segment starts with an underscore, it is forbidden.
+	if strings.HasPrefix(cleanPath, "_") || strings.Contains(cleanPath, "/_") {
+		return actionNotFound, ""
+	}
+
+	// ROOT RULE: Always maps to index.html
+	if cleanPath == "" || cleanPath == "." {
+		return actionServe, "index.html"
+	}
+
+	// EXTENSION RULE: If it has an extension, treat it as a direct asset request
+	if path.Ext(cleanPath) != "" {
+		return actionServe, cleanPath
+	}
+
+	// MPA ROUTE RULE (No Extension):
+	// If the original request lacks a trailing slash, it must be redirected 
+	// so the browser resolves relative assets (like ./logo.png) correctly.
+	if !strings.HasSuffix(requestPath, "/") {
+		return actionRedirect, ""
+	}
+
+	// It is an MPA route with a valid trailing slash. Append index.html.
+	return actionServe, cleanPath + "/index.html"
 }
