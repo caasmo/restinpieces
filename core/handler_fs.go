@@ -26,6 +26,13 @@ const (
 // successful request. It relies on strict conventions and avoids all TOCTOU 
 // (Time-of-Check to Time-of-Use) issues and expensive filesystem guesswork.
 //
+// WHY NOT http.FileServerFS?
+// 1. Dynamic Pages: http.FileServerFS strictly maps the HTTP Request URL to the filesystem path. 
+//    We need to map dynamic RESTful URLs (e.g., "GET /books/{id}/sentences/{idx}") to specific 
+//    static HTML bundles (e.g., "sentence-nlp/index.html").
+// 2. Performance: http.FileServerFS performs 2 to 4 filesystem operations (Open, Stat, Stat) 
+//    to resolve directories to index.html and handle redirects.
+//
 // PARAMETERS:
 //
 //   - fsys (fs.FS):
@@ -74,6 +81,15 @@ const (
 //   - Content-Encoding: Automatically sets the proper Content-Encoding and Vary headers.
 func FSHandler(fsys fs.FS, explicitPath string, compressionExt string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// 0. Method Restriction
+		// While http.FileServer automatically blocks POST/PUT/DELETE requests
+		// with a 405 Method Not Allowed, http.ServeContent does not.
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			w.Header().Set("Allow", "GET, HEAD")
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
 		var action routeAction
 		var basePath string
 
@@ -134,8 +150,16 @@ func FSHandler(fsys fs.FS, explicitPath string, compressionExt string) http.Hand
 			w.Header().Set("Vary", "Accept-Encoding")
 		}
 
-		// Zero-time optimization prevents If-Modified-Since overhead.
+		// Using time.Time{} (zero time) as modTime is a deliberate optimization:
+		// - Embedded assets are immutable - they don't change after compilation
+		// - The modification time is irrelevant since the content is fixed
+		// It prevents the header from being set, so the client never sends If-Modified-Since in the first place.
+		//   * Reduces server-side processing overhead
+        //
 		// CRITICAL: We pass `basePath` (e.g. "app.js") to ServeContent, NOT `openPath`. 
+		// http.ServeContent automatically sets Content-Type based on:
+		// 1. The file extension in the path parameter (r.URL.Path)
+		// 2. If extension is unknown, it sniffs the first 512 bytes of content
 		// This forces Go to automatically set Content-Type: application/javascript instead 
 		// of sniffing binary data and setting octet-stream.
 		http.ServeContent(w, r, basePath, time.Time{}, seeker)
