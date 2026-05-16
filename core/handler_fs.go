@@ -207,11 +207,12 @@ func resolveCompression(basePath, compressionExt, acceptEncoding string) (openPa
 	}
 
 	// Map standard extensions to HTTP encoding names
-	if compressionExt == ".gz" {
+	switch compressionExt {
+	case ".gz":
 		encodingName = "gzip"
-	} else if compressionExt == ".br" {
+	case ".br":
 		encodingName = "br"
-	} else {
+	default:
 		// Unknown compression extension
 		return basePath, ""
 	}
