@@ -151,7 +151,7 @@ func TestFSHandler(t *testing.T) {
 		},
 		{
 			name:           "gzip compression: success",
-			compressionExt: ".gz",
+			compressionExt: CompressExtGzip,
 			requestPath:    "/app.js",
 			requestHeaders: map[string]string{"Accept-Encoding": "gzip"},
 			expectedStatus: http.StatusOK,
@@ -164,14 +164,14 @@ func TestFSHandler(t *testing.T) {
 		},
 		{
 			name:           "gzip compression: zero fallback (missing file)",
-			compressionExt: ".gz",
+			compressionExt: CompressExtGzip,
 			requestPath:    "/assets/style.css",
 			requestHeaders: map[string]string{"Accept-Encoding": "gzip"},
 			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name:           "gzip compression: no client support",
-			compressionExt: ".gz",
+			compressionExt: CompressExtGzip,
 			requestPath:    "/app.js",
 			requestHeaders: map[string]string{"Accept-Encoding": "identity"},
 			expectedStatus: http.StatusOK,
@@ -179,7 +179,7 @@ func TestFSHandler(t *testing.T) {
 		},
 		{
 			name:           "gzip compression: HTML exclusion",
-			compressionExt: ".gz",
+			compressionExt: CompressExtGzip,
 			requestPath:    "/index.html",
 			requestHeaders: map[string]string{"Accept-Encoding": "gzip"},
 			expectedStatus: http.StatusOK,
@@ -190,7 +190,7 @@ func TestFSHandler(t *testing.T) {
 		},
 		{
 			name:           "br compression: success",
-			compressionExt: ".br",
+			compressionExt: CompressExtBrotli,
 			requestPath:    "/style.css", // note: style.css doesn't exist, but style.css.br does. Wait, resolveURL will map style.css to style.css.
 			// Actually if style.css doesn't exist, it should 404.
 			// Let's use app.js but with .br if I had it.
@@ -214,7 +214,7 @@ func TestFSHandler(t *testing.T) {
 		},
 		{
 			name:           "htm exclusion",
-			compressionExt: ".gz",
+			compressionExt: CompressExtGzip,
 			requestPath:    "/custom.htm",
 			expectedStatus: http.StatusOK,
 			expectedBody:   "htm content",
