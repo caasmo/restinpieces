@@ -34,8 +34,8 @@ func TestFSHandler(t *testing.T) {
 		"assets/style.css":      {Data: []byte("body { color: red; }")},
 		"custom.html":           {Data: []byte("custom page")},
 		"no-extension":          {Data: []byte("i have no extension")},
-		"_private.txt":          {Data: []byte("secret")},
-		"dir/_hidden/file.txt":  {Data: []byte("hidden")},
+		"internal/private.txt":  {Data: []byte("secret")},
+		"dir/internal/file.txt": {Data: []byte("hidden")},
 		"dir-only/somefile.txt": {Data: []byte("some text")},
 	}
 
@@ -140,13 +140,13 @@ func TestFSHandler(t *testing.T) {
 			expectedBody:   "body { color: red; }",
 		},
 		{
-			name:           "private file (underscore prefix)",
-			requestPath:    "/_private.txt",
+			name:           "private file (internal/ prefix)",
+			requestPath:    "/internal/private.txt",
 			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name:           "private directory (underscore prefix)",
-			requestPath:    "/dir/_hidden/file.txt",
+			name:           "private directory (internal/ segment)",
+			requestPath:    "/dir/internal/file.txt",
 			expectedStatus: http.StatusNotFound,
 		},
 		{

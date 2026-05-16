@@ -23,6 +23,9 @@ const (
 	CompressExtGzip = ".gz"
 	// CompressExtBrotli is the file extension for brotli compressed files.
 	CompressExtBrotli = ".br"
+	// InternalDir is the name of the directory segment that is considered private.
+	// Any path containing this segment will return 404.
+	InternalDir = "internal/"
 )
 
 // FSHandler is a highly optimized, zero-fallback static file handler designed 
@@ -64,8 +67,8 @@ const (
 //      Always resolves to "index.html".
 //   
 //   2. Private Paths: 
-//      Any file or directory segment starting with an underscore (e.g., "_search", 
-//      "components/_hidden.js") is considered private and returns HTTP 404.
+//      Any path containing an "internal/" directory segment (e.g., "internal/config.json", 
+//      "components/internal/secrets.js") is considered private and returns HTTP 404.
 //
 //   3. Direct Assets (Has Extension): 
 //      URLs with a file extension (e.g., "/dist/app.js") map directly to that file.
@@ -178,8 +181,8 @@ func FSHandler(fsys fs.FS, explicitPath string, compressionExt string) http.Hand
 func resolveURL(requestPath string) (routeAction, string) {
 	cleanPath := strings.TrimPrefix(path.Clean(requestPath), "/")
 
-	// PRIVATE PATH RULE: If any segment starts with an underscore, it is forbidden.
-	if strings.HasPrefix(cleanPath, "_") || strings.Contains(cleanPath, "/_") {
+	// PRIVATE PATH RULE: Any path containing an "internal/" directory segment is forbidden.
+	if strings.HasPrefix(cleanPath, InternalDir) || strings.Contains(cleanPath, "/"+InternalDir) {
 		return actionNotFound, ""
 	}
 
