@@ -6,6 +6,12 @@ import (
 
 const HeaderEndpointsHash = "X-Restinpieces-Endpoints-Hash"
 
+// StrictCSP defines a hardened Content-Security-Policy for HTML documents.
+// - default-src 'self': Only allow resources from the same origin.
+// - frame-ancestors 'none': Prevent the page from being embedded in frames/iframes (clickjacking).
+// - form-action 'none': Prevent any form submissions from this document.
+// - base-uri 'none': Prevent the use of <base> tags to redirect relative URLs.
+const StrictCSP = "default-src 'self'; frame-ancestors 'none'; form-action 'none'; base-uri 'none'"
 // TODO consiten name
 var HeadersJson = map[string]string{
 
@@ -138,7 +144,7 @@ var HeadersStaticHtml = map[string]string{
 	// - Avoid inline code entirely (no 'unsafe-inline' exceptions).
 	// - Use SRI to ensure file integrity
 	//"Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
-    "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'",
+    "Content-Security-Policy": StrictCSP,
 
 	// The Referrer-Policy HTTP header controls how much referrer information
 	// browsers include when navigating from your website to another site.

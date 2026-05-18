@@ -69,18 +69,15 @@ func TestResponseHeaderValues(t *testing.T) {
 	t.Run("HeadersStaticHtml", func(t *testing.T) {
 		h := HeadersStaticHtml
 		checks := map[string]string{
-			"Cache-Control":            "public, no-cache",
-			"X-Content-Type-Options":   "nosniff",
-			"Referrer-Policy":          "strict-origin-when-cross-origin",
+			"Cache-Control":           "public, no-cache",
+			"X-Content-Type-Options":  "nosniff",
+			"Referrer-Policy":         "strict-origin-when-cross-origin",
+			"Content-Security-Policy": StrictCSP,
 		}
 		for k, expected := range checks {
 			if h[k] != expected {
 				t.Errorf("%s: expected %q, got %q", k, expected, h[k])
 			}
-		}
-		// CSP is complex, just check it exists and contains self
-		if csp := h["Content-Security-Policy"]; csp == "" {
-			t.Error("CSP missing in HeadersStaticHtml")
 		}
 	})
 
