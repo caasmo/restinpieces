@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"encoding/base64"
 	"strings"
 	"testing"
 )
@@ -35,6 +36,39 @@ func TestRandomString(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestNonce(t *testing.T) {
+	n1 := Nonce()
+	n2 := Nonce()
+
+	if n1 == n2 {
+		t.Errorf("Nonce() returned same value twice: %s", n1)
+	}
+
+	// 32 bytes base64 encoded should be 44 characters
+	if len(n1) != 44 {
+		t.Errorf("Nonce() length = %d, want 44", len(n1))
+	}
+
+	// Verify it's valid base64
+	_, err := base64.StdEncoding.DecodeString(n1)
+	if err != nil {
+		t.Errorf("Nonce() returned invalid base64: %v", err)
+	}
+}
+
+func TestRandomNumericOTP(t *testing.T) {
+	otp := RandomNumericOTP()
+	if len(otp) != 6 {
+		t.Errorf("RandomNumericOTP() length = %d, want 6", len(otp))
+	}
+
+	for _, char := range otp {
+		if char < '0' || char > '9' {
+			t.Errorf("RandomNumericOTP() contains non-digit character: %c", char)
+		}
 	}
 }
 
