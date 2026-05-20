@@ -87,7 +87,7 @@ func (b *BlockOversizedRequest) Execute(next http.Handler) http.Handler {
 		// target (RFC 9110 §15.5.15).
 		// ----------------------------------------------------------------
 		if cfg.URLPathLimit > 0 && len(r.URL.Path) > cfg.URLPathLimit {
-			http.Error(w, http.StatusText(http.StatusRequestURITooLong), http.StatusRequestURITooLong)
+			w.WriteHeader(http.StatusRequestURITooLong)
 			return
 		}
 
@@ -111,7 +111,7 @@ func (b *BlockOversizedRequest) Execute(next http.Handler) http.Handler {
 		// (RFC 9110 §15.5.15).
 		// ----------------------------------------------------------------
 		if cfg.QueryStringLimit > 0 && len(r.URL.RawQuery) > cfg.QueryStringLimit {
-			http.Error(w, http.StatusText(http.StatusRequestURITooLong), http.StatusRequestURITooLong)
+			w.WriteHeader(http.StatusRequestURITooLong)
 			return
 		}
 
@@ -136,7 +136,7 @@ func (b *BlockOversizedRequest) Execute(next http.Handler) http.Handler {
 		// (RFC 6585 §5).
 		// ----------------------------------------------------------------
 		if cfg.HeaderCountLimit > 0 && len(r.Header) > cfg.HeaderCountLimit {
-			http.Error(w, http.StatusText(http.StatusRequestHeaderFieldsTooLarge), http.StatusRequestHeaderFieldsTooLarge)
+			w.WriteHeader(http.StatusRequestHeaderFieldsTooLarge)
 			return
 		}
 
@@ -162,7 +162,7 @@ func (b *BlockOversizedRequest) Execute(next http.Handler) http.Handler {
 			for _, values := range r.Header {
 				for _, v := range values {
 					if len(v) > cfg.HeaderValueLimit {
-						http.Error(w, http.StatusText(http.StatusRequestHeaderFieldsTooLarge), http.StatusRequestHeaderFieldsTooLarge)
+						w.WriteHeader(http.StatusRequestHeaderFieldsTooLarge)
 						return
 					}
 				}

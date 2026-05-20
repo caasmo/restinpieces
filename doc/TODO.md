@@ -5,7 +5,14 @@
     “text/plain; charset=utf-8”, and sets X-Content-Type-Options to “nosniff”. This
     configures the header properly for the error message, in case the caller had
     set it up expecting a successful output.
+    core/handler_fs.go
+99:                     http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+153:                    http.Error(w, "internal server error", http.StatusInternalServerError)
+
+core/prerouter/block_oversized_request.go
+90:                     http.Error(w, http.StatusText(http.StatusRequestURITooLong), http.StatusRequestURITooLong)
 - core/prerouter/block_oversized_request.go the same for http.Error, has our writeError do we implment it
+
 - dump does not work for scope, shoudl check format, is crap!!! harcoded framwork! must be explicite!!!!
 - scope should be restinpieces or rip let apps have app scope
     - config.ScopeApplication is bad ScopeRestinpieces
