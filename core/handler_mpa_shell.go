@@ -103,7 +103,7 @@ import (
 //
 //	    // Catch-all: static assets (js, css, images) with gzip compression
 //	    "/": r.NewChain(
-//	        core.FSHandler(a.FS(), "", core.CompressExtGzip),
+//	        core.FSHandler(a.FS(), core.CompressExtGzip, nil),
 //	    ).WithMiddleware(a.StaticAssetHeadersMiddleware),
 //	})
 func MPAShellHandler(fsys fs.FS, shellPath string) http.HandlerFunc {

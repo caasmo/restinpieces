@@ -113,7 +113,10 @@ const (
 //     file extension (e.g., "app.js" -> application/javascript), preventing browsers
 //     from downloading compressed assets as binary "octet-stream" attachments.
 //   - Content-Encoding: Automatically sets the proper Content-Encoding and Vary headers.
-func FSHandler(fsys fs.FS, compressionExt string) http.HandlerFunc {
+func FSHandler(fsys fs.FS, compressionExt string, notFoundHandler http.Handler) http.HandlerFunc {
+	if notFoundHandler == nil {
+		notFoundHandler = http.HandlerFunc(http.NotFound)
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		// 0. Method Restriction
 		// While http.FileServer automatically blocks POST/PUT/DELETE requests
@@ -130,7 +133,7 @@ func FSHandler(fsys fs.FS, compressionExt string) http.HandlerFunc {
 		// 2. Execute Routing Instruction
 		switch action {
 		case actionNotFound:
-			http.NotFound(w, r)
+			notFoundHandler.ServeHTTP(w, r)
 			return
 
 		case actionRedirect:
@@ -151,7 +154,7 @@ func FSHandler(fsys fs.FS, compressionExt string) http.HandlerFunc {
 		// EXACTLY ONE FS OPEN (No fallback guesswork)
 		f, err := fsys.Open(openPath)
 		if err != nil {
-			http.NotFound(w, r)
+			notFoundHandler.ServeHTTP(w, r)
 			return
 		}
 		defer func() { _ = f.Close() }()
@@ -159,7 +162,7 @@ func FSHandler(fsys fs.FS, compressionExt string) http.HandlerFunc {
 		// EXACTLY ONE FS STAT
 		stat, err := f.Stat()
 		if err != nil || stat.IsDir() {
-			http.NotFound(w, r)
+			notFoundHandler.ServeHTTP(w, r)
 			return
 		}
 

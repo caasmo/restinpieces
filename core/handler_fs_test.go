@@ -41,7 +41,6 @@ func TestFSHandler(t *testing.T) {
 
 	tests := []struct {
 		name            string
-		explicitPath    string
 		compressionExt  string
 		requestPath     string
 		requestHeaders  map[string]string
@@ -86,13 +85,7 @@ func TestFSHandler(t *testing.T) {
 			expectedStatus: http.StatusMovedPermanently,
 			expectedLoc:    "/about/?foo=bar",
 		},
-		{
-			name:           "explicit path ignores request path",
-			explicitPath:   "custom.html",
-			requestPath:    "/some/random/path",
-			expectedStatus: http.StatusOK,
-			expectedBody:   "custom page",
-		},
+
 		{
 			name:           "non-existent file",
 			requestPath:    "/missing.txt",
@@ -231,7 +224,7 @@ func TestFSHandler(t *testing.T) {
 			}
 			rr := httptest.NewRecorder()
 
-			handler := FSHandler(fsys, tt.explicitPath, tt.compressionExt)
+			handler := FSHandler(fsys, tt.compressionExt, nil)
 			handler.ServeHTTP(rr, req)
 
 			if rr.Code != tt.expectedStatus {
@@ -273,7 +266,7 @@ func TestFSHandler_MethodNotAllowed(t *testing.T) {
 		t.Run(method, func(t *testing.T) {
 			req := httptest.NewRequest(method, "/", nil)
 			rr := httptest.NewRecorder()
-			handler := FSHandler(fsys, "", "")
+			handler := FSHandler(fsys, "", nil)
 			handler.ServeHTTP(rr, req)
 
 			if rr.Code != http.StatusMethodNotAllowed {
@@ -289,7 +282,7 @@ func TestFSHandler_MethodNotAllowed(t *testing.T) {
 	t.Run("HEAD request", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodHead, "/", nil)
 		rr := httptest.NewRecorder()
-		handler := FSHandler(fsys, "", "")
+		handler := FSHandler(fsys, "", nil)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusOK {
@@ -307,7 +300,7 @@ func TestFSHandler_Range(t *testing.T) {
 	req.Header.Set("Range", "bytes=2-5")
 	rr := httptest.NewRecorder()
 
-	handler := FSHandler(fsys, "", "")
+	handler := FSHandler(fsys, "", nil)
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusPartialContent {
@@ -328,7 +321,7 @@ func TestFSHandler_NoLastModified(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rr := httptest.NewRecorder()
 
-	handler := FSHandler(fsys, "", "")
+	handler := FSHandler(fsys, "", nil)
 	handler.ServeHTTP(rr, req)
 
 	if lm := rr.Header().Get("Last-Modified"); lm != "" {
@@ -367,7 +360,7 @@ func TestFSHandler_InternalError(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rr := httptest.NewRecorder()
 
-	handler := FSHandler(fsys, "", "")
+	handler := FSHandler(fsys, "", nil)
 	handler.ServeHTTP(rr, req)
 
 	if rr.Code != http.StatusInternalServerError {
@@ -383,7 +376,7 @@ func TestFSHandler_DirectorySafety(t *testing.T) {
 	t.Run("cannot serve directory as file", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/dir", nil)
 		rr := httptest.NewRecorder()
-		handler := FSHandler(fsys, "", "")
+		handler := FSHandler(fsys, "", nil)
 		handler.ServeHTTP(rr, req)
 
 		// /dir -> redirects to /dir/
@@ -408,11 +401,72 @@ func TestFSHandler_DirectorySafety(t *testing.T) {
 
 		req := httptest.NewRequest(http.MethodGet, "/script.js", nil)
 		rr := httptest.NewRecorder()
-		handler := FSHandler(fsys, "", "")
+		handler := FSHandler(fsys, "", nil)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusNotFound {
 			t.Errorf("expected 404 for directory with file extension, got %d", rr.Code)
+		}
+	})
+}
+
+func TestFSHandler_CustomNotFoundHandler(t *testing.T) {
+	fsys := fstest.MapFS{
+		"index.html": {Data: []byte("root index")},
+	}
+
+	customFound := false
+	customNotFound := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		customFound = true
+		w.WriteHeader(http.StatusTeapot)
+		_, _ = w.Write([]byte("custom not found"))
+	})
+
+	handler := FSHandler(fsys, "", customNotFound)
+
+	t.Run("non-existent file", func(t *testing.T) {
+		customFound = false
+		req := httptest.NewRequest(http.MethodGet, "/missing.txt", nil)
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+
+		if !customFound {
+			t.Error("custom notFoundHandler was not called")
+		}
+		if rr.Code != http.StatusTeapot {
+			t.Errorf("expected status %d, got %d", http.StatusTeapot, rr.Code)
+		}
+		if rr.Body.String() != "custom not found" {
+			t.Errorf("expected body %q, got %q", "custom not found", rr.Body.String())
+		}
+	})
+
+	t.Run("private path", func(t *testing.T) {
+		customFound = false
+		req := httptest.NewRequest(http.MethodGet, "/internal/secret.txt", nil)
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+
+		if !customFound {
+			t.Error("custom notFoundHandler was not called")
+		}
+		if rr.Code != http.StatusTeapot {
+			t.Errorf("expected status %d, got %d", http.StatusTeapot, rr.Code)
+		}
+	})
+
+	t.Run("directory as file (not found after path resolution)", func(t *testing.T) {
+		customFound = false
+		// This should be treated as MPA route /no-ext/index.html which doesn't exist
+		req := httptest.NewRequest(http.MethodGet, "/no-ext/", nil)
+		rr := httptest.NewRecorder()
+		handler.ServeHTTP(rr, req)
+
+		if !customFound {
+			t.Error("custom notFoundHandler was not called")
+		}
+		if rr.Code != http.StatusTeapot {
+			t.Errorf("expected status %d, got %d", http.StatusTeapot, rr.Code)
 		}
 	})
 }
