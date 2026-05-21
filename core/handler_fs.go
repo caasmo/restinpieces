@@ -69,6 +69,11 @@ const (
 // 2. Compression: http.FileServerFS cannot serve pre-compressed assets (e.g. app.js.gz)
 //    while preserving the correct Content-Type (application/javascript). Without special
 //    handling, browsers receive a .gz file and treat it as a binary download.
+// 3. Private Resources: http.FileServerFS serves the entire tree. FSHandler enforces
+//    the "internal/" convention for files that the server must read but should never
+//    be HTTP-accessible. For example, placing a custom "internal/404.html" prevents
+//    users from requesting it directly at "/404.html" and receiving a 200 OK, which
+//    is semantically broken and bad for SEO.
 //
 // PARAMETERS:
 //
