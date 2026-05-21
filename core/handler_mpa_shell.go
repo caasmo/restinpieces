@@ -123,6 +123,6 @@ func MPAShellHandler(fsys fs.FS, shellPath string) http.HandlerFunc {
 		}
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(content)
+		_, _ = w.Write(content)
 	}
 }
