@@ -231,7 +231,6 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 			}
 
 			req := httptest.NewRequest("GET", "/list-oauth2-providers", nil)
-			req.Header.Set("Content-Type", "application/json")
 			rr := httptest.NewRecorder()
 
 			app.ListOAuth2ProvidersHandler(rr, req)
@@ -259,20 +258,8 @@ func TestListOAuth2ProvidersHandler_Errors(t *testing.T) {
 				cfg.OAuth2Providers = map[string]config.OAuth2Provider{} // Empty map
 				return cfg
 			},
-			setupRequest: func(r *http.Request) {
-				r.Header.Set("Content-Type", "application/json")
-			},
-			wantError: errorInvalidOAuth2Provider,
-		},
-		{
-			name: "invalid content type",
-			setupConfig: func() *config.Config {
-				return config.NewDefaultConfig()
-			},
-			setupRequest: func(r *http.Request) {
-				r.Header.Set("Content-Type", "text/plain")
-			},
-			wantError: errorInvalidContentType,
+			setupRequest: func(r *http.Request) {},
+			wantError:    errorInvalidOAuth2Provider,
 		},
 	}
 

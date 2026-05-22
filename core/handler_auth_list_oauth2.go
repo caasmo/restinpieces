@@ -9,7 +9,6 @@ import (
 
 // ListOAuth2ProvidersHandler returns available OAuth2 providers
 // Authenticated: No
-// Allowed Mimetype: application/json
 // Example OAuth2 Providers List Response:
 //
 //	{
@@ -30,10 +29,6 @@ import (
 //
 // Endpoint: GET /list-oauth2-providers
 func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request) {
-	if resp, err := a.Validator().ContentType(r, MimeTypeJSON); err != nil {
-		WriteJsonError(w, resp)
-		return
-	}
 	var providers []OAuth2ProviderInfo
 
 	// Loop through configured providers
