@@ -15,7 +15,7 @@ func StaticHeadersMiddleware(next http.Handler) http.Handler {
 
 		// For HTML files, directory roots, and extension-less routes:
 		if ext == "" || ext == ".html" || ext == ".htm" {
-			SetHeaders(w, HeadersStaticHtml)
+			SetHeaders(w, HeadersHtml)
 			next.ServeHTTP(w, r)
 			return
 		}

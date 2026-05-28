@@ -12,7 +12,7 @@ const HeaderEndpointsHash = "X-Restinpieces-Endpoints-Hash"
 // - form-action 'none': Prevent any form submissions from this document.
 // - base-uri 'none': Prevent the use of <base> tags to redirect relative URLs.
 const StrictCSP = "default-src 'self'; frame-ancestors 'none'; form-action 'none'; base-uri 'none'"
-// TODO consiten name
+
 var HeadersJson = map[string]string{
 
 	"Content-Type": "application/json; charset=utf-8",
@@ -26,8 +26,7 @@ var HeadersJson = map[string]string{
 
 	// The response must not be stored in any cache, anywhere, under any circumstances
 	// no-store alone is enough to prevent all caching
-	// no-cache and must-revalidate is just assurance if something downstream misinterprets no-store.
-	"Cache-Control": "no-store, no-cache, must-revalidate",
+	"Cache-Control": "no-store",
 
 	// Prevents the response from being embedded in an <iframe>, mitigating clickjacking attacks
 	// Adds a layer of defense against obscure misuse
@@ -80,13 +79,27 @@ var HeadersStatic = map[string]string{
 	// Adding CSP to individual static assets doesn't provide security benefits
 }
 
-// HeadersStaticHtml defines cache headers for HTML entry point files.
-var HeadersStaticHtml = map[string]string{
-	// - public: Allows caching by intermediate proxies and browsers.
-	// - no-cache: Requires the cache to revalidate with the origin server
-	//             before using a cached response. Ensures the latest HTML
-	//             (with potentially updated asset links) is served.
-	"Cache-Control": "public, no-cache",
+// HeadersHtml defines the default security and caching headers for HTML responses,
+// suitable for both static shell pages and SSR-hydrated pages (window.INITIAL_DATA pattern).
+var HeadersHtml = map[string]string{
+    // # Cache-Control
+    //
+    // The default "private, no-cache" is intentionally conservative:
+    //   - private: prevents CDN/proxy caching, safe when the response may carry user-specific data.
+	//   - public: Allows caching by intermediate proxies and browsers.
+    //   - no-cache: requires revalidation before reuse, ensuring stale HTML is never served silently.
+    //   - no-store is intentionally avoided: it disables bfcache, degrading back-navigation UX
+    //     with no security benefit for most pages.
+    //
+    // Handlers should override Cache-Control when they know the response semantics:
+    //
+    //  SetHeaders(w, HeadersHtml, HeaderCachePublic)  // page is identical for all users (e.g. landing page)
+    //  SetHeaders(w, HeadersHtml, HeaderCacheNoStore) // page must not survive in any cache (e.g. post-payment)
+    //
+    // For SSR pages, consider whether the response is user-specific. A search results page
+    // (/search?q=...) drawn from a user corpus is a good candidate for "private, no-cache":
+    // results are stable within a session, so bfcache provides a real UX win on back-navigation.
+	"Cache-Control": "private, no-cache",
 
 	// Prevent browsers from MIME-sniffing the response away from declared Content-Type
 	"X-Content-Type-Options": "nosniff",

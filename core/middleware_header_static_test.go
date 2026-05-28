@@ -16,36 +16,36 @@ func TestStaticHeadersMiddleware(t *testing.T) {
 		path            string
 		expectedHeaders map[string]string
 	}{
-		// Document/HTML types (should use HeadersStaticHtml)
+		// Document/HTML types (should use HeadersHtml)
 		{
 			name:            "root path",
 			path:            "/",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 		{
 			name:            "directory path with trailing slash",
 			path:            "/query/",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 		{
 			name:            "clean URL route without extension",
 			path:            "/query",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 		{
 			name:            "standard html file",
 			path:            "/index.html",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 		{
 			name:            "htm extension",
 			path:            "/about.htm",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 		{
 			name:            "nested clean URL",
 			path:            "/settings/profile",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 
 		// Asset types (should use HeadersStatic)
@@ -84,7 +84,7 @@ func TestStaticHeadersMiddleware(t *testing.T) {
 		{
 			name:            "html with query string",
 			path:            "/index.html?v=1.2.3",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 		{
 			name:            "css with query string (cache busting)",
@@ -94,22 +94,22 @@ func TestStaticHeadersMiddleware(t *testing.T) {
 		{
 			name:            "clean URL with query string",
 			path:            "/search?q=something",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 		{
 			name:            "html with fragment (server only sees path)",
 			path:            "/about.html",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 		{
 			name:            "clean URL with fragment (server only sees path)",
 			path:            "/docs",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 		{
 			name:            "complex combined path (server only sees path and query)",
 			path:            "/app/dashboard?user=123",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 		{
 			name:            "asset with multiple dots",
@@ -119,7 +119,7 @@ func TestStaticHeadersMiddleware(t *testing.T) {
 		{
 			name:            "encoded characters in path",
 			path:            "/my%20document.html",
-			expectedHeaders: HeadersStaticHtml,
+			expectedHeaders: HeadersHtml,
 		},
 	}
 
@@ -142,10 +142,10 @@ func TestStaticHeadersMiddleware(t *testing.T) {
 			// Also verify we didn't get extra headers from the other set that shouldn't be there.
 			// This ensures complete separation between document and asset headers.
 			var otherHeaders map[string]string
-			if tc.expectedHeaders["Cache-Control"] == HeadersStaticHtml["Cache-Control"] {
+			if tc.expectedHeaders["Cache-Control"] == HeadersHtml["Cache-Control"] {
 				otherHeaders = HeadersStatic
 			} else {
-				otherHeaders = HeadersStaticHtml
+				otherHeaders = HeadersHtml
 			}
 
 			for key, unwantedValue := range otherHeaders {

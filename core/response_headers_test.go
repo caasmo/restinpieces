@@ -53,10 +53,10 @@ func TestResponseHeaderValues(t *testing.T) {
 	t.Run("HeadersJson", func(t *testing.T) {
 		h := HeadersJson
 		checks := map[string]string{
-			"Content-Type":             "application/json; charset=utf-8",
-			"X-Content-Type-Options":   "nosniff",
-			"Cache-Control":            "no-store, no-cache, must-revalidate",
-			"X-Frame-Options":          "DENY",
+			"Content-Type":            "application/json; charset=utf-8",
+			"X-Content-Type-Options":  "nosniff",
+			"Cache-Control":           "no-store",
+			"X-Frame-Options":         "DENY",
 			"Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
 		}
 		for k, expected := range checks {
@@ -66,10 +66,10 @@ func TestResponseHeaderValues(t *testing.T) {
 		}
 	})
 
-	t.Run("HeadersStaticHtml", func(t *testing.T) {
-		h := HeadersStaticHtml
+	t.Run("HeadersHtml", func(t *testing.T) {
+		h := HeadersHtml
 		checks := map[string]string{
-			"Cache-Control":           "public, no-cache",
+			"Cache-Control":           "private, no-cache",
 			"X-Content-Type-Options":  "nosniff",
 			"Referrer-Policy":         "strict-origin-when-cross-origin",
 			"Content-Security-Policy": StrictCSP,
