@@ -72,9 +72,9 @@ The "one process" paradigm intentionally avoids external dependencies like separ
 
 To address this, the framework provides robust mechanisms for data protection and recovery:
 
-- **Local Backups**: The framework includes a simple, integrated backup solution for SQLite databases, managed as a background job. This can be configured and activated directly in the application's settings. It operates in two modes:
-  - **Online Mode**: Performs a live backup using SQLite's Online Backup API. This allows the application to continue its operations with minimal interruption, making it ideal for active databases. The backup process copies the database page by page, with configurable pauses to reduce I/O contention.
-  - **Vacuum Mode**: Creates a clean, defragmented, and compact copy of the database using the `VACUUM INTO` command. This method is thorough but requires more significant locking, making it suitable for maintenance windows or less active databases.
+- **Local Backups**: The framework includes a simple, integrated backup solution for SQLite databases, managed as a [background job](queue/handlers/backup_local.go). This can be configured and activated directly in the [application's settings](config/config.go). It operates in two modes:
+  - **Online Mode** (default): Performs a live backup using SQLite's Online Backup API. Non-locking, copies page-by-page with configurable pauses to reduce I/O contention. **Recommended for most production systems.**
+  - **Vacuum Mode**: Creates a clean, defragmented copy using the `VACUUM INTO` command. Faster but **blocks all write operations** for the duration. Suitable for low-write databases or scheduled maintenance windows.
   
   Backups are saved as compressed `.bck.gz` archives in a configurable directory, with filenames containing a timestamp and the strategy used. You can pull those gz files from a client available at [restinpieces-sqlite-backup](https://github.com/caasmo/restinpieces-sqlite-backup/tree/master/cmd/client).
 
