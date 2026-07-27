@@ -5,7 +5,7 @@ The built-in backup system follows a two-step push-pull design:
 1. **Push (server-side)**: A recurrent background job creates compressed SQLite snapshots locally on the server.
 2. **Pull (client-side)**: A standalone client retrieves those snapshots from the server via SFTP.
 
-This decouples backup creation from retrieval — backups are produced on the server by the [background job handler](../queue/handlers/backup_local.go) and pulled to any number of client machines using the [restinpieces-sqlite-backup](https://github.com/caasmo/restinpieces-sqlite-backup) client.
+This decouples backup creation from retrieval — backups are produced on the server by the [background job handler](../queue/handlers/backup_local.go) and pulled to any number of client machines using the [restinpieces-backup-client](https://github.com/caasmo/restinpieces-backup-client) client.
 
 ## Job Activation
 
@@ -52,10 +52,10 @@ Uses `VACUUM INTO` to create a clean, defragmented copy. Faster than online but 
 
 ## Pull Client
 
-Backups are written to `backup_dir` as compressed archives named `{dbname}-{timestamp}-{strategy}.bck.gz`. To retrieve them, use the SFTP pull client from [restinpieces-sqlite-backup](https://github.com/caasmo/restinpieces-sqlite-backup):
+Backups are written to `backup_dir` as compressed archives named `{dbname}-{timestamp}-{strategy}.bck.gz`. To retrieve them, use the SFTP pull client from [restinpieces-backup-client](https://github.com/caasmo/restinpieces-backup-client):
 
 ```bash
-go run github.com/caasmo/restinpieces-sqlite-backup/cmd/client@latest \
+go run github.com/caasmo/restinpieces-backup-client/cmd/sftp@latest \
   -host myserver.example.com \
   -user backup \
   -remote-dir /data/backups \
