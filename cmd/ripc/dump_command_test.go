@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
+	toml "github.com/pelletier/go-toml/v2"
 )
 
 // This MockSecureStore is a simplified version for dump command tests.
@@ -52,14 +53,14 @@ addr = ":9090"
 	})
 	var stdout bytes.Buffer
 
-	err := dumpConfig(&stdout, mockStore, scope, true)
+	err := dumpConfig(&stdout, mockStore, scope, false, false)
 
 	if err != nil {
 		t.Fatalf("dumpConfig() returned an unexpected error: %v", err)
 	}
 	got := stdout.String()
-	if !bytes.Contains([]byte(got), []byte(`addr = ":9090"`)) && !bytes.Contains([]byte(got), []byte(`addr = ':9090'`)) {
-		t.Errorf("dumpConfig() output = %q, want it to contain %q", got, `addr = ":9090"`)
+	if got != storedData {
+		t.Errorf("dumpConfig() output = %q, want %q", got, storedData)
 	}
 }
 
@@ -73,14 +74,14 @@ addr = ":9090"
 	})
 	var stdout bytes.Buffer
 
-	err := dumpConfig(&stdout, mockStore, "", true) // Empty scope triggers default
+	err := dumpConfig(&stdout, mockStore, "", false, false)
 
 	if err != nil {
 		t.Fatalf("dumpConfig() with empty scope returned an unexpected error: %v", err)
 	}
 	got := stdout.String()
-	if !bytes.Contains([]byte(got), []byte(`addr = ":9090"`)) && !bytes.Contains([]byte(got), []byte(`addr = ':9090'`)) {
-		t.Errorf("dumpConfig() output = %q, want it to contain %q", got, `addr = ":9090"`)
+	if got != storedData {
+		t.Errorf("dumpConfig() output = %q, want %q", got, storedData)
 	}
 }
 
@@ -90,7 +91,7 @@ func TestDumpConfig_Failure_StoreReadError(t *testing.T) {
 	mockStore.ForceGetError = true
 	var stdout bytes.Buffer
 
-	err := dumpConfig(&stdout, mockStore, "any_scope", false)
+	err := dumpConfig(&stdout, mockStore, "any_scope", false, false)
 
 	if err == nil {
 		t.Fatal("dumpConfig() was expected to return an error, but did not")
@@ -100,20 +101,33 @@ func TestDumpConfig_Failure_StoreReadError(t *testing.T) {
 	}
 }
 
-// TestDumpConfig_Failure_OutputWriteError tests failure on output write error.
+// TestDumpConfig_Failure_OutputWriteError tests write-failure for all dump modes.
 func TestDumpConfig_Failure_OutputWriteError(t *testing.T) {
 	mockStore := NewMockDumpSecureStore(map[string][]byte{
 		"any_scope": []byte("[server]\naddr = ':8080'"),
 	})
-	var failingStdout failingWriter
 
-	err := dumpConfig(&failingStdout, mockStore, "any_scope", true)
-
-	if err == nil {
-		t.Fatal("dumpConfig() was expected to return an error, but did not")
+	tests := []struct {
+		name    string
+		zero    bool
+		runtime bool
+	}{
+		{"raw", false, false},
+		{"zero", true, false},
+		{"runtime", false, true},
 	}
-	if !errors.Is(err, ErrWriteOutput) {
-		t.Errorf("dumpConfig() error = %v, want error wrapping %v", err, ErrWriteOutput)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			var failingStdout failingWriter
+			err := dumpConfig(&failingStdout, mockStore, "any_scope", tc.zero, tc.runtime)
+			if err == nil {
+				t.Fatal("dumpConfig() was expected to return an error, but did not")
+			}
+			if !errors.Is(err, ErrWriteOutput) {
+				t.Errorf("dumpConfig(%s) error = %v, want error wrapping %v", tc.name, err, ErrWriteOutput)
+			}
+		})
 	}
 }
 
@@ -124,10 +138,9 @@ func (fw *failingWriter) Write(p []byte) (n int, err error) {
 	return 0, errors.New("forced write error")
 }
 
-// TestDumpConfig_Effective verifies that effective dump merges defaults with overrides.
-func TestDumpConfig_Effective(t *testing.T) {
+// TestDumpConfig_Runtime verifies that runtime dump merges defaults with stored overrides.
+func TestDumpConfig_Runtime(t *testing.T) {
 	scope := "test_app"
-	// Override server.addr from default :8080 to :9090
 	override := `[server]
 addr = ":9090"
 `
@@ -136,19 +149,64 @@ addr = ":9090"
 	})
 	var stdout bytes.Buffer
 
-	err := dumpConfig(&stdout, mockStore, scope, false) // zero = false for effective dump
+	err := dumpConfig(&stdout, mockStore, scope, false, true)
+	if err != nil {
+		t.Fatalf("dumpConfig(runtime) returned an unexpected error: %v", err)
+	}
+
+	var got config.Config
+	err = toml.Unmarshal(stdout.Bytes(), &got)
+	if err != nil {
+		t.Fatalf("dumpConfig(runtime) produced invalid TOML: %v", err)
+	}
+	if got.Server.Addr != ":9090" {
+		t.Errorf("expected server.addr = %q, got %q", ":9090", got.Server.Addr)
+	}
+	if got.PublicDir != "static/dist" {
+		t.Errorf("expected default public_dir = %q, got %q", "static/dist", got.PublicDir)
+	}
+}
+
+// TestDumpConfig_RawEmpty verifies raw mode on empty stored data produces no output.
+func TestDumpConfig_RawEmpty(t *testing.T) {
+	mockStore := NewMockDumpSecureStore(nil)
+	var stdout bytes.Buffer
+
+	err := dumpConfig(&stdout, mockStore, "nonexistent", false, false)
 
 	if err != nil {
-		t.Fatalf("dumpConfig() returned an unexpected error: %v", err)
+		t.Fatalf("dumpConfig(raw empty) returned an unexpected error: %v", err)
+	}
+	if stdout.Len() != 0 {
+		t.Errorf("dumpConfig(raw empty) expected empty output, got %q", stdout.String())
+	}
+}
+
+// TestDumpConfig_Zero verifies zero dump writes stored overrides on a zero-valued config.
+func TestDumpConfig_Zero(t *testing.T) {
+	scope := "test_app"
+	override := `[server]
+addr = ":9090"
+`
+	mockStore := NewMockDumpSecureStore(map[string][]byte{
+		scope: []byte(override),
+	})
+	var stdout bytes.Buffer
+
+	err := dumpConfig(&stdout, mockStore, scope, true, false)
+	if err != nil {
+		t.Fatalf("dumpConfig(zero) returned an unexpected error: %v", err)
 	}
 
-	got := stdout.Bytes()
-	// Check if the override is present. toml.Marshal may use single or double quotes.
-	if !bytes.Contains(got, []byte(`addr = ':9090'`)) && !bytes.Contains(got, []byte(`addr = ":9090"`)) {
-		t.Errorf("dumpConfig() output missing override: got %q", string(got))
+	var got config.Config
+	err = toml.Unmarshal(stdout.Bytes(), &got)
+	if err != nil {
+		t.Fatalf("dumpConfig(zero) produced invalid TOML: %v", err)
 	}
-	// Check if a default value is still present.
-	if !bytes.Contains(got, []byte(`public_dir = 'static/dist'`)) && !bytes.Contains(got, []byte(`public_dir = "static/dist"`)) {
-		t.Errorf("dumpConfig() output missing default value: got %q", string(got))
+	if got.Server.Addr != ":9090" {
+		t.Errorf("expected server.addr = %q, got %q", ":9090", got.Server.Addr)
+	}
+	if got.PublicDir != "" {
+		t.Errorf("expected zero-valued public_dir, got %q", got.PublicDir)
 	}
 }

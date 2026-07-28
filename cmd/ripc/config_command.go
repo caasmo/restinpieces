@@ -48,12 +48,17 @@ var (
 			},
 		},
 		Options: map[string]Option{
-			"scope":  {DefaultValue: config.ScopeApplication, Usage: "Scope for the configuration (affects: set, get, paths, dump, diff, rollback, save)"},
-			"format": {DefaultValue: "toml", Usage: "Format of the configuration file (affects: set, save)"},
-			"desc":   {Usage: "Optional description for this configuration version (affects: set, save)"},
-			"zero":   {Usage: "Dump the raw stored configuration instead of the effective one (affects: dump)"},
+			"scope":     {DefaultValue: config.ScopeApplication, Usage: "Scope for the configuration (affects: set, get, paths, dump, diff, rollback, save)"},
+			"format":    {DefaultValue: "toml", Usage: "Format of the configuration file (affects: set, save)"},
+			"desc":      {Usage: "Optional description for this configuration version (affects: set, save)"},
+			"zero":      {Usage: "Output stored overrides on top of zero values (affects: dump)"},
+			"runtime":   {Usage: "Output defaults merged with stored overrides (affects: dump)"},
 		},
 		Examples: []string{
+			"ripc config dump",
+			"ripc config dump --scope my-app",
+			"ripc config dump --zero",
+			"ripc config dump --runtime",
 			"ripc config set --scope my-app server.port 8080",
 			"ripc config list --scope my-app",
 			"ripc config rollback --scope my-app 3",
@@ -143,13 +148,13 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		}
 		handlePathsCommand(secureStore, scope, filter)
 	case "dump":
-		scope, zero, err := parseDumpArgs(subcommandArgs)
+		scope, zero, runtime, err := parseDumpArgs(subcommandArgs)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			printConfigUsage()
 			os.Exit(1)
 		}
-		handleDumpCommand(secureStore, scope, zero)
+		handleDumpCommand(secureStore, scope, zero, runtime)
 	case "diff":
 		scope, generation, err := parseDiffArgs(subcommandArgs)
 		if err != nil {
@@ -254,21 +259,26 @@ func parsePathsArgs(args []string) (scope, filter string, err error) {
 	return *pathsScope, filter, nil
 }
 
-func parseDumpArgs(args []string) (scope string, zero bool, err error) {
+func parseDumpArgs(args []string) (scope string, zero bool, runtime bool, err error) {
 	dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
 	dumpCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]
 	zeroOpt := commandConfig.Options["zero"]
+	runtimeOpt := commandConfig.Options["runtime"]
 	dumpScope := dumpCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 	dumpZero := dumpCmd.Bool("zero", false, zeroOpt.Usage)
+	dumpRuntime := dumpCmd.Bool("runtime", false, runtimeOpt.Usage)
 
 	if err := dumpCmd.Parse(args); err != nil {
-		return "", false, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
+		return "", false, false, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if dumpCmd.NArg() > 0 {
-		return "", false, fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
+		return "", false, false, fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
 	}
-	return *dumpScope, *dumpZero, nil
+	if *dumpZero && *dumpRuntime {
+		return "", false, false, fmt.Errorf("--zero and --runtime are mutually exclusive: %w", ErrInvalidFlag)
+	}
+	return *dumpScope, *dumpZero, *dumpRuntime, nil
 }
 
 func parseDiffArgs(args []string) (scope string, generation int, err error) {

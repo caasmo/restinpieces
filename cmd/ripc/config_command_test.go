@@ -133,7 +133,7 @@ func testPathsParsing(t *testing.T) {
 
 func testDumpParsing(t *testing.T) {
 	t.Run("DumpSuccess", func(t *testing.T) {
-		scope, zero, err := parseDumpArgs([]string{"--scope", "test"})
+		scope, zero, runtime, err := parseDumpArgs([]string{"--scope", "test"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -143,20 +143,49 @@ func testDumpParsing(t *testing.T) {
 		if zero {
 			t.Errorf("expected zero to be false by default")
 		}
+		if runtime {
+			t.Errorf("expected runtime to be false by default")
+		}
 	})
 
 	t.Run("DumpZeroSuccess", func(t *testing.T) {
-		_, zero, err := parseDumpArgs([]string{"--zero"})
+		_, zero, runtime, err := parseDumpArgs([]string{"--zero"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if !zero {
 			t.Errorf("expected zero to be true when flag is set")
 		}
+		if runtime {
+			t.Errorf("expected runtime to be false")
+		}
+	})
+
+	t.Run("DumpEffectiveSuccess", func(t *testing.T) {
+		_, zero, runtime, err := parseDumpArgs([]string{"--runtime"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if zero {
+			t.Errorf("expected zero to be false")
+		}
+		if !runtime {
+			t.Errorf("expected runtime to be true when flag is set")
+		}
+	})
+
+	t.Run("DumpZeroAndEffectiveMutualExclusion", func(t *testing.T) {
+		_, _, _, err := parseDumpArgs([]string{"--zero", "--runtime"})
+		if err == nil {
+			t.Fatal("expected error for mutually exclusive flags, got nil")
+		}
+		if !errors.Is(err, ErrInvalidFlag) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrInvalidFlag, err)
+		}
 	})
 
 	t.Run("DumpTooManyArgs", func(t *testing.T) {
-		_, _, err := parseDumpArgs([]string{"extra"})
+		_, _, _, err := parseDumpArgs([]string{"extra"})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}

@@ -67,9 +67,45 @@ Manages the application lifecycle.
 
 Manages the secure configuration store.
 
--   **`dump`**: Outputs the latest effective configuration (defaults + stored overrides) in plaintext.
-    -   `ripc  config dump --scope myapp`
-    -   `ripc  config dump --zero` (Outputs the overrides on top of zero values)
+-   **`dump`**: Decrypts and outputs the latest configuration stored in the database
+    for the given scope. Three modes are available:
+
+    **Default mode (no flags)**:
+    Writes the decrypted TOML configuration exactly as it was saved to the
+    database, with no transformation. If `ripc config save myconfig.toml` stored
+    `[server]\naddr = ":9090"\n`, that is exactly what you get. This is the
+    canonical way to see what was saved.
+
+        ripc config dump
+        ripc config dump --scope myapp
+
+    **`--zero`**:
+    Fills in zero values (`0`, `""`, `false`, `null`) for every configuration
+    key not present in the stored TOML, producing a complete TOML document where
+    only the keys that were explicitly configured carry non-zero values. Useful
+    for seeing which fields are explicitly configured vs left at their zero value.
+
+        ripc config dump --zero
+        ripc config dump --zero --scope myapp
+
+    **`--runtime`**:
+    Merges the stored TOML configuration with the framework's built-in defaults.
+    Every key in the output has a value — either the value from storage or the
+    framework default. This mirrors the full configuration the server would use
+    at startup.
+
+    **Warning**: framework defaults include dynamically generated secrets
+    (JWT signing keys, OTP secrets, etc.). If those fields are not present in
+    the stored TOML, the output shows freshly generated random strings on every
+    invocation — they do not correspond to any secret actually in use. To see
+    what the server actually uses, ensure secrets are part of the stored TOML
+    or use default mode to inspect the stored data directly.
+
+        ripc config dump --runtime
+        ripc config dump --runtime --scope myapp
+
+    `--zero` and `--runtime` are mutually exclusive. Using neither flag
+    produces the default raw output.
 -   **`get [filter]`**: Retrieves configuration values by path, optionally filtered.
     -   `ripc  config get "server.http_port"`
 -   **`init`**: Creates a new configuration with default values.

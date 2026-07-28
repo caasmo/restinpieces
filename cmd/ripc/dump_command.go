@@ -11,8 +11,8 @@ import (
 
 // handleDumpCommand is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
-func handleDumpCommand(secureStore config.SecureStore, scope string, zero bool) {
-	if err := dumpConfig(os.Stdout, secureStore, scope, zero); err != nil {
+func handleDumpCommand(secureStore config.SecureStore, scope string, zero bool, runtime bool) {
+	if err := dumpConfig(os.Stdout, secureStore, scope, zero, runtime); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
@@ -20,7 +20,7 @@ func handleDumpCommand(secureStore config.SecureStore, scope string, zero bool) 
 
 // dumpConfig contains the testable core logic for dumping configuration.
 // It accepts io.Writer for output, making it easy to test.
-func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, zero bool) error {
+func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, zero bool, runtime bool) error {
 	if scope == "" {
 		scope = config.ScopeApplication
 	}
@@ -31,39 +31,44 @@ func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 
 	if zero {
 		normalized := &config.Config{}
-		if err := toml.Unmarshal(decryptedData, normalized); err != nil {
-			return fmt.Errorf("failed to parse zero-default config: %w", err)
+		err = toml.Unmarshal(decryptedData, normalized)
+		if err != nil {
+			return fmt.Errorf("failed to parse config for zero-default dump: %w", err)
 		}
 		out, err := toml.Marshal(normalized)
 		if err != nil {
-			return fmt.Errorf("failed to normalize zero-default config: %w", err)
+			return fmt.Errorf("failed to serialize zero-default config: %w", err)
 		}
 		_, err = stdout.Write(out)
 		if err != nil {
-			return fmt.Errorf("%w: failed to write normalized zero-default config: %w", ErrWriteOutput, err)
+			return fmt.Errorf("%w: failed to write zero-default config to stdout: %w", ErrWriteOutput, err)
 		}
 		return nil
 	}
 
-	// Effective dump: Start with defaults
-	effective := config.NewDefaultConfig()
-
-	// Merge with stored overrides
-	if len(decryptedData) > 0 {
-		if err := toml.Unmarshal(decryptedData, effective); err != nil {
-			return fmt.Errorf("failed to parse stored config: %w", err)
+	if runtime {
+		merged := config.NewDefaultConfig()
+		if len(decryptedData) > 0 {
+			err = toml.Unmarshal(decryptedData, merged)
+			if err != nil {
+				return fmt.Errorf("failed to parse stored config for runtime dump: %w", err)
+			}
 		}
+		out, err := toml.Marshal(merged)
+		if err != nil {
+			return fmt.Errorf("failed to serialize runtime config: %w", err)
+		}
+		_, err = stdout.Write(out)
+		if err != nil {
+			return fmt.Errorf("%w: failed to write runtime config to stdout: %w", ErrWriteOutput, err)
+		}
+		return nil
 	}
 
-	// Re-serialize the merged result
-	merged, err := toml.Marshal(effective)
+	// Raw: write decrypted bytes directly
+	_, err = stdout.Write(decryptedData)
 	if err != nil {
-		return fmt.Errorf("failed to serialize effective config: %w", err)
-	}
-
-	_, err = stdout.Write(merged)
-	if err != nil {
-		return fmt.Errorf("%w: failed to write effective config to stdout: %w", ErrWriteOutput, err)
+		return fmt.Errorf("%w: failed to write raw config to stdout: %w", ErrWriteOutput, err)
 	}
 	return nil
 }
