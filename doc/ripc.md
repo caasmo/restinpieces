@@ -32,12 +32,16 @@ go install github.com/caasmo/restinpieces/cmd/ripc
 
 ## Global Options
 
-`ripc` uses global settings that can be provided via flags or discovered automatically.
+`ripc` uses global settings that can be provided via flags or environment variables.
 
--   `-agekey`: Path to the `age` identity file (private key). If not provided, `ripc` will look for `age_key.txt` or `age.key` in the current directory.
--   `-dbpath`: Path to the SQLite database file. If not provided, `ripc` will look for `app.db` in the current directory.
+-   `-agekey`: Path to the `age` identity file (private key). Can also be set via the
+    `RIPC_AGE_KEY_PATH` environment variable. One of the two must be provided.
+-   `-dbpath`: Path to the SQLite database file. Can also be set via the
+    `RIPC_DB` environment variable. One of the two must be provided.
 
-Flags always take precedence over discovered files.
+The resolution order is: **flag → environment variable → error**. A flag, when
+present, always takes precedence over its corresponding environment variable.
+If neither is provided, `ripc` exits with an error.
 
 ## Usage
 
@@ -45,8 +49,11 @@ Flags always take precedence over discovered files.
 ripc [global options] <command> <subcommand> [options]
 ```
 
-If `age.key` and `app.db` are in the current directory, you can run commands without global options:
+If `RIPC_DB` and `RIPC_AGE_KEY_PATH` are set in your environment, flags can be omitted
+entirely:
 ```
+export RIPC_DB=data/app.db
+export RIPC_AGE_KEY_PATH=age_key.txt
 ripc config list
 ```
 

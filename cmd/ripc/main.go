@@ -31,46 +31,14 @@ func main() {
 	}
 }
 
-// discoverAgeKey checks for an age key, using a provided path or searching default locations.
-func discoverAgeKey(providedKey string) (string, error) {
-	if providedKey != "" {
-		return providedKey, nil
-	}
-	defaultKeys := []string{"age_key.txt", "age.key"}
-	for _, keyFile := range defaultKeys {
-		if _, err := os.Stat(keyFile); err == nil {
-			return keyFile, nil
-		} else if !os.IsNotExist(err) {
-			return "", fmt.Errorf("error checking for default key file %s: %w", keyFile, err)
-		}
-	}
-	return "", fmt.Errorf("%w: -agekey flag must be provided, or 'age_key.txt' or 'age.key' must exist in the current directory", ErrMissingFlag)
-}
-
-// discoverDBPath checks for a database file, using a provided path or searching default locations.
-func discoverDBPath(providedDB string) (string, error) {
-	if providedDB != "" {
-		return providedDB, nil
-	}
-	defaultPaths := []string{"data/app.db", "app.db"}
-	for _, path := range defaultPaths {
-		if _, err := os.Stat(path); err == nil {
-			return path, nil
-		} else if !os.IsNotExist(err) {
-			return "", fmt.Errorf("error checking for default database file %s: %w", path, err)
-		}
-	}
-	return "", fmt.Errorf("%w: -dbpath flag must be provided, or 'data/app.db' or 'app.db' must exist", ErrMissingFlag)
-}
-
 func run(args []string, output io.Writer) error {
 	// We need a new flag set for each run
 	fs := flag.NewFlagSet("ripc", flag.ContinueOnError)
 	fs.SetOutput(output)
 
 	// Global flags
-	ageIdentityPathFlag := fs.String("agekey", "", "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
-	dbPathFlag := fs.String("dbpath", "", "Path to the SQLite database file")
+	ageIdentityPathFlag := fs.String("agekey", os.Getenv("RIPC_AGE_KEY_PATH"), "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
+	dbPathFlag := fs.String("dbpath", os.Getenv("RIPC_DB"), "Path to the SQLite database file")
 
 	fs.Usage = func() {
 		help := CommandHelp{
@@ -103,19 +71,14 @@ func run(args []string, output io.Writer) error {
 		return fmt.Errorf("%w: %v", ErrInvalidFlag, err)
 	}
 
-	finalAgeKeyPath, err := discoverAgeKey(*ageIdentityPathFlag)
-	if err != nil {
+	if *ageIdentityPathFlag == "" {
 		fs.Usage()
-		return err
+		return fmt.Errorf("%w: -agekey flag or RIPC_AGE_KEY_PATH env must be provided", ErrMissingFlag)
 	}
-	*ageIdentityPathFlag = finalAgeKeyPath
-
-	finalDBPath, err := discoverDBPath(*dbPathFlag)
-	if err != nil {
+	if *dbPathFlag == "" {
 		fs.Usage()
-		return err
+		return fmt.Errorf("%w: -dbpath flag or RIPC_DB env must be provided", ErrMissingFlag)
 	}
-	*dbPathFlag = finalDBPath
 
 	cmdArgs := fs.Args()
 	if len(cmdArgs) < 1 {
