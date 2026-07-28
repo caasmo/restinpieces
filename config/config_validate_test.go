@@ -110,6 +110,17 @@ func TestValidate(t *testing.T) {
 		{"invalid request log", func(c *Config) { c.Log.Request.Limits.URILength = 0 }},
 		{"invalid block ip", func(c *Config) { c.BlockIp.Level = "" }},
 		{"invalid cache", func(c *Config) { c.Cache.Level = "" }},
+		{"invalid backup local", func(c *Config) {
+			c.BackupLocal.BackupDir = "/tmp/backups"
+			c.BackupLocal.Files = []BackupLocalDbFile{{SourcePath: "/x.db", Frequency: Duration{Duration: 1 * time.Hour}, Strategy: "invalid"}}
+		}},
+		{"duplicate basename", func(c *Config) {
+			c.BackupLocal.BackupDir = "/tmp/backups"
+			c.BackupLocal.Files = []BackupLocalDbFile{
+				{SourcePath: "/data/a/app.db", Frequency: Duration{Duration: 1 * time.Hour}},
+				{SourcePath: "/data/b/app.db", Frequency: Duration{Duration: 1 * time.Hour}},
+			}
+		}},
 	}
 
 	for _, tt := range errorCases {
@@ -440,4 +451,113 @@ func TestValidateServerPort(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateBackupLocal(t *testing.T) {
+	t.Parallel()
+
+	// Valid cases
+	t.Run("deactivated empty backup dir", func(t *testing.T) {
+		b := &BackupLocal{BackupDir: "", Files: []BackupLocalDbFile{{SourcePath: "/x.db", Frequency: Duration{Duration: time.Hour}}}}
+		if err := validateBackupLocal(b); err != nil {
+			t.Fatalf("expected nil for deactivated backup, got: %v", err)
+		}
+	})
+
+	t.Run("valid files", func(t *testing.T) {
+		b := &BackupLocal{
+			BackupDir:           "/tmp/backups",
+			OnlinePagesPerStep:  100,
+			OnlineSleepInterval: Duration{Duration: time.Millisecond},
+			Files: []BackupLocalDbFile{
+				{SourcePath: "/data/a/app.db", Frequency: Duration{Duration: time.Hour}, Strategy: "online"},
+				{SourcePath: "/data/b/other.db", Frequency: Duration{Duration: 30 * time.Minute}, Strategy: "vacuum"},
+				{SourcePath: "/data/c/empty.db", Frequency: Duration{Duration: 6 * time.Hour}, Strategy: ""},
+			},
+		}
+		if err := validateBackupLocal(b); err != nil {
+			t.Fatalf("expected nil for valid config, got: %v", err)
+		}
+	})
+
+	// Invalid cases
+	t.Run("empty source path", func(t *testing.T) {
+		b := &BackupLocal{
+			BackupDir:          "/tmp/backups",
+			OnlinePagesPerStep: 100,
+			Files:              []BackupLocalDbFile{{SourcePath: "", Frequency: Duration{Duration: time.Hour}}},
+		}
+		if err := validateBackupLocal(b); err == nil {
+			t.Fatal("expected error for empty source_path, got nil")
+		}
+	})
+
+	t.Run("zero frequency", func(t *testing.T) {
+		b := &BackupLocal{
+			BackupDir:          "/tmp/backups",
+			OnlinePagesPerStep: 100,
+			Files:              []BackupLocalDbFile{{SourcePath: "/x.db", Frequency: Duration{Duration: 0}}},
+		}
+		if err := validateBackupLocal(b); err == nil {
+			t.Fatal("expected error for zero frequency, got nil")
+		}
+	})
+
+	t.Run("negative frequency", func(t *testing.T) {
+		b := &BackupLocal{
+			BackupDir:          "/tmp/backups",
+			OnlinePagesPerStep: 100,
+			Files:              []BackupLocalDbFile{{SourcePath: "/x.db", Frequency: Duration{Duration: -time.Hour}}},
+		}
+		if err := validateBackupLocal(b); err == nil {
+			t.Fatal("expected error for negative frequency, got nil")
+		}
+	})
+
+	t.Run("invalid strategy", func(t *testing.T) {
+		b := &BackupLocal{
+			BackupDir:          "/tmp/backups",
+			OnlinePagesPerStep: 100,
+			Files:              []BackupLocalDbFile{{SourcePath: "/x.db", Frequency: Duration{Duration: time.Hour}, Strategy: "invalid"}},
+		}
+		if err := validateBackupLocal(b); err == nil {
+			t.Fatal("expected error for invalid strategy, got nil")
+		}
+	})
+
+	t.Run("duplicate basename", func(t *testing.T) {
+		b := &BackupLocal{
+			BackupDir:          "/tmp/backups",
+			OnlinePagesPerStep: 100,
+			Files: []BackupLocalDbFile{
+				{SourcePath: "/data/a/app.db", Frequency: Duration{Duration: time.Hour}},
+				{SourcePath: "/data/b/app.db", Frequency: Duration{Duration: time.Hour}},
+			},
+		}
+		if err := validateBackupLocal(b); err == nil {
+			t.Fatal("expected error for duplicate basename, got nil")
+		}
+	})
+
+	t.Run("zero online_pages_per_step", func(t *testing.T) {
+		b := &BackupLocal{
+			BackupDir:           "/tmp/backups",
+			OnlinePagesPerStep:  0,
+			OnlineSleepInterval: Duration{Duration: time.Millisecond},
+		}
+		if err := validateBackupLocal(b); err == nil {
+			t.Fatal("expected error for zero online_pages_per_step, got nil")
+		}
+	})
+
+	t.Run("negative sleep interval", func(t *testing.T) {
+		b := &BackupLocal{
+			BackupDir:           "/tmp/backups",
+			OnlinePagesPerStep:  100,
+			OnlineSleepInterval: Duration{Duration: -time.Millisecond},
+		}
+		if err := validateBackupLocal(b); err == nil {
+			t.Fatal("expected error for negative sleep interval, got nil")
+		}
+	})
 }

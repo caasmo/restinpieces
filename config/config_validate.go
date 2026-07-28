@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -81,25 +82,46 @@ func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
 }
 
 // validateBackupLocal checks the BackupLocal configuration section.
+// An empty BackupDir deactivates the entire backup feature — all other
+// fields are ignored.
 func validateBackupLocal(backup *BackupLocal) error {
-	// The backup feature is considered enabled if the source path is set.
-	if backup.SourcePath == "" {
-		return nil // Not configured, no validation needed.
-	}
-
-	// If the strategy is online, pages_per_step must be positive.
-	if backup.Strategy == "online" {
-		if backup.PagesPerStep <= 0 {
-			return fmt.Errorf("pages_per_step must be positive for online strategy")
-		}
-		if backup.SleepInterval.Duration < 0 {
-			return fmt.Errorf("sleep_interval cannot be negative for online strategy")
-		}
-	}
-
-	// The backup directory must be configured.
 	if backup.BackupDir == "" {
-		return fmt.Errorf("backup_dir cannot be empty")
+		return nil // backup feature deactivated
+	}
+
+	if backup.OnlinePagesPerStep <= 0 {
+		return fmt.Errorf("online_pages_per_step must be positive")
+	}
+
+	if backup.OnlineSleepInterval.Duration < 0 {
+		return fmt.Errorf("online_sleep_interval cannot be negative")
+	}
+
+	for i, f := range backup.Files {
+		if f.SourcePath == "" {
+			return fmt.Errorf("files[%d].source_path cannot be empty", i)
+		}
+		if f.Frequency.Duration <= 0 {
+			return fmt.Errorf("files[%d].frequency must be positive", i)
+		}
+		switch f.Strategy {
+		case "online", "vacuum", "":
+			// valid (empty defaults to online at runtime)
+		default:
+			return fmt.Errorf("files[%d].strategy must be 'online' or 'vacuum', got %q", i, f.Strategy)
+		}
+	}
+
+	// Duplicate basenames silently overwrite backup files and latest links
+	// in the shared BackupDir.  Caught at startup and on SIGHUP reload
+	// (config.Reload calls Validate).
+	seen := make(map[string]int)
+	for i, f := range backup.Files {
+		base := filepath.Base(f.SourcePath)
+		if first, dup := seen[base]; dup {
+			return fmt.Errorf("files[%d] duplicates basename %q (first at files[%d])", i, base, first)
+		}
+		seen[base] = i
 	}
 
 	return nil

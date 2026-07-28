@@ -95,11 +95,43 @@ type BlockHost struct {
 
 // BackupLocal defines the settings for the local backup job.
 type BackupLocal struct {
-	SourcePath    string   `toml:"source_path" comment:"Path to the source database file to back up."`
-	BackupDir     string   `toml:"backup_dir" comment:"Directory where backup files will be stored."`
-	Strategy      string   `toml:"strategy" comment:"Backup strategy to use ('online' or 'vacuum'). 'online' is the default."`
-	PagesPerStep  int      `toml:"pages_per_step" comment:"For 'online' strategy, the number of pages to copy in each step."`
-	SleepInterval Duration `toml:"sleep_interval" comment:"For 'online' strategy, the duration to sleep between steps."`
+	// BackupDir is the single directory where all backup files,
+	// compressed archives, and latest hardlinks are written.
+	BackupDir string `toml:"backup_dir" comment:"Directory where backup files will be stored."`
+
+	// OnlinePagesPerStep controls the number of pages copied in each step
+	// when using the "online" backup strategy. Applies globally to all
+	// databases using the online strategy.
+	OnlinePagesPerStep int `toml:"online_pages_per_step" comment:"For 'online' strategy, pages to copy in each step."`
+
+	// OnlineSleepInterval is the duration to sleep between online backup
+	// steps. Applies globally to all databases using the online strategy.
+	OnlineSleepInterval Duration `toml:"online_sleep_interval" comment:"For 'online' strategy, duration to sleep between steps."`
+
+	// Databases lists each database file to back up, with per-DB strategy,
+	// compression, and frequency.
+	Files []BackupLocalDbFile `toml:"files" comment:"Database files to back up with per-file strategy, compression, and frequency."`
+}
+
+// BackupLocalDbFile defines the backup settings for a single SQLite database file.
+type BackupLocalDbFile struct {
+	// SourcePath is the filesystem path to the SQLite database to back up.
+	SourcePath string `toml:"source_path" comment:"Path to the source database file."`
+
+	// Compression enables gzip compression of the backup file.
+	// When true, backup files use the ".bck.gz" extension.
+	// When false, backup files use the ".db" extension (plain SQLite copy).
+	Compression bool `toml:"compression" comment:"Enable gzip compression of the backup."`
+
+	// Strategy selects the backup method: "online" or "vacuum".
+	// "online" uses SQLite's Online Backup API (non-blocking).
+	// "vacuum" uses VACUUM INTO (faster but blocks writers).
+	Strategy string `toml:"strategy" comment:"Backup strategy: 'online' or 'vacuum'."`
+
+	// Frequency defines how often this database should be backed up.
+	// The handler skips a database if its latest backup is newer than
+	// this duration. Parsed via time.ParseDuration (e.g. "24h", "6h").
+	Frequency Duration `toml:"frequency" comment:"Minimum interval between backups (e.g. '24h')."`
 }
 
 // Log contains Default (Batch) log configuration
