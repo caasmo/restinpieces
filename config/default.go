@@ -169,7 +169,7 @@ func NewDefaultConfig() *Config {
 			BackupDir:           "",
 			OnlinePagesPerStep:  100,
 			OnlineSleepInterval: Duration{Duration: 10 * time.Millisecond},
-			Files:               []BackupLocalDbFile{},
+			Files: nil,
 		},
 		Cache: Cache{
 			Level: "medium",

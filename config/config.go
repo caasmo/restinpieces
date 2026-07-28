@@ -110,7 +110,7 @@ type BackupLocal struct {
 
 	// Databases lists each database file to back up, with per-DB strategy,
 	// compression, and frequency.
-	Files []BackupLocalDbFile `toml:"files" comment:"Database files to back up with per-file strategy, compression, and frequency."`
+	Files []BackupLocalDbFile `toml:"files,omitempty" comment:"Database files to back up with per-file strategy, compression, and frequency."`
 }
 
 // BackupLocalDbFile defines the backup settings for a single SQLite database file.
