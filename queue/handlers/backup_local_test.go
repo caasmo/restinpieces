@@ -707,7 +707,7 @@ func TestModuloLogger_Log(t *testing.T) {
 		if sqlErr := sqlitex.Execute(conn, "INSERT INTO users (name, email) VALUES (?, ?);", &sqlitex.ExecOptions{
 			Args: []any{name, email},
 		}); sqlErr != nil {
-			conn.Close()
+			_ = conn.Close()
 			t.Fatalf("Failed to insert test data row %d: %v", i, sqlErr)
 		}
 	}
