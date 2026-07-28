@@ -3,7 +3,6 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/caasmo/restinpieces)](https://pkg.go.dev/github.com/caasmo/restinpieces)
 [![Test](https://github.com/caasmo/restinpieces/actions/workflows/test.yml/badge.svg)](https://github.com/caasmo/restinpieces/actions/workflows/test.yml) 
 [![golangci-lint](https://github.com/caasmo/restinpieces/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/caasmo/restinpieces/actions/workflows/golangci-lint.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/caasmo/restinpieces)](https://goreportcard.com/report/github.com/caasmo/restinpieces)
 [![Coverage](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/caasmo/restinpieces/master/.github/badges/coverage.json)](https://github.com/caasmo/restinpieces/actions/workflows/test.yml)
 [![sloc](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/caasmo/restinpieces/master/.github/badges/sloc.json)](https://github.com/caasmo/restinpieces/actions/workflows/sloc.yml)
 [![deps](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/caasmo/restinpieces/master/.github/badges/deps.json)](https://github.com/caasmo/restinpieces/actions/workflows/dependencies.yml)
