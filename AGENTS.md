@@ -12,6 +12,10 @@ This project uses both `github.com/pelletier/go-toml` (v1) and `github.com/pelle
 
 **Rule**: new code uses v2 unless it needs to enumerate or mutate TOML tree keys. Never import both versions in the same file.
 
+#### v2 unstable/edit
+
+v2's `unstable/edit` sub-package now provides `Set`, `Has`, `Get`, `Delete` with comment preservation — the tree-mutation API v2 was missing. Once it stabilizes into a tagged release, the remaining v1 code (`set`, `get`, `paths`) will migrate to it.
+
 ### Config: maps over slices
 
 Config structs **MUST NOT** contain slices for collections of items. Use `map[string]T` instead.
