@@ -181,7 +181,11 @@ func NewDefaultConfig() *Config {
 
 // NewBackupLocalDbFileDefaults returns a BackupLocalDbFile with sensible defaults
 // for use by ripc config scaffold. The SourcePath is intentionally empty — the
-// user must configure it.
+// user must configure it. After scaffolding, set source_path to the absolute or
+// relative path of your database file. Relative paths resolve against the
+// application's current working directory (CWD). When deployed via the canonical
+// systemd service (restinpieces.service), the CWD is /home/<app> so relative
+// paths typically start with "data/" (e.g. "data/app.db").
 func NewBackupLocalDbFileDefaults() BackupLocalDbFile {
 	return BackupLocalDbFile{
 		Strategy:    BackupStrategyOnline,

@@ -25,7 +25,7 @@ Configuration lives under the `[backup_local]` TOML section, defined in [config/
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `backup_dir` | string | `""` | Single directory for all backup files, compressed archives, and latest hardlinks. Empty string **deactivates** the entire backup feature. |
+| `backup_dir` | string | `""` | Single directory for all backup files, compressed archives, and latest hardlinks. Empty string **deactivates** the entire backup feature. Supports absolute and relative paths. Relative paths resolve against the application's current working directory (CWD). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), the CWD is `/home/<app>` so a relative path like `data/backups` resolves to `/home/<app>/data/backups`. |
 | `online_pages_per_step` | int | `100` | Pages copied per step when using an `"online"` strategy (global across all files). |
 | `online_sleep_interval` | duration | `"10ms"` | Pause between steps when using an `"online"` strategy (global). |
 | `files` | array of tables | `[]` | List of database files to back up (see below). |
@@ -36,7 +36,7 @@ Each entry in the `files` array is a TOML table with these fields:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `source_path` | string | — (required) | Filesystem path to the SQLite database to back up. |
+| `source_path` | string | — (required) | Filesystem path to the SQLite database to back up. Supports absolute and relative paths. Relative paths resolve against the application's current working directory (CWD). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), the CWD is `/home/<app>` and databases typically live under `data/`, so a relative `source_path` should start with `data/` (e.g. `data/app.db`). |
 | `compression` | bool | `false` | Enable gzip compression (`.bck.gz`). When false, produces a plain SQLite copy (`.db`). |
 | `strategy` | string | `"online"` | Backup strategy: `"online"` or `"vacuum"`. Empty string defaults to `"online"`. |
 | `frequency` | duration | — (required) | Minimum interval between backups (e.g. `"24h"`, `"6h"`). The handler skips a file if its latest backup is newer than this duration. |

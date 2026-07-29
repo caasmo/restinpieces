@@ -104,7 +104,12 @@ type BlockHost struct {
 type BackupLocal struct {
 	// BackupDir is the single directory where all backup files,
 	// compressed archives, and latest hardlinks are written.
-	BackupDir string `toml:"backup_dir" comment:"Directory where backup files will be stored."`
+	// Supports absolute and relative paths. Relative paths resolve against
+	// the RestInPieces application's current working directory (CWD).
+	// When deployed via the canonical systemd service (restinpieces.service),
+	// the CWD is /home/<app> so a relative path like "data/backups" resolves
+	// to /home/<app>/data/backups. See doc/backup.md.
+	BackupDir string `toml:"backup_dir" comment:"Directory where backup files will be stored. Supports absolute and relative paths (relative to the application CWD)."`
 
 	// OnlinePagesPerStep controls the number of pages copied in each step
 	// when using the "online" backup strategy. Applies globally to all
@@ -124,7 +129,12 @@ type BackupLocal struct {
 // BackupLocalDbFile defines the backup settings for a single SQLite database file.
 type BackupLocalDbFile struct {
 	// SourcePath is the filesystem path to the SQLite database to back up.
-	SourcePath string `toml:"source_path" comment:"Path to the source database file."`
+	// Supports absolute and relative paths. Relative paths resolve against
+	// the RestInPieces application's current working directory (CWD).
+	// When deployed via the canonical systemd service (restinpieces.service),
+	// the CWD is /home/<app> so relative paths typically start with "data/"
+	// (e.g. "data/app.db"). See doc/backup.md.
+	SourcePath string `toml:"source_path" comment:"Path to the source database file. Supports absolute and relative paths (relative to the application CWD)."`
 
 	// Compression enables gzip compression of the backup file.
 	// When true, backup files use the ".bck.gz" extension.

@@ -164,6 +164,12 @@ user-chosen label and must not already exist.
 Types:
 - `backuplocal` — writes `strategy` (online), `compression` (false),
   `frequency` (15m), and `source_path` (empty) under `backup_local.files.<key>`.
+  After scaffolding, you **must** set `source_path` to the path of your database
+  file. Supports absolute and relative paths. Relative paths resolve against the
+  application's current working directory (CWD). When deployed via the canonical
+  systemd service ([restinpieces.service](../restinpieces.service)), the CWD is
+  `/home/<app>` and databases typically live under `data/`, so a relative
+  `source_path` should start with `data/` (e.g. `data/app.db`).
 - `oauth2` — writes `pkce` (true), `name`, `client_id`, `client_secret`, and
   URLs (all empty) under `oauth2_providers.<key>`.
 
