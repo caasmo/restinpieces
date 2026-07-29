@@ -74,8 +74,10 @@ Manages the application lifecycle.
 
 Manages the secure configuration store.
 
--   **`dump`**: Decrypts and outputs the latest configuration stored in the database
-    for the given scope. Three modes are available:
+#### `dump`
+
+Decrypts and outputs the latest configuration stored in the database
+for the given scope. Three modes are available:
 
     **Default mode (no flags)**:
     Writes the decrypted TOML configuration exactly as it was saved to the
@@ -113,30 +115,50 @@ Manages the secure configuration store.
 
     `--zero` and `--runtime` are mutually exclusive. Using neither flag
     produces the default raw output.
--   **`get [filter]`**: Retrieves configuration values by path, optionally filtered.
-    -   `ripc  config get "server.http_port"`
--   **`init`**: Creates a new configuration with default values.
-    -   `ripc  config init -scope myapp`
--   **`list [scope]`**: Lists configuration versions, optionally filtered by scope.
-    -   `ripc  config list`
-    -   `ripc  config list myapp`
--   **`paths [filter]`**: Lists all available TOML paths in the configuration, optionally filtered.
-    -   `ripc  config paths`
-    -   `ripc  config paths "server.*"`
--   **`rollback <generation>`**: Rolls back to a previous configuration version by its generation number (from `config list`).
-    -   `ripc  config rollback -scope myapp 3`
--   **`save <file>`**: Saves the contents of a file to the configuration store.
-    -   `ripc  config save -scope myapp config.toml`
--   **`scaffold <type> <key>`**: Creates a group of configuration properties in one
-    command. Unlike `set` which writes a single property, scaffold writes all the
-    properties of an entry at once, populated with sensible defaults. The key is a
-    user-chosen label and must not already exist.
+#### `get [filter]`
 
-    Types:
-    - `backuplocal` — writes `strategy` (online), `compression` (false),
-      `frequency` (15m), and `source_path` (empty) under `backup_local.files.<key>`.
-    - `oauth2` — writes `pkce` (true), `name`, `client_id`, `client_secret`, and
-      URLs (all empty) under `oauth2_providers.<key>`.
+Retrieves configuration values by path, optionally filtered.
+
+    ripc  config get "server.http_port"
+#### `init`
+
+Creates a new configuration with default values.
+
+    ripc  config init -scope myapp
+#### `list [scope]`
+
+Lists configuration versions, optionally filtered by scope.
+
+    ripc  config list
+    ripc  config list myapp
+#### `paths [filter]`
+
+Lists all available TOML paths in the configuration, optionally filtered.
+
+    ripc  config paths
+    ripc  config paths "server.*"
+#### `rollback <generation>`
+
+Rolls back to a previous configuration version by its generation number (from `config list`).
+
+    ripc  config rollback -scope myapp 3
+#### `save <file>`
+
+Saves the contents of a file to the configuration store.
+
+    ripc  config save -scope myapp config.toml
+#### `scaffold <type> <key>`
+
+Creates a group of configuration properties in one
+command. Unlike `set` which writes a single property, scaffold writes all the
+properties of an entry at once, populated with sensible defaults. The key is a
+user-chosen label and must not already exist.
+
+Types:
+- `backuplocal` — writes `strategy` (online), `compression` (false),
+  `frequency` (15m), and `source_path` (empty) under `backup_local.files.<key>`.
+- `oauth2` — writes `pkce` (true), `name`, `client_id`, `client_secret`, and
+  URLs (all empty) under `oauth2_providers.<key>`.
 
     ```
     ripc config scaffold backuplocal app_db
@@ -173,12 +195,21 @@ Manages the secure configuration store.
     ripc config paths backup_local.files.app_db
     ```
 
--   **`scopes`**: Lists all unique configuration scopes.
-    -   `ripc  config scopes`
--   **`set <path> <value>`**: Sets a configuration value at a given path.
-    -   `ripc  config set -desc "Update port" server.http_port 8080`
--   **`diff <generation>`**: Shows differences between the latest configuration and a previous version.
-    -   `ripc  config diff -scope myapp 1`
+#### `scopes`
+
+Lists all unique configuration scopes.
+
+    ripc  config scopes
+#### `set <path> <value>`
+
+Sets a configuration value at a given path.
+
+    ripc  config set -desc "Update port" server.http_port 8080
+#### `diff <generation>`
+
+Shows differences between the latest configuration and a previous version.
+
+    ripc  config diff -scope myapp 1
 
 ### `job`
 
