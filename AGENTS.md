@@ -2,20 +2,15 @@
 
 ### Use of pelletier/v1 and v2
 
-This project uses both `github.com/pelletier/go-toml` (v1) and `github.com/pelletier/go-toml/v2`. The split is deliberate.
+This project uses both `github.com/pelletier/go-toml` (v1) and `github.com/pelletier/go-toml/v2`.
 
-**v2** is used everywhere struct marshalling/unmarshalling is needed:
-- Framework startup (`restinpieces.go`) — load config from DB
-- Config reload (`config/reload.go`) — validate on SIGHUP
-- CLI commands: `dump`, `diff`, `log_init`, `app_create` — marshal/unmarshal for normalization
+**Framework** (`restinpieces.go`, `config/reload.go`, etc.) uses v2 exclusively. It only needs `Unmarshal` to load config from the database — no tree navigation required.
 
-**v1** is used only where a mutable tree API is required:
-- `set`, `get`, `paths` commands — dot-path navigation, recursive enumeration, in-place mutation
-- Note: `init_command.go` uses v1 for `toml.Marshal` but could switch to v2
+**ripc CLI** uses both:
+- v1 for `set`, `get`, `paths` — these need `tree.Keys()` and recursive tree-walk to enumerate and mutate TOML keys. v2 has no equivalent.
+- v2 for `dump`, `diff`, `log_init`, `app_create` — these only marshal/unmarshal structs.
 
-**Why not v2 only**: v2 has no tree enumeration API — no `Keys()`, no recursive walk, no `*toml.Tree` type assertion. This makes `get`/`paths` impossible with v2 alone. v2's `unstable/edit` can replace v1 for `set` (better array handling, comment preservation), but `get`/`paths` would need to unmarshal into `map[string]interface{}` and walk that — losing v1's convenience.
-
-**Rule**: new code that only needs marshal/unmarshal uses v2. Code that needs tree mutation or enumeration uses v1. Never mix both in the same file.
+**Rule**: new code uses v2 unless it needs to enumerate or mutate TOML tree keys. Never import both versions in the same file.
 
 ### Config: maps over slices
 
