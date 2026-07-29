@@ -79,74 +79,81 @@ Manages the secure configuration store.
 Decrypts and outputs the latest configuration stored in the database
 for the given scope. Three modes are available:
 
-    **Default mode (no flags)**:
-    Writes the decrypted TOML configuration exactly as it was saved to the
-    database, with no transformation. If `ripc config save myconfig.toml` stored
-    `[server]\naddr = ":9090"\n`, that is exactly what you get. This is the
-    canonical way to see what was saved.
+**Default mode (no flags)**:
+Writes the decrypted TOML configuration exactly as it was saved to the
+database, with no transformation. If `ripc config save myconfig.toml` stored
+`[server]\naddr = ":9090"\n`, that is exactly what you get. This is the
+canonical way to see what was saved.
 
-        ripc config dump
-        ripc config dump --scope myapp
+    ripc config dump
+    ripc config dump --scope myapp
 
-    **`--zero`**:
-    Fills in zero values (`0`, `""`, `false`, `null`) for every configuration
-    key not present in the stored TOML, producing a complete TOML document where
-    only the keys that were explicitly configured carry non-zero values. Useful
-    for seeing which fields are explicitly configured vs left at their zero value.
+**`--zero`**:
+Fills in zero values (`0`, `""`, `false`, `null`) for every configuration
+key not present in the stored TOML, producing a complete TOML document where
+only the keys that were explicitly configured carry non-zero values. Useful
+for seeing which fields are explicitly configured vs left at their zero value.
 
-        ripc config dump --zero
-        ripc config dump --zero --scope myapp
+    ripc config dump --zero
+    ripc config dump --zero --scope myapp
 
-    **`--runtime`**:
-    Merges the stored TOML configuration with the framework's built-in defaults.
-    Every key in the output has a value — either the value from storage or the
-    framework default. This mirrors the full configuration the server would use
-    at startup.
+**`--runtime`**:
+Merges the stored TOML configuration with the framework's built-in defaults.
+Every key in the output has a value — either the value from storage or the
+framework default. This mirrors the full configuration the server would use
+at startup.
 
-    **Warning**: framework defaults include dynamically generated secrets
-    (JWT signing keys, OTP secrets, etc.). If those fields are not present in
-    the stored TOML, the output shows freshly generated random strings on every
-    invocation — they do not correspond to any secret actually in use. To see
-    what the server actually uses, ensure secrets are part of the stored TOML
-    or use default mode to inspect the stored data directly.
+**Warning**: framework defaults include dynamically generated secrets
+(JWT signing keys, OTP secrets, etc.). If those fields are not present in
+the stored TOML, the output shows freshly generated random strings on every
+invocation — they do not correspond to any secret actually in use. To see
+what the server actually uses, ensure secrets are part of the stored TOML
+or use default mode to inspect the stored data directly.
 
-        ripc config dump --runtime
-        ripc config dump --runtime --scope myapp
+    ripc config dump --runtime
+    ripc config dump --runtime --scope myapp
 
-    `--zero` and `--runtime` are mutually exclusive. Using neither flag
-    produces the default raw output.
+`--zero` and `--runtime` are mutually exclusive. Using neither flag
+produces the default raw output.
+
 #### `get [filter]`
 
 Retrieves configuration values by path, optionally filtered.
 
     ripc  config get "server.http_port"
+
 #### `init`
 
 Creates a new configuration with default values.
 
     ripc  config init -scope myapp
+
 #### `list [scope]`
 
 Lists configuration versions, optionally filtered by scope.
 
     ripc  config list
     ripc  config list myapp
+
 #### `paths [filter]`
 
 Lists all available TOML paths in the configuration, optionally filtered.
 
     ripc  config paths
     ripc  config paths "server.*"
+
 #### `rollback <generation>`
 
 Rolls back to a previous configuration version by its generation number (from `config list`).
 
     ripc  config rollback -scope myapp 3
+
 #### `save <file>`
 
 Saves the contents of a file to the configuration store.
 
     ripc  config save -scope myapp config.toml
+
 #### `scaffold <type> <key>`
 
 Creates a group of configuration properties in one
@@ -160,51 +167,53 @@ Types:
 - `oauth2` — writes `pkce` (true), `name`, `client_id`, `client_secret`, and
   URLs (all empty) under `oauth2_providers.<key>`.
 
-    ```
-    ripc config scaffold backuplocal app_db
-    ripc config set backup_local.files.app_db.source_path /var/data/app.db
-    ```
-    ```
-    ripc config scaffold oauth2 my_google
-    ripc config set oauth2_providers.my_google.client_id "..."
-    ```
+```
+ripc config scaffold backuplocal app_db
+ripc config set backup_local.files.app_db.source_path /var/data/app.db
+```
+```
+ripc config scaffold oauth2 my_google
+ripc config set oauth2_providers.my_google.client_id "..."
+```
 
-    Use `config get` to inspect the entry and `config paths` to list its properties.
+Use `config get` to inspect the entry and `config paths` to list its properties.
 
-    **Example: add a new backup db file**
+**Example: add a new backup db file**
 
-    Scaffold creates `strategy` (online), `compression` (false), `frequency` (15m),
-    and an empty `source_path` under `backup_local.files.app_db`:
+Scaffold creates `strategy` (online), `compression` (false), `frequency` (15m),
+and an empty `source_path` under `backup_local.files.app_db`:
 
-    ```
-    ripc config scaffold backuplocal app_db
-    ```
+```
+ripc config scaffold backuplocal app_db
+```
 
-    Set the database path and adjust the defaults:
+Set the database path and adjust the defaults:
 
-    ```
-    ripc config set backup_local.files.app_db.source_path /var/data/app.db
-    ripc config set backup_local.files.app_db.frequency 6h
-    ripc config set backup_local.files.app_db.compression true
-    ```
+```
+ripc config set backup_local.files.app_db.source_path /var/data/app.db
+ripc config set backup_local.files.app_db.frequency 6h
+ripc config set backup_local.files.app_db.compression true
+```
 
-    Verify with `get` and `paths`:
+Verify with `get` and `paths`:
 
-    ```
-    ripc config get backup_local.files.app_db
-    ripc config paths backup_local.files.app_db
-    ```
+```
+ripc config get backup_local.files.app_db
+ripc config paths backup_local.files.app_db
+```
 
 #### `scopes`
 
 Lists all unique configuration scopes.
 
     ripc  config scopes
+
 #### `set <path> <value>`
 
 Sets a configuration value at a given path.
 
     ripc  config set -desc "Update port" server.http_port 8080
+
 #### `diff <generation>`
 
 Shows differences between the latest configuration and a previous version.
