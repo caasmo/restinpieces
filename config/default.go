@@ -169,6 +169,8 @@ func NewDefaultConfig() *Config {
 			BackupDir:           "",
 			OnlinePagesPerStep:  100,
 			OnlineSleepInterval: Duration{Duration: 10 * time.Millisecond},
+			// Files is nil by default. Entries are created via ripc config scaffold.
+			// Map keys are user-chosen labels (not domain identifiers) — see AGENTS.md.
 			Files: nil,
 		},
 		Cache: Cache{

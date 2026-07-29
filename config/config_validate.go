@@ -5,7 +5,6 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -97,31 +96,22 @@ func validateBackupLocal(backup *BackupLocal) error {
 		return fmt.Errorf("online_sleep_interval cannot be negative")
 	}
 
-	for i, f := range backup.Files {
+	for key, f := range backup.Files {
+		if key == "" {
+			return fmt.Errorf("files: map key cannot be empty")
+		}
 		if f.SourcePath == "" {
-			return fmt.Errorf("files[%d].source_path cannot be empty", i)
+			return fmt.Errorf("files.%s.source_path cannot be empty", key)
 		}
 		if f.Frequency.Duration <= 0 {
-			return fmt.Errorf("files[%d].frequency must be positive", i)
+			return fmt.Errorf("files.%s.frequency must be positive", key)
 		}
 		switch f.Strategy {
-		case "online", "vacuum", "":
+		case BackupStrategyOnline, BackupStrategyVacuum, "":
 			// valid (empty defaults to online at runtime)
 		default:
-			return fmt.Errorf("files[%d].strategy must be 'online' or 'vacuum', got %q", i, f.Strategy)
+			return fmt.Errorf("files.%s.strategy must be 'online' or 'vacuum', got %q", key, f.Strategy)
 		}
-	}
-
-	// Duplicate basenames silently overwrite backup files and latest links
-	// in the shared BackupDir.  Caught at startup and on SIGHUP reload
-	// (config.Reload calls Validate).
-	seen := make(map[string]int)
-	for i, f := range backup.Files {
-		base := filepath.Base(f.SourcePath)
-		if first, dup := seen[base]; dup {
-			return fmt.Errorf("files[%d] duplicates basename %q (first at files[%d])", i, base, first)
-		}
-		seen[base] = i
 	}
 
 	return nil

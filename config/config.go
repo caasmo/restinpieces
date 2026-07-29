@@ -45,6 +45,9 @@ func (p *Provider) Update(newConfig *Config) {
 const (
 	OAuth2ProviderGoogle = "google"
 	OAuth2ProviderGitHub = "github"
+
+	BackupStrategyOnline = "online"
+	BackupStrategyVacuum = "vacuum"
 )
 
 // Config holds the application configuration.
@@ -108,9 +111,10 @@ type BackupLocal struct {
 	// steps. Applies globally to all databases using the online strategy.
 	OnlineSleepInterval Duration `toml:"online_sleep_interval" comment:"For 'online' strategy, duration to sleep between steps."`
 
-	// Databases lists each database file to back up, with per-DB strategy,
-	// compression, and frequency.
-	Files []BackupLocalDbFile `toml:"files,omitempty" comment:"Database files to back up with per-file strategy, compression, and frequency."`
+	// Files holds per-database backup configuration, keyed by an arbitrary
+	// user-chosen label (e.g. "app_db", "analytics_db"). The key is a label,
+	// not a domain identifier — see AGENTS.md "Config: map key rules".
+	Files map[string]BackupLocalDbFile `toml:"files,omitempty" comment:"Database files to back up, keyed by a user-chosen label."`
 }
 
 // BackupLocalDbFile defines the backup settings for a single SQLite database file.

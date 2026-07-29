@@ -23,12 +23,6 @@ const (
 	JobTypeBackupLocal = "job_type_backup_local"
 	ScopeDbBackup      = "sqlite_backup"
 
-	// strategyVacuum is the backup strategy that uses VACUUM INTO.
-	strategyVacuum = "vacuum"
-
-	// strategyOnline is the backup strategy that uses the SQLite Online Backup API.
-	strategyOnline = "online"
-
 	// timestampFormat is the UTC timestamp layout used in backup filenames.
 	// It is lexicographically sortable (chronological order equals string order).
 	// Produces e.g. "20250801T103000Z".
@@ -86,26 +80,26 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 	var errs []error
 	times := h.latestBackupTimes(cfg.BackupDir, cfg.Files)
 
-	for _, fileCfg := range cfg.Files {
-		dbName := filepath.Base(fileCfg.SourcePath)
+	for key, fileCfg := range cfg.Files {
+		backupName := h.buildBackupName(key, fileCfg.SourcePath)
 
 		// --- step 1: skip if not yet due ---
-		if !h.isBackupDue(times[dbName], fileCfg.Frequency.Duration, now) {
-			h.logger.Info("Skipping backup; not yet due", "db", dbName)
+		if !h.isBackupDue(times[backupName], fileCfg.Frequency.Duration, now) {
+			h.logger.Info("Skipping backup; not yet due", "db", backupName)
 			continue
 		}
 
 		// --- step 2: run backup ---
 		backupFn := h.onlineBackup // default
-		if fileCfg.Strategy == strategyVacuum {
+		if fileCfg.Strategy == config.BackupStrategyVacuum {
 			backupFn = h.vacuumInto
 		}
 
 		var err error
 		var finalPath string
 		if fileCfg.Compression {
-			finalPath = h.buildCompressedPath(dbName, now, cfg.BackupDir)
-			tempPath := h.buildTempPath(dbName, now)
+			finalPath = h.buildCompressedPath(backupName, now, cfg.BackupDir)
+			tempPath := h.buildTempPath(backupName, now)
 			tempFinalPath := finalPath + ".tmp" // same directory, os.Rename is atomic
 
 			// --- 2a: dump to temp ---
@@ -115,7 +109,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 				if removeErr != nil {
 					h.logger.Error("Failed to remove temp file after failed backup", "path", tempPath, "error", removeErr)
 				}
-				errs = append(errs, fmt.Errorf("%q: %w", dbName, err))
+				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
 				continue
 			}
 
@@ -130,7 +124,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 				if removeErr != nil {
 					h.logger.Error("Failed to remove partial .tmp file", "path", tempFinalPath, "error", removeErr)
 				}
-				errs = append(errs, fmt.Errorf("%q: %w", dbName, err))
+				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
 				continue
 			}
 
@@ -141,11 +135,11 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 				if removeErr != nil {
 					h.logger.Error("Failed to remove .tmp file after failed rename", "path", tempFinalPath, "error", removeErr)
 				}
-				errs = append(errs, fmt.Errorf("%q: %w", dbName, err))
+				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
 				continue
 			}
 		} else {
-			finalPath = h.buildUncompressedPath(dbName, now, cfg.BackupDir)
+			finalPath = h.buildUncompressedPath(backupName, now, cfg.BackupDir)
 			tempFinalPath := finalPath + ".tmp" // same directory, os.Rename is atomic
 
 			// --- 2a: dump to .tmp in backupDir ---
@@ -155,7 +149,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 				if removeErr != nil {
 					h.logger.Error("Failed to remove .tmp file after failed backup", "path", tempFinalPath, "error", removeErr)
 				}
-				errs = append(errs, fmt.Errorf("%q: %w", dbName, err))
+				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
 				continue
 			}
 
@@ -166,7 +160,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 				if removeErr != nil {
 					h.logger.Error("Failed to remove .tmp file after failed rename", "path", tempFinalPath, "error", removeErr)
 				}
-				errs = append(errs, fmt.Errorf("%q: %w", dbName, err))
+				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
 				continue
 			}
 
@@ -174,14 +168,23 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 			// Uncompressed only — the rsync pull client needs a stable
 			// filename to sync. Compressed .bck.gz is not consumable as-is,
 			// so no link is created for it.
-			latestPath := h.buildLatestPath(cfg.BackupDir, dbName)
+			latestPath := h.buildLatestPath(cfg.BackupDir, backupName)
 			err = h.linkLatest(finalPath, latestPath)
 			if err != nil {
-				errs = append(errs, fmt.Errorf("%q: %w", dbName, err))
+				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
 			}
 		}
 	}
 	return errors.Join(errs...)
+}
+
+// buildBackupName returns the prefix used in backup filenames and hardlinks.
+// Produces <key>-<basename> so same-basename source paths do not collide
+// (AGENTS.md: map keys are labels, not identifiers).
+//
+// Example: buildBackupName("app_db", "data/app.db") → "app_db-app.db"
+func (h *Handler) buildBackupName(key, sourcePath string) string {
+	return key + "-" + filepath.Base(sourcePath)
 }
 
 // buildCompressedPath returns the final destination path for a compressed
@@ -213,13 +216,13 @@ func (h *Handler) buildLatestPath(backupDir, dbName string) string {
 }
 
 // latestBackupTimes scans backupDir once and returns the most recent
-// timestamp for each dbName derived from the configured source files.
+// timestamp for each backupName derived from the configured source files.
 // Errors are logged internally; an empty map is returned when the directory
 // is absent or unreadable (all backups will be treated as due).
-func (h *Handler) latestBackupTimes(backupDir string, files []config.BackupLocalDbFile) map[string]time.Time {
-	dbNames := make([]string, len(files))
-	for i, f := range files {
-		dbNames[i] = filepath.Base(f.SourcePath)
+func (h *Handler) latestBackupTimes(backupDir string, files map[string]config.BackupLocalDbFile) map[string]time.Time {
+	backupNames := make([]string, 0, len(files))
+	for key, f := range files {
+		backupNames = append(backupNames, h.buildBackupName(key, f.SourcePath))
 	}
 	entries, err := os.ReadDir(backupDir)
 	if err != nil {
@@ -228,16 +231,16 @@ func (h *Handler) latestBackupTimes(backupDir string, files []config.BackupLocal
 		}
 		return map[string]time.Time{}
 	}
-	times := make(map[string]time.Time, len(dbNames))
+	times := make(map[string]time.Time, len(backupNames))
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
 		name := entry.Name()
-		for _, dbName := range dbNames {
-			ts, ok := h.parseBackupTimestamp(name, dbName)
-			if ok && ts.After(times[dbName]) {
-				times[dbName] = ts
+		for _, bn := range backupNames {
+			ts, ok := h.parseBackupTimestamp(name, bn)
+			if ok && ts.After(times[bn]) {
+				times[bn] = ts
 				break
 			}
 		}

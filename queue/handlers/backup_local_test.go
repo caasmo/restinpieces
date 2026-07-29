@@ -83,18 +83,21 @@ func setupTest(t *testing.T, withData bool) (cfg *config.Config, sourceDbPath, b
 	return cfg, sourceDbPath, backupDir
 }
 
-// addDatabase appends a database file entry to the BackupLocal files list.
-func addDatabase(cfg *config.Config, sourcePath string, compress bool, strategy, frequency string) {
+// addDatabase adds a database file entry to the BackupLocal files map.
+func addDatabase(cfg *config.Config, key, sourcePath string, compress bool, strategy, frequency string) {
 	freq, err := time.ParseDuration(frequency)
 	if err != nil {
 		panic(fmt.Sprintf("invalid test frequency %q: %v", frequency, err))
 	}
-	cfg.BackupLocal.Files = append(cfg.BackupLocal.Files, config.BackupLocalDbFile{
+	if cfg.BackupLocal.Files == nil {
+		cfg.BackupLocal.Files = make(map[string]config.BackupLocalDbFile)
+	}
+	cfg.BackupLocal.Files[key] = config.BackupLocalDbFile{
 		SourcePath:  sourcePath,
 		Compression: compress,
 		Strategy:    strategy,
 		Frequency:   config.Duration{Duration: freq},
-	})
+	}
 }
 
 // verifyBackup checks if a backup file is a valid, non-empty SQLite database.
@@ -179,17 +182,17 @@ func TestBackupHandler_Handle_SingleDB(t *testing.T) {
 		strategy    string
 		compression bool
 	}{
-		{"OnlineCompressed", strategyOnline, true},
-		{"OnlineUncompressed", strategyOnline, false},
-		{"VacuumCompressed", strategyVacuum, true},
-		{"VacuumUncompressed", strategyVacuum, false},
+		{"OnlineCompressed", config.BackupStrategyOnline, true},
+		{"OnlineUncompressed", config.BackupStrategyOnline, false},
+		{"VacuumCompressed", config.BackupStrategyVacuum, true},
+		{"VacuumUncompressed", config.BackupStrategyVacuum, false},
 		{"DefaultStrategyCompressed", "", true},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg, sourcePath, backupDir := setupTest(t, true)
-			addDatabase(cfg, sourcePath, tc.compression, tc.strategy, "24h")
+			addDatabase(cfg, "source", sourcePath, tc.compression, tc.strategy, "24h")
 
 			provider := config.NewProvider(cfg)
 			logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -201,7 +204,7 @@ func TestBackupHandler_Handle_SingleDB(t *testing.T) {
 			}
 
 			// Verify the backup file exists
-			dbName := "source.db"
+			dbName := "source-source.db"
 			timestamp := mockTime.UTC().Format(timestampFormat)
 			var expectedPath string
 			isCompressed := tc.compression
@@ -272,8 +275,8 @@ func TestBackupHandler_Handle_MultiDB(t *testing.T) {
 	}
 
 	// Add both databases: first uncompressed (online), second compressed (vacuum)
-	addDatabase(cfg, sourcePath, false, strategyOnline, "24h")
-	addDatabase(cfg, secondDbPath, true, strategyVacuum, "24h")
+	addDatabase(cfg, "first", sourcePath, false, config.BackupStrategyOnline, "24h")
+	addDatabase(cfg, "second", secondDbPath, true, config.BackupStrategyVacuum, "24h")
 
 	provider := config.NewProvider(cfg)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -286,25 +289,25 @@ func TestBackupHandler_Handle_MultiDB(t *testing.T) {
 
 	// Verify the uncompressed backup file exists and has a latest link
 	timestamp := mockTime.UTC().Format(timestampFormat)
-	uncompressedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "source.db", timestamp))
+	uncompressedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "first-source.db", timestamp))
 	if _, err := os.Stat(uncompressedPath); os.IsNotExist(err) {
 		t.Fatalf("Expected uncompressed backup not found at %s", uncompressedPath)
 	}
 	verifyBackup(t, uncompressedPath, true, false)
 
-	latestPath := filepath.Join(backupDir, fmt.Sprintf(backup.LatestFmt, "source.db"))
+	latestPath := filepath.Join(backupDir, fmt.Sprintf(backup.LatestFmt, "first-source.db"))
 	if _, err := os.Stat(latestPath); os.IsNotExist(err) {
 		t.Fatalf("Expected latest link not found at %s", latestPath)
 	}
 
 	// Verify the compressed backup file exists but has no latest link
-	compressedPath := filepath.Join(backupDir, fmt.Sprintf(backupCompressedFmt, "second.db", timestamp))
+	compressedPath := filepath.Join(backupDir, fmt.Sprintf(backupCompressedFmt, "second-second.db", timestamp))
 	if _, err := os.Stat(compressedPath); os.IsNotExist(err) {
 		t.Fatalf("Expected compressed backup not found at %s", compressedPath)
 	}
 	verifyBackup(t, compressedPath, true, true)
 
-	compressedLatest := filepath.Join(backupDir, fmt.Sprintf(backup.LatestFmt, "second.db"))
+	compressedLatest := filepath.Join(backupDir, fmt.Sprintf(backup.LatestFmt, "second-second.db"))
 	if _, err := os.Stat(compressedLatest); !os.IsNotExist(err) {
 		t.Fatalf("Unexpected latest link for compressed backup at %s", compressedLatest)
 	}
@@ -334,7 +337,7 @@ func TestBackupHandler_Handle_NoFiles(t *testing.T) {
 
 func TestBackupHandler_Handle_FrequencyRespected(t *testing.T) {
 	cfg, sourcePath, backupDir := setupTest(t, true)
-	addDatabase(cfg, sourcePath, false, strategyOnline, "2h") // frequency: 2 hours
+	addDatabase(cfg, "source", sourcePath, false, config.BackupStrategyOnline, "2h") // frequency: 2 hours
 
 	provider := config.NewProvider(cfg)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -359,7 +362,7 @@ func TestBackupHandler_Handle_FrequencyRespected(t *testing.T) {
 	}
 
 	// Verify only two backup files exist (first and third)
-	dbName := "source.db"
+	dbName := "source-source.db"
 	timestamp0 := t0.UTC().Format(timestampFormat)
 	timestamp2 := t2.UTC().Format(timestampFormat)
 
@@ -400,7 +403,7 @@ func TestBackupHandler_Handle_ErrorCases(t *testing.T) {
 
 	t.Run("SourceNotFound", func(t *testing.T) {
 		cfg, _, backupDir := setupTest(t, true)
-		addDatabase(cfg, "/path/to/nonexistent/source.db", false, strategyOnline, "24h")
+		addDatabase(cfg, "source", "/path/to/nonexistent/source.db", false, config.BackupStrategyOnline, "24h")
 		cfg.BackupLocal.BackupDir = backupDir
 		provider := config.NewProvider(cfg)
 		logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -414,7 +417,7 @@ func TestBackupHandler_Handle_ErrorCases(t *testing.T) {
 
 	t.Run("BackupDirNotWritable", func(t *testing.T) {
 		cfg, sourcePath, backupDir := setupTest(t, true)
-		addDatabase(cfg, sourcePath, false, strategyOnline, "24h")
+		addDatabase(cfg, "source", sourcePath, false, config.BackupStrategyOnline, "24h")
 		// Make the backup directory read-only
 		if err := os.Chmod(backupDir, 0400); err != nil {
 			t.Fatalf("Failed to make backup dir read-only: %v", err)
@@ -433,7 +436,7 @@ func TestBackupHandler_Handle_ErrorCases(t *testing.T) {
 
 func TestBackupHandler_Handle_EmptyDatabase(t *testing.T) {
 	cfg, sourcePath, backupDir := setupTest(t, false) // false -> don't add data
-	addDatabase(cfg, sourcePath, false, strategyOnline, "24h")
+	addDatabase(cfg, "source", sourcePath, false, config.BackupStrategyOnline, "24h")
 	provider := config.NewProvider(cfg)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	handler := NewHandler(provider, logger)
@@ -446,7 +449,7 @@ func TestBackupHandler_Handle_EmptyDatabase(t *testing.T) {
 	}
 
 	timestamp := mockTime.UTC().Format(timestampFormat)
-	expectedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "source.db", timestamp))
+	expectedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "source-source.db", timestamp))
 
 	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
 		t.Fatalf("Expected backup file not found at %s", expectedPath)
@@ -599,7 +602,7 @@ func TestNewHandler_Panic(t *testing.T) {
 // works without error (uses time.Now() internally).
 func TestBackupHandler_Handle_Wrapper(t *testing.T) {
 	cfg, sourcePath, backupDir := setupTest(t, true)
-	addDatabase(cfg, sourcePath, false, strategyOnline, "24h")
+	addDatabase(cfg, "source", sourcePath, false, config.BackupStrategyOnline, "24h")
 
 	provider := config.NewProvider(cfg)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -619,7 +622,7 @@ func TestBackupHandler_Handle_Wrapper(t *testing.T) {
 	}
 	found := false
 	for _, e := range entries {
-		if !e.IsDir() && strings.HasPrefix(e.Name(), "source.db-") {
+		if !e.IsDir() && strings.HasPrefix(e.Name(), "source-source.db-") {
 			found = true
 			break
 		}
@@ -660,7 +663,7 @@ func TestBackupHandler_Handle_CompressedError(t *testing.T) {
 
 	t.Run("SourceMissing", func(t *testing.T) {
 		cfg, _, backupDir := setupTest(t, true)
-		addDatabase(cfg, "/nonexistent/source.db", true, strategyOnline, "24h")
+		addDatabase(cfg, "source", "/nonexistent/source.db", true, config.BackupStrategyOnline, "24h")
 		cfg.BackupLocal.BackupDir = backupDir
 
 		provider := config.NewProvider(cfg)
@@ -675,7 +678,7 @@ func TestBackupHandler_Handle_CompressedError(t *testing.T) {
 
 	t.Run("BackupDirNotWritable", func(t *testing.T) {
 		cfg, sourcePath, backupDir := setupTest(t, true)
-		addDatabase(cfg, sourcePath, true, strategyOnline, "24h")
+		addDatabase(cfg, "source", sourcePath, true, config.BackupStrategyOnline, "24h")
 		if err := os.Chmod(backupDir, 0400); err != nil {
 			t.Fatalf("Failed to make backup dir read-only: %v", err)
 		}
@@ -715,7 +718,7 @@ func TestModuloLogger_Log(t *testing.T) {
 		t.Logf("Failed to close db connection: %v", err)
 	}
 
-	addDatabase(cfg, sourcePath, false, strategyOnline, "24h")
+	addDatabase(cfg, "source", sourcePath, false, config.BackupStrategyOnline, "24h")
 	cfg.BackupLocal.OnlinePagesPerStep = 1 // force many small steps
 
 	provider := config.NewProvider(cfg)
@@ -730,7 +733,7 @@ func TestModuloLogger_Log(t *testing.T) {
 
 	// Verify backup exists
 	timestamp := mockTime.UTC().Format(timestampFormat)
-	expectedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "source.db", timestamp))
+	expectedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "source-source.db", timestamp))
 	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
 		t.Fatalf("Expected backup file not found at %s", expectedPath)
 	}
