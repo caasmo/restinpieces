@@ -178,3 +178,24 @@ func NewDefaultConfig() *Config {
 		},
 	}
 }
+
+// NewBackupLocalDbFileDefaults returns a BackupLocalDbFile with sensible defaults
+// for use by ripc config scaffold. The SourcePath is intentionally empty — the
+// user must configure it.
+func NewBackupLocalDbFileDefaults() BackupLocalDbFile {
+	return BackupLocalDbFile{
+		Strategy:    BackupStrategyOnline,
+		Compression: false,
+		Frequency:   Duration{Duration: 15 * time.Minute},
+	}
+}
+
+// NewOAuth2ProviderDefaults returns an OAuth2Provider with sensible defaults
+// for use by ripc config scaffold. PKCE is enabled by default. Name,
+// ClientID, ClientSecret, and URLs are empty — the user must configure them.
+// Note: see TODO on OAuth2Providers in config.go regarding map key refactoring.
+func NewOAuth2ProviderDefaults() OAuth2Provider {
+	return OAuth2Provider{
+		PKCE: true,
+	}
+}

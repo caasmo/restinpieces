@@ -35,6 +35,7 @@ var (
 				Subcommands: []Subcommand{
 					{"set <path> <value>", "Set a configuration value"},
 					{"save <file>", "Save file contents to the configuration"},
+					{"scaffold <type> <key>", "Scaffold a configuration entry with defaults"},
 					{"init", "Initialize the configuration with default values"},
 				},
 			},
@@ -103,6 +104,8 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		switch subcommandToHelp {
 		case "set":
 			printConfigSetUsage()
+		case "scaffold":
+			printScaffoldUsage()
 		// Add cases for other subcommands here as they get their own usage functions
 		default:
 			// For any other subcommand, show the main config usage.
@@ -179,6 +182,14 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 			os.Exit(1)
 		}
 		handleSaveCommand(secureStore, scope, format, desc, filename)
+	case "scaffold":
+		scope, desc, scaffoldType, key, err := parseScaffoldArgs(subcommandArgs)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			printScaffoldUsage()
+			os.Exit(1)
+		}
+		handleScaffoldCommand(secureStore, scope, desc, scaffoldType, key)
 	case "get":
 		scope, filter, err := parseGetArgs(subcommandArgs)
 		if err != nil {
@@ -376,5 +387,25 @@ func parseInitArgs(args []string) error {
 		return fmt.Errorf("'init' does not take any arguments: %w", ErrTooManyArguments)
 	}
 	return nil
+}
+
+func parseScaffoldArgs(args []string) (scope, desc, scaffoldType, key string, err error) {
+	scaffoldCmd := flag.NewFlagSet("scaffold", flag.ContinueOnError)
+	scaffoldCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	descOpt := commandConfig.Options["desc"]
+	sScope := scaffoldCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	sDesc := scaffoldCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
+
+	if err := scaffoldCmd.Parse(args); err != nil {
+		return "", "", "", "", fmt.Errorf("parsing scaffold flags: %w", err)
+	}
+	if scaffoldCmd.NArg() < 2 {
+		return "", "", "", "", fmt.Errorf("'scaffold' requires <type> and <key> arguments: %w", ErrMissingArgument)
+	}
+	if scaffoldCmd.NArg() > 2 {
+		return "", "", "", "", fmt.Errorf("'scaffold' takes exactly two arguments: type and key: %w", ErrTooManyArguments)
+	}
+	return *sScope, *sDesc, scaffoldCmd.Arg(0), scaffoldCmd.Arg(1), nil
 }
 

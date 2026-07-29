@@ -127,6 +127,52 @@ Manages the secure configuration store.
     -   `ripc  config rollback -scope myapp 3`
 -   **`save <file>`**: Saves the contents of a file to the configuration store.
     -   `ripc  config save -scope myapp config.toml`
+-   **`scaffold <type> <key>`**: Creates a group of configuration properties in one
+    command. Unlike `set` which writes a single property, scaffold writes all the
+    properties of an entry at once, populated with sensible defaults. The key is a
+    user-chosen label and must not already exist.
+
+    Types:
+    - `backuplocal` — writes `strategy` (online), `compression` (false),
+      `frequency` (15m), and `source_path` (empty) under `backup_local.files.<key>`.
+    - `oauth2` — writes `pkce` (true), `name`, `client_id`, `client_secret`, and
+      URLs (all empty) under `oauth2_providers.<key>`.
+
+    ```
+    ripc config scaffold backuplocal app_db
+    ripc config set backup_local.files.app_db.source_path /var/data/app.db
+    ```
+    ```
+    ripc config scaffold oauth2 my_google
+    ripc config set oauth2_providers.my_google.client_id "..."
+    ```
+
+    Use `config get` to inspect the entry and `config paths` to list its properties.
+
+    **Example: add a new backup db file**
+
+    Scaffold creates `strategy` (online), `compression` (false), `frequency` (15m),
+    and an empty `source_path` under `backup_local.files.app_db`:
+
+    ```
+    ripc config scaffold backuplocal app_db
+    ```
+
+    Set the database path and adjust the defaults:
+
+    ```
+    ripc config set backup_local.files.app_db.source_path /var/data/app.db
+    ripc config set backup_local.files.app_db.frequency 6h
+    ripc config set backup_local.files.app_db.compression true
+    ```
+
+    Verify with `get` and `paths`:
+
+    ```
+    ripc config get backup_local.files.app_db
+    ripc config paths backup_local.files.app_db
+    ```
+
 -   **`scopes`**: Lists all unique configuration scopes.
     -   `ripc  config scopes`
 -   **`set <path> <value>`**: Sets a configuration value at a given path.

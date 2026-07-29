@@ -63,6 +63,10 @@ type Config struct {
 	Scheduler        Scheduler                 `toml:"scheduler" comment:"Background job scheduler settings"`
 	Server           Server                    `toml:"server" comment:"HTTP server configuration"`
 	RateLimits       RateLimits                `toml:"rate_limits" comment:"Rate limiting settings"`
+	// TODO: refactor so map keys are labels, not domain identifiers.
+	//       The Name field inside OAuth2Provider already holds the provider
+	//       identifier. After refactor, lookup is by Name field, not map key.
+	//       See AGENTS.md "Config: map key rules".
 	OAuth2Providers  map[string]OAuth2Provider `toml:"oauth2_providers" comment:"OAuth2 provider configurations"`
 	Smtp             Smtp                      `toml:"smtp" comment:"SMTP email settings"`
 	Endpoints        Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
