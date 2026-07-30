@@ -48,7 +48,7 @@ func Reload(configStore SecureStore, provider *Provider, logger *slog.Logger) fu
 		}
 		logger.Debug("Reload func: Successfully fetched new raw application configuration", "size", len(decryptedBytes))
 
-		newCfg := &Config{}
+		newCfg := NewDefaultConfig()
 		logger.Debug("Reload func: Unmarshalling new application configuration")
 		if err := toml.Unmarshal(decryptedBytes, newCfg); err != nil {
 			logger.Error("Reload func: Failed to unmarshal new application configuration", "error", err)
