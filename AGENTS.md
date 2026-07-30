@@ -34,3 +34,5 @@ Current violations (to be refactored):
 ### Config: path fields
 
 All config path fields (e.g. `backup_dir`, `source_path`, `db_path`, `public_dir`) are and **MUST be** resolved against the binary's current working directory (CWD) when relative. Absolute paths are supported and used as-is. No path in config is ever resolved against a config file location — there is no config file, only a database. When deployed via the canonical systemd service, the CWD is `/home/<app>`, so relative paths typically start with `data/`.
+
+An empty path `""` resolves to CWD — it is not an error, it means "use the CWD". Validation must accept `""` for all path fields.
