@@ -115,7 +115,9 @@ The framework's configuration is securely managed within the SQLite database.
 The configuration is stored as encrypted, TOML-formatted content in the
 `app_config` table, the schema for which is detailed in
 `migrations/schema/app/app_config.sql`. Management is performed using the
-`ripc` command-line tool, which supports versioning, diffing, and rollbacks.
+`ripc` command-line tool — a server-side tool that runs directly on the
+production machine, reading and writing the local SQLite database and age key
+files. It supports versioning, diffing, and rollbacks.
 Beyond managing the core application's settings, `ripc` can be extended to
 handle custom configuration scopes for your own modules. For more details on
 the tool, see the [`ripc` documentation](doc/ripc.md). 
@@ -134,7 +136,9 @@ modifications to TLS certificates require a full server reload to be applied.
 The framework provides **`ripdep`**, a comprehensive CLI tool designed to
 manage the full lifecycle of your application. It acts as a high-level wrapper
 around the `ripc` binary, orchestrating complex DevOps tasks and remote
-operations via SSH directly from your local developer machine.
+operations via SSH directly from your local developer machine (control plane).
+In contrast, `ripc` is the server-side companion — it runs on the production
+machine itself, operating on the local filesystem.
 -   **Remote DevOps**: Wraps low-level `ripc` commands to handle configuration, maintenance modes, and log monitoring without needing manual server access.
 -   **Disaster Recovery**: Simplifies the process of bootstrapping new servers and recovering from backups (including Litestream integration) through dedicated commands like `build-bootstrap` and `build-recovery`.
 

@@ -31,8 +31,8 @@ It also orquestates high level dev ops operatios, like server migrations.
 
 `ripdep` acts as a high-level orchestrator that wraps the **low-level primitive**, [`ripc`](ripc.md) ([source](../cmd/ripc)). This separation follows a tiered design:
 
--   **ripc (Primitive):** Direct, unopinionated access to configuration and state. It provides a stable, composable interface intended for automation and scripting.
--   **ripdep (Orchestrator):** Focuses on user-facing workflows and operational tasks. It combines multiple primitives, performs pre-flight checks, and orchestrates actions across server fleets.
+-   **ripdep (Control Plane):** Runs on your local machine (or any machine with SSH access to the server). It focuses on user-facing workflows and operational tasks, combining multiple primitives, performing pre-flight checks, and orchestrating actions across server fleets.
+-   **ripc (Server-side):** Runs directly on the production machine, operating on the local SQLite database and age key files. It provides direct, unopinionated access to configuration and state with a stable, composable interface intended for automation and scripting.
 
 This architecture ensures that `ripc` remains a stable foundation for CI/CD while `ripdep` can rapidly evolve to support new deployment use cases.
 
