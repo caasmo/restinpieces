@@ -27,6 +27,7 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 			name: "single provider without PKCE",
 			setupConfig: func() *config.Config {
 				cfg := config.NewDefaultConfig()
+				cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 				cfg.OAuth2Providers = map[string]config.OAuth2Provider{
 					"google": {
 						DisplayName:  "Google",
@@ -107,6 +108,7 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 			name: "single provider with PKCE",
 			setupConfig: func() *config.Config {
 				cfg := config.NewDefaultConfig()
+				cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 				cfg.OAuth2Providers = map[string]config.OAuth2Provider{
 					"github": {
 						DisplayName: "GitHub",
@@ -164,6 +166,7 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 			name: "redirectUrl logic with path and absolute URL",
 			setupConfig: func() *config.Config {
 				cfg := config.NewDefaultConfig()
+				cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 				cfg.Server.Addr = "test.com:443" // BaseURL derives from Addr
 				cfg.Server.EnableTLS = true      // to get https scheme
 				cfg.OAuth2Providers = map[string]config.OAuth2Provider{

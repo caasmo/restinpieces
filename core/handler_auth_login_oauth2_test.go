@@ -308,12 +308,13 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
+		for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			server, tokenURL, userInfoURL := mockOAuth2Server(t, tc.tokenHandler, tc.userInfoHandler)
 
 			cfg := config.NewDefaultConfig()
 			cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
+			cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 			cfg.OAuth2Providers = map[string]config.OAuth2Provider{
 				config.OAuth2ProviderGoogle: {TokenURL: tokenURL, UserInfoURL: userInfoURL, Name: config.OAuth2ProviderGoogle},
 			}
@@ -437,6 +438,7 @@ func TestAuthWithOAuth2Handler_DependencyFailures(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := config.NewDefaultConfig()
 			cfg.Jwt.AuthSecret = tc.jwtSecret
+			cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 			cfg.Jwt.AuthTokenDuration = config.Duration{Duration: 15 * time.Minute}
 			cfg.OAuth2Providers = map[string]config.OAuth2Provider{
 				config.OAuth2ProviderGoogle: {TokenURL: tokenURL, UserInfoURL: userInfoURL, Name: config.OAuth2ProviderGoogle},
@@ -499,6 +501,7 @@ func TestAuthWithOAuth2Handler_Security_EmailNormalization(t *testing.T) {
 
 	cfg := config.NewDefaultConfig()
 	cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
+	cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 	cfg.OAuth2Providers = map[string]config.OAuth2Provider{
 		"google": {TokenURL: tokenURL, UserInfoURL: userInfoURL, Name: config.OAuth2ProviderGoogle},
 	}
@@ -555,6 +558,7 @@ func TestAuthWithOAuth2Handler_Security_RedirectURI(t *testing.T) {
 
 	cfg := config.NewDefaultConfig()
 	cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
+	cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 	cfg.Server.Addr = "myapp.com"
 	cfg.Server.EnableTLS = true
 	cfg.OAuth2Providers = map[string]config.OAuth2Provider{

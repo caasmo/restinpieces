@@ -67,6 +67,7 @@ func newTestConfig() *Config {
 	cfg.Jwt.PasswordResetSecret = "test_secret_3"
 	cfg.Jwt.EmailChangeOtpSecret = "test_secret_4"
 	cfg.Jwt.VerificationEmailOtpSecret = "test_secret_5"
+	cfg.Jwt.Oauth2StateSecret = "test_secret_6"
 	cfg.Smtp.Enabled = true
 	cfg.Smtp.Username = "user"
 	cfg.Smtp.Password = "pass"
@@ -280,10 +281,11 @@ func TestValidateJwt(t *testing.T) {
 		AuthTokenDuration:              Duration{Duration: 1},
 		PasswordResetSecret:            "c",
 		PasswordResetTokenDuration:     Duration{Duration: 1},
-		EmailChangeOtpSecret:         "d",
-		EmailChangeOtpTokenDuration:  Duration{Duration: 1},
+		EmailChangeOtpSecret:           "d",
+		EmailChangeOtpTokenDuration:    Duration{Duration: 1},
 		VerificationEmailOtpSecret:     "e",
 		VerificationEmailOtpTokenDuration: Duration{Duration: 1},
+		Oauth2StateSecret:              "f",
 	}
 	if err := validateJwt(&valid); err != nil {
 		t.Errorf("valid case failed: %v", err)

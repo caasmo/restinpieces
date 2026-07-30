@@ -42,7 +42,13 @@ func newTestAgeIdentity(t *testing.T) (*age.X25519Identity, string) {
 
 // newTestConfig creates a default configuration for testing purposes.
 func newTestConfig() *config.Config {
-	return config.NewDefaultConfig()
+	cfg := config.NewDefaultConfig()
+	cfg.Jwt.AuthSecret = "test_auth_secret_32_chars_long__"
+	cfg.Jwt.PasswordResetSecret = "test_pwreset_secret_32_chars___"
+	cfg.Jwt.EmailChangeOtpSecret = "test_ec_otp_secret_32_chars____"
+	cfg.Jwt.VerificationEmailOtpSecret = "test_ve_otp_secret_32_chars____"
+	cfg.Jwt.Oauth2StateSecret = "test_oauth2_state_secret_32_ch_"
+	return cfg
 }
 
 // newTestLogger creates a silent logger for tests to avoid noisy output.
@@ -333,6 +339,11 @@ func TestNew_WithUserLogger(t *testing.T) {
 		t.Fatalf("Failed to create secure store: %v", err)
 	}
 	cfg := config.NewDefaultConfig()
+	cfg.Jwt.AuthSecret = "test_auth_secret_32_chars_long__"
+	cfg.Jwt.PasswordResetSecret = "test_pwreset_secret_32_chars___"
+	cfg.Jwt.EmailChangeOtpSecret = "test_ec_otp_secret_32_chars____"
+	cfg.Jwt.VerificationEmailOtpSecret = "test_ve_otp_secret_32_chars____"
+	cfg.Jwt.Oauth2StateSecret = "test_oauth2_state_secret_32_ch_"
 	tomlBytes, err := toml.Marshal(cfg)
 	if err != nil {
 		t.Fatalf("Failed to marshal config: %v", err)

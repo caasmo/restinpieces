@@ -4,17 +4,15 @@ import (
 	"log/slog"
 	"regexp"
 	"time"
-
-	"github.com/caasmo/restinpieces/crypto"
 )
 
 // NewDefaultConfig creates a new Config with sensible defaults.
-// All secret values are randomly generated.
-// 
+// Secret fields are empty — the caller must populate them before persisting.
+//
 // effective = defaults ← stored_overrides
 // The key invariant is that defaults are always a complete, valid config. The
 // stored TOML is intentionally partial — it only encodes intent to deviate.
-// 
+//
 // New fields in code always have a value, even if the stored config predates them
 // Stale fields in the stored TOML are silently ignored on unmarshal
 // No invalid config at startup
@@ -22,16 +20,16 @@ func NewDefaultConfig() *Config {
 	return &Config{
 		PublicDir: "static/dist",
 		Jwt: Jwt{
-			AuthSecret:                     crypto.RandomString(32, crypto.AlphanumericAlphabet),
+			AuthSecret:                     "",
 			AuthTokenDuration:              Duration{Duration: 45 * time.Minute},
-			PasswordResetSecret:            crypto.RandomString(32, crypto.AlphanumericAlphabet),
+			PasswordResetSecret:            "",
 			PasswordResetTokenDuration:     Duration{Duration: 1 * time.Hour},
-			EmailChangeOtpSecret:         crypto.RandomString(32, crypto.AlphanumericAlphabet),
-			EmailChangeOtpTokenDuration:  Duration{Duration: 15 * time.Minute},
-			VerificationEmailOtpSecret:     crypto.RandomString(32, crypto.AlphanumericAlphabet),
+			EmailChangeOtpSecret:           "",
+			EmailChangeOtpTokenDuration:    Duration{Duration: 15 * time.Minute},
+			VerificationEmailOtpSecret:     "",
 			VerificationEmailOtpTokenDuration: Duration{Duration: 15 * time.Minute},
-			Oauth2StateSecret:            crypto.RandomString(32, crypto.AlphanumericAlphabet),
-			Oauth2StateTokenDuration:     Duration{Duration: 10 * time.Minute},
+			Oauth2StateSecret:              "",
+			Oauth2StateTokenDuration:       Duration{Duration: 10 * time.Minute},
 		},
 		Scheduler: Scheduler{
 			Interval:              Duration{Duration: 60 * time.Second},

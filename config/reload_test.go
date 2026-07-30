@@ -90,12 +90,17 @@ func TestReload(t *testing.T) {
 
 	// Base config for tests
 	oldCfg := NewDefaultConfig()
+	oldCfg.Jwt.AuthSecret = "test_auth_secret_32_chars_long__"
+	oldCfg.Jwt.PasswordResetSecret = "test_pwreset_secret_32_chars___"
+	oldCfg.Jwt.EmailChangeOtpSecret = "test_ec_otp_secret_32_chars____"
+	oldCfg.Jwt.VerificationEmailOtpSecret = "test_ve_otp_secret_32_chars____"
+	oldCfg.Jwt.Oauth2StateSecret = "test_oauth2_state_secret_32_ch_"
 
 	t.Run("Success with no restart needed", func(t *testing.T) {
 		t.Parallel()
 		provider := NewProvider(oldCfg)
 
-		newCfg := *NewDefaultConfig()
+		newCfg := *oldCfg
 		newCfg.Maintenance.Activated = !oldCfg.Maintenance.Activated
 		newCfgBytes, err := toml.Marshal(newCfg)
 		if err != nil {
@@ -120,7 +125,7 @@ func TestReload(t *testing.T) {
 		t.Parallel()
 		provider := NewProvider(oldCfg)
 
-		newCfg := *NewDefaultConfig()
+		newCfg := *oldCfg
 		newCfg.Server.Addr = ":9999" // This field requires a restart
 		newCfgBytes, err := toml.Marshal(newCfg)
 		if err != nil {
@@ -171,7 +176,7 @@ func TestReload(t *testing.T) {
 		t.Parallel()
 		provider := NewProvider(oldCfg)
 		// Create a valid config and then make it invalid
-		newCfg := *NewDefaultConfig()
+		newCfg := *oldCfg
 		newCfg.Jwt.AuthSecret = "" // This will fail validation
 		newCfgBytes, err := toml.Marshal(newCfg)
 		if err != nil {

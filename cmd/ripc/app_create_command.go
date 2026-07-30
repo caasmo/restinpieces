@@ -10,6 +10,7 @@ import (
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/caasmo/restinpieces/config"
+	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite/sqlitex"
@@ -36,6 +37,11 @@ func createApplication(stdout io.Writer, secureStore config.SecureStore, pool *s
 
 	// Generate Default Config Struct
 	defaultCfg := config.NewDefaultConfig()
+	defaultCfg.Jwt.AuthSecret = crypto.RandomString(32, crypto.AlphanumericAlphabet)
+	defaultCfg.Jwt.PasswordResetSecret = crypto.RandomString(32, crypto.AlphanumericAlphabet)
+	defaultCfg.Jwt.EmailChangeOtpSecret = crypto.RandomString(32, crypto.AlphanumericAlphabet)
+	defaultCfg.Jwt.VerificationEmailOtpSecret = crypto.RandomString(32, crypto.AlphanumericAlphabet)
+	defaultCfg.Jwt.Oauth2StateSecret = crypto.RandomString(32, crypto.AlphanumericAlphabet)
 
 	// Marshal Config to TOML
 	tomlBytes, err := toml.Marshal(defaultCfg)

@@ -351,6 +351,9 @@ func validateJwt(jwt *Jwt) error {
 	if jwt.VerificationEmailOtpTokenDuration.Duration <= 0 {
 		return fmt.Errorf("jwt.verification_email_otp_token_duration must be positive")
 	}
+	if jwt.Oauth2StateSecret == "" {
+		return fmt.Errorf("jwt.oauth2_state_secret cannot be empty")
+	}
 	return nil
 }
 
