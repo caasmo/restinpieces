@@ -482,15 +482,15 @@ func TestValidateBackupLocal(t *testing.T) {
 		}
 	})
 
-	// Invalid cases
-	t.Run("empty source path", func(t *testing.T) {
+	// Valid cases — empty source_path resolves to CWD per path rules
+	t.Run("empty source path resolves to CWD", func(t *testing.T) {
 		b := &BackupLocal{
 			BackupDir:          "/tmp/backups",
 			OnlinePagesPerStep: 100,
 			Files:              map[string]BackupLocalDbFile{"db": {SourcePath: "", Frequency: Duration{Duration: time.Hour}}},
 		}
-		if err := validateBackupLocal(b); err == nil {
-			t.Fatal("expected error for empty source_path, got nil")
+		if err := validateBackupLocal(b); err != nil {
+			t.Fatalf("expected success for empty source_path (resolves to CWD), got: %v", err)
 		}
 	})
 

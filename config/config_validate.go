@@ -98,9 +98,6 @@ func validateBackupLocal(backup *BackupLocal) error {
 		if key == "" {
 			return fmt.Errorf("files: map key cannot be empty")
 		}
-		if f.SourcePath == "" {
-			return fmt.Errorf("files.%s.source_path cannot be empty", key)
-		}
 		if f.Frequency.Duration <= 0 {
 			return fmt.Errorf("files.%s.frequency must be positive", key)
 		}
