@@ -313,14 +313,17 @@ func TestBackupHandler_Handle_MultiDB(t *testing.T) {
 	}
 }
 
-func TestBackupHandler_Handle_NoBackupDir(t *testing.T) {
-	cfg := config.NewDefaultConfig() // BackupDir defaults to ""
+func TestBackupHandler_Handle_EmptyBackupDirWithFiles(t *testing.T) {
+	cfg := config.NewDefaultConfig() // BackupDir defaults to "", Files is nil
+	cfg.BackupLocal.Files = map[string]config.BackupLocalDbFile{
+		"test": {SourcePath: "/dev/null", Frequency: config.Duration{Duration: time.Hour}},
+	}
 	provider := config.NewProvider(cfg)
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	handler := NewHandler(provider, logger)
 	err := handler.handle(context.Background(), time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC))
 	if err != nil {
-		t.Fatalf("handle() with no backup dir should not error, got: %v", err)
+		t.Fatalf("handle() with empty backup dir and files should not error, got: %v", err)
 	}
 }
 

@@ -452,10 +452,10 @@ func TestValidateBackupLocal(t *testing.T) {
 	t.Parallel()
 
 	// Valid cases
-	t.Run("deactivated empty backup dir", func(t *testing.T) {
-		b := &BackupLocal{BackupDir: "", Files: map[string]BackupLocalDbFile{"db": {SourcePath: "/x.db", Frequency: Duration{Duration: time.Hour}}}}
+	t.Run("empty backup dir with valid files", func(t *testing.T) {
+		b := &BackupLocal{BackupDir: "", OnlinePagesPerStep: 100, Files: map[string]BackupLocalDbFile{"db": {SourcePath: "/x.db", Frequency: Duration{Duration: time.Hour}}}}
 		if err := validateBackupLocal(b); err != nil {
-			t.Fatalf("expected nil for deactivated backup, got: %v", err)
+			t.Fatalf("expected nil for empty backup dir with valid files, got: %v", err)
 		}
 	})
 
@@ -472,6 +472,13 @@ func TestValidateBackupLocal(t *testing.T) {
 		}
 		if err := validateBackupLocal(b); err != nil {
 			t.Fatalf("expected nil for valid config, got: %v", err)
+		}
+	})
+
+	t.Run("no files configured validates ok", func(t *testing.T) {
+		b := &BackupLocal{BackupDir: "/tmp/backups", OnlinePagesPerStep: 100, Files: nil}
+		if err := validateBackupLocal(b); err != nil {
+			t.Fatalf("expected nil for no files configured, got: %v", err)
 		}
 	})
 

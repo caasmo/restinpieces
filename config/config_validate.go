@@ -81,12 +81,10 @@ func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
 }
 
 // validateBackupLocal checks the BackupLocal configuration section.
-// An empty BackupDir deactivates the entire backup feature — all other
-// fields are ignored.
+// An empty BackupDir is valid (resolves to the process CWD).
+// The backup feature is deactivated when Files is nil or empty — the
+// backup handler checks len(Files) == 0 at runtime.
 func validateBackupLocal(backup *BackupLocal) error {
-	if backup.BackupDir == "" {
-		return nil // backup feature deactivated
-	}
 
 	if backup.OnlinePagesPerStep <= 0 {
 		return fmt.Errorf("online_pages_per_step must be positive")

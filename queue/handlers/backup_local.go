@@ -68,12 +68,8 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 	cfg := h.configProvider.Get().BackupLocal
 
 	// --- early exits ---
-	if cfg.BackupDir == "" {
-		h.logger.Info("No backup directory configured; backup deactivated.")
-		return nil
-	}
 	if len(cfg.Files) == 0 {
-		h.logger.Info("No backup files configured; nothing to do.")
+		h.logger.Info("No backup files configured; backup deactivated.")
 		return nil
 	}
 

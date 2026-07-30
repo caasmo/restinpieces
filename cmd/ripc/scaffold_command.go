@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	ErrScaffoldTypeUnknown = errors.New("unknown scaffold type")
-	ErrScaffoldKeyExists   = errors.New("key already exists for scaffold type")
+	ErrScaffoldTypeUnknown   = errors.New("unknown scaffold type")
+	ErrScaffoldKeyExists     = errors.New("key already exists for scaffold type")
+	ErrScaffoldParentMissing = errors.New("parent section not found in config; run 'config migrate' first")
 )
 
 const (
@@ -22,18 +23,20 @@ const (
 
 	scaffoldKeyBackupLocal = "backup_local.files"
 	scaffoldKeyOAuth2      = "oauth2_providers"
+
+	scaffoldParentBackupLocal = "backup_local"
 )
 
 var knownScaffoldTypes = []string{ScaffoldTypeBackupLocal, ScaffoldTypeOAuth2}
 
-func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}, err error) {
+func scaffoldDefaults(scaffoldType string) (tomlKey string, parentPath string, defaults interface{}, err error) {
 	switch scaffoldType {
 	case ScaffoldTypeBackupLocal:
-		return scaffoldKeyBackupLocal, config.NewBackupLocalDbFileDefaults(), nil
+		return scaffoldKeyBackupLocal, scaffoldParentBackupLocal, config.NewBackupLocalDbFileDefaults(), nil
 	case ScaffoldTypeOAuth2:
-		return scaffoldKeyOAuth2, config.NewOAuth2ProviderDefaults(), nil
+		return scaffoldKeyOAuth2, scaffoldKeyOAuth2, config.NewOAuth2ProviderDefaults(), nil
 	default:
-		return "", nil, fmt.Errorf("%w: '%s'. Known types: %s",
+		return "", "", nil, fmt.Errorf("%w: '%s'. Known types: %s",
 			ErrScaffoldTypeUnknown, scaffoldType,
 			strings.Join(knownScaffoldTypes, ", "))
 	}
@@ -42,7 +45,7 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}
 func printScaffoldUsage() {
 	help := CommandHelp{
 		Usage:       "ripc config scaffold [options] <type> <key>",
-		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key.",
+		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'config migrate' first if needed.",
 		Subcommands: []SubcommandGroup{
 			{
 				Title: "Scaffold Types",
@@ -82,7 +85,7 @@ func scaffoldConfigValue(
 	scaffoldType string,
 	key string,
 ) error {
-	tomlKey, defaults, err := scaffoldDefaults(scaffoldType)
+	tomlKey, parentPath, defaults, err := scaffoldDefaults(scaffoldType)
 	if err != nil {
 		return err
 	}
@@ -101,6 +104,11 @@ func scaffoldConfigValue(
 	if err != nil {
 		return fmt.Errorf("%w: failed to load config data for scope '%s': %w",
 			ErrConfigUnmarshal, scope, err)
+	}
+
+	if !tree.Has(parentPath) {
+		return fmt.Errorf("%w: '%s' not found in scope '%s'; run 'ripc config migrate' to initialize missing config sections",
+			ErrScaffoldParentMissing, parentPath, scope)
 	}
 
 	configPath := tomlKey + "." + key
