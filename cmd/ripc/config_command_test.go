@@ -24,7 +24,7 @@ func TestParseConfigSubcommand(t *testing.T) {
 	testRollbackParsing(t)
 	testSaveParsing(t)
 	testGetParsing(t)
-	testInitParsing(t)
+	testMigrateParsing(t)
 }
 
 func testSetParsing(t *testing.T) {
@@ -320,18 +320,18 @@ func testGetParsing(t *testing.T) {
 	})
 }
 
-func testInitParsing(t *testing.T) {
-	t.Run("InitSuccess", func(t *testing.T) {
-		err := parseInitArgs([]string{})
+func testMigrateParsing(t *testing.T) {
+	t.Run("MigrateSuccess", func(t *testing.T) {
+		err := parseMigrateArgs([]string{})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 
-	t.Run("InitTooManyArgs", func(t *testing.T) {
-		err := parseInitArgs([]string{"extra"})
+	t.Run("MigrateTooManyArgs", func(t *testing.T) {
+		err := parseMigrateArgs([]string{"extra"})
 		if err == nil {
-			t.Fatal("expected error, but got nil")
+			t.Fatal("expected error, but did not")
 		}
 		if !errors.Is(err, ErrTooManyArguments) {
 			t.Fatalf("expected error to wrap %v, but got %v", ErrTooManyArguments, err)

@@ -104,11 +104,20 @@ Retrieves configuration values by path, optionally filtered.
 
     ripc  config get "server.http_port"
 
-#### `init`
+#### `migrate`
 
-Creates a new configuration with default values.
+Migrates the stored configuration to the current framework version. If no
+configuration exists for the scope, it creates one with default values.
 
-    ripc  config init -scope myapp
+    ripc  config migrate
+
+**After upgrading the restinpieces framework**, run `ripc config migrate` to:
+- Remove stale configuration keys that no longer exist in the framework
+- Add new configuration keys with their default values
+- Preserve all existing configured values
+
+The command is safe to run at any time — it never overwrites existing values with
+defaults unless the field was newly added to the framework.
 
 #### `list [scope]`
 

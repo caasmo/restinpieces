@@ -36,7 +36,7 @@ var (
 					{"set <path> <value>", "Set a configuration value"},
 					{"save <file>", "Save file contents to the configuration"},
 					{"scaffold <type> <key>", "Scaffold a configuration entry with defaults"},
-					{"init", "Initialize the configuration with default values"},
+					{"migrate", "Migrate configuration to current framework version"},
 				},
 			},
 			{
@@ -198,13 +198,14 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 			os.Exit(1)
 		}
 		handleGetCommand(secureStore, scope, filter)
-	case "init":
-		if err := parseInitArgs(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	case "migrate":
+		err := parseMigrateArgs(subcommandArgs)
+		if err != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			printConfigUsage()
 			os.Exit(1)
 		}
-		handleInitCommand(secureStore)
+		handleMigrateCommand(secureStore)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: unknown config subcommand: %s\n", subcommand)
 		printConfigUsage()
@@ -377,14 +378,15 @@ func parseGetArgs(args []string) (scope, filter string, err error) {
 	return *getScope, filter, nil
 }
 
-func parseInitArgs(args []string) error {
-	initCmd := flag.NewFlagSet("init", flag.ContinueOnError)
-	initCmd.SetOutput(io.Discard)
-	if err := initCmd.Parse(args); err != nil {
-		return fmt.Errorf("parsing init flags: %w: %v", ErrInvalidFlag, err)
+func parseMigrateArgs(args []string) error {
+	migrateCmd := flag.NewFlagSet("migrate", flag.ContinueOnError)
+	migrateCmd.SetOutput(io.Discard)
+	err := migrateCmd.Parse(args)
+	if err != nil {
+		return fmt.Errorf("parsing migrate flags: %w: %v", ErrInvalidFlag, err)
 	}
-	if initCmd.NArg() > 0 {
-		return fmt.Errorf("'init' does not take any arguments: %w", ErrTooManyArguments)
+	if migrateCmd.NArg() > 0 {
+		return fmt.Errorf("'migrate' does not take any arguments: %w", ErrTooManyArguments)
 	}
 	return nil
 }
