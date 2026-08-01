@@ -16,20 +16,20 @@ var (
 
 // handleJobRmCommand is the command-level wrapper. It handles parsing command-line
 // arguments and calls the core logic.
-func handleJobRmCommand(dbConn db.DbQueueAdmin, args []string) {
+func handleJobRmCommand(dbConn db.DbQueueAdmin, args []string, ui UI) {
 	if len(args) < 1 {
-		fmt.Fprintln(os.Stderr, "Error: 'rm' command requires a job ID")
+		_, _ = fmt.Fprintln(ui.Err, "Error: 'rm' command requires a job ID")
 		os.Exit(1)
 	}
 
 	jobID, err := strconv.ParseInt(args[0], 10, 64)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: invalid job ID '%s'. Please provide a number.\n", args[0])
+		_, _ = fmt.Fprintf(ui.Err, "Error: invalid job ID '%s'. Please provide a number.\n", args[0])
 		os.Exit(1)
 	}
 
-	if err := removeJob(os.Stdout, dbConn, jobID); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	if err := removeJob(ui.Out, dbConn, jobID); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

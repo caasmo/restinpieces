@@ -15,33 +15,33 @@ var (
 	ErrUnknownAppSubcommand = errors.New("unknown app subcommand")
 )
 
-func printAppUsage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s app <subcommand> [options]\n\n", prog)
-	fmt.Fprintf(os.Stderr, "Manages the application lifecycle.\n\n")
-	fmt.Fprintf(os.Stderr, "Subcommands:\n")
-	fmt.Fprintf(os.Stderr, "  create                Create a new application instance\n")
+func printAppUsage(w io.Writer) {
+	_, _ = fmt.Fprintf(w, "Usage: %s app <subcommand> [options]\n\n", prog)
+	_, _ = fmt.Fprintf(w, "Manages the application lifecycle.\n\n")
+	_, _ = fmt.Fprintf(w, "Subcommands:\n")
+	_, _ = fmt.Fprintf(w, "  create                Create a new application instance\n")
 }
 
-func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPath string, commandArgs []string) {
+func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPath string, commandArgs []string, ui UI) {
 	if len(commandArgs) < 1 {
-		printAppUsage()
+		printAppUsage(ui.Err)
 		os.Exit(1)
 	}
 
-	subcommand, _, err := parseAppSubcommand(commandArgs, os.Stderr)
+	subcommand, _, err := parseAppSubcommand(commandArgs, ui.Err)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		printAppUsage()
+		fprintErr(ui.Err, err)
+		printAppUsage(ui.Err)
 		os.Exit(1)
 	}
 
 	switch subcommand {
 	case "create":
-		handleAppCreateCommand(secureStore, dbPool, dbPath)
+		handleAppCreateCommand(secureStore, dbPool, dbPath, ui)
 	default:
 		// This case should ideally not be reached if parseAppSubcommand is correct
-		fmt.Fprintf(os.Stderr, "Error: unknown app subcommand: %s\n", subcommand)
-		printAppUsage()
+		_, _ = fmt.Fprintf(ui.Err, "Error: unknown app subcommand: %s\n", subcommand)
+		printAppUsage(ui.Err)
 		os.Exit(1)
 	}
 }

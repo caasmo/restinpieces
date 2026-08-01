@@ -28,6 +28,17 @@ var (
 // program name in usage output.
 var prog = os.Args[0]
 
+// UI contains the output streams for the application.
+// Used for injecting buffers during testing.
+type UI struct {
+	Out io.Writer
+	Err io.Writer
+}
+
+func fprintErr(w io.Writer, err error) {
+	_, _ = fmt.Fprintf(w, "Error: %v\n", err)
+}
+
 func main() {
 	if err := run(os.Args[1:], os.Stderr); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -36,6 +47,8 @@ func main() {
 }
 
 func run(args []string, output io.Writer) error {
+	ui := UI{Out: os.Stdout, Err: output}
+
 	// We need a new flag set for each run
 	fs := flag.NewFlagSet("ripc", flag.ContinueOnError)
 	fs.SetOutput(output)
@@ -130,15 +143,15 @@ func run(args []string, output io.Writer) error {
 
 	switch command {
 	case "app":
-		handleAppCommand(secureStore, pool, *dbPathFlag, commandArgs)
+		handleAppCommand(secureStore, pool, *dbPathFlag, commandArgs, ui)
 	case "config":
-		handleConfigCommand(secureStore, pool, commandArgs)
+		handleConfigCommand(secureStore, pool, commandArgs, ui)
 	case "job":
-		handleJobCommand(dbImpl, commandArgs)
+		handleJobCommand(dbImpl, commandArgs, ui)
 	case "log":
-		handleLogCommand(secureStore, *dbPathFlag, commandArgs)
+		handleLogCommand(secureStore, *dbPathFlag, commandArgs, ui)
 	case "help":
-		handleHelpCommand(commandArgs, fs.Usage)
+		handleHelpCommand(commandArgs, fs.Usage, ui)
 	default:
 		fs.Usage()
 		return fmt.Errorf("%w: %s", ErrUnknownCommand, command)

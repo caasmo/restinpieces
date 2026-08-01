@@ -19,9 +19,9 @@ var (
 
 // handleSaveCommand is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
-func handleSaveCommand(secureStore config.SecureStore, scope, format, desc, filename string) {
-	if err := saveConfigFromFile(os.Stdout, secureStore, scope, format, desc, filename); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+func handleSaveCommand(secureStore config.SecureStore, scope, format, desc, filename string, ui UI) {
+	if err := saveConfigFromFile(ui.Out, secureStore, scope, format, desc, filename); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

@@ -43,7 +43,7 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, parentPath string, d
 	}
 }
 
-func printScaffoldUsage() {
+func printScaffoldUsage(w io.Writer) {
 	help := CommandHelp{
 		Usage:       "ripc config scaffold [options] <type> <key>",
 		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'config migrate' first if needed.",
@@ -67,13 +67,13 @@ func printScaffoldUsage() {
 			`ripc config scaffold --scope my-app --desc "scaffold analytics db" backuplocal analytics_db`,
 		},
 	}
-	help.Print(os.Stderr, "ripc", "config", "scaffold")
+	help.Print(w, "ripc", "config", "scaffold")
 }
 
-func handleScaffoldCommand(secureStore config.SecureStore, scope, desc, scaffoldType, key string) {
-	err := scaffoldConfigValue(os.Stdout, secureStore, scope, desc, scaffoldType, key)
+func handleScaffoldCommand(secureStore config.SecureStore, scope, desc, scaffoldType, key string, ui UI) {
+	err := scaffoldConfigValue(ui.Out, secureStore, scope, desc, scaffoldType, key)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

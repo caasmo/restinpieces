@@ -16,41 +16,41 @@ var (
 	ErrUnknownJobSubcommand = errors.New("unknown job subcommand")
 )
 
-func printJobUsage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s job <subcommand> [options]\n\n", prog)
-	fmt.Fprintf(os.Stderr, "Manages background jobs.\n\n")
-	fmt.Fprintf(os.Stderr, "Subcommands:\n")
-	fmt.Fprintf(os.Stderr, "  add-backup [options]    Add a new recurrent backup job\n")
-	fmt.Fprintf(os.Stderr, "  list [limit]            List jobs in the queue\n")
-	fmt.Fprintf(os.Stderr, "  rm <job_id>             Remove a job from the queue\n")
-	fmt.Fprintf(os.Stderr, "  add [options]           Add a generic job (advanced)\n")
+func printJobUsage(w io.Writer) {
+	_, _ = fmt.Fprintf(w, "Usage: %s job <subcommand> [options]\n\n", prog)
+	_, _ = fmt.Fprintf(w, "Manages background jobs.\n\n")
+	_, _ = fmt.Fprintf(w, "Subcommands:\n")
+	_, _ = fmt.Fprintf(w, "  add-backup [options]    Add a new recurrent backup job\n")
+	_, _ = fmt.Fprintf(w, "  list [limit]            List jobs in the queue\n")
+	_, _ = fmt.Fprintf(w, "  rm <job_id>             Remove a job from the queue\n")
+	_, _ = fmt.Fprintf(w, "  add [options]           Add a generic job (advanced)\n")
 }
 
 // handleJobCommand is the dispatcher for all "job" subcommands.
-func handleJobCommand(dbConn *zombiezen.Db, args []string) {
+func handleJobCommand(dbConn *zombiezen.Db, args []string, ui UI) {
 	if len(args) < 1 {
-		printJobUsage()
+		printJobUsage(ui.Err)
 		os.Exit(1)
 	}
 
-	subcommand, subcommandArgs, err := parseJobSubcommand(args, os.Stderr)
+	subcommand, subcommandArgs, err := parseJobSubcommand(args, ui.Err)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		printJobUsage()
+		fprintErr(ui.Err, err)
+		printJobUsage(ui.Err)
 		os.Exit(1)
 	}
 
 	switch subcommand {
 	case "add-backup":
-		handleJobAddBackupCommand(dbConn, subcommandArgs[0], subcommandArgs[1], subcommandArgs[2])
+		handleJobAddBackupCommand(dbConn, subcommandArgs[0], subcommandArgs[1], subcommandArgs[2], ui)
 	case "list":
-		handleJobListCommand(dbConn, subcommandArgs)
+		handleJobListCommand(dbConn, subcommandArgs, ui)
 	case "rm":
-		handleJobRmCommand(dbConn, subcommandArgs)
+		handleJobRmCommand(dbConn, subcommandArgs, ui)
 	default:
 		// This case should ideally not be reached if parseJobSubcommand is correct
-		fmt.Fprintf(os.Stderr, "Error: unknown job subcommand: %s\n", subcommand)
-		printJobUsage()
+		_, _ = fmt.Fprintf(ui.Err, "Error: unknown job subcommand: %s\n", subcommand)
+		printJobUsage(ui.Err)
 		os.Exit(1)
 	}
 }

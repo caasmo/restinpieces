@@ -19,9 +19,9 @@ var (
 
 // handleScopesCommand is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
-func handleScopesCommand(pool *sqlitex.Pool) {
-	if err := listScopes(os.Stdout, pool); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+func handleScopesCommand(pool *sqlitex.Pool, ui UI) {
+	if err := listScopes(ui.Out, pool); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

@@ -28,19 +28,20 @@ func handleSetCommand(
 	scope string,
 	format string,
 	description string,
-	cmdArgs []string) {
+	cmdArgs []string,
+	ui UI) {
 
 	if len(cmdArgs) < 2 {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", ErrMissingSetArguments)
-		fmt.Fprintf(os.Stderr, "Usage: ... set <path> <value>\n")
+		fprintErr(ui.Err, ErrMissingSetArguments)
+		_, _ = fmt.Fprintf(ui.Err, "Usage: ... set <path> <value>\n")
 		os.Exit(1)
 	}
 
 	configPath := cmdArgs[0]
 	rawValue := cmdArgs[1]
 
-	if err := setConfigValue(os.Stdout, secureCfg, scope, format, description, configPath, rawValue); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	if err := setConfigValue(ui.Out, secureCfg, scope, format, description, configPath, rawValue); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

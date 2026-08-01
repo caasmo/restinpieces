@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"io"
 	"testing"
 )
 
@@ -21,10 +22,10 @@ func TestRunHelpTopic_Success(t *testing.T) {
 		printLogUsageFunc = originalPrintLog
 	}()
 
-	printAppUsageFunc = func() { calledTopic = "app" }
-	printJobUsageFunc = func() { calledTopic = "job" }
-	printConfigUsageFunc = func() { calledTopic = "config" }
-	printLogUsageFunc = func() { calledTopic = "log" }
+	printAppUsageFunc = func(w io.Writer) { calledTopic = "app" }
+	printJobUsageFunc = func(w io.Writer) { calledTopic = "job" }
+	printConfigUsageFunc = func(w io.Writer) { calledTopic = "config" }
+	printLogUsageFunc = func(w io.Writer) { calledTopic = "log" }
 
 	testCases := []struct {
 		topic       string
@@ -40,7 +41,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 		t.Run(tc.topic, func(t *testing.T) {
 			calledTopic = "" // Reset before each run.
 
-			err := runHelpTopic(tc.topic)
+			err := runHelpTopic(tc.topic, UI{Out: io.Discard, Err: io.Discard})
 
 			if err != nil {
 				t.Errorf("runHelpTopic(%q) returned unexpected error: %v", tc.topic, err)
@@ -55,7 +56,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 // TestRunHelpTopic_Failure_UnknownTopic tests that an invalid topic returns the correct error.
 func TestRunHelpTopic_Failure_UnknownTopic(t *testing.T) {
 	topic := "nonexistent"
-	err := runHelpTopic(topic)
+	err := runHelpTopic(topic, UI{Out: io.Discard, Err: io.Discard})
 
 	if !errors.Is(err, ErrUnknownHelpTopic) {
 		t.Errorf("runHelpTopic() error = %v, want error wrapping %v", err, ErrUnknownHelpTopic)

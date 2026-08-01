@@ -25,9 +25,9 @@ var (
 
 // handleLogInitCommand is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
-func handleLogInitCommand(secureStore config.SecureStore, appDbPath string) {
-	if err := logInit(os.Stdout, secureStore, appDbPath); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+func handleLogInitCommand(secureStore config.SecureStore, appDbPath string, ui UI) {
+	if err := logInit(ui.Out, secureStore, appDbPath); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

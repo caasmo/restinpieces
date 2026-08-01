@@ -21,9 +21,9 @@ var (
 )
 
 // handleAppCreateCommand is the command-level wrapper that executes the core app creation logic.
-func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string) {
-	if err := createApplication(os.Stdout, secureStore, pool, dbPath); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string, ui UI) {
+	if err := createApplication(ui.Out, secureStore, pool, dbPath); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

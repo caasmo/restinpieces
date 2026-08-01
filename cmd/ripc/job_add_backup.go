@@ -17,28 +17,28 @@ var (
 )
 
 // handleJobAddBackupCommand handles the "job add-backup" subcommand. It's the command-line wrapper.
-func handleJobAddBackupCommand(dbConn db.DbQueue, interval, scheduledFor, maxAttemptsStr string) {
+func handleJobAddBackupCommand(dbConn db.DbQueue, interval, scheduledFor, maxAttemptsStr string, ui UI) {
 	// --- Parse and validate flags ---
 	intervalDuration, err := time.ParseDuration(interval)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Invalid -interval format: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: Invalid -interval format: %v\n", err)
 		os.Exit(1)
 	}
 
 	scheduledTime, err := time.Parse(time.RFC3339, scheduledFor)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Invalid -scheduled-for format: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: Invalid -scheduled-for format: %v\n", err)
 		os.Exit(1)
 	}
 
 	maxAttempts, err := strconv.Atoi(maxAttemptsStr)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: Invalid -max-attempts format: %v\n", err)
+		_, _ = fmt.Fprintf(ui.Err, "Error: Invalid -max-attempts format: %v\n", err)
 		os.Exit(1)
 	}
 
-	if err := addBackupJob(os.Stdout, dbConn, intervalDuration, scheduledTime, maxAttempts); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	if err := addBackupJob(ui.Out, dbConn, intervalDuration, scheduledTime, maxAttempts); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

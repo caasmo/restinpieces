@@ -12,10 +12,10 @@ import (
 
 // handleMigrateCommand is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
-func handleMigrateCommand(secureStore config.SecureStore) {
-	err := migrateConfig(os.Stdout, secureStore)
+func handleMigrateCommand(secureStore config.SecureStore, ui UI) {
+	err := migrateConfig(ui.Out, secureStore)
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

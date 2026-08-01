@@ -27,12 +27,12 @@ var (
 	ErrDiffGenerate    = errors.New("failed to generate diff")
 )
 
-func handleDiffCommand(secureStore config.SecureStore, scope string, generation int) {
+func handleDiffCommand(secureStore config.SecureStore, scope string, generation int, ui UI) {
 	if scope == "" {
 		scope = config.ScopeApplication
 	}
-	if err := diffConfig(os.Stdout, secureStore, scope, generation); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v ", err)
+	if err := diffConfig(ui.Out, secureStore, scope, generation); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

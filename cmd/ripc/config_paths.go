@@ -40,9 +40,9 @@ func listTomlPathsRecursive(tree *toml.Tree, prefix string, paths *[]string) {
 
 // handlePathsCommand is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
-func handlePathsCommand(secureStore config.SecureStore, scopeName string, filter string) {
-	if err := listPaths(os.Stdout, secureStore, scopeName, filter); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+func handlePathsCommand(secureStore config.SecureStore, scopeName string, filter string, ui UI) {
+	if err := listPaths(ui.Out, secureStore, scopeName, filter); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

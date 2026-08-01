@@ -16,20 +16,20 @@ var (
 	ErrListJobsFailed = errors.New("failed to list jobs")
 )
 
-func handleJobListCommand(dbConn db.DbQueueAdmin, args []string) {
+func handleJobListCommand(dbConn db.DbQueueAdmin, args []string, ui UI) {
 	limit := 0 // Default to all jobs
 	if len(args) > 0 {
 		var err error
 		limit, err = strconv.Atoi(args[0])
 		if err != nil {
 			// This error is from argument parsing, not the core logic, so it can stay simple.
-			fmt.Fprintf(os.Stderr, "Error: invalid limit '%s'. Please provide a number.\n", args[0])
+			_, _ = fmt.Fprintf(ui.Err, "Error: invalid limit '%s'. Please provide a number.\n", args[0])
 			os.Exit(1)
 		}
 	}
 
-	if err := listJobs(os.Stdout, dbConn, limit); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	if err := listJobs(ui.Out, dbConn, limit); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

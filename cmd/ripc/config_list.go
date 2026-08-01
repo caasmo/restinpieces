@@ -73,18 +73,18 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count 
 
 // handleListCommand is a wrapper around listItems that handles the command-line
 // execution, including printing errors to stderr and exiting the program on failure.
-func handleListCommand(pool *sqlitex.Pool, scopeFilter string) {
-	count, err := listItems(os.Stdout, pool, scopeFilter)
+func handleListCommand(pool *sqlitex.Pool, scopeFilter string, ui UI) {
+	count, err := listItems(ui.Out, pool, scopeFilter)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 
 	if count == 0 {
 		if scopeFilter != "" {
-			fmt.Printf("No configurations found for scope: %s\n", scopeFilter)
+			_, _ = fmt.Fprintf(ui.Out, "No configurations found for scope: %s\n", scopeFilter)
 		} else {
-			fmt.Println("No configurations found.")
+			_, _ = fmt.Fprintln(ui.Out, "No configurations found.")
 		}
 	}
 }

@@ -18,9 +18,9 @@ var (
 
 // handleRollbackCommand is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
-func handleRollbackCommand(secureStore config.SecureStore, scope string, generation int) {
-	if err := rollbackConfig(os.Stdout, secureStore, scope, generation); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+func handleRollbackCommand(secureStore config.SecureStore, scope string, generation int, ui UI) {
+	if err := rollbackConfig(ui.Out, secureStore, scope, generation); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

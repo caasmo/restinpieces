@@ -14,9 +14,9 @@ import (
 
 // handleGetCommand is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
-func handleGetCommand(secureStore config.SecureStore, scopeName string, filter string) {
-	if err := getAndPrintConfigPaths(os.Stdout, secureStore, scopeName, filter); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+func handleGetCommand(secureStore config.SecureStore, scopeName string, filter string, ui UI) {
+	if err := getAndPrintConfigPaths(ui.Out, secureStore, scopeName, filter); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }

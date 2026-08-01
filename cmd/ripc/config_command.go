@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/caasmo/restinpieces/config"
@@ -63,11 +64,11 @@ var (
 	}
 )
 
-func printConfigUsage() {
-	commandConfig.Print(os.Stderr, "ripc", "config")
+func printConfigUsage(w io.Writer) {
+	commandConfig.Print(w, "ripc", "config")
 }
 
-func printConfigSetUsage() {
+func printConfigSetUsage(w io.Writer) {
 	help := CommandHelp{
 		Usage:       "ripc config set [options] <path> <value>",
 		Description: "Sets a configuration value at a specified path.",
@@ -81,32 +82,32 @@ func printConfigSetUsage() {
 			`ripc config set --scope webapp features.beta true --desc "Enable beta feature"`,
 		},
 	}
-	help.Print(os.Stderr, "ripc", "config", "set")
+	help.Print(w, "ripc", "config", "set")
 }
 
-func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, commandArgs []string) {
+func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, commandArgs []string, ui UI) {
 	if len(commandArgs) < 1 {
-		printConfigUsage()
+		printConfigUsage(ui.Err)
 		os.Exit(1)
 	}
 
 	// Check for "help" subcommand
 	if commandArgs[0] == "help" {
 		if len(commandArgs) < 2 {
-			printConfigUsage()
+			printConfigUsage(ui.Out)
 			os.Exit(0) // Successful exit for general help
 		}
 		subcommandToHelp := commandArgs[1]
 		switch subcommandToHelp {
 		case "set":
-			printConfigSetUsage()
+			printConfigSetUsage(ui.Out)
 		case "scaffold":
-			printScaffoldUsage()
+			printScaffoldUsage(ui.Out)
 		// Add cases for other subcommands here as they get their own usage functions
 		default:
 			// For any other subcommand, show the main config usage.
 			// This is helpful if they don't have a dedicated help page yet.
-			printConfigUsage()
+			printConfigUsage(ui.Out)
 		}
 		os.Exit(0) // Successful exit for help display
 	}
@@ -118,93 +119,93 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 	case "set":
 		scope, format, desc, path, value, remainingArgs, err := parseSetArgs(subcommandArgs)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printConfigUsage()
+			fprintErr(ui.Err, err)
+			printConfigUsage(ui.Err)
 			os.Exit(1)
 		}
-		handleSetCommand(secureStore, scope, format, desc, append([]string{path, value}, remainingArgs...))
+		handleSetCommand(secureStore, scope, format, desc, append([]string{path, value}, remainingArgs...), ui)
 	case "scopes":
 		if err := parseScopesArgs(subcommandArgs); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printConfigUsage()
+			fprintErr(ui.Err, err)
+			printConfigUsage(ui.Err)
 			os.Exit(1)
 		}
-		handleScopesCommand(dbPool)
+		handleScopesCommand(dbPool, ui)
 	case "list":
 		scope, err := parseListArgs(subcommandArgs)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printConfigUsage()
+			fprintErr(ui.Err, err)
+			printConfigUsage(ui.Err)
 			os.Exit(1)
 		}
-		handleListCommand(dbPool, scope)
+		handleListCommand(dbPool, scope, ui)
 	case "paths":
 		scope, filter, err := parsePathsArgs(subcommandArgs)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printConfigUsage()
+			fprintErr(ui.Err, err)
+			printConfigUsage(ui.Err)
 			os.Exit(1)
 		}
-		handlePathsCommand(secureStore, scope, filter)
+		handlePathsCommand(secureStore, scope, filter, ui)
 	case "dump":
 		scope, zero, runtime, err := parseDumpArgs(subcommandArgs)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printConfigUsage()
+			fprintErr(ui.Err, err)
+			printConfigUsage(ui.Err)
 			os.Exit(1)
 		}
-		handleDumpCommand(secureStore, scope, zero, runtime)
+		handleDumpCommand(secureStore, scope, zero, runtime, ui)
 	case "diff":
 		scope, generation, err := parseDiffArgs(subcommandArgs)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printConfigUsage()
+			fprintErr(ui.Err, err)
+			printConfigUsage(ui.Err)
 			os.Exit(1)
 		}
-		handleDiffCommand(secureStore, scope, generation)
+		handleDiffCommand(secureStore, scope, generation, ui)
 	case "rollback":
 		scope, generation, err := parseRollbackArgs(subcommandArgs)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printConfigUsage()
+			fprintErr(ui.Err, err)
+			printConfigUsage(ui.Err)
 			os.Exit(1)
 		}
-		handleRollbackCommand(secureStore, scope, generation)
+		handleRollbackCommand(secureStore, scope, generation, ui)
 	case "save":
 		scope, format, desc, filename, err := parseSaveArgs(subcommandArgs)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printConfigUsage()
+			fprintErr(ui.Err, err)
+			printConfigUsage(ui.Err)
 			os.Exit(1)
 		}
-		handleSaveCommand(secureStore, scope, format, desc, filename)
+		handleSaveCommand(secureStore, scope, format, desc, filename, ui)
 	case "scaffold":
 		scope, desc, scaffoldType, key, err := parseScaffoldArgs(subcommandArgs)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printScaffoldUsage()
+			fprintErr(ui.Err, err)
+			printScaffoldUsage(ui.Err)
 			os.Exit(1)
 		}
-		handleScaffoldCommand(secureStore, scope, desc, scaffoldType, key)
+		handleScaffoldCommand(secureStore, scope, desc, scaffoldType, key, ui)
 	case "get":
 		scope, filter, err := parseGetArgs(subcommandArgs)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printConfigUsage()
+			fprintErr(ui.Err, err)
+			printConfigUsage(ui.Err)
 			os.Exit(1)
 		}
-		handleGetCommand(secureStore, scope, filter)
+		handleGetCommand(secureStore, scope, filter, ui)
 	case "migrate":
 		err := parseMigrateArgs(subcommandArgs)
 		if err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-			printConfigUsage()
+			fprintErr(ui.Err, err)
+			printConfigUsage(ui.Err)
 			os.Exit(1)
 		}
-		handleMigrateCommand(secureStore)
+		handleMigrateCommand(secureStore, ui)
 	default:
-		fmt.Fprintf(os.Stderr, "Error: unknown config subcommand: %s\n", subcommand)
-		printConfigUsage()
+		_, _ = fmt.Fprintf(ui.Err, "Error: unknown config subcommand: %s\n", subcommand)
+		printConfigUsage(ui.Err)
 		os.Exit(1)
 	}
 }

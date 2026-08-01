@@ -12,9 +12,9 @@ import (
 
 // handleDumpCommand is the command-level wrapper. It executes the core logic
 // and handles exiting the process on error.
-func handleDumpCommand(secureStore config.SecureStore, scope string, zero bool, runtime bool) {
-	if err := dumpConfig(os.Stdout, secureStore, scope, zero, runtime); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+func handleDumpCommand(secureStore config.SecureStore, scope string, zero bool, runtime bool, ui UI) {
+	if err := dumpConfig(ui.Out, secureStore, scope, zero, runtime); err != nil {
+		fprintErr(ui.Err, err)
 		os.Exit(1)
 	}
 }
