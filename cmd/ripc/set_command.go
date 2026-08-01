@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -133,4 +134,24 @@ func setConfigValue(
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 	return nil
+}
+
+// parseSetArgs parses the arguments for the 'set' subcommand.
+func parseSetArgs(args []string) (scope, format, desc, path, value string, remainingArgs []string, err error) {
+	setCmd := flag.NewFlagSet("set", flag.ContinueOnError)
+	setCmd.SetOutput(io.Discard) // Output not needed for parsing
+	scopeOpt := commandConfig.Options["scope"]
+	formatOpt := commandConfig.Options["format"]
+	descOpt := commandConfig.Options["desc"]
+	setScope := setCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	formatFlag := setCmd.String("format", formatOpt.DefaultValue, formatOpt.Usage)
+	descFlag := setCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
+
+	if err := setCmd.Parse(args); err != nil {
+		return "", "", "", "", "", nil, fmt.Errorf("parsing set flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if setCmd.NArg() < 2 {
+		return "", "", "", "", "", nil, fmt.Errorf("'set' requires path and value arguments: %w", ErrMissingArgument)
+	}
+	return *setScope, *formatFlag, *descFlag, setCmd.Arg(0), setCmd.Arg(1), setCmd.Args()[2:], nil
 }

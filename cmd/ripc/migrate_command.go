@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -69,6 +70,20 @@ func migrateConfig(stdout io.Writer, secureStore config.SecureStore) error {
 	_, err = fmt.Fprintf(stdout, "Config migrated successfully for scope '%s'. Stale keys removed, new defaults applied.\n", scopeName)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
+	}
+	return nil
+}
+
+// parseMigrateArgs parses the arguments for the 'migrate' subcommand.
+func parseMigrateArgs(args []string) error {
+	migrateCmd := flag.NewFlagSet("migrate", flag.ContinueOnError)
+	migrateCmd.SetOutput(io.Discard)
+	err := migrateCmd.Parse(args)
+	if err != nil {
+		return fmt.Errorf("parsing migrate flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if migrateCmd.NArg() > 0 {
+		return fmt.Errorf("'migrate' does not take any arguments: %w", ErrTooManyArguments)
 	}
 	return nil
 }

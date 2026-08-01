@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -98,4 +99,24 @@ func listTomlPathsWithValuesRecursive(tree *toml.Tree, prefix string, pathsWithV
 			(*pathsWithValues)[fullPath] = value
 		}
 	}
+}
+
+// parseGetArgs parses the arguments for the 'get' subcommand.
+func parseGetArgs(args []string) (scope, filter string, err error) {
+	getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
+	getCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	getScope := getCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	if err := getCmd.Parse(args); err != nil {
+		return "", "", fmt.Errorf("parsing get flags: %w: %v", ErrInvalidFlag, err)
+	}
+	filter = ""
+	if getCmd.NArg() > 0 {
+		filter = getCmd.Arg(0)
+	}
+	if getCmd.NArg() > 1 {
+		return "", "", fmt.Errorf("'get' command takes at most one filter argument: %w", ErrTooManyArguments)
+	}
+	return *getScope, filter, nil
 }

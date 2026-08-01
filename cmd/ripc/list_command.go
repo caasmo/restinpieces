@@ -88,3 +88,14 @@ func handleListCommand(pool *sqlitex.Pool, scopeFilter string) {
 		}
 	}
 }
+
+// parseListArgs parses the arguments for the 'list' subcommand.
+func parseListArgs(args []string) (scope string, err error) {
+	if len(args) > 1 {
+		return "", fmt.Errorf("'list' command takes at most one scope argument: %w", ErrTooManyArguments)
+	}
+	if len(args) > 0 {
+		return args[0], nil
+	}
+	return "", nil
+}

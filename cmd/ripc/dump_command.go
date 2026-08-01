@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -71,4 +72,27 @@ func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 		return fmt.Errorf("%w: failed to write raw config to stdout: %w", ErrWriteOutput, err)
 	}
 	return nil
+}
+
+// parseDumpArgs parses the arguments for the 'dump' subcommand.
+func parseDumpArgs(args []string) (scope string, zero bool, runtime bool, err error) {
+	dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
+	dumpCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	zeroOpt := commandConfig.Options["zero"]
+	runtimeOpt := commandConfig.Options["runtime"]
+	dumpScope := dumpCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	dumpZero := dumpCmd.Bool("zero", false, zeroOpt.Usage)
+	dumpRuntime := dumpCmd.Bool("runtime", false, runtimeOpt.Usage)
+
+	if err := dumpCmd.Parse(args); err != nil {
+		return "", false, false, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if dumpCmd.NArg() > 0 {
+		return "", false, false, fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
+	}
+	if *dumpZero && *dumpRuntime {
+		return "", false, false, fmt.Errorf("--zero and --runtime are mutually exclusive: %w", ErrInvalidFlag)
+	}
+	return *dumpScope, *dumpZero, *dumpRuntime, nil
 }

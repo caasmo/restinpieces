@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -153,4 +154,25 @@ func scaffoldConfigValue(
 	}
 
 	return nil
+}
+
+// parseScaffoldArgs parses the arguments for the 'scaffold' subcommand.
+func parseScaffoldArgs(args []string) (scope, desc, scaffoldType, key string, err error) {
+	scaffoldCmd := flag.NewFlagSet("scaffold", flag.ContinueOnError)
+	scaffoldCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	descOpt := commandConfig.Options["desc"]
+	sScope := scaffoldCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	sDesc := scaffoldCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
+
+	if err := scaffoldCmd.Parse(args); err != nil {
+		return "", "", "", "", fmt.Errorf("parsing scaffold flags: %w", err)
+	}
+	if scaffoldCmd.NArg() < 2 {
+		return "", "", "", "", fmt.Errorf("'scaffold' requires <type> and <key> arguments: %w", ErrMissingArgument)
+	}
+	if scaffoldCmd.NArg() > 2 {
+		return "", "", "", "", fmt.Errorf("'scaffold' takes exactly two arguments: type and key: %w", ErrTooManyArguments)
+	}
+	return *sScope, *sDesc, scaffoldCmd.Arg(0), scaffoldCmd.Arg(1), nil
 }

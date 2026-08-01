@@ -2,9 +2,11 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 
 	"github.com/caasmo/restinpieces/config"
 )
@@ -51,4 +53,27 @@ func rollbackConfig(stdout io.Writer, secureStore config.SecureStore, scope stri
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 	return nil
+}
+
+// parseRollbackArgs parses the arguments for the 'rollback' subcommand.
+func parseRollbackArgs(args []string) (scope string, generation int, err error) {
+	rollbackCmd := flag.NewFlagSet("rollback", flag.ContinueOnError)
+	rollbackCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	rollbackScope := rollbackCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	if err := rollbackCmd.Parse(args); err != nil {
+		return "", 0, fmt.Errorf("parsing rollback flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if rollbackCmd.NArg() < 1 {
+		return "", 0, fmt.Errorf("'rollback' requires generation number argument: %w", ErrMissingArgument)
+	}
+	if rollbackCmd.NArg() > 1 {
+		return "", 0, fmt.Errorf("'rollback' command takes at most one generation argument: %w", ErrTooManyArguments)
+	}
+	gen, err := strconv.Atoi(rollbackCmd.Arg(0))
+	if err != nil {
+		return "", 0, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
+	}
+	return *rollbackScope, gen, nil
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -98,4 +99,24 @@ func listPaths(stdout io.Writer, secureStore config.SecureStore, scopeName strin
 		}
 	}
 	return nil
+}
+
+// parsePathsArgs parses the arguments for the 'paths' subcommand.
+func parsePathsArgs(args []string) (scope, filter string, err error) {
+	pathsCmd := flag.NewFlagSet("paths", flag.ContinueOnError)
+	pathsCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	pathsScope := pathsCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	if err := pathsCmd.Parse(args); err != nil {
+		return "", "", fmt.Errorf("parsing paths flags: %w: %v", ErrInvalidFlag, err)
+	}
+	filter = ""
+	if pathsCmd.NArg() > 0 {
+		filter = pathsCmd.Arg(0)
+	}
+	if pathsCmd.NArg() > 1 {
+		return "", "", fmt.Errorf("'paths' command takes at most one filter argument: %w", ErrTooManyArguments)
+	}
+	return *pathsScope, filter, nil
 }

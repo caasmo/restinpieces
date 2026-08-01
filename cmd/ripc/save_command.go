@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -65,4 +66,27 @@ func saveConfigFromData(stdout io.Writer, secureStore config.SecureStore, scope,
 		return fmt.Errorf("failed to write output: %w", err)
 	}
 	return nil
+}
+
+// parseSaveArgs parses the arguments for the 'save' subcommand.
+func parseSaveArgs(args []string) (scope, format, desc, filename string, err error) {
+	saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
+	saveCmd.SetOutput(io.Discard)
+	scopeOpt := commandConfig.Options["scope"]
+	formatOpt := commandConfig.Options["format"]
+	descOpt := commandConfig.Options["desc"]
+	saveScope := saveCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	formatFlag := saveCmd.String("format", "", formatOpt.Usage) // Corrected default value
+	descFlag := saveCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
+
+	if err := saveCmd.Parse(args); err != nil {
+		return "", "", "", "", fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if saveCmd.NArg() < 1 {
+		return "", "", "", "", fmt.Errorf("'save' requires filename argument: %w", ErrMissingArgument)
+	}
+	if saveCmd.NArg() > 1 {
+		return "", "", "", "", fmt.Errorf("'save' command takes at most one filename argument: %w", ErrTooManyArguments)
+	}
+	return *saveScope, *formatFlag, *descFlag, saveCmd.Arg(0), nil
 }

@@ -64,3 +64,11 @@ func listScopes(stdout io.Writer, pool *sqlitex.Pool) (err error) {
 
 	return nil
 }
+
+// parseScopesArgs parses the arguments for the 'scopes' subcommand.
+func parseScopesArgs(args []string) error {
+	if len(args) > 0 {
+		return fmt.Errorf("'scopes' command does not take any arguments: %w", ErrTooManyArguments)
+	}
+	return nil
+}
