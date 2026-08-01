@@ -44,9 +44,9 @@ func handleJobCommand(dbConn *zombiezen.Db, args []string) {
 	case "add-backup":
 		handleJobAddBackupCommand(dbConn, subcommandArgs[0], subcommandArgs[1], subcommandArgs[2])
 	case "list":
-		handleJobList(dbConn, subcommandArgs)
+		handleJobListCommand(dbConn, subcommandArgs)
 	case "rm":
-		handleJobRm(dbConn, subcommandArgs)
+		handleJobRmCommand(dbConn, subcommandArgs)
 	default:
 		// This case should ideally not be reached if parseJobSubcommand is correct
 		fmt.Fprintf(os.Stderr, "Error: unknown job subcommand: %s\n", subcommand)

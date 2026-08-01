@@ -14,9 +14,9 @@ var (
 	ErrDeleteJobFailed = errors.New("failed to delete job")
 )
 
-// handleJobRm is the command-level wrapper. It handles parsing command-line
+// handleJobRmCommand is the command-level wrapper. It handles parsing command-line
 // arguments and calls the core logic.
-func handleJobRm(dbConn db.DbQueueAdmin, args []string) {
+func handleJobRmCommand(dbConn db.DbQueueAdmin, args []string) {
 	if len(args) < 1 {
 		fmt.Fprintln(os.Stderr, "Error: 'rm' command requires a job ID")
 		os.Exit(1)

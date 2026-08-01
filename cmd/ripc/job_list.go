@@ -16,7 +16,7 @@ var (
 	ErrListJobsFailed = errors.New("failed to list jobs")
 )
 
-func handleJobList(dbConn db.DbQueueAdmin, args []string) {
+func handleJobListCommand(dbConn db.DbQueueAdmin, args []string) {
 	limit := 0 // Default to all jobs
 	if len(args) > 0 {
 		var err error
