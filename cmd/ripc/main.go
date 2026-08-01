@@ -24,6 +24,10 @@ var (
 	ErrCreateSecureStore  = errors.New("failed to instantiate secure store")
 )
 
+// prog is the invoked program path, the single source of truth for the
+// program name in usage output.
+var prog = os.Args[0]
+
 func main() {
 	if err := run(os.Args[1:], os.Stderr); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)

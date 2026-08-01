@@ -16,7 +16,7 @@ var (
 )
 
 func printAppUsage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s app <subcommand> [options]\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage: %s app <subcommand> [options]\n\n", prog)
 	fmt.Fprintf(os.Stderr, "Manages the application lifecycle.\n\n")
 	fmt.Fprintf(os.Stderr, "Subcommands:\n")
 	fmt.Fprintf(os.Stderr, "  create                Create a new application instance\n")

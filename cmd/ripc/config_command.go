@@ -14,7 +14,7 @@ var (
 
 	// commandConfig is the single source of truth for the 'ripc config' command's definition and help text.
 	commandConfig = CommandHelp{
-		Usage:       fmt.Sprintf("%s config <subcommand> [options]", os.Args[0]),
+		Usage:       fmt.Sprintf("%s config <subcommand> [options]", prog),
 		Description: "Manages application configuration with versioning and scope support.",
 		Subcommands: []SubcommandGroup{
 			{

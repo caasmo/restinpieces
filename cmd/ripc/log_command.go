@@ -13,7 +13,7 @@ var (
 )
 
 func printLogUsage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s log <subcommand> [options]\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage: %s log <subcommand> [options]\n\n", prog)
 	fmt.Fprintf(os.Stderr, "Manages the logger database.\n\n")
 	fmt.Fprintf(os.Stderr, "Subcommands:\n")
 	fmt.Fprintf(os.Stderr, "  init    Initialize the log database and schema\n")

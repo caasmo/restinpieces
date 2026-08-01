@@ -17,7 +17,7 @@ var (
 )
 
 func printJobUsage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s job <subcommand> [options]\n\n", os.Args[0])
+	fmt.Fprintf(os.Stderr, "Usage: %s job <subcommand> [options]\n\n", prog)
 	fmt.Fprintf(os.Stderr, "Manages background jobs.\n\n")
 	fmt.Fprintf(os.Stderr, "Subcommands:\n")
 	fmt.Fprintf(os.Stderr, "  add-backup [options]    Add a new recurrent backup job\n")
