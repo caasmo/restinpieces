@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -136,5 +137,79 @@ func TestAddBackupJob_FailureWriteError(t *testing.T) {
 	}
 	if !errors.Is(err, ErrWriteOutput) {
 		t.Errorf("expected error to wrap ErrWriteOutput, got %v", err)
+	}
+}
+
+func TestParseJobAddBackupArgs(t *testing.T) {
+	testTime := time.Now()
+	testTimeStr := testTime.Format(time.RFC3339)
+
+	tests := []struct {
+		name           string
+		args           []string
+		wantInterval   string
+		wantScheduled  string
+		wantMaxAttempt int
+		wantErr        error
+		wantErrContain string
+	}{
+		{
+			name:           "success",
+			args:           []string{"--interval", "1h", "--scheduled-for", testTimeStr, "--max-attempts", "5"},
+			wantInterval:   "1h",
+			wantScheduled:  testTimeStr,
+			wantMaxAttempt: 5,
+		},
+		{
+			name:    "missing interval",
+			args:    []string{"--interval", ""},
+			wantErr: ErrMissingArgument,
+		},
+		{
+			name:           "invalid interval format",
+			args:           []string{"--interval", "abc"},
+			wantErrContain: "invalid -interval format",
+		},
+		{
+			name:           "invalid scheduled-for format",
+			args:           []string{"--scheduled-for", "not-a-time"},
+			wantErrContain: "invalid -scheduled-for format",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			opts, err := parseJobAddBackupArgs(tc.args)
+			if tc.wantErr != nil {
+				if err == nil {
+					t.Fatalf("expected error, but got nil")
+				}
+				if !errors.Is(err, tc.wantErr) {
+					t.Fatalf("expected error to wrap %v, but got %v", tc.wantErr, err)
+				}
+				return
+			}
+			if tc.wantErrContain != "" {
+				if err == nil {
+					t.Fatalf("expected error containing %q, got nil", tc.wantErrContain)
+				}
+				if !strings.Contains(err.Error(), tc.wantErrContain) {
+					t.Errorf("error %q should contain %q", err.Error(), tc.wantErrContain)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if opts.Interval != tc.wantInterval {
+				t.Errorf("expected interval %q, got %q", tc.wantInterval, opts.Interval)
+			}
+			if opts.ScheduledFor != tc.wantScheduled {
+				t.Errorf("expected scheduled-for %q, got %q", tc.wantScheduled, opts.ScheduledFor)
+			}
+			if opts.MaxAttempts != tc.wantMaxAttempt {
+				t.Errorf("expected max-attempts %d, got %d", tc.wantMaxAttempt, opts.MaxAttempts)
+			}
+		})
 	}
 }

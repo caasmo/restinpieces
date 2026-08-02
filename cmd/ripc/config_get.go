@@ -13,8 +13,8 @@ import (
 
 // handleGetCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleGetCommand(secureStore config.SecureStore, scopeName string, filter string, ui UI) error {
-	return getAndPrintConfigPaths(ui.Out, secureStore, scopeName, filter)
+func handleGetCommand(secureStore config.SecureStore, opts ConfigGetOptions, ui UI) error {
+	return getAndPrintConfigPaths(ui.Out, secureStore, opts.Scope, opts.Filter)
 }
 
 // getAndPrintConfigPaths contains the testable core logic for getting and printing config paths.
@@ -97,22 +97,30 @@ func listTomlPathsWithValuesRecursive(tree *toml.Tree, prefix string, pathsWithV
 	}
 }
 
+// ConfigGetOptions holds the parsed options for the 'config get' subcommand.
+type ConfigGetOptions struct {
+	Scope  string // --scope
+	Filter string // optional positional filter argument
+}
+
 // parseGetArgs parses the arguments for the 'get' subcommand.
-func parseGetArgs(args []string) (scope, filter string, err error) {
+func parseGetArgs(args []string) (ConfigGetOptions, error) {
 	getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
 	getCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]
-	getScope := getCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 
-	if err := getCmd.Parse(args); err != nil {
-		return "", "", fmt.Errorf("parsing get flags: %w: %v", ErrInvalidFlag, err)
-	}
-	filter = ""
-	if getCmd.NArg() > 0 {
-		filter = getCmd.Arg(0)
+	var opts ConfigGetOptions
+	getCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	err := getCmd.Parse(args)
+	if err != nil {
+		return ConfigGetOptions{}, fmt.Errorf("parsing get flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if getCmd.NArg() > 1 {
-		return "", "", fmt.Errorf("'get' command takes at most one filter argument: %w", ErrTooManyArguments)
+		return ConfigGetOptions{}, fmt.Errorf("'get' command takes at most one filter argument: %w", ErrTooManyArguments)
 	}
-	return *getScope, filter, nil
+	if getCmd.NArg() > 0 {
+		opts.Filter = getCmd.Arg(0)
+	}
+	return opts, nil
 }

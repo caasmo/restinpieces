@@ -11,8 +11,8 @@ import (
 
 // handleDumpCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleDumpCommand(secureStore config.SecureStore, scope string, zero bool, runtime bool, ui UI) error {
-	return dumpConfig(ui.Out, secureStore, scope, zero, runtime)
+func handleDumpCommand(secureStore config.SecureStore, opts ConfigDumpOptions, ui UI) error {
+	return dumpConfig(ui.Out, secureStore, opts.Scope, opts.Zero, opts.Runtime)
 }
 
 // dumpConfig contains the testable core logic for dumping configuration.
@@ -70,25 +70,35 @@ func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 	return nil
 }
 
+// ConfigDumpOptions holds the parsed options for the 'config dump' subcommand.
+type ConfigDumpOptions struct {
+	Scope   string // --scope
+	Zero    bool   // --zero
+	Runtime bool   // --runtime
+}
+
 // parseDumpArgs parses the arguments for the 'dump' subcommand.
-func parseDumpArgs(args []string) (scope string, zero bool, runtime bool, err error) {
+func parseDumpArgs(args []string) (ConfigDumpOptions, error) {
 	dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
 	dumpCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]
 	zeroOpt := commandConfig.Options["zero"]
 	runtimeOpt := commandConfig.Options["runtime"]
-	dumpScope := dumpCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-	dumpZero := dumpCmd.Bool("zero", false, zeroOpt.Usage)
-	dumpRuntime := dumpCmd.Bool("runtime", false, runtimeOpt.Usage)
 
-	if err := dumpCmd.Parse(args); err != nil {
-		return "", false, false, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
+	var opts ConfigDumpOptions
+	dumpCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	dumpCmd.BoolVar(&opts.Zero, "zero", false, zeroOpt.Usage)
+	dumpCmd.BoolVar(&opts.Runtime, "runtime", false, runtimeOpt.Usage)
+
+	err := dumpCmd.Parse(args)
+	if err != nil {
+		return ConfigDumpOptions{}, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if dumpCmd.NArg() > 0 {
-		return "", false, false, fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
+		return ConfigDumpOptions{}, fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
 	}
-	if *dumpZero && *dumpRuntime {
-		return "", false, false, fmt.Errorf("--zero and --runtime are mutually exclusive: %w", ErrInvalidFlag)
+	if opts.Zero && opts.Runtime {
+		return ConfigDumpOptions{}, fmt.Errorf("--zero and --runtime are mutually exclusive: %w", ErrInvalidFlag)
 	}
-	return *dumpScope, *dumpZero, *dumpRuntime, nil
+	return opts, nil
 }

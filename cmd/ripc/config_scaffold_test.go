@@ -200,7 +200,7 @@ func TestParseScaffoldArgs(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			scope, _, scaffoldType, key, err := parseScaffoldArgs(tc.args)
+			opts, err := parseScaffoldArgs(tc.args)
 			if tc.wantErrContain != "" {
 				if err == nil {
 					t.Fatalf("expected error containing %q, got nil", tc.wantErrContain)
@@ -213,14 +213,14 @@ func TestParseScaffoldArgs(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if scope != tc.wantScope {
-				t.Errorf("scope: got %q, want %q", scope, tc.wantScope)
+			if opts.Scope != tc.wantScope {
+				t.Errorf("scope: got %q, want %q", opts.Scope, tc.wantScope)
 			}
-			if scaffoldType != tc.wantType {
-				t.Errorf("type: got %q, want %q", scaffoldType, tc.wantType)
+			if opts.ScaffoldType != tc.wantType {
+				t.Errorf("type: got %q, want %q", opts.ScaffoldType, tc.wantType)
 			}
-			if key != tc.wantKey {
-				t.Errorf("key: got %q, want %q", key, tc.wantKey)
+			if opts.Key != tc.wantKey {
+				t.Errorf("key: got %q, want %q", opts.Key, tc.wantKey)
 			}
 		})
 	}

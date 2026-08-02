@@ -72,15 +72,15 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count 
 
 // handleListCommand is a wrapper around listItems. It prints the empty-list
 // message and returns any error to the caller.
-func handleListCommand(pool *sqlitex.Pool, scopeFilter string, ui UI) error {
-	count, err := listItems(ui.Out, pool, scopeFilter)
+func handleListCommand(pool *sqlitex.Pool, opts ConfigListOptions, ui UI) error {
+	count, err := listItems(ui.Out, pool, opts.Scope)
 	if err != nil {
 		return err
 	}
 
 	if count == 0 {
-		if scopeFilter != "" {
-			_, err := fmt.Fprintf(ui.Out, "No configurations found for scope: %s\n", scopeFilter)
+		if opts.Scope != "" {
+			_, err := fmt.Fprintf(ui.Out, "No configurations found for scope: %s\n", opts.Scope)
 			if err != nil {
 				return err
 			}
@@ -94,13 +94,19 @@ func handleListCommand(pool *sqlitex.Pool, scopeFilter string, ui UI) error {
 	return nil
 }
 
+// ConfigListOptions holds the parsed options for the 'config list' subcommand.
+type ConfigListOptions struct {
+	Scope string // optional positional scope filter
+}
+
 // parseListArgs parses the arguments for the 'list' subcommand.
-func parseListArgs(args []string) (scope string, err error) {
+func parseListArgs(args []string) (ConfigListOptions, error) {
 	if len(args) > 1 {
-		return "", fmt.Errorf("'list' command takes at most one scope argument: %w", ErrTooManyArguments)
+		return ConfigListOptions{}, fmt.Errorf("'list' command takes at most one scope argument: %w", ErrTooManyArguments)
 	}
+	var opts ConfigListOptions
 	if len(args) > 0 {
-		return args[0], nil
+		opts.Scope = args[0]
 	}
-	return "", nil
+	return opts, nil
 }

@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"io"
-	"strconv"
 	"time"
 
 	"github.com/caasmo/restinpieces/db"
@@ -16,24 +16,53 @@ var (
 )
 
 // handleJobAddBackupCommand handles the "job add-backup" subcommand. It's the command-line wrapper.
-func handleJobAddBackupCommand(dbConn db.DbQueue, interval, scheduledFor, maxAttemptsStr string, ui UI) error {
-	// --- Parse and validate flags ---
-	intervalDuration, err := time.ParseDuration(interval)
+func handleJobAddBackupCommand(dbConn db.DbQueue, opts JobAddBackupOptions, ui UI) error {
+	intervalDuration, err := time.ParseDuration(opts.Interval)
 	if err != nil {
 		return fmt.Errorf("invalid -interval format: %w", err)
 	}
 
-	scheduledTime, err := time.Parse(time.RFC3339, scheduledFor)
+	scheduledTime, err := time.Parse(time.RFC3339, opts.ScheduledFor)
 	if err != nil {
 		return fmt.Errorf("invalid -scheduled-for format: %w", err)
 	}
 
-	maxAttempts, err := strconv.Atoi(maxAttemptsStr)
-	if err != nil {
-		return fmt.Errorf("invalid -max-attempts format: %w", err)
-	}
+	return addBackupJob(ui.Out, dbConn, intervalDuration, scheduledTime, opts.MaxAttempts)
+}
 
-	return addBackupJob(ui.Out, dbConn, intervalDuration, scheduledTime, maxAttempts)
+// JobAddBackupOptions holds the parsed options for the 'job add-backup' subcommand.
+type JobAddBackupOptions struct {
+	Interval     string // -interval, validated as a time.Duration
+	ScheduledFor string // -scheduled-for, validated as RFC3339
+	MaxAttempts  int    // -max-attempts
+}
+
+// parseJobAddBackupArgs parses the arguments for the 'job add-backup' subcommand.
+func parseJobAddBackupArgs(args []string) (JobAddBackupOptions, error) {
+	addBackupCmd := flag.NewFlagSet("add-backup", flag.ContinueOnError)
+	addBackupCmd.SetOutput(io.Discard)
+
+	var opts JobAddBackupOptions
+	addBackupCmd.StringVar(&opts.Interval, "interval", "24h", "Interval for the recurrent backup job (e.g., '24h', '1h30m')")
+	addBackupCmd.StringVar(&opts.ScheduledFor, "scheduled-for", time.Now().Format(time.RFC3339), "Start time in RFC3339 format for the first job")
+	addBackupCmd.IntVar(&opts.MaxAttempts, "max-attempts", 3, "Maximum number of attempts for the job")
+
+	err := addBackupCmd.Parse(args)
+	if err != nil {
+		return JobAddBackupOptions{}, fmt.Errorf("parsing add-backup flags: %w: %v", ErrInvalidFlag, err)
+	}
+	if opts.Interval == "" {
+		return JobAddBackupOptions{}, fmt.Errorf("-interval is a required flag for 'job add-backup': %w", ErrMissingArgument)
+	}
+	_, err = time.ParseDuration(opts.Interval)
+	if err != nil {
+		return JobAddBackupOptions{}, fmt.Errorf("invalid -interval format: %w", err)
+	}
+	_, err = time.Parse(time.RFC3339, opts.ScheduledFor)
+	if err != nil {
+		return JobAddBackupOptions{}, fmt.Errorf("invalid -scheduled-for format: %w", err)
+	}
+	return opts, nil
 }
 
 // addBackupJob contains the testable core logic for adding a backup job.

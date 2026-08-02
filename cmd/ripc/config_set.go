@@ -14,35 +14,16 @@ import (
 
 // Error definitions for set command
 var (
-	ErrMissingSetArguments = errors.New("missing path or value for 'set' command")
-	ErrPathNotFound        = errors.New("configuration path does not exist")
-	ErrReadFile            = errors.New("failed to read value from file")
-	ErrParseValue          = errors.New("failed to parse value")
-	ErrUnsupportedFormat   = errors.New("unsupported format")
+	ErrPathNotFound      = errors.New("configuration path does not exist")
+	ErrReadFile          = errors.New("failed to read value from file")
+	ErrParseValue        = errors.New("failed to parse value")
+	ErrUnsupportedFormat = errors.New("unsupported format")
 )
 
 // handleSetCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleSetCommand(
-	secureCfg config.SecureStore,
-	scope string,
-	format string,
-	description string,
-	cmdArgs []string,
-	ui UI) error {
-
-	if len(cmdArgs) < 2 {
-		_, err := fmt.Fprintf(ui.Err, "Usage: ... set <path> <value>\n")
-		if err != nil {
-			return err
-		}
-		return ErrMissingSetArguments
-	}
-
-	configPath := cmdArgs[0]
-	rawValue := cmdArgs[1]
-
-	return setConfigValue(ui.Out, secureCfg, scope, format, description, configPath, rawValue)
+func handleSetCommand(secureCfg config.SecureStore, opts ConfigSetOptions, ui UI) error {
+	return setConfigValue(ui.Out, secureCfg, opts.Scope, opts.Format, opts.Desc, opts.Path, opts.Value)
 }
 
 // setConfigValue contains the testable core logic for setting a configuration value.
@@ -136,22 +117,36 @@ func setConfigValue(
 	return nil
 }
 
+// ConfigSetOptions holds the parsed options for the 'config set' subcommand.
+type ConfigSetOptions struct {
+	Scope  string // --scope
+	Format string // --format
+	Desc   string // --desc
+	Path   string // positional path argument
+	Value  string // positional value argument
+}
+
 // parseSetArgs parses the arguments for the 'set' subcommand.
-func parseSetArgs(args []string) (scope, format, desc, path, value string, remainingArgs []string, err error) {
+func parseSetArgs(args []string) (ConfigSetOptions, error) {
 	setCmd := flag.NewFlagSet("set", flag.ContinueOnError)
 	setCmd.SetOutput(io.Discard) // Output not needed for parsing
 	scopeOpt := commandConfig.Options["scope"]
 	formatOpt := commandConfig.Options["format"]
 	descOpt := commandConfig.Options["desc"]
-	setScope := setCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-	formatFlag := setCmd.String("format", formatOpt.DefaultValue, formatOpt.Usage)
-	descFlag := setCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
 
-	if err := setCmd.Parse(args); err != nil {
-		return "", "", "", "", "", nil, fmt.Errorf("parsing set flags: %w: %v", ErrInvalidFlag, err)
+	var opts ConfigSetOptions
+	setCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	setCmd.StringVar(&opts.Format, "format", formatOpt.DefaultValue, formatOpt.Usage)
+	setCmd.StringVar(&opts.Desc, "desc", descOpt.DefaultValue, descOpt.Usage)
+
+	err := setCmd.Parse(args)
+	if err != nil {
+		return ConfigSetOptions{}, fmt.Errorf("parsing set flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if setCmd.NArg() < 2 {
-		return "", "", "", "", "", nil, fmt.Errorf("'set' requires path and value arguments: %w", ErrMissingArgument)
+		return ConfigSetOptions{}, fmt.Errorf("'set' requires path and value arguments: %w", ErrMissingArgument)
 	}
-	return *setScope, *formatFlag, *descFlag, setCmd.Arg(0), setCmd.Arg(1), setCmd.Args()[2:], nil
+	opts.Path = setCmd.Arg(0)
+	opts.Value = setCmd.Arg(1)
+	return opts, nil
 }

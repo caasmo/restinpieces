@@ -39,8 +39,8 @@ func listTomlPathsRecursive(tree *toml.Tree, prefix string, paths *[]string) {
 
 // handlePathsCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handlePathsCommand(secureStore config.SecureStore, scopeName string, filter string, ui UI) error {
-	return listPaths(ui.Out, secureStore, scopeName, filter)
+func handlePathsCommand(secureStore config.SecureStore, opts ConfigPathsOptions, ui UI) error {
+	return listPaths(ui.Out, secureStore, opts.Scope, opts.Filter)
 }
 
 // listPaths contains the testable core logic for listing all paths in a TOML configuration.
@@ -97,22 +97,30 @@ func listPaths(stdout io.Writer, secureStore config.SecureStore, scopeName strin
 	return nil
 }
 
+// ConfigPathsOptions holds the parsed options for the 'config paths' subcommand.
+type ConfigPathsOptions struct {
+	Scope  string // --scope
+	Filter string // optional positional filter argument
+}
+
 // parsePathsArgs parses the arguments for the 'paths' subcommand.
-func parsePathsArgs(args []string) (scope, filter string, err error) {
+func parsePathsArgs(args []string) (ConfigPathsOptions, error) {
 	pathsCmd := flag.NewFlagSet("paths", flag.ContinueOnError)
 	pathsCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]
-	pathsScope := pathsCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 
-	if err := pathsCmd.Parse(args); err != nil {
-		return "", "", fmt.Errorf("parsing paths flags: %w: %v", ErrInvalidFlag, err)
-	}
-	filter = ""
-	if pathsCmd.NArg() > 0 {
-		filter = pathsCmd.Arg(0)
+	var opts ConfigPathsOptions
+	pathsCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	err := pathsCmd.Parse(args)
+	if err != nil {
+		return ConfigPathsOptions{}, fmt.Errorf("parsing paths flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if pathsCmd.NArg() > 1 {
-		return "", "", fmt.Errorf("'paths' command takes at most one filter argument: %w", ErrTooManyArguments)
+		return ConfigPathsOptions{}, fmt.Errorf("'paths' command takes at most one filter argument: %w", ErrTooManyArguments)
 	}
-	return *pathsScope, filter, nil
+	if pathsCmd.NArg() > 0 {
+		opts.Filter = pathsCmd.Arg(0)
+	}
+	return opts, nil
 }

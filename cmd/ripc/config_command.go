@@ -116,12 +116,12 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 
 	switch subcommand {
 	case "set":
-		scope, format, desc, path, value, remainingArgs, err := parseSetArgs(subcommandArgs)
+		opts, err := parseSetArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleSetCommand(secureStore, scope, format, desc, append([]string{path, value}, remainingArgs...), ui)
+		return handleSetCommand(secureStore, opts, ui)
 	case "scopes":
 		err := parseScopesArgs(subcommandArgs)
 		if err != nil {
@@ -130,61 +130,61 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		}
 		return handleScopesCommand(dbPool, ui)
 	case "list":
-		scope, err := parseListArgs(subcommandArgs)
+		opts, err := parseListArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleListCommand(dbPool, scope, ui)
+		return handleListCommand(dbPool, opts, ui)
 	case "paths":
-		scope, filter, err := parsePathsArgs(subcommandArgs)
+		opts, err := parsePathsArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handlePathsCommand(secureStore, scope, filter, ui)
+		return handlePathsCommand(secureStore, opts, ui)
 	case "dump":
-		scope, zero, runtime, err := parseDumpArgs(subcommandArgs)
+		opts, err := parseDumpArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleDumpCommand(secureStore, scope, zero, runtime, ui)
+		return handleDumpCommand(secureStore, opts, ui)
 	case "diff":
-		scope, generation, err := parseDiffArgs(subcommandArgs)
+		opts, err := parseDiffArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleDiffCommand(secureStore, scope, generation, ui)
+		return handleDiffCommand(secureStore, opts, ui)
 	case "rollback":
-		scope, generation, err := parseRollbackArgs(subcommandArgs)
+		opts, err := parseRollbackArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleRollbackCommand(secureStore, scope, generation, ui)
+		return handleRollbackCommand(secureStore, opts, ui)
 	case "save":
-		scope, format, desc, filename, err := parseSaveArgs(subcommandArgs)
+		opts, err := parseSaveArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleSaveCommand(secureStore, scope, format, desc, filename, ui)
+		return handleSaveCommand(secureStore, opts, ui)
 	case "scaffold":
-		scope, desc, scaffoldType, key, err := parseScaffoldArgs(subcommandArgs)
+		opts, err := parseScaffoldArgs(subcommandArgs)
 		if err != nil {
 			printScaffoldUsage(ui.Err)
 			return err
 		}
-		return handleScaffoldCommand(secureStore, scope, desc, scaffoldType, key, ui)
+		return handleScaffoldCommand(secureStore, opts, ui)
 	case "get":
-		scope, filter, err := parseGetArgs(subcommandArgs)
+		opts, err := parseGetArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleGetCommand(secureStore, scope, filter, ui)
+		return handleGetCommand(secureStore, opts, ui)
 	case "migrate":
 		err := parseMigrateArgs(subcommandArgs)
 		if err != nil {

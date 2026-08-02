@@ -26,11 +26,11 @@ var (
 	ErrDiffGenerate = errors.New("failed to generate diff")
 )
 
-func handleDiffCommand(secureStore config.SecureStore, scope string, generation int, ui UI) error {
-	if scope == "" {
-		scope = config.ScopeApplication
+func handleDiffCommand(secureStore config.SecureStore, opts ConfigDiffOptions, ui UI) error {
+	if opts.Scope == "" {
+		opts.Scope = config.ScopeApplication
 	}
-	return diffConfig(ui.Out, secureStore, scope, generation)
+	return diffConfig(ui.Out, secureStore, opts.Scope, opts.Generation)
 }
 
 // diffConfig contains the testable core logic for diffing configs.
@@ -118,25 +118,35 @@ func diffConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 	return nil
 }
 
+// ConfigDiffOptions holds the parsed options for the 'config diff' subcommand.
+type ConfigDiffOptions struct {
+	Scope      string // --scope
+	Generation int    // positional generation argument
+}
+
 // parseDiffArgs parses the arguments for the 'diff' subcommand.
-func parseDiffArgs(args []string) (scope string, generation int, err error) {
+func parseDiffArgs(args []string) (ConfigDiffOptions, error) {
 	diffCmd := flag.NewFlagSet("diff", flag.ContinueOnError)
 	diffCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]
-	diffScope := diffCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 
-	if err := diffCmd.Parse(args); err != nil {
-		return "", 0, fmt.Errorf("parsing diff flags: %w: %v", ErrInvalidFlag, err)
+	var opts ConfigDiffOptions
+	diffCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	err := diffCmd.Parse(args)
+	if err != nil {
+		return ConfigDiffOptions{}, fmt.Errorf("parsing diff flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if diffCmd.NArg() < 1 {
-		return "", 0, fmt.Errorf("'diff' requires generation number argument: %w", ErrMissingArgument)
+		return ConfigDiffOptions{}, fmt.Errorf("'diff' requires generation number argument: %w", ErrMissingArgument)
 	}
 	if diffCmd.NArg() > 1 {
-		return "", 0, fmt.Errorf("'diff' command takes at most one generation argument: %w", ErrTooManyArguments)
+		return ConfigDiffOptions{}, fmt.Errorf("'diff' command takes at most one generation argument: %w", ErrTooManyArguments)
 	}
 	gen, err := strconv.Atoi(diffCmd.Arg(0))
 	if err != nil {
-		return "", 0, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
+		return ConfigDiffOptions{}, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
 	}
-	return *diffScope, gen, nil
+	opts.Generation = gen
+	return opts, nil
 }

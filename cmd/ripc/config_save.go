@@ -19,8 +19,8 @@ var (
 
 // handleSaveCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleSaveCommand(secureStore config.SecureStore, scope, format, desc, filename string, ui UI) error {
-	return saveConfigFromFile(ui.Out, secureStore, scope, format, desc, filename)
+func handleSaveCommand(secureStore config.SecureStore, opts ConfigSaveOptions, ui UI) error {
+	return saveConfigFromFile(ui.Out, secureStore, opts.Scope, opts.Format, opts.Desc, opts.Filename)
 }
 
 // saveConfigFromFile reads the specified file and passes its content to the core save logic.
@@ -65,25 +65,37 @@ func saveConfigFromData(stdout io.Writer, secureStore config.SecureStore, scope,
 	return nil
 }
 
+// ConfigSaveOptions holds the parsed options for the 'config save' subcommand.
+type ConfigSaveOptions struct {
+	Scope    string // --scope
+	Format   string // --format
+	Desc     string // --desc
+	Filename string // positional filename argument
+}
+
 // parseSaveArgs parses the arguments for the 'save' subcommand.
-func parseSaveArgs(args []string) (scope, format, desc, filename string, err error) {
+func parseSaveArgs(args []string) (ConfigSaveOptions, error) {
 	saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
 	saveCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]
 	formatOpt := commandConfig.Options["format"]
 	descOpt := commandConfig.Options["desc"]
-	saveScope := saveCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-	formatFlag := saveCmd.String("format", "", formatOpt.Usage) // Corrected default value
-	descFlag := saveCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
 
-	if err := saveCmd.Parse(args); err != nil {
-		return "", "", "", "", fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)
+	var opts ConfigSaveOptions
+	saveCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	saveCmd.StringVar(&opts.Format, "format", "", formatOpt.Usage) // Corrected default value
+	saveCmd.StringVar(&opts.Desc, "desc", descOpt.DefaultValue, descOpt.Usage)
+
+	err := saveCmd.Parse(args)
+	if err != nil {
+		return ConfigSaveOptions{}, fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if saveCmd.NArg() < 1 {
-		return "", "", "", "", fmt.Errorf("'save' requires filename argument: %w", ErrMissingArgument)
+		return ConfigSaveOptions{}, fmt.Errorf("'save' requires filename argument: %w", ErrMissingArgument)
 	}
 	if saveCmd.NArg() > 1 {
-		return "", "", "", "", fmt.Errorf("'save' command takes at most one filename argument: %w", ErrTooManyArguments)
+		return ConfigSaveOptions{}, fmt.Errorf("'save' command takes at most one filename argument: %w", ErrTooManyArguments)
 	}
-	return *saveScope, *formatFlag, *descFlag, saveCmd.Arg(0), nil
+	opts.Filename = saveCmd.Arg(0)
+	return opts, nil
 }

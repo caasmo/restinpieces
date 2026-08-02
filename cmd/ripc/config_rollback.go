@@ -17,8 +17,8 @@ var (
 
 // handleRollbackCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleRollbackCommand(secureStore config.SecureStore, scope string, generation int, ui UI) error {
-	return rollbackConfig(ui.Out, secureStore, scope, generation)
+func handleRollbackCommand(secureStore config.SecureStore, opts ConfigRollbackOptions, ui UI) error {
+	return rollbackConfig(ui.Out, secureStore, opts.Scope, opts.Generation)
 }
 
 // rollbackConfig contains the testable core logic for rolling back a configuration.
@@ -51,25 +51,35 @@ func rollbackConfig(stdout io.Writer, secureStore config.SecureStore, scope stri
 	return nil
 }
 
+// ConfigRollbackOptions holds the parsed options for the 'config rollback' subcommand.
+type ConfigRollbackOptions struct {
+	Scope      string // --scope
+	Generation int    // positional generation argument
+}
+
 // parseRollbackArgs parses the arguments for the 'rollback' subcommand.
-func parseRollbackArgs(args []string) (scope string, generation int, err error) {
+func parseRollbackArgs(args []string) (ConfigRollbackOptions, error) {
 	rollbackCmd := flag.NewFlagSet("rollback", flag.ContinueOnError)
 	rollbackCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]
-	rollbackScope := rollbackCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 
-	if err := rollbackCmd.Parse(args); err != nil {
-		return "", 0, fmt.Errorf("parsing rollback flags: %w: %v", ErrInvalidFlag, err)
+	var opts ConfigRollbackOptions
+	rollbackCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+
+	err := rollbackCmd.Parse(args)
+	if err != nil {
+		return ConfigRollbackOptions{}, fmt.Errorf("parsing rollback flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if rollbackCmd.NArg() < 1 {
-		return "", 0, fmt.Errorf("'rollback' requires generation number argument: %w", ErrMissingArgument)
+		return ConfigRollbackOptions{}, fmt.Errorf("'rollback' requires generation number argument: %w", ErrMissingArgument)
 	}
 	if rollbackCmd.NArg() > 1 {
-		return "", 0, fmt.Errorf("'rollback' command takes at most one generation argument: %w", ErrTooManyArguments)
+		return ConfigRollbackOptions{}, fmt.Errorf("'rollback' command takes at most one generation argument: %w", ErrTooManyArguments)
 	}
 	gen, err := strconv.Atoi(rollbackCmd.Arg(0))
 	if err != nil {
-		return "", 0, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
+		return ConfigRollbackOptions{}, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
 	}
-	return *rollbackScope, gen, nil
+	opts.Generation = gen
+	return opts, nil
 }

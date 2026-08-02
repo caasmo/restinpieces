@@ -69,8 +69,8 @@ func printScaffoldUsage(w io.Writer) {
 	help.Print(w, "ripc", "config", "scaffold")
 }
 
-func handleScaffoldCommand(secureStore config.SecureStore, scope, desc, scaffoldType, key string, ui UI) error {
-	return scaffoldConfigValue(ui.Out, secureStore, scope, desc, scaffoldType, key)
+func handleScaffoldCommand(secureStore config.SecureStore, opts ConfigScaffoldOptions, ui UI) error {
+	return scaffoldConfigValue(ui.Out, secureStore, opts.Scope, opts.Desc, opts.ScaffoldType, opts.Key)
 }
 
 func scaffoldConfigValue(
@@ -151,23 +151,36 @@ func scaffoldConfigValue(
 	return nil
 }
 
+// ConfigScaffoldOptions holds the parsed options for the 'config scaffold' subcommand.
+type ConfigScaffoldOptions struct {
+	Scope        string // --scope
+	Desc         string // --desc
+	ScaffoldType string // positional type argument
+	Key          string // positional key argument
+}
+
 // parseScaffoldArgs parses the arguments for the 'scaffold' subcommand.
-func parseScaffoldArgs(args []string) (scope, desc, scaffoldType, key string, err error) {
+func parseScaffoldArgs(args []string) (ConfigScaffoldOptions, error) {
 	scaffoldCmd := flag.NewFlagSet("scaffold", flag.ContinueOnError)
 	scaffoldCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]
 	descOpt := commandConfig.Options["desc"]
-	sScope := scaffoldCmd.String("scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-	sDesc := scaffoldCmd.String("desc", descOpt.DefaultValue, descOpt.Usage)
 
-	if err := scaffoldCmd.Parse(args); err != nil {
-		return "", "", "", "", fmt.Errorf("parsing scaffold flags: %w", err)
+	var opts ConfigScaffoldOptions
+	scaffoldCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	scaffoldCmd.StringVar(&opts.Desc, "desc", descOpt.DefaultValue, descOpt.Usage)
+
+	err := scaffoldCmd.Parse(args)
+	if err != nil {
+		return ConfigScaffoldOptions{}, fmt.Errorf("parsing scaffold flags: %w", err)
 	}
 	if scaffoldCmd.NArg() < 2 {
-		return "", "", "", "", fmt.Errorf("'scaffold' requires <type> and <key> arguments: %w", ErrMissingArgument)
+		return ConfigScaffoldOptions{}, fmt.Errorf("'scaffold' requires <type> and <key> arguments: %w", ErrMissingArgument)
 	}
 	if scaffoldCmd.NArg() > 2 {
-		return "", "", "", "", fmt.Errorf("'scaffold' takes exactly two arguments: type and key: %w", ErrTooManyArguments)
+		return ConfigScaffoldOptions{}, fmt.Errorf("'scaffold' takes exactly two arguments: type and key: %w", ErrTooManyArguments)
 	}
-	return *sScope, *sDesc, scaffoldCmd.Arg(0), scaffoldCmd.Arg(1), nil
+	opts.ScaffoldType = scaffoldCmd.Arg(0)
+	opts.Key = scaffoldCmd.Arg(1)
+	return opts, nil
 }
