@@ -36,3 +36,20 @@ Current violations (to be refactored):
 All config path fields (e.g. `backup_dir`, `source_path`, `db_path`, `public_dir`) are and **MUST be** resolved against the binary's current working directory (CWD) when relative. Absolute paths are supported and used as-is. No path in config is ever resolved against a config file location — there is no config file, only a database. When deployed via the canonical systemd service, the CWD is `/home/<app>`, so relative paths typically start with `data/`.
 
 An empty path `""` resolves to CWD — it is not an error, it means "use the CWD". Validation must accept `""` for all path fields.
+
+### CLI help framework: shared copy-paste file
+
+`cmd/ripc/help.go` is the reference implementation of the project's
+data-driven CLI help framework: types `Spec`, `OptSpec`, `ArgSpec`,
+`Subcommand`, `SubcommandGroup`, and the shared renderer `Spec.Print`. It is
+**stdlib-only** and must stay that way so it remains copyable.
+
+**Rule**: other CLIs in the organization's repos (e.g. segrob's `cmd/segrob`)
+copy `cmd/ripc/help.go` **verbatim** — no forks, no package variants, no
+rewrites. ripc is the most modern revision of this framework across all repos;
+when `help.go` changes here, sync the new version to the other CLIs in the
+same change.
+
+Help is data-driven: every command declares a `Spec` literal next to its
+command file, and `Spec.Opt(name)` is the single source of truth for flag
+defaults and usage text at flag-registration time.

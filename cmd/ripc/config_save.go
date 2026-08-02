@@ -77,9 +77,9 @@ type ConfigSaveOptions struct {
 func parseConfigSaveArgs(args []string) (ConfigSaveOptions, error) {
 	saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
 	saveCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Options["scope"]
-	formatOpt := commandConfig.Options["format"]
-	descOpt := commandConfig.Options["desc"]
+	scopeOpt := commandConfig.Opt("scope")
+	formatOpt := commandConfig.Opt("format")
+	descOpt := commandConfig.Opt("desc")
 
 	var opts ConfigSaveOptions
 	saveCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)

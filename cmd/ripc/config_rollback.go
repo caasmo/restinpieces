@@ -61,7 +61,7 @@ type ConfigRollbackOptions struct {
 func parseConfigRollbackArgs(args []string) (ConfigRollbackOptions, error) {
 	rollbackCmd := flag.NewFlagSet("rollback", flag.ContinueOnError)
 	rollbackCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Options["scope"]
+	scopeOpt := commandConfig.Opt("scope")
 
 	var opts ConfigRollbackOptions
 	rollbackCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)

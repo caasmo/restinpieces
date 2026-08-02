@@ -130,9 +130,9 @@ type ConfigSetOptions struct {
 func parseConfigSetArgs(args []string) (ConfigSetOptions, error) {
 	setCmd := flag.NewFlagSet("set", flag.ContinueOnError)
 	setCmd.SetOutput(io.Discard) // Output not needed for parsing
-	scopeOpt := commandConfig.Options["scope"]
-	formatOpt := commandConfig.Options["format"]
-	descOpt := commandConfig.Options["desc"]
+	scopeOpt := commandConfig.Opt("scope")
+	formatOpt := commandConfig.Opt("format")
+	descOpt := commandConfig.Opt("desc")
 
 	var opts ConfigSetOptions
 	setCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)

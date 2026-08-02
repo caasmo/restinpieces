@@ -81,9 +81,9 @@ type ConfigDumpOptions struct {
 func parseConfigDumpArgs(args []string) (ConfigDumpOptions, error) {
 	dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
 	dumpCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Options["scope"]
-	zeroOpt := commandConfig.Options["zero"]
-	runtimeOpt := commandConfig.Options["runtime"]
+	scopeOpt := commandConfig.Opt("scope")
+	zeroOpt := commandConfig.Opt("zero")
+	runtimeOpt := commandConfig.Opt("runtime")
 
 	var opts ConfigDumpOptions
 	dumpCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)

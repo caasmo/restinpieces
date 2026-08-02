@@ -6,14 +6,13 @@ import (
 	"testing"
 )
 
-func TestCommandHelp_Print(t *testing.T) {
-	optionsMap := map[string]Option{
-		"option": {DefaultValue: "default", Usage: "a test option"},
-	}
-
-	help := CommandHelp{
-		Usage:       "test-usage",
+func TestSpec_Print(t *testing.T) {
+	spec := Spec{
+		Usage:       "<subcommand> [options]",
 		Description: "test description",
+		Args: []ArgSpec{
+			{"filter", "optional filter"},
+		},
 		Subcommands: []SubcommandGroup{
 			{
 				Title: "Test Group",
@@ -22,34 +21,43 @@ func TestCommandHelp_Print(t *testing.T) {
 				},
 			},
 		},
-		Options:       optionsMap,
-		GlobalOptions: optionsMap,
+		Options: []OptSpec{
+			{Name: "option", Meta: "string", DefaultValue: "default", Usage: "a test option"},
+		},
+		GlobalOptions: []OptSpec{
+			{Name: "global", Meta: "string", Usage: "a global option"},
+		},
 		Examples: []string{
 			"example 1",
 		},
 	}
 
 	var buf bytes.Buffer
-	help.Print(&buf, "test-parent")
+	spec.Print(&buf, "test", "parent")
 
 	output := buf.String()
 
 	expectedSubstrings := []string{
 		"Usage:",
-		"test-usage",
+		"test <subcommand> [options]",
 		"Description:",
 		"test description",
+		"Arguments:",
+		"filter",
+		"optional filter",
 		"Subcommands:",
 		"Test Group",
 		"sub",
 		"sub description",
 		"Options:",
-		"-option",
+		"-option string",
+		"a test option (default: \"default\")",
 		"Global Options:",
+		"-global string",
 		"Examples:",
 		"example 1",
 		"For detailed help on a subcommand:",
-		"test-parent <subcommand> --help",
+		"test parent <subcommand> --help",
 	}
 
 	for _, sub := range expectedSubstrings {

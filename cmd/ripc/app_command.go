@@ -15,10 +15,18 @@ var (
 )
 
 func printAppUsage(w io.Writer) {
-	_, _ = fmt.Fprintf(w, "Usage: %s app <subcommand> [options]\n\n", prog)
-	_, _ = fmt.Fprintf(w, "Manages the application lifecycle.\n\n")
-	_, _ = fmt.Fprintf(w, "Subcommands:\n")
-	_, _ = fmt.Fprintf(w, "  create                Create a new application instance\n")
+	help := Spec{
+		Usage:       "app <subcommand> [options]",
+		Description: "Manages the application lifecycle.",
+		Subcommands: []SubcommandGroup{
+			{
+				Subcommands: []Subcommand{
+					{"create", "Create a new application instance"},
+				},
+			},
+		},
+	}
+	help.Print(w, prog, "app")
 }
 
 func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPath string, commandArgs []string, ui UI) error {

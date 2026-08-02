@@ -43,9 +43,13 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, parentPath string, d
 }
 
 func printConfigScaffoldUsage(w io.Writer) {
-	help := CommandHelp{
-		Usage:       "ripc config scaffold [options] <type> <key>",
+	help := Spec{
+		Usage:       "config scaffold [options] <type> <key>",
 		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'config migrate' first if needed.",
+		Args: []ArgSpec{
+			{"type", "Scaffold type (backuplocal or oauth2)"},
+			{"key", "Key of the new entry"},
+		},
 		Subcommands: []SubcommandGroup{
 			{
 				Title: "Scaffold Types",
@@ -55,18 +59,18 @@ func printConfigScaffoldUsage(w io.Writer) {
 				},
 			},
 		},
-		Options: map[string]Option{
-			"scope": commandConfig.Options["scope"],
-			"desc":  commandConfig.Options["desc"],
+		Options: []OptSpec{
+			commandConfig.Opt("scope"),
+			commandConfig.Opt("desc"),
 		},
 		Examples: []string{
-			`ripc config scaffold backuplocal app_db`,
-			`ripc config scaffold oauth2 my_google`,
-			`ripc config scaffold --scope my-app backuplocal analytics_db`,
-			`ripc config scaffold --scope my-app --desc "scaffold analytics db" backuplocal analytics_db`,
+			"ripc config scaffold backuplocal app_db",
+			"ripc config scaffold oauth2 my_google",
+			"ripc config scaffold --scope my-app backuplocal analytics_db",
+			"ripc config scaffold --scope my-app --desc \"scaffold analytics db\" backuplocal analytics_db",
 		},
 	}
-	help.Print(w, "ripc", "config", "scaffold")
+	help.Print(w, prog, "config", "scaffold")
 }
 
 func handleConfigScaffoldCommand(secureStore config.SecureStore, opts ConfigScaffoldOptions, ui UI) error {
@@ -163,8 +167,8 @@ type ConfigScaffoldOptions struct {
 func parseConfigScaffoldArgs(args []string) (ConfigScaffoldOptions, error) {
 	scaffoldCmd := flag.NewFlagSet("scaffold", flag.ContinueOnError)
 	scaffoldCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Options["scope"]
-	descOpt := commandConfig.Options["desc"]
+	scopeOpt := commandConfig.Opt("scope")
+	descOpt := commandConfig.Opt("desc")
 
 	var opts ConfigScaffoldOptions
 	scaffoldCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)

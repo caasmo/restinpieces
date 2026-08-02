@@ -107,7 +107,7 @@ type ConfigGetOptions struct {
 func parseConfigGetArgs(args []string) (ConfigGetOptions, error) {
 	getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
 	getCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Options["scope"]
+	scopeOpt := commandConfig.Opt("scope")
 
 	var opts ConfigGetOptions
 	getCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)

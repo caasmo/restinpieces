@@ -58,12 +58,12 @@ func run(args []string, output io.Writer) error {
 	dbPathFlag := fs.String("dbpath", os.Getenv("RIPC_DB"), "Path to the SQLite database file")
 
 	fs.Usage = func() {
-		help := CommandHelp{
-			Usage:       "ripc [global options] <command> [command-specific options]",
+		help := Spec{
+			Usage:       "[global options] <command> [command-specific options]",
 			Description: "A tool for managing the Rip application, including configuration, authentication, and jobs.",
-			GlobalOptions: map[string]Option{
-				"agekey": {Usage: "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')"},
-				"dbpath": {Usage: "Path to the SQLite database file"},
+			GlobalOptions: []OptSpec{
+				{Name: "agekey", Meta: "string", Usage: "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')"},
+				{Name: "dbpath", Meta: "string", Usage: "Path to the SQLite database file"},
 			},
 			Subcommands: []SubcommandGroup{
 				{
@@ -81,7 +81,7 @@ func run(args []string, output io.Writer) error {
 				"ripc config set server.port 8080",
 			},
 		}
-		help.Print(output, "ripc")
+		help.Print(output, prog)
 	}
 
 	if err := fs.Parse(args); err != nil {

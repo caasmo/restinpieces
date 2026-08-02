@@ -107,7 +107,7 @@ type ConfigPathsOptions struct {
 func parseConfigPathsArgs(args []string) (ConfigPathsOptions, error) {
 	pathsCmd := flag.NewFlagSet("paths", flag.ContinueOnError)
 	pathsCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Options["scope"]
+	scopeOpt := commandConfig.Opt("scope")
 
 	var opts ConfigPathsOptions
 	pathsCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)

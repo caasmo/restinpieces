@@ -13,10 +13,18 @@ var (
 )
 
 func printLogUsage(w io.Writer) {
-	_, _ = fmt.Fprintf(w, "Usage: %s log <subcommand> [options]\n\n", prog)
-	_, _ = fmt.Fprintf(w, "Manages the logger database.\n\n")
-	_, _ = fmt.Fprintf(w, "Subcommands:\n")
-	_, _ = fmt.Fprintf(w, "  init    Initialize the log database and schema\n")
+	help := Spec{
+		Usage:       "log <subcommand> [options]",
+		Description: "Manages the logger database.",
+		Subcommands: []SubcommandGroup{
+			{
+				Subcommands: []Subcommand{
+					{"init", "Initialize the log database and schema"},
+				},
+			},
+		},
+	}
+	help.Print(w, prog, "log")
 }
 
 func handleLogCommand(secureStore config.SecureStore, dbPath string, commandArgs []string, ui UI) error {

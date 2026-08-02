@@ -128,7 +128,7 @@ type ConfigDiffOptions struct {
 func parseConfigDiffArgs(args []string) (ConfigDiffOptions, error) {
 	diffCmd := flag.NewFlagSet("diff", flag.ContinueOnError)
 	diffCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Options["scope"]
+	scopeOpt := commandConfig.Opt("scope")
 
 	var opts ConfigDiffOptions
 	diffCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)

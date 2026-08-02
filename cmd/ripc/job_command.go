@@ -14,13 +14,21 @@ var (
 )
 
 func printJobUsage(w io.Writer) {
-	_, _ = fmt.Fprintf(w, "Usage: %s job <subcommand> [options]\n\n", prog)
-	_, _ = fmt.Fprintf(w, "Manages background jobs.\n\n")
-	_, _ = fmt.Fprintf(w, "Subcommands:\n")
-	_, _ = fmt.Fprintf(w, "  add-backup [options]    Add a new recurrent backup job\n")
-	_, _ = fmt.Fprintf(w, "  list [limit]            List jobs in the queue\n")
-	_, _ = fmt.Fprintf(w, "  rm <job_id>             Remove a job from the queue\n")
-	_, _ = fmt.Fprintf(w, "  add [options]           Add a generic job (advanced)\n")
+	help := Spec{
+		Usage:       "job <subcommand> [options]",
+		Description: "Manages background jobs.",
+		Subcommands: []SubcommandGroup{
+			{
+				Subcommands: []Subcommand{
+					{"add-backup [options]", "Add a new recurrent backup job"},
+					{"list [limit]", "List jobs in the queue"},
+					{"rm <job_id>", "Remove a job from the queue"},
+					{"add [options]", "Add a generic job (advanced)"},
+				},
+			},
+		},
+	}
+	help.Print(w, prog, "job")
 }
 
 // handleJobCommand is the dispatcher for all "job" subcommands.

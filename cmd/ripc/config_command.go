@@ -13,8 +13,8 @@ var (
 	ErrUnknownSubcommand = errors.New("unknown config subcommand")
 
 	// commandConfig is the single source of truth for the 'ripc config' command's definition and help text.
-	commandConfig = CommandHelp{
-		Usage:       fmt.Sprintf("%s config <subcommand> [options]", prog),
+	commandConfig = Spec{
+		Usage:       "config <subcommand> [options]",
 		Description: "Manages application configuration with versioning and scope support.",
 		Subcommands: []SubcommandGroup{
 			{
@@ -44,12 +44,12 @@ var (
 				},
 			},
 		},
-		Options: map[string]Option{
-			"scope":   {DefaultValue: config.ScopeApplication, Usage: "Scope for the configuration (affects: set, get, paths, dump, diff, rollback, save)"},
-			"format":  {DefaultValue: "toml", Usage: "Format of the configuration file (affects: set, save)"},
-			"desc":    {Usage: "Optional description for this configuration version (affects: set, save)"},
-			"zero":    {Usage: "Output stored overrides on top of zero values (affects: dump)"},
-			"runtime": {Usage: "Output defaults merged with stored overrides (affects: dump)"},
+		Options: []OptSpec{
+			{Name: "scope", Meta: "string", DefaultValue: config.ScopeApplication, Usage: "Scope for the configuration (affects: set, get, paths, dump, diff, rollback, save)"},
+			{Name: "format", Meta: "string", DefaultValue: "toml", Usage: "Format of the configuration file (affects: set, save)"},
+			{Name: "desc", Meta: "string", Usage: "Optional description for this configuration version (affects: set, save)"},
+			{Name: "zero", Usage: "Output stored overrides on top of zero values (affects: dump)"},
+			{Name: "runtime", Usage: "Output defaults merged with stored overrides (affects: dump)"},
 		},
 		Examples: []string{
 			"ripc config dump",
@@ -64,24 +64,28 @@ var (
 )
 
 func printConfigUsage(w io.Writer) {
-	commandConfig.Print(w, "ripc", "config")
+	commandConfig.Print(w, prog, "config")
 }
 
 func printConfigSetUsage(w io.Writer) {
-	help := CommandHelp{
-		Usage:       "ripc config set [options] <path> <value>",
+	help := Spec{
+		Usage:       "config set [options] <path> <value>",
 		Description: "Sets a configuration value at a specified path.",
-		Options: map[string]Option{
-			"scope":  commandConfig.Options["scope"],
-			"format": commandConfig.Options["format"],
-			"desc":   commandConfig.Options["desc"],
+		Args: []ArgSpec{
+			{"path", "Configuration path to set"},
+			{"value", "Value to set"},
+		},
+		Options: []OptSpec{
+			commandConfig.Opt("scope"),
+			commandConfig.Opt("format"),
+			commandConfig.Opt("desc"),
 		},
 		Examples: []string{
-			`ripc config set server.host localhost`,
+			"ripc config set server.host localhost",
 			`ripc config set --scope webapp features.beta true --desc "Enable beta feature"`,
 		},
 	}
-	help.Print(w, "ripc", "config", "set")
+	help.Print(w, prog, "config", "set")
 }
 
 func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, commandArgs []string, ui UI) error {
