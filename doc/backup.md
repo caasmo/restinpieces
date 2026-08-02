@@ -11,13 +11,33 @@ The filename and hardlink naming conventions are defined in the shared [backup p
 
 ## Job Activation
 
-Use `ripc` to insert a recurrent backup job into the queue:
+Run this once to activate the backup job:
 
 ```bash
-ripc job add backup --interval 24h
+ripc job add backup
 ```
 
-This creates a job with type `job_type_backup_local` that the scheduler picks up on its next tick. The job is recurrent — after each successful run it reschedules itself for the next interval. On each tick the handler iterates all configured files, backing up only those whose frequency has elapsed.
+The job's recurrence interval defaults to `1m`. The actual backup schedule is per-database, controlled by each file's `frequency` setting (see below): a file is backed up only once its frequency has elapsed since its last backup.
+
+## Enabling Backups
+
+After activating the job, configure what to back up. For each database, scaffold a per-file entry with sensible defaults, then set its path and frequency:
+
+```bash
+ripc config scaffold backuplocal app_db
+ripc config set backup_local.files.app_db.source_path /data/app.db
+ripc config set backup_local.files.app_db.frequency 24h
+```
+
+The scaffold creates `backup_local.files.app_db` with defaults — `strategy` = `"online"`, `compression` = `false`, `frequency` = `15m` — and an empty `source_path` that you **must** set. Give each database its own key (label, e.g. `app_db`) and its own schedule.
+
+Also set the shared backup directory once:
+
+```bash
+ripc config set backup_local.backup_dir /data/backups
+```
+
+All backups and `latest-` links are written there. With an empty `backup_dir` the backup feature stays deactivated.
 
 ## Job Configuration
 
