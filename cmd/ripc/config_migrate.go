@@ -9,9 +9,9 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-// handleMigrateCommand is the command-level wrapper. It executes the core logic
+// handleConfigMigrateCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleMigrateCommand(secureStore config.SecureStore, ui UI) error {
+func handleConfigMigrateCommand(secureStore config.SecureStore, ui UI) error {
 	return migrateConfig(ui.Out, secureStore)
 }
 
@@ -69,8 +69,8 @@ func migrateConfig(stdout io.Writer, secureStore config.SecureStore) error {
 	return nil
 }
 
-// parseMigrateArgs parses the arguments for the 'migrate' subcommand.
-func parseMigrateArgs(args []string) error {
+// parseConfigMigrateArgs parses the arguments for the 'migrate' subcommand.
+func parseConfigMigrateArgs(args []string) error {
 	migrateCmd := flag.NewFlagSet("migrate", flag.ContinueOnError)
 	migrateCmd.SetOutput(io.Discard)
 	err := migrateCmd.Parse(args)

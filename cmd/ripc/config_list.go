@@ -70,9 +70,9 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count 
 
 }
 
-// handleListCommand is a wrapper around listItems. It prints the empty-list
+// handleConfigListCommand is a wrapper around listItems. It prints the empty-list
 // message and returns any error to the caller.
-func handleListCommand(pool *sqlitex.Pool, opts ConfigListOptions, ui UI) error {
+func handleConfigListCommand(pool *sqlitex.Pool, opts ConfigListOptions, ui UI) error {
 	count, err := listItems(ui.Out, pool, opts.Scope)
 	if err != nil {
 		return err
@@ -99,8 +99,8 @@ type ConfigListOptions struct {
 	Scope string // optional positional scope filter
 }
 
-// parseListArgs parses the arguments for the 'list' subcommand.
-func parseListArgs(args []string) (ConfigListOptions, error) {
+// parseConfigListArgs parses the arguments for the 'list' subcommand.
+func parseConfigListArgs(args []string) (ConfigListOptions, error) {
 	if len(args) > 1 {
 		return ConfigListOptions{}, fmt.Errorf("'list' command takes at most one scope argument: %w", ErrTooManyArguments)
 	}

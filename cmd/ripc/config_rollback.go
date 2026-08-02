@@ -15,9 +15,9 @@ var (
 	ErrInvalidGeneration = errors.New("invalid generation")
 )
 
-// handleRollbackCommand is the command-level wrapper. It executes the core logic
+// handleConfigRollbackCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleRollbackCommand(secureStore config.SecureStore, opts ConfigRollbackOptions, ui UI) error {
+func handleConfigRollbackCommand(secureStore config.SecureStore, opts ConfigRollbackOptions, ui UI) error {
 	return rollbackConfig(ui.Out, secureStore, opts.Scope, opts.Generation)
 }
 
@@ -57,8 +57,8 @@ type ConfigRollbackOptions struct {
 	Generation int    // positional generation argument
 }
 
-// parseRollbackArgs parses the arguments for the 'rollback' subcommand.
-func parseRollbackArgs(args []string) (ConfigRollbackOptions, error) {
+// parseConfigRollbackArgs parses the arguments for the 'rollback' subcommand.
+func parseConfigRollbackArgs(args []string) (ConfigRollbackOptions, error) {
 	rollbackCmd := flag.NewFlagSet("rollback", flag.ContinueOnError)
 	rollbackCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]

@@ -42,7 +42,7 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, parentPath string, d
 	}
 }
 
-func printScaffoldUsage(w io.Writer) {
+func printConfigScaffoldUsage(w io.Writer) {
 	help := CommandHelp{
 		Usage:       "ripc config scaffold [options] <type> <key>",
 		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'config migrate' first if needed.",
@@ -69,7 +69,7 @@ func printScaffoldUsage(w io.Writer) {
 	help.Print(w, "ripc", "config", "scaffold")
 }
 
-func handleScaffoldCommand(secureStore config.SecureStore, opts ConfigScaffoldOptions, ui UI) error {
+func handleConfigScaffoldCommand(secureStore config.SecureStore, opts ConfigScaffoldOptions, ui UI) error {
 	return scaffoldConfigValue(ui.Out, secureStore, opts.Scope, opts.Desc, opts.ScaffoldType, opts.Key)
 }
 
@@ -159,8 +159,8 @@ type ConfigScaffoldOptions struct {
 	Key          string // positional key argument
 }
 
-// parseScaffoldArgs parses the arguments for the 'scaffold' subcommand.
-func parseScaffoldArgs(args []string) (ConfigScaffoldOptions, error) {
+// parseConfigScaffoldArgs parses the arguments for the 'scaffold' subcommand.
+func parseConfigScaffoldArgs(args []string) (ConfigScaffoldOptions, error) {
 	scaffoldCmd := flag.NewFlagSet("scaffold", flag.ContinueOnError)
 	scaffoldCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]

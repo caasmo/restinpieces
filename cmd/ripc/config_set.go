@@ -20,9 +20,9 @@ var (
 	ErrUnsupportedFormat = errors.New("unsupported format")
 )
 
-// handleSetCommand is the command-level wrapper. It executes the core logic
+// handleConfigSetCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleSetCommand(secureCfg config.SecureStore, opts ConfigSetOptions, ui UI) error {
+func handleConfigSetCommand(secureCfg config.SecureStore, opts ConfigSetOptions, ui UI) error {
 	return setConfigValue(ui.Out, secureCfg, opts.Scope, opts.Format, opts.Desc, opts.Path, opts.Value)
 }
 
@@ -126,8 +126,8 @@ type ConfigSetOptions struct {
 	Value  string // positional value argument
 }
 
-// parseSetArgs parses the arguments for the 'set' subcommand.
-func parseSetArgs(args []string) (ConfigSetOptions, error) {
+// parseConfigSetArgs parses the arguments for the 'set' subcommand.
+func parseConfigSetArgs(args []string) (ConfigSetOptions, error) {
 	setCmd := flag.NewFlagSet("set", flag.ContinueOnError)
 	setCmd.SetOutput(io.Discard) // Output not needed for parsing
 	scopeOpt := commandConfig.Options["scope"]

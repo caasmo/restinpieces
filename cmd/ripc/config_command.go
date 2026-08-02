@@ -101,7 +101,7 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		case "set":
 			printConfigSetUsage(ui.Out)
 		case "scaffold":
-			printScaffoldUsage(ui.Out)
+			printConfigScaffoldUsage(ui.Out)
 		// Add cases for other subcommands here as they get their own usage functions
 		default:
 			// For any other subcommand, show the main config usage.
@@ -116,82 +116,82 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 
 	switch subcommand {
 	case "set":
-		opts, err := parseSetArgs(subcommandArgs)
+		opts, err := parseConfigSetArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleSetCommand(secureStore, opts, ui)
+		return handleConfigSetCommand(secureStore, opts, ui)
 	case "scopes":
-		err := parseScopesArgs(subcommandArgs)
+		err := parseConfigScopesArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleScopesCommand(dbPool, ui)
+		return handleConfigScopesCommand(dbPool, ui)
 	case "list":
-		opts, err := parseListArgs(subcommandArgs)
+		opts, err := parseConfigListArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleListCommand(dbPool, opts, ui)
+		return handleConfigListCommand(dbPool, opts, ui)
 	case "paths":
-		opts, err := parsePathsArgs(subcommandArgs)
+		opts, err := parseConfigPathsArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handlePathsCommand(secureStore, opts, ui)
+		return handleConfigPathsCommand(secureStore, opts, ui)
 	case "dump":
-		opts, err := parseDumpArgs(subcommandArgs)
+		opts, err := parseConfigDumpArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleDumpCommand(secureStore, opts, ui)
+		return handleConfigDumpCommand(secureStore, opts, ui)
 	case "diff":
-		opts, err := parseDiffArgs(subcommandArgs)
+		opts, err := parseConfigDiffArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleDiffCommand(secureStore, opts, ui)
+		return handleConfigDiffCommand(secureStore, opts, ui)
 	case "rollback":
-		opts, err := parseRollbackArgs(subcommandArgs)
+		opts, err := parseConfigRollbackArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleRollbackCommand(secureStore, opts, ui)
+		return handleConfigRollbackCommand(secureStore, opts, ui)
 	case "save":
-		opts, err := parseSaveArgs(subcommandArgs)
+		opts, err := parseConfigSaveArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleSaveCommand(secureStore, opts, ui)
+		return handleConfigSaveCommand(secureStore, opts, ui)
 	case "scaffold":
-		opts, err := parseScaffoldArgs(subcommandArgs)
+		opts, err := parseConfigScaffoldArgs(subcommandArgs)
 		if err != nil {
-			printScaffoldUsage(ui.Err)
+			printConfigScaffoldUsage(ui.Err)
 			return err
 		}
-		return handleScaffoldCommand(secureStore, opts, ui)
+		return handleConfigScaffoldCommand(secureStore, opts, ui)
 	case "get":
-		opts, err := parseGetArgs(subcommandArgs)
+		opts, err := parseConfigGetArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleGetCommand(secureStore, opts, ui)
+		return handleConfigGetCommand(secureStore, opts, ui)
 	case "migrate":
-		err := parseMigrateArgs(subcommandArgs)
+		err := parseConfigMigrateArgs(subcommandArgs)
 		if err != nil {
 			printConfigUsage(ui.Err)
 			return err
 		}
-		return handleMigrateCommand(secureStore, ui)
+		return handleConfigMigrateCommand(secureStore, ui)
 	default:
 		printConfigUsage(ui.Err)
 		return fmt.Errorf("unknown config subcommand: %s", subcommand)

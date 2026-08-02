@@ -9,9 +9,9 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-// handleDumpCommand is the command-level wrapper. It executes the core logic
+// handleConfigDumpCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleDumpCommand(secureStore config.SecureStore, opts ConfigDumpOptions, ui UI) error {
+func handleConfigDumpCommand(secureStore config.SecureStore, opts ConfigDumpOptions, ui UI) error {
 	return dumpConfig(ui.Out, secureStore, opts.Scope, opts.Zero, opts.Runtime)
 }
 
@@ -77,8 +77,8 @@ type ConfigDumpOptions struct {
 	Runtime bool   // --runtime
 }
 
-// parseDumpArgs parses the arguments for the 'dump' subcommand.
-func parseDumpArgs(args []string) (ConfigDumpOptions, error) {
+// parseConfigDumpArgs parses the arguments for the 'dump' subcommand.
+func parseConfigDumpArgs(args []string) (ConfigDumpOptions, error) {
 	dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
 	dumpCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]

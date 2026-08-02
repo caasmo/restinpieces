@@ -11,9 +11,9 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-// handleGetCommand is the command-level wrapper. It executes the core logic
+// handleConfigGetCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleGetCommand(secureStore config.SecureStore, opts ConfigGetOptions, ui UI) error {
+func handleConfigGetCommand(secureStore config.SecureStore, opts ConfigGetOptions, ui UI) error {
 	return getAndPrintConfigPaths(ui.Out, secureStore, opts.Scope, opts.Filter)
 }
 
@@ -103,8 +103,8 @@ type ConfigGetOptions struct {
 	Filter string // optional positional filter argument
 }
 
-// parseGetArgs parses the arguments for the 'get' subcommand.
-func parseGetArgs(args []string) (ConfigGetOptions, error) {
+// parseConfigGetArgs parses the arguments for the 'get' subcommand.
+func parseConfigGetArgs(args []string) (ConfigGetOptions, error) {
 	getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
 	getCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]

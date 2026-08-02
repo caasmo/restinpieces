@@ -37,9 +37,9 @@ func listTomlPathsRecursive(tree *toml.Tree, prefix string, paths *[]string) {
 	}
 }
 
-// handlePathsCommand is the command-level wrapper. It executes the core logic
+// handleConfigPathsCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handlePathsCommand(secureStore config.SecureStore, opts ConfigPathsOptions, ui UI) error {
+func handleConfigPathsCommand(secureStore config.SecureStore, opts ConfigPathsOptions, ui UI) error {
 	return listPaths(ui.Out, secureStore, opts.Scope, opts.Filter)
 }
 
@@ -103,8 +103,8 @@ type ConfigPathsOptions struct {
 	Filter string // optional positional filter argument
 }
 
-// parsePathsArgs parses the arguments for the 'paths' subcommand.
-func parsePathsArgs(args []string) (ConfigPathsOptions, error) {
+// parseConfigPathsArgs parses the arguments for the 'paths' subcommand.
+func parseConfigPathsArgs(args []string) (ConfigPathsOptions, error) {
 	pathsCmd := flag.NewFlagSet("paths", flag.ContinueOnError)
 	pathsCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]

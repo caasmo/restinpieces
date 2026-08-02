@@ -16,9 +16,9 @@ var (
 	ErrDbFinalize = errors.New("failed to finalize statement")
 )
 
-// handleScopesCommand is the command-level wrapper. It executes the core logic
+// handleConfigScopesCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleScopesCommand(pool *sqlitex.Pool, ui UI) error {
+func handleConfigScopesCommand(pool *sqlitex.Pool, ui UI) error {
 	return listScopes(ui.Out, pool)
 }
 
@@ -61,8 +61,8 @@ func listScopes(stdout io.Writer, pool *sqlitex.Pool) (err error) {
 	return nil
 }
 
-// parseScopesArgs parses the arguments for the 'scopes' subcommand.
-func parseScopesArgs(args []string) error {
+// parseConfigScopesArgs parses the arguments for the 'scopes' subcommand.
+func parseConfigScopesArgs(args []string) error {
 	if len(args) > 0 {
 		return fmt.Errorf("'scopes' command does not take any arguments: %w", ErrTooManyArguments)
 	}

@@ -17,9 +17,9 @@ var (
 	ErrReadFileFailed = errors.New("failed to read file")
 )
 
-// handleSaveCommand is the command-level wrapper. It executes the core logic
+// handleConfigSaveCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
-func handleSaveCommand(secureStore config.SecureStore, opts ConfigSaveOptions, ui UI) error {
+func handleConfigSaveCommand(secureStore config.SecureStore, opts ConfigSaveOptions, ui UI) error {
 	return saveConfigFromFile(ui.Out, secureStore, opts.Scope, opts.Format, opts.Desc, opts.Filename)
 }
 
@@ -73,8 +73,8 @@ type ConfigSaveOptions struct {
 	Filename string // positional filename argument
 }
 
-// parseSaveArgs parses the arguments for the 'save' subcommand.
-func parseSaveArgs(args []string) (ConfigSaveOptions, error) {
+// parseConfigSaveArgs parses the arguments for the 'save' subcommand.
+func parseConfigSaveArgs(args []string) (ConfigSaveOptions, error) {
 	saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
 	saveCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]

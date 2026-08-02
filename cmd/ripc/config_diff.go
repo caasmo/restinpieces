@@ -26,7 +26,7 @@ var (
 	ErrDiffGenerate = errors.New("failed to generate diff")
 )
 
-func handleDiffCommand(secureStore config.SecureStore, opts ConfigDiffOptions, ui UI) error {
+func handleConfigDiffCommand(secureStore config.SecureStore, opts ConfigDiffOptions, ui UI) error {
 	if opts.Scope == "" {
 		opts.Scope = config.ScopeApplication
 	}
@@ -124,8 +124,8 @@ type ConfigDiffOptions struct {
 	Generation int    // positional generation argument
 }
 
-// parseDiffArgs parses the arguments for the 'diff' subcommand.
-func parseDiffArgs(args []string) (ConfigDiffOptions, error) {
+// parseConfigDiffArgs parses the arguments for the 'diff' subcommand.
+func parseConfigDiffArgs(args []string) (ConfigDiffOptions, error) {
 	diffCmd := flag.NewFlagSet("diff", flag.ContinueOnError)
 	diffCmd.SetOutput(io.Discard)
 	scopeOpt := commandConfig.Options["scope"]
