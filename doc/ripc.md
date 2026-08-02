@@ -211,14 +211,12 @@ Shows differences between the latest configuration and a previous version.
 
 Manages background jobs in the queue.
 
--   **`add-backup`**: Adds a new recurrent database backup job.
-    -   `ripc  job add-backup --interval 24h`
+-   **`add <type>`**: Adds a new job of the given type. Currently supported types: `backup`.
+    -   `ripc  job add backup --interval 24h`
 -   **`list [limit]`**: Lists jobs in the queue, optionally limiting the number of results.
     -   `ripc  job list 10`
 -   **`rm <job_id>`**: Removes a job from the queue by its ID.
     -   `ripc  job rm 123`
--   **`add`**: (Advanced) Adds a generic job to the queue with specified parameters.
-    -   `ripc  job add --type my_job --payload '''{"key":"value"}'''`
 
 ### `help`
 

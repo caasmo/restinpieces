@@ -14,7 +14,7 @@ The filename and hardlink naming conventions are defined in the shared [backup p
 Use `ripc` to insert a recurrent backup job into the queue:
 
 ```bash
-ripc job add-backup --interval 24h
+ripc job add backup --interval 24h
 ```
 
 This creates a job with type `job_type_backup_local` that the scheduler picks up on its next tick. The job is recurrent — after each successful run it reschedules itself for the next interval. On each tick the handler iterates all configured files, backing up only those whose frequency has elapsed.

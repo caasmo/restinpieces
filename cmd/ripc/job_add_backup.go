@@ -15,7 +15,7 @@ var (
 	ErrInsertJobFailed = errors.New("failed to insert job")
 )
 
-// handleJobAddBackupCommand handles the "job add-backup" subcommand. It's the command-line wrapper.
+// handleJobAddBackupCommand handles the "job add backup" subcommand. It's the command-line wrapper.
 func handleJobAddBackupCommand(dbConn db.DbQueue, opts JobAddBackupOptions, ui UI) error {
 	intervalDuration, err := time.ParseDuration(opts.Interval)
 	if err != nil {
@@ -30,29 +30,29 @@ func handleJobAddBackupCommand(dbConn db.DbQueue, opts JobAddBackupOptions, ui U
 	return addBackupJob(ui, dbConn, intervalDuration, scheduledTime, opts.MaxAttempts)
 }
 
-// JobAddBackupOptions holds the parsed options for the 'job add-backup' subcommand.
+// JobAddBackupOptions holds the parsed options for the 'job add backup' subcommand.
 type JobAddBackupOptions struct {
 	Interval     string // -interval, validated as a time.Duration
 	ScheduledFor string // -scheduled-for, validated as RFC3339
 	MaxAttempts  int    // -max-attempts
 }
 
-// parseJobAddBackupArgs parses the arguments for the 'job add-backup' subcommand.
+// parseJobAddBackupArgs parses the arguments for the 'job add backup' subcommand.
 func parseJobAddBackupArgs(args []string) (JobAddBackupOptions, error) {
-	addBackupCmd := flag.NewFlagSet("add-backup", flag.ContinueOnError)
+	addBackupCmd := flag.NewFlagSet("add backup", flag.ContinueOnError)
 	addBackupCmd.SetOutput(io.Discard)
 
 	var opts JobAddBackupOptions
-	addBackupCmd.StringVar(&opts.Interval, "interval", "24h", "Interval for the recurrent backup job (e.g., '24h', '1h30m')")
+	addBackupCmd.StringVar(&opts.Interval, "interval", "1m", "Interval for the recurrent backup job (e.g., '24h', '1h30m')")
 	addBackupCmd.StringVar(&opts.ScheduledFor, "scheduled-for", time.Now().Format(time.RFC3339), "Start time in RFC3339 format for the first job")
 	addBackupCmd.IntVar(&opts.MaxAttempts, "max-attempts", 3, "Maximum number of attempts for the job")
 
 	err := addBackupCmd.Parse(args)
 	if err != nil {
-		return JobAddBackupOptions{}, fmt.Errorf("parsing add-backup flags: %w: %v", ErrInvalidFlag, err)
+		return JobAddBackupOptions{}, fmt.Errorf("parsing add backup flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if opts.Interval == "" {
-		return JobAddBackupOptions{}, fmt.Errorf("-interval is a required flag for 'job add-backup': %w", ErrMissingArgument)
+		return JobAddBackupOptions{}, fmt.Errorf("-interval is a required flag for 'job add backup': %w", ErrMissingArgument)
 	}
 	_, err = time.ParseDuration(opts.Interval)
 	if err != nil {

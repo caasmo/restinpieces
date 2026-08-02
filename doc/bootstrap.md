@@ -210,7 +210,7 @@ The `ripc` tool is also used for managing the application after it has been boot
     ```
 *   **Adding a recurring database backup job:**
     ```bash
-    ripc job add-backup --interval 24h
+    ripc job add backup --interval 24h
     ```
 
 The `ripc` tool is also used for managing the application after it has been bootstrapped. Some common operations include:
@@ -225,7 +225,7 @@ The `ripc` tool is also used for managing the application after it has been boot
     ```
 *   **Adding a recurring database backup job:**
     ```bash
-    ripc job add-backup --interval 24h
+    ripc job add backup --interval 24h
     ```
 
 For a complete list of commands and in-depth documentation, refer to the **[`ripc` README](cmd/ripc/README.md)** or use the `ripc help` command.

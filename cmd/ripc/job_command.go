@@ -11,6 +11,7 @@ import (
 
 var (
 	ErrUnknownJobSubcommand = errors.New("unknown job subcommand")
+	ErrUnknownJobType       = errors.New("unknown job type")
 )
 
 func printJobUsage(w io.Writer) {
@@ -20,10 +21,9 @@ func printJobUsage(w io.Writer) {
 		Subcommands: []SubcommandGroup{
 			{
 				Subcommands: []Subcommand{
-					{"add-backup [options]", "Add a new recurrent backup job"},
+					{"add <type> [options]", "Add a new job (allowed types: backup)"},
 					{"list [limit]", "List jobs in the queue"},
 					{"rm <job_id>", "Remove a job from the queue"},
-					{"add [options]", "Add a generic job (advanced)"},
 				},
 			},
 		},
@@ -45,13 +45,8 @@ func handleJobCommand(dbConn *zombiezen.Db, args []string, ui UI) error {
 	}
 
 	switch subcommand {
-	case "add-backup":
-		opts, err := parseJobAddBackupArgs(subcommandArgs)
-		if err != nil {
-			printJobUsage(ui.Err)
-			return err
-		}
-		return handleJobAddBackupCommand(dbConn, opts, ui)
+	case "add":
+		return handleJobAddCommand(dbConn, subcommandArgs, ui)
 	case "list":
 		return handleJobListCommand(dbConn, subcommandArgs, ui)
 	case "rm":
@@ -70,8 +65,16 @@ func parseJobSubcommand(commandArgs []string) (string, []string, error) {
 	subcommandArgs := commandArgs[1:]
 
 	switch subcommand {
-	case "add-backup":
-		return subcommand, subcommandArgs, nil
+	case "add":
+		if len(subcommandArgs) < 1 {
+			return "", nil, fmt.Errorf("'add' requires a job type argument: %w", ErrMissingArgument)
+		}
+		switch subcommandArgs[0] {
+		case "backup":
+			return subcommand, subcommandArgs, nil
+		default:
+			return "", nil, fmt.Errorf("'%s': %w", subcommandArgs[0], ErrUnknownJobType)
+		}
 	case "list":
 		if len(subcommandArgs) > 1 {
 			return "", nil, fmt.Errorf("'list' command takes at most one limit argument: %w", ErrTooManyArguments)

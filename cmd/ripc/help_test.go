@@ -115,7 +115,7 @@ func TestPrintUsageFuncs(t *testing.T) {
 			want: []string{
 				"job <subcommand> [options]",
 				"Manages background jobs.",
-				"add-backup [options]",
+				"add <type> [options]",
 				"list [limit]",
 				"rm <job_id>",
 			},

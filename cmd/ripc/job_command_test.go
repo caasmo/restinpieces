@@ -70,6 +70,25 @@ func TestParseJobSubcommand(t *testing.T) {
 			args:        []string{"rm", "abc"},
 			expectedErr: ErrNotANumber,
 		},
+
+		// 'add' subcommand with job type token
+		{
+			name:         "AddBackupSuccess",
+			args:         []string{"add", "backup"},
+			expectedCmd:  "add",
+			expectedArgs: []string{"backup"},
+			expectedErr:  nil,
+		},
+		{
+			name:        "AddMissingType",
+			args:        []string{"add"},
+			expectedErr: ErrMissingArgument,
+		},
+		{
+			name:        "AddUnknownType",
+			args:        []string{"add", "unknown-type"},
+			expectedErr: ErrUnknownJobType,
+		},
 	}
 
 	for _, tc := range testCases {
