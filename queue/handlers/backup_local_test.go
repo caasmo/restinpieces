@@ -313,20 +313,6 @@ func TestBackupHandler_Handle_MultiDB(t *testing.T) {
 	}
 }
 
-func TestBackupHandler_Handle_EmptyBackupDirWithFiles(t *testing.T) {
-	cfg := config.NewDefaultConfig() // BackupDir defaults to "", Files is nil
-	cfg.BackupLocal.Files = map[string]config.BackupLocalDbFile{
-		"test": {SourcePath: "/dev/null", Frequency: config.Duration{Duration: time.Hour}},
-	}
-	provider := config.NewProvider(cfg)
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	handler := NewHandler(provider, logger)
-	err := handler.handle(context.Background(), time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC))
-	if err != nil {
-		t.Fatalf("handle() with empty backup dir and files should not error, got: %v", err)
-	}
-}
-
 func TestBackupHandler_Handle_NoFiles(t *testing.T) {
 	cfg, _, _ := setupTest(t, true) // backupDir is set, but no files added
 	provider := config.NewProvider(cfg)
@@ -335,6 +321,77 @@ func TestBackupHandler_Handle_NoFiles(t *testing.T) {
 	err := handler.handle(context.Background(), time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatalf("handle() with no files should not error, got: %v", err)
+	}
+}
+
+func TestBackupHandler_Handle_Deactivated(t *testing.T) {
+	cfg, sourcePath, _ := setupTest(t, true)
+	cfg.BackupLocal.BackupDir = "" // zero value deactivates the feature
+	addDatabase(cfg, "source", sourcePath, false, config.BackupStrategyOnline, "24h")
+
+	provider := config.NewProvider(cfg)
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := NewHandler(provider, logger)
+
+	err := handler.handle(context.Background(), time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatalf("handle() with empty backup_dir should not error, got: %v", err)
+	}
+}
+
+func TestBackupHandler_Handle_EmptySourcePathSkipped(t *testing.T) {
+	mockTime := time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC)
+	cfg, sourcePath, backupDir := setupTest(t, true)
+	addDatabase(cfg, "active", sourcePath, false, config.BackupStrategyOnline, "24h")
+	cfg.BackupLocal.Files["deactivated"] = config.BackupLocalDbFile{
+		SourcePath: "",
+		Frequency:  config.Duration{Duration: 24 * time.Hour},
+	}
+
+	provider := config.NewProvider(cfg)
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := NewHandler(provider, logger)
+
+	err := handler.handle(context.Background(), mockTime)
+	if err != nil {
+		t.Fatalf("handle() with a deactivated entry should not error, got: %v", err)
+	}
+
+	// The active entry is backed up; the deactivated entry produces nothing.
+	timestamp := mockTime.UTC().Format(timestampFormat)
+	activePath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "active-source.db", timestamp))
+	if _, err := os.Stat(activePath); os.IsNotExist(err) {
+		t.Fatalf("expected active backup not found at %s", activePath)
+	}
+	entries, readErr := os.ReadDir(backupDir)
+	if readErr != nil {
+		t.Fatalf("failed to read backup dir: %v", readErr)
+	}
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), "deactivated-") {
+			t.Fatalf("unexpected artifact for deactivated entry: %s", e.Name())
+		}
+	}
+}
+
+func TestBackupHandler_Handle_BackupDirNotADirectory(t *testing.T) {
+	mockTime := time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC)
+	cfg, sourcePath, _ := setupTest(t, true)
+	// Point backup_dir at an existing file instead of a directory.
+	notADir := filepath.Join(filepath.Dir(sourcePath), "not-a-dir")
+	if err := os.WriteFile(notADir, []byte("x"), 0644); err != nil {
+		t.Fatalf("failed to create file: %v", err)
+	}
+	cfg.BackupLocal.BackupDir = notADir
+	addDatabase(cfg, "source", sourcePath, false, config.BackupStrategyOnline, "24h")
+
+	provider := config.NewProvider(cfg)
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := NewHandler(provider, logger)
+
+	err := handler.handle(context.Background(), mockTime)
+	if err == nil {
+		t.Fatal("handle() expected an error for backup_dir being a file, got nil")
 	}
 }
 
@@ -459,6 +516,117 @@ func TestBackupHandler_Handle_EmptyDatabase(t *testing.T) {
 	}
 
 	verifyBackup(t, expectedPath, false, false)
+}
+
+func TestBackupHandler_Handle_EmptySource(t *testing.T) {
+	mockTime := time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC)
+	tempDir := t.TempDir()
+	sourcePath := filepath.Join(tempDir, "empty.db")
+	if err := os.WriteFile(sourcePath, nil, 0644); err != nil {
+		t.Fatalf("failed to create empty source file: %v", err)
+	}
+	backupDir := filepath.Join(tempDir, "backups")
+	if err := os.Mkdir(backupDir, 0755); err != nil {
+		t.Fatalf("failed to create backup dir: %v", err)
+	}
+
+	cfg := config.NewDefaultConfig()
+	cfg.BackupLocal.BackupDir = backupDir
+	cfg.BackupLocal.Files = map[string]config.BackupLocalDbFile{
+		"source": {
+			SourcePath: sourcePath,
+			Frequency:  config.Duration{Duration: 24 * time.Hour},
+		},
+	}
+
+	provider := config.NewProvider(cfg)
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := NewHandler(provider, logger)
+
+	err := handler.handle(context.Background(), mockTime)
+	if err != nil {
+		t.Fatalf("handle() with empty source db error = %v, want nil", err)
+	}
+
+	timestamp := mockTime.UTC().Format(timestampFormat)
+	expectedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "source-empty.db", timestamp))
+	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
+		t.Fatalf("Expected backup file not found at %s", expectedPath)
+	}
+}
+
+func TestBackupHandler_Handle_NotADatabaseFile(t *testing.T) {
+	mockTime := time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC)
+	tempDir := t.TempDir()
+	sourcePath := filepath.Join(tempDir, "garbage.db")
+	if err := os.WriteFile(sourcePath, []byte("this is not a sqlite database file"), 0644); err != nil {
+		t.Fatalf("failed to create non-database source file: %v", err)
+	}
+	backupDir := filepath.Join(tempDir, "backups")
+	if err := os.Mkdir(backupDir, 0755); err != nil {
+		t.Fatalf("failed to create backup dir: %v", err)
+	}
+
+	cfg := config.NewDefaultConfig()
+	cfg.BackupLocal.BackupDir = backupDir
+	cfg.BackupLocal.Files = map[string]config.BackupLocalDbFile{
+		"source": {
+			SourcePath: sourcePath,
+			Frequency:  config.Duration{Duration: 24 * time.Hour},
+		},
+	}
+
+	provider := config.NewProvider(cfg)
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := NewHandler(provider, logger)
+
+	err := handler.handle(context.Background(), mockTime)
+	if err == nil {
+		t.Fatal("handle() expected an error for a non-database source file, got nil")
+	}
+
+	entries, readErr := os.ReadDir(backupDir)
+	if readErr != nil {
+		t.Fatalf("failed to read backup dir: %v", readErr)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("expected no backup files for a non-database source, found %d", len(entries))
+	}
+}
+
+func TestBackupHandler_Handle_MissingSourceFile(t *testing.T) {
+	mockTime := time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC)
+	tempDir := t.TempDir()
+	backupDir := filepath.Join(tempDir, "backups")
+	if err := os.Mkdir(backupDir, 0755); err != nil {
+		t.Fatalf("failed to create backup dir: %v", err)
+	}
+
+	cfg := config.NewDefaultConfig()
+	cfg.BackupLocal.BackupDir = backupDir
+	cfg.BackupLocal.Files = map[string]config.BackupLocalDbFile{
+		"source": {
+			SourcePath: filepath.Join(tempDir, "missing.db"),
+			Frequency:  config.Duration{Duration: 24 * time.Hour},
+		},
+	}
+
+	provider := config.NewProvider(cfg)
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	handler := NewHandler(provider, logger)
+
+	err := handler.handle(context.Background(), mockTime)
+	if err == nil {
+		t.Fatal("handle() expected an error for a missing source file, got nil")
+	}
+
+	entries, readErr := os.ReadDir(backupDir)
+	if readErr != nil {
+		t.Fatalf("failed to read backup dir: %v", readErr)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("expected no backup files for missing source, found %d", len(entries))
+	}
 }
 
 func TestBuildCompressedPath(t *testing.T) {

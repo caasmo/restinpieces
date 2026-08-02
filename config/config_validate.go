@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -81,9 +82,11 @@ func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
 }
 
 // validateBackupLocal checks the BackupLocal configuration section.
-// An empty BackupDir is valid (resolves to the process CWD).
-// The backup feature is deactivated when Files is nil or empty — the
-// backup handler checks len(Files) == 0 at runtime.
+//
+// A path field is either empty ("" = deactivated, the zero value) or a
+// non-empty path. Non-empty paths are absolute or resolved against the
+// application CWD when relative. A non-empty backup_dir must be an existing
+// directory and a non-empty source_path must be an existing file.
 func validateBackupLocal(backup *BackupLocal) error {
 
 	if backup.OnlinePagesPerStep <= 0 {
@@ -92,6 +95,10 @@ func validateBackupLocal(backup *BackupLocal) error {
 
 	if backup.OnlineSleepInterval.Duration < 0 {
 		return fmt.Errorf("online_sleep_interval cannot be negative")
+	}
+
+	if backup.BackupDir != "" && !isDir(backup.BackupDir) {
+		return fmt.Errorf("backup_dir must be an existing directory, got %q", backup.BackupDir)
 	}
 
 	for key, f := range backup.Files {
@@ -107,9 +114,27 @@ func validateBackupLocal(backup *BackupLocal) error {
 		default:
 			return fmt.Errorf("files.%s.strategy must be 'online' or 'vacuum', got %q", key, f.Strategy)
 		}
+		if f.SourcePath != "" && !isFile(f.SourcePath) {
+			return fmt.Errorf("files.%s.source_path must be an existing file, got %q", key, f.SourcePath)
+		}
 	}
 
 	return nil
+}
+
+// isDir reports whether path exists and is a directory. Relative
+// paths resolve against the application CWD — validation runs inside the
+// application, which knows its own CWD.
+func isDir(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
+// isFile reports whether path exists and is a regular file.
+// Relative paths resolve against the application CWD.
+func isFile(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.Mode().IsRegular()
 }
 
 // validateCache checks the Cache configuration section.

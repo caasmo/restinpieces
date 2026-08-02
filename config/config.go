@@ -109,6 +109,7 @@ type BackupLocal struct {
 	// When deployed via the canonical systemd service (restinpieces.service),
 	// the CWD is /home/<app> so a relative path like "data/backups" resolves
 	// to /home/<app>/data/backups. See doc/backup.md.
+	// Empty string deactivates the backup feature.
 	BackupDir string `toml:"backup_dir" comment:"Directory where backup files will be stored. Supports absolute and relative paths (relative to the application CWD)."`
 
 	// OnlinePagesPerStep controls the number of pages copied in each step
@@ -134,6 +135,7 @@ type BackupLocalDbFile struct {
 	// When deployed via the canonical systemd service (restinpieces.service),
 	// the CWD is /home/<app> so relative paths typically start with "data/"
 	// (e.g. "data/app.db"). See doc/backup.md.
+	// Empty string deactivates this file entry.
 	SourcePath string `toml:"source_path" comment:"Path to the source database file. Supports absolute and relative paths (relative to the application CWD)."`
 
 	// Compression enables gzip compression of the backup file.

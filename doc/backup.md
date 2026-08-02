@@ -45,7 +45,7 @@ Configuration lives under the `[backup_local]` TOML section, defined in [config/
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `backup_dir` | string | `""` | Single directory for all backup files, compressed archives, and latest hardlinks. Empty string **deactivates** the entire backup feature. Supports absolute and relative paths. Relative paths resolve against the application's current working directory (CWD). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), the CWD is `/home/<app>` so a relative path like `data/backups` resolves to `/home/<app>/data/backups`. |
+| `backup_dir` | string | `""` | Single directory for all backup files, compressed archives, and latest hardlinks. Empty string **deactivates** the entire backup feature. When non-empty, must be an existing directory. Supports absolute and relative paths. Relative paths resolve against the application's current working directory (CWD). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), the CWD is `/home/<app>` so a relative path like `data/backups` resolves to `/home/<app>/data/backups`. |
 | `online_pages_per_step` | int | `100` | Pages copied per step when using an `"online"` strategy (global across all files). |
 | `online_sleep_interval` | duration | `"10ms"` | Pause between steps when using an `"online"` strategy (global). |
 | `files` | array of tables | `[]` | List of database files to back up (see below). |
@@ -56,7 +56,7 @@ Each entry in the `files` array is a TOML table with these fields:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `source_path` | string | — (required) | Filesystem path to the SQLite database to back up. Supports absolute and relative paths. Relative paths resolve against the application's current working directory (CWD). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), the CWD is `/home/<app>` and databases typically live under `data/`, so a relative `source_path` should start with `data/` (e.g. `data/app.db`). |
+| `source_path` | string | `""` (deactivated) | Filesystem path to the SQLite database to back up. Empty string deactivates the entry. When non-empty, must be an existing file. Supports absolute and relative paths. Relative paths resolve against the application's current working directory (CWD). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), the CWD is `/home/<app>` and databases typically live under `data/`, so a relative `source_path` should start with `data/` (e.g. `data/app.db`). |
 | `compression` | bool | `false` | Enable gzip compression (`.bck.gz`). When false, produces a plain SQLite copy (`.db`). |
 | `strategy` | string | `"online"` | Backup strategy: `"online"` or `"vacuum"`. Empty string defaults to `"online"`. |
 | `frequency` | duration | — (required) | Minimum interval between backups (e.g. `"24h"`, `"6h"`). The handler skips a file if its latest backup is newer than this duration. |
@@ -95,13 +95,19 @@ Configuration validation catches the following at startup and on `SIGHUP` reload
 
 - **Empty `backup_dir`**: Backup feature deactivated (no error, all fields ignored).
 - **Duplicate basenames**: Two files with the same `Base(source_path)` (e.g. `/data/a/app.db` and `/data/b/app.db`) are rejected because they share a backup directory and would overwrite each other's latest links.
-- **Empty `source_path`**: Per-file entry must have a source path.
+- **Empty `source_path`**: Entry deactivated (valid).
+- **Non-empty `backup_dir`**: Must be an existing directory, resolved against the application CWD. Checked at startup and on `SIGHUP` reload.
+- **Non-empty `source_path`**: Must be an existing file, resolved against the application CWD. Checked at startup and on `SIGHUP` reload.
 - **Invalid strategy**: Must be `"online"`, `"vacuum"`, or empty (defaults to online).
 - **Non-positive frequency**: Frequency must be a positive duration.
 - **Non-positive `online_pages_per_step`**: Must be positive.
 - **Negative `online_sleep_interval`**: Cannot be negative.
 
 Configuration is hot-reloadable via `SIGHUP`.
+
+## Failure Behavior
+
+At runtime, the backup handler enforces the same path rules. An entry with an empty `source_path` is skipped as deactivated. A non-empty `source_path` that does not exist or is not a file fails that entry's backup with a clear error — a missing file would previously be auto-created as an empty database and backed up silently. A file that SQLite cannot read as a database (e.g. a text file) also fails the job with SQLite's own error. A genuinely empty database file is backed up as-is. Failed backup jobs are marked failed by the scheduler and retried; no backup file and no `latest-` hardlink are produced for a failed entry.
 
 ## Backup Strategies
 

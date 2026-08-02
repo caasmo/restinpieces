@@ -67,25 +67,55 @@ func (h *Handler) Handle(ctx context.Context, _ db.Job) error {
 func (h *Handler) handle(ctx context.Context, now time.Time) error {
 	cfg := h.configProvider.Get().BackupLocal
 
-	// --- early exits ---
+	// --- early exits: backup deactivated ---
 	if len(cfg.Files) == 0 {
 		h.logger.Info("No backup files configured; backup deactivated.")
 		return nil
+	}
+	if cfg.BackupDir == "" {
+		h.logger.Info("backup_dir is empty; backup deactivated.")
+		return nil
+	}
+
+	// --- step 1: backup_dir must be an existing directory ---
+	dirInfo, statErr := os.Stat(cfg.BackupDir)
+	if statErr != nil {
+		return fmt.Errorf("backup_dir: %w", statErr)
+	}
+	if !dirInfo.IsDir() {
+		return fmt.Errorf("backup_dir is not a directory: %s", cfg.BackupDir)
 	}
 
 	var errs []error
 	times := h.latestBackupTimes(cfg.BackupDir, cfg.Files)
 
 	for key, fileCfg := range cfg.Files {
+		// --- step 2: skip entries with empty source_path (deactivated) ---
+		if fileCfg.SourcePath == "" {
+			h.logger.Info("Skipping backup; source_path is empty (entry deactivated)", "db", key)
+			continue
+		}
+
 		backupName := h.buildBackupName(key, fileCfg.SourcePath)
 
-		// --- step 1: skip if not yet due ---
+		// --- step 3: skip if not yet due ---
 		if !h.isBackupDue(times[backupName], fileCfg.Frequency.Duration, now) {
 			h.logger.Info("Skipping backup; not yet due", "db", backupName)
 			continue
 		}
 
-		// --- step 2: run backup ---
+		// --- step 4: source file must exist and be a file ---
+		srcInfo, srcErr := os.Stat(fileCfg.SourcePath)
+		if srcErr != nil {
+			errs = append(errs, fmt.Errorf("%q: source database file not found: %s: %w", backupName, fileCfg.SourcePath, srcErr))
+			continue
+		}
+		if srcInfo.IsDir() {
+			errs = append(errs, fmt.Errorf("%q: source path is a directory, not a database file: %s", backupName, fileCfg.SourcePath))
+			continue
+		}
+
+		// --- step 5: run backup ---
 		backupFn := h.onlineBackup // default
 		if fileCfg.Strategy == config.BackupStrategyVacuum {
 			backupFn = h.vacuumInto
@@ -98,7 +128,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 			tempPath := h.buildTempPath(backupName, now)
 			tempFinalPath := finalPath + ".tmp" // same directory, os.Rename is atomic
 
-			// --- 2a: dump to temp ---
+			// --- 5a: dump to temp ---
 			err = backupFn(fileCfg.SourcePath, tempPath)
 			if err != nil {
 				removeErr := os.Remove(tempPath)
@@ -109,7 +139,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 				continue
 			}
 
-			// --- 2b: compress temp to .tmp in backupDir ---
+			// --- 5b: compress temp to .tmp in backupDir ---
 			err = h.compressFile(tempPath, tempFinalPath)
 			removeErr := os.Remove(tempPath)
 			if removeErr != nil {
@@ -124,7 +154,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 				continue
 			}
 
-			// --- 2c: atomic promote ---
+			// --- 5c: atomic promote ---
 			err = os.Rename(tempFinalPath, finalPath)
 			if err != nil {
 				removeErr = os.Remove(tempFinalPath)
@@ -138,7 +168,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 			finalPath = h.buildUncompressedPath(backupName, now, cfg.BackupDir)
 			tempFinalPath := finalPath + ".tmp" // same directory, os.Rename is atomic
 
-			// --- 2a: dump to .tmp in backupDir ---
+			// --- 5a: dump to .tmp in backupDir ---
 			err = backupFn(fileCfg.SourcePath, tempFinalPath)
 			if err != nil {
 				removeErr := os.Remove(tempFinalPath)
@@ -149,7 +179,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 				continue
 			}
 
-			// --- 2b: atomic promote ---
+			// --- 5b: atomic promote ---
 			err = os.Rename(tempFinalPath, finalPath)
 			if err != nil {
 				removeErr := os.Remove(tempFinalPath)
@@ -160,7 +190,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 				continue
 			}
 
-			// --- 2c: update latest link ---
+			// --- 5c: update latest link ---
 			// Uncompressed only — the rsync pull client needs a stable
 			// filename to sync. Compressed .bck.gz is not consumable as-is,
 			// so no link is created for it.
@@ -218,6 +248,9 @@ func (h *Handler) buildLatestPath(backupDir, dbName string) string {
 func (h *Handler) latestBackupTimes(backupDir string, files map[string]config.BackupLocalDbFile) map[string]time.Time {
 	backupNames := make([]string, 0, len(files))
 	for key, f := range files {
+		if f.SourcePath == "" {
+			continue // deactivated entry, never backed up
+		}
 		backupNames = append(backupNames, h.buildBackupName(key, f.SourcePath))
 	}
 	entries, err := os.ReadDir(backupDir)

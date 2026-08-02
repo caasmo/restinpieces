@@ -33,9 +33,9 @@ Current violations (to be refactored):
 
 ### Config: path fields
 
-All config path fields (e.g. `backup_dir`, `source_path`, `db_path`, `public_dir`) are and **MUST be** resolved against the binary's current working directory (CWD) when relative. Absolute paths are supported and used as-is. No path in config is ever resolved against a config file location — there is no config file, only a database. When deployed via the canonical systemd service, the CWD is `/home/<app>`, so relative paths typically start with `data/`.
+All config path fields (e.g. `backup_dir`, `source_path`, `db_path`, `public_dir`) are absolute paths or relative paths resolved against the binary's current working directory (CWD). Absolute paths are used as-is. No path in config is ever resolved against a config file location — there is no config file, only a database. When deployed via the canonical systemd service, the CWD is `/home/<app>`, so relative paths typically start with `data/`.
 
-An empty path `""` resolves to CWD — it is not an error, it means "use the CWD". Validation must accept `""` for all path fields.
+An empty path `""` is the zero value and means **deactivated**, never the CWD: `backup_local.backup_dir = ""` deactivates the backup feature and `backup_local.files.<key>.source_path = ""` deactivates that file entry. Validation accepts `""` and requires non-empty path fields to resolve to the required kind (`backup_dir` to an existing directory, `source_path` to an existing file).
 
 ### CLI help framework: shared copy-paste file
 
