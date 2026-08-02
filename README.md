@@ -17,22 +17,11 @@ To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which wa
 
 ## Core Philosophy: One Process Application
 
-This framework is built on the philosophy of One Process Application
-architectural approach that consolidates an entire application and its core
-dependencies into a single, self-contained binary.
+This framework is built on the philosophy of One Process Application architectural approach that consolidates an entire application and its core dependencies into a single, self-contained binary.
 
-The central idea is to "absorb" the typical components of a modern web
-service—such as the database, cache, and job queue—into one application
-binary. Instead of managing a complex stack of separate services (e.g., a
-database server, a Redis instance, a reverse proxy), you deploy a single
-binary. This dramatically simplifies development, deployment, and maintenance.
+The central idea is to "absorb" the typical components of a modern web service—such as the database, cache, and job queue—into one application binary. Instead of managing a complex stack of separate services (e.g., a database server, a Redis instance, a reverse proxy), you deploy a single binary. This dramatically simplifies development, deployment, and maintenance.
 
-By running a single Go binary with an embedded SQLite database on one VM, it
-allows developers to focus on building features rather than managing
-distributed systems, providing a high-performance foundation that can serve a
-growing business for years. When the time comes to scale beyond what a single
-large server can offer, the business will have the resources and clarity to do
-so effectively.
+By running a single Go binary with an embedded SQLite database on one VM, it allows developers to focus on building features rather than managing distributed systems, providing a high-performance foundation that can serve a growing business for years. When the time comes to scale beyond what a single large server can offer, the business will have the resources and clarity to do so effectively.
 
 This approach is heavily inspired by the ideas in [One Process Programming Notes](https://crawshaw.io/blog/one-process-programming-notes).
 
@@ -104,55 +93,26 @@ The "one process" paradigm simplifies deployment by running a single binary on a
 No CORS support is provided as it contradicts the One Process philosophy. If you need cross-origin requests, you'll need to implement CORS middleware yourself.
 
 ### Core Infrastructure
-The framework is built on standard Go patterns, utilizing middleware and handlers
-to provide a familiar and robust development experience. It features a set of
-discoverable API endpoints for essential services, such as token refreshing
-(`/api/refresh-auth`) and OAuth2 authentication (`/api/auth-with-oauth2`),
-facilitating easy integration and exploration.
+The framework is built on standard Go patterns, utilizing middleware and handlers to provide a familiar and robust development experience. It features a set of discoverable API endpoints for essential services, such as token refreshing (`/api/refresh-auth`) and OAuth2 authentication (`/api/auth-with-oauth2`), facilitating easy integration and exploration.
 
 ### Configuration Management
-The framework's configuration is securely managed within the SQLite database.
-The configuration is stored as encrypted, TOML-formatted content in the
-`app_config` table, the schema for which is detailed in
-`migrations/schema/app/app_config.sql`. Management is performed using the
-`ripc` command-line tool — a server-side tool that runs directly on the
-production machine, reading and writing the local SQLite database and age key
-files. It supports versioning, diffing, and rollbacks.
-Beyond managing the core application's settings, `ripc` can be extended to
-handle custom configuration scopes for your own modules. For more details on
-the tool, see the [`ripc` documentation](doc/ripc.md). 
+The framework's configuration is securely managed within the SQLite database.  The configuration is stored as encrypted, TOML-formatted content in the `app_config` table, the schema for which is detailed in `migrations/schema/app/app_config.sql`. Management is performed using the `ripc` command-line tool — a server-side tool that runs directly on the production machine, reading and writing the local SQLite database and age key files. It supports versioning, diffing, and rollbacks.  Beyond managing the core application's settings, `ripc` can be extended to handle custom configuration scopes for your own modules. For more details on the tool, see the [`ripc` documentation](doc/ripc.md). 
 
-`ripc` is though a **low-level primitive**, whereas [`ripdep`](doc/ripdep.md)
-([source](scripts/ripdep)) is a high-level orchestrator.
+`ripc` is though a **low-level primitive**, whereas [`ripdep`](doc/ripdep.md) ([source](scripts/ripdep)) is a high-level orchestrator.
 
-A key feature is support for dynamic updates. The server listens for the
-`SIGHUP` signal to trigger a hot-reload of the configuration, allowing most
-settings to be changed in real-time without service interruption. While the
-majority of parameters can be updated on-the-fly, critical changes like
-modifications to TLS certificates require a full server reload to be applied.
+A key feature is support for dynamic updates. The server listens for the `SIGHUP` signal to trigger a hot-reload of the configuration, allowing most settings to be changed in real-time without service interruption. While the majority of parameters can be updated on-the-fly, critical changes like modifications to TLS certificates require a full server reload to be applied.
 
 ### Deployment & Operations
 
-The framework provides **`ripdep`**, a comprehensive CLI tool designed to
-manage the full lifecycle of your application. It acts as a high-level wrapper
-around the `ripc` binary, orchestrating complex DevOps tasks and remote
-operations via SSH directly from your local developer machine (control plane).
-In contrast, `ripc` is the server-side companion — it runs on the production
-machine itself, operating on the local filesystem.
+The framework provides **`ripdep`**, a comprehensive CLI tool designed to manage the full lifecycle of your application. It acts as a high-level wrapper around the `ripc` binary, orchestrating complex DevOps tasks and remote operations via SSH directly from your local developer machine (control plane).  In contrast, `ripc` is the server-side companion — it runs on the production machine itself, operating on the local filesystem.
 -   **Remote DevOps**: Wraps low-level `ripc` commands to handle configuration, maintenance modes, and log monitoring without needing manual server access.
 -   **Disaster Recovery**: Simplifies the process of bootstrapping new servers and recovering from backups (including Litestream integration) through dedicated commands like `build-bootstrap` and `build-recovery`.
 
 This tool encourages a workflow where most configuration and operational decisions are made locally, then securely applied to the remote environment. For detailed usage, see the **[Deployment Guide](doc/ripdep.md)**.
 
 ### Frontend Integration
-The framework includes a comprehensive JavaScript SDK designed for seamless
-frontend-backend interaction. The SDK offers full support for all
-authentication workflows, including password-based and OAuth2 flows, ensuring a
-consistent integration experience. Beyond authentication, it provides robust
-utilities for custom error handling, local storage management, and general-purpose
-request functions to simplify API communication. You can find example usage of the
-SDK and authentication endpoints at
-[restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk).
+
+The framework includes a comprehensive JavaScript SDK designed for seamless frontend-backend interaction. The SDK offers full support for all authentication workflows, including password-based and OAuth2 flows, ensuring a consistent integration experience. Beyond authentication, it provides robust utilities for custom error handling, local storage management, and general-purpose request functions to simplify API communication. You can find example usage of the SDK and authentication endpoints at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk).
 
 ### Job Framework
 The framework includes a robust job queue system for handling asynchronous tasks, supporting both one-time and recurrent jobs. This is essential for offloading work from the request-response cycle, such as sending emails, processing data, or performing periodic maintenance.
@@ -210,19 +170,12 @@ The framework provides a collection of built-in middleware to handle common cros
 -   **Gzip**: Serves pre-compressed static assets (`.gz` files) from a given file system (`fs.FS`) to clients that support gzip encoding. This reduces bandwidth and improves load times. If a compressed file is not found, it seamlessly falls back to the next handler.
 
 ## Examples
-Detailed examples and integration guides are available to help you build with the
-framework. You can explore a complete **JavaScript SDK Integration** at
-[restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk) to see how to
-connect your frontend, or review implementations of **Custom Routers and DB Drivers**
-at [restinpieces-non-default](https://github.com/caasmo/restinpieces-non-default) for
-advanced customization scenarios.
+
+Detailed examples and integration guides are available to help you build with the framework. You can explore a complete **JavaScript SDK Integration** at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk) to see how to connect your frontend, or review implementations of **Custom Routers and DB Drivers** at [restinpieces-non-default](https://github.com/caasmo/restinpieces-non-default) for advanced customization scenarios.
 
 ## Extensibility
-Beyond its core features, the framework is designed to be easily extended to meet
-diverse application needs. It includes a built-in file server with gzip compression
-for efficient delivery of static assets and a dedicated asset pipeline for
-minification and bundling of HTML, CSS, and JavaScript, leveraging scripts
-available at [restinpieces-js-sdk/gen](https://github.com/caasmo/restinpieces-js-sdk/tree/master/gen).
+
+Beyond its core features, the framework is designed to be easily extended to meet diverse application needs. It includes a built-in file server with gzip compression for efficient delivery of static assets and a dedicated asset pipeline for minification and bundling of HTML, CSS, and JavaScript, leveraging scripts available at [restinpieces-js-sdk/gen](https://github.com/caasmo/restinpieces-js-sdk/tree/master/gen).
 
 ## Layout Best Practices
 
