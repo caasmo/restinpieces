@@ -11,7 +11,7 @@ import (
 // listItems retrieves and prints a formatted list of configurations from the
 // database, optionally filtered by scope. It is a testable function that
 // prepares and executes a SQL query, then formats the results into a table for display.
-func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count int, err error) {
+func listItems(ui UI, pool *sqlitex.Pool, scopeFilter string) (count int, err error) {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
 		return 0, fmt.Errorf("%w: failed to get db connection for list command", ErrDbConnection)
@@ -37,10 +37,10 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count 
 		stmt.BindText(1, scopeFilter)
 	}
 
-	if _, err := fmt.Fprintln(stdout, "Gen  Scope        Created At             Format  Description"); err != nil {
+	if _, err := fmt.Fprintln(ui.Out, "Gen  Scope        Created At             Format  Description"); err != nil {
 		return 0, fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
-	if _, err := fmt.Fprintln(stdout, "---  ------------ ---------------------  ------  -----------"); err != nil {
+	if _, err := fmt.Fprintln(ui.Out, "---  ------------ ---------------------  ------  -----------"); err != nil {
 		return 0, fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 
@@ -61,7 +61,7 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count 
 		if len(format) > 4 {
 			format = format[:4]
 		}
-		if _, err := fmt.Fprintf(stdout, "%3d  %-12s  %-21s  %-4s  %s\n", count, scope, createdAt, format, description); err != nil {
+		if _, err := fmt.Fprintf(ui.Out, "%3d  %-12s  %-21s  %-4s  %s\n", count, scope, createdAt, format, description); err != nil {
 			return count, fmt.Errorf("%w: %w", ErrWriteOutput, err)
 		}
 		count++
@@ -88,19 +88,19 @@ func printConfigListUsage(w io.Writer) {
 // handleConfigListCommand is a wrapper around listItems. It prints the empty-list
 // message and returns any error to the caller.
 func handleConfigListCommand(pool *sqlitex.Pool, opts ConfigListOptions, ui UI) error {
-	count, err := listItems(ui.Out, pool, opts.Scope)
+	count, err := listItems(ui, pool, opts.Scope)
 	if err != nil {
 		return err
 	}
 
 	if count == 0 {
 		if opts.Scope != "" {
-			_, err := fmt.Fprintf(ui.Out, "No configurations found for scope: %s\n", opts.Scope)
+			_, err := fmt.Fprintf(ui.Err, "No configurations found for scope: %s\n", opts.Scope)
 			if err != nil {
 				return err
 			}
 		} else {
-			_, err := fmt.Fprintln(ui.Out, "No configurations found.")
+			_, err := fmt.Fprintln(ui.Err, "No configurations found.")
 			if err != nil {
 				return err
 			}

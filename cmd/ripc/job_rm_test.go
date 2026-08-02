@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/caasmo/restinpieces/db"
@@ -40,11 +41,12 @@ func (m *MockJobRmDB) DeleteJob(id int64) error {
 func TestRemoveJob_Success(t *testing.T) {
 	// --- Setup ---
 	mockDB := &MockJobRmDB{}
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 	jobID := int64(42)
 
 	// --- Execute ---
-	err := removeJob(&stdout, mockDB, jobID)
+	err := removeJob(ui, mockDB, jobID)
 
 	// --- Assert ---
 	if err != nil {
@@ -56,19 +58,23 @@ func TestRemoveJob_Success(t *testing.T) {
 	}
 
 	expectedOutput := fmt.Sprintf("Successfully deleted job %d\n", jobID)
-	if stdout.String() != expectedOutput {
-		t.Errorf("expected output %q, got %q", expectedOutput, stdout.String())
+	if stdout.Len() != 0 {
+		t.Errorf("expected empty stdout, got %q", stdout.String())
+	}
+	if stderr.String() != expectedOutput {
+		t.Errorf("expected output %q, got %q", expectedOutput, stderr.String())
 	}
 }
 
 func TestRemoveJob_FailureDBError(t *testing.T) {
 	// --- Setup ---
 	mockDB := &MockJobRmDB{forceDeleteError: true}
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 	jobID := int64(13)
 
 	// --- Execute ---
-	err := removeJob(&stdout, mockDB, jobID)
+	err := removeJob(ui, mockDB, jobID)
 
 	// --- Assert ---
 	if err == nil {
@@ -85,11 +91,12 @@ func TestRemoveJob_FailureDBError(t *testing.T) {
 func TestRemoveJob_FailureWriteError(t *testing.T) {
 	// --- Setup ---
 	mockDB := &MockJobRmDB{}
-	var failingStdout failingWriter
+	var failingStderr failingWriter
+	ui := UI{Out: io.Discard, Err: &failingStderr}
 	jobID := int64(99)
 
 	// --- Execute ---
-	err := removeJob(&failingStdout, mockDB, jobID)
+	err := removeJob(ui, mockDB, jobID)
 
 	// --- Assert ---
 	if err == nil {

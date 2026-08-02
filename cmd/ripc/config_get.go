@@ -33,12 +33,12 @@ func printConfigGetUsage(w io.Writer) {
 // handleConfigGetCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigGetCommand(secureStore config.SecureStore, opts ConfigGetOptions, ui UI) error {
-	return getAndPrintConfigPaths(ui.Out, secureStore, opts.Scope, opts.Filter)
+	return getAndPrintConfigPaths(ui, secureStore, opts.Scope, opts.Filter)
 }
 
 // getAndPrintConfigPaths contains the testable core logic for getting and printing config paths.
-// It accepts io.Writer for output, making it easy to test.
-func getAndPrintConfigPaths(stdout io.Writer, secureStore config.SecureStore, scopeName string, filter string) error {
+// It accepts UI for output, making it easy to test.
+func getAndPrintConfigPaths(ui UI, secureStore config.SecureStore, scopeName string, filter string) error {
 	if scopeName == "" {
 		scopeName = config.ScopeApplication
 	}
@@ -56,7 +56,7 @@ func getAndPrintConfigPaths(stdout io.Writer, secureStore config.SecureStore, sc
 	listTomlPathsWithValuesRecursive(tree, "", &allPathsWithValues)
 
 	if len(allPathsWithValues) == 0 {
-		if _, err := fmt.Fprintf(stdout, "No TOML paths with values found in configuration for scope '%s'.\n", scopeName); err != nil {
+		if _, err := fmt.Fprintf(ui.Err, "No TOML paths with values found in configuration for scope '%s'.\n", scopeName); err != nil {
 			return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
 		}
 		return nil
@@ -76,7 +76,7 @@ func getAndPrintConfigPaths(stdout io.Writer, secureStore config.SecureStore, sc
 	}
 
 	if len(filteredPaths) == 0 {
-		if _, err := fmt.Fprintf(stdout, "No TOML paths with values matching '%s' found in scope '%s'.\n", filter, scopeName); err != nil {
+		if _, err := fmt.Fprintf(ui.Err, "No TOML paths with values matching '%s' found in scope '%s'.\n", filter, scopeName); err != nil {
 			return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
 		}
 		return nil
@@ -84,12 +84,9 @@ func getAndPrintConfigPaths(stdout io.Writer, secureStore config.SecureStore, sc
 
 	sort.Strings(filteredPaths) // Ensure consistent order for output
 
-	if _, err := fmt.Fprintf(stdout, "TOML paths with values for latest configuration in scope '%s':\n", scopeName); err != nil {
-		return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
-	}
 	for _, path := range filteredPaths {
 		value := allPathsWithValues[path]
-		if _, err := fmt.Fprintf(stdout, "%s = %v\n", path, value); err != nil {
+		if _, err := fmt.Fprintf(ui.Out, "%s = %v\n", path, value); err != nil {
 			return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
 		}
 	}

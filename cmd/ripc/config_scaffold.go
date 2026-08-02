@@ -74,11 +74,11 @@ func printConfigScaffoldUsage(w io.Writer) {
 }
 
 func handleConfigScaffoldCommand(secureStore config.SecureStore, opts ConfigScaffoldOptions, ui UI) error {
-	return scaffoldConfigValue(ui.Out, secureStore, opts.Scope, opts.Desc, opts.ScaffoldType, opts.Key)
+	return scaffoldConfigValue(ui, secureStore, opts.Scope, opts.Desc, opts.ScaffoldType, opts.Key)
 }
 
 func scaffoldConfigValue(
-	stdout io.Writer,
+	ui UI,
 	secureCfg config.SecureStore,
 	scope string,
 	description string,
@@ -147,7 +147,7 @@ func scaffoldConfigValue(
 			ErrSecureStoreSave, scope, err)
 	}
 
-	_, err = fmt.Fprintf(stdout, "Successfully scaffolded '%s' in scope '%s'\n", configPath, scope)
+	_, err = fmt.Fprintf(ui.Err, "Successfully scaffolded '%s' in scope '%s'\n", configPath, scope)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}

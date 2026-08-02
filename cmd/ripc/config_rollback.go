@@ -36,12 +36,12 @@ func printConfigRollbackUsage(w io.Writer) {
 // handleConfigRollbackCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigRollbackCommand(secureStore config.SecureStore, opts ConfigRollbackOptions, ui UI) error {
-	return rollbackConfig(ui.Out, secureStore, opts.Scope, opts.Generation)
+	return rollbackConfig(ui, secureStore, opts.Scope, opts.Generation)
 }
 
 // rollbackConfig contains the testable core logic for rolling back a configuration.
-// It accepts io.Writer for output, making it easy to test.
-func rollbackConfig(stdout io.Writer, secureStore config.SecureStore, scope string, generation int) error {
+// It accepts UI for output, making it easy to test.
+func rollbackConfig(ui UI, secureStore config.SecureStore, scope string, generation int) error {
 	if scope == "" {
 		scope = config.ScopeApplication
 	}
@@ -63,7 +63,7 @@ func rollbackConfig(stdout io.Writer, secureStore config.SecureStore, scope stri
 		return fmt.Errorf("%w: failed to save rollback config for scope '%s': %w", ErrSecureStoreSave, scope, err)
 	}
 
-	if _, err := fmt.Fprintf(stdout, "Successfully rolled back scope '%s' to generation %d\n", scope, generation); err != nil {
+	if _, err := fmt.Fprintf(ui.Err, "Successfully rolled back scope '%s' to generation %d\n", scope, generation); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 	return nil

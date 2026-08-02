@@ -12,10 +12,10 @@ import (
 
 // MockSetSecureStore is a test-only implementation of config.SecureStore for set command tests.
 type MockSetSecureStore struct {
-	data          map[string][]byte
-	format        string
-	saveHistory   []string
-	ForceGetError bool
+	data           map[string][]byte
+	format         string
+	saveHistory    []string
+	ForceGetError  bool
 	ForceSaveError bool
 }
 
@@ -75,11 +75,12 @@ func getTreeFromStore(t *testing.T, store *MockSetSecureStore, scope string) *to
 func TestSetConfigValue_Success_String(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 	path := "server.addr"
 	value := `"localhost:9999"` // TOML strings need quotes
 
-	err := setConfigValue(&stdout, mockStore, scope, "toml", "", path, value)
+	err := setConfigValue(ui, mockStore, scope, "toml", "", path, value)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -96,11 +97,12 @@ func TestSetConfigValue_Success_String(t *testing.T) {
 func TestSetConfigValue_Success_Numeric(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 	path := "log.batch.flush_size"
 	value := "500"
 
-	err := setConfigValue(&stdout, mockStore, scope, "toml", "", path, value)
+	err := setConfigValue(ui, mockStore, scope, "toml", "", path, value)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -114,11 +116,12 @@ func TestSetConfigValue_Success_Numeric(t *testing.T) {
 func TestSetConfigValue_Success_Boolean(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 	path := "server.enable_tls"
 	value := "false"
 
-	err := setConfigValue(&stdout, mockStore, scope, "toml", "", path, value)
+	err := setConfigValue(ui, mockStore, scope, "toml", "", path, value)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -150,11 +153,12 @@ func TestSetConfigValue_Success_FromFile(t *testing.T) {
 
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 	path := "public_dir"
 	value := "@" + tmpFile.Name()
 
-	err = setConfigValue(&stdout, mockStore, scope, "toml", "", path, value)
+	err = setConfigValue(ui, mockStore, scope, "toml", "", path, value)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -168,10 +172,11 @@ func TestSetConfigValue_Success_FromFile(t *testing.T) {
 func TestSetConfigValue_Success_CustomDescription(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 	description := "Manual override of server address"
 
-	err := setConfigValue(&stdout, mockStore, scope, "toml", description, "server.addr", `":443"`)
+	err := setConfigValue(ui, mockStore, scope, "toml", description, "server.addr", `":443"`)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -184,9 +189,10 @@ func TestSetConfigValue_Success_CustomDescription(t *testing.T) {
 func TestSetConfigValue_Failure_NonexistentPath(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := setConfigValue(&stdout, mockStore, scope, "toml", "", "server.nonexistent", "true")
+	err := setConfigValue(ui, mockStore, scope, "toml", "", "server.nonexistent", "true")
 
 	if !errors.Is(err, ErrPathNotFound) {
 		t.Errorf("expected error to wrap ErrPathNotFound, got %v", err)
@@ -196,9 +202,10 @@ func TestSetConfigValue_Failure_NonexistentPath(t *testing.T) {
 func TestSetConfigValue_Failure_StoreReadError(t *testing.T) {
 	mockStore := NewMockSetSecureStore(nil)
 	mockStore.ForceGetError = true
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := setConfigValue(&stdout, mockStore, "app", "toml", "", "any.path", "any_value")
+	err := setConfigValue(ui, mockStore, "app", "toml", "", "any.path", "any_value")
 
 	if !errors.Is(err, ErrSecureStoreGet) {
 		t.Errorf("expected error to wrap ErrSecureStoreGet, got %v", err)
@@ -208,9 +215,10 @@ func TestSetConfigValue_Failure_StoreReadError(t *testing.T) {
 func TestSetConfigValue_Failure_MalformedTOML(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte("[server")})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := setConfigValue(&stdout, mockStore, scope, "toml", "", "any.path", "any_value")
+	err := setConfigValue(ui, mockStore, scope, "toml", "", "any.path", "any_value")
 
 	if !errors.Is(err, ErrConfigUnmarshal) {
 		t.Errorf("expected error to wrap ErrConfigUnmarshal, got %v", err)
@@ -219,9 +227,10 @@ func TestSetConfigValue_Failure_MalformedTOML(t *testing.T) {
 
 func TestSetConfigValue_Failure_UnsupportedFormat(t *testing.T) {
 	mockStore := NewMockSetSecureStore(nil)
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := setConfigValue(&stdout, mockStore, "app", "json", "", "any.path", "any_value")
+	err := setConfigValue(ui, mockStore, "app", "json", "", "any.path", "any_value")
 
 	if !errors.Is(err, ErrUnsupportedFormat) {
 		t.Fatalf("expected error to wrap ErrUnsupportedFormat, got %v", err)

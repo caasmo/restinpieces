@@ -70,10 +70,11 @@ func TestRollbackConfig_Success_ExplicitScope(t *testing.T) {
 	mockStore := NewMockRollbackSecureStore(map[string][]byte{
 		scope: initialData,
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := rollbackConfig(&stdout, mockStore, scope, generation)
+	err := rollbackConfig(ui, mockStore, scope, generation)
 
 	// --- Assert ---
 	if err != nil {
@@ -95,10 +96,13 @@ func TestRollbackConfig_Success_ExplicitScope(t *testing.T) {
 		t.Errorf("description mismatch: got %q, want %q", mockStore.saveHistory[0], expectedDesc)
 	}
 
-	// Verify stdout message
+	// Verify confirmation message
 	expectedOut := fmt.Sprintf("Successfully rolled back scope '%s' to generation %d\n", scope, generation)
-	if stdout.String() != expectedOut {
-		t.Errorf("stdout mismatch: got %q, want %q", stdout.String(), expectedOut)
+	if stdout.Len() != 0 {
+		t.Errorf("expected empty stdout, got %q", stdout.String())
+	}
+	if stderr.String() != expectedOut {
+		t.Errorf("stderr mismatch: got %q, want %q", stderr.String(), expectedOut)
 	}
 }
 
@@ -111,10 +115,11 @@ func TestRollbackConfig_Success_DefaultScope(t *testing.T) {
 	mockStore := NewMockRollbackSecureStore(map[string][]byte{
 		expectedScope: initialData,
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := rollbackConfig(&stdout, mockStore, "", generation) // Empty scope triggers default
+	err := rollbackConfig(ui, mockStore, "", generation) // Empty scope triggers default
 
 	// --- Assert ---
 	if err != nil {
@@ -136,10 +141,13 @@ func TestRollbackConfig_Success_DefaultScope(t *testing.T) {
 		t.Errorf("description mismatch: got %q, want %q", mockStore.saveHistory[0], expectedDesc)
 	}
 
-	// Verify stdout message
+	// Verify confirmation message
 	expectedOut := fmt.Sprintf("Successfully rolled back scope '%s' to generation %d\n", expectedScope, generation)
-	if stdout.String() != expectedOut {
-		t.Errorf("stdout mismatch: got %q, want %q", stdout.String(), expectedOut)
+	if stdout.Len() != 0 {
+		t.Errorf("expected empty stdout, got %q", stdout.String())
+	}
+	if stderr.String() != expectedOut {
+		t.Errorf("stderr mismatch: got %q, want %q", stderr.String(), expectedOut)
 	}
 }
 
@@ -147,10 +155,11 @@ func TestRollbackConfig_Success_DefaultScope(t *testing.T) {
 func TestRollbackConfig_Failure_InvalidGeneration(t *testing.T) {
 	// --- Setup ---
 	mockStore := NewMockRollbackSecureStore(nil)
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := rollbackConfig(&stdout, mockStore, "any-scope", 0)
+	err := rollbackConfig(ui, mockStore, "any-scope", 0)
 
 	// --- Assert ---
 	if err == nil {
@@ -169,10 +178,11 @@ func TestRollbackConfig_Failure_GetError(t *testing.T) {
 	// --- Setup ---
 	mockStore := NewMockRollbackSecureStore(nil)
 	mockStore.ForceGetError = true
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := rollbackConfig(&stdout, mockStore, "any-scope", 1)
+	err := rollbackConfig(ui, mockStore, "any-scope", 1)
 
 	// --- Assert ---
 	if err == nil {
@@ -193,10 +203,11 @@ func TestRollbackConfig_Failure_SaveError(t *testing.T) {
 		"my-scope": []byte("some-data"),
 	})
 	mockStore.ForceSaveError = true
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := rollbackConfig(&stdout, mockStore, "my-scope", 1)
+	err := rollbackConfig(ui, mockStore, "my-scope", 1)
 
 	// --- Assert ---
 	if err == nil {

@@ -30,12 +30,12 @@ func printConfigScopesUsage(w io.Writer) {
 // handleConfigScopesCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigScopesCommand(pool *sqlitex.Pool, ui UI) error {
-	return listScopes(ui.Out, pool)
+	return listScopes(ui, pool)
 }
 
 // listScopes contains the testable core logic for listing all configuration scopes.
-// It accepts io.Writer for output, making it easy to test.
-func listScopes(stdout io.Writer, pool *sqlitex.Pool) (err error) {
+// It accepts UI for output, making it easy to test.
+func listScopes(ui UI, pool *sqlitex.Pool) (err error) {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
 		return fmt.Errorf("%w: for scopes command: %w", ErrDbConnection, err)
@@ -63,7 +63,7 @@ func listScopes(stdout io.Writer, pool *sqlitex.Pool) (err error) {
 			break
 		}
 		scope := stmt.GetText("scope")
-		if _, writeErr := fmt.Fprintln(stdout, scope); writeErr != nil {
+		if _, writeErr := fmt.Fprintln(ui.Out, scope); writeErr != nil {
 			// Follows the pattern in add_oauth2_command.go for output errors
 			return fmt.Errorf("failed to write output: %w", writeErr)
 		}

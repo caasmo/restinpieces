@@ -52,23 +52,23 @@ func TestRun(t *testing.T) {
 		setup       func(t *testing.T, dir string) []string
 		expectedErr error
 	}{
-	{
-		name: "MissingAgeKeyFlag",
-		setup: func(t *testing.T, dir string) []string {
-			t.Setenv("RIPC_AGE_KEY_PATH", "")
-			return []string{"-dbpath", "dummy.db"}
+		{
+			name: "MissingAgeKeyFlag",
+			setup: func(t *testing.T, dir string) []string {
+				t.Setenv("RIPC_AGE_KEY_PATH", "")
+				return []string{"-dbpath", "dummy.db"}
+			},
+			expectedErr: ErrMissingFlag,
 		},
-		expectedErr: ErrMissingFlag,
-	},
-	{
-		name: "MissingDbPathFlag",
-		setup: func(t *testing.T, dir string) []string {
-			t.Setenv("RIPC_DB", "")
-			ageKeyPath := createDummyAgeKeyFile(t, dir)
-			return []string{"-agekey", ageKeyPath}
+		{
+			name: "MissingDbPathFlag",
+			setup: func(t *testing.T, dir string) []string {
+				t.Setenv("RIPC_DB", "")
+				ageKeyPath := createDummyAgeKeyFile(t, dir)
+				return []string{"-agekey", ageKeyPath}
+			},
+			expectedErr: ErrMissingFlag,
 		},
-		expectedErr: ErrMissingFlag,
-	},
 		{
 			name: "MissingCommandShouldShowUsage",
 			setup: func(t *testing.T, dir string) []string {
@@ -159,5 +159,3 @@ func TestRun(t *testing.T) {
 		})
 	}
 }
-
-

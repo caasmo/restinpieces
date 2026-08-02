@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"io"
 	"regexp"
 	"strings"
 	"testing"
@@ -64,10 +65,11 @@ func TestListJobs_SuccessWithJobs(t *testing.T) {
 			},
 		},
 	}
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := listJobs(&stdout, mockDB, 0)
+	err := listJobs(ui, mockDB, 0)
 
 	// --- Assert ---
 	if err != nil {
@@ -108,10 +110,11 @@ func TestListJobs_SuccessNoJobs(t *testing.T) {
 	mockDB := &MockJobListDB{
 		JobsToReturn: []*db.Job{}, // No jobs
 	}
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := listJobs(&stdout, mockDB, 0)
+	err := listJobs(ui, mockDB, 0)
 
 	// --- Assert ---
 	if err != nil {
@@ -119,8 +122,11 @@ func TestListJobs_SuccessNoJobs(t *testing.T) {
 	}
 
 	expectedOutput := "No jobs found in the queue.\n"
-	if stdout.String() != expectedOutput {
-		t.Errorf("expected output %q, got %q", expectedOutput, stdout.String())
+	if stdout.Len() != 0 {
+		t.Errorf("expected empty stdout, got %q", stdout.String())
+	}
+	if stderr.String() != expectedOutput {
+		t.Errorf("expected output %q, got %q", expectedOutput, stderr.String())
 	}
 }
 
@@ -129,10 +135,11 @@ func TestListJobs_FailureDBError(t *testing.T) {
 	mockDB := &MockJobListDB{
 		ForceDBError: true,
 	}
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := listJobs(&stdout, mockDB, 0)
+	err := listJobs(ui, mockDB, 0)
 
 	// --- Assert ---
 	if err == nil {
@@ -149,9 +156,10 @@ func TestListJobs_FailureWriteError(t *testing.T) {
 		JobsToReturn: []*db.Job{{ID: 1}}, // Need at least one job to trigger a write
 	}
 	var failingStdout failingWriter
+	ui := UI{Out: &failingStdout, Err: io.Discard}
 
 	// --- Execute ---
-	err := listJobs(&failingStdout, mockDB, 0)
+	err := listJobs(ui, mockDB, 0)
 
 	// --- Assert ---
 	if err == nil {

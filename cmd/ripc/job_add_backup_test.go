@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 	"time"
@@ -57,13 +58,14 @@ func (m *MockJobAddBackupDB) MarkRecurrentCompleted(jobID int64, nextJob db.Job)
 func TestAddBackupJob_Success(t *testing.T) {
 	// --- Setup ---
 	mockDB := &MockJobAddBackupDB{}
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 	interval := 24 * time.Hour
 	scheduledFor := time.Date(2025, 10, 21, 10, 0, 0, 0, time.UTC)
 	maxAttempts := 5
 
 	// --- Execute ---
-	err := addBackupJob(&stdout, mockDB, interval, scheduledFor, maxAttempts)
+	err := addBackupJob(ui, mockDB, interval, scheduledFor, maxAttempts)
 
 	// --- Assert ---
 	if err != nil {
@@ -92,12 +94,15 @@ func TestAddBackupJob_Success(t *testing.T) {
 		t.Error("expected Recurrent to be true")
 	}
 
-	// Assert the output
-	output := stdout.String()
+	// Assert the confirmation output
+	output := stderr.String()
 	expectedOutput := fmt.Sprintf("Successfully inserted recurrent backup job of type '%s'.\n", handlers.JobTypeBackupLocal)
 	expectedOutput += fmt.Sprintf("  - Interval: %s\n", interval)
 	expectedOutput += fmt.Sprintf("  - First run scheduled for: %s\n", scheduledFor.Format(time.RFC3339))
 
+	if stdout.Len() != 0 {
+		t.Errorf("expected empty stdout, got: %q", stdout.String())
+	}
 	if output != expectedOutput {
 		t.Errorf("expected output:\n%q\ngot:\n%q", expectedOutput, output)
 	}
@@ -106,10 +111,11 @@ func TestAddBackupJob_Success(t *testing.T) {
 func TestAddBackupJob_FailureDBError(t *testing.T) {
 	// --- Setup ---
 	mockDB := &MockJobAddBackupDB{forceInsertError: true}
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := addBackupJob(&stdout, mockDB, time.Hour, time.Now(), 3)
+	err := addBackupJob(ui, mockDB, time.Hour, time.Now(), 3)
 
 	// --- Assert ---
 	if err == nil {
@@ -126,10 +132,11 @@ func TestAddBackupJob_FailureDBError(t *testing.T) {
 func TestAddBackupJob_FailureWriteError(t *testing.T) {
 	// --- Setup ---
 	mockDB := &MockJobAddBackupDB{}
-	var failingStdout failingWriter
+	var failingStderr failingWriter
+	ui := UI{Out: io.Discard, Err: &failingStderr}
 
 	// --- Execute ---
-	err := addBackupJob(&failingStdout, mockDB, time.Hour, time.Now(), 3)
+	err := addBackupJob(ui, mockDB, time.Hour, time.Now(), 3)
 
 	// --- Assert ---
 	if err == nil {

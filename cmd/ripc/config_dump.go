@@ -31,12 +31,12 @@ func printConfigDumpUsage(w io.Writer) {
 // handleConfigDumpCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigDumpCommand(secureStore config.SecureStore, opts ConfigDumpOptions, ui UI) error {
-	return dumpConfig(ui.Out, secureStore, opts.Scope, opts.Zero, opts.Runtime)
+	return dumpConfig(ui, secureStore, opts.Scope, opts.Zero, opts.Runtime)
 }
 
 // dumpConfig contains the testable core logic for dumping configuration.
-// It accepts io.Writer for output, making it easy to test.
-func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, zero bool, runtime bool) error {
+// It accepts UI for output, making it easy to test.
+func dumpConfig(ui UI, secureStore config.SecureStore, scope string, zero bool, runtime bool) error {
 	if scope == "" {
 		scope = config.ScopeApplication
 	}
@@ -55,7 +55,7 @@ func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 		if err != nil {
 			return fmt.Errorf("failed to serialize zero-default config: %w", err)
 		}
-		_, err = stdout.Write(out)
+		_, err = ui.Out.Write(out)
 		if err != nil {
 			return fmt.Errorf("%w: failed to write zero-default config to stdout: %w", ErrWriteOutput, err)
 		}
@@ -74,7 +74,7 @@ func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 		if err != nil {
 			return fmt.Errorf("failed to serialize runtime config: %w", err)
 		}
-		_, err = stdout.Write(out)
+		_, err = ui.Out.Write(out)
 		if err != nil {
 			return fmt.Errorf("%w: failed to write runtime config to stdout: %w", ErrWriteOutput, err)
 		}
@@ -82,7 +82,7 @@ func dumpConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 	}
 
 	// Raw: write decrypted bytes directly
-	_, err = stdout.Write(decryptedData)
+	_, err = ui.Out.Write(decryptedData)
 	if err != nil {
 		return fmt.Errorf("%w: failed to write raw config to stdout: %w", ErrWriteOutput, err)
 	}

@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 
 	"github.com/caasmo/restinpieces/db"
@@ -25,17 +24,17 @@ func handleJobRmCommand(dbConn db.DbQueueAdmin, args []string, ui UI) error {
 		return fmt.Errorf("invalid job ID '%s'. Please provide a number: %w", args[0], ErrNotANumber)
 	}
 
-	return removeJob(ui.Out, dbConn, jobID)
+	return removeJob(ui, dbConn, jobID)
 }
 
 // removeJob contains the testable core logic for removing a job from the queue.
-func removeJob(stdout io.Writer, dbConn db.DbQueueAdmin, jobID int64) error {
+func removeJob(ui UI, dbConn db.DbQueueAdmin, jobID int64) error {
 	err := dbConn.DeleteJob(jobID)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrDeleteJobFailed, err)
 	}
 
-	if _, err := fmt.Fprintf(stdout, "Successfully deleted job %d\n", jobID); err != nil {
+	if _, err := fmt.Fprintf(ui.Err, "Successfully deleted job %d\n", jobID); err != nil {
 		return fmt.Errorf("%w: %v", ErrWriteOutput, err)
 	}
 	return nil

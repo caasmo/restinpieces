@@ -128,9 +128,10 @@ func TestGetLogDbPathFromConfig(t *testing.T) {
 func TestRunLogMigrations(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		pool := newLogTestPool(t)
-		var stdout bytes.Buffer
+		var stdout, stderr bytes.Buffer
+		ui := UI{Out: &stdout, Err: &stderr}
 
-		err := runLogMigrations(&stdout, pool)
+		err := runLogMigrations(ui, pool)
 		if err != nil {
 			t.Fatalf("runLogMigrations failed: %v", err)
 		}
@@ -169,7 +170,8 @@ func TestRunLogMigrations(t *testing.T) {
 			t.Fatalf("failed to close pool for test: %v", err)
 		}
 
-		err = runLogMigrations(io.Discard, pool)
+		ui := UI{Out: io.Discard, Err: io.Discard}
+		err = runLogMigrations(ui, pool)
 
 		if !errors.Is(err, ErrDbConnection) {
 			t.Fatalf("expected error to wrap ErrDbConnection, got %v", err)
@@ -185,9 +187,10 @@ func TestLogInit(t *testing.T) {
 
 		// Mock store that returns a config with no log path, forcing default
 		mockStore := &MockLogInitSecureStore{data: []byte("")}
-		var stdout bytes.Buffer
+		var stdout, stderr bytes.Buffer
+		ui := UI{Out: &stdout, Err: &stderr}
 
-		err := logInit(&stdout, mockStore, appDbPath)
+		err := logInit(ui, mockStore, appDbPath)
 		if err != nil {
 			t.Fatalf("logInit failed: %v", err)
 		}
@@ -228,7 +231,8 @@ func TestLogInit(t *testing.T) {
 
 	t.Run("FailureOnGetPath", func(t *testing.T) {
 		mockStore := &MockLogInitSecureStore{data: []byte("[log.batch")}
-		err := logInit(io.Discard, mockStore, "/tmp/app.db")
+		ui := UI{Out: io.Discard, Err: io.Discard}
+		err := logInit(ui, mockStore, "/tmp/app.db")
 		if !errors.Is(err, ErrGetLogDbPath) {
 			t.Fatalf("expected error to wrap ErrGetLogDbPath, got %v", err)
 		}
@@ -246,7 +250,8 @@ func TestLogInit(t *testing.T) {
 		})
 		mockStore := &MockLogInitSecureStore{data: configData}
 
-		err := logInit(io.Discard, mockStore, "/tmp/app.db")
+		ui := UI{Out: io.Discard, Err: io.Discard}
+		err := logInit(ui, mockStore, "/tmp/app.db")
 
 		if !errors.Is(err, ErrCreateLogDbPool) {
 			t.Fatalf("expected error to wrap ErrCreateLogDbPool, got %v", err)

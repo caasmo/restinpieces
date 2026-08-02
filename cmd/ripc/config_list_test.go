@@ -78,8 +78,9 @@ func TestListItems_Success(t *testing.T) {
 	}
 	pool := setupTestDB(t, configs)
 
-	var stdout bytes.Buffer
-	count, err := listItems(&stdout, pool, "")
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	count, err := listItems(ui, pool, "")
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -98,8 +99,9 @@ func TestListItems_Success(t *testing.T) {
 func TestListItems_Success_NoItems(t *testing.T) {
 	pool := setupTestDB(t, nil)
 
-	var stdout bytes.Buffer
-	count, err := listItems(&stdout, pool, "")
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	count, err := listItems(ui, pool, "")
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -119,8 +121,9 @@ func TestListItems_Failure_DbConnectionError(t *testing.T) {
 		t.Fatalf("failed to close pool for test setup: %v", err)
 	}
 
-	var stdout bytes.Buffer
-	_, err = listItems(&stdout, pool, "")
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	_, err = listItems(ui, pool, "")
 
 	if !errors.Is(err, ErrDbConnection) {
 		t.Errorf("expected ErrDbConnection, got %v", err)
@@ -143,8 +146,9 @@ func TestListItems_Failure_QueryError(t *testing.T) {
 	// IMPORTANT: Return the connection to the pool so the function under test can use it.
 	pool.Put(conn)
 
-	var stdout bytes.Buffer
-	_, err = listItems(&stdout, pool, "")
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	_, err = listItems(ui, pool, "")
 
 	if err == nil {
 		t.Fatal("expected an error, but got nil")

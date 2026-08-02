@@ -65,10 +65,11 @@ addr = ":8080"
 [server]
 addr = ":9090"
 `))
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := diffConfig(&stdout, mockStore, config.ScopeApplication, 1)
+	err := diffConfig(ui, mockStore, config.ScopeApplication, 1)
 
 	// --- Assert ---
 	if err != nil {
@@ -96,18 +97,22 @@ addr = ":8080"
 `)
 	mockStore.AddConfig(config.ScopeApplication, 1, configData)
 	mockStore.AddConfig(config.ScopeApplication, 0, configData)
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := diffConfig(&stdout, mockStore, config.ScopeApplication, 1)
+	err := diffConfig(ui, mockStore, config.ScopeApplication, 1)
 
 	// --- Assert ---
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(stdout.String(), "No differences") {
-		t.Errorf("expected 'No differences' message, got: %s", stdout.String())
+	if stdout.Len() != 0 {
+		t.Errorf("expected empty stdout, got: %s", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "No differences") {
+		t.Errorf("expected 'No differences' message, got: %s", stderr.String())
 	}
 }
 
@@ -124,18 +129,22 @@ name = "app"
 name = "app"
 version = "1.0"
 `))
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := diffConfig(&stdout, mockStore, config.ScopeApplication, 1)
+	err := diffConfig(ui, mockStore, config.ScopeApplication, 1)
 
 	// --- Assert ---
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(stdout.String(), "No differences") {
-		t.Errorf("expected 'No differences' message, got: %s", stdout.String())
+	if stdout.Len() != 0 {
+		t.Errorf("expected empty stdout, got: %s", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "No differences") {
+		t.Errorf("expected 'No differences' message, got: %s", stderr.String())
 	}
 }
 
@@ -145,10 +154,11 @@ func TestDiffConfig_Failure_GetLatestFails(t *testing.T) {
 	// --- Setup ---
 	mockStore := NewDiffMockSecureStore()
 	mockStore.forceGetErrorOn[0] = true // Fail on getting 'latest'
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := diffConfig(&stdout, mockStore, config.ScopeApplication, 1)
+	err := diffConfig(ui, mockStore, config.ScopeApplication, 1)
 
 	// --- Assert ---
 	if err == nil {
@@ -166,10 +176,11 @@ func TestDiffConfig_Failure_GetTargetFails(t *testing.T) {
 	mockStore := NewDiffMockSecureStore()
 	mockStore.AddConfig(config.ScopeApplication, 0, []byte(`[server]`))
 	mockStore.forceGetErrorOn[1] = true // Fail on getting target generation
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := diffConfig(&stdout, mockStore, config.ScopeApplication, 1)
+	err := diffConfig(ui, mockStore, config.ScopeApplication, 1)
 
 	// --- Assert ---
 	if err == nil {
@@ -187,10 +198,11 @@ func TestDiffConfig_Failure_MalformedLatestConfig(t *testing.T) {
 	mockStore := NewDiffMockSecureStore()
 	mockStore.AddConfig(config.ScopeApplication, 0, []byte(`[server`))
 	mockStore.AddConfig(config.ScopeApplication, 1, []byte(`[server]`))
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := diffConfig(&stdout, mockStore, config.ScopeApplication, 1)
+	err := diffConfig(ui, mockStore, config.ScopeApplication, 1)
 
 	// --- Assert ---
 	if err == nil {
@@ -208,10 +220,11 @@ func TestDiffConfig_Failure_MalformedTargetConfig(t *testing.T) {
 	mockStore := NewDiffMockSecureStore()
 	mockStore.AddConfig(config.ScopeApplication, 0, []byte(`[server]`))
 	mockStore.AddConfig(config.ScopeApplication, 1, []byte(`[server`))
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := diffConfig(&stdout, mockStore, config.ScopeApplication, 1)
+	err := diffConfig(ui, mockStore, config.ScopeApplication, 1)
 
 	// --- Assert ---
 	if err == nil {

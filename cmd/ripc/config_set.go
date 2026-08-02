@@ -44,13 +44,13 @@ func printConfigSetUsage(w io.Writer) {
 // handleConfigSetCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigSetCommand(secureCfg config.SecureStore, opts ConfigSetOptions, ui UI) error {
-	return setConfigValue(ui.Out, secureCfg, opts.Scope, opts.Format, opts.Desc, opts.Path, opts.Value)
+	return setConfigValue(ui, secureCfg, opts.Scope, opts.Format, opts.Desc, opts.Path, opts.Value)
 }
 
 // setConfigValue contains the testable core logic for setting a configuration value.
-// It accepts io.Writer for output, making it easy to test.
+// It accepts UI for output, making it easy to test.
 func setConfigValue(
-	stdout io.Writer,
+	ui UI,
 	secureCfg config.SecureStore,
 	scope string,
 	format string,
@@ -132,7 +132,7 @@ func setConfigValue(
 		return fmt.Errorf("%w: failed to save updated config for scope '%s': %w", ErrSecureStoreSave, scope, err)
 	}
 
-	if _, err := fmt.Fprintf(stdout, "Successfully set '%s' in scope '%s'\n", configPath, scope); err != nil {
+	if _, err := fmt.Fprintf(ui.Err, "Successfully set '%s' in scope '%s'\n", configPath, scope); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 	return nil

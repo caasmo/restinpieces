@@ -56,21 +56,21 @@ port = 5432
 
 func TestListPaths_Success(t *testing.T) {
 	testCases := []struct {
-		name           string
-		filter         string
-		expectedPaths  []string
+		name            string
+		filter          string
+		expectedPaths   []string
 		unexpectedPaths []string
 	}{
 		{
-			name:           "No Filter",
-			filter:         "",
-			expectedPaths:  []string{"server.addr", "server.read_timeout", "database.host", "database.port"},
+			name:            "No Filter",
+			filter:          "",
+			expectedPaths:   []string{"server.addr", "server.read_timeout", "database.host", "database.port"},
 			unexpectedPaths: []string{},
 		},
 		{
-			name:           "With Filter",
-			filter:         "server",
-			expectedPaths:  []string{"server.addr", "server.read_timeout"},
+			name:            "With Filter",
+			filter:          "server",
+			expectedPaths:   []string{"server.addr", "server.read_timeout"},
 			unexpectedPaths: []string{"database.host", "database.port"},
 		},
 	}
@@ -81,10 +81,11 @@ func TestListPaths_Success(t *testing.T) {
 			mockStore := NewMockPathsSecureStore(map[string][]byte{
 				config.ScopeApplication: []byte(sampleTomlConfig),
 			})
-			var stdout bytes.Buffer
+			var stdout, stderr bytes.Buffer
+			ui := UI{Out: &stdout, Err: &stderr}
 
 			// --- Execute ---
-			err := listPaths(&stdout, mockStore, config.ScopeApplication, tc.filter)
+			err := listPaths(ui, mockStore, config.ScopeApplication, tc.filter)
 
 			// --- Assert ---
 			if err != nil {
@@ -108,19 +109,19 @@ func TestListPaths_Success(t *testing.T) {
 
 func TestListPaths_Success_NoPathsFound(t *testing.T) {
 	testCases := []struct {
-		name      string
-		config    []byte
-		filter    string
+		name   string
+		config []byte
+		filter string
 	}{
 		{
-			name:      "Empty Config",
-			config:    []byte(""),
-			filter:    "",
+			name:   "Empty Config",
+			config: []byte(""),
+			filter: "",
 		},
 		{
-			name:      "Filter Matches Nothing",
-			config:    []byte(sampleTomlConfig),
-			filter:    "nonexistent",
+			name:   "Filter Matches Nothing",
+			config: []byte(sampleTomlConfig),
+			filter: "nonexistent",
 		},
 	}
 
@@ -132,7 +133,8 @@ func TestListPaths_Success_NoPathsFound(t *testing.T) {
 			})
 
 			// --- Execute ---
-			err := listPaths(io.Discard, mockStore, config.ScopeApplication, tc.filter)
+			ui := UI{Out: io.Discard, Err: io.Discard}
+			err := listPaths(ui, mockStore, config.ScopeApplication, tc.filter)
 
 			// --- Assert ---
 			if err != nil {
@@ -148,7 +150,8 @@ func TestListPaths_Failure_SecureStoreError(t *testing.T) {
 	mockStore.ForceGetError = true
 
 	// --- Execute ---
-	err := listPaths(io.Discard, mockStore, config.ScopeApplication, "")
+	ui := UI{Out: io.Discard, Err: io.Discard}
+	err := listPaths(ui, mockStore, config.ScopeApplication, "")
 
 	// --- Assert ---
 	if err == nil {
@@ -167,7 +170,8 @@ func TestListPaths_Failure_MalformedToml(t *testing.T) {
 	})
 
 	// --- Execute ---
-	err := listPaths(io.Discard, mockStore, config.ScopeApplication, "")
+	ui := UI{Out: io.Discard, Err: io.Discard}
+	err := listPaths(ui, mockStore, config.ScopeApplication, "")
 
 	// --- Assert ---
 	if err == nil {

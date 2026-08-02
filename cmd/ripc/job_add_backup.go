@@ -27,7 +27,7 @@ func handleJobAddBackupCommand(dbConn db.DbQueue, opts JobAddBackupOptions, ui U
 		return fmt.Errorf("invalid -scheduled-for format: %w", err)
 	}
 
-	return addBackupJob(ui.Out, dbConn, intervalDuration, scheduledTime, opts.MaxAttempts)
+	return addBackupJob(ui, dbConn, intervalDuration, scheduledTime, opts.MaxAttempts)
 }
 
 // JobAddBackupOptions holds the parsed options for the 'job add-backup' subcommand.
@@ -66,7 +66,7 @@ func parseJobAddBackupArgs(args []string) (JobAddBackupOptions, error) {
 }
 
 // addBackupJob contains the testable core logic for adding a backup job.
-func addBackupJob(stdout io.Writer, dbConn db.DbQueue, interval time.Duration, scheduledFor time.Time, maxAttempts int) error {
+func addBackupJob(ui UI, dbConn db.DbQueue, interval time.Duration, scheduledFor time.Time, maxAttempts int) error {
 	// --- Construct the job ---
 	newJob := db.Job{
 		JobType:      handlers.JobTypeBackupLocal,
@@ -83,13 +83,13 @@ func addBackupJob(stdout io.Writer, dbConn db.DbQueue, interval time.Duration, s
 		return fmt.Errorf("%w: %v", ErrInsertJobFailed, err)
 	}
 
-	if _, err := fmt.Fprintf(stdout, "Successfully inserted recurrent backup job of type '%s'.\n", newJob.JobType); err != nil {
+	if _, err := fmt.Fprintf(ui.Err, "Successfully inserted recurrent backup job of type '%s'.\n", newJob.JobType); err != nil {
 		return fmt.Errorf("%w: %v", ErrWriteOutput, err)
 	}
-	if _, err := fmt.Fprintf(stdout, "  - Interval: %s\n", newJob.Interval); err != nil {
+	if _, err := fmt.Fprintf(ui.Err, "  - Interval: %s\n", newJob.Interval); err != nil {
 		return fmt.Errorf("%w: %v", ErrWriteOutput, err)
 	}
-	if _, err := fmt.Fprintf(stdout, "  - First run scheduled for: %s\n", newJob.ScheduledFor.Format(time.RFC3339)); err != nil {
+	if _, err := fmt.Fprintf(ui.Err, "  - First run scheduled for: %s\n", newJob.ScheduledFor.Format(time.RFC3339)); err != nil {
 		return fmt.Errorf("%w: %v", ErrWriteOutput, err)
 	}
 

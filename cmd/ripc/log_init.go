@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"path/filepath"
 
@@ -25,23 +24,23 @@ var (
 // handleLogInitCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleLogInitCommand(secureStore config.SecureStore, appDbPath string, ui UI) error {
-	return logInit(ui.Out, secureStore, appDbPath)
+	return logInit(ui, secureStore, appDbPath)
 }
 
 // logInit contains the testable core logic for initializing the log database.
-func logInit(stdout io.Writer, secureStore config.SecureStore, appDbPath string) (err error) {
+func logInit(ui UI, secureStore config.SecureStore, appDbPath string) (err error) {
 	// Get log db path from config, or use default
 	logDbPath, usedDefault, err := getLogDbPathFromConfig(secureStore, appDbPath)
 	if err != nil {
 		return err // Already wrapped
 	}
 	if usedDefault {
-		if _, err := fmt.Fprintln(stdout, "Could not read configuration, using default log path."); err != nil {
+		if _, err := fmt.Fprintln(ui.Err, "Could not read configuration, using default log path."); err != nil {
 			return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 		}
 	}
 
-	if _, err := fmt.Fprintf(stdout, "Initializing log database at: %s\n", logDbPath); err != nil {
+	if _, err := fmt.Fprintf(ui.Err, "Initializing log database at: %s\n", logDbPath); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 
@@ -57,11 +56,11 @@ func logInit(stdout io.Writer, secureStore config.SecureStore, appDbPath string)
 	}()
 
 	// Apply the schema
-	if err := runLogMigrations(stdout, pool); err != nil {
+	if err := runLogMigrations(ui, pool); err != nil {
 		return err // Already wrapped
 	}
 
-	if _, err := fmt.Fprintln(stdout, "Log database initialized successfully."); err != nil {
+	if _, err := fmt.Fprintln(ui.Err, "Log database initialized successfully."); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 
@@ -91,7 +90,7 @@ func getLogDbPathFromConfig(secureStore config.SecureStore, appDbPath string) (s
 }
 
 // runLogMigrations applies the necessary SQL schema to the log database.
-func runLogMigrations(stdout io.Writer, pool *sqlitex.Pool) error {
+func runLogMigrations(ui UI, pool *sqlitex.Pool) error {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
 		return fmt.Errorf("%w: failed to get connection from pool: %w", ErrDbConnection, err)
@@ -108,7 +107,7 @@ func runLogMigrations(stdout io.Writer, pool *sqlitex.Pool) error {
 		return fmt.Errorf("%w: failed to read embedded migration file logs.sql: %w", ErrRunLogMigrations, err)
 	}
 
-	if _, err := fmt.Fprintln(stdout, "Applying log schema..."); err != nil {
+	if _, err := fmt.Fprintln(ui.Err, "Applying log schema..."); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 	if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {

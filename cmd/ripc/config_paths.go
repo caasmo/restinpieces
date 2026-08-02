@@ -59,12 +59,12 @@ func printConfigPathsUsage(w io.Writer) {
 // handleConfigPathsCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigPathsCommand(secureStore config.SecureStore, opts ConfigPathsOptions, ui UI) error {
-	return listPaths(ui.Out, secureStore, opts.Scope, opts.Filter)
+	return listPaths(ui, secureStore, opts.Scope, opts.Filter)
 }
 
 // listPaths contains the testable core logic for listing all paths in a TOML configuration.
-// It accepts io.Writer for output, making it easy to test.
-func listPaths(stdout io.Writer, secureStore config.SecureStore, scopeName string, filter string) error {
+// It accepts UI for output, making it easy to test.
+func listPaths(ui UI, secureStore config.SecureStore, scopeName string, filter string) error {
 	if scopeName == "" {
 		scopeName = config.ScopeApplication
 	}
@@ -82,7 +82,7 @@ func listPaths(stdout io.Writer, secureStore config.SecureStore, scopeName strin
 	listTomlPathsRecursive(tree, "", &allPaths)
 
 	if len(allPaths) == 0 {
-		if _, err := fmt.Fprintf(stdout, "No TOML paths found in configuration for scope '%s'.\n", scopeName); err != nil {
+		if _, err := fmt.Fprintf(ui.Err, "No TOML paths found in configuration for scope '%s'.\n", scopeName); err != nil {
 			return fmt.Errorf("failed to write output: %w", err)
 		}
 		return nil
@@ -99,17 +99,14 @@ func listPaths(stdout io.Writer, secureStore config.SecureStore, scopeName strin
 	}
 
 	if len(allPaths) == 0 {
-		if _, err := fmt.Fprintf(stdout, "No TOML paths matching '%s' found in scope '%s'.\n", filter, scopeName); err != nil {
+		if _, err := fmt.Fprintf(ui.Err, "No TOML paths matching '%s' found in scope '%s'.\n", filter, scopeName); err != nil {
 			return fmt.Errorf("failed to write output: %w", err)
 		}
 		return nil
 	}
 
-	if _, err := fmt.Fprintf(stdout, "Available TOML paths for latest configuration in scope '%s':\n", scopeName); err != nil {
-		return fmt.Errorf("failed to write output: %w", err)
-	}
 	for _, p := range allPaths {
-		if _, err := fmt.Fprintln(stdout, p); err != nil {
+		if _, err := fmt.Fprintln(ui.Out, p); err != nil {
 			return fmt.Errorf("failed to write output: %w", err)
 		}
 	}

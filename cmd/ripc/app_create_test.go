@@ -64,9 +64,10 @@ func TestSaveConfig(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		mockStore := &MockAppCreateSecureStore{}
 		testData := []byte("test-config")
-		var stdout bytes.Buffer
+		var stdout, stderr bytes.Buffer
+		ui := UI{Out: &stdout, Err: &stderr}
 
-		err := saveConfig(&stdout, mockStore, testData)
+		err := saveConfig(ui, mockStore, testData)
 
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -83,8 +84,8 @@ func TestSaveConfig(t *testing.T) {
 		if mockStore.saveDesc != "Initial default configuration" {
 			t.Errorf("expected description 'Initial default configuration', got %q", mockStore.saveDesc)
 		}
-		if stdout.String() != "Saving initial configuration...\n" {
-			t.Errorf("unexpected output: %q", stdout.String())
+		if stderr.String() != "Saving initial configuration...\n" {
+			t.Errorf("unexpected output: %q", stderr.String())
 		}
 	})
 
@@ -92,7 +93,8 @@ func TestSaveConfig(t *testing.T) {
 		mockStore := &MockAppCreateSecureStore{forceSaveError: true}
 		testData := []byte("test-config")
 
-		err := saveConfig(io.Discard, mockStore, testData)
+		ui := UI{Out: io.Discard, Err: io.Discard}
+		err := saveConfig(ui, mockStore, testData)
 
 		if !errors.Is(err, ErrSecureStoreSave) {
 			t.Fatalf("expected error to wrap ErrSecureStoreSave, got %v", err)
@@ -102,9 +104,10 @@ func TestSaveConfig(t *testing.T) {
 
 func TestRunMigrations(t *testing.T) {
 	pool := newTestPool(t)
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := runMigrations(&stdout, pool)
+	err := runMigrations(ui, pool)
 	if err != nil {
 		t.Fatalf("runMigrations failed: %v", err)
 	}
@@ -139,9 +142,10 @@ func TestCreateApplication(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		pool := newTestPool(t)
 		mockStore := &MockAppCreateSecureStore{}
-		var stdout bytes.Buffer
+		var stdout, stderr bytes.Buffer
+		ui := UI{Out: &stdout, Err: &stderr}
 
-		err := createApplication(&stdout, mockStore, pool, "test.db")
+		err := createApplication(ui, mockStore, pool, "test.db")
 		if err != nil {
 			t.Fatalf("createApplication failed: %v", err)
 		}
@@ -183,7 +187,8 @@ func TestCreateApplication(t *testing.T) {
 		pool := newTestPool(t)
 		mockStore := &MockAppCreateSecureStore{forceSaveError: true}
 
-		err := createApplication(io.Discard, mockStore, pool, "test.db")
+		ui := UI{Out: io.Discard, Err: io.Discard}
+		err := createApplication(ui, mockStore, pool, "test.db")
 
 		if !errors.Is(err, ErrSecureStoreSave) {
 			t.Fatalf("expected error to wrap ErrSecureStoreSave, got %v", err)

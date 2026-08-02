@@ -48,8 +48,9 @@ func TestMigrateConfig_NoExistingConfig(t *testing.T) {
 	mockStore := NewMockMigrateSecureStore()
 	// storedTOML remains nil → Get returns nil bytes, no error → fresh init path
 
-	var stdout bytes.Buffer
-	err := migrateConfig(&stdout, mockStore)
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	err := migrateConfig(ui, mockStore)
 
 	if err != nil {
 		t.Fatalf("migrateConfig() returned unexpected error: %v", err)
@@ -70,7 +71,7 @@ func TestMigrateConfig_NoExistingConfig(t *testing.T) {
 		t.Errorf("saved config server.addr = %q, want %q", savedConfig.Server.Addr, expectedConfig.Server.Addr)
 	}
 
-	output := stdout.String()
+	output := stderr.String()
 	if output == "" {
 		t.Error("expected output message, got empty")
 	}
@@ -84,8 +85,9 @@ addr = ":9090"
 `
 	mockStore.storedTOML = []byte(override)
 
-	var stdout bytes.Buffer
-	err := migrateConfig(&stdout, mockStore)
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	err := migrateConfig(ui, mockStore)
 
 	if err != nil {
 		t.Fatalf("migrateConfig() returned unexpected error: %v", err)
@@ -110,7 +112,7 @@ addr = ":9090"
 		t.Errorf("saved config PublicDir = %q, want default %q", savedConfig.PublicDir, expectedConfig.PublicDir)
 	}
 
-	output := stdout.String()
+	output := stderr.String()
 	if output == "" {
 		t.Error("expected output message, got empty")
 	}
@@ -121,7 +123,8 @@ func TestMigrateConfig_SaveError(t *testing.T) {
 	mockStore := NewMockMigrateSecureStore()
 	mockStore.forceSaveError = true
 
-	err := migrateConfig(io.Discard, mockStore)
+	ui := UI{Out: io.Discard, Err: io.Discard}
+	err := migrateConfig(ui, mockStore)
 
 	if err == nil {
 		t.Fatal("migrateConfig() was expected to return an error, but did not")
@@ -136,7 +139,8 @@ func TestMigrateConfig_BadTOML(t *testing.T) {
 	mockStore := NewMockMigrateSecureStore()
 	mockStore.storedTOML = []byte("this is not valid TOML {{{")
 
-	err := migrateConfig(io.Discard, mockStore)
+	ui := UI{Out: io.Discard, Err: io.Discard}
+	err := migrateConfig(ui, mockStore)
 
 	if err == nil {
 		t.Fatal("migrateConfig() was expected to return an error, but did not")

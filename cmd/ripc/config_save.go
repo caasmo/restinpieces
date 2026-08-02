@@ -40,21 +40,21 @@ func printConfigSaveUsage(w io.Writer) {
 // handleConfigSaveCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigSaveCommand(secureStore config.SecureStore, opts ConfigSaveOptions, ui UI) error {
-	return saveConfigFromFile(ui.Out, secureStore, opts.Scope, opts.Format, opts.Desc, opts.Filename)
+	return saveConfigFromFile(ui, secureStore, opts.Scope, opts.Format, opts.Desc, opts.Filename)
 }
 
 // saveConfigFromFile reads the specified file and passes its content to the core save logic.
-func saveConfigFromFile(stdout io.Writer, secureStore config.SecureStore, scope, format, desc, filename string) error {
+func saveConfigFromFile(ui UI, secureStore config.SecureStore, scope, format, desc, filename string) error {
 	fileData, err := os.ReadFile(filename)
 	if err != nil {
 		return fmt.Errorf("%w: %s: %w", ErrReadFileFailed, filename, err)
 	}
-	return saveConfigFromData(stdout, secureStore, scope, filename, fileData, format, desc)
+	return saveConfigFromData(ui, secureStore, scope, filename, fileData, format, desc)
 }
 
 // saveConfigFromData contains the testable core logic for saving a config from a file.
-// It accepts io.Writer for output, making it easy to test.
-func saveConfigFromData(stdout io.Writer, secureStore config.SecureStore, scope, filename string, data []byte, format, desc string) error {
+// It accepts UI for output, making it easy to test.
+func saveConfigFromData(ui UI, secureStore config.SecureStore, scope, filename string, data []byte, format, desc string) error {
 	resolvedFormat := format // Start with format from flag
 	if resolvedFormat == "" {
 		// No format flag, so derive from extension.
@@ -79,7 +79,7 @@ func saveConfigFromData(stdout io.Writer, secureStore config.SecureStore, scope,
 		return fmt.Errorf("%w: failed to save config to database for scope '%s': %w", ErrSecureStoreSave, scope, err)
 	}
 
-	if _, err := fmt.Fprintf(stdout, "Successfully saved file '%s' to scope '%s' in database\n", filename, scope); err != nil {
+	if _, err := fmt.Fprintf(ui.Err, "Successfully saved file '%s' to scope '%s' in database\n", filename, scope); err != nil {
 		return fmt.Errorf("failed to write output: %w", err)
 	}
 	return nil

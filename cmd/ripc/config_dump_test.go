@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
@@ -51,9 +52,10 @@ addr = ":9090"
 	mockStore := NewMockDumpSecureStore(map[string][]byte{
 		scope: []byte(storedData),
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := dumpConfig(&stdout, mockStore, scope, false, false)
+	err := dumpConfig(ui, mockStore, scope, false, false)
 
 	if err != nil {
 		t.Fatalf("dumpConfig() returned an unexpected error: %v", err)
@@ -72,9 +74,10 @@ addr = ":9090"
 	mockStore := NewMockDumpSecureStore(map[string][]byte{
 		config.ScopeApplication: []byte(storedData),
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := dumpConfig(&stdout, mockStore, "", false, false)
+	err := dumpConfig(ui, mockStore, "", false, false)
 
 	if err != nil {
 		t.Fatalf("dumpConfig() with empty scope returned an unexpected error: %v", err)
@@ -89,9 +92,10 @@ addr = ":9090"
 func TestDumpConfig_Failure_StoreReadError(t *testing.T) {
 	mockStore := NewMockDumpSecureStore(nil)
 	mockStore.ForceGetError = true
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := dumpConfig(&stdout, mockStore, "any_scope", false, false)
+	err := dumpConfig(ui, mockStore, "any_scope", false, false)
 
 	if err == nil {
 		t.Fatal("dumpConfig() was expected to return an error, but did not")
@@ -120,7 +124,8 @@ func TestDumpConfig_Failure_OutputWriteError(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			var failingStdout failingWriter
-			err := dumpConfig(&failingStdout, mockStore, "any_scope", tc.zero, tc.runtime)
+			ui := UI{Out: &failingStdout, Err: io.Discard}
+			err := dumpConfig(ui, mockStore, "any_scope", tc.zero, tc.runtime)
 			if err == nil {
 				t.Fatal("dumpConfig() was expected to return an error, but did not")
 			}
@@ -147,9 +152,10 @@ addr = ":9090"
 	mockStore := NewMockDumpSecureStore(map[string][]byte{
 		scope: []byte(override),
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := dumpConfig(&stdout, mockStore, scope, false, true)
+	err := dumpConfig(ui, mockStore, scope, false, true)
 	if err != nil {
 		t.Fatalf("dumpConfig(runtime) returned an unexpected error: %v", err)
 	}
@@ -170,9 +176,10 @@ addr = ":9090"
 // TestDumpConfig_RawEmpty verifies raw mode on empty stored data produces no output.
 func TestDumpConfig_RawEmpty(t *testing.T) {
 	mockStore := NewMockDumpSecureStore(nil)
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := dumpConfig(&stdout, mockStore, "nonexistent", false, false)
+	err := dumpConfig(ui, mockStore, "nonexistent", false, false)
 
 	if err != nil {
 		t.Fatalf("dumpConfig(raw empty) returned an unexpected error: %v", err)
@@ -191,9 +198,10 @@ addr = ":9090"
 	mockStore := NewMockDumpSecureStore(map[string][]byte{
 		scope: []byte(override),
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := dumpConfig(&stdout, mockStore, scope, true, false)
+	err := dumpConfig(ui, mockStore, scope, true, false)
 	if err != nil {
 		t.Fatalf("dumpConfig(zero) returned an unexpected error: %v", err)
 	}

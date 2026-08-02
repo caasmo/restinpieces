@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"text/tabwriter"
 	"time"
@@ -26,31 +25,30 @@ func handleJobListCommand(dbConn db.DbQueueAdmin, args []string, ui UI) error {
 		}
 	}
 
-	return listJobs(ui.Out, dbConn, limit)
+	return listJobs(ui, dbConn, limit)
 }
 
-func listJobs(stdout io.Writer, dbConn db.DbQueueAdmin, limit int) error {
+func listJobs(ui UI, dbConn db.DbQueueAdmin, limit int) error {
 	jobs, err := dbConn.ListJobs(limit)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrListJobsFailed, err)
 	}
 
 	if len(jobs) == 0 {
-		if _, err := fmt.Fprintln(stdout, "No jobs found in the queue."); err != nil {
+		if _, err := fmt.Fprintln(ui.Err, "No jobs found in the queue."); err != nil {
 			return fmt.Errorf("%w: %v", ErrWriteOutput, err)
 		}
 		return nil
 	}
 
 	// Format the output using a tabwriter for alignment
-	w := tabwriter.NewWriter(stdout, 0, 0, 2, ' ', 0)
+	w := tabwriter.NewWriter(ui.Out, 0, 0, 2, ' ', 0)
 	if _, err := fmt.Fprintln(w, "ID\tTYPE\tSTATUS\tSCHEDULED FOR\tINTERVAL\tATTEMPTS\tPAYLOAD\tPAYLOAD EXTRA\tLAST ERROR"); err != nil {
 		return fmt.Errorf("%w: failed to write header: %v", ErrWriteOutput, err)
 	}
 	if _, err := fmt.Fprintln(w, "--\t----\t------\t-------------\t--------\t--------\t-------\t-------------\t----------"); err != nil {
 		return fmt.Errorf("%w: failed to write header separator: %v", ErrWriteOutput, err)
 	}
-
 	for _, job := range jobs {
 		scheduledFor := "N/A"
 		if !job.ScheduledFor.IsZero() {

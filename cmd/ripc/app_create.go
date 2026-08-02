@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 
 	"github.com/pelletier/go-toml/v2"
 
@@ -21,13 +20,13 @@ var (
 
 // handleAppCreateCommand is the command-level wrapper that executes the core app creation logic.
 func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string, ui UI) error {
-	return createApplication(ui.Out, secureStore, pool, dbPath)
+	return createApplication(ui, secureStore, pool, dbPath)
 }
 
 // createApplication contains the testable core logic for creating and configuring the application.
-func createApplication(stdout io.Writer, secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string) error {
+func createApplication(ui UI, secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string) error {
 	// Run Migrations (Apply Schema)
-	if err := runMigrations(stdout, pool); err != nil {
+	if err := runMigrations(ui, pool); err != nil {
 		return err // Error is already wrapped by runMigrations
 	}
 
@@ -46,24 +45,24 @@ func createApplication(stdout io.Writer, secureStore config.SecureStore, pool *s
 	}
 
 	// Save Encrypted Config into DB via SecureConfig
-	if err := saveConfig(stdout, secureStore, tomlBytes); err != nil {
+	if err := saveConfig(ui, secureStore, tomlBytes); err != nil {
 		return err // Error is already wrapped by saveConfig
 	}
 
-	if _, err := fmt.Fprintf(stdout, "Application database created and configured successfully: %s\n", dbPath); err != nil {
+	if _, err := fmt.Fprintf(ui.Err, "Application database created and configured successfully: %s\n", dbPath); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 	return nil
 }
 
-func runMigrations(stdout io.Writer, pool *sqlitex.Pool) error {
+func runMigrations(ui UI, pool *sqlitex.Pool) error {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
 		return fmt.Errorf("%w: for migrations: %w", ErrDbConnection, err)
 	}
 	defer pool.Put(conn)
 
-	if _, err := fmt.Fprintln(stdout, "Applying migrations..."); err != nil {
+	if _, err := fmt.Fprintln(ui.Err, "Applying migrations..."); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 
@@ -75,8 +74,8 @@ func runMigrations(stdout io.Writer, pool *sqlitex.Pool) error {
 	return nil
 }
 
-func saveConfig(stdout io.Writer, secureStore config.SecureStore, configData []byte) error {
-	if _, err := fmt.Fprintln(stdout, "Saving initial configuration..."); err != nil {
+func saveConfig(ui UI, secureStore config.SecureStore, configData []byte) error {
+	if _, err := fmt.Fprintln(ui.Err, "Saving initial configuration..."); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 	err := secureStore.Save(

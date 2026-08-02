@@ -23,14 +23,14 @@ func printConfigMigrateUsage(w io.Writer) {
 // handleConfigMigrateCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigMigrateCommand(secureStore config.SecureStore, ui UI) error {
-	return migrateConfig(ui.Out, secureStore)
+	return migrateConfig(ui, secureStore)
 }
 
 // migrateConfig contains the testable core logic for migrating configuration.
 // If no existing config is found, it creates a fresh default config.
 // If an existing config is found, it merges stored values onto framework defaults,
 // stripping stale keys and filling in new defaults.
-func migrateConfig(stdout io.Writer, secureStore config.SecureStore) error {
+func migrateConfig(ui UI, secureStore config.SecureStore) error {
 	scopeName := config.ScopeApplication
 
 	decryptedData, _, err := secureStore.Get(scopeName, 0)
@@ -49,7 +49,7 @@ func migrateConfig(stdout io.Writer, secureStore config.SecureStore) error {
 		if saveErr != nil {
 			return fmt.Errorf("%w: failed to save default config for scope '%s': %w", ErrSecureStoreSave, scopeName, saveErr)
 		}
-		_, err = fmt.Fprintf(stdout, "No existing config found. Saved default configuration for scope '%s'\n", scopeName)
+		_, err = fmt.Fprintf(ui.Err, "No existing config found. Saved default configuration for scope '%s'\n", scopeName)
 		if err != nil {
 			return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 		}
@@ -73,7 +73,7 @@ func migrateConfig(stdout io.Writer, secureStore config.SecureStore) error {
 		return fmt.Errorf("%w: failed to save migrated config for scope '%s': %w", ErrSecureStoreSave, scopeName, saveErr)
 	}
 
-	_, err = fmt.Fprintf(stdout, "Config migrated successfully for scope '%s'. Stale keys removed, new defaults applied.\n", scopeName)
+	_, err = fmt.Fprintf(ui.Err, "Config migrated successfully for scope '%s'. Stale keys removed, new defaults applied.\n", scopeName)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}

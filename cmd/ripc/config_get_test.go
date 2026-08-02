@@ -65,9 +65,10 @@ func TestGetAndPrintConfigPaths_Success_NoFilter(t *testing.T) {
 	mockStore := NewMockGetSecureStore(map[string][]byte{
 		scope: []byte(conf),
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := getAndPrintConfigPaths(&stdout, mockStore, scope, "")
+	err := getAndPrintConfigPaths(ui, mockStore, scope, "")
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -100,9 +101,10 @@ func TestGetAndPrintConfigPaths_Success_WithFilter(t *testing.T) {
 	mockStore := NewMockGetSecureStore(map[string][]byte{
 		scope: []byte(conf),
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := getAndPrintConfigPaths(&stdout, mockStore, scope, "server")
+	err := getAndPrintConfigPaths(ui, mockStore, scope, "server")
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
@@ -137,17 +139,21 @@ func TestGetAndPrintConfigPaths_NoResults_WithFilter(t *testing.T) {
 	mockStore := NewMockGetSecureStore(map[string][]byte{
 		scope: []byte(conf),
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := getAndPrintConfigPaths(&stdout, mockStore, scope, "nonexistent")
+	err := getAndPrintConfigPaths(ui, mockStore, scope, "nonexistent")
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
 	expectedOutput := "No TOML paths with values matching 'nonexistent' found in scope 'app'.\n"
-	if stdout.String() != expectedOutput {
-		t.Errorf("Expected output %q, got %q", expectedOutput, stdout.String())
+	if stdout.Len() != 0 {
+		t.Errorf("expected empty stdout, got %q", stdout.String())
+	}
+	if stderr.String() != expectedOutput {
+		t.Errorf("Expected stderr %q, got %q", expectedOutput, stderr.String())
 	}
 }
 
@@ -157,17 +163,21 @@ func TestGetAndPrintConfigPaths_EmptyConfig(t *testing.T) {
 	mockStore := NewMockGetSecureStore(map[string][]byte{
 		scope: []byte(""), // Empty config
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := getAndPrintConfigPaths(&stdout, mockStore, scope, "")
+	err := getAndPrintConfigPaths(ui, mockStore, scope, "")
 
 	if err != nil {
 		t.Fatalf("Expected no error, got %v", err)
 	}
 
 	expectedOutput := "No TOML paths with values found in configuration for scope 'empty_scope'.\n"
-	if stdout.String() != expectedOutput {
-		t.Errorf("Expected output %q, got %q", expectedOutput, stdout.String())
+	if stdout.Len() != 0 {
+		t.Errorf("expected empty stdout, got %q", stdout.String())
+	}
+	if stderr.String() != expectedOutput {
+		t.Errorf("Expected stderr %q, got %q", expectedOutput, stderr.String())
 	}
 }
 
@@ -175,9 +185,10 @@ func TestGetAndPrintConfigPaths_EmptyConfig(t *testing.T) {
 func TestGetAndPrintConfigPaths_Failure_StoreReadError(t *testing.T) {
 	mockStore := NewMockGetSecureStore(nil)
 	mockStore.ForceGetError = true
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := getAndPrintConfigPaths(&stdout, mockStore, "any_scope", "")
+	err := getAndPrintConfigPaths(ui, mockStore, "any_scope", "")
 
 	if !errors.Is(err, ErrSecureStoreGet) {
 		t.Errorf("Expected error to wrap ErrSecureStoreGet, got %v", err)
@@ -190,9 +201,10 @@ func TestGetAndPrintConfigPaths_Failure_MalformedTOML(t *testing.T) {
 	mockStore := NewMockGetSecureStore(map[string][]byte{
 		scope: []byte(`[server`),
 	})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := getAndPrintConfigPaths(&stdout, mockStore, scope, "")
+	err := getAndPrintConfigPaths(ui, mockStore, scope, "")
 
 	if !errors.Is(err, ErrConfigUnmarshal) {
 		t.Errorf("Expected error to wrap ErrConfigUnmarshal, got %v", err)

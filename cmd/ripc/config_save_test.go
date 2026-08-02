@@ -65,12 +65,13 @@ func TestSaveConfigFromData(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// --- Setup ---
 			mockStore := NewMockSaveSecureStore()
-			var stdout bytes.Buffer
+			var stdout, stderr bytes.Buffer
+			ui := UI{Out: &stdout, Err: &stderr}
 			filename := "test.toml"
 			data := []byte("[server]\naddr = \":8080\"")
 
 			// --- Execute ---
-			err := saveConfigFromData(&stdout, mockStore, tc.scopeIn, filename, data, "toml", "")
+			err := saveConfigFromData(ui, mockStore, tc.scopeIn, filename, data, "toml", "")
 
 			// --- Assert ---
 			if err != nil {
@@ -92,10 +93,13 @@ func TestSaveConfigFromData(t *testing.T) {
 				t.Errorf("description mismatch: got %q, want %q", mockStore.saveHistory[0], expectedDesc)
 			}
 
-			// Verify stdout message
+			// Verify confirmation message
 			expectedOut := fmt.Sprintf("Successfully saved file '%s' to scope '%s' in database\n", filename, tc.expectedScope)
-			if stdout.String() != expectedOut {
-				t.Errorf("stdout mismatch: got %q, want %q", stdout.String(), expectedOut)
+			if stdout.Len() != 0 {
+				t.Errorf("expected empty stdout, got %q", stdout.String())
+			}
+			if stderr.String() != expectedOut {
+				t.Errorf("stderr mismatch: got %q, want %q", stderr.String(), expectedOut)
 			}
 		})
 	}
@@ -106,10 +110,11 @@ func TestSaveConfig_Failure_SaveError(t *testing.T) {
 	// --- Setup ---
 	mockStore := NewMockSaveSecureStore()
 	mockStore.ForceSaveError = true
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := saveConfigFromData(&stdout, mockStore, "scope", "file.toml", []byte("data"), "toml", "")
+	err := saveConfigFromData(ui, mockStore, "scope", "file.toml", []byte("data"), "toml", "")
 
 	// --- Assert ---
 	if err == nil {
@@ -178,10 +183,11 @@ func TestSaveConfigFromData_FormatResolution(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			// --- Setup ---
 			mockStore := NewMockSaveSecureStore()
-			var stdout bytes.Buffer
+			var stdout, stderr bytes.Buffer
+			ui := UI{Out: &stdout, Err: &stderr}
 
 			// --- Execute ---
-			err := saveConfigFromData(&stdout, mockStore, "scope", tc.filenameIn, []byte("data"), tc.formatIn, "desc")
+			err := saveConfigFromData(ui, mockStore, "scope", tc.filenameIn, []byte("data"), tc.formatIn, "desc")
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

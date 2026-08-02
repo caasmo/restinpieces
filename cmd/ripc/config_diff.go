@@ -48,12 +48,12 @@ func handleConfigDiffCommand(secureStore config.SecureStore, opts ConfigDiffOpti
 	if opts.Scope == "" {
 		opts.Scope = config.ScopeApplication
 	}
-	return diffConfig(ui.Out, secureStore, opts.Scope, opts.Generation)
+	return diffConfig(ui, secureStore, opts.Scope, opts.Generation)
 }
 
 // diffConfig contains the testable core logic for diffing configs.
-// It accepts io.Writer for output, making it easy to test.
-func diffConfig(stdout io.Writer, secureStore config.SecureStore, scope string, generation int) error {
+// It accepts UI for output, making it easy to test.
+func diffConfig(ui UI, secureStore config.SecureStore, scope string, generation int) error {
 	// Get latest config (generation 0)
 	latestData, _, err := secureStore.Get(scope, 0)
 	if err != nil {
@@ -100,14 +100,10 @@ func diffConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 	}
 
 	if strings.TrimSpace(result) == "" {
-		if _, err := fmt.Fprintf(stdout, "No differences between generation %d and latest ", generation); err != nil {
+		if _, err := fmt.Fprintf(ui.Err, "No differences between generation %d and latest\n", generation); err != nil {
 			return fmt.Errorf("failed to write output: %w", err)
 		}
 		return nil
-	}
-
-	if _, err := fmt.Fprintf(stdout, "Differences between generation %d and latest: ", generation); err != nil {
-		return fmt.Errorf("failed to write output: %w", err)
 	}
 
 	// Colorize the output
@@ -116,17 +112,17 @@ func diffConfig(stdout io.Writer, secureStore config.SecureStore, scope string, 
 		var err error
 		switch {
 		case strings.HasPrefix(line, "---"):
-			_, err = fmt.Fprintf(stdout, "%s%s%s\n", ColorBlue, line, ColorReset)
+			_, err = fmt.Fprintf(ui.Out, "%s%s%s\n", ColorBlue, line, ColorReset)
 		case strings.HasPrefix(line, "+++"):
-			_, err = fmt.Fprintf(stdout, "%s%s%s\n", ColorBlue, line, ColorReset)
+			_, err = fmt.Fprintf(ui.Out, "%s%s%s\n", ColorBlue, line, ColorReset)
 		case strings.HasPrefix(line, "@@"):
-			_, err = fmt.Fprintf(stdout, "%s%s%s\n", ColorCyan, line, ColorReset)
+			_, err = fmt.Fprintf(ui.Out, "%s%s%s\n", ColorCyan, line, ColorReset)
 		case strings.HasPrefix(line, "-"):
-			_, err = fmt.Fprintf(stdout, "%s%s%s\n", ColorRed, line, ColorReset)
+			_, err = fmt.Fprintf(ui.Out, "%s%s%s\n", ColorRed, line, ColorReset)
 		case strings.HasPrefix(line, "+"):
-			_, err = fmt.Fprintf(stdout, "%s%s%s\n", ColorGreen, line, ColorReset)
+			_, err = fmt.Fprintf(ui.Out, "%s%s%s\n", ColorGreen, line, ColorReset)
 		default:
-			_, err = fmt.Fprintln(stdout, line)
+			_, err = fmt.Fprintln(ui.Out, line)
 		}
 		if err != nil {
 			return fmt.Errorf("failed to write output: %w", err)

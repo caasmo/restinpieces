@@ -23,9 +23,10 @@ public_dir = "/var/www/public"
 func TestScaffoldConfigValue_BackupLocal(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(&stdout, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -53,9 +54,10 @@ func TestScaffoldConfigValue_BackupLocal(t *testing.T) {
 func TestScaffoldConfigValue_OAuth2(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(&stdout, mockStore, scope, "", ScaffoldTypeOAuth2, "my_github")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeOAuth2, "my_github")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -73,9 +75,10 @@ func TestScaffoldConfigValue_OAuth2(t *testing.T) {
 
 func TestScaffoldConfigValue_UnknownType(t *testing.T) {
 	mockStore := NewMockSetSecureStore(nil)
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(&stdout, mockStore, "app", "", "bogus", "key")
+	err := scaffoldConfigValue(ui, mockStore, "app", "", "bogus", "key")
 	if !errors.Is(err, ErrScaffoldTypeUnknown) {
 		t.Errorf("expected ErrScaffoldTypeUnknown, got %v", err)
 	}
@@ -85,9 +88,10 @@ func TestScaffoldConfigValue_KeyExists(t *testing.T) {
 	tomlWithBackup := scaffoldTestConf + "\n[backup_local.files.app_db]\n  source_path = \"/x.db\"\n"
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(tomlWithBackup)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(&stdout, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
 	if !errors.Is(err, ErrScaffoldKeyExists) {
 		t.Errorf("expected ErrScaffoldKeyExists, got %v", err)
 	}
@@ -96,9 +100,10 @@ func TestScaffoldConfigValue_KeyExists(t *testing.T) {
 func TestScaffoldConfigValue_StoreReadError(t *testing.T) {
 	mockStore := NewMockSetSecureStore(nil)
 	mockStore.ForceGetError = true
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(&stdout, mockStore, "app", "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, "app", "", ScaffoldTypeBackupLocal, "app_db")
 	if !errors.Is(err, ErrSecureStoreGet) {
 		t.Errorf("expected error to wrap ErrSecureStoreGet, got %v", err)
 	}
@@ -107,9 +112,10 @@ func TestScaffoldConfigValue_StoreReadError(t *testing.T) {
 func TestScaffoldConfigValue_MalformedTOML(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte("[server")})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(&stdout, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
 	if !errors.Is(err, ErrConfigUnmarshal) {
 		t.Errorf("expected error to wrap ErrConfigUnmarshal, got %v", err)
 	}
@@ -119,9 +125,10 @@ func TestScaffoldConfigValue_StoreSaveError(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
 	mockStore.ForceSaveError = true
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(&stdout, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
 	if !errors.Is(err, ErrSecureStoreSave) {
 		t.Errorf("expected error to wrap ErrSecureStoreSave, got %v", err)
 	}
@@ -130,10 +137,11 @@ func TestScaffoldConfigValue_StoreSaveError(t *testing.T) {
 func TestScaffoldConfigValue_CustomDescription(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 	desc := "scaffolding analytics db"
 
-	err := scaffoldConfigValue(&stdout, mockStore, scope, desc, ScaffoldTypeBackupLocal, "analytics_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, desc, ScaffoldTypeBackupLocal, "analytics_db")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -146,9 +154,10 @@ func TestScaffoldConfigValue_ParentMissing(t *testing.T) {
 	// setTestConf has no [backup_local] section
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
-	var stdout bytes.Buffer
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(&stdout, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
 	if !errors.Is(err, ErrScaffoldParentMissing) {
 		t.Errorf("expected ErrScaffoldParentMissing, got %v", err)
 	}
