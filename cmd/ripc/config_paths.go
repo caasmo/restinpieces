@@ -37,6 +37,25 @@ func listTomlPathsRecursive(tree *toml.Tree, prefix string, paths *[]string) {
 	}
 }
 
+func printConfigPathsUsage(w io.Writer) {
+	help := Spec{
+		Usage:       "config paths [options] [filter]",
+		Description: "Lists all keys in the configuration.",
+		Args: []ArgSpec{
+			{"filter", "Optional substring filter on configuration paths"},
+		},
+		Options: []OptSpec{
+			commandConfig.Opt("scope"),
+		},
+		Examples: []string{
+			"ripc config paths",
+			"ripc config paths --scope my-app",
+			"ripc config paths server",
+		},
+	}
+	help.Print(w, prog, "config", "paths")
+}
+
 // handleConfigPathsCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigPathsCommand(secureStore config.SecureStore, opts ConfigPathsOptions, ui UI) error {

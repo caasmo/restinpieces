@@ -35,7 +35,7 @@ func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPa
 		return fmt.Errorf("app requires a subcommand")
 	}
 
-	subcommand, _, err := parseAppSubcommand(commandArgs, ui.Err)
+	subcommand, _, err := parseAppSubcommand(commandArgs)
 	if err != nil {
 		printAppUsage(ui.Err)
 		return err
@@ -51,14 +51,14 @@ func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPa
 	}
 }
 
-func parseAppSubcommand(commandArgs []string, output io.Writer) (string, []string, error) {
+func parseAppSubcommand(commandArgs []string) (string, []string, error) {
 	subcommand := commandArgs[0]
 	subcommandArgs := commandArgs[1:]
 
 	switch subcommand {
 	case "create":
 		createCmd := flag.NewFlagSet("create", flag.ContinueOnError)
-		createCmd.SetOutput(output)
+		createCmd.SetOutput(io.Discard)
 		if err := createCmd.Parse(subcommandArgs); err != nil {
 			return "", nil, fmt.Errorf("parsing create flags: %w: %v", ErrInvalidFlag, err)
 		}

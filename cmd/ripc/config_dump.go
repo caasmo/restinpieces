@@ -9,6 +9,25 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+func printConfigDumpUsage(w io.Writer) {
+	help := Spec{
+		Usage:       "config dump [options]",
+		Description: "Dumps the configuration.",
+		Options: []OptSpec{
+			commandConfig.Opt("scope"),
+			commandConfig.Opt("zero"),
+			commandConfig.Opt("runtime"),
+		},
+		Examples: []string{
+			"ripc config dump",
+			"ripc config dump --zero",
+			"ripc config dump --runtime",
+			"ripc config dump --scope my-app",
+		},
+	}
+	help.Print(w, prog, "config", "dump")
+}
+
 // handleConfigDumpCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigDumpCommand(secureStore config.SecureStore, opts ConfigDumpOptions, ui UI) error {

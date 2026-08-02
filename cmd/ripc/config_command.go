@@ -57,7 +57,7 @@ var (
 			"ripc config dump --zero",
 			"ripc config dump --runtime",
 			"ripc config set --scope my-app server.port 8080",
-			"ripc config list --scope my-app",
+			"ripc config list my-app",
 			"ripc config rollback --scope my-app 3",
 		},
 	}
@@ -65,27 +65,6 @@ var (
 
 func printConfigUsage(w io.Writer) {
 	commandConfig.Print(w, prog, "config")
-}
-
-func printConfigSetUsage(w io.Writer) {
-	help := Spec{
-		Usage:       "config set [options] <path> <value>",
-		Description: "Sets a configuration value at a specified path.",
-		Args: []ArgSpec{
-			{"path", "Configuration path to set"},
-			{"value", "Value to set"},
-		},
-		Options: []OptSpec{
-			commandConfig.Opt("scope"),
-			commandConfig.Opt("format"),
-			commandConfig.Opt("desc"),
-		},
-		Examples: []string{
-			"ripc config set server.host localhost",
-			`ripc config set --scope webapp features.beta true --desc "Enable beta feature"`,
-		},
-	}
-	help.Print(w, prog, "config", "set")
 }
 
 func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, commandArgs []string, ui UI) error {
@@ -102,14 +81,30 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 		}
 		subcommandToHelp := commandArgs[1]
 		switch subcommandToHelp {
+		case "get":
+			printConfigGetUsage(ui.Out)
+		case "paths":
+			printConfigPathsUsage(ui.Out)
+		case "dump":
+			printConfigDumpUsage(ui.Out)
+		case "scopes":
+			printConfigScopesUsage(ui.Out)
 		case "set":
 			printConfigSetUsage(ui.Out)
+		case "save":
+			printConfigSaveUsage(ui.Out)
 		case "scaffold":
 			printConfigScaffoldUsage(ui.Out)
-		// Add cases for other subcommands here as they get their own usage functions
+		case "migrate":
+			printConfigMigrateUsage(ui.Out)
+		case "list":
+			printConfigListUsage(ui.Out)
+		case "diff":
+			printConfigDiffUsage(ui.Out)
+		case "rollback":
+			printConfigRollbackUsage(ui.Out)
 		default:
-			// For any other subcommand, show the main config usage.
-			// This is helpful if they don't have a dedicated help page yet.
+			// For an unknown subcommand, show the main config usage.
 			printConfigUsage(ui.Out)
 		}
 		return nil // Successful exit for help display

@@ -15,6 +15,24 @@ var (
 	ErrInvalidGeneration = errors.New("invalid generation")
 )
 
+func printConfigRollbackUsage(w io.Writer) {
+	help := Spec{
+		Usage:       "config rollback [options] <generation>",
+		Description: "Restores a previous configuration version.",
+		Args: []ArgSpec{
+			{"generation", "Generation number to restore"},
+		},
+		Options: []OptSpec{
+			commandConfig.Opt("scope"),
+		},
+		Examples: []string{
+			"ripc config rollback 3",
+			"ripc config rollback --scope my-app 3",
+		},
+	}
+	help.Print(w, prog, "config", "rollback")
+}
+
 // handleConfigRollbackCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigRollbackCommand(secureStore config.SecureStore, opts ConfigRollbackOptions, ui UI) error {

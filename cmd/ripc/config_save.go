@@ -17,6 +17,26 @@ var (
 	ErrReadFileFailed = errors.New("failed to read file")
 )
 
+func printConfigSaveUsage(w io.Writer) {
+	help := Spec{
+		Usage:       "config save [options] <file>",
+		Description: "Saves file contents to the configuration.",
+		Args: []ArgSpec{
+			{"file", "Path to the configuration file to save"},
+		},
+		Options: []OptSpec{
+			commandConfig.Opt("scope"),
+			commandConfig.Opt("format"),
+			commandConfig.Opt("desc"),
+		},
+		Examples: []string{
+			"ripc config save config.toml",
+			"ripc config save --scope my-app config.toml",
+		},
+	}
+	help.Print(w, prog, "config", "save")
+}
+
 // handleConfigSaveCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigSaveCommand(secureStore config.SecureStore, opts ConfigSaveOptions, ui UI) error {

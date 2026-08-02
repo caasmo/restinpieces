@@ -11,6 +11,25 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
+func printConfigGetUsage(w io.Writer) {
+	help := Spec{
+		Usage:       "config get [options] [filter]",
+		Description: "Gets configuration values by path.",
+		Args: []ArgSpec{
+			{"filter", "Optional substring filter on configuration paths"},
+		},
+		Options: []OptSpec{
+			commandConfig.Opt("scope"),
+		},
+		Examples: []string{
+			"ripc config get",
+			"ripc config get server",
+			"ripc config get --scope my-app server.port",
+		},
+	}
+	help.Print(w, prog, "config", "get")
+}
+
 // handleConfigGetCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigGetCommand(secureStore config.SecureStore, opts ConfigGetOptions, ui UI) error {

@@ -20,6 +20,27 @@ var (
 	ErrUnsupportedFormat = errors.New("unsupported format")
 )
 
+func printConfigSetUsage(w io.Writer) {
+	help := Spec{
+		Usage:       "config set [options] <path> <value>",
+		Description: "Sets a configuration value at a specified path.",
+		Args: []ArgSpec{
+			{"path", "Configuration path to set"},
+			{"value", "Value to set"},
+		},
+		Options: []OptSpec{
+			commandConfig.Opt("scope"),
+			commandConfig.Opt("format"),
+			commandConfig.Opt("desc"),
+		},
+		Examples: []string{
+			"ripc config set server.host localhost",
+			`ripc config set --scope webapp features.beta true --desc "Enable beta feature"`,
+		},
+	}
+	help.Print(w, prog, "config", "set")
+}
+
 // handleConfigSetCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigSetCommand(secureCfg config.SecureStore, opts ConfigSetOptions, ui UI) error {

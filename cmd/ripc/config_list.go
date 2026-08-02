@@ -70,6 +70,21 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count 
 
 }
 
+func printConfigListUsage(w io.Writer) {
+	help := Spec{
+		Usage:       "config list [scope]",
+		Description: "Lists configuration versions.",
+		Args: []ArgSpec{
+			{"scope", "Optional scope to filter versions by"},
+		},
+		Examples: []string{
+			"ripc config list",
+			"ripc config list my-app",
+		},
+	}
+	help.Print(w, prog, "config", "list")
+}
+
 // handleConfigListCommand is a wrapper around listItems. It prints the empty-list
 // message and returns any error to the caller.
 func handleConfigListCommand(pool *sqlitex.Pool, opts ConfigListOptions, ui UI) error {

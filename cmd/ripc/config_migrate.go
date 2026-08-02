@@ -9,6 +9,17 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+func printConfigMigrateUsage(w io.Writer) {
+	help := Spec{
+		Usage:       "config migrate",
+		Description: "Migrates configuration to the current framework version.",
+		Examples: []string{
+			"ripc config migrate",
+		},
+	}
+	help.Print(w, prog, "config", "migrate")
+}
+
 // handleConfigMigrateCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigMigrateCommand(secureStore config.SecureStore, ui UI) error {

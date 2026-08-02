@@ -26,6 +26,24 @@ var (
 	ErrDiffGenerate = errors.New("failed to generate diff")
 )
 
+func printConfigDiffUsage(w io.Writer) {
+	help := Spec{
+		Usage:       "config diff [options] <generation>",
+		Description: "Compares a configuration generation with the latest.",
+		Args: []ArgSpec{
+			{"generation", "Generation number to compare against the latest"},
+		},
+		Options: []OptSpec{
+			commandConfig.Opt("scope"),
+		},
+		Examples: []string{
+			"ripc config diff 3",
+			"ripc config diff --scope my-app 3",
+		},
+	}
+	help.Print(w, prog, "config", "diff")
+}
+
 func handleConfigDiffCommand(secureStore config.SecureStore, opts ConfigDiffOptions, ui UI) error {
 	if opts.Scope == "" {
 		opts.Scope = config.ScopeApplication

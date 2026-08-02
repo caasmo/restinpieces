@@ -16,6 +16,17 @@ var (
 	ErrDbFinalize = errors.New("failed to finalize statement")
 )
 
+func printConfigScopesUsage(w io.Writer) {
+	help := Spec{
+		Usage:       "config scopes",
+		Description: "Lists all configuration scopes.",
+		Examples: []string{
+			"ripc config scopes",
+		},
+	}
+	help.Print(w, prog, "config", "scopes")
+}
+
 // handleConfigScopesCommand is the command-level wrapper. It executes the core logic
 // and returns any error to the caller.
 func handleConfigScopesCommand(pool *sqlitex.Pool, ui UI) error {
