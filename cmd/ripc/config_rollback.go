@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 
 	"github.com/caasmo/restinpieces/config"
@@ -17,12 +16,9 @@ var (
 )
 
 // handleRollbackCommand is the command-level wrapper. It executes the core logic
-// and handles exiting the process on error.
-func handleRollbackCommand(secureStore config.SecureStore, scope string, generation int, ui UI) {
-	if err := rollbackConfig(ui.Out, secureStore, scope, generation); err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+// and returns any error to the caller.
+func handleRollbackCommand(secureStore config.SecureStore, scope string, generation int, ui UI) error {
+	return rollbackConfig(ui.Out, secureStore, scope, generation)
 }
 
 // rollbackConfig contains the testable core logic for rolling back a configuration.

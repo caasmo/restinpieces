@@ -4,19 +4,15 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/pelletier/go-toml/v2"
 )
 
 // handleDumpCommand is the command-level wrapper. It executes the core logic
-// and handles exiting the process on error.
-func handleDumpCommand(secureStore config.SecureStore, scope string, zero bool, runtime bool, ui UI) {
-	if err := dumpConfig(ui.Out, secureStore, scope, zero, runtime); err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+// and returns any error to the caller.
+func handleDumpCommand(secureStore config.SecureStore, scope string, zero bool, runtime bool, ui UI) error {
+	return dumpConfig(ui.Out, secureStore, scope, zero, runtime)
 }
 
 // dumpConfig contains the testable core logic for dumping configuration.

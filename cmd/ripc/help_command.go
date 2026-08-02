@@ -2,8 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
-	"os"
 )
 
 // ErrUnknownHelpTopic is returned when a help topic is not found.
@@ -18,21 +16,21 @@ var (
 )
 
 // handleHelpCommand is the command-level wrapper. It executes the core logic
-// and handles exiting the process on error.
-func handleHelpCommand(args []string, mainUsage func(), ui UI) {
+// and returns any error to the caller.
+func handleHelpCommand(args []string, mainUsage func(), ui UI) error {
 	if len(args) == 0 {
 		mainUsage()
-		return
+		return nil
 	}
 
 	topic := args[0]
 	err := runHelpTopic(topic, ui)
 	if err != nil {
 		// We only expect ErrUnknownHelpTopic here.
-		_, _ = fmt.Fprintf(ui.Err, "Error: unknown help topic: %s\n\n", topic)
 		mainUsage()
-		os.Exit(1)
+		return err
 	}
+	return nil
 }
 
 // runHelpTopic contains the testable core logic for dispatching to the

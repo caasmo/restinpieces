@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 
@@ -24,17 +23,14 @@ const (
 )
 
 var (
-	ErrDiffGenerate    = errors.New("failed to generate diff")
+	ErrDiffGenerate = errors.New("failed to generate diff")
 )
 
-func handleDiffCommand(secureStore config.SecureStore, scope string, generation int, ui UI) {
+func handleDiffCommand(secureStore config.SecureStore, scope string, generation int, ui UI) error {
 	if scope == "" {
 		scope = config.ScopeApplication
 	}
-	if err := diffConfig(ui.Out, secureStore, scope, generation); err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+	return diffConfig(ui.Out, secureStore, scope, generation)
 }
 
 // diffConfig contains the testable core logic for diffing configs.
@@ -144,4 +140,3 @@ func parseDiffArgs(args []string) (scope string, generation int, err error) {
 	}
 	return *diffScope, gen, nil
 }
-

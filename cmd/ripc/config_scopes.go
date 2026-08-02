@@ -5,25 +5,21 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 // Custom errors for the scopes command
 var (
-	ErrDbPrepare    = errors.New("failed to prepare statement")
-	ErrDbStep       = errors.New("failed to step through results")
-	ErrDbFinalize   = errors.New("failed to finalize statement")
+	ErrDbPrepare  = errors.New("failed to prepare statement")
+	ErrDbStep     = errors.New("failed to step through results")
+	ErrDbFinalize = errors.New("failed to finalize statement")
 )
 
 // handleScopesCommand is the command-level wrapper. It executes the core logic
-// and handles exiting the process on error.
-func handleScopesCommand(pool *sqlitex.Pool, ui UI) {
-	if err := listScopes(ui.Out, pool); err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+// and returns any error to the caller.
+func handleScopesCommand(pool *sqlitex.Pool, ui UI) error {
+	return listScopes(ui.Out, pool)
 }
 
 // listScopes contains the testable core logic for listing all configuration scopes.

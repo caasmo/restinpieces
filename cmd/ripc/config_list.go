@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 
 	"zombiezen.com/go/sqlite/sqlitex"
 )
@@ -71,22 +70,28 @@ func listItems(stdout io.Writer, pool *sqlitex.Pool, scopeFilter string) (count 
 
 }
 
-// handleListCommand is a wrapper around listItems that handles the command-line
-// execution, including printing errors to stderr and exiting the program on failure.
-func handleListCommand(pool *sqlitex.Pool, scopeFilter string, ui UI) {
+// handleListCommand is a wrapper around listItems. It prints the empty-list
+// message and returns any error to the caller.
+func handleListCommand(pool *sqlitex.Pool, scopeFilter string, ui UI) error {
 	count, err := listItems(ui.Out, pool, scopeFilter)
 	if err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
+		return err
 	}
 
 	if count == 0 {
 		if scopeFilter != "" {
-			_, _ = fmt.Fprintf(ui.Out, "No configurations found for scope: %s\n", scopeFilter)
+			_, err := fmt.Fprintf(ui.Out, "No configurations found for scope: %s\n", scopeFilter)
+			if err != nil {
+				return err
+			}
 		} else {
-			_, _ = fmt.Fprintln(ui.Out, "No configurations found.")
+			_, err := fmt.Fprintln(ui.Out, "No configurations found.")
+			if err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 // parseListArgs parses the arguments for the 'list' subcommand.

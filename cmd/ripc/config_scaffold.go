@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/caasmo/restinpieces/config"
@@ -70,12 +69,8 @@ func printScaffoldUsage(w io.Writer) {
 	help.Print(w, "ripc", "config", "scaffold")
 }
 
-func handleScaffoldCommand(secureStore config.SecureStore, scope, desc, scaffoldType, key string, ui UI) {
-	err := scaffoldConfigValue(ui.Out, secureStore, scope, desc, scaffoldType, key)
-	if err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+func handleScaffoldCommand(secureStore config.SecureStore, scope, desc, scaffoldType, key string, ui UI) error {
+	return scaffoldConfigValue(ui.Out, secureStore, scope, desc, scaffoldType, key)
 }
 
 func scaffoldConfigValue(

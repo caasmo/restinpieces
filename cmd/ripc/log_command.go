@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/caasmo/restinpieces/config"
 )
@@ -20,27 +19,25 @@ func printLogUsage(w io.Writer) {
 	_, _ = fmt.Fprintf(w, "  init    Initialize the log database and schema\n")
 }
 
-func handleLogCommand(secureStore config.SecureStore, dbPath string, commandArgs []string, ui UI) {
+func handleLogCommand(secureStore config.SecureStore, dbPath string, commandArgs []string, ui UI) error {
 	if len(commandArgs) < 1 {
 		printLogUsage(ui.Err)
-		os.Exit(1)
+		return fmt.Errorf("log requires a subcommand")
 	}
 
 	subcommand, _, err := parseLogSubcommand(commandArgs)
 	if err != nil {
-		fprintErr(ui.Err, err)
 		printLogUsage(ui.Err)
-		os.Exit(1)
+		return err
 	}
 
 	switch subcommand {
 	case "init":
-		handleLogInitCommand(secureStore, dbPath, ui)
+		return handleLogInitCommand(secureStore, dbPath, ui)
 	default:
 		// This case should ideally not be reached if parseLogSubcommand is correct
-		_, _ = fmt.Fprintf(ui.Err, "Error: unknown log subcommand: %s\n", subcommand)
 		printLogUsage(ui.Err)
-		os.Exit(1)
+		return fmt.Errorf("unknown log subcommand: %s", subcommand)
 	}
 }
 

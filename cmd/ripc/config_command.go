@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/caasmo/restinpieces/config"
 	"zombiezen.com/go/sqlite/sqlitex"
@@ -46,11 +45,11 @@ var (
 			},
 		},
 		Options: map[string]Option{
-			"scope":     {DefaultValue: config.ScopeApplication, Usage: "Scope for the configuration (affects: set, get, paths, dump, diff, rollback, save)"},
-			"format":    {DefaultValue: "toml", Usage: "Format of the configuration file (affects: set, save)"},
-			"desc":      {Usage: "Optional description for this configuration version (affects: set, save)"},
-			"zero":      {Usage: "Output stored overrides on top of zero values (affects: dump)"},
-			"runtime":   {Usage: "Output defaults merged with stored overrides (affects: dump)"},
+			"scope":   {DefaultValue: config.ScopeApplication, Usage: "Scope for the configuration (affects: set, get, paths, dump, diff, rollback, save)"},
+			"format":  {DefaultValue: "toml", Usage: "Format of the configuration file (affects: set, save)"},
+			"desc":    {Usage: "Optional description for this configuration version (affects: set, save)"},
+			"zero":    {Usage: "Output stored overrides on top of zero values (affects: dump)"},
+			"runtime": {Usage: "Output defaults merged with stored overrides (affects: dump)"},
 		},
 		Examples: []string{
 			"ripc config dump",
@@ -85,17 +84,17 @@ func printConfigSetUsage(w io.Writer) {
 	help.Print(w, "ripc", "config", "set")
 }
 
-func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, commandArgs []string, ui UI) {
+func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, commandArgs []string, ui UI) error {
 	if len(commandArgs) < 1 {
 		printConfigUsage(ui.Err)
-		os.Exit(1)
+		return fmt.Errorf("config requires a subcommand")
 	}
 
 	// Check for "help" subcommand
 	if commandArgs[0] == "help" {
 		if len(commandArgs) < 2 {
 			printConfigUsage(ui.Out)
-			os.Exit(0) // Successful exit for general help
+			return nil // Successful exit for general help
 		}
 		subcommandToHelp := commandArgs[1]
 		switch subcommandToHelp {
@@ -109,7 +108,7 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 			// This is helpful if they don't have a dedicated help page yet.
 			printConfigUsage(ui.Out)
 		}
-		os.Exit(0) // Successful exit for help display
+		return nil // Successful exit for help display
 	}
 
 	subcommand := commandArgs[0]
@@ -119,94 +118,82 @@ func handleConfigCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, c
 	case "set":
 		scope, format, desc, path, value, remainingArgs, err := parseSetArgs(subcommandArgs)
 		if err != nil {
-			fprintErr(ui.Err, err)
 			printConfigUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handleSetCommand(secureStore, scope, format, desc, append([]string{path, value}, remainingArgs...), ui)
+		return handleSetCommand(secureStore, scope, format, desc, append([]string{path, value}, remainingArgs...), ui)
 	case "scopes":
-		if err := parseScopesArgs(subcommandArgs); err != nil {
-			fprintErr(ui.Err, err)
+		err := parseScopesArgs(subcommandArgs)
+		if err != nil {
 			printConfigUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handleScopesCommand(dbPool, ui)
+		return handleScopesCommand(dbPool, ui)
 	case "list":
 		scope, err := parseListArgs(subcommandArgs)
 		if err != nil {
-			fprintErr(ui.Err, err)
 			printConfigUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handleListCommand(dbPool, scope, ui)
+		return handleListCommand(dbPool, scope, ui)
 	case "paths":
 		scope, filter, err := parsePathsArgs(subcommandArgs)
 		if err != nil {
-			fprintErr(ui.Err, err)
 			printConfigUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handlePathsCommand(secureStore, scope, filter, ui)
+		return handlePathsCommand(secureStore, scope, filter, ui)
 	case "dump":
 		scope, zero, runtime, err := parseDumpArgs(subcommandArgs)
 		if err != nil {
-			fprintErr(ui.Err, err)
 			printConfigUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handleDumpCommand(secureStore, scope, zero, runtime, ui)
+		return handleDumpCommand(secureStore, scope, zero, runtime, ui)
 	case "diff":
 		scope, generation, err := parseDiffArgs(subcommandArgs)
 		if err != nil {
-			fprintErr(ui.Err, err)
 			printConfigUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handleDiffCommand(secureStore, scope, generation, ui)
+		return handleDiffCommand(secureStore, scope, generation, ui)
 	case "rollback":
 		scope, generation, err := parseRollbackArgs(subcommandArgs)
 		if err != nil {
-			fprintErr(ui.Err, err)
 			printConfigUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handleRollbackCommand(secureStore, scope, generation, ui)
+		return handleRollbackCommand(secureStore, scope, generation, ui)
 	case "save":
 		scope, format, desc, filename, err := parseSaveArgs(subcommandArgs)
 		if err != nil {
-			fprintErr(ui.Err, err)
 			printConfigUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handleSaveCommand(secureStore, scope, format, desc, filename, ui)
+		return handleSaveCommand(secureStore, scope, format, desc, filename, ui)
 	case "scaffold":
 		scope, desc, scaffoldType, key, err := parseScaffoldArgs(subcommandArgs)
 		if err != nil {
-			fprintErr(ui.Err, err)
 			printScaffoldUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handleScaffoldCommand(secureStore, scope, desc, scaffoldType, key, ui)
+		return handleScaffoldCommand(secureStore, scope, desc, scaffoldType, key, ui)
 	case "get":
 		scope, filter, err := parseGetArgs(subcommandArgs)
 		if err != nil {
-			fprintErr(ui.Err, err)
 			printConfigUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handleGetCommand(secureStore, scope, filter, ui)
+		return handleGetCommand(secureStore, scope, filter, ui)
 	case "migrate":
 		err := parseMigrateArgs(subcommandArgs)
 		if err != nil {
-			fprintErr(ui.Err, err)
 			printConfigUsage(ui.Err)
-			os.Exit(1)
+			return err
 		}
-		handleMigrateCommand(secureStore, ui)
+		return handleMigrateCommand(secureStore, ui)
 	default:
-		_, _ = fmt.Fprintf(ui.Err, "Error: unknown config subcommand: %s\n", subcommand)
 		printConfigUsage(ui.Err)
-		os.Exit(1)
+		return fmt.Errorf("unknown config subcommand: %s", subcommand)
 	}
 }
-

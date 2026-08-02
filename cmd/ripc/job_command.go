@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"time"
 
@@ -27,31 +26,29 @@ func printJobUsage(w io.Writer) {
 }
 
 // handleJobCommand is the dispatcher for all "job" subcommands.
-func handleJobCommand(dbConn *zombiezen.Db, args []string, ui UI) {
+func handleJobCommand(dbConn *zombiezen.Db, args []string, ui UI) error {
 	if len(args) < 1 {
 		printJobUsage(ui.Err)
-		os.Exit(1)
+		return fmt.Errorf("job requires a subcommand")
 	}
 
 	subcommand, subcommandArgs, err := parseJobSubcommand(args, ui.Err)
 	if err != nil {
-		fprintErr(ui.Err, err)
 		printJobUsage(ui.Err)
-		os.Exit(1)
+		return err
 	}
 
 	switch subcommand {
 	case "add-backup":
-		handleJobAddBackupCommand(dbConn, subcommandArgs[0], subcommandArgs[1], subcommandArgs[2], ui)
+		return handleJobAddBackupCommand(dbConn, subcommandArgs[0], subcommandArgs[1], subcommandArgs[2], ui)
 	case "list":
-		handleJobListCommand(dbConn, subcommandArgs, ui)
+		return handleJobListCommand(dbConn, subcommandArgs, ui)
 	case "rm":
-		handleJobRmCommand(dbConn, subcommandArgs, ui)
+		return handleJobRmCommand(dbConn, subcommandArgs, ui)
 	default:
 		// This case should ideally not be reached if parseJobSubcommand is correct
-		_, _ = fmt.Fprintf(ui.Err, "Error: unknown job subcommand: %s\n", subcommand)
 		printJobUsage(ui.Err)
-		os.Exit(1)
+		return fmt.Errorf("unknown job subcommand: %s", subcommand)
 	}
 }
 
@@ -106,4 +103,3 @@ func parseJobSubcommand(commandArgs []string, output io.Writer) (string, []strin
 		return "", nil, fmt.Errorf("'%s': %w", subcommand, ErrUnknownJobSubcommand)
 	}
 }
-

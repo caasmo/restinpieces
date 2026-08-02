@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"os"
 	"path/filepath"
 
 	"github.com/caasmo/restinpieces/config"
@@ -24,12 +23,9 @@ var (
 )
 
 // handleLogInitCommand is the command-level wrapper. It executes the core logic
-// and handles exiting the process on error.
-func handleLogInitCommand(secureStore config.SecureStore, appDbPath string, ui UI) {
-	if err := logInit(ui.Out, secureStore, appDbPath); err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+// and returns any error to the caller.
+func handleLogInitCommand(secureStore config.SecureStore, appDbPath string, ui UI) error {
+	return logInit(ui.Out, secureStore, appDbPath)
 }
 
 // logInit contains the testable core logic for initializing the log database.

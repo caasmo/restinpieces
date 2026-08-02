@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"sort"
 	"strings"
 
@@ -13,12 +12,9 @@ import (
 )
 
 // handleGetCommand is the command-level wrapper. It executes the core logic
-// and handles exiting the process on error.
-func handleGetCommand(secureStore config.SecureStore, scopeName string, filter string, ui UI) {
-	if err := getAndPrintConfigPaths(ui.Out, secureStore, scopeName, filter); err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+// and returns any error to the caller.
+func handleGetCommand(secureStore config.SecureStore, scopeName string, filter string, ui UI) error {
+	return getAndPrintConfigPaths(ui.Out, secureStore, scopeName, filter)
 }
 
 // getAndPrintConfigPaths contains the testable core logic for getting and printing config paths.

@@ -14,14 +14,14 @@ import (
 
 var (
 	// main application errors
-	ErrMissingFlag        = errors.New("missing required global flag")
-	ErrMissingCommand     = errors.New("missing command")
-	ErrUnknownCommand     = errors.New("unknown command")
-	ErrDBNotFound         = errors.New("database file not found")
-	ErrDBAlreadyExists    = errors.New("database file already exists")
-	ErrCreateDbPool       = errors.New("failed to create database pool")
-	ErrCreateDbImpl       = errors.New("failed to instantiate zombiezen db from pool")
-	ErrCreateSecureStore  = errors.New("failed to instantiate secure store")
+	ErrMissingFlag       = errors.New("missing required global flag")
+	ErrMissingCommand    = errors.New("missing command")
+	ErrUnknownCommand    = errors.New("unknown command")
+	ErrDBNotFound        = errors.New("database file not found")
+	ErrDBAlreadyExists   = errors.New("database file already exists")
+	ErrCreateDbPool      = errors.New("failed to create database pool")
+	ErrCreateDbImpl      = errors.New("failed to instantiate zombiezen db from pool")
+	ErrCreateSecureStore = errors.New("failed to instantiate secure store")
 )
 
 // prog is the invoked program path, the single source of truth for the
@@ -41,7 +41,7 @@ func fprintErr(w io.Writer, err error) {
 
 func main() {
 	if err := run(os.Args[1:], os.Stderr); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fprintErr(os.Stderr, err)
 		os.Exit(1)
 	}
 }
@@ -143,18 +143,17 @@ func run(args []string, output io.Writer) error {
 
 	switch command {
 	case "app":
-		handleAppCommand(secureStore, pool, *dbPathFlag, commandArgs, ui)
+		return handleAppCommand(secureStore, pool, *dbPathFlag, commandArgs, ui)
 	case "config":
-		handleConfigCommand(secureStore, pool, commandArgs, ui)
+		return handleConfigCommand(secureStore, pool, commandArgs, ui)
 	case "job":
-		handleJobCommand(dbImpl, commandArgs, ui)
+		return handleJobCommand(dbImpl, commandArgs, ui)
 	case "log":
-		handleLogCommand(secureStore, *dbPathFlag, commandArgs, ui)
+		return handleLogCommand(secureStore, *dbPathFlag, commandArgs, ui)
 	case "help":
-		handleHelpCommand(commandArgs, fs.Usage, ui)
+		return handleHelpCommand(commandArgs, fs.Usage, ui)
 	default:
 		fs.Usage()
 		return fmt.Errorf("%w: %s", ErrUnknownCommand, command)
 	}
-	return nil
 }

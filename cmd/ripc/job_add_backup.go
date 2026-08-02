@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"time"
 
@@ -17,30 +16,24 @@ var (
 )
 
 // handleJobAddBackupCommand handles the "job add-backup" subcommand. It's the command-line wrapper.
-func handleJobAddBackupCommand(dbConn db.DbQueue, interval, scheduledFor, maxAttemptsStr string, ui UI) {
+func handleJobAddBackupCommand(dbConn db.DbQueue, interval, scheduledFor, maxAttemptsStr string, ui UI) error {
 	// --- Parse and validate flags ---
 	intervalDuration, err := time.ParseDuration(interval)
 	if err != nil {
-		_, _ = fmt.Fprintf(ui.Err, "Error: Invalid -interval format: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("invalid -interval format: %w", err)
 	}
 
 	scheduledTime, err := time.Parse(time.RFC3339, scheduledFor)
 	if err != nil {
-		_, _ = fmt.Fprintf(ui.Err, "Error: Invalid -scheduled-for format: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("invalid -scheduled-for format: %w", err)
 	}
 
 	maxAttempts, err := strconv.Atoi(maxAttemptsStr)
 	if err != nil {
-		_, _ = fmt.Fprintf(ui.Err, "Error: Invalid -max-attempts format: %v\n", err)
-		os.Exit(1)
+		return fmt.Errorf("invalid -max-attempts format: %w", err)
 	}
 
-	if err := addBackupJob(ui.Out, dbConn, intervalDuration, scheduledTime, maxAttempts); err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+	return addBackupJob(ui.Out, dbConn, intervalDuration, scheduledTime, maxAttempts)
 }
 
 // addBackupJob contains the testable core logic for adding a backup job.

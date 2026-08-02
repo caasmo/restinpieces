@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/caasmo/restinpieces/config"
 	"zombiezen.com/go/sqlite/sqlitex"
@@ -22,27 +21,25 @@ func printAppUsage(w io.Writer) {
 	_, _ = fmt.Fprintf(w, "  create                Create a new application instance\n")
 }
 
-func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPath string, commandArgs []string, ui UI) {
+func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPath string, commandArgs []string, ui UI) error {
 	if len(commandArgs) < 1 {
 		printAppUsage(ui.Err)
-		os.Exit(1)
+		return fmt.Errorf("app requires a subcommand")
 	}
 
 	subcommand, _, err := parseAppSubcommand(commandArgs, ui.Err)
 	if err != nil {
-		fprintErr(ui.Err, err)
 		printAppUsage(ui.Err)
-		os.Exit(1)
+		return err
 	}
 
 	switch subcommand {
 	case "create":
-		handleAppCreateCommand(secureStore, dbPool, dbPath, ui)
+		return handleAppCreateCommand(secureStore, dbPool, dbPath, ui)
 	default:
 		// This case should ideally not be reached if parseAppSubcommand is correct
-		_, _ = fmt.Fprintf(ui.Err, "Error: unknown app subcommand: %s\n", subcommand)
 		printAppUsage(ui.Err)
-		os.Exit(1)
+		return fmt.Errorf("unknown app subcommand: %s", subcommand)
 	}
 }
 

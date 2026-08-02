@@ -22,28 +22,27 @@ var (
 )
 
 // handleSetCommand is the command-level wrapper. It executes the core logic
-// and handles exiting the process on error.
+// and returns any error to the caller.
 func handleSetCommand(
 	secureCfg config.SecureStore,
 	scope string,
 	format string,
 	description string,
 	cmdArgs []string,
-	ui UI) {
+	ui UI) error {
 
 	if len(cmdArgs) < 2 {
-		fprintErr(ui.Err, ErrMissingSetArguments)
-		_, _ = fmt.Fprintf(ui.Err, "Usage: ... set <path> <value>\n")
-		os.Exit(1)
+		_, err := fmt.Fprintf(ui.Err, "Usage: ... set <path> <value>\n")
+		if err != nil {
+			return err
+		}
+		return ErrMissingSetArguments
 	}
 
 	configPath := cmdArgs[0]
 	rawValue := cmdArgs[1]
 
-	if err := setConfigValue(ui.Out, secureCfg, scope, format, description, configPath, rawValue); err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+	return setConfigValue(ui.Out, secureCfg, scope, format, description, configPath, rawValue)
 }
 
 // setConfigValue contains the testable core logic for setting a configuration value.

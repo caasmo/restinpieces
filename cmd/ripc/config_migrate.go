@@ -4,20 +4,15 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/pelletier/go-toml/v2"
 )
 
 // handleMigrateCommand is the command-level wrapper. It executes the core logic
-// and handles exiting the process on error.
-func handleMigrateCommand(secureStore config.SecureStore, ui UI) {
-	err := migrateConfig(ui.Out, secureStore)
-	if err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+// and returns any error to the caller.
+func handleMigrateCommand(secureStore config.SecureStore, ui UI) error {
+	return migrateConfig(ui.Out, secureStore)
 }
 
 // migrateConfig contains the testable core logic for migrating configuration.

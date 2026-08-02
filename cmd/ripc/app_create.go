@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/pelletier/go-toml/v2"
 
@@ -21,11 +20,8 @@ var (
 )
 
 // handleAppCreateCommand is the command-level wrapper that executes the core app creation logic.
-func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string, ui UI) {
-	if err := createApplication(ui.Out, secureStore, pool, dbPath); err != nil {
-		fprintErr(ui.Err, err)
-		os.Exit(1)
-	}
+func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string, ui UI) error {
+	return createApplication(ui.Out, secureStore, pool, dbPath)
 }
 
 // createApplication contains the testable core logic for creating and configuring the application.
