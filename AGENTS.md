@@ -44,11 +44,10 @@ data-driven CLI help framework: types `Spec`, `OptSpec`, `ArgSpec`,
 `Subcommand`, `SubcommandGroup`, and the shared renderer `Spec.Print`. It is
 **stdlib-only** and must stay that way so it remains copyable.
 
-**Rule**: other CLIs in the organization's repos (e.g. segrob's `cmd/segrob`)
-copy `cmd/ripc/help.go` **verbatim** — no forks, no package variants, no
-rewrites. ripc is the most modern revision of this framework across all repos;
-when `help.go` changes here, sync the new version to the other CLIs in the
-same change.
+**Rule**: other CLIs copy `cmd/ripc/help.go` **verbatim** — no forks, no
+package variants, no rewrites. ripc is the most modern revision of this
+framework across all repos; when `help.go` changes here, sync the new version
+to the other CLIs in the same change.
 
 Help is data-driven: every command declares a `Spec` literal next to its
 command file, and `Spec.Opt(name)` is the single source of truth for flag

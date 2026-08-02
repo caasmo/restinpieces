@@ -1,13 +1,9 @@
 package main
 
 // help.go is the shared, copy-paste help framework for the project's CLIs.
-// The same file exists byte-identical in:
 //
-//	cmd/ripc   (restinpieces — the reference implementation)
-//	cmd/segrob (segrob)
-//
-// Keep both copies in sync by copying this file verbatim. Do not add imports
-// beyond the standard library, so the file stays copyable into any CLI.
+// Do not add imports beyond the standard library, so the file stays copyable
+// into any CLI.
 //
 // The framework is fully data-driven: every command declares a Spec literal
 // (Usage, Description, Args, Options, Subcommands, Examples) and one shared
