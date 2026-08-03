@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -28,17 +29,81 @@ const (
 	// Produces e.g. "20250801T103000Z".
 	timestampFormat = "20060102T150405Z"
 
-	// timestampLen is the fixed character length of timestampFormat.
-	timestampLen = len("20060102T150405Z") // 16
+	// baseFmt is the shared filename template: backupID and UTC timestamp
+	// joined with a dash. The extension is appended separately
+	// (compressedExt / uncompressedExt).
+	baseFmt         = "%s-%s"
+	compressedExt   = ".bck.gz"
+	uncompressedExt = ".db"
 
-	// backupCompressedFmt is the filename template for compressed (gzip) backups.
-	// Example output: app.db-20250801T103000Z.bck.gz
-	backupCompressedFmt = "%s-%s.bck.gz"
+	// compressedFmt is the filename template for gzip-compressed backups,
+	// e.g. "app.db-20250801T103000Z.bck.gz".
+	compressedFmt = baseFmt + compressedExt
 
-	// backupFmt is the filename template for uncompressed backups.
-	// Example output: app.db-20250801T103000Z.db
-	backupFmt = "%s-%s.db"
+	// uncompressedFmt is the filename template for plain SQLite copies,
+	// e.g. "app.db-20250801T103000Z.db".
+	uncompressedFmt = baseFmt + uncompressedExt
 )
+
+// The regexes are the parse encoding of the same grammar String() renders,
+// with the extension written out escaped. TestBackupFileRoundTrip links the
+// two encodings and catches drift between them (e.g. a timestampFormat change
+// without a regex update).
+var (
+	compressedRe   = regexp.MustCompile(`^(.+)-(\d{8}T\d{6}Z)\.bck\.gz$`)
+	uncompressedRe = regexp.MustCompile(`^(.+)-(\d{8}T\d{6}Z)\.db$`)
+)
+
+// backupFile is one backup file: everything needed to render or parse its
+// filename. The backup directory is not part of the struct.
+type backupFile struct {
+	// backupID identifies the configured source file this backup belongs to:
+	// the config label (backup_local.files.<key>) joined with the source
+	// file's basename, e.g. label "app" + source_path "data/app.db"
+	// → "app-app.db".
+	backupID   string
+	time       time.Time // UTC timestamp
+	compressed bool      // ".bck.gz" vs ".db"
+}
+
+// String renders the filename, e.g. "app_db-app.db-20250801T103000Z.bck.gz".
+func (f backupFile) String() string {
+	format := uncompressedFmt
+	if f.compressed {
+		format = compressedFmt
+	}
+	return fmt.Sprintf(format, f.backupID, f.time.UTC().Format(timestampFormat))
+}
+
+// errInvalidBackupFile is the sentinel for parseBackupFile: the filename is
+// not a valid backup. Always returned wrapped via %w so callers can
+// errors.Is(err, errInvalidBackupFile).
+var errInvalidBackupFile = errors.New("invalid backup filename")
+
+// parseBackupFile parses a backup filename. The caller has already
+// established the name is a backup file (extension gate in latestBackupFiles);
+// a name that fails the grammar or has a malformed timestamp returns an error
+// wrapping errInvalidBackupFile.
+func parseBackupFile(filename string) (backupFile, error) {
+	re := uncompressedRe
+	compressed := strings.HasSuffix(filename, compressedExt)
+	if compressed {
+		re = compressedRe
+	}
+	m := re.FindStringSubmatch(filename)
+	if m == nil {
+		return backupFile{}, fmt.Errorf("%w: %q", errInvalidBackupFile, filename)
+	}
+	ts, err := time.Parse(timestampFormat, m[2])
+	if err != nil {
+		return backupFile{}, fmt.Errorf("%w: %q: invalid timestamp: %v", errInvalidBackupFile, filename, err)
+	}
+	return backupFile{
+		backupID:   m[1],
+		time:       ts,
+		compressed: compressed,
+	}, nil
+}
 
 // Handler handles database backup jobs
 type Handler struct {
@@ -87,7 +152,7 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 	}
 
 	var errs []error
-	times := h.latestBackupTimes(cfg.BackupDir, cfg.Files)
+	latest := h.latestBackupFiles(cfg.BackupDir, cfg.Files)
 
 	for key, fileCfg := range cfg.Files {
 		// --- step 2: skip entries with empty source_path (deactivated) ---
@@ -96,137 +161,143 @@ func (h *Handler) handle(ctx context.Context, now time.Time) error {
 			continue
 		}
 
-		backupName := h.buildBackupName(key, fileCfg.SourcePath)
+		backupID := h.buildBackupID(key, fileCfg.SourcePath)
 
 		// --- step 3: skip if not yet due ---
-		if !h.isBackupDue(times[backupName], fileCfg.Frequency.Duration, now) {
-			h.logger.Info("Skipping backup; not yet due", "db", backupName)
+		if !h.isBackupDue(latest[backupID].time, fileCfg.Frequency.Duration, now) {
+			h.logger.Info("Skipping backup; not yet due",
+				"db", backupID,
+				"due_at", latest[backupID].time.Add(fileCfg.Frequency.Duration).Format(timestampFormat),
+			)
 			continue
 		}
 
 		// --- step 4: source file must exist and be a file ---
 		srcInfo, srcErr := os.Stat(fileCfg.SourcePath)
 		if srcErr != nil {
-			errs = append(errs, fmt.Errorf("%q: source database file not found: %s: %w", backupName, fileCfg.SourcePath, srcErr))
+			errs = append(errs, fmt.Errorf("%q: source database file not found: %s: %w", backupID, fileCfg.SourcePath, srcErr))
 			continue
 		}
 		if srcInfo.IsDir() {
-			errs = append(errs, fmt.Errorf("%q: source path is a directory, not a database file: %s", backupName, fileCfg.SourcePath))
+			errs = append(errs, fmt.Errorf("%q: source path is a directory, not a database file: %s", backupID, fileCfg.SourcePath))
 			continue
 		}
 
-		// --- step 5: run backup ---
-		backupFn := h.onlineBackup // default
-		if fileCfg.Strategy == config.BackupStrategyVacuum {
-			backupFn = h.vacuumInto
-		}
-
-		var err error
-		var finalPath string
-		if fileCfg.Compression {
-			finalPath = h.buildCompressedPath(backupName, now, cfg.BackupDir)
-			tempPath := h.buildTempPath(backupName, now)
-			tempFinalPath := finalPath + ".tmp" // same directory, os.Rename is atomic
-
-			// --- 5a: dump to temp ---
-			err = backupFn(fileCfg.SourcePath, tempPath)
-			if err != nil {
-				removeErr := os.Remove(tempPath)
-				if removeErr != nil {
-					h.logger.Error("Failed to remove temp file after failed backup", "path", tempPath, "error", removeErr)
-				}
-				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
-				continue
-			}
-
-			// --- 5b: compress temp to .tmp in backupDir ---
-			err = h.compressFile(tempPath, tempFinalPath)
-			removeErr := os.Remove(tempPath)
-			if removeErr != nil {
-				h.logger.Error("Failed to remove temp file", "path", tempPath, "error", removeErr)
-			}
-			if err != nil {
-				removeErr = os.Remove(tempFinalPath)
-				if removeErr != nil {
-					h.logger.Error("Failed to remove partial .tmp file", "path", tempFinalPath, "error", removeErr)
-				}
-				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
-				continue
-			}
-
-			// --- 5c: atomic promote ---
-			err = os.Rename(tempFinalPath, finalPath)
-			if err != nil {
-				removeErr = os.Remove(tempFinalPath)
-				if removeErr != nil {
-					h.logger.Error("Failed to remove .tmp file after failed rename", "path", tempFinalPath, "error", removeErr)
-				}
-				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
-				continue
-			}
-		} else {
-			finalPath = h.buildUncompressedPath(backupName, now, cfg.BackupDir)
-			tempFinalPath := finalPath + ".tmp" // same directory, os.Rename is atomic
-
-			// --- 5a: dump to .tmp in backupDir ---
-			err = backupFn(fileCfg.SourcePath, tempFinalPath)
-			if err != nil {
-				removeErr := os.Remove(tempFinalPath)
-				if removeErr != nil {
-					h.logger.Error("Failed to remove .tmp file after failed backup", "path", tempFinalPath, "error", removeErr)
-				}
-				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
-				continue
-			}
-
-			// --- 5b: atomic promote ---
-			err = os.Rename(tempFinalPath, finalPath)
-			if err != nil {
-				removeErr := os.Remove(tempFinalPath)
-				if removeErr != nil {
-					h.logger.Error("Failed to remove .tmp file after failed rename", "path", tempFinalPath, "error", removeErr)
-				}
-				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
-				continue
-			}
-
-			// --- 5c: update latest link ---
-			// Uncompressed only — the rsync pull client needs a stable
-			// filename to sync. Compressed .bck.gz is not consumable as-is,
-			// so no link is created for it.
-			latestPath := h.buildLatestPath(cfg.BackupDir, backupName)
-			err = h.linkLatest(finalPath, latestPath)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("%q: %w", backupName, err))
-			}
+		// --- step 5: backup copy ---
+		err := h.handleDbFile(fileCfg, backupID, now, cfg.BackupDir)
+		if err != nil {
+			errs = append(errs, err)
 		}
 	}
 	return errors.Join(errs...)
 }
 
-// buildBackupName returns the prefix used in backup filenames and hardlinks.
+// handleDbFile: backup copy for one configured file.
+// Opens its own source conn; the defer closes it on every return path.
+func (h *Handler) handleDbFile(fileCfg config.BackupLocalDbFile, backupID string, now time.Time, backupDir string) error {
+	srcConn, openErr := zombiezen.NewConn(fileCfg.SourcePath)
+	if openErr != nil {
+		return fmt.Errorf("%q: open source db: %w", backupID, openErr)
+	}
+	defer func() {
+		if closeErr := srcConn.Close(); closeErr != nil {
+			h.logger.Error("Error closing source database connection", "error", closeErr)
+		}
+	}()
+
+	backupFn := h.onlineBackup // default
+	if fileCfg.Strategy == config.BackupStrategyVacuum {
+		backupFn = h.vacuumInto
+	}
+
+	f := backupFile{
+		backupID:   backupID,
+		time:       now,
+		compressed: fileCfg.Compression,
+	}
+	finalPath := filepath.Join(backupDir, f.String())
+
+	var err error
+	if fileCfg.Compression {
+		tempPath := h.buildTempPath(backupID, now)
+		tempFinalPath := finalPath + ".tmp" // same directory, os.Rename is atomic
+
+		// --- 5a: dump to temp ---
+		err = backupFn(srcConn, tempPath)
+		if err != nil {
+			removeErr := os.Remove(tempPath)
+			if removeErr != nil {
+				h.logger.Error("Failed to remove temp file after failed backup", "path", tempPath, "error", removeErr)
+			}
+			return fmt.Errorf("%q: %w", backupID, err)
+		}
+
+		// --- 5b: compress temp to .tmp in backupDir ---
+		err = h.compressFile(tempPath, tempFinalPath)
+		removeErr := os.Remove(tempPath)
+		if removeErr != nil {
+			h.logger.Error("Failed to remove temp file", "path", tempPath, "error", removeErr)
+		}
+		if err != nil {
+			removeErr = os.Remove(tempFinalPath)
+			if removeErr != nil {
+				h.logger.Error("Failed to remove partial .tmp file", "path", tempFinalPath, "error", removeErr)
+			}
+			return fmt.Errorf("%q: %w", backupID, err)
+		}
+
+		// --- 5c: atomic promote ---
+		err = os.Rename(tempFinalPath, finalPath)
+		if err != nil {
+			removeErr = os.Remove(tempFinalPath)
+			if removeErr != nil {
+				h.logger.Error("Failed to remove .tmp file after failed rename", "path", tempFinalPath, "error", removeErr)
+			}
+			return fmt.Errorf("%q: %w", backupID, err)
+		}
+	} else {
+		tempFinalPath := finalPath + ".tmp" // same directory, os.Rename is atomic
+
+		// --- 5a: dump to .tmp in backupDir ---
+		err = backupFn(srcConn, tempFinalPath)
+		if err != nil {
+			removeErr := os.Remove(tempFinalPath)
+			if removeErr != nil {
+				h.logger.Error("Failed to remove .tmp file after failed backup", "path", tempFinalPath, "error", removeErr)
+			}
+			return fmt.Errorf("%q: %w", backupID, err)
+		}
+
+		// --- 5b: atomic promote ---
+		err = os.Rename(tempFinalPath, finalPath)
+		if err != nil {
+			removeErr := os.Remove(tempFinalPath)
+			if removeErr != nil {
+				h.logger.Error("Failed to remove .tmp file after failed rename", "path", tempFinalPath, "error", removeErr)
+			}
+			return fmt.Errorf("%q: %w", backupID, err)
+		}
+
+		// --- 5c: update latest link ---
+		// Uncompressed only — the rsync pull client needs a stable
+		// filename to sync. Compressed .bck.gz is not consumable as-is,
+		// so no link is created for it.
+		latestPath := h.buildLatestPath(backupDir, backupID)
+		err = h.linkLatest(finalPath, latestPath)
+		if err != nil {
+			return fmt.Errorf("%q: %w", backupID, err)
+		}
+	}
+	return nil
+}
+
+// buildBackupID returns the prefix used in backup filenames and hardlinks.
 // Produces <key>-<basename> so same-basename source paths do not collide
 // (AGENTS.md: map keys are labels, not identifiers).
 //
-// Example: buildBackupName("app_db", "data/app.db") → "app_db-app.db"
-func (h *Handler) buildBackupName(key, sourcePath string) string {
+// Example: buildBackupID("app_db", "data/app.db") → "app_db-app.db"
+func (h *Handler) buildBackupID(key, sourcePath string) string {
 	return key + "-" + filepath.Base(sourcePath)
-}
-
-// buildCompressedPath returns the final destination path for a compressed
-// backup inside backupDir. Produces e.g. "backupDir/app.db-20250801T103000Z.bck.gz".
-func (h *Handler) buildCompressedPath(dbName string, now time.Time, backupDir string) string {
-	timestamp := now.UTC().Format(timestampFormat)
-	filename := fmt.Sprintf(backupCompressedFmt, dbName, timestamp)
-	return filepath.Join(backupDir, filename)
-}
-
-// buildUncompressedPath returns the final destination path for an uncompressed
-// backup inside backupDir. Produces e.g. "backupDir/app.db-20250801T103000Z.db".
-func (h *Handler) buildUncompressedPath(dbName string, now time.Time, backupDir string) string {
-	timestamp := now.UTC().Format(timestampFormat)
-	filename := fmt.Sprintf(backupFmt, dbName, timestamp)
-	return filepath.Join(backupDir, filename)
 }
 
 // buildTempPath returns a unique staging path in os.TempDir for the
@@ -241,40 +312,48 @@ func (h *Handler) buildLatestPath(backupDir, dbName string) string {
 	return filepath.Join(backupDir, fmt.Sprintf(backup.LatestFmt, dbName))
 }
 
-// latestBackupTimes scans backupDir once and returns the most recent
-// timestamp for each backupName derived from the configured source files.
+// latestBackupFiles scans backupDir once and returns the most recent backup
+// file for each backupID derived from the configured source files.
 // Errors are logged internally; an empty map is returned when the directory
 // is absent or unreadable (all backups will be treated as due).
-func (h *Handler) latestBackupTimes(backupDir string, files map[string]config.BackupLocalDbFile) map[string]time.Time {
-	backupNames := make([]string, 0, len(files))
+func (h *Handler) latestBackupFiles(backupDir string, files map[string]config.BackupLocalDbFile) map[string]backupFile {
+	backupIDs := make([]string, 0, len(files))
 	for key, f := range files {
 		if f.SourcePath == "" {
 			continue // deactivated entry, never backed up
 		}
-		backupNames = append(backupNames, h.buildBackupName(key, f.SourcePath))
+		backupIDs = append(backupIDs, h.buildBackupID(key, f.SourcePath))
 	}
 	entries, err := os.ReadDir(backupDir)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			h.logger.Warn("Failed to scan backup directory", "error", err)
 		}
-		return map[string]time.Time{}
+		return map[string]backupFile{}
 	}
-	times := make(map[string]time.Time, len(backupNames))
+	latest := make(map[string]backupFile, len(backupIDs))
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
 		name := entry.Name()
-		for _, bn := range backupNames {
-			ts, ok := h.parseBackupTimestamp(name, bn)
-			if ok && ts.After(times[bn]) {
-				times[bn] = ts
+		// Extension gate: only backup filenames reach the parser; everything
+		// else (stale .tmp, logs, etc.) is not a backup.
+		if !strings.HasSuffix(name, uncompressedExt) && !strings.HasSuffix(name, compressedExt) {
+			continue
+		}
+		parsed, err := parseBackupFile(name)
+		if err != nil {
+			continue // link, pre-feature backup, or junk — never a backup
+		}
+		for _, id := range backupIDs {
+			if parsed.backupID == id && parsed.time.After(latest[id].time) {
+				latest[id] = parsed
 				break
 			}
 		}
 	}
-	return times
+	return latest
 }
 
 // isBackupDue returns true if frequency has elapsed since latestTime.
@@ -284,23 +363,6 @@ func (h *Handler) isBackupDue(latestTime time.Time, frequency time.Duration, now
 		return true
 	}
 	return now.Sub(latestTime) >= frequency
-}
-
-// parseBackupTimestamp extracts the UTC timestamp from a backup filename.
-// Filenames follow the pattern {dbName}-{YYYYMMDDTHHMMSSZ}{ext}.
-// Filenames ending in .tmp are rejected to prevent stale artifacts from
-// being mistaken for valid backups.
-func (h *Handler) parseBackupTimestamp(filename, dbName string) (time.Time, bool) {
-	if strings.HasSuffix(filename, ".tmp") {
-		return time.Time{}, false
-	}
-	prefix := dbName + "-"
-	rest, ok := strings.CutPrefix(filename, prefix)
-	if !ok || len(rest) < timestampLen {
-		return time.Time{}, false
-	}
-	ts, err := time.Parse(timestampFormat, rest[:timestampLen])
-	return ts, err == nil
 }
 
 // linkLatest atomically replaces latestPath to point at the backup file.
@@ -322,18 +384,8 @@ func (h *Handler) linkLatest(backupPath, latestPath string) error {
 }
 
 // vacuumInto creates a clean, defragmented copy of the database.
-func (h *Handler) vacuumInto(sourcePath, destPath string) error {
-	sourceConn, err := zombiezen.NewConn(sourcePath)
-	if err != nil {
-		return fmt.Errorf("failed to open source db for vacuum: %w", err)
-	}
-	defer func() {
-		if err := sourceConn.Close(); err != nil {
-			h.logger.Error("Error closing source database connection", "error", err)
-		}
-	}()
-
-	stmt, err := sourceConn.Prepare(fmt.Sprintf("VACUUM INTO '%s';", destPath))
+func (h *Handler) vacuumInto(srcConn *sqlite.Conn, destPath string) error {
+	stmt, err := srcConn.Prepare(fmt.Sprintf("VACUUM INTO '%s';", destPath))
 	if err != nil {
 		return fmt.Errorf("failed to prepare vacuum statement: %w", err)
 	}
@@ -350,20 +402,10 @@ func (h *Handler) vacuumInto(sourcePath, destPath string) error {
 }
 
 // onlineBackup performs a live backup using the SQLite Online Backup API.
-func (h *Handler) onlineBackup(sourcePath, destPath string) error {
+func (h *Handler) onlineBackup(srcConn *sqlite.Conn, destPath string) error {
 	backupCfg := h.configProvider.Get().BackupLocal
 	pagesPerStep := backupCfg.OnlinePagesPerStep
 	sleepInterval := backupCfg.OnlineSleepInterval.Duration
-
-	srcConn, err := zombiezen.NewConn(sourcePath)
-	if err != nil {
-		return fmt.Errorf("failed to open source db for online backup: %w", err)
-	}
-	defer func() {
-		if err := srcConn.Close(); err != nil {
-			h.logger.Error("Error closing source database connection", "error", err)
-		}
-	}()
 
 	destConn, err := zombiezen.NewConn(destPath)
 	if err != nil {

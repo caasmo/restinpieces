@@ -3,6 +3,7 @@ package handlers
 import (
 	"compress/gzip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -205,14 +206,12 @@ func TestBackupHandler_Handle_SingleDB(t *testing.T) {
 
 			// Verify the backup file exists
 			dbName := "source-source.db"
-			timestamp := mockTime.UTC().Format(timestampFormat)
-			var expectedPath string
 			isCompressed := tc.compression
-			if isCompressed {
-				expectedPath = filepath.Join(backupDir, fmt.Sprintf(backupCompressedFmt, dbName, timestamp))
-			} else {
-				expectedPath = filepath.Join(backupDir, fmt.Sprintf(backupFmt, dbName, timestamp))
-			}
+			expectedPath := filepath.Join(backupDir, (backupFile{
+				backupID:   dbName,
+				time:       mockTime,
+				compressed: isCompressed,
+			}).String())
 			if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
 				t.Fatalf("Expected backup file not found at %s", expectedPath)
 			}
@@ -288,8 +287,11 @@ func TestBackupHandler_Handle_MultiDB(t *testing.T) {
 	}
 
 	// Verify the uncompressed backup file exists and has a latest link
-	timestamp := mockTime.UTC().Format(timestampFormat)
-	uncompressedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "first-source.db", timestamp))
+	uncompressedPath := filepath.Join(backupDir, (backupFile{
+		backupID:   "first-source.db",
+		time:       mockTime,
+		compressed: false,
+	}).String())
 	if _, err := os.Stat(uncompressedPath); os.IsNotExist(err) {
 		t.Fatalf("Expected uncompressed backup not found at %s", uncompressedPath)
 	}
@@ -301,7 +303,11 @@ func TestBackupHandler_Handle_MultiDB(t *testing.T) {
 	}
 
 	// Verify the compressed backup file exists but has no latest link
-	compressedPath := filepath.Join(backupDir, fmt.Sprintf(backupCompressedFmt, "second-second.db", timestamp))
+	compressedPath := filepath.Join(backupDir, (backupFile{
+		backupID:   "second-second.db",
+		time:       mockTime,
+		compressed: true,
+	}).String())
 	if _, err := os.Stat(compressedPath); os.IsNotExist(err) {
 		t.Fatalf("Expected compressed backup not found at %s", compressedPath)
 	}
@@ -358,8 +364,11 @@ func TestBackupHandler_Handle_EmptySourcePathSkipped(t *testing.T) {
 	}
 
 	// The active entry is backed up; the deactivated entry produces nothing.
-	timestamp := mockTime.UTC().Format(timestampFormat)
-	activePath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "active-source.db", timestamp))
+	activePath := filepath.Join(backupDir, (backupFile{
+		backupID:   "active-source.db",
+		time:       mockTime,
+		compressed: false,
+	}).String())
 	if _, err := os.Stat(activePath); os.IsNotExist(err) {
 		t.Fatalf("expected active backup not found at %s", activePath)
 	}
@@ -423,11 +432,16 @@ func TestBackupHandler_Handle_FrequencyRespected(t *testing.T) {
 
 	// Verify only two backup files exist (first and third)
 	dbName := "source-source.db"
-	timestamp0 := t0.UTC().Format(timestampFormat)
-	timestamp2 := t2.UTC().Format(timestampFormat)
-
-	backup1 := filepath.Join(backupDir, fmt.Sprintf(backupFmt, dbName, timestamp0))
-	backup2 := filepath.Join(backupDir, fmt.Sprintf(backupFmt, dbName, timestamp2))
+	backup1 := filepath.Join(backupDir, (backupFile{
+		backupID:   dbName,
+		time:       t0,
+		compressed: false,
+	}).String())
+	backup2 := filepath.Join(backupDir, (backupFile{
+		backupID:   dbName,
+		time:       t2,
+		compressed: false,
+	}).String())
 
 	if _, err := os.Stat(backup1); os.IsNotExist(err) {
 		t.Fatalf("Expected backup 1 not found at %s", backup1)
@@ -437,8 +451,11 @@ func TestBackupHandler_Handle_FrequencyRespected(t *testing.T) {
 	}
 
 	// Count total backup files (should be exactly 2)
-	timestamp1 := t1.UTC().Format(timestampFormat)
-	skippedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, dbName, timestamp1))
+	skippedPath := filepath.Join(backupDir, (backupFile{
+		backupID:   dbName,
+		time:       t1,
+		compressed: false,
+	}).String())
 	if _, err := os.Stat(skippedPath); !os.IsNotExist(err) {
 		t.Fatalf("Unexpected backup file for skipped attempt at %s", skippedPath)
 	}
@@ -508,8 +525,11 @@ func TestBackupHandler_Handle_EmptyDatabase(t *testing.T) {
 		t.Fatalf("handle() with empty db error = %v, want nil", err)
 	}
 
-	timestamp := mockTime.UTC().Format(timestampFormat)
-	expectedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "source-source.db", timestamp))
+	expectedPath := filepath.Join(backupDir, (backupFile{
+		backupID:   "source-source.db",
+		time:       mockTime,
+		compressed: false,
+	}).String())
 
 	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
 		t.Fatalf("Expected backup file not found at %s", expectedPath)
@@ -548,8 +568,11 @@ func TestBackupHandler_Handle_EmptySource(t *testing.T) {
 		t.Fatalf("handle() with empty source db error = %v, want nil", err)
 	}
 
-	timestamp := mockTime.UTC().Format(timestampFormat)
-	expectedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "source-empty.db", timestamp))
+	expectedPath := filepath.Join(backupDir, (backupFile{
+		backupID:   "source-empty.db",
+		time:       mockTime,
+		compressed: false,
+	}).String())
 	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
 		t.Fatalf("Expected backup file not found at %s", expectedPath)
 	}
@@ -629,31 +652,51 @@ func TestBackupHandler_Handle_MissingSourceFile(t *testing.T) {
 	}
 }
 
-func TestBuildCompressedPath(t *testing.T) {
+func TestBackupFileString(t *testing.T) {
 	mockTime := time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC)
-	backupDir := "/tmp/backups"
-	dbName := "app.db"
 
-	handler := &Handler{}
-	path := handler.buildCompressedPath(dbName, mockTime, backupDir)
+	tests := []struct {
+		name string
+		file backupFile
+		want string
+	}{
+		{
+			name: "compressed",
+			file: backupFile{backupID: "app.db", time: mockTime, compressed: true},
+			want: "app.db-20250801T103000Z.bck.gz",
+		},
+		{
+			name: "uncompressed",
+			file: backupFile{backupID: "app.db", time: mockTime},
+			want: "app.db-20250801T103000Z.db",
+		},
+	}
 
-	expected := filepath.Join(backupDir, "app.db-20250801T103000Z.bck.gz")
-	if path != expected {
-		t.Fatalf("buildCompressedPath() = %q, want %q", path, expected)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.file.String(); got != tt.want {
+				t.Fatalf("String() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 
-func TestBuildUncompressedPath(t *testing.T) {
+func TestBackupFileRoundTrip(t *testing.T) {
 	mockTime := time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC)
-	backupDir := "/tmp/backups"
-	dbName := "app.db"
-
-	handler := &Handler{}
-	path := handler.buildUncompressedPath(dbName, mockTime, backupDir)
-
-	expected := filepath.Join(backupDir, "app.db-20250801T103000Z.db")
-	if path != expected {
-		t.Fatalf("buildUncompressedPath() = %q, want %q", path, expected)
+	tests := []backupFile{
+		{backupID: "app.db", time: mockTime, compressed: true},
+		{backupID: "app.db", time: mockTime},
+		{backupID: "app_db-app.db", time: mockTime, compressed: true},
+	}
+	for _, f := range tests {
+		got, err := parseBackupFile(f.String())
+		if err != nil {
+			t.Errorf("round-trip %q: %v", f.String(), err)
+			continue
+		}
+		if got.backupID != f.backupID || !got.time.Equal(f.time) || got.compressed != f.compressed {
+			t.Errorf("round-trip %q = %+v, want %+v", f.String(), got, f)
+		}
 	}
 }
 
@@ -673,73 +716,74 @@ func TestBuildTempPath(t *testing.T) {
 	}
 }
 
-func TestParseBackupTimestamp(t *testing.T) {
-	handler := &Handler{}
-
+func TestParseBackupFile(t *testing.T) {
 	tests := []struct {
 		name     string
 		filename string
-		dbName   string
+		want     backupFile
 		wantOK   bool
-		wantTS   string // empty if !wantOK
 	}{
 		{
 			name:     "valid compressed",
 			filename: "app.db-20250801T103000Z.bck.gz",
-			dbName:   "app.db",
-			wantOK:   true,
-			wantTS:   "2025-08-01T10:30:00Z",
+			want: backupFile{
+				backupID:   "app.db",
+				time:       time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC),
+				compressed: true,
+			},
+			wantOK: true,
 		},
 		{
 			name:     "valid uncompressed",
 			filename: "app.db-20250801T103000Z.db",
-			dbName:   "app.db",
-			wantOK:   true,
-			wantTS:   "2025-08-01T10:30:00Z",
+			want: backupFile{
+				backupID:   "app.db",
+				time:       time.Date(2025, 8, 1, 10, 30, 0, 0, time.UTC),
+				compressed: false,
+			},
+			wantOK: true,
 		},
 		{
-			name:     "wrong prefix",
-			filename: "other.db-20250801T103000Z.bck.gz",
-			dbName:   "app.db",
+			name:     "legacy versioned filename ignored",
+			filename: "app.db-20250801T103000Z-4821.bck.gz",
 			wantOK:   false,
 		},
 		{
 			name:     "stale tmp file",
 			filename: "app.db-20250801T103000Z.bck.gz.tmp",
-			dbName:   "app.db",
 			wantOK:   false,
 		},
 		{
-			name:     "too short timestamp",
-			filename: "app.db-20250801.bck.gz",
-			dbName:   "app.db",
-			wantOK:   false,
-		},
-		{
-			name:     "invalid date characters",
-			filename: "app.db-20ABCD01T103000Z.bck.gz",
-			dbName:   "app.db",
+			name:     "regexp matches but invalid date",
+			filename: "app.db-20251301T103000Z.bck.gz",
 			wantOK:   false,
 		},
 		{
 			name:     "latest link ignored",
 			filename: "latest-app.db",
-			dbName:   "app.db",
 			wantOK:   false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ts, ok := handler.parseBackupTimestamp(tt.filename, tt.dbName)
-			if ok != tt.wantOK {
-				t.Fatalf("parseBackupTimestamp() ok = %v, want %v", ok, tt.wantOK)
-			}
+			got, err := parseBackupFile(tt.filename)
 			if tt.wantOK {
-				expectedTS, _ := time.Parse(time.RFC3339, tt.wantTS)
-				if !ts.Equal(expectedTS) {
-					t.Fatalf("parseBackupTimestamp() ts = %v, want %v", ts, expectedTS)
+				if err != nil {
+					t.Fatalf("parseBackupFile(%q) error = %v, want nil", tt.filename, err)
 				}
+				if got.backupID != tt.want.backupID ||
+					!got.time.Equal(tt.want.time) ||
+					got.compressed != tt.want.compressed {
+					t.Fatalf("parseBackupFile(%q) = %+v, want %+v", tt.filename, got, tt.want)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatalf("parseBackupFile(%q) expected error, got nil", tt.filename)
+			}
+			if !errors.Is(err, errInvalidBackupFile) {
+				t.Fatalf("parseBackupFile(%q) error = %v, want wrapping of errInvalidBackupFile", tt.filename, err)
 			}
 		})
 	}
@@ -903,8 +947,11 @@ func TestModuloLogger_Log(t *testing.T) {
 	}
 
 	// Verify backup exists
-	timestamp := mockTime.UTC().Format(timestampFormat)
-	expectedPath := filepath.Join(backupDir, fmt.Sprintf(backupFmt, "source-source.db", timestamp))
+	expectedPath := filepath.Join(backupDir, (backupFile{
+		backupID:   "source-source.db",
+		time:       mockTime,
+		compressed: false,
+	}).String())
 	if _, err := os.Stat(expectedPath); os.IsNotExist(err) {
 		t.Fatalf("Expected backup file not found at %s", expectedPath)
 	}

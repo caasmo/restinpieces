@@ -123,7 +123,7 @@ Uses `VACUUM INTO` to create a clean, defragmented copy. Faster than online but 
 
 ## Per-File Frequency
 
-Each database has its own `frequency` setting. The handler checks the most recent backup timestamp for each file by scanning `backup_dir` for filenames matching the pattern `{dbName}-{YYYYMMDDTHHMMSSZ}{ext}`. If the elapsed time since the latest backup is less than the configured frequency, that file is skipped. A file with no prior backup is always due.
+Each database has its own `frequency` setting. The handler checks the most recent backup timestamp for each file by scanning `backup_dir` for filenames matching the pattern `{backupID}-{YYYYMMDDTHHMMSSZ}{ext}`. If the elapsed time since the latest backup is less than the configured frequency, that file is skipped. A file with no prior backup is always due.
 
 This allows different schedules for different databases (e.g. critical data every hour, analytics once a day).
 
@@ -131,9 +131,9 @@ This allows different schedules for different databases (e.g. critical data ever
 
 Backup files are written to `backup_dir` using a lexicographically sortable UTC timestamp:
 
-- **Compressed**: `{dbName}-{YYYYMMDDTHHMMSSZ}.bck.gz`  
+- **Compressed**: `{backupID}-{YYYYMMDDTHHMMSSZ}.bck.gz`  
   Example: `app.db-20250801T103000Z.bck.gz`
-- **Uncompressed**: `{dbName}-{YYYYMMDDTHHMMSSZ}.db`  
+- **Uncompressed**: `{backupID}-{YYYYMMDDTHHMMSSZ}.db`  
   Example: `app.db-20250801T103000Z.db`
 
 The timestamp format `20060102T150405Z` sorts chronologically by string order.
