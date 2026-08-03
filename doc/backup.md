@@ -39,6 +39,27 @@ ripc config set backup_local.backup_dir /data/backups
 
 All backups and `latest-` links are written there. With an empty `backup_dir` the backup feature stays deactivated.
 
+## Deactivating Local Backups
+
+To deactivate the entire backup feature, set `backup_dir` back to the empty string:
+
+```bash
+ripc config set backup_local.backup_dir ""
+```
+
+Config changes are picked up on `SIGHUP` reload (no restart needed). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), reload the unit:
+
+```bash
+systemctl reload restinpieces
+```
+
+Once reloaded, the backup job detects the empty `backup_dir` and skips all work — no backup files and no `latest-` hardlinks are created or updated, and the job logs `backup_dir is empty; backup deactivated.`. This is not an error; the job simply does nothing.
+
+Deactivating `backup_dir`:
+
+- **does not delete** existing backups — files already in `backup_dir` are left untouched.
+- **does not require** removing the `backup` job — leaving it scheduled is harmless since it becomes a no-op. You can re-activate backups later by setting `backup_dir` to a directory again and running `systemctl reload restinpieces`; the job picks it up on the next tick.
+
 ## Job Configuration
 
 Configuration lives under the `[backup_local]` TOML section, defined in [config/config.go](../config/config.go):

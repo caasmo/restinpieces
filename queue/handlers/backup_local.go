@@ -22,7 +22,6 @@ import (
 
 const (
 	JobTypeBackupLocal = "job_type_backup_local"
-	ScopeDbBackup      = "sqlite_backup"
 
 	// timestampFormat is the UTC timestamp layout used in backup filenames.
 	// It is lexicographically sortable (chronological order equals string order).
@@ -118,7 +117,7 @@ func NewHandler(provider *config.Provider, logger *slog.Logger) *Handler {
 	}
 	return &Handler{
 		configProvider: provider,
-		logger:         logger.With("job_handler", "sqlite_backup"),
+		logger:         logger.With("job_handler", JobTypeBackupLocal),
 	}
 }
 
