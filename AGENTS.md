@@ -20,7 +20,7 @@ v2's `unstable/edit` sub-package now provides `Set`, `Has`, `Get`, `Delete` with
 
 Config structs **MUST NOT** contain slices for collections of items. Use `map[string]T` instead.
 
-**Why**: `ripc set`, `get`, and `paths` operate on dot-paths like `server.addr`. Maps produce stable paths (`backup_local.files.app_db.source_path`). Slices produce unstable paths (`backup_local.files[2].source_path`) — the index breaks on insertions and deletions. Maps make every path a permanent, addressable key.
+**Why**: `ripc set`, `get`, and `paths` operate on dot-paths like `server.addr`. Maps produce stable paths (`backup.files.app_db.source_path`). Slices produce unstable paths (`backup.files[2].source_path`) — the index breaks on insertions and deletions. Maps make every path a permanent, addressable key.
 
 ### Config: map key rules
 
@@ -28,14 +28,13 @@ Config structs **MUST NOT** contain slices for collections of items. Use `map[st
 - Domain identifiers belong as struct fields inside the map value (e.g. `OAuth2Provider.Name = "google"`).
 
 Current violations (to be refactored):
-- `BackupLocal.Files` is `[]BackupLocalDbFile` — must become `map[string]BackupLocalDbFile`
 - `OAuth2Providers` is `map[string]OAuth2Provider` but uses the key as the provider identifier — must move identifier into the struct and make the key a label
 
 ### Config: path fields
 
-All config path fields (e.g. `backup_dir`, `source_path`, `db_path`, `public_dir`) are absolute paths or relative paths resolved against the binary's current working directory (CWD). Absolute paths are used as-is. No path in config is ever resolved against a config file location — there is no config file, only a database. When deployed via the canonical systemd service, the CWD is `/home/<app>`, so relative paths typically start with `data/`.
+All config path fields (e.g. `dest_path`, `source_path`, `db_path`, `public_dir`) are absolute paths or relative paths resolved against the binary's current working directory (CWD). Absolute paths are used as-is. No path in config is ever resolved against a config file location — there is no config file, only a database. When deployed via the canonical systemd service, the CWD is `/home/<app>`, so relative paths typically start with `data/`.
 
-An empty path `""` is the zero value and means **deactivated**, never the CWD: `backup_local.backup_dir = ""` deactivates the backup feature and `backup_local.files.<key>.source_path = ""` deactivates that file entry. Validation accepts `""` and requires non-empty path fields to resolve to the required kind (`backup_dir` to an existing directory, `source_path` to an existing file).
+An empty path `""` is the zero value and means **deactivated**, never the CWD: `backup.files.<key>.source_path = ""` deactivates that file entry (and an empty `backup.files` map deactivates the backup feature). Validation accepts `""` and requires non-empty path fields to resolve to the required kind (`dest_path` to an existing directory, `source_path` to an existing file).
 
 ### CLI help framework: shared copy-paste file
 

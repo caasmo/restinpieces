@@ -60,7 +60,7 @@ The "one process" paradigm intentionally avoids external dependencies like separ
 
 To address this, the framework provides robust mechanisms for data protection and recovery:
 
-- **Database Snapshots**: The built-in backup system uses a two-phase push-pull design. A recurrent [background job](queue/handlers/backup_local.go) creates compressed SQLite snapshots directly on the server (push phase). A standalone [client](https://github.com/caasmo/restinpieces-backup) then retrieves those snapshots via SFTP for secure off-server storage and verifies their integrity (pull phase). The snapshot job is configured through the [application's settings](config/config.go) and supports two strategies:
+- **Database Snapshots**: The backup system uses a two-phase push-pull design. A standalone [daemon](https://github.com/caasmo/restinpieces-backup) creates compressed SQLite snapshots directly on the server (push phase). Clients from the same repository then retrieve those snapshots via SFTP or rsync for secure off-server storage and verify their integrity (pull phase). The backup is configured through the [application's settings](config/config.go) (`[backup]` section) and supports two strategies:
 
   - **Online Mode** (default): Uses SQLite's Online Backup API — non-locking, copies page-by-page with configurable pauses to reduce I/O contention. **Recommended for most production systems.**
   - **Vacuum Mode**: Uses `VACUUM INTO` to create a clean, defragmented copy. Faster but **blocks all write operations** for the duration. Suitable for low-write databases or scheduled maintenance windows.
