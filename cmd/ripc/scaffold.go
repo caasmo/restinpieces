@@ -14,15 +14,15 @@ import (
 var (
 	ErrScaffoldTypeUnknown   = errors.New("unknown scaffold type")
 	ErrScaffoldKeyExists     = errors.New("key already exists for scaffold type")
-	ErrScaffoldParentMissing = errors.New("parent section not found in config; run 'config migrate' first")
+	ErrScaffoldParentMissing = errors.New("parent section not found in config")
 )
 
 const (
 	ScaffoldTypeBackup = "backup"
 	ScaffoldTypeOAuth2 = "oauth2"
 
-	scaffoldKeyBackup  = "backup.files"
-	scaffoldKeyOAuth2  = "oauth2_providers"
+	scaffoldKeyBackup = "backup.files"
+	scaffoldKeyOAuth2 = "oauth2_providers"
 
 	scaffoldParentBackup = "backup"
 )
@@ -42,10 +42,10 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, parentPath string, d
 	}
 }
 
-func printConfigScaffoldUsage(w io.Writer) {
+func printScaffoldUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config scaffold [options] <type> <key>",
-		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'config migrate' first if needed.",
+		Usage:       "scaffold [options] <type> <key>",
+		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed.",
 		Args: []ArgSpec{
 			{"type", "Scaffold type (backup or oauth2)"},
 			{"key", "Key of the new entry"},
@@ -60,20 +60,31 @@ func printConfigScaffoldUsage(w io.Writer) {
 			},
 		},
 		Options: []OptSpec{
-			commandConfig.Opt("scope"),
-			commandConfig.Opt("desc"),
+			commandOptions.Opt("scope"),
+			commandOptions.Opt("desc"),
 		},
 		Examples: []string{
-			"ripc config scaffold backup app_db",
-			"ripc config scaffold oauth2 my_google",
-			"ripc config scaffold --scope my-app backup analytics_db",
-			"ripc config scaffold --scope my-app --desc \"scaffold analytics db\" backup analytics_db",
+			"ripc scaffold backup app_db",
+			"ripc scaffold oauth2 my_google",
+			"ripc scaffold --scope my-app backup analytics_db",
+			"ripc scaffold --scope my-app --desc \"scaffold analytics db\" backup analytics_db",
 		},
 	}
-	help.Print(w, prog, "config", "scaffold")
+	help.Print(w, prog)
 }
 
-func handleConfigScaffoldCommand(secureStore config.SecureStore, opts ConfigScaffoldOptions, ui UI) error {
+// handleScaffoldCommand parses the arguments for the 'scaffold' command and
+// executes the core logic, returning any error to the caller.
+func handleScaffoldCommand(secureStore config.SecureStore, args []string, ui UI) error {
+	opts, err := parseScaffoldArgs(args)
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			printScaffoldUsage(ui.Out)
+			return nil
+		}
+		printScaffoldUsage(ui.Err)
+		return err
+	}
 	return scaffoldConfigValue(ui, secureStore, opts.Scope, opts.Desc, opts.ScaffoldType, opts.Key)
 }
 
@@ -107,7 +118,7 @@ func scaffoldConfigValue(
 	}
 
 	if !tree.Has(parentPath) {
-		return fmt.Errorf("%w: '%s' not found in scope '%s'; run 'ripc config migrate' to initialize missing config sections",
+		return fmt.Errorf("%w: '%s' not found in scope '%s'; run 'ripc migrate' to initialize missing config sections",
 			ErrScaffoldParentMissing, parentPath, scope)
 	}
 
@@ -155,34 +166,37 @@ func scaffoldConfigValue(
 	return nil
 }
 
-// ConfigScaffoldOptions holds the parsed options for the 'config scaffold' subcommand.
-type ConfigScaffoldOptions struct {
+// ScaffoldOptions holds the parsed options for the 'scaffold' command.
+type ScaffoldOptions struct {
 	Scope        string // --scope
 	Desc         string // --desc
 	ScaffoldType string // positional type argument
 	Key          string // positional key argument
 }
 
-// parseConfigScaffoldArgs parses the arguments for the 'scaffold' subcommand.
-func parseConfigScaffoldArgs(args []string) (ConfigScaffoldOptions, error) {
+// parseScaffoldArgs parses the arguments for the 'scaffold' command.
+func parseScaffoldArgs(args []string) (ScaffoldOptions, error) {
 	scaffoldCmd := flag.NewFlagSet("scaffold", flag.ContinueOnError)
 	scaffoldCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Opt("scope")
-	descOpt := commandConfig.Opt("desc")
+	scopeOpt := commandOptions.Opt("scope")
+	descOpt := commandOptions.Opt("desc")
 
-	var opts ConfigScaffoldOptions
+	var opts ScaffoldOptions
 	scaffoldCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 	scaffoldCmd.StringVar(&opts.Desc, "desc", descOpt.DefaultValue, descOpt.Usage)
 
 	err := scaffoldCmd.Parse(args)
 	if err != nil {
-		return ConfigScaffoldOptions{}, fmt.Errorf("parsing scaffold flags: %w", err)
+		if errors.Is(err, flag.ErrHelp) {
+			return ScaffoldOptions{}, flag.ErrHelp
+		}
+		return ScaffoldOptions{}, fmt.Errorf("parsing scaffold flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if scaffoldCmd.NArg() < 2 {
-		return ConfigScaffoldOptions{}, fmt.Errorf("'scaffold' requires <type> and <key> arguments: %w", ErrMissingArgument)
+		return ScaffoldOptions{}, fmt.Errorf("'scaffold' requires <type> and <key> arguments: %w", ErrMissingArgument)
 	}
 	if scaffoldCmd.NArg() > 2 {
-		return ConfigScaffoldOptions{}, fmt.Errorf("'scaffold' takes exactly two arguments: type and key: %w", ErrTooManyArguments)
+		return ScaffoldOptions{}, fmt.Errorf("'scaffold' takes exactly two arguments: type and key: %w", ErrTooManyArguments)
 	}
 	opts.ScaffoldType = scaffoldCmd.Arg(0)
 	opts.Key = scaffoldCmd.Arg(1)

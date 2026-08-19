@@ -92,7 +92,7 @@ func TestRun(t *testing.T) {
 			setup: func(t *testing.T, dir string) []string {
 				ageKeyPath := createDummyAgeKeyFile(t, dir)
 				dbPath := filepath.Join(dir, "nonexistent.db") // Does not exist
-				return []string{"-agekey", ageKeyPath, "-dbpath", dbPath, "config", "list"}
+				return []string{"-agekey", ageKeyPath, "-dbpath", dbPath, "list"}
 			},
 			expectedErr: ErrDBNotFound,
 		},

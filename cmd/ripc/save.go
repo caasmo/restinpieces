@@ -17,29 +17,38 @@ var (
 	ErrReadFileFailed = errors.New("failed to read file")
 )
 
-func printConfigSaveUsage(w io.Writer) {
+func printSaveUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config save [options] <file>",
+		Usage:       "save [options] <file>",
 		Description: "Saves file contents to the configuration.",
 		Args: []ArgSpec{
 			{"file", "Path to the configuration file to save"},
 		},
 		Options: []OptSpec{
-			commandConfig.Opt("scope"),
-			commandConfig.Opt("format"),
-			commandConfig.Opt("desc"),
+			commandOptions.Opt("scope"),
+			commandOptions.Opt("format"),
+			commandOptions.Opt("desc"),
 		},
 		Examples: []string{
-			"ripc config save config.toml",
-			"ripc config save --scope my-app config.toml",
+			"ripc save config.toml",
+			"ripc save --scope my-app config.toml",
 		},
 	}
-	help.Print(w, prog, "config", "save")
+	help.Print(w, prog)
 }
 
-// handleConfigSaveCommand is the command-level wrapper. It executes the core logic
-// and returns any error to the caller.
-func handleConfigSaveCommand(secureStore config.SecureStore, opts ConfigSaveOptions, ui UI) error {
+// handleSaveCommand parses the arguments for the 'save' command and executes
+// the core logic, returning any error to the caller.
+func handleSaveCommand(secureStore config.SecureStore, args []string, ui UI) error {
+	opts, err := parseSaveArgs(args)
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			printSaveUsage(ui.Out)
+			return nil
+		}
+		printSaveUsage(ui.Err)
+		return err
+	}
 	return saveConfigFromFile(ui, secureStore, opts.Scope, opts.Format, opts.Desc, opts.Filename)
 }
 
@@ -85,36 +94,39 @@ func saveConfigFromData(ui UI, secureStore config.SecureStore, scope, filename s
 	return nil
 }
 
-// ConfigSaveOptions holds the parsed options for the 'config save' subcommand.
-type ConfigSaveOptions struct {
+// SaveOptions holds the parsed options for the 'save' command.
+type SaveOptions struct {
 	Scope    string // --scope
 	Format   string // --format
 	Desc     string // --desc
 	Filename string // positional filename argument
 }
 
-// parseConfigSaveArgs parses the arguments for the 'save' subcommand.
-func parseConfigSaveArgs(args []string) (ConfigSaveOptions, error) {
+// parseSaveArgs parses the arguments for the 'save' command.
+func parseSaveArgs(args []string) (SaveOptions, error) {
 	saveCmd := flag.NewFlagSet("save", flag.ContinueOnError)
 	saveCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Opt("scope")
-	formatOpt := commandConfig.Opt("format")
-	descOpt := commandConfig.Opt("desc")
+	scopeOpt := commandOptions.Opt("scope")
+	formatOpt := commandOptions.Opt("format")
+	descOpt := commandOptions.Opt("desc")
 
-	var opts ConfigSaveOptions
+	var opts SaveOptions
 	saveCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 	saveCmd.StringVar(&opts.Format, "format", "", formatOpt.Usage) // Corrected default value
 	saveCmd.StringVar(&opts.Desc, "desc", descOpt.DefaultValue, descOpt.Usage)
 
 	err := saveCmd.Parse(args)
 	if err != nil {
-		return ConfigSaveOptions{}, fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)
+		if errors.Is(err, flag.ErrHelp) {
+			return SaveOptions{}, flag.ErrHelp
+		}
+		return SaveOptions{}, fmt.Errorf("parsing save flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if saveCmd.NArg() < 1 {
-		return ConfigSaveOptions{}, fmt.Errorf("'save' requires filename argument: %w", ErrMissingArgument)
+		return SaveOptions{}, fmt.Errorf("'save' requires filename argument: %w", ErrMissingArgument)
 	}
 	if saveCmd.NArg() > 1 {
-		return ConfigSaveOptions{}, fmt.Errorf("'save' command takes at most one filename argument: %w", ErrTooManyArguments)
+		return SaveOptions{}, fmt.Errorf("'save' command takes at most one filename argument: %w", ErrTooManyArguments)
 	}
 	opts.Filename = saveCmd.Arg(0)
 	return opts, nil

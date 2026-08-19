@@ -213,7 +213,7 @@ func TestParseScaffoldArgs(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			opts, err := parseConfigScaffoldArgs(tc.args)
+			opts, err := parseScaffoldArgs(tc.args)
 			if tc.wantErrContain != "" {
 				if err == nil {
 					t.Fatalf("expected error containing %q, got nil", tc.wantErrContain)

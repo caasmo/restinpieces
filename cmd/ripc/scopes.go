@@ -16,20 +16,24 @@ var (
 	ErrDbFinalize = errors.New("failed to finalize statement")
 )
 
-func printConfigScopesUsage(w io.Writer) {
+func printScopesUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config scopes",
+		Usage:       "scopes",
 		Description: "Lists all configuration scopes.",
 		Examples: []string{
-			"ripc config scopes",
+			"ripc scopes",
 		},
 	}
-	help.Print(w, prog, "config", "scopes")
+	help.Print(w, prog)
 }
 
-// handleConfigScopesCommand is the command-level wrapper. It executes the core logic
-// and returns any error to the caller.
-func handleConfigScopesCommand(pool *sqlitex.Pool, ui UI) error {
+// handleScopesCommand parses the arguments for the 'scopes' command and
+// executes the core logic, returning any error to the caller.
+func handleScopesCommand(pool *sqlitex.Pool, args []string, ui UI) error {
+	if err := parseScopesArgs(args); err != nil {
+		printScopesUsage(ui.Err)
+		return err
+	}
 	return listScopes(ui, pool)
 }
 
@@ -72,8 +76,8 @@ func listScopes(ui UI, pool *sqlitex.Pool) (err error) {
 	return nil
 }
 
-// parseConfigScopesArgs parses the arguments for the 'scopes' subcommand.
-func parseConfigScopesArgs(args []string) error {
+// parseScopesArgs parses the arguments for the 'scopes' command.
+func parseScopesArgs(args []string) error {
 	if len(args) > 0 {
 		return fmt.Errorf("'scopes' command does not take any arguments: %w", ErrTooManyArguments)
 	}

@@ -26,27 +26,35 @@ var (
 	ErrDiffGenerate = errors.New("failed to generate diff")
 )
 
-func printConfigDiffUsage(w io.Writer) {
+func printDiffUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config diff [options] <generation>",
+		Usage:       "diff [options] <generation>",
 		Description: "Compares a configuration generation with the latest.",
 		Args: []ArgSpec{
 			{"generation", "Generation number to compare against the latest"},
 		},
 		Options: []OptSpec{
-			commandConfig.Opt("scope"),
+			commandOptions.Opt("scope"),
 		},
 		Examples: []string{
-			"ripc config diff 3",
-			"ripc config diff --scope my-app 3",
+			"ripc diff 3",
+			"ripc diff --scope my-app 3",
 		},
 	}
-	help.Print(w, prog, "config", "diff")
+	help.Print(w, prog)
 }
 
-func handleConfigDiffCommand(secureStore config.SecureStore, opts ConfigDiffOptions, ui UI) error {
-	if opts.Scope == "" {
-		opts.Scope = config.ScopeApplication
+// handleDiffCommand parses the arguments for the 'diff' command and executes
+// the core logic, returning any error to the caller.
+func handleDiffCommand(secureStore config.SecureStore, args []string, ui UI) error {
+	opts, err := parseDiffArgs(args)
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			printDiffUsage(ui.Out)
+			return nil
+		}
+		printDiffUsage(ui.Err)
+		return err
 	}
 	return diffConfig(ui, secureStore, opts.Scope, opts.Generation)
 }
@@ -54,6 +62,10 @@ func handleConfigDiffCommand(secureStore config.SecureStore, opts ConfigDiffOpti
 // diffConfig contains the testable core logic for diffing configs.
 // It accepts UI for output, making it easy to test.
 func diffConfig(ui UI, secureStore config.SecureStore, scope string, generation int) error {
+	if scope == "" {
+		scope = config.ScopeApplication
+	}
+
 	// Get latest config (generation 0)
 	latestData, _, err := secureStore.Get(scope, 0)
 	if err != nil {
@@ -132,34 +144,37 @@ func diffConfig(ui UI, secureStore config.SecureStore, scope string, generation 
 	return nil
 }
 
-// ConfigDiffOptions holds the parsed options for the 'config diff' subcommand.
-type ConfigDiffOptions struct {
+// DiffOptions holds the parsed options for the 'diff' command.
+type DiffOptions struct {
 	Scope      string // --scope
 	Generation int    // positional generation argument
 }
 
-// parseConfigDiffArgs parses the arguments for the 'diff' subcommand.
-func parseConfigDiffArgs(args []string) (ConfigDiffOptions, error) {
+// parseDiffArgs parses the arguments for the 'diff' command.
+func parseDiffArgs(args []string) (DiffOptions, error) {
 	diffCmd := flag.NewFlagSet("diff", flag.ContinueOnError)
 	diffCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Opt("scope")
+	scopeOpt := commandOptions.Opt("scope")
 
-	var opts ConfigDiffOptions
+	var opts DiffOptions
 	diffCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 
 	err := diffCmd.Parse(args)
 	if err != nil {
-		return ConfigDiffOptions{}, fmt.Errorf("parsing diff flags: %w: %v", ErrInvalidFlag, err)
+		if errors.Is(err, flag.ErrHelp) {
+			return DiffOptions{}, flag.ErrHelp
+		}
+		return DiffOptions{}, fmt.Errorf("parsing diff flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if diffCmd.NArg() < 1 {
-		return ConfigDiffOptions{}, fmt.Errorf("'diff' requires generation number argument: %w", ErrMissingArgument)
+		return DiffOptions{}, fmt.Errorf("'diff' requires generation number argument: %w", ErrMissingArgument)
 	}
 	if diffCmd.NArg() > 1 {
-		return ConfigDiffOptions{}, fmt.Errorf("'diff' command takes at most one generation argument: %w", ErrTooManyArguments)
+		return DiffOptions{}, fmt.Errorf("'diff' command takes at most one generation argument: %w", ErrTooManyArguments)
 	}
 	gen, err := strconv.Atoi(diffCmd.Arg(0))
 	if err != nil {
-		return ConfigDiffOptions{}, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
+		return DiffOptions{}, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
 	}
 	opts.Generation = gen
 	return opts, nil

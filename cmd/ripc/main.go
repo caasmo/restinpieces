@@ -67,9 +67,35 @@ func run(args []string, output io.Writer) error {
 			},
 			Subcommands: []SubcommandGroup{
 				{
+					Title: "Reading Configuration",
+					Subcommands: []Subcommand{
+						{"get", "Get configuration values by path"},
+						{"paths", "List all keys in the configuration"},
+						{"dump", "Dump the configuration"},
+						{"scopes", "List all configuration scopes"},
+					},
+				},
+				{
+					Title: "Modifying Configuration",
+					Subcommands: []Subcommand{
+						{"set", "Set a configuration value"},
+						{"save", "Save file contents to the configuration"},
+						{"scaffold", "Scaffold a configuration entry with defaults"},
+						{"migrate", "Migrate configuration to current framework version"},
+					},
+				},
+				{
+					Title: "Version Control",
+					Subcommands: []Subcommand{
+						{"list", "List configuration versions"},
+						{"diff", "Compare configuration versions"},
+						{"rollback", "Restore a previous configuration version"},
+					},
+				},
+				{
+					Title: "Management",
 					Subcommands: []Subcommand{
 						{"app", "Manage application lifecycle (e.g., creating the database)"},
-						{"config", "Manage the application's secure configuration"},
 						{"job", "Manage background jobs"},
 						{"log", "Manage the log database"},
 						{"help", "Show help for a specific command"},
@@ -78,13 +104,16 @@ func run(args []string, output io.Writer) error {
 			},
 			Examples: []string{
 				"ripc app create",
-				"ripc config set server.port 8080",
+				"ripc set server.port 8080",
 			},
 		}
 		help.Print(output, prog)
 	}
 
 	if err := fs.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
 		return fmt.Errorf("%w: %v", ErrInvalidFlag, err)
 	}
 
@@ -144,8 +173,28 @@ func run(args []string, output io.Writer) error {
 	switch command {
 	case "app":
 		return handleAppCommand(secureStore, pool, *dbPathFlag, commandArgs, ui)
-	case "config":
-		return handleConfigCommand(secureStore, pool, commandArgs, ui)
+	case "get":
+		return handleGetCommand(secureStore, commandArgs, ui)
+	case "paths":
+		return handlePathsCommand(secureStore, commandArgs, ui)
+	case "dump":
+		return handleDumpCommand(secureStore, commandArgs, ui)
+	case "scopes":
+		return handleScopesCommand(pool, commandArgs, ui)
+	case "set":
+		return handleSetCommand(secureStore, commandArgs, ui)
+	case "save":
+		return handleSaveCommand(secureStore, commandArgs, ui)
+	case "scaffold":
+		return handleScaffoldCommand(secureStore, commandArgs, ui)
+	case "migrate":
+		return handleMigrateCommand(secureStore, commandArgs, ui)
+	case "list":
+		return handleListCommand(pool, commandArgs, ui)
+	case "diff":
+		return handleDiffCommand(secureStore, commandArgs, ui)
+	case "rollback":
+		return handleRollbackCommand(secureStore, commandArgs, ui)
 	case "job":
 		return handleJobCommand(dbImpl, commandArgs, ui)
 	case "log":

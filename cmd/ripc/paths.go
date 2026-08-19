@@ -37,28 +37,37 @@ func listTomlPathsRecursive(tree *toml.Tree, prefix string, paths *[]string) {
 	}
 }
 
-func printConfigPathsUsage(w io.Writer) {
+func printPathsUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config paths [options] [filter]",
+		Usage:       "paths [options] [filter]",
 		Description: "Lists all keys in the configuration.",
 		Args: []ArgSpec{
 			{"filter", "Optional substring filter on configuration paths"},
 		},
 		Options: []OptSpec{
-			commandConfig.Opt("scope"),
+			commandOptions.Opt("scope"),
 		},
 		Examples: []string{
-			"ripc config paths",
-			"ripc config paths --scope my-app",
-			"ripc config paths server",
+			"ripc paths",
+			"ripc paths --scope my-app",
+			"ripc paths server",
 		},
 	}
-	help.Print(w, prog, "config", "paths")
+	help.Print(w, prog)
 }
 
-// handleConfigPathsCommand is the command-level wrapper. It executes the core logic
-// and returns any error to the caller.
-func handleConfigPathsCommand(secureStore config.SecureStore, opts ConfigPathsOptions, ui UI) error {
+// handlePathsCommand parses the arguments for the 'paths' command and executes
+// the core logic, returning any error to the caller.
+func handlePathsCommand(secureStore config.SecureStore, args []string, ui UI) error {
+	opts, err := parsePathsArgs(args)
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			printPathsUsage(ui.Out)
+			return nil
+		}
+		printPathsUsage(ui.Err)
+		return err
+	}
 	return listPaths(ui, secureStore, opts.Scope, opts.Filter)
 }
 
@@ -113,27 +122,30 @@ func listPaths(ui UI, secureStore config.SecureStore, scopeName string, filter s
 	return nil
 }
 
-// ConfigPathsOptions holds the parsed options for the 'config paths' subcommand.
-type ConfigPathsOptions struct {
+// PathsOptions holds the parsed options for the 'paths' command.
+type PathsOptions struct {
 	Scope  string // --scope
 	Filter string // optional positional filter argument
 }
 
-// parseConfigPathsArgs parses the arguments for the 'paths' subcommand.
-func parseConfigPathsArgs(args []string) (ConfigPathsOptions, error) {
+// parsePathsArgs parses the arguments for the 'paths' command.
+func parsePathsArgs(args []string) (PathsOptions, error) {
 	pathsCmd := flag.NewFlagSet("paths", flag.ContinueOnError)
 	pathsCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Opt("scope")
+	scopeOpt := commandOptions.Opt("scope")
 
-	var opts ConfigPathsOptions
+	var opts PathsOptions
 	pathsCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 
 	err := pathsCmd.Parse(args)
 	if err != nil {
-		return ConfigPathsOptions{}, fmt.Errorf("parsing paths flags: %w: %v", ErrInvalidFlag, err)
+		if errors.Is(err, flag.ErrHelp) {
+			return PathsOptions{}, flag.ErrHelp
+		}
+		return PathsOptions{}, fmt.Errorf("parsing paths flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if pathsCmd.NArg() > 1 {
-		return ConfigPathsOptions{}, fmt.Errorf("'paths' command takes at most one filter argument: %w", ErrTooManyArguments)
+		return PathsOptions{}, fmt.Errorf("'paths' command takes at most one filter argument: %w", ErrTooManyArguments)
 	}
 	if pathsCmd.NArg() > 0 {
 		opts.Filter = pathsCmd.Arg(0)

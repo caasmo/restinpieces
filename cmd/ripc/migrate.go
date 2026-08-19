@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -9,20 +10,28 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-func printConfigMigrateUsage(w io.Writer) {
+func printMigrateUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config migrate",
+		Usage:       "migrate",
 		Description: "Migrates configuration to the current framework version.",
 		Examples: []string{
-			"ripc config migrate",
+			"ripc migrate",
 		},
 	}
-	help.Print(w, prog, "config", "migrate")
+	help.Print(w, prog)
 }
 
-// handleConfigMigrateCommand is the command-level wrapper. It executes the core logic
-// and returns any error to the caller.
-func handleConfigMigrateCommand(secureStore config.SecureStore, ui UI) error {
+// handleMigrateCommand parses the arguments for the 'migrate' command and
+// executes the core logic, returning any error to the caller.
+func handleMigrateCommand(secureStore config.SecureStore, args []string, ui UI) error {
+	if err := parseMigrateArgs(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			printMigrateUsage(ui.Out)
+			return nil
+		}
+		printMigrateUsage(ui.Err)
+		return err
+	}
 	return migrateConfig(ui, secureStore)
 }
 
@@ -80,12 +89,15 @@ func migrateConfig(ui UI, secureStore config.SecureStore) error {
 	return nil
 }
 
-// parseConfigMigrateArgs parses the arguments for the 'migrate' subcommand.
-func parseConfigMigrateArgs(args []string) error {
+// parseMigrateArgs parses the arguments for the 'migrate' command.
+func parseMigrateArgs(args []string) error {
 	migrateCmd := flag.NewFlagSet("migrate", flag.ContinueOnError)
 	migrateCmd.SetOutput(io.Discard)
 	err := migrateCmd.Parse(args)
 	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return flag.ErrHelp
+		}
 		return fmt.Errorf("parsing migrate flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if migrateCmd.NArg() > 0 {

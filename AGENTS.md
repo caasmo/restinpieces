@@ -20,7 +20,7 @@ v2's `unstable/edit` sub-package now provides `Set`, `Has`, `Get`, `Delete` with
 
 Config structs **MUST NOT** contain slices for collections of items. Use `map[string]T` instead.
 
-**Why**: `ripc config set`, `get`, and `paths` operate on dot-paths like `server.addr`. Maps produce stable paths (`backup_local.files.app_db.source_path`). Slices produce unstable paths (`backup_local.files[2].source_path`) — the index breaks on insertions and deletions. Maps make every path a permanent, addressable key.
+**Why**: `ripc set`, `get`, and `paths` operate on dot-paths like `server.addr`. Maps produce stable paths (`backup_local.files.app_db.source_path`). Slices produce unstable paths (`backup_local.files[2].source_path`) — the index breaks on insertions and deletions. Maps make every path a permanent, addressable key.
 
 ### Config: map key rules
 

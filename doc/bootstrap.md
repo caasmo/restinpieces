@@ -36,32 +36,32 @@ The `-dbpath` is specified here to create `myapp.db` instead of the default `app
 
 ### 3. Customize the Configuration
 
-The default configuration provides a sensible starting point, but you will need to customize it for your environment. While you can dump the entire configuration to a file for bulk editing, it is often safer and more precise to manage individual settings directly from the command line using `ripc config`.
+The default configuration provides a sensible starting point, but you will need to customize it for your environment. While you can dump the entire configuration to a file for bulk editing, it is often safer and more precise to manage individual settings directly from the command line using `ripc`.
 
 This approach is especially recommended for complex, multiline values like TLS certificates or private keys, where editing them in a TOML file can easily introduce formatting errors.
 
 #### Direct Configuration with `ripc`
 
-The `ripc config` command provides `get`, `set`, and `paths` subcommands to interact with specific configuration values.
+The `ripc` command provides `get`, `set`, and `paths` subcommands to interact with specific configuration values.
 
 To discover what settings are available, you can use the `paths` subcommand. It displays a flat list of all configurable fields, making it easy to find the exact path you need to modify.
 
 ```bash
 # List all available configuration paths
-ripc config paths
+ripc paths
 
 # You can also filter the list
-ripc config paths server
+ripc paths server
 ```
 
 Once you know the path, you can retrieve its current value with `get` or modify it with `set`.
 
 ```bash
 # Get the current server port
-ripc config get server.http_port
+ripc get server.http_port
 
 # Change the server port
-ripc config set server.http_port 8081
+ripc set server.http_port 8081
 ```
 
 #### Handling Complex Values
@@ -74,10 +74,10 @@ For example, to set the TLS certificate and key:
 # For example: localhost.pem and localhost-key.pem
 
 # Set the certificate
-ripc config set server.tls_cert @/path/to/localhost.pem
+ripc set server.tls_cert @/path/to/localhost.pem
 
 # Set the private key
-ripc config set server.tls_key @/path/to/localhost-key.pem
+ripc set server.tls_key @/path/to/localhost-key.pem
 ```
 This method is robust and script-friendly, making it ideal for automated deployments and managing sensitive information.
 
@@ -85,27 +85,27 @@ This method is robust and script-friendly, making it ideal for automated deploym
 
 If you still prefer to edit the entire configuration at once, you can dump it to a file:
 ```bash
-ripc config dump > config.toml
+ripc dump > config.toml
 ```
-After editing `config.toml`, you will save it back using the `config save` command as described in the next step.
+After editing `config.toml`, you will save it back using the `save` command as described in the next step.
 
 ### 4. Save the Custom Configuration
 
 After editing `config.toml`, save it back into the secure store. This creates a new, versioned entry in the configuration table, which will now be considered the "latest".
 
 ```bash
-ripc config save config.toml
+ripc save config.toml
 ```
 
 You can view the history of configuration changes at any time:
 ```bash
-ripc config list
+ripc list
 ```
 
-Should you need to revert to a previous configuration, the `rollback` command allows you to restore any historical version by its generation number (obtained from `config list`). This provides a safety net for configuration changes.
+Should you need to revert to a previous configuration, the `rollback` command allows you to restore any historical version by its generation number (obtained from `list`). This provides a safety net for configuration changes.
 
 ```bash
-ripc config rollback 3
+ripc rollback 3
 ```
 
 ### 5. Initialize the Logger Database
@@ -202,7 +202,7 @@ The `ripc` tool is also used for managing the application after it has been boot
 
 *   **Updating a single config value:**
     ```bash
-    ripc config set server.http_port 8081
+    ripc set server.http_port 8081
     ```
 *   **Rotating JWT secrets for security:**
     ```bash
@@ -217,7 +217,7 @@ The `ripc` tool is also used for managing the application after it has been boot
 
 *   **Updating a single config value:**
     ```bash
-    ripc config set server.http_port 8081
+    ripc set server.http_port 8081
     ```
 *   **Rotating JWT secrets for security:**
     ```bash

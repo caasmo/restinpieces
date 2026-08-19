@@ -12,19 +12,49 @@ func TestRunHelpTopic_Success(t *testing.T) {
 
 	// Replace the real print functions with test fakes.
 	originalPrintApp := printAppUsageFunc
+	originalPrintGet := printGetUsageFunc
+	originalPrintPaths := printPathsUsageFunc
+	originalPrintDump := printDumpUsageFunc
+	originalPrintScopes := printScopesUsageFunc
+	originalPrintSet := printSetUsageFunc
+	originalPrintSave := printSaveUsageFunc
+	originalPrintScaffold := printScaffoldUsageFunc
+	originalPrintMigrate := printMigrateUsageFunc
+	originalPrintList := printListUsageFunc
+	originalPrintDiff := printDiffUsageFunc
+	originalPrintRollback := printRollbackUsageFunc
 	originalPrintJob := printJobUsageFunc
-	originalPrintConfig := printConfigUsageFunc
 	originalPrintLog := printLogUsageFunc
 	defer func() {
 		printAppUsageFunc = originalPrintApp
+		printGetUsageFunc = originalPrintGet
+		printPathsUsageFunc = originalPrintPaths
+		printDumpUsageFunc = originalPrintDump
+		printScopesUsageFunc = originalPrintScopes
+		printSetUsageFunc = originalPrintSet
+		printSaveUsageFunc = originalPrintSave
+		printScaffoldUsageFunc = originalPrintScaffold
+		printMigrateUsageFunc = originalPrintMigrate
+		printListUsageFunc = originalPrintList
+		printDiffUsageFunc = originalPrintDiff
+		printRollbackUsageFunc = originalPrintRollback
 		printJobUsageFunc = originalPrintJob
-		printConfigUsageFunc = originalPrintConfig
 		printLogUsageFunc = originalPrintLog
 	}()
 
 	printAppUsageFunc = func(w io.Writer) { calledTopic = "app" }
+	printGetUsageFunc = func(w io.Writer) { calledTopic = "get" }
+	printPathsUsageFunc = func(w io.Writer) { calledTopic = "paths" }
+	printDumpUsageFunc = func(w io.Writer) { calledTopic = "dump" }
+	printScopesUsageFunc = func(w io.Writer) { calledTopic = "scopes" }
+	printSetUsageFunc = func(w io.Writer) { calledTopic = "set" }
+	printSaveUsageFunc = func(w io.Writer) { calledTopic = "save" }
+	printScaffoldUsageFunc = func(w io.Writer) { calledTopic = "scaffold" }
+	printMigrateUsageFunc = func(w io.Writer) { calledTopic = "migrate" }
+	printListUsageFunc = func(w io.Writer) { calledTopic = "list" }
+	printDiffUsageFunc = func(w io.Writer) { calledTopic = "diff" }
+	printRollbackUsageFunc = func(w io.Writer) { calledTopic = "rollback" }
 	printJobUsageFunc = func(w io.Writer) { calledTopic = "job" }
-	printConfigUsageFunc = func(w io.Writer) { calledTopic = "config" }
 	printLogUsageFunc = func(w io.Writer) { calledTopic = "log" }
 
 	testCases := []struct {
@@ -32,8 +62,18 @@ func TestRunHelpTopic_Success(t *testing.T) {
 		expectTopic string
 	}{
 		{topic: "app", expectTopic: "app"},
+		{topic: "get", expectTopic: "get"},
+		{topic: "paths", expectTopic: "paths"},
+		{topic: "dump", expectTopic: "dump"},
+		{topic: "scopes", expectTopic: "scopes"},
+		{topic: "set", expectTopic: "set"},
+		{topic: "save", expectTopic: "save"},
+		{topic: "scaffold", expectTopic: "scaffold"},
+		{topic: "migrate", expectTopic: "migrate"},
+		{topic: "list", expectTopic: "list"},
+		{topic: "diff", expectTopic: "diff"},
+		{topic: "rollback", expectTopic: "rollback"},
 		{topic: "job", expectTopic: "job"},
-		{topic: "config", expectTopic: "config"},
 		{topic: "log", expectTopic: "log"},
 	}
 

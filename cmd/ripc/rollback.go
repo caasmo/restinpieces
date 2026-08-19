@@ -15,27 +15,36 @@ var (
 	ErrInvalidGeneration = errors.New("invalid generation")
 )
 
-func printConfigRollbackUsage(w io.Writer) {
+func printRollbackUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config rollback [options] <generation>",
+		Usage:       "rollback [options] <generation>",
 		Description: "Restores a previous configuration version.",
 		Args: []ArgSpec{
 			{"generation", "Generation number to restore"},
 		},
 		Options: []OptSpec{
-			commandConfig.Opt("scope"),
+			commandOptions.Opt("scope"),
 		},
 		Examples: []string{
-			"ripc config rollback 3",
-			"ripc config rollback --scope my-app 3",
+			"ripc rollback 3",
+			"ripc rollback --scope my-app 3",
 		},
 	}
-	help.Print(w, prog, "config", "rollback")
+	help.Print(w, prog)
 }
 
-// handleConfigRollbackCommand is the command-level wrapper. It executes the core logic
-// and returns any error to the caller.
-func handleConfigRollbackCommand(secureStore config.SecureStore, opts ConfigRollbackOptions, ui UI) error {
+// handleRollbackCommand parses the arguments for the 'rollback' command and
+// executes the core logic, returning any error to the caller.
+func handleRollbackCommand(secureStore config.SecureStore, args []string, ui UI) error {
+	opts, err := parseRollbackArgs(args)
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			printRollbackUsage(ui.Out)
+			return nil
+		}
+		printRollbackUsage(ui.Err)
+		return err
+	}
 	return rollbackConfig(ui, secureStore, opts.Scope, opts.Generation)
 }
 
@@ -69,34 +78,37 @@ func rollbackConfig(ui UI, secureStore config.SecureStore, scope string, generat
 	return nil
 }
 
-// ConfigRollbackOptions holds the parsed options for the 'config rollback' subcommand.
-type ConfigRollbackOptions struct {
+// RollbackOptions holds the parsed options for the 'rollback' command.
+type RollbackOptions struct {
 	Scope      string // --scope
 	Generation int    // positional generation argument
 }
 
-// parseConfigRollbackArgs parses the arguments for the 'rollback' subcommand.
-func parseConfigRollbackArgs(args []string) (ConfigRollbackOptions, error) {
+// parseRollbackArgs parses the arguments for the 'rollback' command.
+func parseRollbackArgs(args []string) (RollbackOptions, error) {
 	rollbackCmd := flag.NewFlagSet("rollback", flag.ContinueOnError)
 	rollbackCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Opt("scope")
+	scopeOpt := commandOptions.Opt("scope")
 
-	var opts ConfigRollbackOptions
+	var opts RollbackOptions
 	rollbackCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 
 	err := rollbackCmd.Parse(args)
 	if err != nil {
-		return ConfigRollbackOptions{}, fmt.Errorf("parsing rollback flags: %w: %v", ErrInvalidFlag, err)
+		if errors.Is(err, flag.ErrHelp) {
+			return RollbackOptions{}, flag.ErrHelp
+		}
+		return RollbackOptions{}, fmt.Errorf("parsing rollback flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if rollbackCmd.NArg() < 1 {
-		return ConfigRollbackOptions{}, fmt.Errorf("'rollback' requires generation number argument: %w", ErrMissingArgument)
+		return RollbackOptions{}, fmt.Errorf("'rollback' requires generation number argument: %w", ErrMissingArgument)
 	}
 	if rollbackCmd.NArg() > 1 {
-		return ConfigRollbackOptions{}, fmt.Errorf("'rollback' command takes at most one generation argument: %w", ErrTooManyArguments)
+		return RollbackOptions{}, fmt.Errorf("'rollback' command takes at most one generation argument: %w", ErrTooManyArguments)
 	}
 	gen, err := strconv.Atoi(rollbackCmd.Arg(0))
 	if err != nil {
-		return ConfigRollbackOptions{}, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
+		return RollbackOptions{}, fmt.Errorf("generation must be a number: %w", ErrNotANumber)
 	}
 	opts.Generation = gen
 	return opts, nil

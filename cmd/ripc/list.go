@@ -70,24 +70,30 @@ func listItems(ui UI, pool *sqlitex.Pool, scopeFilter string) (count int, err er
 
 }
 
-func printConfigListUsage(w io.Writer) {
+func printListUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config list [scope]",
+		Usage:       "list [scope]",
 		Description: "Lists configuration versions.",
 		Args: []ArgSpec{
 			{"scope", "Optional scope to filter versions by"},
 		},
 		Examples: []string{
-			"ripc config list",
-			"ripc config list my-app",
+			"ripc list",
+			"ripc list my-app",
 		},
 	}
-	help.Print(w, prog, "config", "list")
+	help.Print(w, prog)
 }
 
-// handleConfigListCommand is a wrapper around listItems. It prints the empty-list
-// message and returns any error to the caller.
-func handleConfigListCommand(pool *sqlitex.Pool, opts ConfigListOptions, ui UI) error {
+// handleListCommand parses the arguments for the 'list' command and executes
+// the core logic, returning any error to the caller.
+func handleListCommand(pool *sqlitex.Pool, args []string, ui UI) error {
+	opts, err := parseListArgs(args)
+	if err != nil {
+		printListUsage(ui.Err)
+		return err
+	}
+
 	count, err := listItems(ui, pool, opts.Scope)
 	if err != nil {
 		return err
@@ -109,17 +115,17 @@ func handleConfigListCommand(pool *sqlitex.Pool, opts ConfigListOptions, ui UI) 
 	return nil
 }
 
-// ConfigListOptions holds the parsed options for the 'config list' subcommand.
-type ConfigListOptions struct {
+// ListOptions holds the parsed options for the 'list' command.
+type ListOptions struct {
 	Scope string // optional positional scope filter
 }
 
-// parseConfigListArgs parses the arguments for the 'list' subcommand.
-func parseConfigListArgs(args []string) (ConfigListOptions, error) {
+// parseListArgs parses the arguments for the 'list' command.
+func parseListArgs(args []string) (ListOptions, error) {
 	if len(args) > 1 {
-		return ConfigListOptions{}, fmt.Errorf("'list' command takes at most one scope argument: %w", ErrTooManyArguments)
+		return ListOptions{}, fmt.Errorf("'list' command takes at most one scope argument: %w", ErrTooManyArguments)
 	}
-	var opts ConfigListOptions
+	var opts ListOptions
 	if len(args) > 0 {
 		opts.Scope = args[0]
 	}

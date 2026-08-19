@@ -24,9 +24,9 @@ The job's recurrence interval defaults to `1m`. The actual backup schedule is pe
 After activating the job, configure what to back up. For each database, scaffold a per-file entry with sensible defaults, then set its path and frequency:
 
 ```bash
-ripc config scaffold backuplocal app_db
-ripc config set backup_local.files.app_db.source_path /data/app.db
-ripc config set backup_local.files.app_db.frequency 24h
+ripc scaffold backuplocal app_db
+ripc set backup_local.files.app_db.source_path /data/app.db
+ripc set backup_local.files.app_db.frequency 24h
 ```
 
 The scaffold creates `backup_local.files.app_db` with defaults — `strategy` = `"online"`, `compression` = `false`, `frequency` = `15m` — and an empty `source_path` that you **must** set. Give each database its own key (label, e.g. `app_db`) and its own schedule.
@@ -34,7 +34,7 @@ The scaffold creates `backup_local.files.app_db` with defaults — `strategy` = 
 Also set the shared backup directory once:
 
 ```bash
-ripc config set backup_local.backup_dir /data/backups
+ripc set backup_local.backup_dir /data/backups
 ```
 
 All backups and `latest-` links are written there. With an empty `backup_dir` the backup feature stays deactivated.
@@ -44,7 +44,7 @@ All backups and `latest-` links are written there. With an empty `backup_dir` th
 To deactivate the entire backup feature, set `backup_dir` back to the empty string:
 
 ```bash
-ripc config set backup_local.backup_dir ""
+ripc set backup_local.backup_dir ""
 ```
 
 Config changes are picked up on `SIGHUP` reload (no restart needed). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), reload the unit:
@@ -85,8 +85,8 @@ Each entry in the `files` array is a TOML table with these fields:
 Set individual fields via `ripc`:
 
 ```bash
-ripc config set backup_local.backup_dir /data/backups
-ripc config set backup_local.online_pages_per_step 50
+ripc set backup_local.backup_dir /data/backups
+ripc set backup_local.online_pages_per_step 50
 ```
 
 TOML examples:

@@ -428,7 +428,7 @@ add_litestream_configuration() {
     log_info "Checking Litestream configuration..."
     if [ -f "$config_file" ]; then
         log_info "Importing Litestream config from: $config_file"
-        "$ripc_bin" -agekey "$key_path" -dbpath "$db_path" config save -scope litestream "$config_file"
+        "$ripc_bin" -agekey "$key_path" -dbpath "$db_path" save -scope litestream "$config_file"
         log_success "Added ${config_file} to config store in $db_path"
     else
         log_warning "Build has no litestream support (config file not found at $config_file)"
@@ -1184,7 +1184,7 @@ key_path="/home/$project_name/age.key"
 ripc_bin="/home/$project_name/bin/ripc"
 
 echo "→ Updating maintenance.activated to $activated_value..."
-sudo -u "$project_name" "$ripc_bin" -dbpath "$db_path" -agekey "$key_path" config set maintenance.activated "$activated_value"
+sudo -u "$project_name" "$ripc_bin" -dbpath "$db_path" -agekey "$key_path" set maintenance.activated "$activated_value"
 
 echo "→ Reloading service $project_name to apply changes..."
 sudo systemctl reload "$project_name"

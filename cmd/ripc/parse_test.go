@@ -7,13 +7,7 @@ import (
 	"github.com/caasmo/restinpieces/config"
 )
 
-func TestParseConfigSubcommand(t *testing.T) {
-	// Test unknown subcommand - now handled in handleConfigCommand
-	t.Run("UnknownSubcommand", func(t *testing.T) {
-		// This is now handled in handleConfigCommand's default case
-		// We'll test it through integration tests
-	})
-
+func TestParseArgs(t *testing.T) {
 	// Test individual parsing functions
 	testSetParsing(t)
 	testScopesParsing(t)
@@ -29,7 +23,7 @@ func TestParseConfigSubcommand(t *testing.T) {
 
 func testSetParsing(t *testing.T) {
 	t.Run("SetSuccess", func(t *testing.T) {
-		opts, err := parseConfigSetArgs([]string{"--scope", "my-scope", "--desc", "My Change", "server.addr", ":8081"})
+		opts, err := parseSetArgs([]string{"--scope", "my-scope", "--desc", "My Change", "server.addr", ":8081"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -51,7 +45,7 @@ func testSetParsing(t *testing.T) {
 	})
 
 	t.Run("SetMissingValue", func(t *testing.T) {
-		_, err := parseConfigSetArgs([]string{"server.addr"})
+		_, err := parseSetArgs([]string{"server.addr"})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}
@@ -63,14 +57,14 @@ func testSetParsing(t *testing.T) {
 
 func testScopesParsing(t *testing.T) {
 	t.Run("ScopesSuccess", func(t *testing.T) {
-		err := parseConfigScopesArgs([]string{})
+		err := parseScopesArgs([]string{})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 
 	t.Run("ScopesTooManyArgs", func(t *testing.T) {
-		err := parseConfigScopesArgs([]string{"extra"})
+		err := parseScopesArgs([]string{"extra"})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}
@@ -83,7 +77,7 @@ func testScopesParsing(t *testing.T) {
 func testListParsing(t *testing.T) {
 	// Note: list command doesn't have flags, just optional scope argument
 	t.Run("ListSuccess", func(t *testing.T) {
-		opts, err := parseConfigListArgs([]string{"test"})
+		opts, err := parseListArgs([]string{"test"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -93,7 +87,7 @@ func testListParsing(t *testing.T) {
 	})
 
 	t.Run("ListTooManyArgs", func(t *testing.T) {
-		_, err := parseConfigListArgs([]string{"scope1", "scope2"})
+		_, err := parseListArgs([]string{"scope1", "scope2"})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}
@@ -105,7 +99,7 @@ func testListParsing(t *testing.T) {
 
 func testPathsParsing(t *testing.T) {
 	t.Run("PathsSuccess", func(t *testing.T) {
-		opts, err := parseConfigPathsArgs([]string{"--scope", "test", "filter"})
+		opts, err := parsePathsArgs([]string{"--scope", "test", "filter"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -118,7 +112,7 @@ func testPathsParsing(t *testing.T) {
 	})
 
 	t.Run("PathsTooManyArgs", func(t *testing.T) {
-		_, err := parseConfigPathsArgs([]string{"filter", "extra"})
+		_, err := parsePathsArgs([]string{"filter", "extra"})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}
@@ -130,7 +124,7 @@ func testPathsParsing(t *testing.T) {
 
 func testDumpParsing(t *testing.T) {
 	t.Run("DumpSuccess", func(t *testing.T) {
-		opts, err := parseConfigDumpArgs([]string{"--scope", "test"})
+		opts, err := parseDumpArgs([]string{"--scope", "test"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -146,7 +140,7 @@ func testDumpParsing(t *testing.T) {
 	})
 
 	t.Run("DumpZeroSuccess", func(t *testing.T) {
-		opts, err := parseConfigDumpArgs([]string{"--zero"})
+		opts, err := parseDumpArgs([]string{"--zero"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -159,7 +153,7 @@ func testDumpParsing(t *testing.T) {
 	})
 
 	t.Run("DumpEffectiveSuccess", func(t *testing.T) {
-		opts, err := parseConfigDumpArgs([]string{"--runtime"})
+		opts, err := parseDumpArgs([]string{"--runtime"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -172,7 +166,7 @@ func testDumpParsing(t *testing.T) {
 	})
 
 	t.Run("DumpZeroAndEffectiveMutualExclusion", func(t *testing.T) {
-		_, err := parseConfigDumpArgs([]string{"--zero", "--runtime"})
+		_, err := parseDumpArgs([]string{"--zero", "--runtime"})
 		if err == nil {
 			t.Fatal("expected error for mutually exclusive flags, got nil")
 		}
@@ -182,7 +176,7 @@ func testDumpParsing(t *testing.T) {
 	})
 
 	t.Run("DumpTooManyArgs", func(t *testing.T) {
-		_, err := parseConfigDumpArgs([]string{"extra"})
+		_, err := parseDumpArgs([]string{"extra"})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}
@@ -194,7 +188,7 @@ func testDumpParsing(t *testing.T) {
 
 func testDiffParsing(t *testing.T) {
 	t.Run("DiffSuccess", func(t *testing.T) {
-		opts, err := parseConfigDiffArgs([]string{"123"})
+		opts, err := parseDiffArgs([]string{"123"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -207,7 +201,7 @@ func testDiffParsing(t *testing.T) {
 	})
 
 	t.Run("DiffNotANumber", func(t *testing.T) {
-		_, err := parseConfigDiffArgs([]string{"abc"})
+		_, err := parseDiffArgs([]string{"abc"})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}
@@ -217,7 +211,7 @@ func testDiffParsing(t *testing.T) {
 	})
 
 	t.Run("DiffMissingArgument", func(t *testing.T) {
-		_, err := parseConfigDiffArgs([]string{})
+		_, err := parseDiffArgs([]string{})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}
@@ -229,7 +223,7 @@ func testDiffParsing(t *testing.T) {
 
 func testRollbackParsing(t *testing.T) {
 	t.Run("RollbackSuccessWithScope", func(t *testing.T) {
-		opts, err := parseConfigRollbackArgs([]string{"--scope", "custom", "42"})
+		opts, err := parseRollbackArgs([]string{"--scope", "custom", "42"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -242,7 +236,7 @@ func testRollbackParsing(t *testing.T) {
 	})
 
 	t.Run("RollbackTooManyArgs", func(t *testing.T) {
-		_, err := parseConfigRollbackArgs([]string{"42", "extra"})
+		_, err := parseRollbackArgs([]string{"42", "extra"})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}
@@ -254,7 +248,7 @@ func testRollbackParsing(t *testing.T) {
 
 func testSaveParsing(t *testing.T) {
 	t.Run("SaveSuccess", func(t *testing.T) {
-		opts, err := parseConfigSaveArgs([]string{"--scope", "test", "file.toml"})
+		opts, err := parseSaveArgs([]string{"--scope", "test", "file.toml"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -273,7 +267,7 @@ func testSaveParsing(t *testing.T) {
 	})
 
 	t.Run("SaveSuccessWithAllFlags", func(t *testing.T) {
-		opts, err := parseConfigSaveArgs([]string{"--scope", "test", "--format", "json", "--desc", "my description", "file.json"})
+		opts, err := parseSaveArgs([]string{"--scope", "test", "--format", "json", "--desc", "my description", "file.json"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -292,7 +286,7 @@ func testSaveParsing(t *testing.T) {
 	})
 
 	t.Run("SaveMissingArgument", func(t *testing.T) {
-		_, err := parseConfigSaveArgs([]string{})
+		_, err := parseSaveArgs([]string{})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}
@@ -304,7 +298,7 @@ func testSaveParsing(t *testing.T) {
 
 func testGetParsing(t *testing.T) {
 	t.Run("GetSuccess", func(t *testing.T) {
-		opts, err := parseConfigGetArgs([]string{"--scope", "test", "filter"})
+		opts, err := parseGetArgs([]string{"--scope", "test", "filter"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -319,14 +313,14 @@ func testGetParsing(t *testing.T) {
 
 func testMigrateParsing(t *testing.T) {
 	t.Run("MigrateSuccess", func(t *testing.T) {
-		err := parseConfigMigrateArgs([]string{})
+		err := parseMigrateArgs([]string{})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 	})
 
 	t.Run("MigrateTooManyArgs", func(t *testing.T) {
-		err := parseConfigMigrateArgs([]string{"extra"})
+		err := parseMigrateArgs([]string{"extra"})
 		if err == nil {
 			t.Fatal("expected error, but did not")
 		}

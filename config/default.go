@@ -165,7 +165,7 @@ func NewDefaultConfig() *Config {
 		},
 		Backup: Backup{
 			// Files is nil by default (the zero value). Entries are
-			// created via ripc config scaffold. Map keys are
+			// created via ripc scaffold. Map keys are
 			// user-chosen labels (not domain identifiers) — see AGENTS.md.
 		},
 		Cache: Cache{
@@ -175,7 +175,7 @@ func NewDefaultConfig() *Config {
 }
 
 // NewBackupFileDefaults returns a BackupFile with sensible defaults
-// for use by ripc config scaffold. The SourcePath and DestPath are
+// for use by ripc scaffold. The SourcePath and DestPath are
 // intentionally empty — an empty path deactivates the entry until the
 // user sets it. Relative paths resolve against the application's
 // current working directory (CWD).
@@ -190,7 +190,7 @@ func NewBackupFileDefaults() BackupFile {
 }
 
 // NewOAuth2ProviderDefaults returns an OAuth2Provider with sensible defaults
-// for use by ripc config scaffold. PKCE is enabled by default. Name,
+// for use by ripc scaffold. PKCE is enabled by default. Name,
 // ClientID, ClientSecret, and URLs are empty — the user must configure them.
 // Note: see TODO on OAuth2Providers in config.go regarding map key refactoring.
 func NewOAuth2ProviderDefaults() OAuth2Provider {

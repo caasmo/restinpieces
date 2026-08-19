@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -11,28 +12,37 @@ import (
 	"github.com/pelletier/go-toml"
 )
 
-func printConfigGetUsage(w io.Writer) {
+func printGetUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config get [options] [filter]",
+		Usage:       "get [options] [filter]",
 		Description: "Gets configuration values by path.",
 		Args: []ArgSpec{
 			{"filter", "Optional substring filter on configuration paths"},
 		},
 		Options: []OptSpec{
-			commandConfig.Opt("scope"),
+			commandOptions.Opt("scope"),
 		},
 		Examples: []string{
-			"ripc config get",
-			"ripc config get server",
-			"ripc config get --scope my-app server.port",
+			"ripc get",
+			"ripc get server",
+			"ripc get --scope my-app server.port",
 		},
 	}
-	help.Print(w, prog, "config", "get")
+	help.Print(w, prog)
 }
 
-// handleConfigGetCommand is the command-level wrapper. It executes the core logic
-// and returns any error to the caller.
-func handleConfigGetCommand(secureStore config.SecureStore, opts ConfigGetOptions, ui UI) error {
+// handleGetCommand parses the arguments for the 'get' command and executes
+// the core logic, returning any error to the caller.
+func handleGetCommand(secureStore config.SecureStore, args []string, ui UI) error {
+	opts, err := parseGetArgs(args)
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			printGetUsage(ui.Out)
+			return nil
+		}
+		printGetUsage(ui.Err)
+		return err
+	}
 	return getAndPrintConfigPaths(ui, secureStore, opts.Scope, opts.Filter)
 }
 
@@ -113,27 +123,30 @@ func listTomlPathsWithValuesRecursive(tree *toml.Tree, prefix string, pathsWithV
 	}
 }
 
-// ConfigGetOptions holds the parsed options for the 'config get' subcommand.
-type ConfigGetOptions struct {
+// GetOptions holds the parsed options for the 'get' command.
+type GetOptions struct {
 	Scope  string // --scope
 	Filter string // optional positional filter argument
 }
 
-// parseConfigGetArgs parses the arguments for the 'get' subcommand.
-func parseConfigGetArgs(args []string) (ConfigGetOptions, error) {
+// parseGetArgs parses the arguments for the 'get' command.
+func parseGetArgs(args []string) (GetOptions, error) {
 	getCmd := flag.NewFlagSet("get", flag.ContinueOnError)
 	getCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Opt("scope")
+	scopeOpt := commandOptions.Opt("scope")
 
-	var opts ConfigGetOptions
+	var opts GetOptions
 	getCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 
 	err := getCmd.Parse(args)
 	if err != nil {
-		return ConfigGetOptions{}, fmt.Errorf("parsing get flags: %w: %v", ErrInvalidFlag, err)
+		if errors.Is(err, flag.ErrHelp) {
+			return GetOptions{}, flag.ErrHelp
+		}
+		return GetOptions{}, fmt.Errorf("parsing get flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if getCmd.NArg() > 1 {
-		return ConfigGetOptions{}, fmt.Errorf("'get' command takes at most one filter argument: %w", ErrTooManyArguments)
+		return GetOptions{}, fmt.Errorf("'get' command takes at most one filter argument: %w", ErrTooManyArguments)
 	}
 	if getCmd.NArg() > 0 {
 		opts.Filter = getCmd.Arg(0)

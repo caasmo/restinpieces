@@ -20,31 +20,40 @@ var (
 	ErrUnsupportedFormat = errors.New("unsupported format")
 )
 
-func printConfigSetUsage(w io.Writer) {
+func printSetUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config set [options] <path> <value>",
+		Usage:       "set [options] <path> <value>",
 		Description: "Sets a configuration value at a specified path.",
 		Args: []ArgSpec{
 			{"path", "Configuration path to set"},
 			{"value", "Value to set"},
 		},
 		Options: []OptSpec{
-			commandConfig.Opt("scope"),
-			commandConfig.Opt("format"),
-			commandConfig.Opt("desc"),
+			commandOptions.Opt("scope"),
+			commandOptions.Opt("format"),
+			commandOptions.Opt("desc"),
 		},
 		Examples: []string{
-			"ripc config set server.host localhost",
-			`ripc config set --scope webapp features.beta true --desc "Enable beta feature"`,
+			"ripc set server.host localhost",
+			`ripc set --scope webapp features.beta true --desc "Enable beta feature"`,
 		},
 	}
-	help.Print(w, prog, "config", "set")
+	help.Print(w, prog)
 }
 
-// handleConfigSetCommand is the command-level wrapper. It executes the core logic
-// and returns any error to the caller.
-func handleConfigSetCommand(secureCfg config.SecureStore, opts ConfigSetOptions, ui UI) error {
-	return setConfigValue(ui, secureCfg, opts.Scope, opts.Format, opts.Desc, opts.Path, opts.Value)
+// handleSetCommand parses the arguments for the 'set' command and executes
+// the core logic, returning any error to the caller.
+func handleSetCommand(secureStore config.SecureStore, args []string, ui UI) error {
+	opts, err := parseSetArgs(args)
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			printSetUsage(ui.Out)
+			return nil
+		}
+		printSetUsage(ui.Err)
+		return err
+	}
+	return setConfigValue(ui, secureStore, opts.Scope, opts.Format, opts.Desc, opts.Path, opts.Value)
 }
 
 // setConfigValue contains the testable core logic for setting a configuration value.
@@ -138,8 +147,8 @@ func setConfigValue(
 	return nil
 }
 
-// ConfigSetOptions holds the parsed options for the 'config set' subcommand.
-type ConfigSetOptions struct {
+// SetOptions holds the parsed options for the 'set' command.
+type SetOptions struct {
 	Scope  string // --scope
 	Format string // --format
 	Desc   string // --desc
@@ -147,25 +156,31 @@ type ConfigSetOptions struct {
 	Value  string // positional value argument
 }
 
-// parseConfigSetArgs parses the arguments for the 'set' subcommand.
-func parseConfigSetArgs(args []string) (ConfigSetOptions, error) {
+// parseSetArgs parses the arguments for the 'set' command.
+func parseSetArgs(args []string) (SetOptions, error) {
 	setCmd := flag.NewFlagSet("set", flag.ContinueOnError)
 	setCmd.SetOutput(io.Discard) // Output not needed for parsing
-	scopeOpt := commandConfig.Opt("scope")
-	formatOpt := commandConfig.Opt("format")
-	descOpt := commandConfig.Opt("desc")
+	scopeOpt := commandOptions.Opt("scope")
+	formatOpt := commandOptions.Opt("format")
+	descOpt := commandOptions.Opt("desc")
 
-	var opts ConfigSetOptions
+	var opts SetOptions
 	setCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 	setCmd.StringVar(&opts.Format, "format", formatOpt.DefaultValue, formatOpt.Usage)
 	setCmd.StringVar(&opts.Desc, "desc", descOpt.DefaultValue, descOpt.Usage)
 
 	err := setCmd.Parse(args)
 	if err != nil {
-		return ConfigSetOptions{}, fmt.Errorf("parsing set flags: %w: %v", ErrInvalidFlag, err)
+		if errors.Is(err, flag.ErrHelp) {
+			return SetOptions{}, flag.ErrHelp
+		}
+		return SetOptions{}, fmt.Errorf("parsing set flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if setCmd.NArg() < 2 {
-		return ConfigSetOptions{}, fmt.Errorf("'set' requires path and value arguments: %w", ErrMissingArgument)
+		return SetOptions{}, fmt.Errorf("'set' requires path and value arguments: %w", ErrMissingArgument)
+	}
+	if setCmd.NArg() > 2 {
+		return SetOptions{}, fmt.Errorf("'set' command takes at most two arguments (path and value): %w", ErrTooManyArguments)
 	}
 	opts.Path = setCmd.Arg(0)
 	opts.Value = setCmd.Arg(1)

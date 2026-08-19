@@ -9,10 +9,20 @@ var ErrUnknownHelpTopic = errors.New("unknown help topic")
 
 // Stored as variables to allow for easy mocking in tests.
 var (
-	printAppUsageFunc    = printAppUsage
-	printJobUsageFunc    = printJobUsage
-	printConfigUsageFunc = printConfigUsage
-	printLogUsageFunc    = printLogUsage
+	printAppUsageFunc      = printAppUsage
+	printGetUsageFunc      = printGetUsage
+	printPathsUsageFunc    = printPathsUsage
+	printDumpUsageFunc     = printDumpUsage
+	printScopesUsageFunc   = printScopesUsage
+	printSetUsageFunc      = printSetUsage
+	printSaveUsageFunc     = printSaveUsage
+	printScaffoldUsageFunc = printScaffoldUsage
+	printMigrateUsageFunc  = printMigrateUsage
+	printListUsageFunc     = printListUsage
+	printDiffUsageFunc     = printDiffUsage
+	printRollbackUsageFunc = printRollbackUsage
+	printJobUsageFunc      = printJobUsage
+	printLogUsageFunc      = printLogUsage
 )
 
 // handleHelpCommand is the command-level wrapper. It executes the core logic
@@ -39,10 +49,30 @@ func runHelpTopic(topic string, ui UI) error {
 	switch topic {
 	case "app":
 		printAppUsageFunc(ui.Out)
+	case "get":
+		printGetUsageFunc(ui.Out)
+	case "paths":
+		printPathsUsageFunc(ui.Out)
+	case "dump":
+		printDumpUsageFunc(ui.Out)
+	case "scopes":
+		printScopesUsageFunc(ui.Out)
+	case "set":
+		printSetUsageFunc(ui.Out)
+	case "save":
+		printSaveUsageFunc(ui.Out)
+	case "scaffold":
+		printScaffoldUsageFunc(ui.Out)
+	case "migrate":
+		printMigrateUsageFunc(ui.Out)
+	case "list":
+		printListUsageFunc(ui.Out)
+	case "diff":
+		printDiffUsageFunc(ui.Out)
+	case "rollback":
+		printRollbackUsageFunc(ui.Out)
 	case "job":
 		printJobUsageFunc(ui.Out)
-	case "config":
-		printConfigUsageFunc(ui.Out)
 	case "log":
 		printLogUsageFunc(ui.Out)
 	default:

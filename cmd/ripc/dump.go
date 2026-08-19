@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -9,28 +10,37 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
-func printConfigDumpUsage(w io.Writer) {
+func printDumpUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "config dump [options]",
+		Usage:       "dump [options]",
 		Description: "Dumps the configuration.",
 		Options: []OptSpec{
-			commandConfig.Opt("scope"),
-			commandConfig.Opt("zero"),
-			commandConfig.Opt("runtime"),
+			commandOptions.Opt("scope"),
+			commandOptions.Opt("zero"),
+			commandOptions.Opt("runtime"),
 		},
 		Examples: []string{
-			"ripc config dump",
-			"ripc config dump --zero",
-			"ripc config dump --runtime",
-			"ripc config dump --scope my-app",
+			"ripc dump",
+			"ripc dump --zero",
+			"ripc dump --runtime",
+			"ripc dump --scope my-app",
 		},
 	}
-	help.Print(w, prog, "config", "dump")
+	help.Print(w, prog)
 }
 
-// handleConfigDumpCommand is the command-level wrapper. It executes the core logic
-// and returns any error to the caller.
-func handleConfigDumpCommand(secureStore config.SecureStore, opts ConfigDumpOptions, ui UI) error {
+// handleDumpCommand parses the arguments for the 'dump' command and executes
+// the core logic, returning any error to the caller.
+func handleDumpCommand(secureStore config.SecureStore, args []string, ui UI) error {
+	opts, err := parseDumpArgs(args)
+	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			printDumpUsage(ui.Out)
+			return nil
+		}
+		printDumpUsage(ui.Err)
+		return err
+	}
 	return dumpConfig(ui, secureStore, opts.Scope, opts.Zero, opts.Runtime)
 }
 
@@ -89,35 +99,38 @@ func dumpConfig(ui UI, secureStore config.SecureStore, scope string, zero bool, 
 	return nil
 }
 
-// ConfigDumpOptions holds the parsed options for the 'config dump' subcommand.
-type ConfigDumpOptions struct {
+// DumpOptions holds the parsed options for the 'dump' command.
+type DumpOptions struct {
 	Scope   string // --scope
 	Zero    bool   // --zero
 	Runtime bool   // --runtime
 }
 
-// parseConfigDumpArgs parses the arguments for the 'dump' subcommand.
-func parseConfigDumpArgs(args []string) (ConfigDumpOptions, error) {
+// parseDumpArgs parses the arguments for the 'dump' command.
+func parseDumpArgs(args []string) (DumpOptions, error) {
 	dumpCmd := flag.NewFlagSet("dump", flag.ContinueOnError)
 	dumpCmd.SetOutput(io.Discard)
-	scopeOpt := commandConfig.Opt("scope")
-	zeroOpt := commandConfig.Opt("zero")
-	runtimeOpt := commandConfig.Opt("runtime")
+	scopeOpt := commandOptions.Opt("scope")
+	zeroOpt := commandOptions.Opt("zero")
+	runtimeOpt := commandOptions.Opt("runtime")
 
-	var opts ConfigDumpOptions
+	var opts DumpOptions
 	dumpCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
 	dumpCmd.BoolVar(&opts.Zero, "zero", false, zeroOpt.Usage)
 	dumpCmd.BoolVar(&opts.Runtime, "runtime", false, runtimeOpt.Usage)
 
 	err := dumpCmd.Parse(args)
 	if err != nil {
-		return ConfigDumpOptions{}, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
+		if errors.Is(err, flag.ErrHelp) {
+			return DumpOptions{}, flag.ErrHelp
+		}
+		return DumpOptions{}, fmt.Errorf("parsing dump flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if dumpCmd.NArg() > 0 {
-		return ConfigDumpOptions{}, fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
+		return DumpOptions{}, fmt.Errorf("'dump' command does not take any arguments: %w", ErrTooManyArguments)
 	}
 	if opts.Zero && opts.Runtime {
-		return ConfigDumpOptions{}, fmt.Errorf("--zero and --runtime are mutually exclusive: %w", ErrInvalidFlag)
+		return DumpOptions{}, fmt.Errorf("--zero and --runtime are mutually exclusive: %w", ErrInvalidFlag)
 	}
 	return opts, nil
 }
