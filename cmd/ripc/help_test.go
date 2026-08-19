@@ -115,7 +115,6 @@ func TestPrintUsageFuncs(t *testing.T) {
 			want: []string{
 				"job <subcommand> [options]",
 				"Manages background jobs.",
-				"add <type> [options]",
 				"list [limit]",
 				"rm <job_id>",
 			},
@@ -226,12 +225,12 @@ func TestPrintUsageFuncs(t *testing.T) {
 				"type",
 				"key",
 				"Scaffold Types:",
-				"backuplocal",
+				"backup",
 				"oauth2",
 				"Options:",
 				"-scope string",
 				"-desc string",
-				"ripc config scaffold backuplocal app_db",
+				"ripc config scaffold backup app_db",
 			},
 		},
 		{

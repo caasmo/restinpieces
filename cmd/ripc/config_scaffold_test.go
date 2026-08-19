@@ -14,25 +14,23 @@ const scaffoldTestConf = `
 public_dir = "/var/www/public"
 [server]
   addr = ":8080"
-[backup_local]
-  backup_dir = "/tmp/backups"
-  online_pages_per_step = 100
+[backup]
 [oauth2_providers]
 `
 
-func TestScaffoldConfigValue_BackupLocal(t *testing.T) {
+func TestScaffoldConfigValue_Backup(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackup, "app_db")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	tree := getTreeFromStore(t, mockStore, scope)
-	path := "backup_local.files.app_db"
+	path := "backup.files.app_db"
 	if !tree.Has(path) {
 		t.Fatalf("expected path %s to exist", path)
 	}
@@ -48,6 +46,12 @@ func TestScaffoldConfigValue_BackupLocal(t *testing.T) {
 	}
 	if got := filesTree.Get("frequency"); got != "15m0s" {
 		t.Errorf("expected frequency %q, got %v", "15m0s", got)
+	}
+	if got := filesTree.Get("online_api_pages_per_step"); got != int64(100) {
+		t.Errorf("expected online_api_pages_per_step 100, got %v", got)
+	}
+	if got := filesTree.Get("online_api_sleep_interval"); got != "10ms" {
+		t.Errorf("expected online_api_sleep_interval %q, got %v", "10ms", got)
 	}
 }
 
@@ -85,13 +89,13 @@ func TestScaffoldConfigValue_UnknownType(t *testing.T) {
 }
 
 func TestScaffoldConfigValue_KeyExists(t *testing.T) {
-	tomlWithBackup := scaffoldTestConf + "\n[backup_local.files.app_db]\n  source_path = \"/x.db\"\n"
+	tomlWithBackup := scaffoldTestConf + "\n[backup.files.app_db]\n  source_path = \"/x.db\"\n"
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(tomlWithBackup)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackup, "app_db")
 	if !errors.Is(err, ErrScaffoldKeyExists) {
 		t.Errorf("expected ErrScaffoldKeyExists, got %v", err)
 	}
@@ -103,7 +107,7 @@ func TestScaffoldConfigValue_StoreReadError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, "app", "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, "app", "", ScaffoldTypeBackup, "app_db")
 	if !errors.Is(err, ErrSecureStoreGet) {
 		t.Errorf("expected error to wrap ErrSecureStoreGet, got %v", err)
 	}
@@ -115,7 +119,7 @@ func TestScaffoldConfigValue_MalformedTOML(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackup, "app_db")
 	if !errors.Is(err, ErrConfigUnmarshal) {
 		t.Errorf("expected error to wrap ErrConfigUnmarshal, got %v", err)
 	}
@@ -128,7 +132,7 @@ func TestScaffoldConfigValue_StoreSaveError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackup, "app_db")
 	if !errors.Is(err, ErrSecureStoreSave) {
 		t.Errorf("expected error to wrap ErrSecureStoreSave, got %v", err)
 	}
@@ -141,7 +145,7 @@ func TestScaffoldConfigValue_CustomDescription(t *testing.T) {
 	ui := UI{Out: &stdout, Err: &stderr}
 	desc := "scaffolding analytics db"
 
-	err := scaffoldConfigValue(ui, mockStore, scope, desc, ScaffoldTypeBackupLocal, "analytics_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, desc, ScaffoldTypeBackup, "analytics_db")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -151,13 +155,13 @@ func TestScaffoldConfigValue_CustomDescription(t *testing.T) {
 }
 
 func TestScaffoldConfigValue_ParentMissing(t *testing.T) {
-	// setTestConf has no [backup_local] section
+	// setTestConf has no [backup] section
 	scope := "app"
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackupLocal, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackup, "app_db")
 	if !errors.Is(err, ErrScaffoldParentMissing) {
 		t.Errorf("expected ErrScaffoldParentMissing, got %v", err)
 	}
@@ -174,36 +178,36 @@ func TestParseScaffoldArgs(t *testing.T) {
 	}{
 		{
 			name:      "two positional args",
-			args:      []string{"backuplocal", "app_db"},
+			args:      []string{"backup", "app_db"},
 			wantScope: config.ScopeApplication,
-			wantType:  "backuplocal",
+			wantType:  "backup",
 			wantKey:   "app_db",
 		},
 		{
 			name:      "flags before positional",
-			args:      []string{"--scope", "my-app", "backuplocal", "app_db"},
+			args:      []string{"--scope", "my-app", "backup", "app_db"},
 			wantScope: "my-app",
-			wantType:  "backuplocal",
+			wantType:  "backup",
 			wantKey:   "app_db",
 		},
 		{
 			name:           "missing key arg",
-			args:           []string{"backuplocal"},
+			args:           []string{"backup"},
 			wantErrContain: "requires <type> and <key>",
 		},
 		{
 			name:           "flags after positional (not consumed)",
-			args:           []string{"backuplocal", "app_db", "--scope", "my-app"},
+			args:           []string{"backup", "app_db", "--scope", "my-app"},
 			wantErrContain: "takes exactly two arguments",
 		},
 		{
 			name:           "too many positional",
-			args:           []string{"backuplocal", "app_db", "extra"},
+			args:           []string{"backup", "app_db", "extra"},
 			wantErrContain: "takes exactly two arguments",
 		},
 		{
 			name:           "unknown flag",
-			args:           []string{"--bogus", "backuplocal", "app_db"},
+			args:           []string{"--bogus", "backup", "app_db"},
 			wantErrContain: "flag provided but not defined",
 		},
 	}

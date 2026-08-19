@@ -113,10 +113,6 @@ func TestValidate(t *testing.T) {
 		{"invalid request log", func(c *Config) { c.Log.Request.Limits.URILength = 0 }},
 		{"invalid block ip", func(c *Config) { c.BlockIp.Level = "" }},
 		{"invalid cache", func(c *Config) { c.Cache.Level = "" }},
-		{"invalid backup local", func(c *Config) {
-			c.BackupLocal.BackupDir = "/tmp/backups"
-			c.BackupLocal.Files = map[string]BackupLocalDbFile{"db": {SourcePath: "/x.db", Frequency: Duration{Duration: 1 * time.Hour}, Strategy: "invalid"}}
-		}},
 	}
 
 	for _, tt := range errorCases {
@@ -469,112 +465,104 @@ func backupLocalFixture(t *testing.T) (backupDir, appDB, otherDB string) {
 	return backupDir, appDB, otherDB
 }
 
-func TestValidateBackupLocal(t *testing.T) {
+func TestValidateBackup(t *testing.T) {
 	t.Parallel()
 
-	t.Run("empty backup dir deactivates", func(t *testing.T) {
+	t.Run("empty paths deactivate entry", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &BackupLocal{BackupDir: "", OnlinePagesPerStep: 100, Files: map[string]BackupLocalDbFile{"db": {SourcePath: appDB, Frequency: Duration{Duration: time.Hour}}}}
-		if err := validateBackupLocal(b); err != nil {
-			t.Fatalf("expected nil for empty backup dir (deactivated), got: %v", err)
+		b := &Backup{Files: map[string]BackupFile{"db": {SourcePath: appDB, Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100}}}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("expected nil for empty dest_path (deactivated), got: %v", err)
 		}
 	})
 
 	t.Run("valid files", func(t *testing.T) {
 		backupDir, appDB, otherDB := backupLocalFixture(t)
-		b := &BackupLocal{
-			BackupDir:           backupDir,
-			OnlinePagesPerStep:  100,
-			OnlineSleepInterval: Duration{Duration: time.Millisecond},
-			Files: map[string]BackupLocalDbFile{
-				"app":   {SourcePath: appDB, Frequency: Duration{Duration: time.Hour}, Strategy: "online"},
-				"other": {SourcePath: otherDB, Frequency: Duration{Duration: 30 * time.Minute}, Strategy: "vacuum"},
-				"empty": {SourcePath: "", Frequency: Duration{Duration: 6 * time.Hour}, Strategy: ""},
+		b := &Backup{
+			Files: map[string]BackupFile{
+				"app":   {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, Strategy: "online", OnlineAPIPagesPerStep: 100},
+				"other": {SourcePath: otherDB, DestPath: backupDir, Frequency: Duration{Duration: 30 * time.Minute}, Strategy: "vacuum", OnlineAPIPagesPerStep: 100},
+				"empty": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: 6 * time.Hour}, Strategy: "", OnlineAPIPagesPerStep: 100},
 			},
 		}
-		if err := validateBackupLocal(b); err != nil {
+		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil for valid config, got: %v", err)
 		}
 	})
 
 	t.Run("no files configured validates ok", func(t *testing.T) {
-		b := &BackupLocal{BackupDir: "", OnlinePagesPerStep: 100, Files: nil}
-		if err := validateBackupLocal(b); err != nil {
+		b := &Backup{Files: nil}
+		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil for no files configured, got: %v", err)
 		}
 	})
 
 	t.Run("empty source path deactivates entry", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
-		b := &BackupLocal{
-			BackupDir:          backupDir,
-			OnlinePagesPerStep: 100,
-			Files:              map[string]BackupLocalDbFile{"db": {SourcePath: "", Frequency: Duration{Duration: time.Hour}}},
+		b := &Backup{
+			Files: map[string]BackupFile{"db": {SourcePath: "", DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100}},
 		}
-		if err := validateBackupLocal(b); err != nil {
+		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected success for empty source_path (deactivated), got: %v", err)
 		}
 	})
 
-	t.Run("backup_dir missing", func(t *testing.T) {
-		b := &BackupLocal{BackupDir: filepath.Join(t.TempDir(), "nope"), OnlinePagesPerStep: 100}
-		if err := validateBackupLocal(b); err == nil {
-			t.Fatal("expected error for missing backup_dir, got nil")
+	t.Run("dest_path missing", func(t *testing.T) {
+		_, appDB, _ := backupLocalFixture(t)
+		b := &Backup{Files: map[string]BackupFile{"db": {SourcePath: appDB, DestPath: filepath.Join(t.TempDir(), "nope"), Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100}}}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for missing dest_path, got nil")
 		}
 	})
 
-	t.Run("backup_dir is a file", func(t *testing.T) {
+	t.Run("dest_path is a file", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &BackupLocal{BackupDir: appDB, OnlinePagesPerStep: 100}
-		if err := validateBackupLocal(b); err == nil {
-			t.Fatal("expected error for backup_dir being a file, got nil")
+		b := &Backup{Files: map[string]BackupFile{"db": {SourcePath: appDB, DestPath: appDB, Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100}}}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for dest_path being a file, got nil")
 		}
 	})
 
 	t.Run("source_path missing", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
-		b := &BackupLocal{
-			BackupDir:          backupDir,
-			OnlinePagesPerStep: 100,
-			Files:              map[string]BackupLocalDbFile{"db": {SourcePath: filepath.Join(t.TempDir(), "missing.db"), Frequency: Duration{Duration: time.Hour}}},
+		b := &Backup{
+			Files: map[string]BackupFile{"db": {SourcePath: filepath.Join(t.TempDir(), "missing.db"), DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100}},
 		}
-		if err := validateBackupLocal(b); err == nil {
+		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for missing source_path, got nil")
 		}
 	})
 
 	t.Run("source_path is a directory", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
-		b := &BackupLocal{
-			BackupDir:          backupDir,
-			OnlinePagesPerStep: 100,
-			Files:              map[string]BackupLocalDbFile{"db": {SourcePath: backupDir, Frequency: Duration{Duration: time.Hour}}},
+		b := &Backup{
+			Files: map[string]BackupFile{"db": {SourcePath: backupDir, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100}},
 		}
-		if err := validateBackupLocal(b); err == nil {
+		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for source_path being a directory, got nil")
 		}
 	})
 
 	t.Run("zero frequency", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
-		b := &BackupLocal{BackupDir: backupDir, OnlinePagesPerStep: 100, Files: map[string]BackupLocalDbFile{"db": {SourcePath: appDB, Frequency: Duration{Duration: 0}}}}
-		if err := validateBackupLocal(b); err == nil {
+		b := &Backup{Files: map[string]BackupFile{"db": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: 0}, OnlineAPIPagesPerStep: 100}}}
+		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for zero frequency, got nil")
 		}
 	})
 
 	t.Run("negative frequency", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
-		b := &BackupLocal{BackupDir: backupDir, OnlinePagesPerStep: 100, Files: map[string]BackupLocalDbFile{"db": {SourcePath: appDB, Frequency: Duration{Duration: -time.Hour}}}}
-		if err := validateBackupLocal(b); err == nil {
+		b := &Backup{Files: map[string]BackupFile{"db": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: -time.Hour}, OnlineAPIPagesPerStep: 100}}}
+		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for negative frequency, got nil")
 		}
 	})
 
 	t.Run("invalid strategy", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
-		b := &BackupLocal{BackupDir: backupDir, OnlinePagesPerStep: 100, Files: map[string]BackupLocalDbFile{"db": {SourcePath: appDB, Frequency: Duration{Duration: time.Hour}, Strategy: "invalid"}}}
-		if err := validateBackupLocal(b); err == nil {
+		b := &Backup{Files: map[string]BackupFile{"db": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, Strategy: "invalid", OnlineAPIPagesPerStep: 100}}}
+		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for invalid strategy, got nil")
 		}
 	})
@@ -589,29 +577,27 @@ func TestValidateBackupLocal(t *testing.T) {
 		if err := os.WriteFile(otherAppDB, nil, 0644); err != nil {
 			t.Fatal(err)
 		}
-		b := &BackupLocal{
-			BackupDir:          backupDir,
-			OnlinePagesPerStep: 100,
-			Files: map[string]BackupLocalDbFile{
-				"first":  {SourcePath: appDB, Frequency: Duration{Duration: time.Hour}},
-				"second": {SourcePath: otherAppDB, Frequency: Duration{Duration: time.Hour}},
+		b := &Backup{
+			Files: map[string]BackupFile{
+				"first":  {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100},
+				"second": {SourcePath: otherAppDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100},
 			},
 		}
-		if err := validateBackupLocal(b); err != nil {
+		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("same basename with different map keys should be valid, got: %v", err)
 		}
 	})
 
-	t.Run("zero online_pages_per_step", func(t *testing.T) {
-		b := &BackupLocal{OnlinePagesPerStep: 0, OnlineSleepInterval: Duration{Duration: time.Millisecond}}
-		if err := validateBackupLocal(b); err == nil {
-			t.Fatal("expected error for zero online_pages_per_step, got nil")
+	t.Run("zero online_api_pages_per_step", func(t *testing.T) {
+		b := &Backup{Files: map[string]BackupFile{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 0}}}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for zero online_api_pages_per_step, got nil")
 		}
 	})
 
 	t.Run("negative sleep interval", func(t *testing.T) {
-		b := &BackupLocal{BackupDir: "", OnlinePagesPerStep: 100, OnlineSleepInterval: Duration{Duration: -time.Millisecond}}
-		if err := validateBackupLocal(b); err == nil {
+		b := &Backup{Files: map[string]BackupFile{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100, OnlineAPISleepInterval: Duration{Duration: -time.Millisecond}}}}
+		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for negative sleep interval, got nil")
 		}
 	})

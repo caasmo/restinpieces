@@ -79,7 +79,7 @@ type Config struct {
 	Notifier               Notifier               `toml:"notifier"`
 	Log              Log                       `toml:"log" comment:"Logging configuration"`
 	Metrics          Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
-	BackupLocal      BackupLocal               `toml:"backup_local" comment:"Local backup configuration"`
+	Backup           Backup                    `toml:"backup" comment:"Backup configuration"`
 	Cache            Cache                     `toml:"cache" comment:"Cache system settings"`
 }
 
@@ -100,43 +100,39 @@ type BlockHost struct {
 	AllowedHosts []string `toml:"allowed_hosts" comment:"List of allowed hostnames (e.g., 'example.com', '*.example.com')"`
 }
 
-// BackupLocal defines the settings for the local backup job.
-type BackupLocal struct {
-	// BackupDir is the single directory where all backup files,
-	// compressed archives, and latest hardlinks are written.
-	// Supports absolute and relative paths. Relative paths resolve against
-	// the RestInPieces application's current working directory (CWD).
-	// When deployed via the canonical systemd service (restinpieces.service),
-	// the CWD is /home/<app> so a relative path like "data/backups" resolves
-	// to /home/<app>/data/backups. See doc/backup.md.
-	// Empty string deactivates the backup feature.
-	BackupDir string `toml:"backup_dir" comment:"Directory where backup files will be stored. Supports absolute and relative paths (relative to the application CWD)."`
-
-	// OnlinePagesPerStep controls the number of pages copied in each step
-	// when using the "online" backup strategy. Applies globally to all
-	// databases using the online strategy.
-	OnlinePagesPerStep int `toml:"online_pages_per_step" comment:"For 'online' strategy, pages to copy in each step."`
-
-	// OnlineSleepInterval is the duration to sleep between online backup
-	// steps. Applies globally to all databases using the online strategy.
-	OnlineSleepInterval Duration `toml:"online_sleep_interval" comment:"For 'online' strategy, duration to sleep between steps."`
-
-	// Files holds per-database backup configuration, keyed by an arbitrary
-	// user-chosen label (e.g. "app_db", "analytics_db"). The key is a label,
-	// not a domain identifier — see AGENTS.md "Config: map key rules".
-	Files map[string]BackupLocalDbFile `toml:"files,omitempty" comment:"Database files to back up, keyed by a user-chosen label."`
+// Backup defines the backup configuration: one entry per database,
+// keyed by an arbitrary user-chosen label (e.g. "app_db",
+// "analytics_db"). The key is a label, not a domain identifier — see
+// AGENTS.md "Config: map key rules". The engines that consume this
+// shape live in restinpieces-backup; the framework only hosts the
+// shape and its validation.
+type Backup struct {
+	// Files holds per-database backup configuration, keyed by an
+	// arbitrary user-chosen label. The map can be empty, which
+	// deactivates the backup feature.
+	Files map[string]BackupFile `toml:"files,omitempty" comment:"Database backups, keyed by a user-chosen label."`
 }
 
-// BackupLocalDbFile defines the backup settings for a single SQLite database file.
-type BackupLocalDbFile struct {
+// BackupFile is the union of every field a backup engine can need.
+// An engine reads the whole record and uses only the fields of its
+// type; unused fields keep their zero value.
+type BackupFile struct {
 	// SourcePath is the filesystem path to the SQLite database to back up.
 	// Supports absolute and relative paths. Relative paths resolve against
-	// the RestInPieces application's current working directory (CWD).
-	// When deployed via the canonical systemd service (restinpieces.service),
-	// the CWD is /home/<app> so relative paths typically start with "data/"
-	// (e.g. "data/app.db"). See doc/backup.md.
+	// the application's current working directory (CWD).
 	// Empty string deactivates this file entry.
 	SourcePath string `toml:"source_path" comment:"Path to the source database file. Supports absolute and relative paths (relative to the application CWD)."`
+
+	// DestPath is the directory where the backup files are written.
+	// Supports absolute and relative paths. Relative paths resolve against
+	// the application's current working directory (CWD).
+	// Empty string deactivates this file entry.
+	DestPath string `toml:"dest_path" comment:"Directory where backup files will be stored. Supports absolute and relative paths (relative to the application CWD)."`
+
+	// Frequency defines how often this database should be backed up.
+	// The daemon skips a database if its latest backup is newer than
+	// this duration. Parsed via time.ParseDuration (e.g. "24h", "6h").
+	Frequency Duration `toml:"frequency" comment:"Minimum interval between backups (e.g. '24h')."`
 
 	// Compression enables gzip compression of the backup file.
 	// When true, backup files use the ".bck.gz" extension.
@@ -148,10 +144,17 @@ type BackupLocalDbFile struct {
 	// "vacuum" uses VACUUM INTO (faster but blocks writers).
 	Strategy string `toml:"strategy" comment:"Backup strategy: 'online' or 'vacuum'."`
 
-	// Frequency defines how often this database should be backed up.
-	// The handler skips a database if its latest backup is newer than
-	// this duration. Parsed via time.ParseDuration (e.g. "24h", "6h").
-	Frequency Duration `toml:"frequency" comment:"Minimum interval between backups (e.g. '24h')."`
+	// OnlineAPIPagesPerStep controls the number of pages copied in each
+	// step when using the "online" strategy. Must be ≥ 1: Step(0) would
+	// copy nothing and never finish. Zero is replaced by the 100-page
+	// default (NewBackupFileDefaults) when the daemon loads the config.
+	OnlineAPIPagesPerStep int `toml:"online_api_pages_per_step" comment:"For 'online' strategy, pages to copy in each step (must be >= 1)."`
+
+	// OnlineAPISleepInterval is the duration to sleep between online
+	// backup steps when using the "online" strategy. May be 0 (no
+	// throttling between steps). Zero is replaced by the 10ms default
+	// (NewBackupFileDefaults) when the daemon loads the config.
+	OnlineAPISleepInterval Duration `toml:"online_api_sleep_interval" comment:"For 'online' strategy, duration to sleep between steps (0 = no throttling)."`
 }
 
 // Log contains Default (Batch) log configuration

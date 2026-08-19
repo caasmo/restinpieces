@@ -18,21 +18,21 @@ var (
 )
 
 const (
-	ScaffoldTypeBackupLocal = "backuplocal"
-	ScaffoldTypeOAuth2      = "oauth2"
+	ScaffoldTypeBackup = "backup"
+	ScaffoldTypeOAuth2 = "oauth2"
 
-	scaffoldKeyBackupLocal = "backup_local.files"
-	scaffoldKeyOAuth2      = "oauth2_providers"
+	scaffoldKeyBackup  = "backup.files"
+	scaffoldKeyOAuth2  = "oauth2_providers"
 
-	scaffoldParentBackupLocal = "backup_local"
+	scaffoldParentBackup = "backup"
 )
 
-var knownScaffoldTypes = []string{ScaffoldTypeBackupLocal, ScaffoldTypeOAuth2}
+var knownScaffoldTypes = []string{ScaffoldTypeBackup, ScaffoldTypeOAuth2}
 
 func scaffoldDefaults(scaffoldType string) (tomlKey string, parentPath string, defaults interface{}, err error) {
 	switch scaffoldType {
-	case ScaffoldTypeBackupLocal:
-		return scaffoldKeyBackupLocal, scaffoldParentBackupLocal, config.NewBackupLocalDbFileDefaults(), nil
+	case ScaffoldTypeBackup:
+		return scaffoldKeyBackup, scaffoldParentBackup, config.NewBackupFileDefaults(), nil
 	case ScaffoldTypeOAuth2:
 		return scaffoldKeyOAuth2, scaffoldKeyOAuth2, config.NewOAuth2ProviderDefaults(), nil
 	default:
@@ -47,14 +47,14 @@ func printConfigScaffoldUsage(w io.Writer) {
 		Usage:       "config scaffold [options] <type> <key>",
 		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'config migrate' first if needed.",
 		Args: []ArgSpec{
-			{"type", "Scaffold type (backuplocal or oauth2)"},
+			{"type", "Scaffold type (backup or oauth2)"},
 			{"key", "Key of the new entry"},
 		},
 		Subcommands: []SubcommandGroup{
 			{
 				Title: "Scaffold Types",
 				Subcommands: []Subcommand{
-					{"backuplocal", "Scaffold a backup_local.files entry"},
+					{"backup", "Scaffold a backup.files entry"},
 					{"oauth2", "Scaffold an oauth2_providers entry"},
 				},
 			},
@@ -64,10 +64,10 @@ func printConfigScaffoldUsage(w io.Writer) {
 			commandConfig.Opt("desc"),
 		},
 		Examples: []string{
-			"ripc config scaffold backuplocal app_db",
+			"ripc config scaffold backup app_db",
 			"ripc config scaffold oauth2 my_google",
-			"ripc config scaffold --scope my-app backuplocal analytics_db",
-			"ripc config scaffold --scope my-app --desc \"scaffold analytics db\" backuplocal analytics_db",
+			"ripc config scaffold --scope my-app backup analytics_db",
+			"ripc config scaffold --scope my-app --desc \"scaffold analytics db\" backup analytics_db",
 		},
 	}
 	help.Print(w, prog, "config", "scaffold")

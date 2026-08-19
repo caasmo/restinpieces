@@ -51,9 +51,6 @@ func Validate(cfg *Config) error {
 	if err := validateCache(&cfg.Cache); err != nil {
 		return fmt.Errorf("cache config validation failed: %w", err)
 	}
-	if err := validateBackupLocal(&cfg.BackupLocal); err != nil {
-		return fmt.Errorf("backup_local config validation failed: %w", err)
-	}
 	return nil
 }
 
@@ -81,26 +78,15 @@ func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
 	return nil
 }
 
-// validateBackupLocal checks the BackupLocal configuration section.
+// ValidateBackup checks the Backup configuration section.
 //
 // A path field is either empty ("" = deactivated, the zero value) or a
 // non-empty path. Non-empty paths are absolute or resolved against the
-// application CWD when relative. A non-empty backup_dir must be an existing
-// directory and a non-empty source_path must be an existing file.
-func validateBackupLocal(backup *BackupLocal) error {
-
-	if backup.OnlinePagesPerStep <= 0 {
-		return fmt.Errorf("online_pages_per_step must be positive")
-	}
-
-	if backup.OnlineSleepInterval.Duration < 0 {
-		return fmt.Errorf("online_sleep_interval cannot be negative")
-	}
-
-	if backup.BackupDir != "" && !isDir(backup.BackupDir) {
-		return fmt.Errorf("backup_dir must be an existing directory, got %q", backup.BackupDir)
-	}
-
+// application CWD when relative. A non-empty dest_path must be an existing
+// directory and a non-empty source_path must be an existing file. The
+// online API tuning fields (pages per step, sleep interval) are
+// validated for every entry, whatever the strategy.
+func ValidateBackup(backup *Backup) error {
 	for key, f := range backup.Files {
 		if key == "" {
 			return fmt.Errorf("files: map key cannot be empty")
@@ -116,6 +102,15 @@ func validateBackupLocal(backup *BackupLocal) error {
 		}
 		if f.SourcePath != "" && !isFile(f.SourcePath) {
 			return fmt.Errorf("files.%s.source_path must be an existing file, got %q", key, f.SourcePath)
+		}
+		if f.DestPath != "" && !isDir(f.DestPath) {
+			return fmt.Errorf("files.%s.dest_path must be an existing directory, got %q", key, f.DestPath)
+		}
+		if f.OnlineAPIPagesPerStep <= 0 {
+			return fmt.Errorf("files.%s.online_api_pages_per_step must be positive", key)
+		}
+		if f.OnlineAPISleepInterval.Duration < 0 {
+			return fmt.Errorf("files.%s.online_api_sleep_interval cannot be negative", key)
 		}
 	}
 

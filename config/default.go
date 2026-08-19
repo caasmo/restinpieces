@@ -163,13 +163,10 @@ func NewDefaultConfig() *Config {
 			Endpoint:   "/metrics",
 			AllowedIPs: []string{"127.0.0.1", "::1"}, // Only exact IPs allowed, no CIDR ranges
 		},
-		BackupLocal: BackupLocal{
-			BackupDir:           "",
-			OnlinePagesPerStep:  100,
-			OnlineSleepInterval: Duration{Duration: 10 * time.Millisecond},
-			// Files is nil by default. Entries are created via ripc config scaffold.
-			// Map keys are user-chosen labels (not domain identifiers) — see AGENTS.md.
-			Files: nil,
+		Backup: Backup{
+			// Files is nil by default (the zero value). Entries are
+			// created via ripc config scaffold. Map keys are
+			// user-chosen labels (not domain identifiers) — see AGENTS.md.
 		},
 		Cache: Cache{
 			Level: "medium",
@@ -177,19 +174,18 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// NewBackupLocalDbFileDefaults returns a BackupLocalDbFile with sensible defaults
-// for use by ripc config scaffold. The SourcePath is intentionally empty — an
-// empty source_path deactivates the entry until the user sets it to the
-// absolute or relative path of an existing database file. Relative paths
-// resolve against the application's current working directory (CWD). When
-// deployed via the canonical systemd service (restinpieces.service), the CWD
-// is /home/<app> so relative paths typically start with "data/" (e.g.
-// "data/app.db").
-func NewBackupLocalDbFileDefaults() BackupLocalDbFile {
-	return BackupLocalDbFile{
-		Strategy:    BackupStrategyOnline,
-		Compression: false,
-		Frequency:   Duration{Duration: 15 * time.Minute},
+// NewBackupFileDefaults returns a BackupFile with sensible defaults
+// for use by ripc config scaffold. The SourcePath and DestPath are
+// intentionally empty — an empty path deactivates the entry until the
+// user sets it. Relative paths resolve against the application's
+// current working directory (CWD).
+func NewBackupFileDefaults() BackupFile {
+	return BackupFile{
+		Strategy:               BackupStrategyOnline,
+		Compression:            false,
+		Frequency:              Duration{Duration: 15 * time.Minute},
+		OnlineAPIPagesPerStep:  100,
+		OnlineAPISleepInterval: Duration{Duration: 10 * time.Millisecond},
 	}
 }
 

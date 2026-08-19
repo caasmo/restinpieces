@@ -344,10 +344,6 @@ func (i *initializer) setupScheduler(configProvider *config.Provider) (*scl.Sche
 		logger.Info(ft.Ok("registered dummy handler"))
 	}
 
-	backupLocalHandler := handlers.NewHandler(configProvider, logger)
-	hdls[handlers.JobTypeBackupLocal] = backupLocalHandler
-	logger.Info(ft.Ok("registered backup local handler"))
-
 	scheduler := scl.NewScheduler(configProvider, i.app.DbQueue(), executor.NewExecutor(hdls), logger)
 	logger.Info(ft.Complete("scheduler setup complete"), "handlers_registered", len(hdls))
 	return scheduler, nil

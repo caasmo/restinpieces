@@ -179,10 +179,10 @@ Two approaches are available for pulling backups:
 
 ### SFTP
 
-The [restinpieces-backup-client](https://github.com/caasmo/restinpieces-backup-client) provides an SFTP client that scans the backup directory by filename pattern and downloads the most recent files:
+The [restinpieces-backup](https://github.com/caasmo/restinpieces-backup) provides an SFTP client that scans the backup directory by filename pattern and downloads the most recent files:
 
 ```bash
-go run github.com/caasmo/restinpieces-backup-client/cmd/sftp@latest \
+go run github.com/caasmo/restinpieces-backup/cmd/sftp@latest \
   -host myserver.example.com \
   -user backup \
   -remote-dir /data/backups \

@@ -369,5 +369,12 @@ core/prerouter/block_oversized_request.go
 - no ripc command currently exists to generate secrets independently
 - ref: `config/default.go:25-34`, `cmd/ripc/app_create_command.go`, `cmd/ripc/init_command.go`
 
+# server: unstarted daemons are stopped after a startup failure
+
+- `Server.Run` (server/server.go): when a daemon fails to start, the start loop breaks but the shutdown loop still stops **all** registered daemons, including those never started
+- their `Stop` waits on a `ShutdownDone` that never closes, burning the full `ShutdownGracefulTimeout` (default 15s) and returning a spurious "daemon failed to stop gracefully: context deadline exceeded" error
+- fix: track started daemons (append after each successful `Start()`) and stop only those — already fixed in the go-daemon-runner extraction (impl-daemon-runner.md Phase 3, `startedDaemons`)
+- ref: `server/server.go:184-194` (start loop), `server/server.go:262-276` (shutdown loop)
+
 ### done
 

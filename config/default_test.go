@@ -22,10 +22,13 @@ func TestNewDefaultConfig_DeterministicSecrets(t *testing.T) {
 	}
 }
 
-func TestNewBackupLocalDbFileDefaults(t *testing.T) {
-	v := NewBackupLocalDbFileDefaults()
+func TestNewBackupFileDefaults(t *testing.T) {
+	v := NewBackupFileDefaults()
 	if v.SourcePath != "" {
 		t.Errorf("SourcePath: got %q, want empty", v.SourcePath)
+	}
+	if v.DestPath != "" {
+		t.Errorf("DestPath: got %q, want empty", v.DestPath)
 	}
 	if v.Strategy != BackupStrategyOnline {
 		t.Errorf("Strategy: got %q, want %q", v.Strategy, BackupStrategyOnline)
@@ -35,6 +38,12 @@ func TestNewBackupLocalDbFileDefaults(t *testing.T) {
 	}
 	if v.Frequency.Duration != 15*time.Minute {
 		t.Errorf("Frequency: got %v, want 15m", v.Frequency)
+	}
+	if v.OnlineAPIPagesPerStep != 100 {
+		t.Errorf("OnlineAPIPagesPerStep: got %d, want 100", v.OnlineAPIPagesPerStep)
+	}
+	if v.OnlineAPISleepInterval.Duration != 10*time.Millisecond {
+		t.Errorf("OnlineAPISleepInterval: got %v, want 10ms", v.OnlineAPISleepInterval)
 	}
 }
 
