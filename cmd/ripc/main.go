@@ -28,6 +28,20 @@ var (
 // program name in usage output.
 var prog = os.Args[0]
 
+// commandOptions is the single source of truth for the flags shared by the
+// flattened configuration commands. Each command's Spec and flag registration
+// read from it via Spec.Opt. It is a Spec (rather than a []OptSpec) so the
+// lookup reuses the framework's Spec.Opt helper.
+var commandOptions = Spec{
+	Options: []OptSpec{
+		{Name: "scope", Meta: "string", DefaultValue: config.ScopeApplication, Usage: "Scope for the configuration"},
+		{Name: "format", Meta: "string", DefaultValue: "toml", Usage: "Format of the configuration file"},
+		{Name: "desc", Meta: "string", Usage: "Optional description for this configuration version"},
+		{Name: "zero", Usage: "Output stored overrides on top of zero values"},
+		{Name: "runtime", Usage: "Output defaults merged with stored overrides"},
+	},
+}
+
 // UI contains the output streams for the application.
 // Used for injecting buffers during testing.
 type UI struct {
