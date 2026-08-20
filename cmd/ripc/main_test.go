@@ -134,6 +134,24 @@ func TestRun(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name: "TopLevelHelpShortFlag",
+			setup: func(t *testing.T, dir string) []string {
+				ageKeyPath := createDummyAgeKeyFile(t, dir)
+				dbPath := createDummyDB(t, dir)
+				return []string{"-agekey", ageKeyPath, "-dbpath", dbPath, "-h"}
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "TopLevelHelpLongFlag",
+			setup: func(t *testing.T, dir string) []string {
+				ageKeyPath := createDummyAgeKeyFile(t, dir)
+				dbPath := createDummyDB(t, dir)
+				return []string{"-agekey", ageKeyPath, "-dbpath", dbPath, "--help"}
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for _, tc := range testCases {

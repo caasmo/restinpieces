@@ -199,3 +199,23 @@ func TestSaveConfigFromData_FormatResolution(t *testing.T) {
 		})
 	}
 }
+
+// TestHandleSaveCommand_Help verifies that -h prints usage to stdout and
+// returns nil instead of an error.
+func TestHandleSaveCommand_Help(t *testing.T) {
+	mockStore := NewMockSaveSecureStore()
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := handleSaveCommand(mockStore, []string{"-h"}, ui)
+
+	if err != nil {
+		t.Fatalf("expected no error for -h, got %v", err)
+	}
+	if !bytes.Contains(stdout.Bytes(), []byte("Usage:")) {
+		t.Errorf("expected usage on stdout, got: %q", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Errorf("expected empty stderr, got: %q", stderr.String())
+	}
+}

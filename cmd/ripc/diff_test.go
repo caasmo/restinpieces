@@ -234,3 +234,23 @@ func TestDiffConfig_Failure_MalformedTargetConfig(t *testing.T) {
 		t.Errorf("Expected error to wrap ErrConfigUnmarshal, got %v", err)
 	}
 }
+
+// TestHandleDiffCommand_Help verifies that -h prints usage to stdout and
+// returns nil instead of an error.
+func TestHandleDiffCommand_Help(t *testing.T) {
+	mockStore := NewDiffMockSecureStore()
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := handleDiffCommand(mockStore, []string{"-h"}, ui)
+
+	if err != nil {
+		t.Fatalf("expected no error for -h, got %v", err)
+	}
+	if !bytes.Contains(stdout.Bytes(), []byte("Usage:")) {
+		t.Errorf("expected usage on stdout, got: %q", stdout.String())
+	}
+	if stderr.Len() != 0 {
+		t.Errorf("expected empty stderr, got: %q", stderr.String())
+	}
+}
