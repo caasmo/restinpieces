@@ -51,6 +51,9 @@ func Validate(cfg *Config) error {
 	if err := validateCache(&cfg.Cache); err != nil {
 		return fmt.Errorf("cache config validation failed: %w", err)
 	}
+	if err := ValidateBackup(&cfg.Backup); err != nil {
+		return fmt.Errorf("backup config validation failed: %w", err)
+	}
 	return nil
 }
 

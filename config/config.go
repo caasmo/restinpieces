@@ -6,41 +6,8 @@ import (
 	"log/slog"
 	"regexp"
 	"strings"
-	"sync/atomic"
 	"time"
 )
-
-// Provider holds the application configuration and allows for atomic updates.
-type Provider struct {
-	value atomic.Value // Holds the current *Config
-}
-
-// NewProvider creates a new configuration provider with the initial config.
-// It panics if the initialConfig is nil.
-func NewProvider(c *Config) *Provider {
-	if c == nil {
-		panic("initial config cannot be nil")
-	}
-	p := &Provider{}
-	p.value.Store(c)
-	return p
-}
-
-// Get returns the current configuration snapshot.
-// It's safe for concurrent use.
-func (p *Provider) Get() *Config {
-	// Load returns interface{}, assert to *Config
-	// This is safe because Store only accepts *Config.
-	return p.value.Load().(*Config)
-}
-
-// Update atomically swaps the current configuration with the new one.
-// The caller is responsible for ensuring newConfig is not nil.
-func (p *Provider) Update(newConfig *Config) {
-	// Assume newConfig is valid as the check is moved to the caller (signal handler)
-	p.value.Store(newConfig)
-	// Logging is now handled by the caller (e.g., signal handler in main.go)
-}
 
 const (
 	OAuth2ProviderGoogle = "google"
@@ -155,6 +122,17 @@ type BackupFile struct {
 	// throttling between steps). Zero is replaced by the 10ms default
 	// (NewBackupFileDefaults) when the daemon loads the config.
 	OnlineAPISleepInterval Duration `toml:"online_api_sleep_interval" comment:"For 'online' strategy, duration to sleep between steps (0 = no throttling)."`
+
+	// SyncTimeout is the longest one sync may run. Zero uses the
+	// default of 15 minutes.
+	SyncTimeout Duration `toml:"sync_timeout" comment:"Longest one sync may run (e.g. '15m'). Zero uses the default of 15 minutes."`
+}
+
+// BackupFiles returns the configured backup files, keyed by database
+// label. The origin daemon reads the backup configuration through
+// this accessor.
+func (c Config) BackupFiles() map[string]BackupFile {
+	return c.Backup.Files
 }
 
 // Log contains Default (Batch) log configuration

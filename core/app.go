@@ -2,6 +2,7 @@ package core
 
 import (
 	"log/slog"
+	"sync/atomic"
 
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
@@ -79,6 +80,15 @@ func (a *App) Cache() cache.Cache[string, interface{}] {
 
 func (a *App) Config() *config.Config {
 	return a.configProvider.Get()
+}
+
+// ConfigPointer returns the current-config box: the atomic pointer
+// that holds the current *Config. External consumers that must read
+// the current configuration over time — e.g. daemons — hold this box
+// and call Load() at each decision point; internal consumers use
+// Config().
+func (a *App) ConfigPointer() *atomic.Pointer[config.Config] {
+	return a.configProvider.Pointer()
 }
 
 func (a *App) ConfigStore() config.SecureStore {

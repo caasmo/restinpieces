@@ -1,5 +1,12 @@
 ### TODOs
 
+- config: delete config.Provider (no wrapper) — the current-config box is stdlib atomic.Pointer[config.Config]; core.App owns it via a ConfigPointer() getter, Reload Stores into it, every consumer reads Load() (see brainstorm-restinpieces-daemons.md Q23)
+    - ConfigPointer() is for external wiring (daemons, jobs); Config() stays the canonical read for internal consumers (handlers, middleware)
+    - End-state framework changes — no migration noise: the box is atomic.Pointer[config.Config], Provider is deleted, every consumer reads Load()
+        - (a) config.Provider is deleted — the atomic.Value holder was the misplaced construct; the config package keeps only domain types, defaults and validation. The current-config box is the stdlib *atomic.Pointer[config.Config] everywhere in the framework.
+        - (b) core.App owns the box: it holds *atomic.Pointer[config.Config], exposes it via a ConfigPointer() getter, and Config() becomes box.Load().
+        - (c) config.Reload re-publishes into the box — signature takes *atomic.Pointer[config.Config], SIGHUP path does parse → validate → Store.
+        - (d) Every framework consumer switches to the box: server, scheduler, log daemon, batch handler, mail, auth — all take *atomic.Pointer[config.Config] and read Load() at each use. One box type, one read op, framework-wide.
 - handler_fs has to return framwork errors http.error does things to header
     - Error deletes the Content-Length header, sets Content-Type to
     “text/plain; charset=utf-8”, and sets X-Content-Type-Options to “nosniff”. This
