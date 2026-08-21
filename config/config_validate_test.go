@@ -602,3 +602,66 @@ func TestValidateBackup(t *testing.T) {
 		}
 	})
 }
+
+func TestValidateBackup_StrategyDispatch(t *testing.T) {
+	t.Run("online valid", func(t *testing.T) {
+		backupDir, appDB, _ := backupLocalFixture(t)
+		b := &Backup{Files: map[string]BackupFile{"app-online": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, Strategy: BackupStrategyOnline, OnlineAPIPagesPerStep: 100}}}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+	})
+	t.Run("vacuum valid without tuning", func(t *testing.T) {
+		backupDir, appDB, _ := backupLocalFixture(t)
+		b := &Backup{Files: map[string]BackupFile{"app-vacuum": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, Strategy: BackupStrategyVacuum, OnlineAPIPagesPerStep: 0}}}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("vacuum should not require pages_per_step, got %v", err)
+		}
+	})
+	t.Run("sqlite-rsync valid with only source and sync_timeout", func(t *testing.T) {
+		_, appDB, _ := backupLocalFixture(t)
+		b := &Backup{Files: map[string]BackupFile{"app-rsync": {SourcePath: appDB, Strategy: BackupStrategySqliteRsync, SyncTimeout: Duration{Duration: 15 * time.Minute}}}}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("expected nil for rsync, got %v", err)
+		}
+	})
+	t.Run("sqlite-rsync with zero sync_timeout is allowed (daemon default)", func(t *testing.T) {
+		_, appDB, _ := backupLocalFixture(t)
+		b := &Backup{Files: map[string]BackupFile{"app-rsync": {SourcePath: appDB, Strategy: BackupStrategySqliteRsync, SyncTimeout: Duration{Duration: 0}}}}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("zero sync_timeout should be allowed, got %v", err)
+		}
+	})
+	t.Run("invalid strategy", func(t *testing.T) {
+		_, appDB, _ := backupLocalFixture(t)
+		b := &Backup{Files: map[string]BackupFile{"db": {SourcePath: appDB, Strategy: "invalid", Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100}}}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for invalid strategy")
+		}
+	})
+	t.Run("mixed strategies coexist", func(t *testing.T) {
+		backupDir, appDB, otherDB := backupLocalFixture(t)
+		b := &Backup{Files: map[string]BackupFile{
+			"app-online": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, Strategy: BackupStrategyOnline, OnlineAPIPagesPerStep: 100},
+			"app-vacuum": {SourcePath: otherDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, Strategy: BackupStrategyVacuum},
+			"app-rsync":  {SourcePath: appDB, Strategy: BackupStrategySqliteRsync, SyncTimeout: Duration{Duration: 15 * time.Minute}},
+		}}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("mixed strategies should validate, got %v", err)
+		}
+	})
+	t.Run("label with space rejected", func(t *testing.T) {
+		_, appDB, _ := backupLocalFixture(t)
+		b := &Backup{Files: map[string]BackupFile{"my label": {SourcePath: appDB, Strategy: BackupStrategySqliteRsync, SyncTimeout: Duration{Duration: 15 * time.Minute}}}}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for label with space")
+		}
+	})
+	t.Run("label with dot rejected", func(t *testing.T) {
+		_, appDB, _ := backupLocalFixture(t)
+		b := &Backup{Files: map[string]BackupFile{"my.label": {SourcePath: appDB, Strategy: BackupStrategyOnline, Frequency: Duration{Duration: time.Hour}, OnlineAPIPagesPerStep: 100}}}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for label with dot")
+		}
+	})
+}

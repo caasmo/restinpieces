@@ -22,8 +22,8 @@ func TestNewDefaultConfig_DeterministicSecrets(t *testing.T) {
 	}
 }
 
-func TestNewBackupFileDefaults(t *testing.T) {
-	v := NewBackupFileDefaults()
+func TestNewBackupOnlineDefaults(t *testing.T) {
+	v := NewBackupOnlineDefaults()
 	if v.SourcePath != "" {
 		t.Errorf("SourcePath: got %q, want empty", v.SourcePath)
 	}
@@ -44,6 +44,35 @@ func TestNewBackupFileDefaults(t *testing.T) {
 	}
 	if v.OnlineAPISleepInterval.Duration != 10*time.Millisecond {
 		t.Errorf("OnlineAPISleepInterval: got %v, want 10ms", v.OnlineAPISleepInterval)
+	}
+}
+
+func TestNewBackupVacuumDefaults(t *testing.T) {
+	v := NewBackupVacuumDefaults()
+	if v.Strategy != BackupStrategyVacuum {
+		t.Errorf("Strategy: got %q, want %q", v.Strategy, BackupStrategyVacuum)
+	}
+	if v.Compression != false {
+		t.Errorf("Compression: got %v, want false", v.Compression)
+	}
+	if v.Frequency.Duration != 15*time.Minute {
+		t.Errorf("Frequency: got %v, want 15m", v.Frequency)
+	}
+	if v.OnlineAPIPagesPerStep != 0 {
+		t.Errorf("OnlineAPIPagesPerStep: got %d, want 0", v.OnlineAPIPagesPerStep)
+	}
+}
+
+func TestNewBackupSqliteRsyncDefaults(t *testing.T) {
+	v := NewBackupSqliteRsyncDefaults()
+	if v.Strategy != BackupStrategySqliteRsync {
+		t.Errorf("Strategy: got %q, want %q", v.Strategy, BackupStrategySqliteRsync)
+	}
+	if v.SyncTimeout.Duration != 15*time.Minute {
+		t.Errorf("SyncTimeout: got %v, want 15m", v.SyncTimeout)
+	}
+	if v.Frequency.Duration != 0 {
+		t.Errorf("Frequency: got %v, want 0", v.Frequency)
 	}
 }
 

@@ -81,42 +81,100 @@ func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
 	return nil
 }
 
-// ValidateBackup checks the Backup configuration section.
+// isValidBackupLabel reports whether label is a valid backup map key.
 //
-// A path field is either empty ("" = deactivated, the zero value) or a
-// non-empty path. Non-empty paths are absolute or resolved against the
-// application CWD when relative. A non-empty dest_path must be an existing
-// directory and a non-empty source_path must be an existing file. The
-// online API tuning fields (pages per step, sleep interval) are
-// validated for every entry, whatever the strategy.
+// The label is the <key> in backup.files.<key> and therefore part of
+// every dot-path the tooling uses (ripc set/get/paths, TOML, origin
+// wire label). It must not contain whitespace or '.'.
+//
+//   - whitespace (space, tab, newline) would require shell quoting and
+//     would be marshaled as a quoted TOML key (e.g. [backup.files."my label"]),
+//     breaking copy-pasteable `ripc set backup.files.<key>.source_path` commands.
+//   - '.' would be split by the TOML tree as a nesting level
+//     (backup.files.a.b → map entry a with sub-table b, not entry "a.b").
+//
+// Valid:   "app-online", "app-vacuum", "app-rsync", "app_db", "analytics".
+// Invalid: "my label", "my.label", "", "app db", "a\tb".
+func isValidBackupLabel(label string) bool {
+	if label == "" {
+		return false
+	}
+	if strings.ContainsAny(label, " \t\r\n.") {
+		return false
+	}
+	return true
+}
+
+// ValidateBackup checks the Backup configuration section.
 func ValidateBackup(backup *Backup) error {
 	for key, f := range backup.Files {
-		if key == "" {
-			return fmt.Errorf("files: map key cannot be empty")
-		}
-		if f.Frequency.Duration <= 0 {
-			return fmt.Errorf("files.%s.frequency must be positive", key)
+		if !isValidBackupLabel(key) {
+			return fmt.Errorf("files: map key %q must not contain whitespace or '.'", key)
 		}
 		switch f.Strategy {
-		case BackupStrategyOnline, BackupStrategyVacuum, "":
-			// valid (empty defaults to online at runtime)
+		case BackupStrategyOnline:
+			if err := validateBackupOnline(key, f); err != nil {
+				return err
+			}
+		case BackupStrategyVacuum:
+			if err := validateBackupVacuum(key, f); err != nil {
+				return err
+			}
+		case BackupStrategySqliteRsync:
+			if err := validateBackupSqliteRsync(key, f); err != nil {
+				return err
+			}
+		case "":
+			// Legacy: empty strategy treated as online for backwards compatibility.
+			if err := validateBackupOnline(key, f); err != nil {
+				return err
+			}
 		default:
-			return fmt.Errorf("files.%s.strategy must be 'online' or 'vacuum', got %q", key, f.Strategy)
-		}
-		if f.SourcePath != "" && !isFile(f.SourcePath) {
-			return fmt.Errorf("files.%s.source_path must be an existing file, got %q", key, f.SourcePath)
-		}
-		if f.DestPath != "" && !isDir(f.DestPath) {
-			return fmt.Errorf("files.%s.dest_path must be an existing directory, got %q", key, f.DestPath)
-		}
-		if f.OnlineAPIPagesPerStep <= 0 {
-			return fmt.Errorf("files.%s.online_api_pages_per_step must be positive", key)
-		}
-		if f.OnlineAPISleepInterval.Duration < 0 {
-			return fmt.Errorf("files.%s.online_api_sleep_interval cannot be negative", key)
+			return fmt.Errorf("files.%s.strategy must be 'online', 'vacuum' or 'sqlite-rsync', got %q", key, f.Strategy)
 		}
 	}
+	return nil
+}
 
+func validateBackupOnline(key string, f BackupFile) error {
+	if f.Frequency.Duration <= 0 {
+		return fmt.Errorf("files.%s.frequency must be positive", key)
+	}
+	if f.SourcePath != "" && !isFile(f.SourcePath) {
+		return fmt.Errorf("files.%s.source_path must be an existing file, got %q", key, f.SourcePath)
+	}
+	if f.DestPath != "" && !isDir(f.DestPath) {
+		return fmt.Errorf("files.%s.dest_path must be an existing directory, got %q", key, f.DestPath)
+	}
+	if f.OnlineAPIPagesPerStep <= 0 {
+		return fmt.Errorf("files.%s.online_api_pages_per_step must be positive", key)
+	}
+	if f.OnlineAPISleepInterval.Duration < 0 {
+		return fmt.Errorf("files.%s.online_api_sleep_interval cannot be negative", key)
+	}
+	return nil
+}
+
+func validateBackupVacuum(key string, f BackupFile) error {
+	if f.Frequency.Duration <= 0 {
+		return fmt.Errorf("files.%s.frequency must be positive", key)
+	}
+	if f.SourcePath != "" && !isFile(f.SourcePath) {
+		return fmt.Errorf("files.%s.source_path must be an existing file, got %q", key, f.SourcePath)
+	}
+	if f.DestPath != "" && !isDir(f.DestPath) {
+		return fmt.Errorf("files.%s.dest_path must be an existing directory, got %q", key, f.DestPath)
+	}
+	return nil
+}
+
+func validateBackupSqliteRsync(key string, f BackupFile) error {
+	if f.SourcePath != "" && !isFile(f.SourcePath) {
+		return fmt.Errorf("files.%s.source_path must be an existing file, got %q", key, f.SourcePath)
+	}
+	if f.SyncTimeout.Duration < 0 {
+		return fmt.Errorf("files.%s.sync_timeout cannot be negative", key)
+	}
 	return nil
 }
 

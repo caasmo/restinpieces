@@ -18,22 +18,17 @@ public_dir = "/var/www/public"
 [oauth2_providers]
 `
 
-func TestScaffoldConfigValue_Backup(t *testing.T) {
-	scope := "app"
+func TestScaffoldConfigValue_BackupOnlineAPI(t *testing.T) {
+	scope := config.ScopeApplication
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackup, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupOnlineAPI, "app-online")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-
 	tree := getTreeFromStore(t, mockStore, scope)
-	path := "backup.files.app_db"
-	if !tree.Has(path) {
-		t.Fatalf("expected path %s to exist", path)
-	}
+	path := "backup.files.app-online"
 	filesTree, ok := tree.Get(path).(*toml.Tree)
 	if !ok {
 		t.Fatalf("expected subtree at %s", path)
@@ -41,27 +36,99 @@ func TestScaffoldConfigValue_Backup(t *testing.T) {
 	if got := filesTree.Get("strategy"); got != config.BackupStrategyOnline {
 		t.Errorf("expected strategy %q, got %v", config.BackupStrategyOnline, got)
 	}
-	if got := filesTree.Get("compression"); got != false {
-		t.Errorf("expected compression false, got %v", got)
-	}
 	if got := filesTree.Get("frequency"); got != "15m0s" {
 		t.Errorf("expected frequency %q, got %v", "15m0s", got)
 	}
 	if got := filesTree.Get("online_api_pages_per_step"); got != int64(100) {
-		t.Errorf("expected online_api_pages_per_step 100, got %v", got)
+		t.Errorf("expected 100, got %v", got)
 	}
-	if got := filesTree.Get("online_api_sleep_interval"); got != "10ms" {
-		t.Errorf("expected online_api_sleep_interval %q, got %v", "10ms", got)
+	if !strings.Contains(stderr.String(), "Successfully scaffolded backup 'app-online'") {
+		t.Errorf("expected success line with backup label, got %q", stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "app-online:") {
+		t.Errorf("expected label block header, got %q", stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "ripc set backup.files.app-online.source_path") {
+		t.Errorf("expected next steps command, got %q", stderr.String())
+	}
+}
+
+func TestScaffoldConfigValue_BackupVacuum(t *testing.T) {
+	scope := config.ScopeApplication
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupVacuum, "app-vacuum")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	tree := getTreeFromStore(t, mockStore, scope)
+	path := "backup.files.app-vacuum"
+	filesTree, _ := tree.Get(path).(*toml.Tree)
+	if got := filesTree.Get("strategy"); got != config.BackupStrategyVacuum {
+		t.Errorf("expected vacuum, got %v", got)
+	}
+	if filesTree.Has("online_api_pages_per_step") {
+		t.Errorf("vacuum should not scaffold online tuning")
+	}
+}
+
+func TestScaffoldConfigValue_BackupSqliteRsync(t *testing.T) {
+	scope := config.ScopeApplication
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupSqliteRsync, "app-rsync")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	tree := getTreeFromStore(t, mockStore, scope)
+	path := "backup.files.app-rsync"
+	filesTree, _ := tree.Get(path).(*toml.Tree)
+	if got := filesTree.Get("strategy"); got != config.BackupStrategySqliteRsync {
+		t.Errorf("expected sqlite-rsync, got %v", got)
+	}
+	if got := filesTree.Get("sync_timeout"); got != "15m0s" {
+		t.Errorf("expected sync_timeout 15m, got %v", got)
+	}
+	if filesTree.Has("frequency") {
+		t.Errorf("rsync should not scaffold frequency")
+	}
+}
+
+func TestScaffoldConfigValue_LabelWithSpaceRejected(t *testing.T) {
+	scope := config.ScopeApplication
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupSqliteRsync, "my label")
+	if err == nil {
+		t.Fatal("expected error for label with space")
+	}
+}
+
+func TestParseScaffoldArgs_RejectsLabelWithWhitespace(t *testing.T) {
+	_, err := parseScaffoldArgs([]string{ScaffoldTypeBackupSqliteRsync, "my label"})
+	if err == nil {
+		t.Fatal("expected error for label with space via parse")
+	}
+	_, err = parseScaffoldArgs([]string{ScaffoldTypeBackupOnlineAPI, "my.label"})
+	if err == nil {
+		t.Fatal("expected error for label with dot via parse")
+	}
+	_, err = parseScaffoldArgs([]string{"--scope", "my-app", ScaffoldTypeBackupOnlineAPI, "app-online"})
+	if err == nil {
+		t.Fatal("expected error for --scope flag — scaffold does not support scope")
 	}
 }
 
 func TestScaffoldConfigValue_OAuth2(t *testing.T) {
-	scope := "app"
+	scope := config.ScopeApplication
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeOAuth2, "my_github")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeOAuth2, "my_github")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -82,7 +149,7 @@ func TestScaffoldConfigValue_UnknownType(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, "app", "", "bogus", "key")
+	err := scaffoldConfigValue(ui, mockStore, "", "bogus", "key")
 	if !errors.Is(err, ErrScaffoldTypeUnknown) {
 		t.Errorf("expected ErrScaffoldTypeUnknown, got %v", err)
 	}
@@ -90,12 +157,12 @@ func TestScaffoldConfigValue_UnknownType(t *testing.T) {
 
 func TestScaffoldConfigValue_KeyExists(t *testing.T) {
 	tomlWithBackup := scaffoldTestConf + "\n[backup.files.app_db]\n  source_path = \"/x.db\"\n"
-	scope := "app"
+	scope := config.ScopeApplication
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(tomlWithBackup)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackup, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupOnlineAPI, "app_db")
 	if !errors.Is(err, ErrScaffoldKeyExists) {
 		t.Errorf("expected ErrScaffoldKeyExists, got %v", err)
 	}
@@ -107,45 +174,45 @@ func TestScaffoldConfigValue_StoreReadError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, "app", "", ScaffoldTypeBackup, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupOnlineAPI, "app_db")
 	if !errors.Is(err, ErrSecureStoreGet) {
 		t.Errorf("expected error to wrap ErrSecureStoreGet, got %v", err)
 	}
 }
 
 func TestScaffoldConfigValue_MalformedTOML(t *testing.T) {
-	scope := "app"
+	scope := config.ScopeApplication
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte("[server")})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackup, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupOnlineAPI, "app_db")
 	if !errors.Is(err, ErrConfigUnmarshal) {
 		t.Errorf("expected error to wrap ErrConfigUnmarshal, got %v", err)
 	}
 }
 
 func TestScaffoldConfigValue_StoreSaveError(t *testing.T) {
-	scope := "app"
+	scope := config.ScopeApplication
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
 	mockStore.ForceSaveError = true
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackup, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupOnlineAPI, "app_db")
 	if !errors.Is(err, ErrSecureStoreSave) {
 		t.Errorf("expected error to wrap ErrSecureStoreSave, got %v", err)
 	}
 }
 
 func TestScaffoldConfigValue_CustomDescription(t *testing.T) {
-	scope := "app"
+	scope := config.ScopeApplication
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 	desc := "scaffolding analytics db"
 
-	err := scaffoldConfigValue(ui, mockStore, scope, desc, ScaffoldTypeBackup, "analytics_db")
+	err := scaffoldConfigValue(ui, mockStore, desc, ScaffoldTypeBackupVacuum, "analytics_db")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -156,12 +223,12 @@ func TestScaffoldConfigValue_CustomDescription(t *testing.T) {
 
 func TestScaffoldConfigValue_ParentMissing(t *testing.T) {
 	// setTestConf has no [backup] section
-	scope := "app"
+	scope := config.ScopeApplication
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, scope, "", ScaffoldTypeBackup, "app_db")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupVacuum, "app_db")
 	if !errors.Is(err, ErrScaffoldParentMissing) {
 		t.Errorf("expected ErrScaffoldParentMissing, got %v", err)
 	}
@@ -171,43 +238,34 @@ func TestParseScaffoldArgs(t *testing.T) {
 	tests := []struct {
 		name           string
 		args           []string
-		wantScope      string
 		wantType       string
 		wantKey        string
 		wantErrContain string
 	}{
 		{
-			name:      "two positional args",
-			args:      []string{"backup", "app_db"},
-			wantScope: config.ScopeApplication,
-			wantType:  "backup",
-			wantKey:   "app_db",
-		},
-		{
-			name:      "flags before positional",
-			args:      []string{"--scope", "my-app", "backup", "app_db"},
-			wantScope: "my-app",
-			wantType:  "backup",
-			wantKey:   "app_db",
+			name:     "two positional args",
+			args:     []string{ScaffoldTypeBackupOnlineAPI, "app-online"},
+			wantType: ScaffoldTypeBackupOnlineAPI,
+			wantKey:  "app-online",
 		},
 		{
 			name:           "missing key arg",
-			args:           []string{"backup"},
+			args:           []string{ScaffoldTypeBackupOnlineAPI},
 			wantErrContain: "requires <type> and <key>",
 		},
 		{
 			name:           "flags after positional (not consumed)",
-			args:           []string{"backup", "app_db", "--scope", "my-app"},
+			args:           []string{ScaffoldTypeBackupOnlineAPI, "app-online", "--desc", "hi"},
 			wantErrContain: "takes exactly two arguments",
 		},
 		{
 			name:           "too many positional",
-			args:           []string{"backup", "app_db", "extra"},
+			args:           []string{ScaffoldTypeBackupOnlineAPI, "app-online", "extra"},
 			wantErrContain: "takes exactly two arguments",
 		},
 		{
 			name:           "unknown flag",
-			args:           []string{"--bogus", "backup", "app_db"},
+			args:           []string{"--bogus", ScaffoldTypeBackupOnlineAPI, "app-online"},
 			wantErrContain: "flag provided but not defined",
 		},
 	}
@@ -226,9 +284,6 @@ func TestParseScaffoldArgs(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if opts.Scope != tc.wantScope {
-				t.Errorf("scope: got %q, want %q", opts.Scope, tc.wantScope)
-			}
 			if opts.ScaffoldType != tc.wantType {
 				t.Errorf("type: got %q, want %q", opts.ScaffoldType, tc.wantType)
 			}
@@ -237,6 +292,39 @@ func TestParseScaffoldArgs(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestScaffoldNextSteps(t *testing.T) {
+	t.Run("rsync", func(t *testing.T) {
+		got := scaffoldNextSteps(ScaffoldTypeBackupSqliteRsync, "app-rsync", config.NewBackupSqliteRsyncDefaults())
+		if !strings.Contains(got, "app-rsync:") {
+			t.Fatalf("expected label header, got %q", got)
+		}
+		if !strings.Contains(got, "\tripc set backup.files.app-rsync.source_path") {
+			t.Fatalf("expected tab-indented command, got %q", got)
+		}
+		if !strings.Contains(got, "Deactivate: ripc set backup.files.app-rsync.source_path") {
+			t.Fatalf("expected Deactivate line, got %q", got)
+		}
+	})
+	t.Run("vacuum", func(t *testing.T) {
+		got := scaffoldNextSteps(ScaffoldTypeBackupVacuum, "app-vacuum", config.NewBackupVacuumDefaults())
+		if !strings.Contains(got, "\tripc set backup.files.app-vacuum.dest_path") {
+			t.Fatalf("expected dest_path command, got %q", got)
+		}
+	})
+	t.Run("online", func(t *testing.T) {
+		got := scaffoldNextSteps(ScaffoldTypeBackupOnlineAPI, "app-online", config.NewBackupOnlineDefaults())
+		if !strings.Contains(got, "\tripc set backup.files.app-online.frequency 24h") {
+			t.Fatalf("expected frequency command, got %q", got)
+		}
+	})
+	t.Run("oauth2 empty", func(t *testing.T) {
+		got := scaffoldNextSteps(ScaffoldTypeOAuth2, "my_google", config.NewOAuth2ProviderDefaults())
+		if got != "" {
+			t.Fatalf("expected empty for oauth2, got %q", got)
+		}
+	})
 }
 
 // TestHandleScaffoldCommand_Help verifies that -h prints usage to stdout and

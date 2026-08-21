@@ -13,8 +13,9 @@ const (
 	OAuth2ProviderGoogle = "google"
 	OAuth2ProviderGitHub = "github"
 
-	BackupStrategyOnline = "online"
-	BackupStrategyVacuum = "vacuum"
+	BackupStrategyOnline      = "online"
+	BackupStrategyVacuum      = "vacuum"
+	BackupStrategySqliteRsync = "sqlite-rsync"
 )
 
 // Config holds the application configuration.
@@ -99,33 +100,34 @@ type BackupFile struct {
 	// Frequency defines how often this database should be backed up.
 	// The daemon skips a database if its latest backup is newer than
 	// this duration. Parsed via time.ParseDuration (e.g. "24h", "6h").
-	Frequency Duration `toml:"frequency" comment:"Minimum interval between backups (e.g. '24h')."`
+	Frequency Duration `toml:"frequency,omitempty" comment:"Minimum interval between backups (e.g. '24h')."`
 
 	// Compression enables gzip compression of the backup file.
 	// When true, backup files use the ".bck.gz" extension.
 	// When false, backup files use the ".db" extension (plain SQLite copy).
 	Compression bool `toml:"compression" comment:"Enable gzip compression of the backup."`
 
-	// Strategy selects the backup method: "online" or "vacuum".
+	// Strategy selects the backup method: "online", "vacuum" or "sqlite-rsync".
 	// "online" uses SQLite's Online Backup API (non-blocking).
 	// "vacuum" uses VACUUM INTO (faster but blocks writers).
-	Strategy string `toml:"strategy" comment:"Backup strategy: 'online' or 'vacuum'."`
+	// "sqlite-rsync" serves the file over the sqlite-rsync protocol (origin daemon, no schedule).
+	Strategy string `toml:"strategy" comment:"Backup strategy: 'online', 'vacuum' or 'sqlite-rsync'."`
 
 	// OnlineAPIPagesPerStep controls the number of pages copied in each
 	// step when using the "online" strategy. Must be ≥ 1: Step(0) would
 	// copy nothing and never finish. Zero is replaced by the 100-page
-	// default (NewBackupFileDefaults) when the daemon loads the config.
-	OnlineAPIPagesPerStep int `toml:"online_api_pages_per_step" comment:"For 'online' strategy, pages to copy in each step (must be >= 1)."`
+	// default (NewBackupOnlineDefaults) when the daemon loads the config.
+	OnlineAPIPagesPerStep int `toml:"online_api_pages_per_step,omitempty" comment:"For 'online' strategy, pages to copy in each step (must be >= 1)."`
 
 	// OnlineAPISleepInterval is the duration to sleep between online
 	// backup steps when using the "online" strategy. May be 0 (no
 	// throttling between steps). Zero is replaced by the 10ms default
-	// (NewBackupFileDefaults) when the daemon loads the config.
-	OnlineAPISleepInterval Duration `toml:"online_api_sleep_interval" comment:"For 'online' strategy, duration to sleep between steps (0 = no throttling)."`
+	// (NewBackupOnlineDefaults) when the daemon loads the config.
+	OnlineAPISleepInterval Duration `toml:"online_api_sleep_interval,omitempty" comment:"For 'online' strategy, duration to sleep between steps (0 = no throttling)."`
 
 	// SyncTimeout is the longest one sync may run. Zero uses the
 	// default of 15 minutes.
-	SyncTimeout Duration `toml:"sync_timeout" comment:"Longest one sync may run (e.g. '15m'). Zero uses the default of 15 minutes."`
+	SyncTimeout Duration `toml:"sync_timeout,omitempty" comment:"Longest one sync may run (e.g. '15m'). Zero uses the default of 15 minutes."`
 }
 
 // BackupFiles returns the configured backup files, keyed by database

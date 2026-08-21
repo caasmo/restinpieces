@@ -174,18 +174,32 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// NewBackupFileDefaults returns a BackupFile with sensible defaults
-// for use by ripc scaffold. The SourcePath and DestPath are
-// intentionally empty — an empty path deactivates the entry until the
-// user sets it. Relative paths resolve against the application's
-// current working directory (CWD).
-func NewBackupFileDefaults() BackupFile {
+// NewBackupOnlineDefaults returns defaults for the Online Backup API strategy.
+func NewBackupOnlineDefaults() BackupFile {
 	return BackupFile{
 		Strategy:               BackupStrategyOnline,
 		Compression:            false,
 		Frequency:              Duration{Duration: 15 * time.Minute},
 		OnlineAPIPagesPerStep:  100,
 		OnlineAPISleepInterval: Duration{Duration: 10 * time.Millisecond},
+	}
+}
+
+// NewBackupVacuumDefaults returns defaults for the VACUUM INTO strategy.
+func NewBackupVacuumDefaults() BackupFile {
+	return BackupFile{
+		Strategy:    BackupStrategyVacuum,
+		Compression: false,
+		Frequency:   Duration{Duration: 15 * time.Minute},
+	}
+}
+
+// NewBackupSqliteRsyncDefaults returns defaults for the sqlite-rsync origin strategy.
+// SyncTimeout is explicit 15m so the written TOML matches the daemon default.
+func NewBackupSqliteRsyncDefaults() BackupFile {
+	return BackupFile{
+		Strategy:    BackupStrategySqliteRsync,
+		SyncTimeout: Duration{Duration: 15 * time.Minute},
 	}
 }
 
