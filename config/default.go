@@ -164,6 +164,7 @@ func NewDefaultConfig() *Config {
 			AllowedIPs: []string{"127.0.0.1", "::1"}, // Only exact IPs allowed, no CIDR ranges
 		},
 		Backup: Backup{
+			SqliteRsync: NewBackupSqliteRsyncDefaults(),
 			// Files is nil by default (the zero value). Entries are
 			// created via ripc scaffold. Map keys are
 			// user-chosen labels (not domain identifiers) — see AGENTS.md.

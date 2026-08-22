@@ -80,6 +80,13 @@ func TestNewBackupSqliteRsyncDefaults(t *testing.T) {
 	}
 }
 
+func TestNewDefaultConfigWiresSqliteRsyncDefaults(t *testing.T) {
+	cfg := NewDefaultConfig()
+	if got := cfg.Backup.SqliteRsync.ListenAddr; got != "127.0.0.1:54321" {
+		t.Errorf("Backup.SqliteRsync.ListenAddr: got %q, want %q", got, "127.0.0.1:54321")
+	}
+}
+
 func TestNewOAuth2ProviderDefaults(t *testing.T) {
 	v := NewOAuth2ProviderDefaults()
 	if v.Name != "" {

@@ -123,6 +123,9 @@ func ValidateBackup(backup *Backup) error {
 			return err
 		}
 	}
+	if len(backup.SqliteRsync.Entries) > 0 && backup.SqliteRsync.ListenAddr == "" {
+		return fmt.Errorf("sqlite-rsync.listen_addr cannot be empty when entries are configured")
+	}
 	if backup.SqliteRsync.ListenAddr != "" {
 		_, _, err := net.SplitHostPort(backup.SqliteRsync.ListenAddr)
 		if err != nil {

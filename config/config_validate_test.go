@@ -483,9 +483,16 @@ func TestValidateBackup(t *testing.T) {
 	})
 	t.Run("sqlite-rsync valid", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{SqliteRsync: BackupSqliteRsync{Entries: map[string]BackupSqliteRsyncEntry{"app-rsync": {SourcePath: appDB, SyncTimeout: Duration{Duration: 15 * time.Minute}}}}}
+		b := &Backup{SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"app-rsync": {SourcePath: appDB, SyncTimeout: Duration{Duration: 15 * time.Minute}}}}}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil for rsync, got %v", err)
+		}
+	})
+	t.Run("sqlite-rsync listen_addr empty rejected", func(t *testing.T) {
+		_, appDB, _ := backupLocalFixture(t)
+		b := &Backup{SqliteRsync: BackupSqliteRsync{Entries: map[string]BackupSqliteRsyncEntry{"app-rsync": {SourcePath: appDB}}}}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for empty listen_addr")
 		}
 	})
 	t.Run("sqlite-rsync listen_addr invalid", func(t *testing.T) {
@@ -525,7 +532,7 @@ func TestValidateBackup(t *testing.T) {
 	})
 	t.Run("label with dot rejected sqlite-rsync", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{SqliteRsync: BackupSqliteRsync{Entries: map[string]BackupSqliteRsyncEntry{"my.label": {SourcePath: appDB}}}}
+		b := &Backup{SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"my.label": {SourcePath: appDB}}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for label with dot in sqlite-rsync")
 		}
@@ -542,7 +549,7 @@ func TestValidateBackup(t *testing.T) {
 		b := &Backup{
 			Online: BackupOnline{"app": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}},
 			Vacuum: BackupVacuum{"other": {SourcePath: otherDB, DestPath: backupDir, Frequency: Duration{Duration: 30 * time.Minute}}},
-			SqliteRsync: BackupSqliteRsync{Entries: map[string]BackupSqliteRsyncEntry{"rsync": {SourcePath: appDB, SyncTimeout: Duration{Duration: 15 * time.Minute}}}},
+			SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"rsync": {SourcePath: appDB, SyncTimeout: Duration{Duration: 15 * time.Minute}}}},
 		}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil for valid mixed config, got: %v", err)
@@ -635,14 +642,14 @@ func TestValidateBackup(t *testing.T) {
 		}
 	})
 	t.Run("negative sync_timeout", func(t *testing.T) {
-		b := &Backup{SqliteRsync: BackupSqliteRsync{Entries: map[string]BackupSqliteRsyncEntry{"db": {SourcePath: "", SyncTimeout: Duration{Duration: -time.Minute}}}}}
+		b := &Backup{SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"db": {SourcePath: "", SyncTimeout: Duration{Duration: -time.Minute}}}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for negative sync_timeout, got nil")
 		}
 	})
 	t.Run("zero sync_timeout allowed", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{SqliteRsync: BackupSqliteRsync{Entries: map[string]BackupSqliteRsyncEntry{"db": {SourcePath: appDB, SyncTimeout: Duration{Duration: 0}}}}}
+		b := &Backup{SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"db": {SourcePath: appDB, SyncTimeout: Duration{Duration: 0}}}}}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("zero sync_timeout should be allowed, got %v", err)
 		}
