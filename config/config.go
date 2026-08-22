@@ -12,10 +12,6 @@ import (
 const (
 	OAuth2ProviderGoogle = "google"
 	OAuth2ProviderGitHub = "github"
-
-	BackupStrategyOnline      = "online"
-	BackupStrategyVacuum      = "vacuum"
-	BackupStrategySqliteRsync = "sqlite-rsync"
 )
 
 // Config holds the application configuration.
@@ -66,75 +62,6 @@ type BlockHost struct {
 	// If the list is empty, all hosts are allowed.
 	// Supports exact matches (e.g., "example.com") and wildcard subdomains (e.g., "*.example.com").
 	AllowedHosts []string `toml:"allowed_hosts" comment:"List of allowed hostnames (e.g., 'example.com', '*.example.com')"`
-}
-
-// Backup defines the backup configuration: one entry per database,
-// keyed by an arbitrary user-chosen label (e.g. "app_db",
-// "analytics_db"). The key is a label, not a domain identifier — see
-// AGENTS.md "Config: map key rules". The engines that consume this
-// shape live in restinpieces-backup; the framework only hosts the
-// shape and its validation.
-type Backup struct {
-	// Files holds per-database backup configuration, keyed by an
-	// arbitrary user-chosen label. The map can be empty, which
-	// deactivates the backup feature.
-	Files map[string]BackupFile `toml:"files,omitempty" comment:"Database backups, keyed by a user-chosen label."`
-}
-
-// BackupFile is the union of every field a backup engine can need.
-// An engine reads the whole record and uses only the fields of its
-// type; unused fields keep their zero value.
-type BackupFile struct {
-	// SourcePath is the filesystem path to the SQLite database to back up.
-	// Supports absolute and relative paths. Relative paths resolve against
-	// the application's current working directory (CWD).
-	// Empty string deactivates this file entry.
-	SourcePath string `toml:"source_path" comment:"Path to the source database file. Supports absolute and relative paths (relative to the application CWD)."`
-
-	// DestPath is the directory where the backup files are written.
-	// Supports absolute and relative paths. Relative paths resolve against
-	// the application's current working directory (CWD).
-	// Empty string deactivates this file entry.
-	DestPath string `toml:"dest_path" comment:"Directory where backup files will be stored. Supports absolute and relative paths (relative to the application CWD)."`
-
-	// Frequency defines how often this database should be backed up.
-	// The daemon skips a database if its latest backup is newer than
-	// this duration. Parsed via time.ParseDuration (e.g. "24h", "6h").
-	Frequency Duration `toml:"frequency,omitempty" comment:"Minimum interval between backups (e.g. '24h')."`
-
-	// Compression enables gzip compression of the backup file.
-	// When true, backup files use the ".bck.gz" extension.
-	// When false, backup files use the ".db" extension (plain SQLite copy).
-	Compression bool `toml:"compression" comment:"Enable gzip compression of the backup."`
-
-	// Strategy selects the backup method: "online", "vacuum" or "sqlite-rsync".
-	// "online" uses SQLite's Online Backup API (non-blocking).
-	// "vacuum" uses VACUUM INTO (faster but blocks writers).
-	// "sqlite-rsync" serves the file over the sqlite-rsync protocol (origin daemon, no schedule).
-	Strategy string `toml:"strategy" comment:"Backup strategy: 'online', 'vacuum' or 'sqlite-rsync'."`
-
-	// OnlineAPIPagesPerStep controls the number of pages copied in each
-	// step when using the "online" strategy. Must be ≥ 1: Step(0) would
-	// copy nothing and never finish. Zero is replaced by the 100-page
-	// default (NewBackupOnlineDefaults) when the daemon loads the config.
-	OnlineAPIPagesPerStep int `toml:"online_api_pages_per_step,omitempty" comment:"For 'online' strategy, pages to copy in each step (must be >= 1)."`
-
-	// OnlineAPISleepInterval is the duration to sleep between online
-	// backup steps when using the "online" strategy. May be 0 (no
-	// throttling between steps). Zero is replaced by the 10ms default
-	// (NewBackupOnlineDefaults) when the daemon loads the config.
-	OnlineAPISleepInterval Duration `toml:"online_api_sleep_interval,omitempty" comment:"For 'online' strategy, duration to sleep between steps (0 = no throttling)."`
-
-	// SyncTimeout is the longest one sync may run. Zero uses the
-	// default of 15 minutes.
-	SyncTimeout Duration `toml:"sync_timeout,omitempty" comment:"Longest one sync may run (e.g. '15m'). Zero uses the default of 15 minutes."`
-}
-
-// BackupFiles returns the configured backup files, keyed by database
-// label. The origin daemon reads the backup configuration through
-// this accessor.
-func (c Config) BackupFiles() map[string]BackupFile {
-	return c.Backup.Files
 }
 
 // Log contains Default (Batch) log configuration

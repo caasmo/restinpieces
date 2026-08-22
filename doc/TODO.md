@@ -383,5 +383,18 @@ core/prerouter/block_oversized_request.go
 - fix: track started daemons (append after each successful `Start()`) and stop only those — already fixed in the go-daemon-runner extraction (impl-daemon-runner.md Phase 3, `startedDaemons`)
 - ref: `server/server.go:184-194` (start loop), `server/server.go:262-276` (shutdown loop)
 
+# logs schema: random TEXT primary key scatters inserts and bloats sqlite-rsync syncs
+
+- the `logs` table uses a random TEXT primary key: `id TEXT PRIMARY KEY DEFAULT ('r'||lower(hex(randomblob(7)))) NOT NULL`
+- nothing writes it: `InsertBatch` (`db/zombiezen/log.go`) inserts only `(level, message, data, created)`; the id is filled purely by the schema default
+- nothing reads it: no SELECT, no reference, no consumer anywhere in restinpieces or writeplay; the tailsqlitelogs reader selects `created, level, message, data` — never `id`. (The `users` table uses the same random id for a reason — external users need a stable, unguessable identifier. `logs` has no such need.)
+- a `TEXT PRIMARY KEY` in SQLite creates an implicit unique index (`sqlite_autoindex_logs_1`), so every insert writes into **three** B-trees: the PK autoindex (random key → random leaf), `idx_logs_level`, and `idx_logs_message`
+- the random key scatters each row to a different leaf page and causes page splits; measured: 5 log rows ≈ 14–21 `page_updates` on the next sqlite-rsync replica sync, versus ~1 page for a quiet minute
+- proposal: drop the random `id` from `logs`; the table already has an implicit sequential `rowid`, so inserts append at the tail of one B-tree. Either:
+  - drop `id` entirely: `CREATE TABLE IF NOT EXISTS logs (level INTEGER DEFAULT 0 NOT NULL, message TEXT DEFAULT "" NOT NULL, data JSON DEFAULT "{}" NOT NULL, created TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ')) NOT NULL)`
+  - or use `INTEGER PRIMARY KEY` (rowid alias) for an explicit conventional key — still sequential/append-only, no autoindex
+- schema change in `migrations/schema/log/logs.sql`, affects the app DB migration, not daemon code
+- ref: `migrations/schema/log/logs.sql:6`, `db/zombiezen/log.go:55`
+
 ### done
 

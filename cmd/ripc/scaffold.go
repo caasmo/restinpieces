@@ -18,33 +18,45 @@ var (
 )
 
 const (
-	ScaffoldTypeBackupOnlineAPI   = "backup-online-api"
+	ScaffoldTypeBackupOnline      = "backup-online"
 	ScaffoldTypeBackupVacuum      = "backup-vacuum"
 	ScaffoldTypeBackupSqliteRsync = "backup-sqlite-rsync"
 	ScaffoldTypeOAuth2            = "oauth2"
-
-	scaffoldKeyBackup  = "backup.files"
-	scaffoldKeyOAuth2  = "oauth2_providers"
-	scaffoldParentBackup = "backup"
 )
 
-var knownScaffoldTypes = []string{ScaffoldTypeBackupOnlineAPI, ScaffoldTypeBackupVacuum, ScaffoldTypeBackupSqliteRsync, ScaffoldTypeOAuth2}
+var knownScaffoldTypes = []string{ScaffoldTypeBackupOnline, ScaffoldTypeBackupVacuum, ScaffoldTypeBackupSqliteRsync, ScaffoldTypeOAuth2}
 
-func scaffoldDefaults(scaffoldType string) (tomlKey string, parentPath string, defaults interface{}, err error) {
+func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}, sectionDefaults interface{}, err error) {
 	switch scaffoldType {
-	case ScaffoldTypeBackupOnlineAPI:
-		return scaffoldKeyBackup, scaffoldParentBackup, config.NewBackupOnlineDefaults(), nil
+	case ScaffoldTypeBackupOnline:
+		return "backup.online", config.NewBackupOnlineEntryDefaults(), nil, nil
 	case ScaffoldTypeBackupVacuum:
-		return scaffoldKeyBackup, scaffoldParentBackup, config.NewBackupVacuumDefaults(), nil
+		return "backup.vacuum", config.NewBackupVacuumEntryDefaults(), nil, nil
 	case ScaffoldTypeBackupSqliteRsync:
-		return scaffoldKeyBackup, scaffoldParentBackup, config.NewBackupSqliteRsyncDefaults(), nil
+		return "backup.sqlite-rsync.entries", config.NewBackupSqliteRsyncEntryDefaults(), config.NewBackupSqliteRsyncDefaults(), nil
 	case ScaffoldTypeOAuth2:
-		return scaffoldKeyOAuth2, scaffoldKeyOAuth2, config.NewOAuth2ProviderDefaults(), nil
+		return "oauth2_providers", config.NewOAuth2ProviderDefaults(), nil, nil
 	default:
-		return "", "", nil, fmt.Errorf("%w: '%s'. Known types: %s",
-			ErrScaffoldTypeUnknown, scaffoldType,
-			strings.Join(knownScaffoldTypes, ", "))
+		return "", nil, nil, fmt.Errorf("%w: '%s'. Known types: %s", ErrScaffoldTypeUnknown, scaffoldType, strings.Join(knownScaffoldTypes, ", "))
 	}
+}
+
+// parentTomlKeyOf returns the parent path of a dot-separated TOML key, i.e.
+// the prefix before the last dot. It is the single place that derives
+// the parent for scaffold's `tree.Has` check.
+//
+// Examples:
+//
+//   parentTomlKeyOf("backup.online") == "backup"
+//   parentTomlKeyOf("backup.sqlite-rsync.entries") == "backup.sqlite-rsync"
+//   parentTomlKeyOf("oauth2_providers") == ""
+//   parentTomlKeyOf("backup") == ""
+func parentTomlKeyOf(tomlKey string) string {
+	idx := strings.LastIndex(tomlKey, ".")
+	if idx == -1 {
+		return ""
+	}
+	return tomlKey[:idx]
 }
 
 // defaultFieldsAndValues returns the indented TOML block for the given
@@ -87,10 +99,10 @@ func scaffoldNextSteps(scaffoldType, label string, defaults interface{}) string 
 
 Next steps:
 1. Set the origin file to replicate (required):
-	ripc set backup.files.%s.source_path /path/to/app.db
+	ripc set backup.sqlite-rsync.entries.%s.source_path /path/to/app.db
 2. Reload the app:
 	systemctl reload myapp
-Deactivate: ripc set backup.files.%s.source_path ""`, label, block, label, label)
+Deactivate: ripc set backup.sqlite-rsync.entries.%s.source_path ""`, label, block, label, label)
 	case ScaffoldTypeBackupVacuum:
 		return fmt.Sprintf(`
 %s:
@@ -98,29 +110,29 @@ Deactivate: ripc set backup.files.%s.source_path ""`, label, block, label, label
 
 Next steps:
 1. Set the origin file to back up (required):
-	ripc set backup.files.%s.source_path /path/to/app.db
+	ripc set backup.vacuum.%s.source_path /path/to/app.db
 2. Set the backup destination directory (required):
-	ripc set backup.files.%s.dest_path /var/backups
+	ripc set backup.vacuum.%s.dest_path /var/backups
 3. Optionally modify above values (frequency, compression) as needed:
-	ripc set backup.files.%s.frequency 24h
+	ripc set backup.vacuum.%s.frequency 24h
 4. Reload the app:
 	systemctl reload myapp
-Deactivate: ripc set backup.files.%s.source_path ""`, label, block, label, label, label, label)
-	case ScaffoldTypeBackupOnlineAPI:
+Deactivate: ripc set backup.vacuum.%s.source_path ""`, label, block, label, label, label, label)
+	case ScaffoldTypeBackupOnline:
 		return fmt.Sprintf(`
 %s:
 %s
 
 Next steps:
 1. Set the origin file to back up (required):
-	ripc set backup.files.%s.source_path /path/to/app.db
+	ripc set backup.online.%s.source_path /path/to/app.db
 2. Set the backup destination directory (required):
-	ripc set backup.files.%s.dest_path /var/backups
+	ripc set backup.online.%s.dest_path /var/backups
 3. Optionally modify above values (frequency, compression, tuning) as needed:
-	ripc set backup.files.%s.frequency 24h
+	ripc set backup.online.%s.frequency 24h
 4. Reload the app:
 	systemctl reload myapp
-Deactivate: ripc set backup.files.%s.source_path ""`, label, block, label, label, label, label)
+Deactivate: ripc set backup.online.%s.source_path ""`, label, block, label, label, label, label)
 	default:
 		return ""
 	}
@@ -129,18 +141,18 @@ Deactivate: ripc set backup.files.%s.source_path ""`, label, block, label, label
 func printScaffoldUsage(w io.Writer) {
 	help := Spec{
 		Usage:       "scaffold [options] <type> <key>",
-		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.files.<key>; use a best-practice label <dbfile>-<strategy> (e.g. app-online, analytics-vacuum, app-rsync) so the map key reveals the database and the engine.",
+		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key> or backup.sqlite-rsync.entries.<key>; use a best-practice label <dbfile>-<strategy> (e.g. app-online, analytics-vacuum, app-rsync) so the map key reveals the database and the engine.",
 		Args: []ArgSpec{
-			{"type", "Scaffold type (backup-online-api, backup-vacuum, backup-sqlite-rsync or oauth2)"},
+			{"type", "Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync or oauth2)"},
 			{"key", "Key of the new entry — required backup label, e.g. app-online, app-vacuum, app-rsync (file + method)"},
 		},
 		Subcommands: []SubcommandGroup{
 			{
 				Title: "Scaffold Types",
 				Subcommands: []Subcommand{
-					{"backup-online-api", "Scaffold a backup.files entry for Online API (non-blocking)"},
-					{"backup-vacuum", "Scaffold a backup.files entry for VACUUM INTO (blocking)"},
-					{"backup-sqlite-rsync", "Scaffold a backup.files entry for sqlite-rsync (origin serve)"},
+					{"backup-online", "Scaffold a backup.online entry for Online API (non-blocking)"},
+					{"backup-vacuum", "Scaffold a backup.vacuum entry for VACUUM INTO (blocking)"},
+					{"backup-sqlite-rsync", "Scaffold a backup.sqlite-rsync.entries entry for sqlite-rsync (origin serve)"},
 					{"oauth2", "Scaffold an oauth2_providers entry"},
 				},
 			},
@@ -149,7 +161,7 @@ func printScaffoldUsage(w io.Writer) {
 			commandOptions.Opt("desc"),
 		},
 		Examples: []string{
-			"ripc scaffold backup-online-api app-online",
+			"ripc scaffold backup-online app-online",
 			"ripc scaffold backup-vacuum app-vacuum",
 			"ripc scaffold backup-sqlite-rsync app-rsync",
 			"ripc scaffold oauth2 my_google",
@@ -184,9 +196,13 @@ func scaffoldConfigValue(
 		return fmt.Errorf("invalid scaffold key %q: must not contain whitespace or '.': %w", key, ErrInvalidFlag)
 	}
 	scope := config.ScopeApplication
-	tomlKey, parentPath, defaults, err := scaffoldDefaults(scaffoldType)
+	tomlKey, defaults, sectionDefaults, err := scaffoldDefaults(scaffoldType)
 	if err != nil {
 		return err
+	}
+	parentPath := parentTomlKeyOf(tomlKey)
+	if parentPath == "" {
+		parentPath = tomlKey
 	}
 	decryptedData, fileFormat, err := secureCfg.Get(scope, 0)
 	if err != nil {
@@ -199,8 +215,19 @@ func scaffoldConfigValue(
 			ErrConfigUnmarshal, scope, err)
 	}
 	if !tree.Has(parentPath) {
-		return fmt.Errorf("%w: '%s' not found in scope '%s'; run 'ripc migrate' to initialize missing config sections",
-			ErrScaffoldParentMissing, parentPath, scope)
+		if sectionDefaults == nil {
+			return fmt.Errorf("%w: '%s' not found in scope '%s'\nrun 'ripc migrate' to initialize missing config sections",
+				ErrScaffoldParentMissing, parentPath, scope)
+		}
+		sectionBytes, err := toml.Marshal(sectionDefaults)
+		if err != nil {
+			return fmt.Errorf("%w: failed to marshal scaffold section defaults: %w", ErrConfigMarshal, err)
+		}
+		sectionTree, err := toml.LoadBytes(sectionBytes)
+		if err != nil {
+			return fmt.Errorf("%w: failed to load scaffold section defaults: %w", ErrConfigUnmarshal, err)
+		}
+		tree.Set(parentPath, sectionTree)
 	}
 	configPath := tomlKey + "." + key
 	if tree.Has(configPath) {

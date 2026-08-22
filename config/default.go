@@ -174,32 +174,30 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-// NewBackupOnlineDefaults returns defaults for the Online Backup API strategy.
-func NewBackupOnlineDefaults() BackupFile {
-	return BackupFile{
-		Strategy:               BackupStrategyOnline,
-		Compression:            false,
-		Frequency:              Duration{Duration: 15 * time.Minute},
-		OnlineAPIPagesPerStep:  100,
-		OnlineAPISleepInterval: Duration{Duration: 10 * time.Millisecond},
+func NewBackupOnlineEntryDefaults() BackupOnlineEntry {
+	return BackupOnlineEntry{
+		Frequency:     Duration{Duration: 15 * time.Minute},
+		PagesPerStep:  100,
+		SleepInterval: Duration{Duration: 10 * time.Millisecond},
 	}
 }
 
-// NewBackupVacuumDefaults returns defaults for the VACUUM INTO strategy.
-func NewBackupVacuumDefaults() BackupFile {
-	return BackupFile{
-		Strategy:    BackupStrategyVacuum,
-		Compression: false,
-		Frequency:   Duration{Duration: 15 * time.Minute},
+func NewBackupVacuumEntryDefaults() BackupVacuumEntry {
+	return BackupVacuumEntry{
+		Frequency: Duration{Duration: 15 * time.Minute},
 	}
 }
 
-// NewBackupSqliteRsyncDefaults returns defaults for the sqlite-rsync origin strategy.
-// SyncTimeout is explicit 15m so the written TOML matches the daemon default.
-func NewBackupSqliteRsyncDefaults() BackupFile {
-	return BackupFile{
-		Strategy:    BackupStrategySqliteRsync,
+func NewBackupSqliteRsyncEntryDefaults() BackupSqliteRsyncEntry {
+	return BackupSqliteRsyncEntry{
 		SyncTimeout: Duration{Duration: 15 * time.Minute},
+	}
+}
+
+func NewBackupSqliteRsyncDefaults() BackupSqliteRsync {
+	return BackupSqliteRsync{
+		ListenAddr: "127.0.0.1:54321",
+		Entries:    nil,
 	}
 }
 
