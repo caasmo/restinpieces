@@ -1,5 +1,12 @@
 ### TODOs
 
+- ripc: all mutating config subcommands should validate before Save (fail-fast on `set`)
+    - `ripc set backup.sqlite-rsync.listen_addr bad` currently reports `Successfully set` then fails on next `HUP` (`backup config validation failed: ... missing port`). Every mutating subcommand (`set`, `scaffold`, `migrate`, `save`) should `toml/v2.Unmarshal` the updated bytes into `config.Config` and call `config.Validate` before `SecureStore.Save`.
+    - Keeps single source of truth (`config.Validate` / `ValidateBackup`), gives immediate operator feedback, avoids persisting invalid rows.
+    - Split the `v2` unmarshal into a separate file (`validate_set.go`) to respect `AGENTS.md` “Never import both v1 and v2 in the same file” — `set.go` stays `v1`-only (`tree.Has/Set`), helper is `v2`-only.
+    - Note: `ValidateBackup`’s `isFile`/`isDir` checks are CWD-dependent; for local `RIPC_DB` (same host/CWD as app, the normal `systemd` case) they are accurate and should stay. For a future remote-CLI case they are conservative (rejecting a non-existent file early is still better than persisting it).
+    - Repro: `ripc set backup.sqlite-rsync.listen_addr bad` → `ripc get backup` shows `bad` → `kill -HUP` → `Configuration reload failed: sqlite-rsync.listen_addr "bad" is not a valid host:port` (fixed by validating on `set`).
+
 - config: delete config.Provider (no wrapper) — the current-config box is stdlib atomic.Pointer[config.Config]; core.App owns it via a ConfigPointer() getter, Reload Stores into it, every consumer reads Load() (see brainstorm-restinpieces-daemons.md Q23)
     - ConfigPointer() is for external wiring (daemons, jobs); Config() stays the canonical read for internal consumers (handlers, middleware)
     - End-state framework changes — no migration noise: the box is atomic.Pointer[config.Config], Provider is deleted, every consumer reads Load()

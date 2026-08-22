@@ -138,16 +138,22 @@ Saves the contents of a file to the configuration store.
 
 ### `scaffold <type> <key>`
 
-Creates a group of configuration properties in one command. Unlike `set` which writes a single property, scaffold writes all the properties of an entry at once, populated with sensible defaults. The key is a user-chosen label and must not already exist.
+Scaffold writes a full config entry with defaults. Unlike `set` which writes one value, scaffold writes the whole entry at once. The key is a label you choose. It must not already exist.
 
 Types:
-- `backup` — writes `strategy` (online), `compression` (false), `frequency` (15m), `online_api_pages_per_step` (100), `online_api_sleep_interval` (10ms), and `source_path` (empty) under `backup.files.<key>`.  After scaffolding, you **must** set `source_path` to the path of your database file. Supports absolute and relative paths. Relative paths resolve against the application's current working directory (CWD). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), the CWD is `/home/<app>` and databases typically live under `data/`, so a relative `source_path` should start with `data/` (e.g. `data/app.db`).
-- `oauth2` — writes `pkce` (true), `name`, `client_id`, `client_secret`, and URLs (all empty) under `oauth2_providers.<key>`.
+- `backup-online` — writes `backup.online.<key>` for the Online Backup API. Defaults: `frequency` 15m, `pages_per_step` 100, `sleep_interval` 10ms, `compression` false, `source_path` and `dest_path` empty.
+- `backup-vacuum` — writes `backup.vacuum.<key>` for VACUUM INTO. Defaults: `frequency` 15m, `compression` false, `source_path` and `dest_path` empty.
+- `backup-sqlite-rsync` — writes `backup.sqlite-rsync.entries.<key>` for sqlite-rsync. Defaults: `sync_timeout` 15m, `source_path` empty. Creates `[backup.sqlite-rsync]` with `listen_addr` 127.0.0.1:54321 if missing.
+- `oauth2` — writes `oauth2_providers.<key>` with `pkce` true and empty `name`, `client_id`, `client_secret`, and URLs.
+
+After scaffolding you must set `source_path`. It supports absolute and relative paths. Relative paths resolve against the app's current working directory (CWD). With the canonical systemd service ([restinpieces.service](../restinpieces.service)) the CWD is `/home/<app>`, so use `data/` as prefix (e.g. `data/app.db`).
 
 
 ```
-ripc scaffold backup app_db
-ripc set backup.files.app_db.source_path /var/data/app.db
+ripc scaffold backup-online app-online
+ripc scaffold backup-vacuum app-vacuum
+ripc scaffold backup-sqlite-rsync app-rsync
+ripc set backup.online.app-online.source_path /var/data/app.db
 ```
 
 ```
@@ -155,29 +161,37 @@ ripc scaffold oauth2 my_google
 ripc set oauth2_providers.my_google.client_id "..."
 ```
 
-Use `get` to inspect the entry and `paths` to list its properties.
+Use `get` to inspect and `paths` to list properties.
 
-**Example: add a new backup db file**
+**Example: add a new backup**
 
-Scaffold creates `strategy` (online), `compression` (false), `frequency` (15m), and an empty `source_path` under `backup.files.app_db`:
-
-```
-ripc scaffold backup app_db
-```
-
-Set the database path and adjust the defaults:
+Scaffold creates `backup.online.app-online` with defaults:
 
 ```
-ripc set backup.files.app_db.source_path /var/data/app.db
-ripc set backup.files.app_db.frequency 6h
-ripc set backup.files.app_db.compression true
+ripc scaffold backup-online app-online
 ```
 
-Verify with `get` and `paths`:
+Set the database path and adjust defaults:
 
 ```
-ripc get backup.files.app_db
-ripc paths backup.files.app_db
+ripc set backup.online.app-online.source_path /var/data/app.db
+ripc set backup.online.app-online.dest_path /var/backups
+ripc set backup.online.app-online.frequency 6h
+ripc set backup.online.app-online.compression true
+```
+
+Verify:
+
+```
+ripc get backup.online.app-online
+ripc paths backup.online.app-online
+```
+
+For sqlite-rsync:
+
+```
+ripc scaffold backup-sqlite-rsync app-rsync
+ripc set backup.sqlite-rsync.entries.app-rsync.source_path /var/data/app.db
 ```
 
 ### `migrate`
