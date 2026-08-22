@@ -5,41 +5,38 @@ The backup system follows a two-phase push-pull design:
 1. **Push (server-side)**: A snapshot daemon creates SQLite snapshots locally on the server — either gzip-compressed (`.bck.gz`) or plain SQLite copies (`.db`).
 2. **Pull (client-side)**: Clients retrieve those snapshots from the server via SFTP or rsync, using stable `latest-` hardlinks as sync targets when applicable.
 
-The framework hosts the backup **configuration shape** (the `[backup]` section in [config/config.go](../config/config.go)), its validation, the `ripc scaffold backup` command, and the shared [naming contract](../backup/backup.go) (`backup.LatestFmt`, `backup.LatestGlob`). The engines that consume this shape live in the separate [restinpieces-backup](https://github.com/caasmo/restinpieces-backup) repository: `cmd/local-copy` produces the snapshots on the database machine, and `cmd/rsync`, `cmd/rsync-daemon`, and `cmd/sftp` pull them to a backup machine and verify every received database with `PRAGMA integrity_check`.
+The framework hosts the backup shape (`[backup]` in [config/config.go](../config/config.go)), its validation, the `ripc scaffold` commands, and the shared naming contract (`backup.LatestFmt`, `backup.LatestGlob`). Engines live in [restinpieces-backup](https://github.com/caasmo/restinpieces-backup): `cmd/local-copy` creates snapshots, `cmd/rsync`, `cmd/rsync-daemon`, and `cmd/sftp` pull and verify them with `PRAGMA integrity_check`.
 
 ## Enabling Backups
 
-For each database, scaffold a per-file entry with sensible defaults, then set its paths and frequency:
+Each database gets one entry. Scaffold it with defaults, then set its paths:
 
 ```bash
-ripc scaffold backup app_db
-ripc set backup.files.app_db.source_path /data/app.db
-ripc set backup.files.app_db.dest_path /data/backups
-ripc set backup.files.app_db.frequency 24h
+ripc scaffold backup-online app-online
+ripc set backup.online.app-online.source_path /data/app.db
+ripc set backup.online.app-online.dest_path /data/backups
+ripc set backup.online.app-online.frequency 24h
+ripc scaffold backup-vacuum app-vacuum
+ripc set backup.vacuum.app-vacuum.source_path /data/other.db
+ripc set backup.vacuum.app-vacuum.dest_path /data/backups
+ripc scaffold backup-sqlite-rsync app-rsync
+ripc set backup.sqlite-rsync.entries.app-rsync.source_path /data/app.db
 ```
 
-The scaffold creates `backup.files.app_db` with defaults — `strategy` = `"online"`, `compression` = `false`, `frequency` = `15m`, `online_api_pages_per_step` = `100`, `online_api_sleep_interval` = `10ms` — and empty `source_path` and `dest_path` that you **must** set. Give each database its own key (label, e.g. `app_db`) and its own schedule. The `dest_path` is the directory where that database's backups and `latest-` links are written.
+Scaffold creates the entry with defaults and empty `source_path`/`dest_path` that you must set. Each entry has its own label (e.g. `app-online`) and schedule. `dest_path` is the directory for that database's backups and `latest-` links. `sqlite-rsync` needs no `dest_path`; it serves the live file over the network.
 
 ## Deactivating Backups
 
-To deactivate an individual entry, set its `source_path` (or `dest_path`) back to the empty string:
+To deactivate one entry, empty its `source_path` (or `dest_path` for online/vacuum):
 
 ```bash
-ripc set backup.files.app_db.source_path ""
+ripc set backup.online.app-online.source_path ""
+ripc set backup.sqlite-rsync.entries.app-rsync.source_path ""
 ```
 
-To deactivate the entire backup feature, empty the `files` map:
+To deactivate all backups, remove every entry. Empty maps are valid and make backups a no-op. Deactivating does not delete files on disk and does not require removing the daemon. You can reactivate by setting the paths again.
 
-```bash
-ripc set backup.files ""
-```
-
-An empty `files` map is valid and makes the backup feature a no-op. Deactivating:
-
-- **does not delete** existing backups — files already in `dest_path` are left untouched.
-- **does not require** uninstalling the snapshot daemon — with no configured files it has nothing to do, and you can re-activate later by setting the fields again.
-
-Config changes are picked up on `SIGHUP` reload (no restart needed). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), reload the unit:
+Config changes apply on `SIGHUP` reload (no restart). With the canonical systemd service ([restinpieces.service](../restinpieces.service)):
 
 ```bash
 systemctl reload restinpieces
@@ -47,64 +44,97 @@ systemctl reload restinpieces
 
 ## Configuration
 
-Configuration lives under the `[backup]` TOML section, defined in [config/config.go](../config/config.go):
+Configuration lives under `[backup]` in [config/config.go](../config/config.go). Each strategy has its own table. The table you scaffold into selects the engine.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `files` | map of tables | `{}` | Per-database backup entries, keyed by an arbitrary user-chosen label (e.g. `app_db`). An empty map deactivates the backup feature. |
+| `online` | map of tables | `{}` | Online Backup API entries, keyed by label (e.g. `app-online`). |
+| `vacuum` | map of tables | `{}` | VACUUM INTO entries, keyed by label (e.g. `app-vacuum`). |
+| `sqlite-rsync` | table | — | Origin for sqlite-rsync. Holds `listen_addr` and `entries`. |
 
-### Per-File Configuration (`files.<label>`)
+### `backup.online.<label>` — Online Backup API
 
-Each entry in the `files` map is a TOML table with these fields:
+Each `online` entry is one database. Fields:
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `source_path` | string | `""` (deactivated) | Filesystem path to the SQLite database to back up. Empty string deactivates the entry. When non-empty, must be an existing file. Supports absolute and relative paths. Relative paths resolve against the application's current working directory (CWD). When deployed via the canonical systemd service ([restinpieces.service](../restinpieces.service)), the CWD is `/home/<app>` and databases typically live under `data/`, so a relative `source_path` should start with `data/` (e.g. `data/app.db`). |
-| `dest_path` | string | `""` (deactivated) | Directory where the backup files and `latest-` links are written. Empty string deactivates the entry. When non-empty, must be an existing directory. Supports absolute and relative paths. Relative paths resolve against the application CWD. |
-| `frequency` | duration | — (required) | Minimum interval between backups (e.g. `"24h"`, `"6h"`). The daemon skips a file if its latest backup is newer than this duration. |
-| `compression` | bool | `false` | Enable gzip compression (`.bck.gz`). When false, produces a plain SQLite copy (`.db`). |
-| `strategy` | string | `"online"` | Backup strategy: `"online"` or `"vacuum"`. Empty string defaults to `"online"`. |
-| `online_api_pages_per_step` | int | `100` | For the `"online"` strategy, pages copied per step (must be ≥ 1). |
-| `online_api_sleep_interval` | duration | `"10ms"` | For the `"online"` strategy, pause between steps (`"0s"` = no throttling). |
+| `source_path` | string | `""` (deactivated) | SQLite file to back up. Empty deactivates. When set, must be an existing file. Supports absolute and relative paths (relative to CWD). |
+| `dest_path` | string | `""` (deactivated) | Directory for backups and `latest-` links. Empty deactivates. When set, must be an existing directory. |
+| `frequency` | duration | — (required) | Minimum interval between backups (e.g. `24h`). Skips if latest backup is newer. |
+| `compression` | bool | `false` | Gzip the snapshot (`.bck.gz` vs `.db`). |
+| `pages_per_step` | int | `100` | Pages copied per step. 0 uses default 100. Must be ≥0. |
+| `sleep_interval` | duration | `10ms` | Pause between steps. 0 means no throttling. Must be ≥0. |
 
-Set individual fields via `ripc`:
+### `backup.vacuum.<label>` — VACUUM INTO
+
+Each `vacuum` entry is one database. Fields:
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `source_path` | string | `""` (deactivated) | SQLite file to back up. Same rules as `online`. |
+| `dest_path` | string | `""` (deactivated) | Directory for backups. Same rules as `online`. |
+| `frequency` | duration | — (required) | Minimum interval between backups. |
+| `compression` | bool | `false` | Gzip the snapshot. |
+
+### `backup.sqlite-rsync` — sqlite-rsync origin
+
+One section with topology plus per-database entries.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `listen_addr` | string | `127.0.0.1:54321` | TCP address the origin listens on. Empty uses default. |
+
+Each `backup.sqlite-rsync.entries.<label>` entry:
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `source_path` | string | `""` (deactivated) | SQLite file to serve. Empty deactivates. |
+| `sync_timeout` | duration | `15m` | Longest one sync may run. 0 uses default 15m. |
+
+Set fields via `ripc`:
 
 ```bash
-ripc set backup.files.app_db.source_path /data/app.db
-ripc set backup.files.app_db.frequency 24h
+ripc set backup.online.app-online.source_path /data/app.db
+ripc set backup.online.app-online.frequency 24h
+ripc set backup.sqlite-rsync.entries.app-rsync.source_path /data/app.db
 ```
 
 TOML examples:
 
 ```toml
-[backup.files.app_db]
+[backup.online.app1]
 source_path = "/data/app.db"
-dest_path = "/data/backups"
+dest_path = "/backups"
 frequency = "24h"
-compression = true
-strategy = "online"
-
-[backup.files.analytics_db]
-source_path = "/data/analytics.db"
-dest_path = "/data/backups"
-frequency = "6h"
 compression = false
-strategy = "vacuum"
+
+[backup.vacuum.app2]
+source_path = "/data/other.db"
+dest_path = "/backups"
+frequency = "24h"
+
+[backup.sqlite-rsync]
+listen_addr = "127.0.0.1:54321"
+
+[backup.sqlite-rsync.entries.app3]
+source_path = "/data/app3.db"
+sync_timeout = "15m"
 ```
 
 ### Validation
 
-Configuration validation (in [config/config_validate.go](../config/config_validate.go)) catches the following at startup and on `SIGHUP` reload:
+Validation in [config/config_validate.go](../config/config_validate.go) runs at startup and on `SIGHUP` reload:
 
-- **Empty `files` map**: Backup feature deactivated (no error, all fields ignored).
-- **Empty map key**: A `files` entry with an empty label is rejected.
-- **Empty `source_path` / `dest_path`**: Entry deactivated (valid).
-- **Non-empty `source_path`**: Must be an existing file, resolved against the application CWD.
-- **Non-empty `dest_path`**: Must be an existing directory, resolved against the application CWD.
-- **Invalid strategy**: Must be `"online"`, `"vacuum"`, or empty (defaults to online).
-- **Non-positive `frequency`**: Frequency must be a positive duration.
-- **Non-positive `online_api_pages_per_step`**: Must be positive (checked for every entry, whatever the strategy).
-- **Negative `online_api_sleep_interval`**: Cannot be negative (checked for every entry, whatever the strategy).
+- **Empty maps**: No `online`/`vacuum`/`sqlite-rsync` entries means backups are deactivated (no error).
+- **Invalid label**: Key must not be empty and must not contain whitespace or `.`.
+- **Empty `source_path` / `dest_path`**: Deactivates that entry (valid).
+- **Non-empty `source_path`**: Must be an existing file (resolved against CWD).
+- **Non-empty `dest_path`**: Must be an existing directory (resolved against CWD).
+- **`frequency`**: Must be positive (`online`, `vacuum`).
+- **`pages_per_step`**: Must be ≥0 (`online`).
+- **`sleep_interval`**: Must be ≥0 (`online`).
+- **`sync_timeout`**: Must be ≥0 (`sqlite-rsync`).
+- **`listen_addr`**: Must be `host:port` when set.
 
 Configuration is hot-reloadable via `SIGHUP`.
 
