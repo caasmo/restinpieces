@@ -153,8 +153,8 @@ func validateBackupOnlineAPI(key string, e BackupOnlineAPIEntry) error {
 	if e.DestPath != "" && !isDir(e.DestPath) {
 		return fmt.Errorf("online.%s.dest_path must be an existing directory, got %q", key, e.DestPath)
 	}
-	if e.PagesPerStep < 0 {
-		return fmt.Errorf("online.%s.pages_per_step cannot be negative", key)
+	if e.PagesPerStep <= 0 {
+		return fmt.Errorf("online.%s.pages_per_step must be positive", key)
 	}
 	if e.SleepInterval.Duration < 0 {
 		return fmt.Errorf("online.%s.sleep_interval cannot be negative", key)

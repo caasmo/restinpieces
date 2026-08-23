@@ -62,7 +62,7 @@ Each `online` entry is one database. Fields:
 | `dest_path` | string | `""` (deactivated) | Directory for backups and `latest-` links. Empty deactivates. When set, must be an existing directory. |
 | `frequency` | duration | — (required) | Minimum interval between backups (e.g. `24h`). Skips if latest backup is newer. |
 | `compression` | bool | `false` | Gzip the snapshot (`.bck.gz` vs `.db`). |
-| `pages_per_step` | int | `100` | Pages copied per step. 0 uses default 100. Must be ≥0. |
+| `pages_per_step` | int | `100` | Pages copied per step. Must be ≥1. |
 | `sleep_interval` | duration | `10ms` | Pause between steps. 0 means no throttling. Must be ≥0. |
 
 ### `backup.vacuum.<label>` — VACUUM INTO
@@ -131,7 +131,7 @@ Validation in [config/config_validate.go](../config/config_validate.go) runs at 
 - **Non-empty `source_path`**: Must be an existing file (resolved against CWD).
 - **Non-empty `dest_path`**: Must be an existing directory (resolved against CWD).
 - **`frequency`**: Must be positive (`online`, `vacuum`).
-- **`pages_per_step`**: Must be ≥0 (`online`).
+- **`pages_per_step`**: Must be ≥1 (`online`).
 - **`sleep_interval`**: Must be ≥0 (`online`).
 - **`sync_timeout`**: Must be ≥0 (`sqlite-rsync`).
 - **`listen_addr`**: Must be `host:port` when set.

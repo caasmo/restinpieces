@@ -48,9 +48,8 @@ type BackupOnlineAPIEntry struct {
 	Compression bool `toml:"compression" comment:"Enable gzip compression of the backup."`
 
 	// PagesPerStep controls the number of pages copied in each step.
-	// Must be >= 0: 0 means "use the 100-page default" (Step(0) would copy
-	// nothing and never finish).
-	PagesPerStep int `toml:"pages_per_step" comment:"Pages to copy in each step (must be >= 1, 0 uses default 100)."`
+	// Must be >= 1: Step(0) would copy nothing and never finish.
+	PagesPerStep int `toml:"pages_per_step" comment:"Pages to copy in each step (must be >= 1)."`
 
 	// SleepInterval is the duration to sleep between online backup steps.
 	// 0 means no throttling.

@@ -629,10 +629,10 @@ func TestValidateBackup(t *testing.T) {
 			t.Fatal("expected error for negative pages_per_step, got nil")
 		}
 	})
-	t.Run("zero pages_per_step allowed", func(t *testing.T) {
+	t.Run("zero pages_per_step rejected", func(t *testing.T) {
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, PagesPerStep: 0}}}
-		if err := ValidateBackup(b); err != nil {
-			t.Fatalf("zero pages_per_step should be allowed (daemon default), got %v", err)
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for zero pages_per_step, got nil")
 		}
 	})
 	t.Run("negative sleep interval", func(t *testing.T) {
