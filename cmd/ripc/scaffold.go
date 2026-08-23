@@ -29,7 +29,7 @@ var knownScaffoldTypes = []string{ScaffoldTypeBackupOnline, ScaffoldTypeBackupVa
 func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}, sectionDefaults interface{}, err error) {
 	switch scaffoldType {
 	case ScaffoldTypeBackupOnline:
-		return "backup.online", config.NewBackupOnlineEntryDefaults(), nil, nil
+		return "backup.online", config.NewBackupOnlineAPIEntryDefaults(), nil, nil
 	case ScaffoldTypeBackupVacuum:
 		return "backup.vacuum", config.NewBackupVacuumEntryDefaults(), nil, nil
 	case ScaffoldTypeBackupSqliteRsync:

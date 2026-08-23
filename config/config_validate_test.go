@@ -469,7 +469,7 @@ func TestValidateBackup(t *testing.T) {
 	t.Parallel()
 	t.Run("online valid", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
-		b := &Backup{Online: BackupOnline{"app-online": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"app-online": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
@@ -511,14 +511,14 @@ func TestValidateBackup(t *testing.T) {
 	})
 	t.Run("label with dot rejected", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{Online: BackupOnline{"my.label": {SourcePath: appDB, DestPath: t.TempDir(), Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"my.label": {SourcePath: appDB, DestPath: t.TempDir(), Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for label with dot")
 		}
 	})
 	t.Run("label with space rejected", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{Online: BackupOnline{"my label": {SourcePath: appDB, DestPath: t.TempDir(), Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"my label": {SourcePath: appDB, DestPath: t.TempDir(), Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for label with space")
 		}
@@ -539,7 +539,7 @@ func TestValidateBackup(t *testing.T) {
 	})
 	t.Run("empty paths deactivate entry", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{Online: BackupOnline{"db": {SourcePath: appDB, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: appDB, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil for empty dest_path (deactivated), got: %v", err)
 		}
@@ -547,7 +547,7 @@ func TestValidateBackup(t *testing.T) {
 	t.Run("valid files mixed", func(t *testing.T) {
 		backupDir, appDB, otherDB := backupLocalFixture(t)
 		b := &Backup{
-			Online: BackupOnline{"app": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}},
+			OnlineAPI: BackupOnlineAPI{"app": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}},
 			Vacuum: BackupVacuum{"other": {SourcePath: otherDB, DestPath: backupDir, Frequency: Duration{Duration: 30 * time.Minute}}},
 			SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"rsync": {SourcePath: appDB, SyncTimeout: Duration{Duration: 15 * time.Minute}}}},
 		}
@@ -563,42 +563,42 @@ func TestValidateBackup(t *testing.T) {
 	})
 	t.Run("dest_path missing", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{Online: BackupOnline{"db": {SourcePath: appDB, DestPath: filepath.Join(t.TempDir(), "nope"), Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: appDB, DestPath: filepath.Join(t.TempDir(), "nope"), Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for missing dest_path, got nil")
 		}
 	})
 	t.Run("dest_path is a file", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{Online: BackupOnline{"db": {SourcePath: appDB, DestPath: appDB, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: appDB, DestPath: appDB, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for dest_path being a file, got nil")
 		}
 	})
 	t.Run("source_path missing", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
-		b := &Backup{Online: BackupOnline{"db": {SourcePath: filepath.Join(t.TempDir(), "missing.db"), DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: filepath.Join(t.TempDir(), "missing.db"), DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for missing source_path, got nil")
 		}
 	})
 	t.Run("source_path is a directory", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
-		b := &Backup{Online: BackupOnline{"db": {SourcePath: backupDir, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: backupDir, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for source_path being a directory, got nil")
 		}
 	})
 	t.Run("zero frequency", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
-		b := &Backup{Online: BackupOnline{"db": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: 0}, PagesPerStep: 100}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: 0}, PagesPerStep: 100}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for zero frequency, got nil")
 		}
 	})
 	t.Run("negative frequency", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
-		b := &Backup{Online: BackupOnline{"db": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: -time.Hour}, PagesPerStep: 100}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: -time.Hour}, PagesPerStep: 100}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for negative frequency, got nil")
 		}
@@ -614,7 +614,7 @@ func TestValidateBackup(t *testing.T) {
 			t.Fatal(err)
 		}
 		b := &Backup{
-			Online: BackupOnline{
+			OnlineAPI: BackupOnlineAPI{
 				"first":  {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100},
 				"second": {SourcePath: otherAppDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100},
 			},
@@ -624,19 +624,19 @@ func TestValidateBackup(t *testing.T) {
 		}
 	})
 	t.Run("negative pages_per_step", func(t *testing.T) {
-		b := &Backup{Online: BackupOnline{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, PagesPerStep: -1}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, PagesPerStep: -1}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for negative pages_per_step, got nil")
 		}
 	})
 	t.Run("zero pages_per_step allowed", func(t *testing.T) {
-		b := &Backup{Online: BackupOnline{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, PagesPerStep: 0}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, PagesPerStep: 0}}}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("zero pages_per_step should be allowed (daemon default), got %v", err)
 		}
 	})
 	t.Run("negative sleep interval", func(t *testing.T) {
-		b := &Backup{Online: BackupOnline{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100, SleepInterval: Duration{Duration: -time.Millisecond}}}}
+		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100, SleepInterval: Duration{Duration: -time.Millisecond}}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for negative sleep interval, got nil")
 		}

@@ -322,7 +322,7 @@ func TestScaffoldNextSteps(t *testing.T) {
 		}
 	})
 	t.Run("online", func(t *testing.T) {
-		got := scaffoldNextSteps(ScaffoldTypeBackupOnline, "app-online", config.NewBackupOnlineEntryDefaults())
+		got := scaffoldNextSteps(ScaffoldTypeBackupOnline, "app-online", config.NewBackupOnlineAPIEntryDefaults())
 		if !strings.Contains(got, "\tripc set backup.online.app-online.frequency 24h") {
 			t.Fatalf("expected frequency command, got %q", got)
 		}

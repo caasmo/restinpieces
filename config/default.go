@@ -175,8 +175,8 @@ func NewDefaultConfig() *Config {
 	}
 }
 
-func NewBackupOnlineEntryDefaults() BackupOnlineEntry {
-	return BackupOnlineEntry{
+func NewBackupOnlineAPIEntryDefaults() BackupOnlineAPIEntry {
+	return BackupOnlineAPIEntry{
 		Frequency:     Duration{Duration: 15 * time.Minute},
 		PagesPerStep:  100,
 		SleepInterval: Duration{Duration: 10 * time.Millisecond},

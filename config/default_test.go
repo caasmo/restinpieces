@@ -22,8 +22,8 @@ func TestNewDefaultConfig_DeterministicSecrets(t *testing.T) {
 	}
 }
 
-func TestNewBackupOnlineEntryDefaults(t *testing.T) {
-	v := NewBackupOnlineEntryDefaults()
+func TestNewBackupOnlineAPIEntryDefaults(t *testing.T) {
+	v := NewBackupOnlineAPIEntryDefaults()
 	if v.SourcePath != "" {
 		t.Errorf("SourcePath: got %q, want empty", v.SourcePath)
 	}

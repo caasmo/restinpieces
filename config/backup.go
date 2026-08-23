@@ -7,24 +7,24 @@ package config
 // shape live in restinpieces-backup; the framework only hosts the shape
 // and its validation.
 type Backup struct {
-	Online      BackupOnline      `toml:"online"`
+	OnlineAPI   BackupOnlineAPI   `toml:"online"`
 	Vacuum      BackupVacuum      `toml:"vacuum"`
 	SqliteRsync BackupSqliteRsync `toml:"sqlite-rsync"`
 }
 
-// BackupOnline holds per-database configuration for the Online Backup API
+// BackupOnlineAPI holds per-database configuration for the Online Backup API
 // strategy. The map key is a user-chosen label; the value holds the
 // database's backup settings.
-type BackupOnline map[string]BackupOnlineEntry
+type BackupOnlineAPI map[string]BackupOnlineAPIEntry
 
-// BackupOnlineEntry is one Online Backup API entry.
+// BackupOnlineAPIEntry is one Online Backup API entry.
 //
 // Empty source_path or dest_path deactivates the entry. Frequency is
 // parsed via time.ParseDuration (e.g. "24h"). Compressed snapshots use
 // ".bck.gz" and plain ones ".db". PagesPerStep 0 means "use the 100-page
 // default" (Step(0) would copy nothing and never finish). SleepInterval 0
 // means no throttling.
-type BackupOnlineEntry struct {
+type BackupOnlineAPIEntry struct {
 	// SourcePath is the filesystem path to the SQLite database to back up.
 	// Supports absolute and relative paths. Relative paths resolve against
 	// the application's current working directory (CWD).
@@ -114,4 +114,12 @@ type BackupSqliteRsyncEntry struct {
 
 func (c Config) BackupSqliteRsync() BackupSqliteRsync {
 	return c.Backup.SqliteRsync
+}
+
+func (c Config) BackupOnlineAPI() BackupOnlineAPI {
+	return c.Backup.OnlineAPI
+}
+
+func (c Config) BackupVacuum() BackupVacuum {
+	return c.Backup.Vacuum
 }

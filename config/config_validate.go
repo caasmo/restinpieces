@@ -107,11 +107,11 @@ func isValidBackupLabel(label string) bool {
 }
 
 func ValidateBackup(backup *Backup) error {
-	for key, e := range backup.Online {
+	for key, e := range backup.OnlineAPI {
 		if !isValidBackupLabel(key) {
 			return fmt.Errorf("online: map key %q must not contain whitespace or '.'", key)
 		}
-		if err := validateBackupOnline(key, e); err != nil {
+		if err := validateBackupOnlineAPI(key, e); err != nil {
 			return err
 		}
 	}
@@ -143,7 +143,7 @@ func ValidateBackup(backup *Backup) error {
 	return nil
 }
 
-func validateBackupOnline(key string, e BackupOnlineEntry) error {
+func validateBackupOnlineAPI(key string, e BackupOnlineAPIEntry) error {
 	if e.Frequency.Duration <= 0 {
 		return fmt.Errorf("online.%s.frequency must be positive", key)
 	}
