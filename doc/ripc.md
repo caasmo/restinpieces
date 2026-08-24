@@ -1,6 +1,6 @@
 # `ripc` - Command-Line Interface for RestInPieces
 
-`ripc` is a CLI tool for managing RestInPieces application instances. It handles the creation of new application databases and provides tools for managing the secure configuration store, authentication settings, and background jobs.
+`ripc` is a CLI tool for managing RestInPieces application configuration. Configuration is stored as an age-encrypted TOML row in the main SQLite database.
 
 # Content
 
@@ -10,26 +10,26 @@
 - [Usage](#usage)
 - [Commands](#commands)
   - [app](#app)
-  - [get](#get)
-  - [paths](#paths)
+  - [get](#get-filter)
+  - [paths](#paths-filter)
   - [dump](#dump)
   - [scopes](#scopes)
-  - [set](#set)
-  - [save](#save)
-  - [scaffold](#scaffold)
+  - [set](#set-path-value)
+  - [save](#save-file)
+  - [scaffold](#scaffold-type-key)
   - [migrate](#migrate)
-  - [list](#list)
-  - [diff](#diff)
-  - [rollback](#rollback)
+  - [list](#list-scope)
+  - [diff](#diff-generation)
+  - [rollback](#rollback-generation)
   - [job](#job)
   - [log](#log)
   - [help](#help)
 
 ## Relationship with `ripdep`
 
-`ripc` is a **low-level primitive** that runs on the server machine, operating directly on the local SQLite database and age key files. [`ripdep`](ripdep.md) ([source](../scripts/ripdep)) is a high-level orchestrator that runs on your local machine (or any machine with SSH access to the server), managing remote operations over SSH.
+`ripc` runs on the server machine, operating directly on the local SQLite database and age key files. [`ripdep`](ripdep.md) ([source](../scripts/ripdep)) is a high-level orchestrator that runs on your local machine (or any machine with SSH access to the server), managing remote operations over SSH.
 
--   **Server-side:** `ripc` is designed to run on the production server itself — it reads and writes the database file and age key from the local filesystem. It is not a remote-control tool.
+-   **Server-side:** `ripc` is designed to run on the production server itself 
 -   **Unopinionated:** `ripc` provides direct configuration and state manipulation without enforcing workflows.
 -   **Composable:** It is designed with a stable interface meant to be called by other tools, CI/CD, or custom scripts.
 -   **Stable Foundation:** `ripc` is versioned conservatively. This allows `ripdep` to iterate on new workflows and user-facing features without modifying the core server-side tool.
@@ -80,16 +80,23 @@ Manages the application lifecycle.
 
 ### `get [filter]`
 
-Retrieves configuration values by path, optionally filtered.
+Retrieves configuration values by path.
 
-    ripc get "server.http_port"
+    ripc get "server.addr"
+
+If a string is given, only values whose path contains that string are shown. For example, `ripc get backup` shows all configuration whose path contains `backup`.
+
+    ripc get backup
 
 ### `paths [filter]`
 
-Lists all available TOML paths in the configuration, optionally filtered.
+Lists all available TOML paths in the configuration.
 
     ripc paths
-    ripc paths "server.*"
+
+If a string is given, only paths containing that string are shown. For example, `ripc paths backup` shows all paths containing `backup`.
+
+    ripc paths backup
 
 ### `dump`
 
@@ -109,8 +116,6 @@ Fills in zero values (`0`, `""`, `false`, `null`) for every configuration key no
 
 **`--runtime`**:
 Merges the stored TOML configuration with the framework's built-in defaults.  Every key in the output has a value — either the value from storage or the framework default. This mirrors the full configuration the server would use at startup.
-
-**Warning**: framework defaults include dynamically generated secrets (JWT signing keys, OTP secrets, etc.). If those fields are not present in the stored TOML, the output shows freshly generated random strings on every invocation — they do not correspond to any secret actually in use. To see what the server actually uses, ensure secrets are part of the stored TOML or use default mode to inspect the stored data directly.
 
     ripc dump --runtime
     ripc dump --runtime --scope myapp
@@ -138,60 +143,49 @@ Saves the contents of a file to the configuration store.
 
 ### `scaffold <type> <key>`
 
-Scaffold writes a full config entry with defaults. Unlike `set` which writes one value, scaffold writes the whole entry at once. The key is a label you choose. It must not already exist.
+Creates a complete configuration section with defaults. `set` changes a single field; `scaffold` creates an entire section at once. `<key>` is a label you choose for the new section and must not already exist.
 
-Types:
-- `backup-online` — writes `backup.online.<key>` for the Online Backup API. Defaults: `frequency` 15m, `pages_per_step` 100, `sleep_interval` 10ms, `compression` false, `source_path` and `dest_path` empty.
-- `backup-vacuum` — writes `backup.vacuum.<key>` for VACUUM INTO. Defaults: `frequency` 15m, `compression` false, `source_path` and `dest_path` empty.
-- `backup-sqlite-rsync` — writes `backup.sqlite-rsync.entries.<key>` for sqlite-rsync. Defaults: `sync_timeout` 15m, `source_path` empty. Creates `[backup.sqlite-rsync]` with `listen_addr` 127.0.0.1:54321 if missing.
-- `oauth2` — writes `oauth2_providers.<key>` with `pkce` true and empty `name`, `client_id`, `client_secret`, and URLs.
+| Type | Path | Description |
+|------|------|-------------|
+| `backup-online` | `backup.online.<key>` | Online Backup API |
+| `backup-vacuum` | `backup.vacuum.<key>` | VACUUM INTO |
+| `backup-sqlite-rsync` | `backup.sqlite-rsync.entries.<key>` | sqlite-rsync |
+| `oauth2` | `oauth2_providers.<key>` | OAuth2 provider |
 
-After scaffolding you must set `source_path`. It supports absolute and relative paths. Relative paths resolve against the app's current working directory (CWD). With the canonical systemd service ([restinpieces.service](../restinpieces.service)) the CWD is `/home/<app>`, so use `data/` as prefix (e.g. `data/app.db`).
+**Example: configure backup of type `sqlite-rsync` for application SQLite file `/tmp/app.db`**
 
-
-```
-ripc scaffold backup-online app-online
-ripc scaffold backup-vacuum app-vacuum
-ripc scaffold backup-sqlite-rsync app-rsync
-ripc set backup.online.app-online.source_path /var/data/app.db
-```
+Scaffold the configuration with defaults by providing a label — a string to identify the backup:
 
 ```
-ripc scaffold oauth2 my_google
-ripc set oauth2_providers.my_google.client_id "..."
+ripc scaffold backup-sqlite-rsync myapp
 ```
 
-Use `get` to inspect and `paths` to list properties.
+```
+Successfully scaffolded backup 'myapp' in scope 'application'
 
-**Example: add a new backup**
+myapp:
+  source_path = ""
+  sync_timeout = "15m"
 
-Scaffold creates `backup.online.app-online` with defaults:
+Next steps:
+1. Set the origin file to replicate (required):
+	ripc set backup.sqlite-rsync.entries.myapp.source_path /path/to/app.db
+2. Reload the app:
+	systemctl reload myapp
+Deactivate: ripc set backup.sqlite-rsync.entries.myapp.source_path ""
+```
+
+Set `source_path` using the same key:
 
 ```
-ripc scaffold backup-online app-online
-```
-
-Set the database path and adjust defaults:
-
-```
-ripc set backup.online.app-online.source_path /var/data/app.db
-ripc set backup.online.app-online.dest_path /var/backups
-ripc set backup.online.app-online.frequency 6h
-ripc set backup.online.app-online.compression true
+ripc set backup.sqlite-rsync.entries.myapp.source_path /tmp/app.db
 ```
 
 Verify:
 
 ```
-ripc get backup.online.app-online
-ripc paths backup.online.app-online
-```
-
-For sqlite-rsync:
-
-```
-ripc scaffold backup-sqlite-rsync app-rsync
-ripc set backup.sqlite-rsync.entries.app-rsync.source_path /var/data/app.db
+ripc get myapp
+ripc paths myapp
 ```
 
 ### `migrate`
