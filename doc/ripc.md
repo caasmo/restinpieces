@@ -16,7 +16,7 @@
   - [scopes](#scopes)
   - [set](#set-path-value)
   - [save](#save-file)
-  - [scaffold](#scaffold-type-key)
+  - [scaffold](#scaffold-type-label)
   - [migrate](#migrate)
   - [list](#list-scope)
   - [diff](#diff-generation)
@@ -49,7 +49,7 @@ go install github.com/caasmo/restinpieces/cmd/ripc
 -   `-agekey`: Path to the `age` identity file (private key). Can also be set via the `RIPC_AGE_KEY_PATH` environment variable. One of the two must be provided.
 -   `-dbpath`: Path to the SQLite database file. Can also be set via the `RIPC_DB` environment variable. One of the two must be provided.
 
-The resolution order is: **flag → environment variable → error**. A flag, when present, always takes precedence over its corresponding environment variable.  If neither is provided, `ripc` exits with an error.
+The resolution order is: flag → environment variable → error. A flag, when present, always takes precedence over its corresponding environment variable.  If neither is provided, `ripc` exits with an error.
 
 ## Usage
 
@@ -57,8 +57,7 @@ The resolution order is: **flag → environment variable → error**. A flag, wh
 ripc [global options] <command> [options]
 ```
 
-If `RIPC_DB` and `RIPC_AGE_KEY_PATH` are set in your environment, flags can be omitted
-entirely:
+If `RIPC_DB` and `RIPC_AGE_KEY_PATH` are set in your environment, flags can be omitted entirely:
 ```
 export RIPC_DB=data/app.db
 export RIPC_AGE_KEY_PATH=age_key.txt
@@ -120,8 +119,7 @@ Merges the stored TOML configuration with the framework's built-in defaults.  Ev
     ripc dump --runtime
     ripc dump --runtime --scope myapp
 
-`--zero` and `--runtime` are mutually exclusive. Using neither flag
-produces the default raw output.
+`--zero` and `--runtime` are mutually exclusive. Using neither flag produces the default raw output.
 
 ### `scopes`
 
@@ -141,16 +139,16 @@ Saves the contents of a file to the configuration store.
 
     ripc save -scope myapp config.toml
 
-### `scaffold <type> <key>`
+### `scaffold <type> <label>`
 
-Creates a complete configuration section with defaults. `set` changes a single field; `scaffold` creates an entire section at once. `<key>` is a label you choose for the new section and must not already exist.
+Creates a complete configuration section with defaults. `set` changes a single field; `scaffold` creates an entire section at once. `<label>` is the label you choose for the new section and must not already exist.
 
 | Type | Path | Description |
 |------|------|-------------|
-| `backup-online` | `backup.online.<key>` | Online Backup API |
-| `backup-vacuum` | `backup.vacuum.<key>` | VACUUM INTO |
-| `backup-sqlite-rsync` | `backup.sqlite-rsync.entries.<key>` | sqlite-rsync |
-| `oauth2` | `oauth2_providers.<key>` | OAuth2 provider |
+| `backup-online` | `backup.online.<label>` | Online Backup API |
+| `backup-vacuum` | `backup.vacuum.<label>` | VACUUM INTO |
+| `backup-sqlite-rsync` | `backup.sqlite-rsync.entries.<label>` | sqlite-rsync |
+| `oauth2` | `oauth2_providers.<label>` | OAuth2 provider |
 
 **Example: configure backup of type `sqlite-rsync` for application SQLite file `/tmp/app.db`**
 
@@ -175,7 +173,7 @@ Next steps:
 Deactivate: ripc set backup.sqlite-rsync.entries.myapp.source_path ""
 ```
 
-Set `source_path` using the same key:
+Set `source_path` using the same label:
 
 ```
 ripc set backup.sqlite-rsync.entries.myapp.source_path /tmp/app.db
@@ -190,18 +188,15 @@ ripc paths myapp
 
 ### `migrate`
 
-Migrates the stored configuration to the current framework version. If no
-configuration exists for the scope, it creates one with default values.
+Migrates the stored configuration to the current framework version. 
+
+- it removes stale configuration keys that no longer exist in the framework
+- adds the new framewrok configuration keys with their default values
+- preserves all existing configured values
 
     ripc migrate
 
-**After upgrading the restinpieces framework**, run `ripc migrate` to:
-- Remove stale configuration keys that no longer exist in the framework
-- Add new configuration keys with their default values
-- Preserve all existing configured values
-
-The command is safe to run at any time — it never overwrites existing values with
-defaults unless the field was newly added to the framework.
+The command is safe to run at any time — it never overwrites existing values with defaults unless the field was newly added to the framework.
 
 ### `list [scope]`
 
