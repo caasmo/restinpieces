@@ -58,16 +58,18 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
 ### Data Durability
 The "one process" paradigm intentionally avoids external dependencies like separate database servers, as they would violate the architectural principle of maintaining a single process per virtual machine. Consequently, the framework relies on an embedded SQLite database for data persistence. This design choice places critical importance on the durability of the single database file.
 
-To address this, the framework provides robust mechanisms for data protection and recovery:
+To address this, the framework provides implementations of all available SQLite sync protocols, in the [restinpieces-backup](https://github.com/caasmo/restinpieces-backup) repository, and continuous real-time replication with point-in-time recovery via [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream):
 
-- **Database Snapshots**: The backup system uses a two-phase push-pull design. A standalone [daemon](https://github.com/caasmo/restinpieces-backup) creates compressed SQLite snapshots directly on the server (push phase). Clients from the same repository then retrieve those snapshots via SFTP or rsync for secure off-server storage and verify their integrity (pull phase). The backup is configured through the [application's settings](config/config.go) (`[backup]` section) and supports two strategies:
+| Method | Use | Implementation |
+| --- | --- | --- |
+| [Online Backup API](https://www.sqlite.org/backup.html) | local backup | [`cmd/onlineapi`](https://github.com/caasmo/restinpieces-backup/tree/master/cmd/onlineapi) |
+| [`VACUUM INTO`](https://www.sqlite.org/lang_vacuum.html) | local backup | [`cmd/vacuum`](https://github.com/caasmo/restinpieces-backup/tree/master/cmd/vacuum) |
+| [sqlite3_rsync](https://github.com/caasmo/go-sqlite-rsync) | remote backup, delta-based | [`cmd/sqlite-rsync`](https://github.com/caasmo/restinpieces-backup/tree/master/cmd/sqlite-rsync) |
+| rsync pull client | remote backup, incremental | [`cmd/rsync`](https://github.com/caasmo/restinpieces-backup/tree/master/cmd/rsync) |
+| sftp pull client | remote backup | [`cmd/sftp`](https://github.com/caasmo/restinpieces-backup/tree/master/cmd/sftp) |
+| [litestream](https://github.com/benbjohnson/litestream) | continuous replication, point-in-time | [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) |
 
-  - **Online Mode** (default): Uses SQLite's Online Backup API — non-locking, copies page-by-page with configurable pauses to reduce I/O contention. **Recommended for most production systems.**
-  - **Vacuum Mode**: Uses `VACUUM INTO` to create a clean, defragmented copy. Faster but **blocks all write operations** for the duration. Suitable for low-write databases or scheduled maintenance windows.
-
-  Snapshots are saved as compressed `.bck.gz` archives in a configurable directory, with filenames containing a timestamp and the strategy used. For full setup and configuration details, see the [Backup Guide](doc/backup.md).
-
-- **Real-Time Replication**: For more robust, real-time replication and point-in-time recovery, a Litestream-based integration is available in a separate repository. See [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) for implementation details. This approach ensures that the state of the SQLite database is continuously synchronized to a remote location, providing a strong guarantee against data loss.
+For the framework-side `backup` configuration, see [doc/backup.md](doc/backup.md).
 
 ### Database Drivers
 The framework defaults to using [zombiezen/go-sqlite](https://github.com/zombiezen/go-sqlite), a pure Go SQLite driver that offers excellent performance without relying on CGo. This simplifies the build process and ensures portability. For users who require an alternative, the framework is designed to be modular, and an implementation using the popular [crawshaw.io/sqlite](https://github.com/caasmo/restinpieces-sqlite-crawshaw) driver is also available.
