@@ -188,13 +188,16 @@ ripc paths myapp
 
 ### `migrate`
 
-Migrates the stored configuration to the current framework version. 
+Migrates the stored configuration to the current framework version:
 
-- it removes stale configuration keys that no longer exist in the framework
-- adds the new framewrok configuration keys with their default values
+- it removes stale configuration that no longer exist in the framework
+- adds the new framework configuration with their default values
 - preserves all existing configured values
 
-    ripc migrate
+
+```
+ripc migrate
+```
 
 The command is safe to run at any time — it never overwrites existing values with defaults unless the field was newly added to the framework.
 
