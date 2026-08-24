@@ -58,7 +58,7 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
 ### Data Durability
 The "one process" paradigm intentionally avoids external dependencies like separate database servers, as they would violate the architectural principle of maintaining a single process per virtual machine. Consequently, the framework relies on an embedded SQLite database for data persistence. This design choice places critical importance on the durability of the single database file.
 
-To address this, the framework provides implementations of all available SQLite sync protocols, in the [restinpieces-backup](https://github.com/caasmo/restinpieces-backup) repository, and continuous real-time replication with point-in-time recovery via [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream):
+To address this, the framework provides pure Go implementations of all available SQLite sync protocols, in the [restinpieces-backup](https://github.com/caasmo/restinpieces-backup) repository, and continuous real-time replication with point-in-time recovery via [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream):
 
 | Method | Use | Implementation |
 | --- | --- | --- |
