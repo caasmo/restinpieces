@@ -45,8 +45,12 @@ func TestCache_SetAndGet(t *testing.T) {
 	// 1. Basic Set and Get
 	key, value := "test-key", "test-value"
 	cache.Set(key, value, 1)
-	// Ristretto processes writes asynchronously, so a small delay is needed for the value to become available.
-	time.Sleep(10 * time.Millisecond)
+	// Ristretto processes writes asynchronously, so poll until the write
+	// becomes visible instead of relying on a fixed sleep (flaky on loaded CI).
+	waitFor(t, func() bool {
+		_, found := cache.Get(key)
+		return found
+	}, "key to become available after Set")
 
 	retrieved, found := cache.Get(key)
 	if !found {
@@ -68,7 +72,10 @@ func TestCache_SetAndGet(t *testing.T) {
 	// 3. Overwrite Key
 	newValue := "new-value"
 	cache.Set(key, newValue, 1)
-	time.Sleep(10 * time.Millisecond)
+	waitFor(t, func() bool {
+		got, found := cache.Get(key)
+		return found && got == newValue
+	}, "key to reflect the overwritten value")
 
 	retrieved, found = cache.Get(key)
 	if !found {
@@ -87,12 +94,20 @@ func TestCache_SetWithTTL(t *testing.T) {
 	}
 
 	key, value := "ttl-key", 123
-	ttl := 20 * time.Millisecond
+	// Use a TTL with generous headroom: ristretto records the expiration at
+	// SetWithTTL time and applies the write asynchronously, so a short TTL
+	// could leave the item stored already-expired under load.
+	ttl := 100 * time.Millisecond
 
 	cache.SetWithTTL(key, value, 1, ttl)
-	time.Sleep(10 * time.Millisecond) // Wait for write to process
 
-	// 1. Check that the key is present before expiration
+	// 1. Check that the key is present before expiration.
+	// Ristretto processes writes asynchronously, so poll until the write
+	// becomes visible instead of relying on a fixed sleep (flaky on loaded CI).
+	waitFor(t, func() bool {
+		_, found := cache.Get(key)
+		return found
+	}, "key to become available before TTL expiration")
 	retrieved, found := cache.Get(key)
 	if !found {
 		t.Fatal("key not found before TTL expiration")
@@ -104,7 +119,12 @@ func TestCache_SetWithTTL(t *testing.T) {
 	// 2. Wait for the TTL to expire
 	time.Sleep(ttl)
 
-	// 3. Check that the key is gone after expiration
+	// 3. Check that the key is gone after expiration.
+	// Poll because the key may linger briefly past the boundary.
+	waitFor(t, func() bool {
+		_, found := cache.Get(key)
+		return !found
+	}, "key to be evicted after TTL expiration")
 	retrieved, found = cache.Get(key)
 	if found {
 		t.Errorf("key was found after TTL expiration, but should have been evicted")
@@ -149,4 +169,19 @@ func TestCache_ZeroValue(t *testing.T) {
 			t.Errorf(`expected (nil, false), got (%v, %v)`, val, found)
 		}
 	})
+}
+
+// waitFor polls cond until it returns true or a generous deadline elapses.
+// It fails the test if cond never becomes true. Ristretto applies writes
+// asynchronously, so tests must not rely on a fixed sleep before Get.
+func waitFor(t *testing.T, cond func() bool, msg string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		if cond() {
+			return
+		}
+		time.Sleep(time.Millisecond)
+	}
+	t.Fatalf("timed out waiting for %s", msg)
 }
