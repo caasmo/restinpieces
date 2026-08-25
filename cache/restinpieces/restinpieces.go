@@ -137,6 +137,7 @@ func (c *Cache[K, V]) Get(key K) (V, bool) {
 	// Lazy expiry: time.Now() is a vDSO clock read costing ~40ns, roughly
 	// doubling the cost of TTL reads.
 	if c.nodes[n].expiration != 0 && time.Now().UnixNano() > c.nodes[n].expiration {
+        
 		c.unlink(n)
 		delete(c.index, key)
 		c.dealloc(n)
@@ -191,13 +192,16 @@ func (c *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) 
 	}
 
 	n = c.alloc()
-	if n == -1 {
-		// Full: evict the least-recently-used node to make room.
-		c.evictTail()
+	if n == -1 && c.tail != -1 {
+		// Full: evict the least-recently-used node (tail) to make room.
+		nTail := c.tail
+		c.unlink(nTail)
+		delete(c.index, c.nodes[nTail].key)
+		c.dealloc(nTail)
 		n = c.alloc()
 	}
 	if n == -1 {
-		// Cannot happen: evictTail made room when the cache was full.
+		// Cannot happen: tail eviction made room when the cache was full.
 		return false
 	}
 
@@ -266,7 +270,7 @@ func (c *Cache[K, V]) unlink(n int32) {
 	c.nodes[n].next = -1
 }
 
-// linkToHead inserts node n at the LRU head (most-recently-used, left end).
+// linkToHead links node n as the LRU head (most-recently-used, left end).
 //
 // linkToHead(N) does this:
 // 1. Prepare N: N.prev = -1 (no left), N.next = head (old head A)
@@ -300,13 +304,4 @@ func (c *Cache[K, V]) linkToHead(n int32) {
 	}
 }
 
-// evictTail removes the least-recently-used node (the LRU tail).
-func (c *Cache[K, V]) evictTail() {
-	n := c.tail
-	if n == -1 {
-		return
-	}
-	c.unlink(n)
-	delete(c.index, c.nodes[n].key)
-	c.dealloc(n)
-}
+
