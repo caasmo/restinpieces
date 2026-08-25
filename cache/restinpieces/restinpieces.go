@@ -213,7 +213,7 @@ func (c *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) 
 	return true
 }
 
-// alloc returns an unused node index, -1 if none left.
+// alloc returns an unused node index from the right end of free, -1 if none left.
 func (c *Cache[K, V]) alloc() int32 {
 	len := len(c.free)
 	if len == 0 {
@@ -224,7 +224,7 @@ func (c *Cache[K, V]) alloc() int32 {
 	return n
 }
 
-// dealloc returns the node index n to free.
+// dealloc returns node index n to the right end of free.
 func (c *Cache[K, V]) dealloc(n int32) {
 	c.free = append(c.free, n)
 }

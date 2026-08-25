@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"filippo.io/age"
-	"github.com/caasmo/restinpieces/cache/ristretto"
+	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/db/mock"
@@ -162,8 +162,8 @@ func TestSetupDefaultCache(t *testing.T) {
 			t.Fatal("app.Cache() is nil after calling setupDefaultCache()")
 		}
 
-		if _, ok := app.Cache().(*ristretto.Cache[any]); !ok {
-			t.Errorf("Expected cache of type *ristretto.Cache[any], but got %T", app.Cache())
+		if _, ok := app.Cache().(cache.Cache[string, any]); !ok {
+			t.Errorf("cache does not implement cache.Cache[string,any], got %T", app.Cache())
 		}
 	})
 
@@ -172,7 +172,7 @@ func TestSetupDefaultCache(t *testing.T) {
 		app.SetLogger(newTestLogger())
 		init := &initializer{app: app}
 		cfg := newTestConfig()
-		cfg.Cache.Level = "invalid-level" // This should cause ristretto.New to fail
+		cfg.Cache.Level = "invalid-level" // This should cause cache.New to fail
 
 		err := init.setupDefaultCache(cfg)
 		if err == nil {
