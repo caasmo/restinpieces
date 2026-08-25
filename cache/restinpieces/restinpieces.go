@@ -1,13 +1,14 @@
 package restinpieces
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/caasmo/restinpieces/cache"
 )
 
-// node holds one cache entry. Its prev and next indexes, together with
+// node is one slot in the Cache's preallocated array. Its prev and next indexes, together with
 // the Cache fields head and tail, implement the LRU list: a doubly-linked
 // list that chains all live nodes from most- (head) to least- (tail) recently used.
 //
@@ -28,7 +29,7 @@ type node[K comparable, V any] struct {
 // Cache is a preallocated, fixed-capacity LRU cache with lazy expiration.
 //
 // Storage is allocated once at construction and never grows:
-//   - nodes is a fixed array of maxEntries nodes; prev/next are indexes into it
+//   - nodes is a fixed array of max nodes; prev/next are indexes into it
 //   - index maps each key to its node
 //   - free holds the indexes of unused nodes
 //
@@ -36,15 +37,15 @@ type node[K comparable, V any] struct {
 // head (left, most-recently-used) <-> ... <-> tail (right, least-recently-used).
 // Each node's prev points left toward head, next points right toward tail.
 //
-// Why LRU: the cache never holds more than maxEntries entries. When it is
-// full and a new key arrives, an old one must leave. LRU removes the entry
+// Why LRU: the cache never holds more than max nodes. When it is
+// full and a new key arrives, an old one must leave. LRU removes the node
 // unused for the longest time, betting that anything touched recently will
 // be asked for again soon and long-idle keys will not.
 //
-// Expired entries are removed lazily on Get. When the cache is full, Set
-// evicts the least-recently-used entry (the LRU tail, rightmost) to make room.
+// Expired nodes are removed lazily on Get. When the cache is full, Set
+// evicts the least-recently-used node (the LRU tail, rightmost) to make room.
 //
-// TODO: proactive reclamation of expired entries that are never read again
+// TODO: proactive reclamation of expired nodes that are never read again
 // (rotating cursor sweep, inline on writes) is not yet implemented.
 type Cache[K comparable, V any] struct {
 	// nodes holds every node, preallocated once by New and never grown.
@@ -57,10 +58,10 @@ type Cache[K comparable, V any] struct {
 	// every other node is free.
 	index map[K]int32
 
-	// head is the index of the node containing the most-recently-used entry (left end of the LRU list), -1 if empty.
+	// head is the index of the most-recently-used node (left end of the LRU list), -1 if empty.
 	head int32
 
-	// tail is the index of the node containing the least-recently-used entry (right end of the LRU list), -1 if empty.
+	// tail is the index of the least-recently-used node (right end of the LRU list), -1 if empty.
 	tail int32
 
 	// free holds the indexes of unused nodes. alloc takes one out
@@ -74,16 +75,47 @@ type Cache[K comparable, V any] struct {
 
 var _ cache.Cache[string, any] = (*Cache[string, any])(nil)
 
-// New creates a cache with maxEntries preallocated nodes.
-func New[K comparable, V any](maxEntries int) *Cache[K, V] {
-	c := &Cache[K, V]{
-		nodes: make([]node[K, V], maxEntries),
-		index: make(map[K]int32, maxEntries),
+// cacheLevels translates a level string to max, mirroring ristretto's
+// presets. Values are based on ristretto's "assumes ~N active items" comments:
+// small 10k, medium 100k, large 1M, very-large 4M.
+var cacheLevels = map[string]int{
+	"small":      10_000,
+	"medium":     100_000,
+	"large":      1_000_000,
+	"very-large": 4_000_000,
+}
+
+// New creates a cache for string keys based on a predefined level, like ristretto.New.
+// It translates the level to max using the same presets as ristretto.
+func New[V any](level string) (cache.Cache[string, V], error) {
+	max, ok := cacheLevels[level]
+	if !ok {
+		return nil, fmt.Errorf("invalid cache level provided: %s", level)
+	}
+	c := &Cache[string, V]{
+		nodes: make([]node[string, V], max),
+		index: make(map[string]int32, max),
 		head:  -1,
 		tail:  -1,
-		free:  make([]int32, 0, maxEntries),
+		free:  make([]int32, 0, max),
 	}
-	for n := int32(0); n < int32(maxEntries); n++ {
+	for n := int32(0); n < int32(max); n++ {
+		c.free = append(c.free, n)
+	}
+	return c, nil
+}
+
+// newWithMax creates a cache with max preallocated nodes.
+// For tests only; production uses New(level).
+func newWithMax[K comparable, V any](max int) *Cache[K, V] {
+	c := &Cache[K, V]{
+		nodes: make([]node[K, V], max),
+		index: make(map[K]int32, max),
+		head:  -1,
+		tail:  -1,
+		free:  make([]int32, 0, max),
+	}
+	for n := int32(0); n < int32(max); n++ {
 		c.free = append(c.free, n)
 	}
 	return c
@@ -91,7 +123,7 @@ func New[K comparable, V any](maxEntries int) *Cache[K, V] {
 
 // Get retrieves the value for key, moving it to the LRU head on a hit.
 //
-// An expired entry is removed lazily on read and reported as a miss.
+// An expired node is removed lazily on read and reported as a miss.
 func (c *Cache[K, V]) Get(key K) (V, bool) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
@@ -128,9 +160,9 @@ func (c *Cache[K, V]) Set(key K, value V, cost int64) bool {
 
 // SetWithTTL stores key with value, cost and TTL.
 //
-// A zero TTL means the entry never expires. A negative TTL is a no-op and
+// A zero TTL means the node never expires. A negative TTL is a no-op and
 // returns false, matching ristretto semantics. When the cache is full, the
-// least-recently-used entry is evicted to make room.
+// least-recently-used node is evicted to make room.
 func (c *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) bool {
 	if ttl < 0 {
 		return false
@@ -160,7 +192,7 @@ func (c *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) 
 
 	n = c.alloc()
 	if n == -1 {
-		// Full: evict the least-recently-used entry to make room.
+		// Full: evict the least-recently-used node to make room.
 		c.evictTail()
 		n = c.alloc()
 	}
@@ -268,7 +300,7 @@ func (c *Cache[K, V]) linkToHead(n int32) {
 	}
 }
 
-// evictTail removes the least-recently-used entry (the LRU tail).
+// evictTail removes the least-recently-used node (the LRU tail).
 func (c *Cache[K, V]) evictTail() {
 	n := c.tail
 	if n == -1 {
