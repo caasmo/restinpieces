@@ -8,7 +8,7 @@ import (
 )
 
 func TestCache_SetAndGet(t *testing.T) {
-	c := newWithMax[string, string](10)
+	c := newWith[string, string](10)
 
 	c.Set("key", "value", 1)
 	got, ok := c.Get("key")
@@ -22,7 +22,7 @@ func TestCache_SetAndGet(t *testing.T) {
 }
 
 func TestCache_Overwrite(t *testing.T) {
-	c := newWithMax[string, string](10)
+	c := newWith[string, string](10)
 
 	c.Set("key", "old", 1)
 	c.Set("key", "new", 1)
@@ -34,7 +34,7 @@ func TestCache_Overwrite(t *testing.T) {
 }
 
 func TestCache_SetWithTTL(t *testing.T) {
-	c := newWithMax[string, string](10)
+	c := newWith[string, string](10)
 	ttl := 20 * time.Millisecond
 
 	c.SetWithTTL("key", "value", 1, ttl)
@@ -52,7 +52,7 @@ func TestCache_SetWithTTL(t *testing.T) {
 }
 
 func TestCache_SetWithTTLNegativeIsNoop(t *testing.T) {
-	c := newWithMax[string, string](10)
+	c := newWith[string, string](10)
 
 	if c.SetWithTTL("key", "value", 1, -1*time.Second) {
 		t.Fatal("expected SetWithTTL with a negative TTL to return false")
@@ -63,7 +63,7 @@ func TestCache_SetWithTTLNegativeIsNoop(t *testing.T) {
 }
 
 func TestCache_SetWithTTLZeroNeverExpires(t *testing.T) {
-	c := newWithMax[string, string](10)
+	c := newWith[string, string](10)
 
 	c.SetWithTTL("key", "value", 1, 0)
 	time.Sleep(20 * time.Millisecond)
@@ -74,7 +74,7 @@ func TestCache_SetWithTTLZeroNeverExpires(t *testing.T) {
 }
 
 func TestCache_Eviction(t *testing.T) {
-	c := newWithMax[string, string](3)
+	c := newWith[string, string](3)
 
 	c.Set("a", "1", 1)
 	c.Set("b", "2", 1)
@@ -92,7 +92,7 @@ func TestCache_Eviction(t *testing.T) {
 }
 
 func TestCache_GetRefreshesLRU(t *testing.T) {
-	c := newWithMax[string, string](3)
+	c := newWith[string, string](3)
 
 	c.Set("a", "1", 1)
 	c.Set("b", "2", 1)
@@ -111,7 +111,7 @@ func TestCache_GetRefreshesLRU(t *testing.T) {
 }
 
 func TestCache_OverwriteRefreshesLRU(t *testing.T) {
-	c := newWithMax[string, string](3)
+	c := newWith[string, string](3)
 
 	c.Set("a", "1", 1)
 	c.Set("b", "2", 1)
@@ -130,7 +130,7 @@ func TestCache_OverwriteRefreshesLRU(t *testing.T) {
 }
 
 func TestCache_LazyExpiryMakesRoom(t *testing.T) {
-	c := newWithMax[string, string](2)
+	c := newWith[string, string](2)
 	ttl := 20 * time.Millisecond
 
 	c.SetWithTTL("a", "1", 1, ttl)
@@ -152,7 +152,7 @@ func TestCache_LazyExpiryMakesRoom(t *testing.T) {
 }
 
 func TestCache_ReinsertAfterEviction(t *testing.T) {
-	c := newWithMax[string, string](2)
+	c := newWith[string, string](2)
 
 	c.Set("a", "1", 1)
 	c.Set("b", "2", 1)
@@ -170,7 +170,7 @@ func TestCache_ReinsertAfterEviction(t *testing.T) {
 }
 
 func TestCache_ZeroValueOnMiss(t *testing.T) {
-	c := newWithMax[string, int](10)
+	c := newWith[string, int](10)
 
 	v, ok := c.Get("missing")
 	if ok || v != 0 {
@@ -179,7 +179,7 @@ func TestCache_ZeroValueOnMiss(t *testing.T) {
 }
 
 func TestCache_ConcurrentAccess(t *testing.T) {
-	c := newWithMax[string, int](100)
+	c := newWith[string, int](100)
 
 	var wg sync.WaitGroup
 	for g := 0; g < 8; g++ {

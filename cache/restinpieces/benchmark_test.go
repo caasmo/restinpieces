@@ -43,7 +43,7 @@ func fillBenchCache(c *Cache[string, string], keys []string) {
 // BenchmarkCache_GetHit measures the full read path: map lookup plus the
 // LRU move-to-head.
 func BenchmarkCache_GetHit(b *testing.B) {
-	c := newWithMax[string, string](benchMaxEntries)
+	c := newWith[string, string](benchMaxEntries)
 	keys := newBenchKeys("key", benchMaxEntries)
 	fillBenchCache(c, keys)
 
@@ -56,7 +56,7 @@ func BenchmarkCache_GetHit(b *testing.B) {
 
 // BenchmarkCache_GetMiss measures the miss path: pure map lookup.
 func BenchmarkCache_GetMiss(b *testing.B) {
-	c := newWithMax[string, string](benchMaxEntries)
+	c := newWith[string, string](benchMaxEntries)
 	keys := newBenchKeys("key", benchMaxEntries)
 	fillBenchCache(c, keys)
 	missKeys := newBenchKeys("miss", benchMaxEntries)
@@ -71,7 +71,7 @@ func BenchmarkCache_GetMiss(b *testing.B) {
 // BenchmarkCache_GetHitTTL measures the full read path on TTL entries:
 // map lookup, LRU move-to-head, and the expiry check (time.Now()).
 func BenchmarkCache_GetHitTTL(b *testing.B) {
-	c := newWithMax[string, string](benchMaxEntries)
+	c := newWith[string, string](benchMaxEntries)
 	keys := newBenchKeys("key", benchMaxEntries)
 	for _, k := range keys {
 		c.SetWithTTL(k, "value", 1, time.Minute)
@@ -87,7 +87,7 @@ func BenchmarkCache_GetHitTTL(b *testing.B) {
 // BenchmarkCache_SetWithFull measures the worst-case write path on a full
 // cache: every Set inserts a new key and evicts the LRU tail.
 func BenchmarkCache_SetWithFull(b *testing.B) {
-	c := newWithMax[string, string](benchMaxEntries)
+	c := newWith[string, string](benchMaxEntries)
 	keys := newBenchKeys("key", benchMaxEntries)
 	fillBenchCache(c, keys)
 	churn := newBenchKeys("churn", benchMaxEntries)
@@ -102,7 +102,7 @@ func BenchmarkCache_SetWithFull(b *testing.B) {
 // BenchmarkCache_Overwrite measures the cheap write path: updating an
 // existing key and moving it to the head.
 func BenchmarkCache_Overwrite(b *testing.B) {
-	c := newWithMax[string, string](benchMaxEntries)
+	c := newWith[string, string](benchMaxEntries)
 	keys := newBenchKeys("key", benchMaxEntries)
 	fillBenchCache(c, keys)
 
@@ -116,7 +116,7 @@ func BenchmarkCache_Overwrite(b *testing.B) {
 // BenchmarkCache_SetWithTTL measures the new-key write path with a TTL on
 // a full cache.
 func BenchmarkCache_SetWithTTL(b *testing.B) {
-	c := newWithMax[string, string](benchMaxEntries)
+	c := newWith[string, string](benchMaxEntries)
 	keys := newBenchKeys("key", benchMaxEntries)
 	fillBenchCache(c, keys)
 	churn := newBenchKeys("churn", benchMaxEntries)
@@ -132,7 +132,7 @@ func BenchmarkCache_SetWithTTL(b *testing.B) {
 // BenchmarkCache_Mixed measures a read-heavy workload: 90% Get hits and
 // 10% new-key Sets that evict.
 func BenchmarkCache_Mixed(b *testing.B) {
-	c := newWithMax[string, string](benchMaxEntries)
+	c := newWith[string, string](benchMaxEntries)
 	keys := newBenchKeys("key", benchMaxEntries)
 	fillBenchCache(c, keys)
 	churn := newBenchKeys("churn", benchMaxEntries)

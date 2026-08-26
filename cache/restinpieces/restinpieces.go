@@ -88,34 +88,24 @@ var cacheLevels = map[string]int{
 // New creates a cache for string keys based on a predefined level, like ristretto.New.
 // It translates the level to max using the same presets as ristretto.
 func New[V any](level string) (cache.Cache[string, V], error) {
-	max, ok := cacheLevels[level]
+	num, ok := cacheLevels[level]
 	if !ok {
 		return nil, fmt.Errorf("invalid cache level provided: %s", level)
 	}
-	c := &Cache[string, V]{
-		nodes: make([]node[string, V], max),
-		index: make(map[string]int32, max),
-		head:  -1,
-		tail:  -1,
-		free:  make([]int32, 0, max),
-	}
-	for n := int32(0); n < int32(max); n++ {
-		c.free = append(c.free, n)
-	}
-	return c, nil
+	return newWith[string, V](num), nil
 }
 
-// newWithMax creates a cache with max preallocated nodes.
+// newWith creates a cache with num preallocated nodes.
 // For tests only; production uses New(level).
-func newWithMax[K comparable, V any](max int) *Cache[K, V] {
+func newWith[K comparable, V any](num int) *Cache[K, V] {
 	c := &Cache[K, V]{
-		nodes: make([]node[K, V], max),
-		index: make(map[K]int32, max),
+		nodes: make([]node[K, V], num),
+		index: make(map[K]int32, num),
 		head:  -1,
 		tail:  -1,
-		free:  make([]int32, 0, max),
+		free:  make([]int32, 0, num),
 	}
-	for n := int32(0); n < int32(max); n++ {
+	for n := int32(0); n < int32(num); n++ {
 		c.free = append(c.free, n)
 	}
 	return c
