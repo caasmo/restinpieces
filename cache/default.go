@@ -3,8 +3,38 @@ package cache
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 )
+
+// clockResolution is how often clockNow is refreshed. 100ms is enough for
+// the seconds-to-hours TTLs this cache stores; entries can outlive their
+// TTL by up to one interval, and TTLs below the resolution are unreliable.
+const clockResolution = 100 * time.Millisecond
+
+// clockNow is a periodically-refreshed snapshot of time.Now().UnixNano().
+// TTL reads and writes use it in place of a direct time.Now() call: an
+// atomic load costs ~1-2ns versus ~40ns for a vDSO clock read, at the cost
+// of clockResolution worth of precision. See fastNow and startClock.
+var clockNow atomic.Int64
+
+// startClock is called once, the first time a TTL is actually set, and
+// starts the single background goroutine that keeps clockNow fresh.
+// Callers that never use TTL never pay for the goroutine or the ticker.
+var startClock = sync.OnceFunc(func() {
+	clockNow.Store(time.Now().UnixNano())
+	go func() {
+		t := time.NewTicker(clockResolution)
+		for now := range t.C {
+			clockNow.Store(now.UnixNano())
+		}
+	}()
+})
+
+// fastNow returns a recent, sampled unix-nano timestamp. See clockNow.
+func fastNow() int64 {
+	return clockNow.Load()
+}
 
 // node is one slot in the defaultCache's preallocated array. Its prev and next indexes, together with
 // the defaultCache fields head and tail, implement the LRU list: a doubly-linked
@@ -121,10 +151,10 @@ func (c *Default[K, V]) Get(key K) (V, bool) {
 		return zero, false
 	}
 
-	// Lazy expiry: time.Now() is a vDSO clock read costing ~40ns, roughly
-	// doubling the cost of TTL reads.
-	if c.nodes[n].expiration != 0 && time.Now().UnixNano() > c.nodes[n].expiration {
-        
+	// Lazy expiry, checked against the sampled clock (see fastNow). The
+	// short-circuit on expiration != 0 means non-TTL entries never touch
+	// the clock at all.
+	if c.nodes[n].expiration != 0 && fastNow() > c.nodes[n].expiration {
 		c.unlink(n)
 		delete(c.index, key)
 		c.dealloc(n)
@@ -163,7 +193,8 @@ func (c *Default[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration
 
 	var expiration int64
 	if ttl > 0 {
-		expiration = time.Now().Add(ttl).UnixNano()
+		startClock() // no-op after the first TTL write anywhere in the process
+		expiration = fastNow() + ttl.Nanoseconds()
 	}
 
 	n, ok := c.index[key]
@@ -290,5 +321,3 @@ func (c *Default[K, V]) linkToHead(n int32) {
 		c.tail = n
 	}
 }
-
-
