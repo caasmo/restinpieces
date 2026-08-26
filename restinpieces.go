@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	ripcache "github.com/caasmo/restinpieces/cache/restinpieces"
+	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
@@ -363,7 +363,7 @@ func (i *initializer) setupDefaultCache(cfg *config.Config) error {
 	ft := log.NewMessageFormatter().WithComponent("cache", "🛠️")
 	i.app.Logger().Info(ft.Start("Initializing cache..."), "level", cfg.Cache.Level)
 
-	cacheInstance, err := ripcache.New[any](cfg.Cache.Level) // Explicit string keys and interface{} values
+	cacheInstance, err := cache.New[any](cfg.Cache.Level) // Explicit string keys and interface{} values
 	if err != nil {
 		i.app.Logger().Error(ft.Fail("cache initialization failed"), "error", err)
 		return fmt.Errorf("failed to initialize cache: %w", err)

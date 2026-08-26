@@ -1,4 +1,4 @@
-package restinpieces
+package cache
 
 import (
 	"fmt"

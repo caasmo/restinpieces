@@ -1,4 +1,4 @@
-package restinpieces
+package cache
 
 import (
 	"fmt"
@@ -34,7 +34,7 @@ func newBenchKeys(prefix string, n int) []string {
 }
 
 // fillBenchCache fills c with one entry per key.
-func fillBenchCache(c *Cache[string, string], keys []string) {
+func fillBenchCache(c *Default[string, string], keys []string) {
 	for _, k := range keys {
 		c.Set(k, "value", 1)
 	}

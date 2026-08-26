@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	ripcache "github.com/caasmo/restinpieces/cache/restinpieces"
+	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/router"
@@ -43,11 +43,11 @@ func newBenchmarkApp(b *testing.B, cfgModifiers ...func(*config.Config)) *core.A
 	app.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 
 	// Use a fresh, isolated cache for each benchmark
-	cache, err := ripcache.New[any]("small")
+	c, err := cache.New[any]("small")
 	if err != nil {
 		b.Fatalf("Failed to create cache: %v", err)
 	}
-	app.SetCache(cache)
+	app.SetCache(c)
 
 	return app
 }

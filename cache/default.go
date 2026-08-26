@@ -1,15 +1,13 @@
-package restinpieces
+package cache
 
 import (
 	"fmt"
 	"sync"
 	"time"
-
-	"github.com/caasmo/restinpieces/cache"
 )
 
-// node is one slot in the Cache's preallocated array. Its prev and next indexes, together with
-// the Cache fields head and tail, implement the LRU list: a doubly-linked
+// node is one slot in the defaultCache's preallocated array. Its prev and next indexes, together with
+// the defaultCache fields head and tail, implement the LRU list: a doubly-linked
 // list that chains all live nodes from most- (head) to least- (tail) recently used.
 //
 // LRU layout (left to right):
@@ -26,7 +24,8 @@ type node[K comparable, V any] struct {
 	next       int32 // index of next node toward tail (right), -1 = none
 }
 
-// Cache is a preallocated, fixed-capacity LRU cache with lazy expiration.
+// Default is a preallocated, fixed-capacity LRU cache with lazy expiration.
+// It is the framework's shipped implementation of the Cache interface.
 //
 // Storage is allocated once at construction and never grows:
 //   - nodes is a fixed array of max nodes; prev/next are indexes into it
@@ -47,7 +46,7 @@ type node[K comparable, V any] struct {
 //
 // TODO: proactive reclamation of expired nodes that are never read again
 // (rotating cursor sweep, inline on writes) is not yet implemented.
-type Cache[K comparable, V any] struct {
+type Default[K comparable, V any] struct {
 	// nodes holds every node, preallocated once by New and never grown.
 	// Each node keeps its position in the array for life; only its
 	// content changes as it cycles between unused and live.
@@ -73,11 +72,9 @@ type Cache[K comparable, V any] struct {
 	lock sync.Mutex
 }
 
-var _ cache.Cache[string, any] = (*Cache[string, any])(nil)
+var _ Cache[string, any] = (*Default[string, any])(nil)
 
-// cacheLevels translates a level string to max, mirroring ristretto's
-// presets. Values are based on ristretto's "assumes ~N active items" comments:
-// small 10k, medium 100k, large 1M, very-large 4M.
+// cacheLevels translates a level string to the cache's max-entry cap.
 var cacheLevels = map[string]int{
 	"small":      10_000,    // ~1 MB
 	"medium":     100_000,   // ~10 MB
@@ -85,9 +82,9 @@ var cacheLevels = map[string]int{
 	"very-large": 10_000_000, // ~1.1 GB
 }
 
-// New creates a cache for string keys based on a predefined level, like ristretto.New.
-// It translates the level to max using the same presets as ristretto.
-func New[V any](level string) (cache.Cache[string, V], error) {
+// New creates a cache for string keys based on a predefined level.
+// It translates the level to a max-entry cap using cacheLevels.
+func New[V any](level string) (Cache[string, V], error) {
 	num, ok := cacheLevels[level]
 	if !ok {
 		return nil, fmt.Errorf("invalid cache level provided: %s", level)
@@ -97,8 +94,8 @@ func New[V any](level string) (cache.Cache[string, V], error) {
 
 // newWith creates a cache with num preallocated nodes.
 // For tests only; production uses New(level).
-func newWith[K comparable, V any](num int) *Cache[K, V] {
-	c := &Cache[K, V]{
+func newWith[K comparable, V any](num int) *Default[K, V] {
+	c := &Default[K, V]{
 		nodes: make([]node[K, V], num),
 		index: make(map[K]int32, num),
 		head:  -1,
@@ -114,7 +111,7 @@ func newWith[K comparable, V any](num int) *Cache[K, V] {
 // Get retrieves the value for key, moving it to the LRU head on a hit.
 //
 // An expired node is removed lazily on read and reported as a miss.
-func (c *Cache[K, V]) Get(key K) (V, bool) {
+func (c *Default[K, V]) Get(key K) (V, bool) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
@@ -145,16 +142,16 @@ func (c *Cache[K, V]) Get(key K) (V, bool) {
 
 // Set stores key with value and cost. Cost is accepted for interface
 // compatibility and currently unused.
-func (c *Cache[K, V]) Set(key K, value V, cost int64) bool {
+func (c *Default[K, V]) Set(key K, value V, cost int64) bool {
 	return c.SetWithTTL(key, value, cost, 0)
 }
 
 // SetWithTTL stores key with value, cost and TTL.
 //
 // A zero TTL means the node never expires. A negative TTL is a no-op and
-// returns false, matching ristretto semantics. When the cache is full, the
-// least-recently-used node is evicted to make room.
-func (c *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) bool {
+// returns false. When the cache is full, the least-recently-used node is
+// evicted to make room.
+func (c *Default[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) bool {
 	if ttl < 0 {
 		return false
 	}
@@ -204,7 +201,7 @@ func (c *Cache[K, V]) SetWithTTL(key K, value V, cost int64, ttl time.Duration) 
 }
 
 // alloc returns an unused node index from the right end of free, -1 if none left.
-func (c *Cache[K, V]) alloc() int32 {
+func (c *Default[K, V]) alloc() int32 {
 	len := len(c.free)
 	if len == 0 {
 		return -1
@@ -215,7 +212,7 @@ func (c *Cache[K, V]) alloc() int32 {
 }
 
 // dealloc returns node index n to the right end of free.
-func (c *Cache[K, V]) dealloc(n int32) {
+func (c *Default[K, V]) dealloc(n int32) {
 	c.free = append(c.free, n)
 }
 
@@ -238,7 +235,7 @@ func (c *Cache[K, V]) dealloc(n int32) {
 // - unlink(head) -> next node becomes new head
 // - unlink(tail) -> prev node becomes new tail
 // - unlink only node -> head = -1, tail = -1 (empty list)
-func (c *Cache[K, V]) unlink(n int32) {
+func (c *Default[K, V]) unlink(n int32) {
 	// 1. Look at B's neighbors: prev = B.prev (A), next = B.next (C)
 	prev, next := c.nodes[n].prev, c.nodes[n].next
 	// 2. Stitch them together: A.next = C and C.prev = A -> now A <-> C
@@ -278,7 +275,7 @@ func (c *Cache[K, V]) unlink(n int32) {
 // Edge cases handled by same code:
 // - linkToHead on empty list -> head = N, tail = N
 // - linkToHead on non-empty list -> old head's prev = N
-func (c *Cache[K, V]) linkToHead(n int32) {
+func (c *Default[K, V]) linkToHead(n int32) {
 	// 1. Prepare N: N.prev = -1 (no left), N.next = head (old head A)
 	c.nodes[n].prev = -1
 	c.nodes[n].next = c.head

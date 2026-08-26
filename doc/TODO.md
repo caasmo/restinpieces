@@ -16,15 +16,15 @@
         - (d) Every framework consumer switches to the box: server, scheduler, log daemon, batch handler, mail, auth — all take *atomic.Pointer[config.Config] and read Load() at each use. One box type, one read op, framework-wide.
 - handler_fs has to return framwork errors http.error does things to header
     - Error deletes the Content-Length header, sets Content-Type to
-    “text/plain; charset=utf-8”, and sets X-Content-Type-Options to “nosniff”. This
+     “text/plain; charset=utf-8”, and sets X-Content-Type-Options to “nosniff”. This
     configures the header properly for the error message, in case the caller had
     set it up expecting a successful output.
     core/handler_fs.go
-99:                     http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+ 99:                     http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 153:                    http.Error(w, "internal server error", http.StatusInternalServerError)
 
 core/prerouter/block_oversized_request.go
-90:                     http.Error(w, http.StatusText(http.StatusRequestURITooLong), http.StatusRequestURITooLong)
+ 90:                     http.Error(w, http.StatusText(http.StatusRequestURITooLong), http.StatusRequestURITooLong)
 - core/prerouter/block_oversized_request.go the same for http.Error, has our writeError do we implment it
 
 - dump does not work for scope, shoudl check format, is crap!!! harcoded framwork! must be explicite!!!!
@@ -156,7 +156,7 @@ core/prerouter/block_oversized_request.go
 
 - BUG
     - if there is a error in initializing (restinpieces) and we are alrady activated the batch handler logger, it will not Flush 
-    on error,  
+   on error,  
         - last error should flush all log message 
         - or at least do not use the the app.Logger in entry points
         - bug ocurred in restinpieces-litestream
@@ -403,5 +403,12 @@ core/prerouter/block_oversized_request.go
 - schema change in `migrations/schema/log/logs.sql`, affects the app DB migration, not daemon code
 - ref: `migrations/schema/log/logs.sql:6`, `db/zombiezen/log.go:55`
 
-### done
+# block_ip: buckets + TTL redundant — 40ns vs 90ns
 
+Buckets are pointless with TTL.
+
+With `SetWithTTL + no buckets` = precise 3m, but `Get` 90ns (TTL branch + `time.Now()`)
+With `Set + buckets at 3m` = coarse 3m, but `Get` 40ns (no TTL, `expiration==0` skips `time.Now()`), fastest under attack
+Current `3600s bucket + 3m TTL` is worst of both
+
+### done

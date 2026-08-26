@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	ripcache "github.com/caasmo/restinpieces/cache/restinpieces"
+	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/topk"
@@ -43,16 +43,13 @@ func TestBlockIP_GetClientIP(t *testing.T) {
 func TestBlockIP_WhenIPIsAlreadyBlocked(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
-	rCache, _ := ripcache.New[any]("medium")
+	rCache, _ := cache.New[any]("medium")
 	mockApp.SetCache(rCache)
 	mockApp.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 
 	// Manually block an IP by adding it to the cache.
 	blockedIP := "192.0.2.100"
-	now := time.Now()
-	bucket := getTimeBucket(now)
-	key := formatBlockKey(blockedIP, bucket)
-	mockApp.Cache().Set(key, true, 1)
+	mockApp.Cache().Set(blockedIP, true, 1)
 	// Wait for set to take effect
 	time.Sleep(10 * time.Millisecond)
 
@@ -84,7 +81,7 @@ func TestBlockIP_WhenIPIsAlreadyBlocked(t *testing.T) {
 func TestBlockIP_WhenIPIsNotBlocked(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
-	rCache, _ := ripcache.New[any]("medium")
+	rCache, _ := cache.New[any]("medium")
 	mockApp.SetCache(rCache)
 	mockApp.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 
@@ -121,7 +118,7 @@ func TestBlockIP_WhenIPIsNotBlocked(t *testing.T) {
 func TestBlockIP_ProcessAndBlockTrigger(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
-	rCache, _ := ripcache.New[any]("medium")
+	rCache, _ := cache.New[any]("medium")
 	mockApp.SetCache(rCache)
 	mockApp.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 
