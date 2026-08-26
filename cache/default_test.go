@@ -44,7 +44,7 @@ func TestCache_SetWithTTL(t *testing.T) {
 		t.Fatalf("expected key to be present before expiry, got (%q, %v)", got, ok)
 	}
 
-	time.Sleep(ttl * 2)
+	time.Sleep(ttl + clockResolution + 20*time.Millisecond)
 
 	if _, ok := c.Get("key"); ok {
 		t.Fatal("expected key to be expired")
@@ -135,7 +135,7 @@ func TestCache_LazyExpiryMakesRoom(t *testing.T) {
 
 	c.SetWithTTL("a", "1", 1, ttl)
 	c.Set("b", "2", 1)
-	time.Sleep(ttl * 2)
+	time.Sleep(ttl + clockResolution + 20*time.Millisecond)
 
 	if _, ok := c.Get("a"); ok {
 		t.Fatal("expected a to be expired")
