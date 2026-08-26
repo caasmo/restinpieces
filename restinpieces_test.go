@@ -11,7 +11,6 @@ import (
 	"testing"
 
 	"filippo.io/age"
-	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/db/mock"
@@ -160,10 +159,6 @@ func TestSetupDefaultCache(t *testing.T) {
 
 		if app.Cache() == nil {
 			t.Fatal("app.Cache() is nil after calling setupDefaultCache()")
-		}
-
-		if _, ok := app.Cache().(cache.Cache[string, any]); !ok {
-			t.Errorf("cache does not implement cache.Cache[string,any], got %T", app.Cache())
 		}
 	})
 
