@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/caasmo/restinpieces/cache/ristretto"
+	ripcache "github.com/caasmo/restinpieces/cache/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/router"
@@ -43,7 +43,7 @@ func newBenchmarkApp(b *testing.B, cfgModifiers ...func(*config.Config)) *core.A
 	app.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 
 	// Use a fresh, isolated cache for each benchmark
-	cache, err := ristretto.New[any]("small")
+	cache, err := ripcache.New[any]("small")
 	if err != nil {
 		b.Fatalf("Failed to create cache: %v", err)
 	}

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caasmo/restinpieces/cache/ristretto"
+	ripcache "github.com/caasmo/restinpieces/cache/restinpieces"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/topk"
@@ -43,7 +43,7 @@ func TestBlockIP_GetClientIP(t *testing.T) {
 func TestBlockIP_WhenIPIsAlreadyBlocked(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
-	rCache, _ := ristretto.New[any]("medium")
+	rCache, _ := ripcache.New[any]("medium")
 	mockApp.SetCache(rCache)
 	mockApp.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 
@@ -84,7 +84,7 @@ func TestBlockIP_WhenIPIsAlreadyBlocked(t *testing.T) {
 func TestBlockIP_WhenIPIsNotBlocked(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
-	rCache, _ := ristretto.New[any]("medium")
+	rCache, _ := ripcache.New[any]("medium")
 	mockApp.SetCache(rCache)
 	mockApp.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 
@@ -121,7 +121,7 @@ func TestBlockIP_WhenIPIsNotBlocked(t *testing.T) {
 func TestBlockIP_ProcessAndBlockTrigger(t *testing.T) {
 	// --- Setup ---
 	mockApp := &core.App{}
-	rCache, _ := ristretto.New[any]("medium")
+	rCache, _ := ripcache.New[any]("medium")
 	mockApp.SetCache(rCache)
 	mockApp.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 

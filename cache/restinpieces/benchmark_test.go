@@ -84,9 +84,9 @@ func BenchmarkCache_GetHitTTL(b *testing.B) {
 	}
 }
 
-// BenchmarkCache_SetNewKey measures the worst-case write path on a full
+// BenchmarkCache_SetWithFull measures the worst-case write path on a full
 // cache: every Set inserts a new key and evicts the LRU tail.
-func BenchmarkCache_SetNewKey(b *testing.B) {
+func BenchmarkCache_SetWithFull(b *testing.B) {
 	c := newWithMax[string, string](benchMaxEntries)
 	keys := newBenchKeys("key", benchMaxEntries)
 	fillBenchCache(c, keys)

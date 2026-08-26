@@ -79,10 +79,10 @@ var _ cache.Cache[string, any] = (*Cache[string, any])(nil)
 // presets. Values are based on ristretto's "assumes ~N active items" comments:
 // small 10k, medium 100k, large 1M, very-large 4M.
 var cacheLevels = map[string]int{
-	"small":      10_000,
-	"medium":     100_000,
-	"large":      1_000_000,
-	"very-large": 4_000_000,
+	"small":      10_000,    // ~1 MB
+	"medium":     100_000,   // ~10 MB
+	"large":      1_000_000, // ~120 MB
+	"very-large": 10_000_000, // ~1.1 GB
 }
 
 // New creates a cache for string keys based on a predefined level, like ristretto.New.
