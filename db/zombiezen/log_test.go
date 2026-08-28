@@ -1,6 +1,7 @@
 package zombiezen
 
 import (
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"testing"
@@ -8,6 +9,7 @@ import (
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/db/dbtest"
 	"github.com/caasmo/restinpieces/sql"
+	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
@@ -20,7 +22,8 @@ func newTestLogDB(t *testing.T) (*Log, string) {
 	dbPath := filepath.Join(tempDir, "test_log.db")
 
 	// Apply the logs schema using a temporary connection
-	conn, err := NewConn(dbPath)
+	dsn := fmt.Sprintf("file:%s", dbPath)
+	conn, err := sqlite.OpenConn(dsn, sqlite.OpenReadWrite|sqlite.OpenCreate|sqlite.OpenURI)
 	if err != nil {
 		t.Fatalf("failed to create db conn for schema setup: %v", err)
 	}
@@ -39,8 +42,12 @@ func newTestLogDB(t *testing.T) (*Log, string) {
 		t.Fatalf("Failed to close setup connection: %v", err)
 	}
 
-	// Create the Log object for the test, which opens its own connection
-	logDB, err := NewLog(dbPath)
+	// Create the Log object for the test with a new connection
+	logConn, err := sqlite.OpenConn(dsn, sqlite.OpenReadWrite|sqlite.OpenURI)
+	if err != nil {
+		t.Fatalf("failed to open log conn: %v", err)
+	}
+	logDB, err := NewLog(logConn)
 	if err != nil {
 		t.Fatalf("failed to create new log db: %v", err)
 	}
@@ -60,3 +67,4 @@ func TestLogSuite(t *testing.T) {
 		return logDB
 	}}.RunAll(t)
 }
+

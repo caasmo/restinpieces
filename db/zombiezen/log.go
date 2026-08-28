@@ -17,15 +17,17 @@ type Log struct {
 	conn *sqlite.Conn
 }
 
-// New creates a new SQLite connection for logging purposes with performance optimizations.
-// It returns a pointer to a Log struct.
-func NewLog(dbPath string) (*Log, error) {
-	conn, err := NewConn(dbPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open logging connection: %w", err)
+// NewLog creates a Log from an existing connection.
+// It validates that the required schema exists before returning.
+func NewLog(conn *sqlite.Conn) (*Log, error) {
+	if conn == nil {
+		return nil, fmt.Errorf("conn cannot be nil")
 	}
-
-	return &Log{conn: conn}, nil
+	l := &Log{conn: conn}
+	if err := l.Ping("logs"); err != nil {
+		return nil, fmt.Errorf("schema validation failed: %w", err)
+	}
+	return l, nil
 }
 
 // InsertBatch writes a batch of log entries to the SQLite database.

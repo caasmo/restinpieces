@@ -399,24 +399,21 @@ func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUs
 		return nil, fmt.Errorf("logger daemon: %w", err)
 	}
 
-	// Check if the log database file exists before attempting to connect.
-	if _, err := os.Stat(logDbPath); os.IsNotExist(err) {
+	i.app.Logger().Info("Using log database", "path", logDbPath)
+	conn, err := NewZombiezenConn(logDbPath)
+	if err != nil {
 		return nil, fmt.Errorf(
-			"log database not found at %s. Please run 'ripc log init' to create and initialize it",
+			"log database not found at %s. Please run 'ripc log init' to create and initialize it: %w",
 			logDbPath,
+			err,
 		)
 	}
 
-	i.app.Logger().Info("Using log database", "path", logDbPath)
-	logDb, err := zombiezen.NewLog(logDbPath)
+	logDb, err := zombiezen.NewLog(conn)
 	if err != nil {
-		return nil, fmt.Errorf("logger daemon: failed to open database at %s: %w", logDbPath, err)
-	}
-
-	// Verify that the 'logs' table exists
-	if err := logDb.Ping("logs"); err != nil {
+		conn.Close()
 		return nil, fmt.Errorf(
-			"log database at %s is not initialized or schema is missing. Please run 'ripc log init'. Error: %w",
+			"log database at %s is not initialized or schema is missing. Please run 'ripc log init': %w",
 			logDbPath,
 			err,
 		)

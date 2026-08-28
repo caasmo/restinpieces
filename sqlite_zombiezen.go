@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"time"
 
+	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 
 	"github.com/caasmo/restinpieces/db/zombiezen"
@@ -75,4 +76,15 @@ func NewZombiezenPerformancePool(dbPath string) (*sqlitex.Pool, error) {
 		return nil, fmt.Errorf("failed to create performance zombiezen pool at %s using DSN '%s': %w", dbPath, dsn, err)
 	}
 	return pool, nil
+}
+
+// NewZombiezenConn creates a new single SQLite connection with performance pragmas.
+// The database file must already exist; OpenCreate is not used.
+func NewZombiezenConn(dbPath string) (*sqlite.Conn, error) {
+	dsn := fmt.Sprintf("file:%s?_journal_mode=WAL&_synchronous=NORMAL&_busy_timeout=5000&_foreign_keys=off", dbPath)
+	conn, err := sqlite.OpenConn(dsn, sqlite.OpenReadWrite|sqlite.OpenURI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open connection at %s: %w", dbPath, err)
+	}
+	return conn, nil
 }
