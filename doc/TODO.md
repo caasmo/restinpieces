@@ -421,3 +421,13 @@ Current `3600s bucket + 3m TTL` is worst of both
 # BlockRequestBody maybe we shoudl check less is too much checks
 
 ### done
+
+# sqlite driver: enumerate the files to substitute zombiezen with modernc
+
+- `db/zombiezen/` — the driver wrapper package to replace with a modernc-backed wrapper (`db.go`, `config.go`, `users.go`, `queue.go`, `queue_admin.go`, `log.go`, `pool.go`, `conn.go` and their `*_test.go`)
+- `db/zombiezen/db.go`, `db/zombiezen/log.go` — package entry points `New`, `NewLog`
+- `sqlite_zombiezen.go` — root public constructor API (`NewZombiezenPool`, `NewZombiezenPerformancePool`, `NewZombiezenConn`, `WithZombiezenPool`), still returns raw zombiezen types
+- `restinpieces.go` — `newLog` uses `zombiezen.NewLog`
+- `cmd/ripc/sql.go` — holds a `*sqlitex.Pool` and imports the wrapper
+- `cmd/ripc/sql_helpers_test.go` — test pool helper
+- `go.mod` — the `zombiezen.com/go/sqlite` module dependency to be swapped for `modernc.org/sqlite`
