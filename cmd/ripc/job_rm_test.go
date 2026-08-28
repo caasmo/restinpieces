@@ -7,14 +7,14 @@ import (
 	"io"
 	"testing"
 
-	"github.com/caasmo/restinpieces/db"
+	rdb "github.com/caasmo/restinpieces/db"
 )
 
 // MockJobRmDB is a test-only implementation of the db.DbQueueAdmin interface
 // for testing the 'job rm' command.
 type MockJobRmDB struct {
 	// ListJobs is not used by the rm command but is part of the interface.
-	ListJobsFunc func(limit int) ([]*db.Job, error)
+	ListJobsFunc func(limit int) ([]*rdb.Job, error)
 
 	// DeleteJob is the method we are testing against.
 	deleteJobCalledWith int64
@@ -22,7 +22,7 @@ type MockJobRmDB struct {
 }
 
 // ListJobs is a mock implementation.
-func (m *MockJobRmDB) ListJobs(limit int) ([]*db.Job, error) {
+func (m *MockJobRmDB) ListJobs(limit int) ([]*rdb.Job, error) {
 	if m.ListJobsFunc != nil {
 		return m.ListJobsFunc(limit)
 	}

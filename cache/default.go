@@ -75,7 +75,8 @@ type node[K comparable, V any] struct {
 // evicts the least-recently-used node (the LRU tail, rightmost) to make room.
 //
 // TODO: proactive reclamation of expired nodes that are never read again
-// (rotating cursor sweep, inline on writes) is not yet implemented.
+// (rotating cursor sweep W/K — W window nodes per sweep, every K writes, inline on writes) is not yet implemented.
+// See doc/TODO.md "cache: rotating cursor sweep (W/K)" and brainstorm-remove-ristretto.md Q33/Q40.
 type Default[K comparable, V any] struct {
 	// nodes holds every node, preallocated once by New and never grown.
 	// Each node keeps its position in the array for life; only its

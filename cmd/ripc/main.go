@@ -174,6 +174,8 @@ func run(args []string, output io.Writer) error {
 		}
 	}()
 
+	ripcDb := newDB(pool)
+
 	dbImpl, err := dbz.New(pool)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrCreateDbImpl, err)
@@ -204,7 +206,7 @@ func run(args []string, output io.Writer) error {
 	case "migrate":
 		return handleMigrateCommand(secureStore, commandArgs, ui)
 	case "list":
-		return handleListCommand(pool, commandArgs, ui)
+		return handleListCommand(ripcDb, commandArgs, ui)
 	case "diff":
 		return handleDiffCommand(secureStore, commandArgs, ui)
 	case "rollback":

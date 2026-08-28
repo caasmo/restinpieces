@@ -70,17 +70,18 @@ func setupTestDB(t *testing.T, configs [][2]string) *sqlitex.Pool {
 	return pool
 }
 
-func TestListItems_Success(t *testing.T) {
+func TestPrintConfigList_Success(t *testing.T) {
 	configs := [][2]string{
 		{"scope-a", "content-a"},
 		{"scope-b", "content-b"},
 		{"scope-a", "content-c"},
 	}
 	pool := setupTestDB(t, configs)
+	ripcDb := newDB(pool)
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	count, err := listItems(ui, pool, "")
+	count, err := printConfigList(ui, ripcDb, "")
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -96,12 +97,13 @@ func TestListItems_Success(t *testing.T) {
 	}
 }
 
-func TestListItems_Success_NoItems(t *testing.T) {
+func TestPrintConfigList_Success_NoItems(t *testing.T) {
 	pool := setupTestDB(t, nil)
+	ripcDb := newDB(pool)
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	count, err := listItems(ui, pool, "")
+	count, err := printConfigList(ui, ripcDb, "")
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -112,7 +114,7 @@ func TestListItems_Success_NoItems(t *testing.T) {
 	}
 }
 
-func TestListItems_Failure_DbConnectionError(t *testing.T) {
+func TestPrintConfigList_Failure_DbConnectionError(t *testing.T) {
 	pool, err := sqlitex.NewPool("file::memory:", sqlitex.PoolOptions{PoolSize: 1})
 	if err != nil {
 		t.Fatalf("failed to open in-memory database: %v", err)
@@ -120,42 +122,40 @@ func TestListItems_Failure_DbConnectionError(t *testing.T) {
 	if err := pool.Close(); err != nil {
 		t.Fatalf("failed to close pool for test setup: %v", err)
 	}
+	ripcDb := newDB(pool)
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	_, err = listItems(ui, pool, "")
+	_, err = printConfigList(ui, ripcDb, "")
 
 	if !errors.Is(err, ErrDbConnection) {
 		t.Errorf("expected ErrDbConnection, got %v", err)
 	}
 }
 
-func TestListItems_Failure_QueryError(t *testing.T) {
+func TestPrintConfigList_Failure_QueryError(t *testing.T) {
 	pool := setupTestDB(t, nil)
+	ripcDb := newDB(pool)
 
-	// Take a connection from the pool to modify the schema.
 	conn, err := pool.Take(context.Background())
 	if err != nil {
 		t.Fatalf("failed to get connection: %v", err)
 	}
-	// Intentionally drop the table to cause a query error in the function under test.
 	if err := sqlitex.ExecuteTransient(conn, "DROP TABLE app_config;", nil); err != nil {
 		pool.Put(conn)
 		t.Fatalf("failed to drop table: %v", err)
 	}
-	// IMPORTANT: Return the connection to the pool so the function under test can use it.
 	pool.Put(conn)
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	_, err = listItems(ui, pool, "")
+	_, err = printConfigList(ui, ripcDb, "")
 
 	if err == nil {
 		t.Fatal("expected an error, but got nil")
 	}
 
-	// The error should be ErrQueryPrepare because conn.Prepare will fail.
 	if !errors.Is(err, ErrQueryPrepare) {
-		t.Errorf("expected error to wrap ErrQueryPrepare, got %v", err)
+		t.Errorf("expected ErrQueryPrepare, got %v", err)
 	}
 }

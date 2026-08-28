@@ -411,6 +411,13 @@ With `SetWithTTL + no buckets` = precise 3m, but `Get` 90ns (TTL branch + `time.
 With `Set + buckets at 3m` = coarse 3m, but `Get` 40ns (no TTL, `expiration==0` skips `time.Now()`), fastest under attack
 Current `3600s bucket + 3m TTL` is worst of both
 
+# cache: rotating cursor sweep (W/K) — reclaim expired never-read entries
+
+- `cache/default.go` is preallocated LRU (`Get` lazy-expires, `SetWithTTL` evicts LRU tail). Expired never-read entries waste effective capacity.
+- TODO: inline sweep, no goroutine, bounded `W/K`. `W = window` nodes per sweep, `K = every` K writes — e.g. `W=64, K=64` → `W/K=1` check/write, full pass every `maxEntries` writes, one constant for all levels. Hook `sweepIfDue()` at top of `SetWithTTL` (under lock); `sweep()` walks `W` slots from `cursor` (wraps), skips free, frees `expiration !=0 && fastNow()>expiration`.
+- Live-vs-free still open: `used bool` vs `expiration==0` sentinel vs map lookup (Q41/Q42, you choose). `cost` not involved (Q39).
+- Refs: `cache/default.go:77-79`, `192-193`, `brainstorm-remove-ristretto.md` Q10/Q22/Q33/Q40.
+
 # BlockRequestBody maybe we shoudl check less is too much checks
 
 ### done

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/caasmo/restinpieces/db"
+	rdb "github.com/caasmo/restinpieces/db"
 )
 
 var (
@@ -14,7 +14,7 @@ var (
 
 // handleJobRmCommand is the command-level wrapper. It handles parsing command-line
 // arguments and calls the core logic.
-func handleJobRmCommand(dbConn db.DbQueueAdmin, args []string, ui UI) error {
+func handleJobRmCommand(dbConn rdb.DbQueueAdmin, args []string, ui UI) error {
 	if len(args) < 1 {
 		return fmt.Errorf("'rm' command requires a job ID: %w", ErrMissingArgument)
 	}
@@ -28,7 +28,7 @@ func handleJobRmCommand(dbConn db.DbQueueAdmin, args []string, ui UI) error {
 }
 
 // removeJob contains the testable core logic for removing a job from the queue.
-func removeJob(ui UI, dbConn db.DbQueueAdmin, jobID int64) error {
+func removeJob(ui UI, dbConn rdb.DbQueueAdmin, jobID int64) error {
 	err := dbConn.DeleteJob(jobID)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrDeleteJobFailed, err)

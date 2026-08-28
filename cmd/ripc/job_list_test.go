@@ -9,17 +9,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caasmo/restinpieces/db"
+	rdb "github.com/caasmo/restinpieces/db"
 )
 
 // MockJobListDB is a test-only implementation of the db.DbQueueAdmin interface.
 type MockJobListDB struct {
-	JobsToReturn []*db.Job
+	JobsToReturn []*rdb.Job
 	ForceDBError bool
 }
 
 // ListJobs is the mock implementation for listing jobs.
-func (m *MockJobListDB) ListJobs(limit int) ([]*db.Job, error) {
+func (m *MockJobListDB) ListJobs(limit int) ([]*rdb.Job, error) {
 	if m.ForceDBError {
 		return nil, errors.New("forced database error")
 	}
@@ -37,7 +37,7 @@ func (m *MockJobListDB) DeleteJob(id int64) error {
 func TestListJobs_SuccessWithJobs(t *testing.T) {
 	// --- Setup ---
 	mockDB := &MockJobListDB{
-		JobsToReturn: []*db.Job{
+		JobsToReturn: []*rdb.Job{
 			{
 				ID:           1,
 				JobType:      "backup",
@@ -108,7 +108,7 @@ func TestListJobs_SuccessWithJobs(t *testing.T) {
 func TestListJobs_SuccessNoJobs(t *testing.T) {
 	// --- Setup ---
 	mockDB := &MockJobListDB{
-		JobsToReturn: []*db.Job{}, // No jobs
+		JobsToReturn: []*rdb.Job{}, // No jobs
 	}
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -153,7 +153,7 @@ func TestListJobs_FailureDBError(t *testing.T) {
 func TestListJobs_FailureWriteError(t *testing.T) {
 	// --- Setup ---
 	mockDB := &MockJobListDB{
-		JobsToReturn: []*db.Job{{ID: 1}}, // Need at least one job to trigger a write
+		JobsToReturn: []*rdb.Job{{ID: 1}}, // Need at least one job to trigger a write
 	}
 	var failingStdout failingWriter
 	ui := UI{Out: &failingStdout, Err: io.Discard}

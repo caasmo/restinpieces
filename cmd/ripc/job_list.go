@@ -7,14 +7,14 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/caasmo/restinpieces/db"
+	rdb "github.com/caasmo/restinpieces/db"
 )
 
 var (
 	ErrListJobsFailed = errors.New("failed to list jobs")
 )
 
-func handleJobListCommand(dbConn db.DbQueueAdmin, args []string, ui UI) error {
+func handleJobListCommand(dbConn rdb.DbQueueAdmin, args []string, ui UI) error {
 	limit := 0 // Default to all jobs
 	if len(args) > 0 {
 		var err error
@@ -28,7 +28,7 @@ func handleJobListCommand(dbConn db.DbQueueAdmin, args []string, ui UI) error {
 	return listJobs(ui, dbConn, limit)
 }
 
-func listJobs(ui UI, dbConn db.DbQueueAdmin, limit int) error {
+func listJobs(ui UI, dbConn rdb.DbQueueAdmin, limit int) error {
 	jobs, err := dbConn.ListJobs(limit)
 	if err != nil {
 		return fmt.Errorf("%w: %v", ErrListJobsFailed, err)

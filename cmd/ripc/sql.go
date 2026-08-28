@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
@@ -9,6 +11,67 @@ import (
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
+
+type db struct {
+	pool *sqlitex.Pool
+}
+
+func newDB(pool *sqlitex.Pool) *db {
+	return &db{pool: pool}
+}
+
+type configRow struct {
+	Scope       string
+	CreatedAt   string
+	Format      string
+	Description string
+}
+
+func (db *db) configList(scopeFilter string) (rows []configRow, err error) {
+	conn, err := db.pool.Take(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to get db connection for list command", ErrDbConnection)
+	}
+	defer db.pool.Put(conn)
+
+	query := "SELECT scope, created_at, format, description FROM app_config ORDER BY created_at DESC;"
+	if scopeFilter != "" {
+		query = "SELECT scope, created_at, format, description FROM app_config WHERE scope = ? ORDER BY created_at DESC;"
+	}
+
+	stmt, err := conn.Prepare(query)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to prepare statement for list command", ErrQueryPrepare)
+	}
+	defer func() {
+		if ferr := stmt.Finalize(); ferr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to finalize statement: %w", ferr))
+		}
+	}()
+
+	if scopeFilter != "" {
+		stmt.BindText(1, scopeFilter)
+	}
+
+	for {
+		hasRow, stepErr := stmt.Step()
+		if stepErr != nil {
+			return nil, fmt.Errorf("failed to step through list results: %w", stepErr)
+		}
+		if !hasRow {
+			break
+		}
+
+		rows = append(rows, configRow{
+			Scope:       stmt.GetText("scope"),
+			CreatedAt:   stmt.GetText("created_at"),
+			Format:      stmt.GetText("format"),
+			Description: stmt.GetText("description"),
+		})
+	}
+
+	return rows, err
+}
 
 // applySQL executes all .sql files in the given directory of the embedded SQL filesystem.
 // The embedded filesystem is expected to contain only one level of directories (app, log).
