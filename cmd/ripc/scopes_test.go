@@ -2,90 +2,26 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"errors"
-	"io/fs"
 	"testing"
-
-	"github.com/caasmo/restinpieces/sql"
-	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-// setupTestScopesDB creates and primes an in-memory SQLite database for testing.
-// It creates the necessary table and populates it with the given scopes.
-// It returns a connection pool and handles cleanup automatically.
-func setupTestScopesDB(t *testing.T, scopes []string) *sqlitex.Pool {
-	t.Helper()
-
-	// Use an in-memory database. PoolSize: 1 ensures we operate on the same db.
-	pool, err := sqlitex.NewPool("file::memory:", sqlitex.PoolOptions{
-		PoolSize: 1,
-	})
-	if err != nil {
-		t.Fatalf("Failed to open in-memory database: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := pool.Close(); err != nil {
-			t.Logf("Failed to close test database pool: %v", err)
-		}
-	})
-
-	conn, err := pool.Take(context.Background())
-	if err != nil {
-		t.Fatalf("Failed to get connection from pool: %v", err)
-	}
-	defer pool.Put(conn)
-
-	// Create schema from embedded sql
-	schemaFS := sql.FS()
-	sqlBytes, err := fs.ReadFile(schemaFS, "app/app_config.sql")
-	if err != nil {
-		t.Fatalf("Failed to read app/app_config.sql: %v", err)
-	}
-	if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
-		t.Fatalf("Failed to execute app_config.sql: %v", err)
-	}
-
-	// Insert test data
-	if len(scopes) > 0 {
-		stmt, err := conn.Prepare("INSERT INTO app_config (scope, content) VALUES (?, ?);")
-		if err != nil {
-			t.Fatalf("Failed to prepare insert statement: %v", err)
-		}
-		defer func() {
-			if err := stmt.Finalize(); err != nil {
-				t.Logf("Failed to finalize statement: %v", err)
-			}
-		}()
-
-		for _, scope := range scopes {
-			stmt.BindText(1, scope)
-			stmt.BindText(2, "{}") // Set a default value for the 'content' column.
-			if _, err := stmt.Step(); err != nil {
-				t.Fatalf("Failed to insert scope '%s': %v", scope, err)
-			}
-			if err := stmt.Reset(); err != nil {
-				t.Fatalf("Failed to reset statement: %v", err)
-			}
-		}
-	}
-
-	return pool
-}
-
 func TestListScopes_Success(t *testing.T) {
-	// --- Setup ---
-	// Unordered and with duplicates to test the query's DISTINCT and ORDER BY clauses.
 	initialScopes := []string{"scope-c", "scope-a", "scope-b", "scope-a"}
-	pool := setupTestScopesDB(t, initialScopes)
-	db := newAppDbFromPool(pool)
+	db := newTestAppDb(t)
+	if err := db.createSchemas(); err != nil {
+		t.Fatalf("createSchemas failed: %v", err)
+	}
+	for _, scope := range initialScopes {
+		if err := db.InsertConfig(scope, []byte("{}"), "json", ""); err != nil {
+			t.Fatalf("failed to insert config for scope %q: %v", scope, err)
+		}
+	}
+
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	// --- Execute ---
 	err := listScopes(ui, db)
-
-	// --- Assert ---
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -97,16 +33,15 @@ func TestListScopes_Success(t *testing.T) {
 }
 
 func TestListScopes_Success_NoScopes(t *testing.T) {
-	// --- Setup ---
-	pool := setupTestScopesDB(t, []string{}) // Empty table
-	db := newAppDbFromPool(pool)
+	db := newTestAppDb(t)
+	if err := db.createSchemas(); err != nil {
+		t.Fatalf("createSchemas failed: %v", err)
+	}
+
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	// --- Execute ---
 	err := listScopes(ui, db)
-
-	// --- Assert ---
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -117,27 +52,15 @@ func TestListScopes_Success_NoScopes(t *testing.T) {
 }
 
 func TestListScopes_Failure_DbConnectionError(t *testing.T) {
-	// --- Setup ---
-	// Create a pool but don't use the helper that adds cleanup,
-	// as we are testing the connection error by closing it manually.
-	pool, err := sqlitex.NewPool("file::memory:", sqlitex.PoolOptions{
-		PoolSize: 1,
-	})
-	if err != nil {
-		t.Fatalf("Failed to open in-memory database: %v", err)
+	db := newTestAppDb(t)
+	if err := db.Close(); err != nil {
+		t.Fatalf("failed to close database pool: %v", err)
 	}
-	// Immediately close the pool to force a connection error.
-	if err := pool.Close(); err != nil {
-		t.Fatalf("failed to close pool for test setup: %v", err)
-	}
-	db := newAppDbFromPool(pool)
+
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	// --- Execute ---
-	err = listScopes(ui, db)
-
-	// --- Assert ---
+	err := listScopes(ui, db)
 	if err == nil {
 		t.Fatal("expected an error, but got nil")
 	}

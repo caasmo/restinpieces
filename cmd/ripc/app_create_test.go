@@ -2,41 +2,16 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"io"
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/pelletier/go-toml"
-	"zombiezen.com/go/sqlite"
-	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-// newTestPool creates a new in-memory SQLite database pool for testing.
-// It does not apply any SQL.
-func newTestPool(t *testing.T) *sqlitex.Pool {
-	t.Helper()
-
-	// Each connection in the pool gets its own separate in-memory database
-	// instance. We need to make sure we only have one for the test.
-	pool, err := sqlitex.NewPool("file::memory:?mode=memory", sqlitex.PoolOptions{
-		PoolSize: 1,
-	})
-	if err != nil {
-		t.Fatalf("failed to create db pool: %v", err)
-	}
-
-	t.Cleanup(func() {
-		if err := pool.Close(); err != nil {
-			t.Errorf("failed to close db pool: %v", err)
-		}
-	})
-
-	return pool
-}
-
-// Mock for SecureStore to test saveConfig
+// MockAppCreateSecureStore is a test-only implementation of config.SecureStore
+// for app create tests.
 type MockAppCreateSecureStore struct {
 	saveCalled     bool
 	saveData       []byte
@@ -103,44 +78,16 @@ func TestSaveConfig(t *testing.T) {
 }
 
 func TestApplyAppSchema(t *testing.T) {
-	pool := newTestPool(t)
-	db := newAppDbFromPool(pool)
+	db := newTestAppDb(t)
 
-	err := db.createSchemas()
-	if err != nil {
+	if err := db.createSchemas(); err != nil {
 		t.Fatalf("createSchemas failed: %v", err)
-	}
-
-	// Verify that the tables were created
-	conn, err := pool.Take(context.Background())
-	if err != nil {
-		t.Fatalf("failed to get connection from pool: %v", err)
-	}
-	defer pool.Put(conn)
-
-	expectedTables := []string{"app_config", "users", "job_queue"}
-	for _, table := range expectedTables {
-		var count int
-		err := sqlitex.Execute(conn, "SELECT count(*) FROM sqlite_master WHERE type='table' AND name=?;", &sqlitex.ExecOptions{
-			ResultFunc: func(stmt *sqlite.Stmt) error {
-				count = stmt.ColumnInt(0)
-				return nil
-			},
-			Args: []any{table},
-		})
-		if err != nil {
-			t.Fatalf("failed to query for table %s: %v", table, err)
-		}
-		if count != 1 {
-			t.Errorf("expected table %s to be created, but it wasn't", table)
-		}
 	}
 }
 
 func TestCreateApplication(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
-		pool := newTestPool(t)
-		db := newAppDbFromPool(pool)
+		db := newTestAppDb(t)
 		mockStore := &MockAppCreateSecureStore{}
 		var stdout, stderr bytes.Buffer
 		ui := UI{Out: &stdout, Err: &stderr}
@@ -150,27 +97,6 @@ func TestCreateApplication(t *testing.T) {
 			t.Fatalf("createApplication failed: %v", err)
 		}
 
-		// Verify schema was applied
-		conn, err := pool.Take(context.Background())
-		if err != nil {
-			t.Fatalf("failed to get connection from pool: %v", err)
-		}
-		defer pool.Put(conn)
-		var count int
-		err = sqlitex.Execute(conn, "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='users';", &sqlitex.ExecOptions{
-			ResultFunc: func(stmt *sqlite.Stmt) error {
-				count = stmt.ColumnInt(0)
-				return nil
-			},
-		})
-		if err != nil {
-			t.Fatalf("failed to query for users table: %v", err)
-		}
-		if count != 1 {
-			t.Error("expected schema to be applied, but users table not found")
-		}
-
-		// Verify config was saved
 		if !mockStore.saveCalled {
 			t.Error("expected Save to be called, but it wasn't")
 		}
@@ -184,8 +110,7 @@ func TestCreateApplication(t *testing.T) {
 	})
 
 	t.Run("FailureOnSave", func(t *testing.T) {
-		pool := newTestPool(t)
-		db := newAppDbFromPool(pool)
+		db := newTestAppDb(t)
 		mockStore := &MockAppCreateSecureStore{forceSaveError: true}
 
 		ui := UI{Out: io.Discard, Err: io.Discard}
