@@ -40,12 +40,6 @@ func newAppDb(dbPath string) (*appDb, error) {
 	return &appDb{pool: pool, Db: zdb}, nil
 }
 
-// TODO: refactor this — test-only helper, move to test helper or remove
-func newAppDbFromPool(pool *sqlitex.Pool) *appDb {
-	zdb, _ := dbz.New(pool)
-	return &appDb{pool: pool, Db: zdb}
-}
-
 func (db *appDb) Close() error {
 	return db.pool.Close()
 }
@@ -134,8 +128,8 @@ func (db *appDb) configScopes() (scopes []string, err error) {
 	return scopes, err
 }
 
-// TODO: refactor — applyAppSchema should not be a method on appDb; move to standalone helper or driver package (keep sql.go pure)
-func (db *appDb) applyAppSchema() error {
+// TODO: refactor — createSchemas should not be a method on appDb; move to standalone helper or driver package (keep sql.go pure)
+func (db *appDb) createSchemas() error {
 	conn, err := db.pool.Take(context.Background())
 	if err != nil {
 		return fmt.Errorf("%w: for sql: %w", ErrDbConnection, err)
@@ -149,23 +143,32 @@ func (db *appDb) applyAppSchema() error {
 	return nil
 }
 
-func initLogDb(logDbPath string) error {
-	pool, err := restinpieces.NewZombiezenPool(logDbPath)
-	if err != nil {
-		return fmt.Errorf("%w: failed to open/create log database at %s: %w", ErrDbConnection, logDbPath, err)
-	}
-	defer func() {
-		_ = pool.Close()
-	}()
+// logDb is the log database for ripc. It mirrors appDb so both databases
+// share the same constructor + createSchemas + Close shape.
+type logDb struct {
+	pool *sqlitex.Pool
+}
 
-	conn, err := pool.Take(context.Background())
+func newLogDb(dbPath string) (*logDb, error) {
+	pool, err := restinpieces.NewZombiezenPool(dbPath)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to open/create log database at %s: %w", ErrDbConnection, dbPath, err)
+	}
+	return &logDb{pool: pool}, nil
+}
+
+func (db *logDb) Close() error {
+	return db.pool.Close()
+}
+
+func (db *logDb) createSchemas() error {
+	conn, err := db.pool.Take(context.Background())
 	if err != nil {
 		return fmt.Errorf("%w: failed to get connection from pool: %w", ErrDbConnection, err)
 	}
-	defer pool.Put(conn)
+	defer db.pool.Put(conn)
 
-	err = applySQL(conn, "log")
-	if err != nil {
+	if err := applySQL(conn, "log"); err != nil {
 		return fmt.Errorf("%w: failed to execute log sql: %w", ErrApplyLogSQL, err)
 	}
 

@@ -24,7 +24,7 @@ func createApplication(ui UI, secureStore config.SecureStore, db *appDb, dbPath 
 	if _, err := fmt.Fprintln(ui.Err, "Applying app schema..."); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
-	if err := db.applyAppSchema(); err != nil {
+	if err := db.createSchemas(); err != nil {
 		return err
 	}
 

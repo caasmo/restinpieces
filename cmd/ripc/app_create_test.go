@@ -106,9 +106,9 @@ func TestApplyAppSchema(t *testing.T) {
 	pool := newTestPool(t)
 	db := newAppDbFromPool(pool)
 
-	err := db.applyAppSchema()
+	err := db.createSchemas()
 	if err != nil {
-		t.Fatalf("applyAppSchema failed: %v", err)
+		t.Fatalf("createSchemas failed: %v", err)
 	}
 
 	// Verify that the tables were created

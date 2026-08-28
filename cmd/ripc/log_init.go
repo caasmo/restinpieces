@@ -33,7 +33,17 @@ func logInit(ui UI, secureStore config.SecureStore, appDbPath string, logPathArg
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 
-	err = initLogDb(logDbPath)
+	ldb, err := newLogDb(logDbPath)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if cerr := ldb.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("failed to close log db: %w", cerr))
+		}
+	}()
+
+	err = ldb.createSchemas()
 	if err != nil {
 		return err
 	}
