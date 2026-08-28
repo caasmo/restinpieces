@@ -23,15 +23,22 @@ func TestParseLogSubcommand(t *testing.T) {
 
 		// 'init' subcommand
 		{
-			name:         "InitSuccess",
+			name:         "InitNoArgs",
 			args:         []string{"init"},
 			expectedCmd:  "init",
-			expectedArgs: nil,
+			expectedArgs: []string{},
+			expectedErr:  nil,
+		},
+		{
+			name:         "InitWithLogPath",
+			args:         []string{"init", "/data/logs.db"},
+			expectedCmd:  "init",
+			expectedArgs: []string{"/data/logs.db"},
 			expectedErr:  nil,
 		},
 		{
 			name:        "InitTooManyArgs",
-			args:        []string{"init", "extra-arg"},
+			args:        []string{"init", "arg1", "arg2"},
 			expectedErr: ErrTooManyArguments,
 		},
 	}

@@ -112,13 +112,12 @@ ripc rollback 3
 
 The framework accepts any logger that complies with the standard `log/slog` interface. If no custom logger is provided, it defaults to a high-performance batch logger that writes application events to a separate SQLite database. Before the main application can start, this database must be created and its schema must be applied.
 
-Use the `ripc log init` command to perform this one-time setup. The command is idempotent, meaning you can run it multiple times without causing issues.
+Use the `ripc log init` command to perform this setup. `ripc log init` initializes the log database for the default sqlite batch logger and updates `log.batch.db_path` in the app config. Without an argument, it defaults to the main application database file. With an optional `[logpath]` argument, it creates/initializes the log database at that path:
 
 ```bash
 ripc log init
+ripc log init /data/custom-logs.db
 ```
-
-This command reads the `log.batch.db_path` from your configuration, creates the database file (e.g., `logs.db`) if it doesn't exist, and applies the necessary table schema. If you have not configured a path, it will default to creating a `logs.db` file in the same directory as your main application database.
 
 ### 6. Write the Application Code
 

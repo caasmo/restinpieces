@@ -15,11 +15,11 @@ var (
 func printLogUsage(w io.Writer) {
 	help := Spec{
 		Usage:       "log <subcommand> [options]",
-		Description: "Manages the logger database.",
+		Description: "Manages the default logger database.",
 		Subcommands: []SubcommandGroup{
 			{
 				Subcommands: []Subcommand{
-					{"init", "Initialize the log database and schema"},
+					{"init [logpath]", "Initialize the log database for the default batch logger"},
 				},
 			},
 		},
@@ -33,7 +33,7 @@ func handleLogCommand(secureStore config.SecureStore, dbPath string, commandArgs
 		return fmt.Errorf("log requires a subcommand")
 	}
 
-	subcommand, _, err := parseLogSubcommand(commandArgs)
+	subcommand, subcommandArgs, err := parseLogSubcommand(commandArgs)
 	if err != nil {
 		printLogUsage(ui.Err)
 		return err
@@ -41,9 +41,12 @@ func handleLogCommand(secureStore config.SecureStore, dbPath string, commandArgs
 
 	switch subcommand {
 	case "init":
-		return handleLogInitCommand(secureStore, dbPath, ui)
+		logPath := ""
+		if len(subcommandArgs) > 0 {
+			logPath = subcommandArgs[0]
+		}
+		return handleLogInitCommand(secureStore, dbPath, logPath, ui)
 	default:
-		// This case should ideally not be reached if parseLogSubcommand is correct
 		printLogUsage(ui.Err)
 		return fmt.Errorf("unknown log subcommand: %s", subcommand)
 	}
@@ -55,10 +58,10 @@ func parseLogSubcommand(commandArgs []string) (string, []string, error) {
 
 	switch subcommand {
 	case "init":
-		if len(subcommandArgs) > 0 {
-			return "", nil, fmt.Errorf("'init' does not take any arguments: %w", ErrTooManyArguments)
+		if len(subcommandArgs) > 1 {
+			return "", nil, fmt.Errorf("'init' takes at most one log path argument: %w", ErrTooManyArguments)
 		}
-		return subcommand, nil, nil
+		return subcommand, subcommandArgs, nil
 	default:
 		return "", nil, fmt.Errorf("'%s': %w", subcommand, ErrUnknownLogSubcommand)
 	}

@@ -17,6 +17,7 @@ import (
 var (
 	ErrCreateDbPool = errors.New("failed to create database pool")
 	ErrCreateDbImpl = errors.New("failed to instantiate zombiezen db from pool")
+	ErrApplyLogSQL  = errors.New("failed to apply log SQL")
 )
 
 // appDb is the app database for ripc. It embeds the zombiezen app DB
@@ -143,6 +144,29 @@ func (db *appDb) applyAppSchema() error {
 
 	if err := applySQL(conn, "app"); err != nil {
 		return fmt.Errorf("%w: sql process failed: %w", ErrApplySQL, err)
+	}
+
+	return nil
+}
+
+func initLogDb(logDbPath string) error {
+	pool, err := restinpieces.NewZombiezenPool(logDbPath)
+	if err != nil {
+		return fmt.Errorf("%w: failed to open/create log database at %s: %w", ErrDbConnection, logDbPath, err)
+	}
+	defer func() {
+		_ = pool.Close()
+	}()
+
+	conn, err := pool.Take(context.Background())
+	if err != nil {
+		return fmt.Errorf("%w: failed to get connection from pool: %w", ErrDbConnection, err)
+	}
+	defer pool.Put(conn)
+
+	err = applySQL(conn, "log")
+	if err != nil {
+		return fmt.Errorf("%w: failed to execute log sql: %w", ErrApplyLogSQL, err)
 	}
 
 	return nil
