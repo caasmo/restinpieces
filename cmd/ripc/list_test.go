@@ -77,7 +77,7 @@ func TestPrintConfigList_Success(t *testing.T) {
 		{"scope-a", "content-c"},
 	}
 	pool := setupTestDB(t, configs)
-	ripcDb := newDB(pool)
+	ripcDb := newDBFromPool(pool)
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -99,7 +99,7 @@ func TestPrintConfigList_Success(t *testing.T) {
 
 func TestPrintConfigList_Success_NoItems(t *testing.T) {
 	pool := setupTestDB(t, nil)
-	ripcDb := newDB(pool)
+	ripcDb := newDBFromPool(pool)
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -122,7 +122,7 @@ func TestPrintConfigList_Failure_DbConnectionError(t *testing.T) {
 	if err := pool.Close(); err != nil {
 		t.Fatalf("failed to close pool for test setup: %v", err)
 	}
-	ripcDb := newDB(pool)
+	ripcDb := newDBFromPool(pool)
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -135,7 +135,7 @@ func TestPrintConfigList_Failure_DbConnectionError(t *testing.T) {
 
 func TestPrintConfigList_Failure_QueryError(t *testing.T) {
 	pool := setupTestDB(t, nil)
-	ripcDb := newDB(pool)
+	ripcDb := newDBFromPool(pool)
 
 	conn, err := pool.Take(context.Background())
 	if err != nil {

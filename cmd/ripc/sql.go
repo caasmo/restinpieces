@@ -7,6 +7,8 @@ import (
 	"io/fs"
 	"path/filepath"
 
+	"github.com/caasmo/restinpieces"
+	dbz "github.com/caasmo/restinpieces/db/zombiezen"
 	"github.com/caasmo/restinpieces/sql"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
@@ -14,10 +16,29 @@ import (
 
 type db struct {
 	pool *sqlitex.Pool
+	*dbz.Db
 }
 
-func newDB(pool *sqlitex.Pool) *db {
-	return &db{pool: pool}
+func newDB(dbPath string) (*db, error) {
+	pool, err := restinpieces.NewZombiezenPool(dbPath)
+	if err != nil {
+		return nil, err
+	}
+	zdb, err := dbz.New(pool)
+	if err != nil {
+		_ = pool.Close()
+		return nil, err
+	}
+	return &db{pool: pool, Db: zdb}, nil
+}
+
+func newDBFromPool(pool *sqlitex.Pool) *db {
+	zdb, _ := dbz.New(pool)
+	return &db{pool: pool, Db: zdb}
+}
+
+func (db *db) Close() error {
+	return db.pool.Close()
 }
 
 type configRow struct {
@@ -71,6 +92,21 @@ func (db *db) configList(scopeFilter string) (rows []configRow, err error) {
 	}
 
 	return rows, err
+}
+
+// TODO: refactor — applyAppSchema should not be a method on db; move to standalone helper or driver package (keep sql.go pure)
+func (db *db) applyAppSchema() error {
+	conn, err := db.pool.Take(context.Background())
+	if err != nil {
+		return fmt.Errorf("%w: for sql: %w", ErrDbConnection, err)
+	}
+	defer db.pool.Put(conn)
+
+	if err := applySQL(conn, "app"); err != nil {
+		return fmt.Errorf("%w: sql process failed: %w", ErrApplySQL, err)
+	}
+
+	return nil
 }
 
 // applySQL executes all .sql files in the given directory of the embedded SQL filesystem.

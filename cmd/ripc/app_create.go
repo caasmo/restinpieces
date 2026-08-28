@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
@@ -9,7 +8,6 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
-	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 var (
@@ -17,13 +15,16 @@ var (
 )
 
 // handleAppCreateCommand is the command-level wrapper that executes the core app creation logic.
-func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string, ui UI) error {
-	return createApplication(ui, secureStore, pool, dbPath)
+func handleAppCreateCommand(secureStore config.SecureStore, ripcDb *db, dbPath string, ui UI) error {
+	return createApplication(ui, secureStore, ripcDb, dbPath)
 }
 
 // createApplication contains the testable core logic for creating and configuring the application.
-func createApplication(ui UI, secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string) error {
-	if err := applyAppSchema(ui, pool); err != nil {
+func createApplication(ui UI, secureStore config.SecureStore, ripcDb *db, dbPath string) error {
+	if _, err := fmt.Fprintln(ui.Err, "Applying app schema..."); err != nil {
+		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
+	}
+	if err := ripcDb.applyAppSchema(); err != nil {
 		return err
 	}
 
@@ -49,24 +50,6 @@ func createApplication(ui UI, secureStore config.SecureStore, pool *sqlitex.Pool
 	if _, err := fmt.Fprintf(ui.Err, "Application database created and configured successfully: %s\n", dbPath); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
-	return nil
-}
-
-func applyAppSchema(ui UI, pool *sqlitex.Pool) error {
-	conn, err := pool.Take(context.Background())
-	if err != nil {
-		return fmt.Errorf("%w: for sql: %w", ErrDbConnection, err)
-	}
-	defer pool.Put(conn)
-
-	if _, err := fmt.Fprintln(ui.Err, "Applying app schema..."); err != nil {
-		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
-	}
-
-	if err := applySQL(conn, "app"); err != nil {
-		return fmt.Errorf("%w: sql process failed: %w", ErrApplySQL, err)
-	}
-
 	return nil
 }
 

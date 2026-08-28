@@ -7,9 +7,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/caasmo/restinpieces"
 	"github.com/caasmo/restinpieces/config"
-	dbz "github.com/caasmo/restinpieces/db/zombiezen"
 )
 
 var (
@@ -164,31 +162,24 @@ func run(args []string, output io.Writer) error {
 		}
 	}
 
-	pool, err := restinpieces.NewZombiezenPool(*dbPathFlag)
+	ripcDb, err := newDB(*dbPathFlag)
 	if err != nil {
 		return fmt.Errorf("%w (db_path: %s): %v", ErrCreateDbPool, *dbPathFlag, err)
 	}
 	defer func() {
-		if err := pool.Close(); err != nil {
+		if err := ripcDb.Close(); err != nil {
 			_, _ = fmt.Fprintf(output, "Error: error closing database pool: %v\n", err)
 		}
 	}()
 
-	ripcDb := newDB(pool)
-
-	dbImpl, err := dbz.New(pool)
-	if err != nil {
-		return fmt.Errorf("%w: %v", ErrCreateDbImpl, err)
-	}
-
-	secureStore, err := config.NewSecureStoreAge(dbImpl, *ageIdentityPathFlag)
+	secureStore, err := config.NewSecureStoreAge(ripcDb, *ageIdentityPathFlag)
 	if err != nil {
 		return fmt.Errorf("%w (age, age_key_path: %s): %v", ErrCreateSecureStore, *ageIdentityPathFlag, err)
 	}
 
 	switch command {
 	case "app":
-		return handleAppCommand(secureStore, pool, *dbPathFlag, commandArgs, ui)
+		return handleAppCommand(secureStore, ripcDb, *dbPathFlag, commandArgs, ui)
 	case "get":
 		return handleGetCommand(secureStore, commandArgs, ui)
 	case "paths":
@@ -196,7 +187,7 @@ func run(args []string, output io.Writer) error {
 	case "dump":
 		return handleDumpCommand(secureStore, commandArgs, ui)
 	case "scopes":
-		return handleScopesCommand(pool, commandArgs, ui)
+		return handleScopesCommand(ripcDb.pool, commandArgs, ui)
 	case "set":
 		return handleSetCommand(secureStore, commandArgs, ui)
 	case "save":
@@ -212,7 +203,7 @@ func run(args []string, output io.Writer) error {
 	case "rollback":
 		return handleRollbackCommand(secureStore, commandArgs, ui)
 	case "job":
-		return handleJobCommand(dbImpl, commandArgs, ui)
+		return handleJobCommand(ripcDb.Db, commandArgs, ui)
 	case "log":
 		return handleLogCommand(secureStore, *dbPathFlag, commandArgs, ui)
 	case "help":

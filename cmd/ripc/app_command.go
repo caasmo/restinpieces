@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/caasmo/restinpieces/config"
-	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 var (
@@ -29,7 +28,7 @@ func printAppUsage(w io.Writer) {
 	help.Print(w, prog, "app")
 }
 
-func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPath string, commandArgs []string, ui UI) error {
+func handleAppCommand(secureStore config.SecureStore, ripcDb *db, dbPath string, commandArgs []string, ui UI) error {
 	if len(commandArgs) < 1 {
 		printAppUsage(ui.Err)
 		return fmt.Errorf("app requires a subcommand")
@@ -43,7 +42,7 @@ func handleAppCommand(secureStore config.SecureStore, dbPool *sqlitex.Pool, dbPa
 
 	switch subcommand {
 	case "create":
-		return handleAppCreateCommand(secureStore, dbPool, dbPath, ui)
+		return handleAppCreateCommand(secureStore, ripcDb, dbPath, ui)
 	default:
 		// This case should ideally not be reached if parseAppSubcommand is correct
 		printAppUsage(ui.Err)

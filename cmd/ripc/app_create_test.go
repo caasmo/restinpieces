@@ -104,10 +104,9 @@ func TestSaveConfig(t *testing.T) {
 
 func TestApplyAppSchema(t *testing.T) {
 	pool := newTestPool(t)
-	var stdout, stderr bytes.Buffer
-	ui := UI{Out: &stdout, Err: &stderr}
+	ripcDb := newDBFromPool(pool)
 
-	err := applyAppSchema(ui, pool)
+	err := ripcDb.applyAppSchema()
 	if err != nil {
 		t.Fatalf("applyAppSchema failed: %v", err)
 	}
@@ -141,11 +140,12 @@ func TestApplyAppSchema(t *testing.T) {
 func TestCreateApplication(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		pool := newTestPool(t)
+		ripcDb := newDBFromPool(pool)
 		mockStore := &MockAppCreateSecureStore{}
 		var stdout, stderr bytes.Buffer
 		ui := UI{Out: &stdout, Err: &stderr}
 
-		err := createApplication(ui, mockStore, pool, "test.db")
+		err := createApplication(ui, mockStore, ripcDb, "test.db")
 		if err != nil {
 			t.Fatalf("createApplication failed: %v", err)
 		}
@@ -185,10 +185,11 @@ func TestCreateApplication(t *testing.T) {
 
 	t.Run("FailureOnSave", func(t *testing.T) {
 		pool := newTestPool(t)
+		ripcDb := newDBFromPool(pool)
 		mockStore := &MockAppCreateSecureStore{forceSaveError: true}
 
 		ui := UI{Out: io.Discard, Err: io.Discard}
-		err := createApplication(ui, mockStore, pool, "test.db")
+		err := createApplication(ui, mockStore, ripcDb, "test.db")
 
 		if !errors.Is(err, ErrSecureStoreSave) {
 			t.Fatalf("expected error to wrap ErrSecureStoreSave, got %v", err)
