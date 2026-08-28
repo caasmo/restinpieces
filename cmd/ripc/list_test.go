@@ -77,11 +77,11 @@ func TestPrintConfigList_Success(t *testing.T) {
 		{"scope-a", "content-c"},
 	}
 	pool := setupTestDB(t, configs)
-	ripcDb := newDBFromPool(pool)
+	db := newAppDbFromPool(pool)
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	count, err := printConfigList(ui, ripcDb, "")
+	count, err := printConfigList(ui, db, "")
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -99,11 +99,11 @@ func TestPrintConfigList_Success(t *testing.T) {
 
 func TestPrintConfigList_Success_NoItems(t *testing.T) {
 	pool := setupTestDB(t, nil)
-	ripcDb := newDBFromPool(pool)
+	db := newAppDbFromPool(pool)
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	count, err := printConfigList(ui, ripcDb, "")
+	count, err := printConfigList(ui, db, "")
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -122,11 +122,11 @@ func TestPrintConfigList_Failure_DbConnectionError(t *testing.T) {
 	if err := pool.Close(); err != nil {
 		t.Fatalf("failed to close pool for test setup: %v", err)
 	}
-	ripcDb := newDBFromPool(pool)
+	db := newAppDbFromPool(pool)
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	_, err = printConfigList(ui, ripcDb, "")
+	_, err = printConfigList(ui, db, "")
 
 	if !errors.Is(err, ErrDbConnection) {
 		t.Errorf("expected ErrDbConnection, got %v", err)
@@ -135,7 +135,7 @@ func TestPrintConfigList_Failure_DbConnectionError(t *testing.T) {
 
 func TestPrintConfigList_Failure_QueryError(t *testing.T) {
 	pool := setupTestDB(t, nil)
-	ripcDb := newDBFromPool(pool)
+	db := newAppDbFromPool(pool)
 
 	conn, err := pool.Take(context.Background())
 	if err != nil {
@@ -149,7 +149,7 @@ func TestPrintConfigList_Failure_QueryError(t *testing.T) {
 
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	_, err = printConfigList(ui, ripcDb, "")
+	_, err = printConfigList(ui, db, "")
 
 	if err == nil {
 		t.Fatal("expected an error, but got nil")

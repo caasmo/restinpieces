@@ -14,30 +14,38 @@ import (
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
-type db struct {
+var (
+	ErrCreateDbPool = errors.New("failed to create database pool")
+	ErrCreateDbImpl = errors.New("failed to instantiate zombiezen db from pool")
+)
+
+// appDb is the app database for ripc. It embeds the zombiezen app DB
+// and adds ad-hoc query helpers used only by the ripc CLI.
+type appDb struct {
 	pool *sqlitex.Pool
 	*dbz.Db
 }
 
-func newDB(dbPath string) (*db, error) {
+func newAppDb(dbPath string) (*appDb, error) {
 	pool, err := restinpieces.NewZombiezenPool(dbPath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w (db_path: %s): %v", ErrCreateDbPool, dbPath, err)
 	}
 	zdb, err := dbz.New(pool)
 	if err != nil {
 		_ = pool.Close()
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", ErrCreateDbImpl, err)
 	}
-	return &db{pool: pool, Db: zdb}, nil
+	return &appDb{pool: pool, Db: zdb}, nil
 }
 
-func newDBFromPool(pool *sqlitex.Pool) *db {
+// TODO: refactor this — test-only helper, move to test helper or remove
+func newAppDbFromPool(pool *sqlitex.Pool) *appDb {
 	zdb, _ := dbz.New(pool)
-	return &db{pool: pool, Db: zdb}
+	return &appDb{pool: pool, Db: zdb}
 }
 
-func (db *db) Close() error {
+func (db *appDb) Close() error {
 	return db.pool.Close()
 }
 
@@ -48,7 +56,7 @@ type configRow struct {
 	Description string
 }
 
-func (db *db) configList(scopeFilter string) (rows []configRow, err error) {
+func (db *appDb) configList(scopeFilter string) (rows []configRow, err error) {
 	conn, err := db.pool.Take(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to get db connection for list command", ErrDbConnection)
@@ -94,8 +102,39 @@ func (db *db) configList(scopeFilter string) (rows []configRow, err error) {
 	return rows, err
 }
 
-// TODO: refactor — applyAppSchema should not be a method on db; move to standalone helper or driver package (keep sql.go pure)
-func (db *db) applyAppSchema() error {
+func (db *appDb) configScopes() (scopes []string, err error) {
+	conn, err := db.pool.Take(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("%w: for scopes command: %w", ErrDbConnection, err)
+	}
+	defer db.pool.Put(conn)
+
+	stmt, err := conn.Prepare("SELECT DISTINCT scope FROM app_config ORDER BY scope;")
+	if err != nil {
+		return nil, fmt.Errorf("%w: for scopes command: %w", ErrDbPrepare, err)
+	}
+	defer func() {
+		if ferr := stmt.Finalize(); ferr != nil {
+			err = errors.Join(err, fmt.Errorf("%w: %w", ErrDbFinalize, ferr))
+		}
+	}()
+
+	for {
+		hasRow, stepErr := stmt.Step()
+		if stepErr != nil {
+			return nil, fmt.Errorf("%w: %w", ErrDbStep, stepErr)
+		}
+		if !hasRow {
+			break
+		}
+		scopes = append(scopes, stmt.GetText("scope"))
+	}
+
+	return scopes, err
+}
+
+// TODO: refactor — applyAppSchema should not be a method on appDb; move to standalone helper or driver package (keep sql.go pure)
+func (db *appDb) applyAppSchema() error {
 	conn, err := db.pool.Take(context.Background())
 	if err != nil {
 		return fmt.Errorf("%w: for sql: %w", ErrDbConnection, err)

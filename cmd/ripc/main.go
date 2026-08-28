@@ -17,8 +17,6 @@ var (
 	ErrUnknownCommand    = errors.New("unknown command")
 	ErrDBNotFound        = errors.New("database file not found")
 	ErrDBAlreadyExists   = errors.New("database file already exists")
-	ErrCreateDbPool      = errors.New("failed to create database pool")
-	ErrCreateDbImpl      = errors.New("failed to instantiate zombiezen db from pool")
 	ErrCreateSecureStore = errors.New("failed to instantiate secure store")
 )
 
@@ -162,24 +160,24 @@ func run(args []string, output io.Writer) error {
 		}
 	}
 
-	ripcDb, err := newDB(*dbPathFlag)
+	db, err := newAppDb(*dbPathFlag)
 	if err != nil {
-		return fmt.Errorf("%w (db_path: %s): %v", ErrCreateDbPool, *dbPathFlag, err)
+		return err
 	}
 	defer func() {
-		if err := ripcDb.Close(); err != nil {
+		if err := db.Close(); err != nil {
 			_, _ = fmt.Fprintf(output, "Error: error closing database pool: %v\n", err)
 		}
 	}()
 
-	secureStore, err := config.NewSecureStoreAge(ripcDb, *ageIdentityPathFlag)
+	secureStore, err := config.NewSecureStoreAge(db, *ageIdentityPathFlag)
 	if err != nil {
 		return fmt.Errorf("%w (age, age_key_path: %s): %v", ErrCreateSecureStore, *ageIdentityPathFlag, err)
 	}
 
 	switch command {
 	case "app":
-		return handleAppCommand(secureStore, ripcDb, *dbPathFlag, commandArgs, ui)
+		return handleAppCommand(secureStore, db, *dbPathFlag, commandArgs, ui)
 	case "get":
 		return handleGetCommand(secureStore, commandArgs, ui)
 	case "paths":
@@ -187,7 +185,7 @@ func run(args []string, output io.Writer) error {
 	case "dump":
 		return handleDumpCommand(secureStore, commandArgs, ui)
 	case "scopes":
-		return handleScopesCommand(ripcDb.pool, commandArgs, ui)
+		return handleScopesCommand(db, commandArgs, ui)
 	case "set":
 		return handleSetCommand(secureStore, commandArgs, ui)
 	case "save":
@@ -197,13 +195,13 @@ func run(args []string, output io.Writer) error {
 	case "migrate":
 		return handleMigrateCommand(secureStore, commandArgs, ui)
 	case "list":
-		return handleListCommand(ripcDb, commandArgs, ui)
+		return handleListCommand(db, commandArgs, ui)
 	case "diff":
 		return handleDiffCommand(secureStore, commandArgs, ui)
 	case "rollback":
 		return handleRollbackCommand(secureStore, commandArgs, ui)
 	case "job":
-		return handleJobCommand(ripcDb.Db, commandArgs, ui)
+		return handleJobCommand(db.Db, commandArgs, ui)
 	case "log":
 		return handleLogCommand(secureStore, *dbPathFlag, commandArgs, ui)
 	case "help":

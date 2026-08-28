@@ -5,8 +5,8 @@ import (
 	"io"
 )
 
-func printConfigList(ui UI, ripcDb *db, scopeFilter string) (count int, err error) {
-	rows, err := ripcDb.configList(scopeFilter)
+func printConfigList(ui UI, db *appDb, scopeFilter string) (count int, err error) {
+	rows, err := db.configList(scopeFilter)
 	if err != nil {
 		return 0, err
 	}
@@ -52,14 +52,14 @@ func printListUsage(w io.Writer) {
 
 // handleListCommand parses the arguments for the 'list' command and executes
 // the core logic, returning any error to the caller.
-func handleListCommand(ripcDb *db, args []string, ui UI) error {
+func handleListCommand(db *appDb, args []string, ui UI) error {
 	opts, err := parseListArgs(args)
 	if err != nil {
 		printListUsage(ui.Err)
 		return err
 	}
 
-	count, err := printConfigList(ui, ripcDb, opts.Scope)
+	count, err := printConfigList(ui, db, opts.Scope)
 	if err != nil {
 		return err
 	}

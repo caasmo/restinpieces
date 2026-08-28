@@ -78,11 +78,12 @@ func TestListScopes_Success(t *testing.T) {
 	// Unordered and with duplicates to test the query's DISTINCT and ORDER BY clauses.
 	initialScopes := []string{"scope-c", "scope-a", "scope-b", "scope-a"}
 	pool := setupTestScopesDB(t, initialScopes)
+	db := newAppDbFromPool(pool)
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := listScopes(ui, pool)
+	err := listScopes(ui, db)
 
 	// --- Assert ---
 	if err != nil {
@@ -98,11 +99,12 @@ func TestListScopes_Success(t *testing.T) {
 func TestListScopes_Success_NoScopes(t *testing.T) {
 	// --- Setup ---
 	pool := setupTestScopesDB(t, []string{}) // Empty table
+	db := newAppDbFromPool(pool)
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err := listScopes(ui, pool)
+	err := listScopes(ui, db)
 
 	// --- Assert ---
 	if err != nil {
@@ -128,11 +130,12 @@ func TestListScopes_Failure_DbConnectionError(t *testing.T) {
 	if err := pool.Close(); err != nil {
 		t.Fatalf("failed to close pool for test setup: %v", err)
 	}
+	db := newAppDbFromPool(pool)
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
 	// --- Execute ---
-	err = listScopes(ui, pool)
+	err = listScopes(ui, db)
 
 	// --- Assert ---
 	if err == nil {

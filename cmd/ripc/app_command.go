@@ -28,7 +28,7 @@ func printAppUsage(w io.Writer) {
 	help.Print(w, prog, "app")
 }
 
-func handleAppCommand(secureStore config.SecureStore, ripcDb *db, dbPath string, commandArgs []string, ui UI) error {
+func handleAppCommand(secureStore config.SecureStore, db *appDb, dbPath string, commandArgs []string, ui UI) error {
 	if len(commandArgs) < 1 {
 		printAppUsage(ui.Err)
 		return fmt.Errorf("app requires a subcommand")
@@ -42,7 +42,7 @@ func handleAppCommand(secureStore config.SecureStore, ripcDb *db, dbPath string,
 
 	switch subcommand {
 	case "create":
-		return handleAppCreateCommand(secureStore, ripcDb, dbPath, ui)
+		return handleAppCreateCommand(secureStore, db, dbPath, ui)
 	default:
 		// This case should ideally not be reached if parseAppSubcommand is correct
 		printAppUsage(ui.Err)

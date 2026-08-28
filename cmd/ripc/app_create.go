@@ -15,16 +15,16 @@ var (
 )
 
 // handleAppCreateCommand is the command-level wrapper that executes the core app creation logic.
-func handleAppCreateCommand(secureStore config.SecureStore, ripcDb *db, dbPath string, ui UI) error {
-	return createApplication(ui, secureStore, ripcDb, dbPath)
+func handleAppCreateCommand(secureStore config.SecureStore, db *appDb, dbPath string, ui UI) error {
+	return createApplication(ui, secureStore, db, dbPath)
 }
 
 // createApplication contains the testable core logic for creating and configuring the application.
-func createApplication(ui UI, secureStore config.SecureStore, ripcDb *db, dbPath string) error {
+func createApplication(ui UI, secureStore config.SecureStore, db *appDb, dbPath string) error {
 	if _, err := fmt.Fprintln(ui.Err, "Applying app schema..."); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
-	if err := ripcDb.applyAppSchema(); err != nil {
+	if err := db.applyAppSchema(); err != nil {
 		return err
 	}
 
