@@ -8,12 +8,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/caasmo/restinpieces/migrations"
+	"github.com/caasmo/restinpieces/sql"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 // setupTestDB is a test helper function that creates an in-memory SQLite
-// database, migrates the schema, and optionally seeds it with data. It returns a
+// database, applies the schema, and optionally seeds it with data. It returns a
 // connection pool and a cleanup function to close the database connection.
 func setupTestDB(t *testing.T, configs [][2]string) *sqlitex.Pool {
 	t.Helper()
@@ -34,7 +34,7 @@ func setupTestDB(t *testing.T, configs [][2]string) *sqlitex.Pool {
 	}
 	defer pool.Put(conn)
 
-	schemaFS := migrations.Schema()
+	schemaFS := sql.FS()
 	sqlBytes, err := fs.ReadFile(schemaFS, "app/app_config.sql")
 	if err != nil {
 		t.Fatalf("failed to read app/app_config.sql: %v", err)

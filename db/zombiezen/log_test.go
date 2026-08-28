@@ -7,7 +7,7 @@ import (
 
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/db/dbtest"
-	"github.com/caasmo/restinpieces/migrations"
+	"github.com/caasmo/restinpieces/sql"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
@@ -25,7 +25,7 @@ func newTestLogDB(t *testing.T) (*Log, string) {
 		t.Fatalf("failed to create db conn for schema setup: %v", err)
 	}
 
-	schemaFS := migrations.Schema()
+	schemaFS := sql.FS()
 	sqlBytes, err := fs.ReadFile(schemaFS, "log/logs.sql")
 	if err != nil {
 		t.Fatalf("Failed to read log/logs.sql: %v", err)

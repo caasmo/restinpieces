@@ -14,8 +14,8 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/db/zombiezen"
-	"github.com/caasmo/restinpieces/migrations"
 	"github.com/caasmo/restinpieces/queue/executor"
+	"github.com/caasmo/restinpieces/sql"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
@@ -49,7 +49,7 @@ func newTestQueueDB(t *testing.T) *zombiezen.Db {
 	}
 	defer pool.Put(conn)
 
-	schemaFS := migrations.Schema()
+	schemaFS := sql.FS()
 	sqlBytes, err := fs.ReadFile(schemaFS, "app/job_queue.sql")
 	if err != nil {
 		t.Fatalf("Failed to read app/job_queue.sql: %v", err)

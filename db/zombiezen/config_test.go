@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/caasmo/restinpieces/db/dbtest"
-	"github.com/caasmo/restinpieces/migrations"
+	"github.com/caasmo/restinpieces/sql"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
@@ -37,7 +37,7 @@ func newTestDB(t *testing.T) *Db {
 	}
 	defer pool.Put(conn)
 
-	schemaFS := migrations.Schema()
+	schemaFS := sql.FS()
 
 	// Directly read and execute the app_config.sql file we need
 	sqlBytes, err := fs.ReadFile(schemaFS, "app/app_config.sql")
@@ -45,8 +45,6 @@ func newTestDB(t *testing.T) *Db {
 		t.Fatalf("Failed to read app_config.sql: %v", err)
 	}
 
-	t.Logf("Applying migration: app/app_config.sql")
-	//t.Logf("Migration SQL contents:\n%s", string(sqlBytes))
 	if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
 		t.Fatalf("Failed to execute app_config.sql: %v", err)
 	}

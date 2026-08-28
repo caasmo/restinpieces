@@ -7,7 +7,7 @@ import (
 	"io/fs"
 	"testing"
 
-	"github.com/caasmo/restinpieces/migrations"
+	"github.com/caasmo/restinpieces/sql"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
@@ -36,8 +36,8 @@ func setupTestScopesDB(t *testing.T, scopes []string) *sqlitex.Pool {
 	}
 	defer pool.Put(conn)
 
-	// Create schema from embedded migrations
-	schemaFS := migrations.Schema()
+	// Create schema from embedded sql
+	schemaFS := sql.FS()
 	sqlBytes, err := fs.ReadFile(schemaFS, "app/app_config.sql")
 	if err != nil {
 		t.Fatalf("Failed to read app/app_config.sql: %v", err)

@@ -14,7 +14,7 @@ import (
 )
 
 // newTestPool creates a new in-memory SQLite database pool for testing.
-// It does not apply any migrations.
+// It does not apply any SQL.
 func newTestPool(t *testing.T) *sqlitex.Pool {
 	t.Helper()
 
@@ -102,14 +102,14 @@ func TestSaveConfig(t *testing.T) {
 	})
 }
 
-func TestRunMigrations(t *testing.T) {
+func TestApplyAppSchema(t *testing.T) {
 	pool := newTestPool(t)
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := runMigrations(ui, pool)
+	err := applyAppSchema(ui, pool)
 	if err != nil {
-		t.Fatalf("runMigrations failed: %v", err)
+		t.Fatalf("applyAppSchema failed: %v", err)
 	}
 
 	// Verify that the tables were created
@@ -150,7 +150,7 @@ func TestCreateApplication(t *testing.T) {
 			t.Fatalf("createApplication failed: %v", err)
 		}
 
-		// Verify migrations ran
+		// Verify schema was applied
 		conn, err := pool.Take(context.Background())
 		if err != nil {
 			t.Fatalf("failed to get connection from pool: %v", err)
@@ -167,7 +167,7 @@ func TestCreateApplication(t *testing.T) {
 			t.Fatalf("failed to query for users table: %v", err)
 		}
 		if count != 1 {
-			t.Error("expected migrations to be run, but users table not found")
+			t.Error("expected schema to be applied, but users table not found")
 		}
 
 		// Verify config was saved

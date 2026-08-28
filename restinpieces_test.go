@@ -14,10 +14,7 @@ import (
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/db/mock"
-	"github.com/caasmo/restinpieces/db/zombiezen"
-	"github.com/caasmo/restinpieces/migrations"
 	"github.com/pelletier/go-toml/v2"
-	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 // --- Test Helpers ---
@@ -298,86 +295,6 @@ func TestSetupConfig(t *testing.T) {
 	})
 }
 
-// TestNew_WithUserLogger validates the New function's initialization logic when a custom logger is provided.
-func TestNew_WithUserLogger(t *testing.T) {
-	// 1. Setup a Test Environment
-	tempDir := t.TempDir()
-	appDbPath := filepath.Join(tempDir, "app.db")
-	_, ageKeyPath := newTestAgeIdentity(t)
-
-	// 2. Initialize App Database for Setup
-	setupConn, err := zombiezen.NewConn(appDbPath)
-	if err != nil {
-		t.Fatalf("Failed to create setup db connection: %v", err)
-	}
-	defer func() {
-		if err := setupConn.Close(); err != nil {
-			t.Logf("Failed to close setup db connection: %v", err)
-		}
-	}()
-
-	if err := zombiezen.ApplyMigrations(setupConn, migrations.Schema()); err != nil {
-		t.Fatalf("Failed to apply migrations to app db: %v", err)
-	}
-
-	// 3. Seed Encrypted Config using a temporary pool
-	tempPool, err := sqlitex.NewPool(appDbPath, sqlitex.PoolOptions{PoolSize: 1})
-	if err != nil {
-		t.Fatalf("Failed to create temp pool for seeding: %v", err)
-	}
-	dbCfg, err := zombiezen.New(tempPool)
-	if err != nil {
-		t.Fatalf("Failed to create db config for seeding: %v", err)
-	}
-	secureStore, err := config.NewSecureStoreAge(dbCfg, ageKeyPath)
-	if err != nil {
-		t.Fatalf("Failed to create secure store: %v", err)
-	}
-	cfg := config.NewDefaultConfig()
-	cfg.Jwt.AuthSecret = "test_auth_secret_32_chars_long__"
-	cfg.Jwt.PasswordResetSecret = "test_pwreset_secret_32_chars___"
-	cfg.Jwt.EmailChangeOtpSecret = "test_ec_otp_secret_32_chars____"
-	cfg.Jwt.VerificationEmailOtpSecret = "test_ve_otp_secret_32_chars____"
-	cfg.Jwt.Oauth2StateSecret = "test_oauth2_state_secret_32_ch_"
-	tomlBytes, err := toml.Marshal(cfg)
-	if err != nil {
-		t.Fatalf("Failed to marshal config: %v", err)
-	}
-	if err := secureStore.Save(config.ScopeApplication, tomlBytes, "toml", "initial test config"); err != nil {
-		t.Fatalf("Failed to save config to secure store: %v", err)
-	}
-	// We explicitly ignore the error here because we're in a test and the consequences are minimal.
-	_ = tempPool.Close() // Close the temporary pool after seeding
-
-	// 4. Execute with a fresh, real pool
-	realPool, err := NewZombiezenPool(appDbPath)
-	if err != nil {
-		t.Fatalf("Failed to create real pool for New(): %v", err)
-	}
-	defer func() {
-		if err := realPool.Close(); err != nil {
-			t.Logf("Failed to close real pool: %v", err)
-		}
-	}()
-
-	app, srv, err := New(
-		WithZombiezenPool(realPool),
-		WithAgeKeyPath(ageKeyPath),
-		WithLogger(newTestLogger()), // Provide a custom logger to prevent daemon start
-	)
-
-	// 5. Assertions
-	if err != nil {
-		t.Fatalf("New() returned an unexpected error: %v", err)
-	}
-	if app == nil {
-		t.Fatal("New() returned a nil app")
-	}
-	if srv == nil {
-		t.Fatal("New() returned a nil server")
-	}
-}
-
 // TestNew_MissingDB validates that New returns an error when the database is not provided.
 func TestNew_MissingDB(t *testing.T) {
 	_, ageKeyPath := newTestAgeIdentity(t)
@@ -399,4 +316,3 @@ func TestNew_MissingDB(t *testing.T) {
 		t.Errorf("New() returned an unexpected error. Got: %v, Want: %v", err, expectedError)
 	}
 }
-

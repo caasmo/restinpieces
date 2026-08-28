@@ -33,7 +33,7 @@ func (m *MockLogInitSecureStore) Save(scope string, data []byte, format string, 
 	panic("not implemented for log init tests")
 }
 
-// newLogTestPool creates a new in-memory SQLite database pool for testing migrations.
+// newLogTestPool creates a new in-memory SQLite database pool for testing.
 func newLogTestPool(t *testing.T) *sqlitex.Pool {
 	t.Helper()
 	pool, err := sqlitex.NewPool("file::memory:?mode=memory", sqlitex.PoolOptions{
@@ -125,15 +125,15 @@ func TestGetLogDbPathFromConfig(t *testing.T) {
 	}
 }
 
-func TestRunLogMigrations(t *testing.T) {
+func TestApplyLogSchema(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		pool := newLogTestPool(t)
 		var stdout, stderr bytes.Buffer
 		ui := UI{Out: &stdout, Err: &stderr}
 
-		err := runLogMigrations(ui, pool)
+		err := applyLogSchema(ui, pool)
 		if err != nil {
-			t.Fatalf("runLogMigrations failed: %v", err)
+			t.Fatalf("applyLogSchema failed: %v", err)
 		}
 
 		// Verify that the 'logs' table was created
@@ -171,7 +171,7 @@ func TestRunLogMigrations(t *testing.T) {
 		}
 
 		ui := UI{Out: io.Discard, Err: io.Discard}
-		err = runLogMigrations(ui, pool)
+		err = applyLogSchema(ui, pool)
 
 		if !errors.Is(err, ErrDbConnection) {
 			t.Fatalf("expected error to wrap ErrDbConnection, got %v", err)
@@ -253,8 +253,8 @@ func TestLogInit(t *testing.T) {
 		ui := UI{Out: io.Discard, Err: io.Discard}
 		err := logInit(ui, mockStore, "/tmp/app.db")
 
-		if !errors.Is(err, ErrCreateLogDbPool) {
-			t.Fatalf("expected error to wrap ErrCreateLogDbPool, got %v", err)
+		if !errors.Is(err, ErrDbConnection) {
+			t.Fatalf("expected error to wrap ErrDbConnection, got %v", err)
 		}
 	})
 }

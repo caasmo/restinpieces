@@ -4,11 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/fs"
 	"path/filepath"
 
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/migrations"
 	"github.com/pelletier/go-toml/v2"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
@@ -16,9 +14,8 @@ import (
 const defaultLogFilename = "logs.db"
 
 var (
-	ErrGetLogDbPath     = errors.New("failed to get log db path")
-	ErrCreateLogDbPool  = errors.New("failed to create log db pool")
-	ErrRunLogMigrations = errors.New("failed to run log migrations")
+	ErrGetLogDbPath = errors.New("failed to get log db path")
+	ErrApplyLogSQL  = errors.New("failed to apply log SQL")
 )
 
 // handleLogInitCommand is the command-level wrapper. It executes the core logic
@@ -47,7 +44,7 @@ func logInit(ui UI, secureStore config.SecureStore, appDbPath string) (err error
 	// Connect to the log database (creates the file if it doesn't exist)
 	pool, err := sqlitex.NewPool(logDbPath, sqlitex.PoolOptions{})
 	if err != nil {
-		return fmt.Errorf("%w: failed to open/create log database at %s: %w", ErrCreateLogDbPool, logDbPath, err)
+		return fmt.Errorf("%w: failed to open/create log database at %s: %w", ErrDbConnection, logDbPath, err)
 	}
 	defer func() {
 		if closeErr := pool.Close(); closeErr != nil && err == nil {
@@ -56,7 +53,7 @@ func logInit(ui UI, secureStore config.SecureStore, appDbPath string) (err error
 	}()
 
 	// Apply the schema
-	if err := runLogMigrations(ui, pool); err != nil {
+	if err := applyLogSchema(ui, pool); err != nil {
 		return err // Already wrapped
 	}
 
@@ -89,29 +86,18 @@ func getLogDbPathFromConfig(secureStore config.SecureStore, appDbPath string) (s
 	return filepath.Join(filepath.Dir(appDbPath), defaultLogFilename), true, nil
 }
 
-// runLogMigrations applies the necessary SQL schema to the log database.
-func runLogMigrations(ui UI, pool *sqlitex.Pool) error {
+func applyLogSchema(ui UI, pool *sqlitex.Pool) error {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
 		return fmt.Errorf("%w: failed to get connection from pool: %w", ErrDbConnection, err)
 	}
 	defer pool.Put(conn)
 
-	schemaFS, err := fs.Sub(migrations.Schema(), "log")
-	if err != nil {
-		return fmt.Errorf("%w: failed to access embedded log migrations: %w", ErrRunLogMigrations, err)
-	}
-
-	sqlBytes, err := fs.ReadFile(schemaFS, "logs.sql")
-	if err != nil {
-		return fmt.Errorf("%w: failed to read embedded migration file logs.sql: %w", ErrRunLogMigrations, err)
-	}
-
 	if _, err := fmt.Fprintln(ui.Err, "Applying log schema..."); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
-	if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
-		return fmt.Errorf("%w: failed to execute migration file logs.sql: %w", ErrRunLogMigrations, err)
+	if err := applySQL(conn, "log"); err != nil {
+		return fmt.Errorf("%w: failed to execute log sql: %w", ErrApplyLogSQL, err)
 	}
 
 	return nil

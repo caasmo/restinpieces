@@ -9,13 +9,11 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/crypto"
-	"github.com/caasmo/restinpieces/db/zombiezen"
-	"github.com/caasmo/restinpieces/migrations"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 var (
-	ErrExecMigration = errors.New("failed to execute migration")
+	ErrApplySQL = errors.New("failed to apply SQL")
 )
 
 // handleAppCreateCommand is the command-level wrapper that executes the core app creation logic.
@@ -25,9 +23,8 @@ func handleAppCreateCommand(secureStore config.SecureStore, pool *sqlitex.Pool, 
 
 // createApplication contains the testable core logic for creating and configuring the application.
 func createApplication(ui UI, secureStore config.SecureStore, pool *sqlitex.Pool, dbPath string) error {
-	// Run Migrations (Apply Schema)
-	if err := runMigrations(ui, pool); err != nil {
-		return err // Error is already wrapped by runMigrations
+	if err := applyAppSchema(ui, pool); err != nil {
+		return err
 	}
 
 	// Generate Default Config Struct
@@ -55,20 +52,19 @@ func createApplication(ui UI, secureStore config.SecureStore, pool *sqlitex.Pool
 	return nil
 }
 
-func runMigrations(ui UI, pool *sqlitex.Pool) error {
+func applyAppSchema(ui UI, pool *sqlitex.Pool) error {
 	conn, err := pool.Take(context.Background())
 	if err != nil {
-		return fmt.Errorf("%w: for migrations: %w", ErrDbConnection, err)
+		return fmt.Errorf("%w: for sql: %w", ErrDbConnection, err)
 	}
 	defer pool.Put(conn)
 
-	if _, err := fmt.Fprintln(ui.Err, "Applying migrations..."); err != nil {
+	if _, err := fmt.Fprintln(ui.Err, "Applying app schema..."); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 
-	schemaFS := migrations.Schema()
-	if err := zombiezen.ApplyMigrations(conn, schemaFS); err != nil {
-		return fmt.Errorf("%w: migration process failed: %w", ErrExecMigration, err)
+	if err := applySQL(conn, "app"); err != nil {
+		return fmt.Errorf("%w: sql process failed: %w", ErrApplySQL, err)
 	}
 
 	return nil

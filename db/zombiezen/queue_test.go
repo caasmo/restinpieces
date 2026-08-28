@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/caasmo/restinpieces/db/dbtest"
-	"github.com/caasmo/restinpieces/migrations"
+	"github.com/caasmo/restinpieces/sql"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
@@ -33,7 +33,7 @@ func newTestQueueDB(t *testing.T) *Db {
 	}
 	defer pool.Put(conn)
 
-	schemaFS := migrations.Schema()
+	schemaFS := sql.FS()
 	sqlBytes, err := fs.ReadFile(schemaFS, "app/job_queue.sql")
 	if err != nil {
 		t.Fatalf("Failed to read app/job_queue.sql: %v", err)
