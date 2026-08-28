@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-
-	"github.com/caasmo/restinpieces/db/zombiezen"
 )
 
 var ErrUnknownJobSubcommand = errors.New("unknown job subcommand")
@@ -28,7 +26,7 @@ func printJobUsage(w io.Writer) {
 }
 
 // handleJobCommand is the dispatcher for all "job" subcommands.
-func handleJobCommand(dbConn *zombiezen.Db, args []string, ui UI) error {
+func handleJobCommand(db *appDb, args []string, ui UI) error {
 	if len(args) < 1 {
 		printJobUsage(ui.Err)
 		return fmt.Errorf("job requires a subcommand")
@@ -42,9 +40,9 @@ func handleJobCommand(dbConn *zombiezen.Db, args []string, ui UI) error {
 
 	switch subcommand {
 	case "list":
-		return handleJobListCommand(dbConn, subcommandArgs, ui)
+		return handleJobListCommand(db, subcommandArgs, ui)
 	case "rm":
-		return handleJobRmCommand(dbConn, subcommandArgs, ui)
+		return handleJobRmCommand(db, subcommandArgs, ui)
 	default:
 		// This case should ideally not be reached if parseJobSubcommand is correct
 		printJobUsage(ui.Err)

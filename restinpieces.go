@@ -428,7 +428,7 @@ func (i *initializer) newLog(logDbPath string) (*zombiezen.Log, error) {
 	conn, err := NewZombiezenConn(logDbPath)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"log database not found at %s. Please run 'ripc log init' to create and initialize it: %w",
+			"Default sqlite logger: database not found at %s (log.batch.db_path). Please run 'ripc log init' to create it: %w",
 			logDbPath,
 			err,
 		)
@@ -441,7 +441,7 @@ func (i *initializer) newLog(logDbPath string) (*zombiezen.Log, error) {
 			err = errors.Join(err, closeErr)
 		}
 		return nil, fmt.Errorf(
-			"log database at %s is not initialized or schema is missing. Please run 'ripc log init': %w",
+			"Default sqlite logger: database at %s is not initialized (missing log table). Please run 'ripc log init': %w",
 			logDbPath,
 			err,
 		)
@@ -461,7 +461,7 @@ func getLogDbPath(cfg *config.Config, dbConfig db.DbConfig) (string, error) {
 
 	mainPath := dbConfig.Path()
 	if mainPath == "" {
-		return "", fmt.Errorf("cannot determine log database path - main database path unavailable")
+		return "", fmt.Errorf("Default sqlite logger needs a database file. Please run 'ripc log init' to create it")
 	}
 	return filepath.Join(filepath.Dir(mainPath), defaultLogFilename), nil
 }

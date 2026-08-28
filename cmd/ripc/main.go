@@ -201,7 +201,7 @@ func run(args []string, output io.Writer) error {
 	case "rollback":
 		return handleRollbackCommand(secureStore, commandArgs, ui)
 	case "job":
-		return handleJobCommand(db.Db, commandArgs, ui)
+		return handleJobCommand(db, commandArgs, ui)
 	case "log":
 		return handleLogCommand(secureStore, *dbPathFlag, commandArgs, ui)
 	case "help":
