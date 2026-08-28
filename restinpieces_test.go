@@ -351,6 +351,9 @@ func TestNew_WithUserLogger(t *testing.T) {
 	customLogger := newTestLogger()
 	app, srv, err := New(
 		WithDbApp(dbMock),
+		func(i *initializer) {
+			i.dbConfig = dbMock
+		},
 		WithAgeKeyPath(ageKeyPath),
 		WithLogger(customLogger),
 	)

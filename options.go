@@ -23,7 +23,6 @@ func WithCache(c cache.Cache[string, interface{}]) Option {
 func WithDbApp(dbApp db.DbApp) Option {
 	return func(i *initializer) {
 		i.app.SetDb(dbApp)
-		i.dbConfig = dbApp
 	}
 }
 
