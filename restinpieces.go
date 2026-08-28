@@ -1,6 +1,7 @@
 package restinpieces
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -400,23 +401,9 @@ func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUs
 	}
 
 	i.app.Logger().Info("Using log database", "path", logDbPath)
-	conn, err := NewZombiezenConn(logDbPath)
+	logDb, err := i.newLog(logDbPath)
 	if err != nil {
-		return nil, fmt.Errorf(
-			"log database not found at %s. Please run 'ripc log init' to create and initialize it: %w",
-			logDbPath,
-			err,
-		)
-	}
-
-	logDb, err := zombiezen.NewLog(conn)
-	if err != nil {
-		conn.Close()
-		return nil, fmt.Errorf(
-			"log database at %s is not initialized or schema is missing. Please run 'ripc log init': %w",
-			logDbPath,
-			err,
-		)
+		return nil, err
 	}
 
 	logDaemon, err := log.New(configProvider, i.app.Logger(), logDb)
@@ -435,6 +422,32 @@ func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUs
 	i.app.SetLogger(slog.New(batchHandler))
 
 	return logDaemon, nil
+}
+
+func (i *initializer) newLog(logDbPath string) (*zombiezen.Log, error) {
+	conn, err := NewZombiezenConn(logDbPath)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"log database not found at %s. Please run 'ripc log init' to create and initialize it: %w",
+			logDbPath,
+			err,
+		)
+	}
+
+	logDb, err := zombiezen.NewLog(conn)
+	if err != nil {
+		closeErr := conn.Close()
+		if closeErr != nil {
+			err = errors.Join(err, closeErr)
+		}
+		return nil, fmt.Errorf(
+			"log database at %s is not initialized or schema is missing. Please run 'ripc log init': %w",
+			logDbPath,
+			err,
+		)
+	}
+
+	return logDb, nil
 }
 
 const defaultLogFilename = "logs.db"

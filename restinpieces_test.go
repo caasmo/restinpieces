@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"filippo.io/age"
@@ -377,5 +378,96 @@ func TestNew_WithUserLogger(t *testing.T) {
 	}
 	if app.Cache() == nil {
 		t.Fatal("app.Cache() is nil after New()")
+	}
+}
+
+func TestSetupDefaultLogger_WithUserLogger(t *testing.T) {
+	app := &core.App{}
+	customLogger := newTestLogger()
+	app.SetLogger(customLogger)
+
+	init := &initializer{app: app}
+	cfg := newTestConfig()
+	provider := config.NewProvider(cfg)
+
+	daemon, err := init.setupDefaultLogger(provider, true)
+	if err != nil {
+		t.Fatalf("setupDefaultLogger with user logger should not return error, got %v", err)
+	}
+	if daemon != nil {
+		t.Error("expected nil daemon when user logger is provided")
+	}
+	if app.Logger() != customLogger {
+		t.Error("expected custom logger to stay unchanged")
+	}
+}
+
+func TestSetupDefaultLogger_GetLogDbPathError(t *testing.T) {
+	app := &core.App{}
+	app.SetLogger(newTestLogger())
+
+	dbMock := &mock.Db{}
+	dbMock.PathFunc = func() string {
+		return ""
+	}
+
+	init := &initializer{
+		app:      app,
+		dbConfig: dbMock,
+	}
+
+	cfg := newTestConfig()
+	cfg.Log.Batch.DbPath = ""
+	provider := config.NewProvider(cfg)
+
+	_, err := init.setupDefaultLogger(provider, false)
+	if err == nil {
+		t.Fatal("expected error when log db path cannot be determined")
+	}
+	if !strings.Contains(err.Error(), "cannot determine log database path") {
+		t.Errorf("expected error about log database path, got %v", err)
+	}
+}
+
+func TestSetupDefaultLogger_ConnNotFound(t *testing.T) {
+	tmpDir := t.TempDir()
+	mainPath := filepath.Join(tmpDir, "app.db")
+
+	app := &core.App{}
+	app.SetLogger(newTestLogger())
+
+	dbMock := &mock.Db{}
+	dbMock.PathFunc = func() string {
+		return mainPath
+	}
+
+	init := &initializer{
+		app:      app,
+		dbConfig: dbMock,
+	}
+
+	cfg := newTestConfig()
+	cfg.Log.Batch.DbPath = ""
+	provider := config.NewProvider(cfg)
+
+	_, err := init.setupDefaultLogger(provider, false)
+	if err == nil {
+		t.Fatal("expected error when log database file is missing")
+	}
+	if !strings.Contains(err.Error(), "log database not found") {
+		t.Errorf("expected 'log database not found' error, got %v", err)
+	}
+}
+
+func TestNewLog_FileNotFound(t *testing.T) {
+	logPath := filepath.Join(t.TempDir(), "logs.db")
+
+	init := &initializer{
+		app: &core.App{},
+	}
+
+	_, err := init.newLog(logPath)
+	if err == nil {
+		t.Fatal("expected error when log database file is missing")
 	}
 }
