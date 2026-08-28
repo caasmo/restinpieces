@@ -316,3 +316,63 @@ func TestNew_MissingDB(t *testing.T) {
 		t.Errorf("New() returned an unexpected error. Got: %v, Want: %v", err, expectedError)
 	}
 }
+
+func TestNew_WithUserLogger(t *testing.T) {
+	identity, ageKeyPath := newTestAgeIdentity(t)
+
+	cfg := newTestConfig()
+	tomlBytes, err := toml.Marshal(cfg)
+	if err != nil {
+		t.Fatalf("Failed to marshal config: %v", err)
+	}
+
+	encryptedBytes := &bytes.Buffer{}
+	w, err := age.Encrypt(encryptedBytes, identity.Recipient())
+	if err != nil {
+		t.Fatalf("Failed to create encryptor: %v", err)
+	}
+	_, err = w.Write(tomlBytes)
+	if err != nil {
+		t.Fatalf("Failed to write encrypted data: %v", err)
+	}
+	err = w.Close()
+	if err != nil {
+		t.Fatalf("Failed to close encryptor: %v", err)
+	}
+
+	dbMock := &mock.Db{}
+	dbMock.GetConfigFunc = func(scope string, generation int) ([]byte, string, error) {
+		return encryptedBytes.Bytes(), "toml", nil
+	}
+	dbMock.PathFunc = func() string {
+		return filepath.Join(t.TempDir(), "app.db")
+	}
+
+	customLogger := newTestLogger()
+	app, srv, err := New(
+		WithDbApp(dbMock),
+		WithAgeKeyPath(ageKeyPath),
+		WithLogger(customLogger),
+	)
+	if err != nil {
+		t.Fatalf("New() returned unexpected error: %v", err)
+	}
+	if app == nil {
+		t.Fatal("New() returned nil app")
+	}
+	if srv == nil {
+		t.Fatal("New() returned nil server")
+	}
+	if app.Logger() != customLogger {
+		t.Error("expected custom logger to be preserved")
+	}
+	if app.Config() == nil {
+		t.Fatal("app.Config() is nil after New()")
+	}
+	if app.Router() == nil {
+		t.Fatal("app.Router() is nil after New()")
+	}
+	if app.Cache() == nil {
+		t.Fatal("app.Cache() is nil after New()")
+	}
+}
