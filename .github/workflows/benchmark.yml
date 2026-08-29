@@ -22,7 +22,7 @@ concurrency:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 70
     permissions:
       contents: write
     steps:
@@ -95,10 +95,10 @@ jobs:
       - name: Run benchmarks on base
         run: |
           cd base
-          # -count=5 runs each benchmark five times; benchstat aggregates the
-          # samples with statistical confidence so single-run noise cannot be
-          # misread as a change.
-          go test -bench=. -run=^$ -benchmem -count=5 ./... > ../base.txt
+          # -count=6 runs each benchmark six times; benchstat needs >=6 samples
+          # for a 95% confidence interval, so the report shows real ±% instead
+          # of ± ∞.
+          go test -bench=. -run=^$ -benchmem -count=6 ./... > ../base.txt
           if [ ! -s ../base.txt ]; then
             echo "No benchmark results generated for base."
             exit 1
@@ -107,7 +107,7 @@ jobs:
       - name: Run benchmarks on head
         run: |
           cd head
-          go test -bench=. -run=^$ -benchmem -count=5 ./... > ../head.txt
+          go test -bench=. -run=^$ -benchmem -count=6 ./... > ../head.txt
           if [ ! -s ../head.txt ]; then
             echo "No benchmark results generated for head."
             exit 1
@@ -122,12 +122,14 @@ jobs:
           # present in one run but not the other (added, removed, or renamed)
           # are listed without a delta.
           benchstat base.txt head.txt > benchstat.txt
+          BASE_SHA=$(git -C base rev-parse --short HEAD)
+          HEAD_SHA=$(git -C head rev-parse --short HEAD)
           {
-            echo "# Benchmark comparison: ${BASE_REF} vs ${HEAD_REF}"
+            echo "# Benchmark comparison: ${BASE_REF} (${BASE_SHA}) vs ${HEAD_REF} (${HEAD_SHA})"
             echo ""
             echo "- Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-            echo "- Base: ${BASE_REF}"
-            echo "- Head: ${HEAD_REF}"
+            echo "- Base: ${BASE_REF} (${BASE_SHA})"
+            echo "- Head: ${HEAD_REF} (${HEAD_SHA})"
             echo "- Go: $(go version)"
             echo "- CPU: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | xargs)"
             echo ""
