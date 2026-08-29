@@ -9,10 +9,19 @@ import (
 )
 
 // connPragmas are the SQLite pragmas applied to every connection after it is
-// opened, pool connections and single connections alike. Keeping the list in
-// one place guarantees both paths run with identical settings. busy_timeout
-// precedes journal_mode so a WAL conversion can wait on locks instead of
-// failing immediately.
+// opened, pool connections and single connections alike.
+//
+// zombiezen.com/go/sqlite (v1.4.2) does NOT parse DSN pragma parameters:
+// a URI like "file:app.db?_journal_mode=WAL&_synchronous=NORMAL" opens the
+// connection with default settings and silently ignores every parameter
+// except SQLite's native ones (mode, cache, immutable, vfs, ...). The only
+// pragma the library executes itself is "PRAGMA journal_mode=wal", and only
+// when the OpenWAL flag is passed. All other settings must be executed
+// explicitly after the connection is opened — which is what this list does,
+// and why every connection constructor in this package runs applyPragmas.
+//
+// busy_timeout precedes journal_mode so a WAL conversion can wait on locks
+// instead of failing immediately.
 var connPragmas = []string{
 	"PRAGMA busy_timeout = 5000",
 	"PRAGMA journal_mode = WAL",

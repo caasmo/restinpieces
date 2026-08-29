@@ -7,8 +7,9 @@ import (
 	"zombiezen.com/go/sqlite"
 )
 
-// OpenConn opens a new single SQLite connection with performance pragmas.
-// The database file must already exist; OpenCreate is not used.
+// OpenConn opens a new single SQLite connection with the shared performance
+// pragmas (see connPragmas). The database file must already exist; OpenCreate
+// is not used.
 func OpenConn(dbPath string) (conn *sqlite.Conn, err error) {
 	conn, err = sqlite.OpenConn("file:"+dbPath, sqlite.OpenReadWrite|sqlite.OpenURI)
 	if err != nil {
