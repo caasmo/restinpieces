@@ -34,31 +34,6 @@ func TestNewPool(t *testing.T) {
 	}
 }
 
-// TestNewPerformancePool verifies the performance pool constructor produces
-// a usable pool on a real database file.
-func TestNewPerformancePool(t *testing.T) {
-	pool, err := NewPerformancePool(filepath.Join(t.TempDir(), "test.db"))
-	if err != nil {
-		t.Fatalf("failed to create performance pool: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := pool.Close(); err != nil {
-			t.Errorf("failed to close pool: %v", err)
-		}
-	})
-
-	conn, err := pool.Take(context.Background())
-	if err != nil {
-		t.Fatalf("failed to take connection: %v", err)
-	}
-	defer pool.Put(conn)
-
-	err = sqlitex.Execute(conn, "SELECT 1;", nil)
-	if err != nil {
-		t.Fatalf("failed to execute query: %v", err)
-	}
-}
-
 // TestOpenConn verifies the single-connection constructor on an existing
 // database file (OpenCreate is not used, so the file must pre-exist).
 func TestOpenConn(t *testing.T) {

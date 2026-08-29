@@ -2,13 +2,11 @@ package zombiezen
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
 	"path/filepath"
 	"testing"
 
 	"github.com/caasmo/restinpieces/sql"
-	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
@@ -65,11 +63,16 @@ func newBenchLog(b *testing.B) *Log {
 	b.Helper()
 
 	dbPath := filepath.Join(b.TempDir(), "bench_log.db")
-	dsn := fmt.Sprintf("file:%s", dbPath)
 
-	conn, err := sqlite.OpenConn(dsn, sqlite.OpenReadWrite|sqlite.OpenCreate|sqlite.OpenURI)
+	// Schema setup goes through the production pool constructor so the file is
+	// born with the same pragmas (WAL, synchronous=NORMAL) as in production.
+	pool, err := NewPool(dbPath)
 	if err != nil {
-		b.Fatalf("failed to create db conn for schema setup: %v", err)
+		b.Fatalf("failed to create bench log pool: %v", err)
+	}
+	conn, err := pool.Take(context.Background())
+	if err != nil {
+		b.Fatalf("failed to get bench log connection: %v", err)
 	}
 
 	schemaFS := sql.FS()
@@ -81,11 +84,12 @@ func newBenchLog(b *testing.B) *Log {
 	if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
 		b.Fatalf("failed to execute logs.sql script: %v", err)
 	}
-	if err := conn.Close(); err != nil {
-		b.Fatalf("failed to close setup connection: %v", err)
+	pool.Put(conn)
+	if err := pool.Close(); err != nil {
+		b.Fatalf("failed to close schema pool: %v", err)
 	}
 
-	logConn, err := sqlite.OpenConn(dsn, sqlite.OpenReadWrite|sqlite.OpenURI)
+	logConn, err := OpenConn(dbPath)
 	if err != nil {
 		b.Fatalf("failed to open log conn: %v", err)
 	}

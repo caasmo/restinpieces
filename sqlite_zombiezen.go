@@ -36,12 +36,6 @@ func NewZombiezenPool(dbPath string) (*sqlitex.Pool, error) {
 	return zombiezen.NewPool(dbPath)
 }
 
-// NewZombiezenPerformancePool creates a new Zombiezen SQLite connection pool optimized
-// for performance using explicit PRAGMA settings via the DSN string.
-func NewZombiezenPerformancePool(dbPath string) (*sqlitex.Pool, error) {
-	return zombiezen.NewPerformancePool(dbPath)
-}
-
 // NewZombiezenConn creates a new single SQLite connection with performance pragmas.
 // The database file must already exist; OpenCreate is not used.
 func NewZombiezenConn(dbPath string) (*sqlite.Conn, error) {
