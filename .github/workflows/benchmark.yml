@@ -25,7 +25,9 @@ jobs:
         run: |
           go install github.com/caasmo/gobench2json/cmd/gobench2json@latest
           mkdir -p .github/benchmarks
-          go test -bench=. -run=^$ -benchmem ./... > benchmark.txt
+          # -count=5 runs each benchmark five times; the viewer aggregates the
+          # samples by median so single-run noise cannot be misread as a change.
+          go test -bench=. -run=^$ -benchmem -count=5 ./... > benchmark.txt
 
           if [ ! -s benchmark.txt ]; then
             echo "No benchmark results generated."

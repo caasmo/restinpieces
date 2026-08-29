@@ -138,8 +138,37 @@
             }
 
             function renderTable(packageData1, packageData2, packageName) {
-                const benchmarks1 = new Map(packageData1.map(b => [b.name, b]));
-                const benchmarks2 = new Map(packageData2.map(b => [b.name, b]));
+                // Reports contain -count=5 samples per benchmark; reduce each
+                // benchmark to the median of its samples so single-run noise
+                // cannot be misread as a change. Single-sample reports (older
+                // files) pass through unchanged.
+                function median(values) {
+                    const sorted = [...values].sort((a, b) => a - b);
+                    const mid = Math.floor(sorted.length / 2);
+                    return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+                }
+
+                function aggregateBenchmarks(list) {
+                    const byName = new Map();
+                    for (const b of list) {
+                        if (!byName.has(b.name)) byName.set(b.name, []);
+                        byName.get(b.name).push(b);
+                    }
+                    const out = new Map();
+                    for (const [name, samples] of byName) {
+                        out.set(name, {
+                            name: name,
+                            runs: Math.max(...samples.map(s => s.runs)),
+                            ns_per_op: median(samples.map(s => s.ns_per_op)),
+                            b_per_op: median(samples.map(s => s.b_per_op)),
+                            allocs_per_op: Math.round(median(samples.map(s => s.allocs_per_op)))
+                        });
+                    }
+                    return out;
+                }
+
+                const benchmarks1 = aggregateBenchmarks(packageData1);
+                const benchmarks2 = aggregateBenchmarks(packageData2);
                 const allBenchmarkNames = new Set([...benchmarks1.keys(), ...benchmarks2.keys()]);
 
                 const table = document.createElement('table');

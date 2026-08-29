@@ -18,6 +18,9 @@ func setupAuthBenchmark(b *testing.B) (*DefaultAuthenticator, *mock.Db, *config.
 	b.Helper()
 
 	cfg := config.NewDefaultConfig()
+	// The default config has an empty auth secret, but token generation needs
+	// a secret of at least 32 bytes (crypto.MinKeyLength).
+	cfg.Jwt.AuthSecret = "benchmark-auth-secret-32-bytes-minimum!"
 	// Discard logger to prevent I/O from affecting benchmark results.
 	logger := slog.New(slog.NewTextHandler(nil, nil))
 	// Use the existing, official mock database.
