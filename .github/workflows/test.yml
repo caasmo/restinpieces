@@ -21,7 +21,7 @@ jobs:
           go-version: 1.25
 
       - name: Test with coverage
-        run: go test -v -cover ./... -coverprofile=coverage.out -coverpkg=./...
+        run: go test -v -cover -bench=. -benchtime=100x ./... -coverprofile=coverage.out -coverpkg=./...
 
       - name: Show coverage by package
         run: |
