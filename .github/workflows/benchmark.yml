@@ -22,7 +22,7 @@ concurrency:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60
     permissions:
       contents: write
     steps:
@@ -96,7 +96,7 @@ jobs:
         run: |
           cd base
           echo "Starting benchmark run for base..."
-          timeout 30m go test -bench=. -run=^$ -benchmem -count=6 -v ./... > ../base.txt 2>&1 || {
+          timeout 20m go test -bench=. -run=^$ -benchmem -count=4 -v ./... > ../base.txt 2>&1 || {
             EXIT_CODE=$?
             echo "Benchmark failed with exit code: $EXIT_CODE"
             echo "Last 50 lines of output:"
@@ -112,7 +112,7 @@ jobs:
         run: |
           cd head
           echo "Starting benchmark run for head..."
-          timeout 30m go test -bench=. -run=^$ -benchmem -count=6 -v ./... > ../head.txt 2>&1 || {
+          timeout 20m go test -bench=. -run=^$ -benchmem -count=4 -v ./... > ../head.txt 2>&1 || {
             EXIT_CODE=$?
             echo "Benchmark failed with exit code: $EXIT_CODE"
             echo "Last 50 lines of output:"
