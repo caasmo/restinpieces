@@ -22,7 +22,7 @@ concurrency:
 jobs:
   benchmark:
     runs-on: ubuntu-latest
-    timeout-minutes: 70
+    timeout-minutes: 90
     permissions:
       contents: write
     steps:
@@ -95,10 +95,14 @@ jobs:
       - name: Run benchmarks on base
         run: |
           cd base
-          # -count=6 runs each benchmark six times; benchstat needs >=6 samples
-          # for a 95% confidence interval, so the report shows real ±% instead
-          # of ± ∞.
-          go test -bench=. -run=^$ -benchmem -count=6 ./... > ../base.txt
+          echo "Starting benchmark run for base..."
+          timeout 30m go test -bench=. -run=^$ -benchmem -count=6 -v ./... > ../base.txt 2>&1 || {
+            EXIT_CODE=$?
+            echo "Benchmark failed with exit code: $EXIT_CODE"
+            echo "Last 50 lines of output:"
+            tail -50 ../base.txt
+            exit $EXIT_CODE
+          }
           if [ ! -s ../base.txt ]; then
             echo "No benchmark results generated for base."
             exit 1
@@ -107,7 +111,14 @@ jobs:
       - name: Run benchmarks on head
         run: |
           cd head
-          go test -bench=. -run=^$ -benchmem -count=6 ./... > ../head.txt
+          echo "Starting benchmark run for head..."
+          timeout 30m go test -bench=. -run=^$ -benchmem -count=6 -v ./... > ../head.txt 2>&1 || {
+            EXIT_CODE=$?
+            echo "Benchmark failed with exit code: $EXIT_CODE"
+            echo "Last 50 lines of output:"
+            tail -50 ../head.txt
+            exit $EXIT_CODE
+          }
           if [ ! -s ../head.txt ]; then
             echo "No benchmark results generated for head."
             exit 1
