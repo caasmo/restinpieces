@@ -1,0 +1,1552 @@
+{
+  "github.com/caasmo/restinpieces/cache": [
+    {
+      "name": "BenchmarkCache_GetHit-4",
+      "runs": 33013126,
+      "ns_per_op": 36.29
+    },
+    {
+      "name": "BenchmarkCache_GetHit-4",
+      "runs": 33320433,
+      "ns_per_op": 36.44
+    },
+    {
+      "name": "BenchmarkCache_GetHit-4",
+      "runs": 32846482,
+      "ns_per_op": 36.74
+    },
+    {
+      "name": "BenchmarkCache_GetHit-4",
+      "runs": 32911045,
+      "ns_per_op": 36.41
+    },
+    {
+      "name": "BenchmarkCache_GetHit-4",
+      "runs": 33003117,
+      "ns_per_op": 36.45
+    },
+    {
+      "name": "BenchmarkCache_GetMiss-4",
+      "runs": 62498300,
+      "ns_per_op": 18.51
+    },
+    {
+      "name": "BenchmarkCache_GetMiss-4",
+      "runs": 63279300,
+      "ns_per_op": 18.5
+    },
+    {
+      "name": "BenchmarkCache_GetMiss-4",
+      "runs": 64520283,
+      "ns_per_op": 18.91
+    },
+    {
+      "name": "BenchmarkCache_GetMiss-4",
+      "runs": 62781075,
+      "ns_per_op": 19.09
+    },
+    {
+      "name": "BenchmarkCache_GetMiss-4",
+      "runs": 65393733,
+      "ns_per_op": 18.55
+    },
+    {
+      "name": "BenchmarkCache_GetHitTTL-4",
+      "runs": 32667931,
+      "ns_per_op": 36.87
+    },
+    {
+      "name": "BenchmarkCache_GetHitTTL-4",
+      "runs": 32597041,
+      "ns_per_op": 36.85
+    },
+    {
+      "name": "BenchmarkCache_GetHitTTL-4",
+      "runs": 32437785,
+      "ns_per_op": 36.65
+    },
+    {
+      "name": "BenchmarkCache_GetHitTTL-4",
+      "runs": 32680423,
+      "ns_per_op": 36.79
+    },
+    {
+      "name": "BenchmarkCache_GetHitTTL-4",
+      "runs": 32818870,
+      "ns_per_op": 36.74
+    },
+    {
+      "name": "BenchmarkCache_SetWithFull-4",
+      "runs": 31771724,
+      "ns_per_op": 37.83
+    },
+    {
+      "name": "BenchmarkCache_SetWithFull-4",
+      "runs": 31670670,
+      "ns_per_op": 37.7
+    },
+    {
+      "name": "BenchmarkCache_SetWithFull-4",
+      "runs": 31760804,
+      "ns_per_op": 37.76
+    },
+    {
+      "name": "BenchmarkCache_SetWithFull-4",
+      "runs": 31626746,
+      "ns_per_op": 37.54
+    },
+    {
+      "name": "BenchmarkCache_SetWithFull-4",
+      "runs": 31606240,
+      "ns_per_op": 37.65
+    },
+    {
+      "name": "BenchmarkCache_Overwrite-4",
+      "runs": 32111143,
+      "ns_per_op": 38.37
+    },
+    {
+      "name": "BenchmarkCache_Overwrite-4",
+      "runs": 31978702,
+      "ns_per_op": 37.9
+    },
+    {
+      "name": "BenchmarkCache_Overwrite-4",
+      "runs": 32157742,
+      "ns_per_op": 37.41
+    },
+    {
+      "name": "BenchmarkCache_Overwrite-4",
+      "runs": 32101221,
+      "ns_per_op": 37.4
+    },
+    {
+      "name": "BenchmarkCache_Overwrite-4",
+      "runs": 32035933,
+      "ns_per_op": 37.19
+    },
+    {
+      "name": "BenchmarkCache_SetWithTTL-4",
+      "runs": 29670343,
+      "ns_per_op": 40.34
+    },
+    {
+      "name": "BenchmarkCache_SetWithTTL-4",
+      "runs": 29635684,
+      "ns_per_op": 40.57
+    },
+    {
+      "name": "BenchmarkCache_SetWithTTL-4",
+      "runs": 29413278,
+      "ns_per_op": 40.22
+    },
+    {
+      "name": "BenchmarkCache_SetWithTTL-4",
+      "runs": 28434895,
+      "ns_per_op": 40.92
+    },
+    {
+      "name": "BenchmarkCache_SetWithTTL-4",
+      "runs": 29620443,
+      "ns_per_op": 40.51
+    },
+    {
+      "name": "BenchmarkCache_Mixed-4",
+      "runs": 29017320,
+      "ns_per_op": 41.67
+    },
+    {
+      "name": "BenchmarkCache_Mixed-4",
+      "runs": 29039410,
+      "ns_per_op": 41.4
+    },
+    {
+      "name": "BenchmarkCache_Mixed-4",
+      "runs": 28898985,
+      "ns_per_op": 41.39
+    },
+    {
+      "name": "BenchmarkCache_Mixed-4",
+      "runs": 28724018,
+      "ns_per_op": 41.51
+    },
+    {
+      "name": "BenchmarkCache_Mixed-4",
+      "runs": 29043831,
+      "ns_per_op": 41.53
+    }
+  ],
+  "github.com/caasmo/restinpieces/core": [
+    {
+      "name": "BenchmarkAuthenticator_HappyPath-4",
+      "runs": 140841,
+      "ns_per_op": 8442,
+      "b_per_op": 3891,
+      "allocs_per_op": 65
+    },
+    {
+      "name": "BenchmarkAuthenticator_HappyPath-4",
+      "runs": 140302,
+      "ns_per_op": 8728,
+      "b_per_op": 3891,
+      "allocs_per_op": 65
+    },
+    {
+      "name": "BenchmarkAuthenticator_HappyPath-4",
+      "runs": 138322,
+      "ns_per_op": 8469,
+      "b_per_op": 3891,
+      "allocs_per_op": 65
+    },
+    {
+      "name": "BenchmarkAuthenticator_HappyPath-4",
+      "runs": 135795,
+      "ns_per_op": 8460,
+      "b_per_op": 3892,
+      "allocs_per_op": 65
+    },
+    {
+      "name": "BenchmarkAuthenticator_HappyPath-4",
+      "runs": 138073,
+      "ns_per_op": 8437,
+      "b_per_op": 3892,
+      "allocs_per_op": 65
+    },
+    {
+      "name": "BenchmarkAuthenticator_NoAuthHeader-4",
+      "runs": 27410161,
+      "ns_per_op": 42.67,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_NoAuthHeader-4",
+      "runs": 27326727,
+      "ns_per_op": 42.83,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_NoAuthHeader-4",
+      "runs": 27335398,
+      "ns_per_op": 42.86,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_NoAuthHeader-4",
+      "runs": 27694099,
+      "ns_per_op": 42.72,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_NoAuthHeader-4",
+      "runs": 27328369,
+      "ns_per_op": 42.73,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidFormat_NoBearer-4",
+      "runs": 23639350,
+      "ns_per_op": 50.38,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidFormat_NoBearer-4",
+      "runs": 23323233,
+      "ns_per_op": 49.87,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidFormat_NoBearer-4",
+      "runs": 23611309,
+      "ns_per_op": 49.71,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidFormat_NoBearer-4",
+      "runs": 23448877,
+      "ns_per_op": 49.64,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidFormat_NoBearer-4",
+      "runs": 23343802,
+      "ns_per_op": 49.59,
+      "b_per_op": 16,
+      "allocs_per_op": 1
+    },
+    {
+      "name": "BenchmarkAuthenticator_MalformedToken-4",
+      "runs": 10567723,
+      "ns_per_op": 112.6,
+      "b_per_op": 64,
+      "allocs_per_op": 2
+    },
+    {
+      "name": "BenchmarkAuthenticator_MalformedToken-4",
+      "runs": 10532098,
+      "ns_per_op": 112.6,
+      "b_per_op": 64,
+      "allocs_per_op": 2
+    },
+    {
+      "name": "BenchmarkAuthenticator_MalformedToken-4",
+      "runs": 10495045,
+      "ns_per_op": 113.3,
+      "b_per_op": 64,
+      "allocs_per_op": 2
+    },
+    {
+      "name": "BenchmarkAuthenticator_MalformedToken-4",
+      "runs": 10514323,
+      "ns_per_op": 112.9,
+      "b_per_op": 64,
+      "allocs_per_op": 2
+    },
+    {
+      "name": "BenchmarkAuthenticator_MalformedToken-4",
+      "runs": 10543200,
+      "ns_per_op": 112.4,
+      "b_per_op": 64,
+      "allocs_per_op": 2
+    },
+    {
+      "name": "BenchmarkAuthenticator_ExpiredToken_UnverifiedCheck-4",
+      "runs": 553358,
+      "ns_per_op": 2109,
+      "b_per_op": 912,
+      "allocs_per_op": 15
+    },
+    {
+      "name": "BenchmarkAuthenticator_ExpiredToken_UnverifiedCheck-4",
+      "runs": 540804,
+      "ns_per_op": 2073,
+      "b_per_op": 913,
+      "allocs_per_op": 15
+    },
+    {
+      "name": "BenchmarkAuthenticator_ExpiredToken_UnverifiedCheck-4",
+      "runs": 538458,
+      "ns_per_op": 2064,
+      "b_per_op": 912,
+      "allocs_per_op": 15
+    },
+    {
+      "name": "BenchmarkAuthenticator_ExpiredToken_UnverifiedCheck-4",
+      "runs": 530418,
+      "ns_per_op": 2084,
+      "b_per_op": 912,
+      "allocs_per_op": 15
+    },
+    {
+      "name": "BenchmarkAuthenticator_ExpiredToken_UnverifiedCheck-4",
+      "runs": 538603,
+      "ns_per_op": 2092,
+      "b_per_op": 912,
+      "allocs_per_op": 15
+    },
+    {
+      "name": "BenchmarkAuthenticator_UserNotFound-4",
+      "runs": 545168,
+      "ns_per_op": 2074,
+      "b_per_op": 913,
+      "allocs_per_op": 15
+    },
+    {
+      "name": "BenchmarkAuthenticator_UserNotFound-4",
+      "runs": 562612,
+      "ns_per_op": 2084,
+      "b_per_op": 913,
+      "allocs_per_op": 15
+    },
+    {
+      "name": "BenchmarkAuthenticator_UserNotFound-4",
+      "runs": 544342,
+      "ns_per_op": 2140,
+      "b_per_op": 912,
+      "allocs_per_op": 15
+    },
+    {
+      "name": "BenchmarkAuthenticator_UserNotFound-4",
+      "runs": 548463,
+      "ns_per_op": 2071,
+      "b_per_op": 912,
+      "allocs_per_op": 15
+    },
+    {
+      "name": "BenchmarkAuthenticator_UserNotFound-4",
+      "runs": 536901,
+      "ns_per_op": 2061,
+      "b_per_op": 913,
+      "allocs_per_op": 15
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidSignature-4",
+      "runs": 542301,
+      "ns_per_op": 2045,
+      "b_per_op": 897,
+      "allocs_per_op": 14
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidSignature-4",
+      "runs": 550086,
+      "ns_per_op": 2047,
+      "b_per_op": 897,
+      "allocs_per_op": 14
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidSignature-4",
+      "runs": 523119,
+      "ns_per_op": 2040,
+      "b_per_op": 897,
+      "allocs_per_op": 14
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidSignature-4",
+      "runs": 558838,
+      "ns_per_op": 2038,
+      "b_per_op": 896,
+      "allocs_per_op": 14
+    },
+    {
+      "name": "BenchmarkAuthenticator_InvalidSignature-4",
+      "runs": 525135,
+      "ns_per_op": 2040,
+      "b_per_op": 896,
+      "allocs_per_op": 14
+    }
+  ],
+  "github.com/caasmo/restinpieces/core/prerouter": [
+    {
+      "name": "BenchmarkRecorder-4",
+      "runs": 7829152,
+      "ns_per_op": 154.3,
+      "b_per_op": 240,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkRecorder-4",
+      "runs": 7598845,
+      "ns_per_op": 154.5,
+      "b_per_op": 240,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkRecorder-4",
+      "runs": 7825798,
+      "ns_per_op": 154.6,
+      "b_per_op": 240,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkRecorder-4",
+      "runs": 7680954,
+      "ns_per_op": 154.8,
+      "b_per_op": 240,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkRecorder-4",
+      "runs": 7717990,
+      "ns_per_op": 154.9,
+      "b_per_op": 240,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkRequestLog_Active-4",
+      "runs": 412257,
+      "ns_per_op": 2704,
+      "b_per_op": 640,
+      "allocs_per_op": 6
+    },
+    {
+      "name": "BenchmarkRequestLog_Active-4",
+      "runs": 454269,
+      "ns_per_op": 2613,
+      "b_per_op": 640,
+      "allocs_per_op": 6
+    },
+    {
+      "name": "BenchmarkRequestLog_Active-4",
+      "runs": 434289,
+      "ns_per_op": 2725,
+      "b_per_op": 640,
+      "allocs_per_op": 6
+    },
+    {
+      "name": "BenchmarkRequestLog_Active-4",
+      "runs": 451293,
+      "ns_per_op": 2599,
+      "b_per_op": 640,
+      "allocs_per_op": 6
+    },
+    {
+      "name": "BenchmarkRequestLog_Active-4",
+      "runs": 450265,
+      "ns_per_op": 2583,
+      "b_per_op": 640,
+      "allocs_per_op": 6
+    },
+    {
+      "name": "BenchmarkRequestLog_Inactive-4",
+      "runs": 14125536,
+      "ns_per_op": 89.88,
+      "b_per_op": 160,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkRequestLog_Inactive-4",
+      "runs": 13211991,
+      "ns_per_op": 86.82,
+      "b_per_op": 160,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkRequestLog_Inactive-4",
+      "runs": 13900312,
+      "ns_per_op": 89.52,
+      "b_per_op": 160,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkRequestLog_Inactive-4",
+      "runs": 13501390,
+      "ns_per_op": 87.22,
+      "b_per_op": 160,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkRequestLog_Inactive-4",
+      "runs": 13187484,
+      "ns_per_op": 90.92,
+      "b_per_op": 160,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockIp_Process-4",
+      "runs": 1891256,
+      "ns_per_op": 588.9,
+      "b_per_op": 162,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockIp_Process-4",
+      "runs": 1857627,
+      "ns_per_op": 596.2,
+      "b_per_op": 162,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockIp_Process-4",
+      "runs": 2058669,
+      "ns_per_op": 648.6,
+      "b_per_op": 162,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockIp_Process-4",
+      "runs": 2001214,
+      "ns_per_op": 584.8,
+      "b_per_op": 162,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockIp_Process-4",
+      "runs": 1871318,
+      "ns_per_op": 582.6,
+      "b_per_op": 162,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockIp_Blocked-4",
+      "runs": 5662155,
+      "ns_per_op": 208.3,
+      "b_per_op": 208,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockIp_Blocked-4",
+      "runs": 5805849,
+      "ns_per_op": 207.4,
+      "b_per_op": 208,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockIp_Blocked-4",
+      "runs": 5713782,
+      "ns_per_op": 207.4,
+      "b_per_op": 208,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockIp_Blocked-4",
+      "runs": 5822102,
+      "ns_per_op": 206,
+      "b_per_op": 208,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockIp_Blocked-4",
+      "runs": 5802712,
+      "ns_per_op": 205.2,
+      "b_per_op": 208,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockUaList_NoMatch-4",
+      "runs": 6369517,
+      "ns_per_op": 192.2,
+      "b_per_op": 161,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockUaList_NoMatch-4",
+      "runs": 5680114,
+      "ns_per_op": 191.6,
+      "b_per_op": 161,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockUaList_NoMatch-4",
+      "runs": 6337878,
+      "ns_per_op": 190.3,
+      "b_per_op": 161,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockUaList_NoMatch-4",
+      "runs": 6208881,
+      "ns_per_op": 192.1,
+      "b_per_op": 161,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockUaList_NoMatch-4",
+      "runs": 6463362,
+      "ns_per_op": 193.1,
+      "b_per_op": 161,
+      "allocs_per_op": 3
+    },
+    {
+      "name": "BenchmarkBlockUaList_Match-4",
+      "runs": 3640886,
+      "ns_per_op": 328.8,
+      "b_per_op": 209,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockUaList_Match-4",
+      "runs": 3626239,
+      "ns_per_op": 330.7,
+      "b_per_op": 209,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockUaList_Match-4",
+      "runs": 3637850,
+      "ns_per_op": 328.5,
+      "b_per_op": 209,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockUaList_Match-4",
+      "runs": 3634074,
+      "ns_per_op": 329.9,
+      "b_per_op": 209,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockUaList_Match-4",
+      "runs": 3588265,
+      "ns_per_op": 325.7,
+      "b_per_op": 209,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockHost_Allowed-4",
+      "runs": 9270674,
+      "ns_per_op": 132.7,
+      "b_per_op": 192,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockHost_Allowed-4",
+      "runs": 9091218,
+      "ns_per_op": 131.7,
+      "b_per_op": 192,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockHost_Allowed-4",
+      "runs": 9185902,
+      "ns_per_op": 132.1,
+      "b_per_op": 192,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockHost_Allowed-4",
+      "runs": 9264979,
+      "ns_per_op": 132.7,
+      "b_per_op": 192,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockHost_Allowed-4",
+      "runs": 9116715,
+      "ns_per_op": 133.5,
+      "b_per_op": 192,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockHost_Blocked-4",
+      "runs": 6348786,
+      "ns_per_op": 193.5,
+      "b_per_op": 240,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkBlockHost_Blocked-4",
+      "runs": 6165907,
+      "ns_per_op": 195.5,
+      "b_per_op": 240,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkBlockHost_Blocked-4",
+      "runs": 6209157,
+      "ns_per_op": 193.8,
+      "b_per_op": 240,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkBlockHost_Blocked-4",
+      "runs": 6067022,
+      "ns_per_op": 196.8,
+      "b_per_op": 240,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkBlockHost_Blocked-4",
+      "runs": 6190480,
+      "ns_per_op": 189,
+      "b_per_op": 240,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkBlockOversizedRequest_Allowed-4",
+      "runs": 5149785,
+      "ns_per_op": 243.5,
+      "b_per_op": 224,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockOversizedRequest_Allowed-4",
+      "runs": 5263486,
+      "ns_per_op": 241.9,
+      "b_per_op": 224,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockOversizedRequest_Allowed-4",
+      "runs": 4641538,
+      "ns_per_op": 243.7,
+      "b_per_op": 224,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockOversizedRequest_Allowed-4",
+      "runs": 5491622,
+      "ns_per_op": 249.1,
+      "b_per_op": 224,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockOversizedRequest_Allowed-4",
+      "runs": 5559897,
+      "ns_per_op": 233.1,
+      "b_per_op": 224,
+      "allocs_per_op": 4
+    },
+    {
+      "name": "BenchmarkBlockOversizedRequest_Blocked-4",
+      "runs": 4683524,
+      "ns_per_op": 263.4,
+      "b_per_op": 272,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkBlockOversizedRequest_Blocked-4",
+      "runs": 3810448,
+      "ns_per_op": 291,
+      "b_per_op": 272,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkBlockOversizedRequest_Blocked-4",
+      "runs": 4035645,
+      "ns_per_op": 279.1,
+      "b_per_op": 272,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkBlockOversizedRequest_Blocked-4",
+      "runs": 4119870,
+      "ns_per_op": 281.6,
+      "b_per_op": 272,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkBlockOversizedRequest_Blocked-4",
+      "runs": 4007232,
+      "ns_per_op": 295.7,
+      "b_per_op": 272,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkChain_HappyPath-4",
+      "runs": 271924,
+      "ns_per_op": 4137,
+      "b_per_op": 774,
+      "allocs_per_op": 11
+    },
+    {
+      "name": "BenchmarkChain_HappyPath-4",
+      "runs": 288043,
+      "ns_per_op": 4153,
+      "b_per_op": 773,
+      "allocs_per_op": 11
+    },
+    {
+      "name": "BenchmarkChain_HappyPath-4",
+      "runs": 280207,
+      "ns_per_op": 4178,
+      "b_per_op": 774,
+      "allocs_per_op": 11
+    },
+    {
+      "name": "BenchmarkChain_HappyPath-4",
+      "runs": 289350,
+      "ns_per_op": 4154,
+      "b_per_op": 773,
+      "allocs_per_op": 11
+    },
+    {
+      "name": "BenchmarkChain_HappyPath-4",
+      "runs": 288200,
+      "ns_per_op": 4138,
+      "b_per_op": 773,
+      "allocs_per_op": 11
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Maintenance-4",
+      "runs": 249523,
+      "ns_per_op": 4903,
+      "b_per_op": 1525,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Maintenance-4",
+      "runs": 247516,
+      "ns_per_op": 4811,
+      "b_per_op": 1525,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Maintenance-4",
+      "runs": 250111,
+      "ns_per_op": 4791,
+      "b_per_op": 1525,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Maintenance-4",
+      "runs": 252640,
+      "ns_per_op": 4792,
+      "b_per_op": 1525,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Maintenance-4",
+      "runs": 245373,
+      "ns_per_op": 4807,
+      "b_per_op": 1525,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Host-4",
+      "runs": 303674,
+      "ns_per_op": 3933,
+      "b_per_op": 757,
+      "allocs_per_op": 11
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Host-4",
+      "runs": 300486,
+      "ns_per_op": 3942,
+      "b_per_op": 757,
+      "allocs_per_op": 11
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Host-4",
+      "runs": 292045,
+      "ns_per_op": 3986,
+      "b_per_op": 756,
+      "allocs_per_op": 11
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Host-4",
+      "runs": 306873,
+      "ns_per_op": 3897,
+      "b_per_op": 757,
+      "allocs_per_op": 11
+    },
+    {
+      "name": "BenchmarkChain_Blocked_Host-4",
+      "runs": 300112,
+      "ns_per_op": 3908,
+      "b_per_op": 757,
+      "allocs_per_op": 11
+    }
+  ],
+  "github.com/caasmo/restinpieces/crypto": [
+    {
+      "name": "BenchmarkNewJwtSigningKey-4",
+      "runs": 1718028,
+      "ns_per_op": 696.8,
+      "b_per_op": 657,
+      "allocs_per_op": 10
+    },
+    {
+      "name": "BenchmarkNewJwtSigningKey-4",
+      "runs": 1707898,
+      "ns_per_op": 703.1,
+      "b_per_op": 657,
+      "allocs_per_op": 10
+    },
+    {
+      "name": "BenchmarkNewJwtSigningKey-4",
+      "runs": 1710675,
+      "ns_per_op": 701.4,
+      "b_per_op": 657,
+      "allocs_per_op": 10
+    },
+    {
+      "name": "BenchmarkNewJwtSigningKey-4",
+      "runs": 1722614,
+      "ns_per_op": 700.5,
+      "b_per_op": 657,
+      "allocs_per_op": 10
+    },
+    {
+      "name": "BenchmarkNewJwtSigningKey-4",
+      "runs": 1718547,
+      "ns_per_op": 701.5,
+      "b_per_op": 657,
+      "allocs_per_op": 10
+    },
+    {
+      "name": "BenchmarkNewJwt-4",
+      "runs": 300908,
+      "ns_per_op": 3936,
+      "b_per_op": 2056,
+      "allocs_per_op": 41
+    },
+    {
+      "name": "BenchmarkNewJwt-4",
+      "runs": 295158,
+      "ns_per_op": 3945,
+      "b_per_op": 2056,
+      "allocs_per_op": 41
+    },
+    {
+      "name": "BenchmarkNewJwt-4",
+      "runs": 293395,
+      "ns_per_op": 3960,
+      "b_per_op": 2056,
+      "allocs_per_op": 41
+    },
+    {
+      "name": "BenchmarkNewJwt-4",
+      "runs": 301018,
+      "ns_per_op": 3952,
+      "b_per_op": 2056,
+      "allocs_per_op": 41
+    },
+    {
+      "name": "BenchmarkNewJwt-4",
+      "runs": 301965,
+      "ns_per_op": 3950,
+      "b_per_op": 2056,
+      "allocs_per_op": 41
+    },
+    {
+      "name": "BenchmarkParseJwt_Valid-4",
+      "runs": 247550,
+      "ns_per_op": 4637,
+      "b_per_op": 2217,
+      "allocs_per_op": 39
+    },
+    {
+      "name": "BenchmarkParseJwt_Valid-4",
+      "runs": 253087,
+      "ns_per_op": 4672,
+      "b_per_op": 2217,
+      "allocs_per_op": 39
+    },
+    {
+      "name": "BenchmarkParseJwt_Valid-4",
+      "runs": 250272,
+      "ns_per_op": 4647,
+      "b_per_op": 2217,
+      "allocs_per_op": 39
+    },
+    {
+      "name": "BenchmarkParseJwt_Valid-4",
+      "runs": 246682,
+      "ns_per_op": 4657,
+      "b_per_op": 2217,
+      "allocs_per_op": 39
+    },
+    {
+      "name": "BenchmarkParseJwt_Valid-4",
+      "runs": 248305,
+      "ns_per_op": 4644,
+      "b_per_op": 2217,
+      "allocs_per_op": 39
+    },
+    {
+      "name": "BenchmarkParseJwt_InvalidSignature-4",
+      "runs": 232873,
+      "ns_per_op": 5056,
+      "b_per_op": 2281,
+      "allocs_per_op": 43
+    },
+    {
+      "name": "BenchmarkParseJwt_InvalidSignature-4",
+      "runs": 229905,
+      "ns_per_op": 5039,
+      "b_per_op": 2281,
+      "allocs_per_op": 43
+    },
+    {
+      "name": "BenchmarkParseJwt_InvalidSignature-4",
+      "runs": 230068,
+      "ns_per_op": 5061,
+      "b_per_op": 2282,
+      "allocs_per_op": 43
+    },
+    {
+      "name": "BenchmarkParseJwt_InvalidSignature-4",
+      "runs": 228313,
+      "ns_per_op": 5047,
+      "b_per_op": 2282,
+      "allocs_per_op": 43
+    },
+    {
+      "name": "BenchmarkParseJwt_InvalidSignature-4",
+      "runs": 231303,
+      "ns_per_op": 5033,
+      "b_per_op": 2281,
+      "allocs_per_op": 43
+    },
+    {
+      "name": "BenchmarkParseJwtUnverified-4",
+      "runs": 350577,
+      "ns_per_op": 3277,
+      "b_per_op": 1256,
+      "allocs_per_op": 26
+    },
+    {
+      "name": "BenchmarkParseJwtUnverified-4",
+      "runs": 348397,
+      "ns_per_op": 3317,
+      "b_per_op": 1256,
+      "allocs_per_op": 26
+    },
+    {
+      "name": "BenchmarkParseJwtUnverified-4",
+      "runs": 347640,
+      "ns_per_op": 3259,
+      "b_per_op": 1256,
+      "allocs_per_op": 26
+    },
+    {
+      "name": "BenchmarkParseJwtUnverified-4",
+      "runs": 353292,
+      "ns_per_op": 3279,
+      "b_per_op": 1256,
+      "allocs_per_op": 26
+    },
+    {
+      "name": "BenchmarkParseJwtUnverified-4",
+      "runs": 346974,
+      "ns_per_op": 3271,
+      "b_per_op": 1256,
+      "allocs_per_op": 26
+    }
+  ],
+  "github.com/caasmo/restinpieces/db/zombiezen": [
+    {
+      "name": "BenchmarkGetConfig_Serial-4",
+      "runs": 56767,
+      "ns_per_op": 21033,
+      "b_per_op": 5140,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkGetConfig_Serial-4",
+      "runs": 57442,
+      "ns_per_op": 20827,
+      "b_per_op": 5137,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkGetConfig_Serial-4",
+      "runs": 56758,
+      "ns_per_op": 20751,
+      "b_per_op": 5139,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkGetConfig_Serial-4",
+      "runs": 57568,
+      "ns_per_op": 20815,
+      "b_per_op": 5137,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkGetConfig_Serial-4",
+      "runs": 57058,
+      "ns_per_op": 21074,
+      "b_per_op": 5138,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkInsertConfig_Serial-4",
+      "runs": 3267,
+      "ns_per_op": 367564,
+      "b_per_op": 424,
+      "allocs_per_op": 9
+    },
+    {
+      "name": "BenchmarkInsertConfig_Serial-4",
+      "runs": 3214,
+      "ns_per_op": 369716,
+      "b_per_op": 428,
+      "allocs_per_op": 9
+    },
+    {
+      "name": "BenchmarkInsertConfig_Serial-4",
+      "runs": 3230,
+      "ns_per_op": 350641,
+      "b_per_op": 427,
+      "allocs_per_op": 9
+    },
+    {
+      "name": "BenchmarkInsertConfig_Serial-4",
+      "runs": 3421,
+      "ns_per_op": 342899,
+      "b_per_op": 426,
+      "allocs_per_op": 9
+    },
+    {
+      "name": "BenchmarkInsertConfig_Serial-4",
+      "runs": 3247,
+      "ns_per_op": 361136,
+      "b_per_op": 425,
+      "allocs_per_op": 9
+    },
+    {
+      "name": "BenchmarkInsertBatch_Serial-4",
+      "runs": 852,
+      "ns_per_op": 1419949,
+      "b_per_op": 241,
+      "allocs_per_op": 7
+    },
+    {
+      "name": "BenchmarkInsertBatch_Serial-4",
+      "runs": 711,
+      "ns_per_op": 1483671,
+      "b_per_op": 240,
+      "allocs_per_op": 7
+    },
+    {
+      "name": "BenchmarkInsertBatch_Serial-4",
+      "runs": 976,
+      "ns_per_op": 1402408,
+      "b_per_op": 240,
+      "allocs_per_op": 7
+    },
+    {
+      "name": "BenchmarkInsertBatch_Serial-4",
+      "runs": 975,
+      "ns_per_op": 1336657,
+      "b_per_op": 240,
+      "allocs_per_op": 7
+    },
+    {
+      "name": "BenchmarkInsertBatch_Serial-4",
+      "runs": 835,
+      "ns_per_op": 1383820,
+      "b_per_op": 240,
+      "allocs_per_op": 7
+    },
+    {
+      "name": "BenchmarkInsertJob_Serial-4",
+      "runs": 3218,
+      "ns_per_op": 368646,
+      "b_per_op": 465,
+      "allocs_per_op": 12
+    },
+    {
+      "name": "BenchmarkInsertJob_Serial-4",
+      "runs": 3194,
+      "ns_per_op": 371997,
+      "b_per_op": 464,
+      "allocs_per_op": 12
+    },
+    {
+      "name": "BenchmarkInsertJob_Serial-4",
+      "runs": 3318,
+      "ns_per_op": 358014,
+      "b_per_op": 464,
+      "allocs_per_op": 12
+    },
+    {
+      "name": "BenchmarkInsertJob_Serial-4",
+      "runs": 3001,
+      "ns_per_op": 388189,
+      "b_per_op": 466,
+      "allocs_per_op": 12
+    },
+    {
+      "name": "BenchmarkInsertJob_Serial-4",
+      "runs": 2956,
+      "ns_per_op": 390343,
+      "b_per_op": 464,
+      "allocs_per_op": 12
+    },
+    {
+      "name": "BenchmarkInsertJob_Parallel-4",
+      "runs": 3469,
+      "ns_per_op": 364177,
+      "b_per_op": 480,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkInsertJob_Parallel-4",
+      "runs": 2652,
+      "ns_per_op": 385393,
+      "b_per_op": 476,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkInsertJob_Parallel-4",
+      "runs": 3158,
+      "ns_per_op": 368331,
+      "b_per_op": 476,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkInsertJob_Parallel-4",
+      "runs": 2926,
+      "ns_per_op": 363392,
+      "b_per_op": 475,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkInsertJob_Parallel-4",
+      "runs": 3567,
+      "ns_per_op": 363216,
+      "b_per_op": 474,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkClaim_Serial-4",
+      "runs": 1608,
+      "ns_per_op": 624056,
+      "b_per_op": 811,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkClaim_Serial-4",
+      "runs": 1620,
+      "ns_per_op": 647881,
+      "b_per_op": 811,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkClaim_Serial-4",
+      "runs": 1628,
+      "ns_per_op": 643714,
+      "b_per_op": 810,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkClaim_Serial-4",
+      "runs": 1836,
+      "ns_per_op": 653050,
+      "b_per_op": 808,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkClaim_Serial-4",
+      "runs": 1696,
+      "ns_per_op": 626789,
+      "b_per_op": 810,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkClaim_Parallel-4",
+      "runs": 1867,
+      "ns_per_op": 582065,
+      "b_per_op": 865,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkClaim_Parallel-4",
+      "runs": 2000,
+      "ns_per_op": 595898,
+      "b_per_op": 851,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkClaim_Parallel-4",
+      "runs": 1965,
+      "ns_per_op": 581467,
+      "b_per_op": 857,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkClaim_Parallel-4",
+      "runs": 1992,
+      "ns_per_op": 587814,
+      "b_per_op": 849,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkClaim_Parallel-4",
+      "runs": 2108,
+      "ns_per_op": 584310,
+      "b_per_op": 849,
+      "allocs_per_op": 16
+    },
+    {
+      "name": "BenchmarkMarkCompleted_Serial-4",
+      "runs": 4116,
+      "ns_per_op": 277686,
+      "b_per_op": 352,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkMarkCompleted_Serial-4",
+      "runs": 3952,
+      "ns_per_op": 281370,
+      "b_per_op": 353,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkMarkCompleted_Serial-4",
+      "runs": 3951,
+      "ns_per_op": 284975,
+      "b_per_op": 352,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkMarkCompleted_Serial-4",
+      "runs": 3951,
+      "ns_per_op": 284984,
+      "b_per_op": 353,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkMarkCompleted_Serial-4",
+      "runs": 3871,
+      "ns_per_op": 285884,
+      "b_per_op": 353,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkMarkCompleted_Parallel-4",
+      "runs": 4030,
+      "ns_per_op": 288264,
+      "b_per_op": 360,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkMarkCompleted_Parallel-4",
+      "runs": 3169,
+      "ns_per_op": 325811,
+      "b_per_op": 363,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkMarkCompleted_Parallel-4",
+      "runs": 3297,
+      "ns_per_op": 304735,
+      "b_per_op": 367,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkMarkCompleted_Parallel-4",
+      "runs": 3355,
+      "ns_per_op": 298681,
+      "b_per_op": 370,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkMarkCompleted_Parallel-4",
+      "runs": 4100,
+      "ns_per_op": 286726,
+      "b_per_op": 361,
+      "allocs_per_op": 5
+    },
+    {
+      "name": "BenchmarkGetUserById_Serial-4",
+      "runs": 117596,
+      "ns_per_op": 9961,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserById_Serial-4",
+      "runs": 116433,
+      "ns_per_op": 10066,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserById_Serial-4",
+      "runs": 117614,
+      "ns_per_op": 9934,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserById_Serial-4",
+      "runs": 116928,
+      "ns_per_op": 10021,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserById_Serial-4",
+      "runs": 117309,
+      "ns_per_op": 9923,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserById_Parallel-4",
+      "runs": 195688,
+      "ns_per_op": 5799,
+      "b_per_op": 624,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserById_Parallel-4",
+      "runs": 196417,
+      "ns_per_op": 5803,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserById_Parallel-4",
+      "runs": 195476,
+      "ns_per_op": 5789,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserById_Parallel-4",
+      "runs": 212323,
+      "ns_per_op": 5868,
+      "b_per_op": 624,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserById_Parallel-4",
+      "runs": 203880,
+      "ns_per_op": 5789,
+      "b_per_op": 624,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserByEmail_Serial-4",
+      "runs": 120148,
+      "ns_per_op": 9899,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserByEmail_Serial-4",
+      "runs": 120363,
+      "ns_per_op": 9975,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserByEmail_Serial-4",
+      "runs": 119816,
+      "ns_per_op": 9990,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserByEmail_Serial-4",
+      "runs": 119361,
+      "ns_per_op": 10003,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserByEmail_Serial-4",
+      "runs": 119654,
+      "ns_per_op": 10009,
+      "b_per_op": 625,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserByEmail_Parallel-4",
+      "runs": 196131,
+      "ns_per_op": 5917,
+      "b_per_op": 624,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserByEmail_Parallel-4",
+      "runs": 194493,
+      "ns_per_op": 5938,
+      "b_per_op": 624,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserByEmail_Parallel-4",
+      "runs": 196704,
+      "ns_per_op": 5846,
+      "b_per_op": 624,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserByEmail_Parallel-4",
+      "runs": 196128,
+      "ns_per_op": 5904,
+      "b_per_op": 624,
+      "allocs_per_op": 13
+    },
+    {
+      "name": "BenchmarkGetUserByEmail_Parallel-4",
+      "runs": 196818,
+      "ns_per_op": 5858,
+      "b_per_op": 624,
+      "allocs_per_op": 13
+    }
+  ]
+}
