@@ -6,21 +6,20 @@ import (
 	"time"
 )
 
-// Performance note: a TTL roughly doubles the cost per operation.
+// Performance note: TTL cost with sampled clock.
 //
-// The TTL write (SetWithTTL) and the expiry check in Get both call
-// time.Now(), a vDSO clock read costing ~40ns. UnixNano() itself is
-// negligible (~0.3ns); the clock read dominates. Measured on the dev
-// machine (Intel i7-8550U, Linux, Go 1.26, 1000-entry cache):
+// The TTL write (SetWithTTL) and the expiry check in Get use fastNow —
+// a periodically-refreshed snapshot of time.Now().UnixNano() (clockNow)
+// via an atomic load (~1-2ns) instead of a direct vDSO clock read
+// (~40ns). Non-TTL entries short-circuit on expiration == 0 and never
+// touch the clock. Measured on the dev machine (Intel i7-8550U, Linux,
+// Go 1.26, 1000-entry cache, fastNow):
 //
-//	GetHit       (no TTL)   ~39 ns/op   <- expiry check short-circuits
-//	GetHitTTL    (with TTL) ~83 ns/op   <- +44 ns for time.Now()
-//	SetNewKey                ~38 ns/op
-//	SetWithTTL               ~98 ns/op   <- +60 ns for time.Now()
-//
-// So the clock read roughly doubles the per-op cost of both the read and
-// write paths for TTL entries. A sampled clock (one package-level cached
-// time value) is the planned fix; until then, time.Now() is used as-is.
+//	GetHit       (no TTL)   ~38 ns/op   <- expiry check short-circuits
+//	GetHitTTL    (with TTL) ~40 ns/op   <- +2 ns for fastNow
+//	SetWithFull              ~42 ns/op
+//	Overwrite                ~42 ns/op
+//	SetWithTTL               ~46 ns/op   <- +4 ns for fastNow
 
 const benchMaxEntries = 1000
 
@@ -69,7 +68,7 @@ func BenchmarkCache_GetMiss(b *testing.B) {
 }
 
 // BenchmarkCache_GetHitTTL measures the full read path on TTL entries:
-// map lookup, LRU move-to-head, and the expiry check (time.Now()).
+// map lookup, LRU move-to-head, and the expiry check (fastNow).
 func BenchmarkCache_GetHitTTL(b *testing.B) {
 	c := newWith[string, string](benchMaxEntries)
 	keys := newBenchKeys("key", benchMaxEntries)
