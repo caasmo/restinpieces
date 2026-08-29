@@ -1,59 +1,16 @@
 package zombiezen
 
 import (
-	"context"
-	"io/fs"
 	"path/filepath"
 	"testing"
 
 	"github.com/caasmo/restinpieces/db/dbtest"
-	"github.com/caasmo/restinpieces/sql"
 	"zombiezen.com/go/sqlite/sqlitex"
 )
 
 // newTestDB creates a new in-memory SQLite database and applies all schemas.
 func newTestDB(t *testing.T) *Db {
-	t.Helper()
-
-	//  each connection in the pool gets its own separate in-memory database
-	//  instance. we need to make sure we only have one
-	pool, err := sqlitex.NewPool("file::memory:", sqlitex.PoolOptions{
-		PoolSize: 1,
-	})
-	if err != nil {
-		t.Fatalf("failed to create db pool: %v", err)
-	}
-
-	t.Cleanup(func() {
-		err := pool.Close()
-		if err != nil {
-			t.Errorf("failed to close db pool: %v", err)
-		}
-	})
-
-	conn, err := pool.Take(context.Background())
-	if err != nil {
-		t.Fatalf("failed to get db connection: %v", err)
-	}
-	defer pool.Put(conn)
-
-	schemaFS := sql.FS()
-
-	// Directly read and execute the app_config.sql file we need
-	sqlBytes, err := fs.ReadFile(schemaFS, "app/app_config.sql")
-	if err != nil {
-		t.Fatalf("Failed to read app_config.sql: %v", err)
-	}
-
-	if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
-		t.Fatalf("Failed to execute app_config.sql: %v", err)
-	}
-
-	db, err := New(pool)
-	if err != nil {
-		t.Fatalf("failed to create db: %v", err)
-	}
-	return db
+	return newTestDb(t, "app/app_config.sql")
 }
 
 func TestConfigSuite(t *testing.T) {
