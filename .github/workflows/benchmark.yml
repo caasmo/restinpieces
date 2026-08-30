@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       base:
-        description: 'Base ref to compare against (SHA or tag)'
-        required: true
+        description: 'Base ref to compare against (SHA or tag). Optional; provide at least one of base or head.'
+        required: false
       head:
-        description: 'Head ref to benchmark (SHA or tag)'
-        required: true
+        description: 'Head ref to benchmark (SHA or tag). Optional; provide at least one of base or head.'
+        required: false
 
 # Serialize benchmark runs: every run pushes to master, so concurrent runs
 # must not race each other's git pull --rebase and push. The default
@@ -54,20 +54,40 @@ jobs:
             # release tag reachable from its parent commit.
             HEAD_REF="${{ github.ref_name }}"
             BASE_REF="$(git describe --tags --match 'v*' --abbrev=0 "${HEAD_REF}^")"
+            MODE="compare"
           else
-            HEAD_REF="$HEAD_INPUT"
-            BASE_REF="$BASE_INPUT"
+            if [ -z "$BASE_INPUT" ] && [ -z "$HEAD_INPUT" ]; then
+              MODE=""
+            elif [ -z "$BASE_INPUT" ] || [ -z "$HEAD_INPUT" ]; then
+              MODE="single"
+              HEAD_REF="${HEAD_INPUT:-$BASE_INPUT}"
+              BASE_REF=""
+            else
+              MODE="compare"
+              HEAD_REF="$HEAD_INPUT"
+              BASE_REF="$BASE_INPUT"
+            fi
           fi
           echo "base=${BASE_REF}" >> "$GITHUB_OUTPUT"
           echo "head=${HEAD_REF}" >> "$GITHUB_OUTPUT"
+          echo "mode=${MODE}" >> "$GITHUB_OUTPUT"
 
-      - name: Fail when no previous release
-        if: steps.refs.outputs.base == ''
+      - name: Validate inputs
+        env:
+          MODE: ${{ steps.refs.outputs.mode }}
+          BASE: ${{ steps.refs.outputs.base }}
         run: |
-          echo "Base ref is empty: on a release there is no previous release tag; on dispatch, the base input is blank."
-          exit 1
+          if [ -z "$MODE" ]; then
+            echo "Error: provide at least one of 'base' or 'head'."
+            exit 1
+          fi
+          if [ "$MODE" = "compare" ] && [ -z "$BASE" ]; then
+            echo "Error: no previous release tag to compare against."
+            exit 1
+          fi
 
       - name: Checkout base
+        if: steps.refs.outputs.mode == 'compare'
         uses: actions/checkout@v7
         with:
           ref: ${{ steps.refs.outputs.base }}
@@ -82,17 +102,12 @@ jobs:
           fetch-depth: 1
 
       - name: Set up Go
-        # The cache is keyed on both comparison trees' go.sum files, which
-        # only exist after the base and head checkouts; both trees share the
-        # module and build cache.
         uses: actions/setup-go@v7
         with:
           go-version: stable
-          cache-dependency-path: |
-            base/go.sum
-            head/go.sum
 
       - name: Run benchmarks on base
+        if: steps.refs.outputs.mode == 'compare'
         run: |
           cd base
           echo "Starting benchmark run for base..."
@@ -124,19 +139,30 @@ jobs:
             exit 1
           fi
 
-      - name: Generate benchmark comparison report
+      - name: Generate benchmark report
         env:
+          MODE: ${{ steps.refs.outputs.mode }}
           BASE_REF: ${{ steps.refs.outputs.base }}
           HEAD_REF: ${{ steps.refs.outputs.head }}
         run: |
-          # benchstat compares overlapping benchmark names only; benchmarks
-          # present in one run but not the other (added, removed, or renamed)
-          # are listed without a delta.
-          benchstat base.txt head.txt > benchstat.txt
-          BASE_SHA=$(git -C base rev-parse --short HEAD)
+          if [ "$MODE" = "compare" ]; then
+            # benchstat compares overlapping benchmark names only; benchmarks
+            # present in one run but not the other (added, removed, or renamed)
+            # are listed without a delta.
+            benchstat base.txt head.txt > benchstat.txt
+            TITLE="Benchmark comparison: ${BASE_REF} vs ${HEAD_REF}"
+          else
+            benchstat head.txt > benchstat.txt
+            TITLE="Benchmark report: ${HEAD_REF}"
+          fi
           HEAD_SHA=$(git -C head rev-parse --short HEAD)
+          if [ "$MODE" = "compare" ]; then
+            BASE_SHA=$(git -C base rev-parse --short HEAD)
+          else
+            BASE_SHA="-"
+          fi
           {
-            echo "# Benchmark comparison: ${BASE_REF} (${BASE_SHA}) vs ${HEAD_REF} (${HEAD_SHA})"
+            echo "# ${TITLE}"
             echo ""
             echo "- Date: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
             echo "- Base: ${BASE_REF} (${BASE_SHA})"
@@ -149,26 +175,3 @@ jobs:
             echo '```'
           } > benchmark-report.md
           cat benchmark-report.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Commit benchmark report
-        if: github.event_name == 'release'
-        env:
-          BASE_REF: ${{ steps.refs.outputs.base }}
-          HEAD_REF: ${{ steps.refs.outputs.head }}
-        # base/ and head/ are nested git repositories inside this checkout;
-        # only ever add .github/benchmarks here, never git add -A.
-        run: |
-          mkdir -p .github/benchmarks
-          cp benchmark-report.md ".github/benchmarks/compare-${BASE_REF//\//-}-${HEAD_REF//\//-}.md"
-
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-
-          git add .github/benchmarks
-          if git diff --quiet --staged -- .github/benchmarks; then
-            echo "No changes to benchmark reports"
-          else
-            git commit -m "chore(benchmark): Compare ${BASE_REF} vs ${HEAD_REF}"
-            git pull --rebase
-            git push
-          fi
