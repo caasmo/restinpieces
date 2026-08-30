@@ -9,12 +9,12 @@ import (
 
 const logBatchSize = 10
 
-// BenchInsertBatch_Serial measures one InsertBatch call against the provided
+// BenchLog_InsertBatch_Serial measures one InsertBatch call against the provided
 // log database, one call at a time. Each call inserts logBatchSize entries in
 // one transaction, which is how the framework writes logs. The log database
 // uses a single connection, so there is no pool to contend over and only a
 // serial variant exists.
-func BenchInsertBatch_Serial(b *testing.B, logDB db.DbLog) {
+func BenchLog_InsertBatch_Serial(b *testing.B, logDB db.DbLog) {
 	batch := make([]db.Log, logBatchSize)
 	for i := 0; i < logBatchSize; i++ {
 		batch[i] = db.Log{

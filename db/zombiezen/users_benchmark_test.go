@@ -6,27 +6,27 @@ import (
 	"github.com/caasmo/restinpieces/db/dbtest"
 )
 
-// BenchmarkGetUserById_Serial runs the shared GetUserById workload against a
-// production-like database file. See dbtest.BenchGetUserById_Serial.
-func BenchmarkGetUserById_Serial(b *testing.B) {
-	dbtest.BenchGetUserById_Serial(b, newBenchDb(b, "app/users.sql"))
+// BenchmarkUser_GetById_Serial runs the shared GetUserById workload against a
+// production-like database file. See dbtest.BenchUser_GetById_Serial.
+func BenchmarkUser_GetById_Serial(b *testing.B) {
+	dbtest.BenchUser_GetById_Serial(b, newBenchDb(b, "app/users.sql"))
 }
 
-// BenchmarkGetUserById_Parallel runs the shared GetUserById workload under
-// contention. See dbtest.BenchGetUserById_Parallel.
-func BenchmarkGetUserById_Parallel(b *testing.B) {
-	dbtest.BenchGetUserById_Parallel(b, newBenchDb(b, "app/users.sql"))
+// BenchmarkUser_GetById_Parallel runs the shared GetUserById workload under
+// contention. See dbtest.BenchUser_GetById_Parallel.
+func BenchmarkUser_GetById_Parallel(b *testing.B) {
+	dbtest.BenchUser_GetById_Parallel(b, newBenchDb(b, "app/users.sql"))
 }
 
-// BenchmarkGetUserByEmail_Serial runs the shared GetUserByEmail workload
+// BenchmarkUser_GetByEmail_Serial runs the shared GetUserByEmail workload
 // against a production-like database file. See
-// dbtest.BenchGetUserByEmail_Serial.
-func BenchmarkGetUserByEmail_Serial(b *testing.B) {
-	dbtest.BenchGetUserByEmail_Serial(b, newBenchDb(b, "app/users.sql"))
+// dbtest.BenchUser_GetByEmail_Serial.
+func BenchmarkUser_GetByEmail_Serial(b *testing.B) {
+	dbtest.BenchUser_GetByEmail_Serial(b, newBenchDb(b, "app/users.sql"))
 }
 
-// BenchmarkGetUserByEmail_Parallel runs the shared GetUserByEmail workload
-// under contention. See dbtest.BenchGetUserByEmail_Parallel.
-func BenchmarkGetUserByEmail_Parallel(b *testing.B) {
-	dbtest.BenchGetUserByEmail_Parallel(b, newBenchDb(b, "app/users.sql"))
+// BenchmarkUser_GetByEmail_Parallel runs the shared GetUserByEmail workload
+// under contention. See dbtest.BenchUser_GetByEmail_Parallel.
+func BenchmarkUser_GetByEmail_Parallel(b *testing.B) {
+	dbtest.BenchUser_GetByEmail_Parallel(b, newBenchDb(b, "app/users.sql"))
 }

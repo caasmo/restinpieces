@@ -6,14 +6,14 @@ import (
 	"github.com/caasmo/restinpieces/db/dbtest"
 )
 
-// BenchmarkGetConfig_Serial runs the shared GetConfig workload against a
-// production-like database file. See dbtest.BenchGetConfig_Serial.
-func BenchmarkGetConfig_Serial(b *testing.B) {
-	dbtest.BenchGetConfig_Serial(b, newBenchDb(b, "app/app_config.sql"))
+// BenchmarkConfig_Get_Serial runs the shared GetConfig workload against a
+// production-like database file. See dbtest.BenchConfig_Get_Serial.
+func BenchmarkConfig_Get_Serial(b *testing.B) {
+	dbtest.BenchConfig_Get_Serial(b, newBenchDb(b, "app/app_config.sql"))
 }
 
-// BenchmarkInsertConfig_Serial runs the shared InsertConfig workload against
-// a production-like database file. See dbtest.BenchInsertConfig_Serial.
-func BenchmarkInsertConfig_Serial(b *testing.B) {
-	dbtest.BenchInsertConfig_Serial(b, newBenchDb(b, "app/app_config.sql"))
+// BenchmarkConfig_Insert_Serial runs the shared InsertConfig workload against
+// a production-like database file. See dbtest.BenchConfig_Insert_Serial.
+func BenchmarkConfig_Insert_Serial(b *testing.B) {
+	dbtest.BenchConfig_Insert_Serial(b, newBenchDb(b, "app/app_config.sql"))
 }

@@ -51,9 +51,9 @@ func seedBenchJobs(b *testing.B, benchDB benchQueue, jobCount int) []int64 {
 	return ids
 }
 
-// BenchInsertJob_Serial measures one InsertJob call against the provided
+// BenchQueue_InsertJob_Serial measures one InsertJob call against the provided
 // database, one call at a time.
-func BenchInsertJob_Serial(b *testing.B, benchDB benchQueue) {
+func BenchQueue_InsertJob_Serial(b *testing.B, benchDB benchQueue) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -70,10 +70,10 @@ func BenchInsertJob_Serial(b *testing.B, benchDB benchQueue) {
 	}
 }
 
-// BenchInsertJob_Parallel measures InsertJob under contention: one goroutine
+// BenchQueue_InsertJob_Parallel measures InsertJob under contention: one goroutine
 // per CPU, all inserting into the same database. This exposes the writer lock
 // contention that serial benches hide.
-func BenchInsertJob_Parallel(b *testing.B, benchDB benchQueue) {
+func BenchQueue_InsertJob_Parallel(b *testing.B, benchDB benchQueue) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -92,10 +92,10 @@ func BenchInsertJob_Parallel(b *testing.B, benchDB benchQueue) {
 	})
 }
 
-// BenchClaim_Serial measures one Claim(1) call against the provided database,
+// BenchQueue_Claim_Serial measures one Claim(1) call against the provided database,
 // one call at a time. Claim drains the queue, so each iteration inserts a
 // fresh job before claiming it; the insert runs with the timer stopped.
-func BenchClaim_Serial(b *testing.B, benchDB benchQueue) {
+func BenchQueue_Claim_Serial(b *testing.B, benchDB benchQueue) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -122,10 +122,10 @@ func BenchClaim_Serial(b *testing.B, benchDB benchQueue) {
 	}
 }
 
-// BenchClaim_Parallel measures Claim(1) under contention: one goroutine per
+// BenchQueue_Claim_Parallel measures Claim(1) under contention: one goroutine per
 // CPU, each inserting a fresh job and claiming it. Claim drains the queue, so
 // the insert runs with the timer stopped.
-func BenchClaim_Parallel(b *testing.B, benchDB benchQueue) {
+func BenchQueue_Claim_Parallel(b *testing.B, benchDB benchQueue) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
@@ -155,10 +155,10 @@ func BenchClaim_Parallel(b *testing.B, benchDB benchQueue) {
 	})
 }
 
-// BenchMarkCompleted_Serial measures one MarkCompleted call against the
+// BenchQueue_MarkCompleted_Serial measures one MarkCompleted call against the
 // provided database, one call at a time. The IDs rotate across the seeded
 // jobs so the updates hit different rows like real traffic.
-func BenchMarkCompleted_Serial(b *testing.B, benchDB benchQueue) {
+func BenchQueue_MarkCompleted_Serial(b *testing.B, benchDB benchQueue) {
 	ids := seedBenchJobs(b, benchDB, jobCount)
 
 	b.ReportAllocs()
@@ -174,10 +174,10 @@ func BenchMarkCompleted_Serial(b *testing.B, benchDB benchQueue) {
 	}
 }
 
-// BenchMarkCompleted_Parallel measures MarkCompleted under contention: one
+// BenchQueue_MarkCompleted_Parallel measures MarkCompleted under contention: one
 // goroutine per CPU, all updating the seeded jobs through the database. This
 // exposes the writer lock contention that serial benches hide.
-func BenchMarkCompleted_Parallel(b *testing.B, benchDB benchQueue) {
+func BenchQueue_MarkCompleted_Parallel(b *testing.B, benchDB benchQueue) {
 	ids := seedBenchJobs(b, benchDB, jobCount)
 
 	b.ReportAllocs()

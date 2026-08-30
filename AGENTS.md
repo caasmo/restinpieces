@@ -51,3 +51,19 @@ to the other CLIs in the same change.
 Help is data-driven: every command declares a `Spec` literal next to its
 command file, and `Spec.Opt(name)` is the single source of truth for flag
 defaults and usage text at flag-registration time.
+
+### Benchmarks: component-scenario naming
+
+A benchmark name starts with the component being tested, then the scenario,
+separated by underscores.
+
+- Good: `BenchmarkCache_GetHit`, `BenchmarkAuthenticator_HappyPath`,
+  `BenchmarkBlockIp_Process`
+- Bad: `GetConfig_Serial` — the component is missing, so you can't tell what
+  is being tested without opening the file
+
+For concurrency variants, append `_Serial` or `_Parallel` to the scenario,
+like `BenchmarkLog_InsertBatch_Serial` and `BenchmarkQueue_Claim_Parallel`.
+
+Benchmark names appear in the comparison reports. Renaming one loses its
+history, so once a benchmark is released, its name stays.

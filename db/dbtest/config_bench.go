@@ -33,11 +33,11 @@ func seedBenchConfigs(b *testing.B, benchDB db.DbConfig, configCount int) []stri
 	return scopes
 }
 
-// BenchGetConfig_Serial measures one GetConfig call against the provided
+// BenchConfig_Get_Serial measures one GetConfig call against the provided
 // database, one call at a time. The scopes rotate so the reads hit different
 // rows like real traffic. Generation 0 is the latest config for a scope,
 // which is what the config reload path reads.
-func BenchGetConfig_Serial(b *testing.B, benchDB db.DbConfig) {
+func BenchConfig_Get_Serial(b *testing.B, benchDB db.DbConfig) {
 	scopes := seedBenchConfigs(b, benchDB, configCount)
 
 	b.ReportAllocs()
@@ -53,11 +53,11 @@ func BenchGetConfig_Serial(b *testing.B, benchDB db.DbConfig) {
 	}
 }
 
-// BenchInsertConfig_Serial measures one InsertConfig call against the
+// BenchConfig_Insert_Serial measures one InsertConfig call against the
 // provided database, one call at a time. The scopes rotate so the inserts
 // spread across rows like real traffic. The same content blob is reused: the
 // insert cost does not depend on the blob contents.
-func BenchInsertConfig_Serial(b *testing.B, benchDB db.DbConfig) {
+func BenchConfig_Insert_Serial(b *testing.B, benchDB db.DbConfig) {
 	scopes := make([]string, configCount)
 	for i := 0; i < configCount; i++ {
 		scopes[i] = fmt.Sprintf("bench-%d", i)

@@ -32,10 +32,10 @@ func seedBenchUsers(b *testing.B, benchDB db.DbAuth, userCount int) (ids []strin
 	return ids, emails
 }
 
-// BenchGetUserById_Serial measures one GetUserById call against the provided
+// BenchUser_GetById_Serial measures one GetUserById call against the provided
 // database, one call at a time. This is the floor cost of the database lookup
 // that every authenticated request performs.
-func BenchGetUserById_Serial(b *testing.B, benchDB db.DbAuth) {
+func BenchUser_GetById_Serial(b *testing.B, benchDB db.DbAuth) {
 	ids, _ := seedBenchUsers(b, benchDB, userCount)
 
 	b.ReportAllocs()
@@ -51,10 +51,10 @@ func BenchGetUserById_Serial(b *testing.B, benchDB db.DbAuth) {
 	}
 }
 
-// BenchGetUserById_Parallel measures GetUserById under contention: one
+// BenchUser_GetById_Parallel measures GetUserById under contention: one
 // goroutine per CPU, all sharing the same database through their pool. This
 // exposes pool and WAL lock contention that serial benches hide.
-func BenchGetUserById_Parallel(b *testing.B, benchDB db.DbAuth) {
+func BenchUser_GetById_Parallel(b *testing.B, benchDB db.DbAuth) {
 	ids, _ := seedBenchUsers(b, benchDB, userCount)
 
 	b.ReportAllocs()
@@ -72,10 +72,10 @@ func BenchGetUserById_Parallel(b *testing.B, benchDB db.DbAuth) {
 	})
 }
 
-// BenchGetUserByEmail_Serial measures one GetUserByEmail call against the
+// BenchUser_GetByEmail_Serial measures one GetUserByEmail call against the
 // provided database, one call at a time. This is the cost of the lookup the
 // login flow performs.
-func BenchGetUserByEmail_Serial(b *testing.B, benchDB db.DbAuth) {
+func BenchUser_GetByEmail_Serial(b *testing.B, benchDB db.DbAuth) {
 	_, emails := seedBenchUsers(b, benchDB, userCount)
 
 	b.ReportAllocs()
@@ -91,9 +91,9 @@ func BenchGetUserByEmail_Serial(b *testing.B, benchDB db.DbAuth) {
 	}
 }
 
-// BenchGetUserByEmail_Parallel measures GetUserByEmail under contention: one
+// BenchUser_GetByEmail_Parallel measures GetUserByEmail under contention: one
 // goroutine per CPU, all sharing the same database through their pool.
-func BenchGetUserByEmail_Parallel(b *testing.B, benchDB db.DbAuth) {
+func BenchUser_GetByEmail_Parallel(b *testing.B, benchDB db.DbAuth) {
 	_, emails := seedBenchUsers(b, benchDB, userCount)
 
 	b.ReportAllocs()
