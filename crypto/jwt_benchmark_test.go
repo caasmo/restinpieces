@@ -27,7 +27,7 @@ func setupCryptoBenchmark(b *testing.B) (userID, email, passwordHash, secret str
 
 // --- Benchmark Scenarios ---
 
-func BenchmarkNewJwtSigningKey(b *testing.B) {
+func BenchmarkJwt_NewSigningKey(b *testing.B) {
 	_, email, passwordHash, secret, _ := setupCryptoBenchmark(b)
 
 	b.ReportAllocs()
@@ -38,7 +38,7 @@ func BenchmarkNewJwtSigningKey(b *testing.B) {
 	}
 }
 
-func BenchmarkNewJwt(b *testing.B) {
+func BenchmarkJwt_New(b *testing.B) {
 	userID, _, _, _, signingKey := setupCryptoBenchmark(b)
 	claims := jwt.MapClaims{ClaimUserID: userID}
 
@@ -50,7 +50,7 @@ func BenchmarkNewJwt(b *testing.B) {
 	}
 }
 
-func BenchmarkParseJwt_Valid(b *testing.B) {
+func BenchmarkJwt_Parse_Valid(b *testing.B) {
 	userID, _, _, _, signingKey := setupCryptoBenchmark(b)
 	claims := jwt.MapClaims{ClaimUserID: userID}
 	token, err := NewJwt(claims, signingKey, time.Hour)
@@ -66,7 +66,7 @@ func BenchmarkParseJwt_Valid(b *testing.B) {
 	}
 }
 
-func BenchmarkParseJwt_InvalidSignature(b *testing.B) {
+func BenchmarkJwt_Parse_InvalidSignature(b *testing.B) {
 	userID, _, _, _, signingKey := setupCryptoBenchmark(b)
 	claims := jwt.MapClaims{ClaimUserID: userID}
 	token, err := NewJwt(claims, signingKey, time.Hour)
@@ -84,7 +84,7 @@ func BenchmarkParseJwt_InvalidSignature(b *testing.B) {
 	}
 }
 
-func BenchmarkParseJwtUnverified(b *testing.B) {
+func BenchmarkJwt_Parse_Unverified(b *testing.B) {
 	userID, _, _, _, signingKey := setupCryptoBenchmark(b)
 	claims := jwt.MapClaims{ClaimUserID: userID}
 	token, err := NewJwt(claims, signingKey, time.Hour)
