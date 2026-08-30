@@ -7,16 +7,12 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-const logBatchSize = 10
-
-// BenchLog_InsertBatch_Serial measures one InsertBatch call against the provided
-// log database, one call at a time. Each call inserts logBatchSize entries in
-// one transaction, which is how the framework writes logs. The log database
-// uses a single connection, so there is no pool to contend over and only a
-// serial variant exists.
-func BenchLog_InsertBatch_Serial(b *testing.B, logDB db.DbLog) {
-	batch := make([]db.Log, logBatchSize)
-	for i := 0; i < logBatchSize; i++ {
+// BenchLog_InsertBatch measures one InsertBatch call against the provided
+// log database, one call at a time. Each call inserts n entries in
+// one transaction, which is how the framework writes logs.
+func BenchLog_InsertBatch(b *testing.B, logDB db.DbLog, n int) {
+	batch := make([]db.Log, n)
+	for i := 0; i < n; i++ {
 		batch[i] = db.Log{
 			Level:    1,
 			Message:  "bench log message",
@@ -33,5 +29,11 @@ func BenchLog_InsertBatch_Serial(b *testing.B, logDB db.DbLog) {
 		if err != nil {
 			b.Fatalf("InsertBatch failed: %v", err)
 		}
+	}
+	// Report per-message throughput so N10/N50/N100 are directly comparable.
+	// sec/op is per InsertBatch call (N logs), msg/sec is per log.
+	if b.N > 0 {
+		nsPerOp := float64(b.Elapsed().Nanoseconds()) / float64(b.N)
+		b.ReportMetric(float64(n)/(nsPerOp/1e9), "msg/sec")
 	}
 }
