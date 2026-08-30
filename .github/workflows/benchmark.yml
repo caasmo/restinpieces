@@ -96,7 +96,7 @@ jobs:
         run: |
           cd base
           echo "Starting benchmark run for base..."
-          timeout 20m go test -bench=. -run=^$ -benchmem -count=4 -v ./... > ../base.txt 2>&1 || {
+          timeout 20m go test -bench=. -run=^$ -benchmem -count=4 -v ./... > ../base.txt || {
             EXIT_CODE=$?
             echo "Benchmark failed with exit code: $EXIT_CODE"
             echo "Last 50 lines of output:"
@@ -112,7 +112,7 @@ jobs:
         run: |
           cd head
           echo "Starting benchmark run for head..."
-          timeout 20m go test -bench=. -run=^$ -benchmem -count=4 -v ./... > ../head.txt 2>&1 || {
+          timeout 20m go test -bench=. -run=^$ -benchmem -count=4 -v ./... > ../head.txt || {
             EXIT_CODE=$?
             echo "Benchmark failed with exit code: $EXIT_CODE"
             echo "Last 50 lines of output:"
