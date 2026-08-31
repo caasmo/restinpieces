@@ -137,7 +137,7 @@ func NewDefaultConfig() *Config {
 			Activated: true,
 			URLPathLimit:     2048,
 			QueryStringLimit: 2048,
-			HeaderCountLimit: 100,
+			HeaderCountLimit: 40,
 			BodyLimit:        1024 * 1024, // 1MB default limit
 			ExcludedPaths: []string{
 				"/api/upload",
