@@ -50,32 +50,14 @@ func TestUpdateLogPathInConfig(t *testing.T) {
 }
 
 func TestLogInit(t *testing.T) {
-	t.Run("SuccessDefaultPathAppDb", func(t *testing.T) {
-		tempDir := t.TempDir()
-		appDbPath := filepath.Join(tempDir, "app.db")
-
-		f, err := os.Create(appDbPath)
-		if err != nil {
-			t.Fatalf("failed to create dummy app.db: %v", err)
-		}
-		_ = f.Close()
-
+	t.Run("MissingPath", func(t *testing.T) {
 		mockStore := &MockLogInitSecureStore{data: []byte("")}
 		var stdout, stderr bytes.Buffer
 		ui := UI{Out: &stdout, Err: &stderr}
 
-		err = logInit(ui, mockStore, appDbPath, "")
-		if err != nil {
-			t.Fatalf("logInit failed: %v", err)
-		}
-
-		var cfg config.Config
-		err = toml.Unmarshal(mockStore.savedData, &cfg)
-		if err != nil {
-			t.Fatalf("failed to unmarshal saved config: %v", err)
-		}
-		if cfg.Log.Batch.DbPath != appDbPath {
-			t.Errorf("expected log.batch.db_path %q, got %q", appDbPath, cfg.Log.Batch.DbPath)
+		err := logInit(ui, mockStore, "/tmp/app.db", "")
+		if err == nil {
+			t.Fatal("expected error when log path is missing, got nil")
 		}
 	})
 

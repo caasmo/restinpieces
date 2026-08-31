@@ -17,11 +17,12 @@ func handleLogInitCommand(secureStore config.SecureStore, appDbPath string, logP
 }
 
 // logInit contains the testable core logic for initializing the log database.
+// logPathArg must be provided explicitly — no silent default to appDbPath.
 func logInit(ui UI, secureStore config.SecureStore, appDbPath string, logPathArg string) (err error) {
-	logDbPath := logPathArg
-	if logDbPath == "" {
-		logDbPath = appDbPath
+	if logPathArg == "" {
+		return fmt.Errorf("log path is required: please provide a path, e.g. ripc log init ./logs.db")
 	}
+	logDbPath := logPathArg
 
 	_, err = fmt.Fprintf(ui.Err, "Initializing log database at: %s\n", logDbPath)
 	if err != nil {

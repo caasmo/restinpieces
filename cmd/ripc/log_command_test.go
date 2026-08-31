@@ -23,11 +23,9 @@ func TestParseLogSubcommand(t *testing.T) {
 
 		// 'init' subcommand
 		{
-			name:         "InitNoArgs",
-			args:         []string{"init"},
-			expectedCmd:  "init",
-			expectedArgs: []string{},
-			expectedErr:  nil,
+			name:        "InitNoArgs",
+			args:        []string{"init"},
+			expectedErr: ErrTooManyArguments,
 		},
 		{
 			name:         "InitWithLogPath",

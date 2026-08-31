@@ -106,7 +106,7 @@ func TestPrintUsageFuncs(t *testing.T) {
 			want: []string{
 				"log <subcommand> [options]",
 				"Manages the default logger database.",
-				"init [logpath]",
+				"init <logpath>",
 				"Initialize the log database for the default batch logger",
 			},
 			notWant: []string{"Options:"},

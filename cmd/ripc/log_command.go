@@ -19,7 +19,7 @@ func printLogUsage(w io.Writer) {
 		Subcommands: []SubcommandGroup{
 			{
 				Subcommands: []Subcommand{
-					{"init [logpath]", "Initialize the log database for the default batch logger"},
+					{"init <logpath>", "Initialize the log database for the default batch logger"},
 				},
 			},
 		},
@@ -58,8 +58,11 @@ func parseLogSubcommand(commandArgs []string) (string, []string, error) {
 
 	switch subcommand {
 	case "init":
+		if len(subcommandArgs) < 1 {
+			return "", nil, fmt.Errorf("'init' requires a log path argument: %w", ErrTooManyArguments)
+		}
 		if len(subcommandArgs) > 1 {
-			return "", nil, fmt.Errorf("'init' takes at most one log path argument: %w", ErrTooManyArguments)
+			return "", nil, fmt.Errorf("'init' takes exactly one log path argument: %w", ErrTooManyArguments)
 		}
 		return subcommand, subcommandArgs, nil
 	default:
