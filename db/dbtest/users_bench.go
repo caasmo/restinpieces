@@ -1,3 +1,10 @@
+// Benchmarks for DbAuth.
+//
+// Measured: GetUserById, GetUserByEmail — run on every login and authenticated request.
+// Not measured:
+//   CreateUserWithPassword, CreateUserWithOauth2 — run once per user at signup.
+//   UpdatePassword, UpdateEmail, UpdateVerified  — rare profile changes, not per-request.
+
 package dbtest
 
 import (

@@ -1,3 +1,9 @@
+// Benchmarks for DbConfig.
+//
+// Measured: GetConfig, InsertConfig — the config read/write path used on reload.
+// Not measured:
+//   Path — returns the file path, does no I/O.
+
 package dbtest
 
 import (

@@ -1,3 +1,11 @@
+// Benchmarks for DbQueue and DbQueueAdmin.
+//
+// Measured: InsertJob, Claim, MarkCompleted — run on every job.
+// Not measured:
+//   MarkFailed             — only on job failure, rare error path.
+//   MarkRecurrentCompleted — only for recurrent jobs; it's MarkCompleted + InsertJob.
+//   ListJobs, DeleteJob    — admin operations, triggered by an operator, not the worker loop.
+
 package dbtest
 
 import (

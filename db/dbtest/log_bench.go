@@ -1,3 +1,10 @@
+// Benchmarks for DbLog.
+//
+// Measured: InsertBatch — writes a batch of logs, the only per-request path.
+// Not measured:
+//   Ping  — checks the connection is alive, run once at startup.
+//   Close — closes the connection, run once at shutdown.
+
 package dbtest
 
 import (
