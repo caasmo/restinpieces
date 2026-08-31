@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
@@ -384,8 +383,8 @@ func (i *initializer) setupDefaultCache(cfg *config.Config) error {
 //   - the database in in another file as the main db
 //   - Using the same driver as the main app would require additional wiring
 //
-// Users can configure the log database path via config.Log.Batch.DbPath.
-// If not specified, it defaults to "logs.db" in the same directory as the main database.
+// The log database path must be configured via config.Log.Batch.DbPath, which
+// is set authoritatively by `ripc log init`.
 //
 // withUserLogger indicates if the app already had a logger configured via options.
 // If true, this function does nothing since the user provided their own logger.
@@ -395,10 +394,7 @@ func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUs
 	}
 
 	cfg := configProvider.Get()
-	logDbPath, err := getLogDbPath(cfg, i.dbConfig)
-	if err != nil {
-		return nil, fmt.Errorf("logger daemon: %w", err)
-	}
+	logDbPath := cfg.Log.Batch.DbPath
 
 	i.app.Logger().Info("Using log database", "path", logDbPath)
 	logDb, err := i.newLog(logDbPath)
@@ -448,22 +444,6 @@ func (i *initializer) newLog(logDbPath string) (*zombiezen.Log, error) {
 	}
 
 	return logDb, nil
-}
-
-const defaultLogFilename = "logs.db"
-
-// getLogDbPath returns the path for the log database, either from config or by
-// placing it in the same directory as the main database with default filename.
-func getLogDbPath(cfg *config.Config, dbConfig db.DbConfig) (string, error) {
-	if path := cfg.Log.Batch.DbPath; path != "" {
-		return path, nil
-	}
-
-	mainPath := dbConfig.Path()
-	if mainPath == "" {
-		return "", fmt.Errorf("default sqlite logger needs a database file. Please run 'ripc log init' to create it")
-	}
-	return filepath.Join(filepath.Dir(mainPath), defaultLogFilename), nil
 }
 
 func (i *initializer) setupDefaultNotifier() error {

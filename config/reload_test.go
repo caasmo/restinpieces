@@ -95,6 +95,7 @@ func TestReload(t *testing.T) {
 	oldCfg.Jwt.EmailChangeOtpSecret = "test_ec_otp_secret_32_chars____"
 	oldCfg.Jwt.VerificationEmailOtpSecret = "test_ve_otp_secret_32_chars____"
 	oldCfg.Jwt.Oauth2StateSecret = "test_oauth2_state_secret_32_ch_"
+	oldCfg.Log.Batch.DbPath = "test-logs.db"
 
 	t.Run("Success with no restart needed", func(t *testing.T) {
 		t.Parallel()

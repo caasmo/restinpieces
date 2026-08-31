@@ -251,7 +251,7 @@ func validateLoggerBatch(loggerBatch *BatchLogger) error {
 		return fmt.Errorf("flush_interval must be positive")
 	}
 	if loggerBatch.DbPath == "" {
-		return fmt.Errorf("db_path cannot be empty")
+		return fmt.Errorf("default sqlite logger: database path not configured. Please run 'ripc log init' to create it")
 	}
 	// LogLevel validation is handled by UnmarshalText
 	return nil

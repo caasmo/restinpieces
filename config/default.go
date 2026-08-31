@@ -51,7 +51,7 @@ func NewDefaultConfig() *Config {
 				ChanSize:      1000,
 				FlushInterval: Duration{Duration: 5 * time.Second},
 				Level:         LogLevel{Level: slog.LevelInfo},
-				DbPath:        "logs.db",
+				DbPath:        "",
 			},
 		},
 		Server: Server{

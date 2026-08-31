@@ -44,6 +44,7 @@ func newTestConfig() *config.Config {
 	cfg.Jwt.EmailChangeOtpSecret = "test_ec_otp_secret_32_chars____"
 	cfg.Jwt.VerificationEmailOtpSecret = "test_ve_otp_secret_32_chars____"
 	cfg.Jwt.Oauth2StateSecret = "test_oauth2_state_secret_32_ch_"
+	cfg.Log.Batch.DbPath = "test-logs.db"
 	return cfg
 }
 
@@ -53,76 +54,6 @@ func newTestLogger() *slog.Logger {
 }
 
 // --- Unit Tests for Helper Methods ---
-
-func TestGetLogDbPath(t *testing.T) {
-	testCases := []struct {
-		name         string
-		cfgLogDbPath string
-		mainDbPath   string
-		expectedPath string
-		expectErr    bool
-	}{
-		{
-			name:         "Path from config",
-			cfgLogDbPath: "/custom/path/logs.db",
-			mainDbPath:   "/data/main.db", // This will be ignored
-			expectedPath: "/custom/path/logs.db",
-			expectErr:    false,
-		},
-		{
-			name:         "Path derived from main db path",
-			cfgLogDbPath: "",
-			mainDbPath:   "/data/main.db",
-			expectedPath: "/data/logs.db",
-			expectErr:    false,
-		},
-		{
-			name:         "Path derived from main db path in same directory",
-			cfgLogDbPath: "",
-			mainDbPath:   "main.db",
-			expectedPath: "logs.db",
-			expectErr:    false,
-		},
-		{
-			name:         "Error when main db path is missing",
-			mainDbPath:   "",
-			expectErr:    true,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			cfg := &config.Config{
-				Log: config.Log{
-					Batch: config.BatchLogger{
-						DbPath: tc.cfgLogDbPath,
-					},
-				},
-			}
-			// Use the mock that correctly implements the interface
-			dbCfg := &mock.Db{}
-			// Control the mock's Path() method for predictable results
-			dbCfg.PathFunc = func() string {
-				return tc.mainDbPath
-			}
-
-			path, err := getLogDbPath(cfg, dbCfg)
-
-			if tc.expectErr {
-				if err == nil {
-					t.Fatalf("Expected an error but got none")
-				}
-			} else {
-				if err != nil {
-					t.Fatalf("Did not expect an error but got: %v", err)
-				}
-				if path != tc.expectedPath {
-					t.Errorf("Expected path '%s', got '%s'", tc.expectedPath, path)
-				}
-			}
-		})
-	}
-}
 
 func TestSetupDefaultRouter(t *testing.T) {
 	app := &core.App{}
@@ -344,9 +275,6 @@ func TestNew_WithUserLogger(t *testing.T) {
 	dbMock.GetConfigFunc = func(scope string, generation int) ([]byte, string, error) {
 		return encryptedBytes.Bytes(), "toml", nil
 	}
-	dbMock.PathFunc = func() string {
-		return filepath.Join(t.TempDir(), "app.db")
-	}
 
 	customLogger := newTestLogger()
 	app, srv, err := New(
@@ -405,14 +333,8 @@ func TestSetupDefaultLogger_GetLogDbPathError(t *testing.T) {
 	app := &core.App{}
 	app.SetLogger(newTestLogger())
 
-	dbMock := &mock.Db{}
-	dbMock.PathFunc = func() string {
-		return ""
-	}
-
 	init := &initializer{
-		app:      app,
-		dbConfig: dbMock,
+		app: app,
 	}
 
 	cfg := newTestConfig()
@@ -426,24 +348,15 @@ func TestSetupDefaultLogger_GetLogDbPathError(t *testing.T) {
 }
 
 func TestSetupDefaultLogger_ConnNotFound(t *testing.T) {
-	tmpDir := t.TempDir()
-	mainPath := filepath.Join(tmpDir, "app.db")
-
 	app := &core.App{}
 	app.SetLogger(newTestLogger())
 
-	dbMock := &mock.Db{}
-	dbMock.PathFunc = func() string {
-		return mainPath
-	}
-
 	init := &initializer{
-		app:      app,
-		dbConfig: dbMock,
+		app: app,
 	}
 
 	cfg := newTestConfig()
-	cfg.Log.Batch.DbPath = ""
+	cfg.Log.Batch.DbPath = filepath.Join(t.TempDir(), "missing-logs.db")
 	provider := config.NewProvider(cfg)
 
 	_, err := init.setupDefaultLogger(provider, false)

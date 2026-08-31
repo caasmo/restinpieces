@@ -81,6 +81,7 @@ func newTestConfig() *Config {
 	cfg.Server.EnableTLS = false
 	cfg.Server.CertData = ""
 	cfg.Server.KeyData = ""
+	cfg.Log.Batch.DbPath = "test-logs.db"
 	return cfg
 }
 
