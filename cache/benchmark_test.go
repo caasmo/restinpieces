@@ -48,8 +48,10 @@ func BenchmarkCache_GetHit(b *testing.B) {
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	i := 0
+	for b.Loop() {
 		c.Get(keys[i%benchMaxEntries])
+		i++
 	}
 }
 
@@ -62,8 +64,10 @@ func BenchmarkCache_GetMiss(b *testing.B) {
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	i := 0
+	for b.Loop() {
 		c.Get(missKeys[i%benchMaxEntries])
+		i++
 	}
 }
 
@@ -78,8 +82,10 @@ func BenchmarkCache_GetHitTTL(b *testing.B) {
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	i := 0
+	for b.Loop() {
 		c.Get(keys[i%benchMaxEntries])
+		i++
 	}
 }
 
@@ -93,8 +99,10 @@ func BenchmarkCache_SetWithFull(b *testing.B) {
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	i := 0
+	for b.Loop() {
 		c.Set(churn[i%benchMaxEntries], "value", 1)
+		i++
 	}
 }
 
@@ -107,8 +115,10 @@ func BenchmarkCache_Overwrite(b *testing.B) {
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	i := 0
+	for b.Loop() {
 		c.Set(keys[i%benchMaxEntries], "value", 1)
+		i++
 	}
 }
 
@@ -123,8 +133,10 @@ func BenchmarkCache_SetWithTTL(b *testing.B) {
 	const ttl = time.Minute
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	i := 0
+	for b.Loop() {
 		c.SetWithTTL(churn[i%benchMaxEntries], "value", 1, ttl)
+		i++
 	}
 }
 
@@ -138,11 +150,13 @@ func BenchmarkCache_Mixed(b *testing.B) {
 
 	b.ReportAllocs()
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	i := 0
+	for b.Loop() {
 		if i%10 == 0 {
 			c.Set(churn[(i/10)%benchMaxEntries], "value", 1)
 		} else {
 			c.Get(keys[i%benchMaxEntries])
 		}
+		i++
 	}
 }

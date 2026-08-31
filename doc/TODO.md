@@ -426,6 +426,10 @@ Current `3600s bucket + 3m TTL` is worst of both
 - default `1<<20` in `config/default.go`, validate in `config/config_validate.go`, wire to `http.Server` in `server/server.go`
 - ref: `config/config.go:Server`, `server/server.go:123`
 
+# ci: show per-package coverage in run summary
+
+- `test.yml` prints per-package coverage to log only; also write markdown table to `$GITHUB_STEP_SUMMARY` (run summary) like `benchmark.yml` does
+
 ### done
 
 # sqlite driver: enumerate the files to substitute zombiezen with modernc

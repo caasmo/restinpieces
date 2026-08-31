@@ -33,7 +33,7 @@ func BenchmarkJwt_NewSigningKey(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = NewJwtSigningKeyWithCredentials(email, passwordHash, secret)
 	}
 }
@@ -45,7 +45,7 @@ func BenchmarkJwt_New(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = NewJwt(claims, signingKey, time.Hour)
 	}
 }
@@ -61,7 +61,7 @@ func BenchmarkJwt_Parse_Valid(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ParseJwt(token, signingKey)
 	}
 }
@@ -79,7 +79,7 @@ func BenchmarkJwt_Parse_InvalidSignature(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ParseJwt(token, invalidKey)
 	}
 }
@@ -95,7 +95,7 @@ func BenchmarkJwt_Parse_Unverified(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ParseJwtUnverified(token)
 	}
 }

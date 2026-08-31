@@ -70,7 +70,7 @@ func BenchmarkAuthenticator_HappyPath(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _, _ = auth.Authenticate(req)
 	}
 }
@@ -83,7 +83,7 @@ func BenchmarkAuthenticator_NoAuthHeader(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _, _ = auth.Authenticate(req)
 	}
 }
@@ -97,7 +97,7 @@ func BenchmarkAuthenticator_InvalidFormat_NoBearer(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _, _ = auth.Authenticate(req)
 	}
 }
@@ -111,7 +111,7 @@ func BenchmarkAuthenticator_MalformedToken(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _, _ = auth.Authenticate(req)
 	}
 }
@@ -127,7 +127,7 @@ func BenchmarkAuthenticator_ExpiredToken_UnverifiedCheck(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _, _ = auth.Authenticate(req)
 	}
 }
@@ -148,7 +148,7 @@ func BenchmarkAuthenticator_UserNotFound(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _, _ = auth.Authenticate(req)
 	}
 }
@@ -176,7 +176,7 @@ func BenchmarkAuthenticator_InvalidSignature(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _, _ = auth.Authenticate(req)
 	}
 }

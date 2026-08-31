@@ -77,9 +77,11 @@ func BenchmarkChain_HappyPath(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	i := 0
+	for b.Loop() {
 		req.RemoteAddr = monotonicIP(i) + ":12345"
 		handler.ServeHTTP(httptest.NewRecorder(), req)
+		i++
 	}
 }
 
@@ -104,9 +106,11 @@ func BenchmarkChain_Blocked_Maintenance(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	i := 0
+	for b.Loop() {
 		req.RemoteAddr = monotonicIP(i) + ":12345"
 		handler.ServeHTTP(httptest.NewRecorder(), req)
+		i++
 	}
 }
 
@@ -129,8 +133,10 @@ func BenchmarkChain_Blocked_Host(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	i := 0
+	for b.Loop() {
 		req.RemoteAddr = monotonicIP(i) + ":12345"
 		handler.ServeHTTP(httptest.NewRecorder(), req)
+		i++
 	}
 }

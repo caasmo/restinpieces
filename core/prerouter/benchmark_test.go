@@ -21,7 +21,7 @@ func BenchmarkRecorder(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		rr := httptest.NewRecorder()
 		handler.ServeHTTP(rr, req)
 	}
@@ -40,7 +40,7 @@ func BenchmarkRequestLog_Active(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		rr := httptest.NewRecorder()
 		middleware.ServeHTTP(rr, req)
 	}
@@ -57,7 +57,7 @@ func BenchmarkRequestLog_Inactive(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		rr := httptest.NewRecorder()
 		middleware.ServeHTTP(rr, req)
 	}
@@ -79,12 +79,17 @@ func BenchmarkBlockIp_Process(b *testing.B) {
 	// Create the middleware once, as it would be in a real server.
 	middleware := NewBlockIp(app).Execute(noOpHandler)
 
-	// Pre-generate a slice of requests with unique IP addresses.
-	// This avoids repeated work inside the loop and ensures we only measure the handler.
-	reqs := make([]*http.Request, b.N)
-	for i := 0; i < b.N; i++ {
+	// Pre-generate a fixed pool of requests with unique IP addresses.
+	// b.Loop() runs the benchmark function once, with b.N unknown until after
+	// the loop, so the pool cannot be sized by b.N. The pool must be larger
+	// than the sketch window (1000 requests) so each IP appears at most once
+	// per window and the blocking threshold is never met. This avoids
+	// per-iteration allocation and ensures we only measure the handler.
+	const poolSize = 4096
+	reqs := make([]*http.Request, poolSize)
+	for i := 0; i < poolSize; i++ {
 		req := httptest.NewRequest("GET", "/", nil)
-		// Generate a unique IP for every single request to guarantee the blocking
+		// Generate a unique IP for every request to guarantee the blocking
 		// threshold is never met. This provides a pure test of the process path.
 		req.RemoteAddr = monotonicIP(i) + ":12345"
 		reqs[i] = req
@@ -93,8 +98,10 @@ func BenchmarkBlockIp_Process(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
-		middleware.ServeHTTP(httptest.NewRecorder(), reqs[i])
+	i := 0
+	for b.Loop() {
+		middleware.ServeHTTP(httptest.NewRecorder(), reqs[i%poolSize])
+		i++
 	}
 }
 
@@ -119,7 +126,7 @@ func BenchmarkBlockIp_Blocked(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		handler.ServeHTTP(httptest.NewRecorder(), req)
 	}
 }
@@ -137,7 +144,7 @@ func BenchmarkBlockUaList_NoMatch(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		middleware.ServeHTTP(httptest.NewRecorder(), req)
 	}
 }
@@ -155,7 +162,7 @@ func BenchmarkBlockUaList_Match(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		middleware.ServeHTTP(httptest.NewRecorder(), req)
 	}
 }
@@ -173,7 +180,7 @@ func BenchmarkBlockHost_Allowed(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		middleware.ServeHTTP(httptest.NewRecorder(), req)
 	}
 }
@@ -191,7 +198,7 @@ func BenchmarkBlockHost_Blocked(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		middleware.ServeHTTP(httptest.NewRecorder(), req)
 	}
 }
@@ -213,7 +220,7 @@ func BenchmarkBlockOversizedRequest_Allowed(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		// We must reset the body for each iteration
 		if _, err := body.Seek(0, io.SeekStart); err != nil {
 			b.Fatalf("Failed to seek body: %v", err)
@@ -243,7 +250,7 @@ func BenchmarkBlockOversizedRequest_Blocked(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		if _, err := body.Seek(0, io.SeekStart); err != nil {
 			b.Fatalf("Failed to seek body: %v", err)
 		}
