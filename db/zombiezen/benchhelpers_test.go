@@ -89,7 +89,7 @@ func newBenchLog(b *testing.B) *Log {
 		b.Fatalf("failed to close schema pool: %v", err)
 	}
 
-	logConn, err := OpenConn(dbPath)
+	logConn, err := NewConn(dbPath)
 	if err != nil {
 		b.Fatalf("failed to open log conn: %v", err)
 	}

@@ -30,14 +30,19 @@ func WithZombiezenPool(pool *sqlitex.Pool) Option {
 	}
 }
 
-// NewZombiezenPool creates a new Zombiezen SQLite connection pool with reasonable defaults
-// compatible with restinpieces (e.g., WAL mode enabled, busy_timeout set).
-func NewZombiezenPool(dbPath string) (*sqlitex.Pool, error) {
-	return zombiezen.NewPool(dbPath)
+// NewZombiezenPool creates a new Zombiezen SQLite connection pool with
+// reasonable defaults compatible with restinpieces (e.g., WAL mode enabled,
+// busy_timeout set). Pragmas beyond the defaults may be passed as full
+// statements, e.g. "PRAGMA cache_size = 10000"; they run after the defaults
+// and override them on key collision.
+func NewZombiezenPool(dbPath string, pragmas ...string) (*sqlitex.Pool, error) {
+	return zombiezen.NewPool(dbPath, pragmas...)
 }
 
-// NewZombiezenConn creates a new single SQLite connection with performance pragmas.
-// The database file must already exist; OpenCreate is not used.
-func NewZombiezenConn(dbPath string) (*sqlite.Conn, error) {
-	return zombiezen.OpenConn(dbPath)
+// NewZombiezenConn creates a new single SQLite connection with the shared
+// performance pragmas. The database file must already exist; OpenCreate is
+// not used. Pragmas beyond the defaults may be passed as full statements;
+// they run after the defaults and override them on key collision.
+func NewZombiezenConn(dbPath string, pragmas ...string) (*sqlite.Conn, error) {
+	return zombiezen.NewConn(dbPath, pragmas...)
 }

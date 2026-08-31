@@ -34,16 +34,16 @@ func TestNewPool(t *testing.T) {
 	}
 }
 
-// TestOpenConn verifies the single-connection constructor on an existing
+// TestNewConn verifies the single-connection constructor on an existing
 // database file (OpenCreate is not used, so the file must pre-exist).
-func TestOpenConn(t *testing.T) {
+func TestNewConn(t *testing.T) {
 	dbPath := filepath.Join(t.TempDir(), "test.db")
 	err := os.WriteFile(dbPath, nil, 0o600)
 	if err != nil {
 		t.Fatalf("failed to create db file: %v", err)
 	}
 
-	conn, err := OpenConn(dbPath)
+	conn, err := NewConn(dbPath)
 	if err != nil {
 		t.Fatalf("failed to open connection: %v", err)
 	}
