@@ -487,9 +487,6 @@ type BlockOversizedRequest struct {
 	// HeaderCountLimit is the maximum number of distinct headers allowed.
 	HeaderCountLimit int `toml:"header_count_limit" comment:"Max number of headers"`
 
-	// HeaderValueLimit is the maximum allowed length for any single header value.
-	HeaderValueLimit int `toml:"header_value_limit" comment:"Max length of any single header value"`
-
 	// BodyLimit is the maximum allowed request body size in bytes.
 	BodyLimit int64 `toml:"body_limit" comment:"Maximum allowed request body size in bytes"`
 

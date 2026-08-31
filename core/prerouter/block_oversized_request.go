@@ -12,7 +12,6 @@ import (
 //   - URL path length
 //   - Query string length
 //   - Number of headers
-//   - Individual header value length
 //   - Request body size
 //
 // Checks are applied cheapest-first: the inexpensive string-length and count
@@ -22,7 +21,7 @@ import (
 //
 // All rejections return the appropriate HTTP status code:
 //   - 414 URI Too Long        — URL path or query string exceeds limit
-//   - 431 Request Header Fields Too Large — header count or a single header value exceeds limit
+//   - 431 Request Header Fields Too Large — header count exceeds limit
 //   - 413 Content Too Large   — body exceeds limit (handled by http.MaxBytesReader)
 type BlockOversizedRequest struct {
 	app *core.App // Use App to access config
@@ -42,9 +41,7 @@ func NewBlockOversizedRequest(app *core.App) *BlockOversizedRequest {
 //  1. URL path length      — single len() call on a string already in memory
 //  2. Query string length  — same cost as path check
 //  3. Header count         — single len() call on the header map
-//  4. Header value lengths — O(n) over header map entries; slightly more work but
-//     still CPU-bound and done entirely in memory
-//  5. Body limit           — delegated to http.MaxBytesReader, which is lazy:
+//  4. Body limit           — delegated to http.MaxBytesReader, which is lazy:
 //     it only fires when the handler (or a decoder downstream) actually reads
 //     r.Body. This must be set before calling next.ServeHTTP so it is in place
 //     for whoever reads the body first.
@@ -141,36 +138,7 @@ func (b *BlockOversizedRequest) Execute(next http.Handler) http.Handler {
 		}
 
 		// ----------------------------------------------------------------
-		// CHECK 4: Individual header value length
-		//
-		// Oversized individual header values — particularly Cookie,
-		// Authorization, or custom application headers — can crash log
-		// processors, overwhelm fixed-size buffers in WAFs or proxies, or
-		// carry encoded payloads that exploit downstream parsers.
-		//
-		// We iterate over every (canonical key → []string values) pair and
-		// check the byte length of each individual value string. Multiple
-		// values for the same key are checked independently; the limit
-		// applies per value, not per key.
-		//
-		// This is O(total header bytes) in the worst case, but header blocks
-		// are already bounded by Go's MaxHeaderBytes, so the work is capped.
-		//
-		// 431 Request Header Fields Too Large (RFC 6585 §5).
-		// ----------------------------------------------------------------
-		if cfg.HeaderValueLimit > 0 {
-			for _, values := range r.Header {
-				for _, v := range values {
-					if len(v) > cfg.HeaderValueLimit {
-						w.WriteHeader(http.StatusRequestHeaderFieldsTooLarge)
-						return
-					}
-				}
-			}
-		}
-
-		// ----------------------------------------------------------------
-		// CHECK 5: Request body size
+		// CHECK 4: Request body size
 		//
 		// http.MaxBytesReader handles various cases:
 		// 1. If Content-Length header exists and is > limitBytes, it immediately rejects.

@@ -71,9 +71,6 @@ func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
 	if cfg.HeaderCountLimit < 0 {
 		return fmt.Errorf("header_count_limit cannot be negative")
 	}
-	if cfg.HeaderValueLimit < 0 {
-		return fmt.Errorf("header_value_limit cannot be negative")
-	}
 	if cfg.BodyLimit < 0 {
 		return fmt.Errorf("body_limit cannot be negative")
 	}

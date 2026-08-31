@@ -119,25 +119,12 @@ func TestBlockOversizedRequest(t *testing.T) {
 			expectedStatusCode: http.StatusRequestHeaderFieldsTooLarge,
 		},
 		{
-			name: "Case: Header Value Exceeds the Limit",
-			config: config.BlockOversizedRequest{
-				Activated:        true,
-				HeaderValueLimit: 5,
-			},
-			requestURL: "/",
-			requestHeaders: http.Header{
-				"X-Header-1": {"toolongvalue"},
-			},
-			expectedStatusCode: http.StatusRequestHeaderFieldsTooLarge,
-		},
-		{
 			name: "Case: Limits Disabled (Zero Values)",
 			config: config.BlockOversizedRequest{
 				Activated:        true,
 				URLPathLimit:     0,
 				QueryStringLimit: 0,
 				HeaderCountLimit: 0,
-				HeaderValueLimit: 0,
 				BodyLimit:        0,
 			},
 			requestURL: "/verylongpath?verylongquery=true",

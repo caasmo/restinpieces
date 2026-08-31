@@ -420,6 +420,12 @@ Current `3600s bucket + 3m TTL` is worst of both
 
 # BlockRequestBody maybe we shoudl check less is too much checks
 
+# server: implement MaxHeaderBytes
+
+- add `Server.MaxHeaderBytes int` `toml:"max_header_bytes"` in `config/config.go`
+- default `1<<20` in `config/default.go`, validate in `config/config_validate.go`, wire to `http.Server` in `server/server.go`
+- ref: `config/config.go:Server`, `server/server.go:123`
+
 ### done
 
 # sqlite driver: enumerate the files to substitute zombiezen with modernc
