@@ -39,7 +39,7 @@ func newBenchmarkApp(b *testing.B, cfgModifiers ...func(*config.Config)) *core.A
 	app.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
 
 	// Use a fresh, isolated cache for each benchmark
-	c, err := cache.New[any]("small")
+	c, err := cache.New[any]("medium")
 	if err != nil {
 		b.Fatalf("Failed to create cache: %v", err)
 	}

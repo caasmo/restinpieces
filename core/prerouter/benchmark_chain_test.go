@@ -3,7 +3,6 @@ package prerouter
 import (
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
@@ -11,9 +10,9 @@ import (
 	"github.com/caasmo/restinpieces/router"
 )
 
-// buildFullChain constructs the entire prerouter middleware chain for benchmarking,
+// buildChain constructs the entire prerouter middleware chain for benchmarking,
 // mimicking the execution order in restinpieces.go.
-func buildFullChain(app *core.App) http.Handler {
+func buildChain(app *core.App) http.Handler {
 	preRouterChain := router.NewChain(noOpHandler)
 	cfg := app.Config()
 
@@ -53,24 +52,19 @@ func buildFullChain(app *core.App) http.Handler {
 	// 9. BlockOversizedRequest
 	preRouterChain.WithMiddleware(NewBlockOversizedRequest(app).Execute)
 
+	// 10. BlockEndpointsMismatch
+	preRouterChain.WithMiddleware(NewBlockEndpointsMismatch(app).Execute)
+
 	return preRouterChain.Handler()
 }
 
 // BenchmarkChain_HappyPath measures the full chain with a valid request.
+// Realistic chain is just the default config with no changes. It uses a
+// discard logger, so it times middleware only — the DB flush is timed
+// separately by BenchmarkLog_InsertBatch.
 func BenchmarkChain_HappyPath(b *testing.B) {
-	app := newBenchmarkApp(b, func(cfg *config.Config) {
-		cfg.Log.Request.Activated = true
-		cfg.BlockIp.Enabled = true
-		cfg.BlockIp.Activated = true
-		cfg.Metrics.Enabled = true
-		cfg.Metrics.Activated = true
-		cfg.BlockUaList.Activated = true
-		cfg.BlockUaList.List.Regexp = regexp.MustCompile(`^BadBot/.*`)
-		cfg.BlockHost.Activated = true
-		cfg.BlockHost.AllowedHosts = []string{"example.com"}
-		cfg.Maintenance.Activated = false
-	})
-	handler := buildFullChain(app)
+	app := newBenchmarkApp(b)
+	handler := buildChain(app)
 
 	// Use a single request object and modify its RemoteAddr in the loop.
 	// This avoids a large upfront allocation and the high overhead of calling
@@ -100,7 +94,7 @@ func BenchmarkChain_Blocked_Maintenance(b *testing.B) {
 		// Finally, activate maintenance mode, which is what we want to measure.
 		cfg.Maintenance.Activated = true
 	})
-	handler := buildFullChain(app)
+	handler := buildChain(app)
 
 	// Use a single request object, modifying the IP inside the loop to ensure
 	// no preceding middleware blocks the request before the maintenance check.
@@ -125,7 +119,7 @@ func BenchmarkChain_Blocked_Host(b *testing.B) {
 		cfg.BlockIp.Enabled = true
 		cfg.BlockIp.Activated = true
 	})
-	handler := buildFullChain(app)
+	handler := buildChain(app)
 
 	// Use a single request object, modifying the IP inside the loop to ensure
 	// the IP blocker does not fire before the host blocker.
