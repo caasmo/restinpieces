@@ -12,7 +12,7 @@ import (
 )
 
 // newBenchLog creates a log database on a real temp file for benchmarks,
-// mirroring db/modernc's newBenchLog: same pragmas (WAL, synchronous
+// mirroring db/databasesql's newBenchLog: same pragmas (WAL, synchronous
 // NORMAL), single connection, schema from log/logs.sql. entries is the batch
 // size the Log is built for, matching the benchmark sub-run. The temp file
 // and connection are cleaned up automatically when the benchmark finishes.

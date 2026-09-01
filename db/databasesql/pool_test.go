@@ -1,4 +1,4 @@
-package modernc_test
+package databasesql_test
 
 // This file tests the public NewPool constructor of the modernc package
 // exactly as an external consumer uses it (hence the _test package name).
@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/caasmo/restinpieces/db/modernc"
+	"github.com/caasmo/restinpieces/db/databasesql"
 )
 
 // queryPragmaInt runs "PRAGMA name;" on the database and returns the value
@@ -63,7 +63,7 @@ func checkDefaultPragmas(t *testing.T, db *sql.DB) {
 // TestNewPool verifies the pool constructor produces a usable pool on a real
 // database file.
 func TestNewPool(t *testing.T) {
-	db, err := modernc.NewPool(filepath.Join(t.TempDir(), "test.db"))
+	db, err := databasesql.NewPool(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
 		t.Fatalf("failed to create pool: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestNewPool(t *testing.T) {
 // TestNewPool_PragmasDefault verifies that a pool created without pragmas
 // runs all default pragmas (see checkDefaultPragmas).
 func TestNewPool_PragmasDefault(t *testing.T) {
-	db, err := modernc.NewPool(filepath.Join(t.TempDir(), "test.db"))
+	db, err := databasesql.NewPool(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
 		t.Fatalf("failed to create pool: %v", err)
 	}
@@ -99,7 +99,7 @@ func TestNewPool_PragmasDefault(t *testing.T) {
 // TestNewPool_PragmasOverride verifies that a pragma passed to NewPool
 // replaces the default on the same key: busy_timeout becomes 12345 ms.
 func TestNewPool_PragmasOverride(t *testing.T) {
-	db, err := modernc.NewPool(filepath.Join(t.TempDir(), "test.db"), map[string]string{"busy_timeout": "12345"})
+	db, err := databasesql.NewPool(filepath.Join(t.TempDir(), "test.db"), map[string]string{"busy_timeout": "12345"})
 	if err != nil {
 		t.Fatalf("failed to create pool: %v", err)
 	}

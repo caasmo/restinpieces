@@ -35,7 +35,7 @@ type User struct {
 }
 
 // DbApp is an interface combining the required DB roles for the application.
-// The concrete DB implementation (e.g., *crawshaw.Db or *modernc.Db) must satisfy this interface.
+// The concrete DB implementation (e.g., *crawshaw.Db or *databasesql.Db) must satisfy this interface.
 
 // Job represents a job in the processing queue
 type Job struct {

@@ -12,7 +12,7 @@ import (
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/db/modernc"
+	"github.com/caasmo/restinpieces/db/databasesql"
 	"github.com/caasmo/restinpieces/log"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/notify"
@@ -419,7 +419,7 @@ func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUs
 	return logDaemon, nil
 }
 
-func (i *initializer) newLog(logDbPath string) (*modernc.Log, error) {
+func (i *initializer) newLog(logDbPath string) (*databasesql.Log, error) {
 	sqlDB, err := NewModerncConn(logDbPath)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -429,7 +429,7 @@ func (i *initializer) newLog(logDbPath string) (*modernc.Log, error) {
 		)
 	}
 
-	logDb, err := modernc.NewLog(sqlDB)
+	logDb, err := databasesql.NewLog(sqlDB)
 	if err != nil {
 		closeErr := sqlDB.Close()
 		if closeErr != nil {

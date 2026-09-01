@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
-	dbm "github.com/caasmo/restinpieces/db/modernc"
+	dbm "github.com/caasmo/restinpieces/db/databasesql"
 )
 
 // newTestAppDb opens an in-memory SQLite connection for testing and wires

@@ -13,14 +13,14 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/caasmo/restinpieces/db/modernc"
+	"github.com/caasmo/restinpieces/db/databasesql"
 )
 
 // WithModerncPool configures the App to use the Modernc SQLite implementation with an existing pool.
 // The user is responsible for creating and managing the lifecycle of the provided pool.
 func WithModerncPool(pool *sql.DB) Option {
 	return func(i *initializer) {
-		dbInstance, err := modernc.New(pool)
+		dbInstance, err := databasesql.New(pool)
 		if err != nil {
 			panic(fmt.Sprintf("failed to initialize modernc DB with existing pool: %v", err))
 		}
@@ -35,7 +35,7 @@ func WithModerncPool(pool *sql.DB) Option {
 // value, e.g. map[string]string{"cache_size": "10000"}; a pragma on the same
 // key as a default replaces it.
 func NewModerncPool(dbPath string, pragmas ...map[string]string) (*sql.DB, error) {
-	return modernc.NewPool(dbPath, pragmas...)
+	return databasesql.NewPool(dbPath, pragmas...)
 }
 
 // NewModerncConn creates a new single SQLite connection with the shared
@@ -43,5 +43,5 @@ func NewModerncPool(dbPath string, pragmas ...map[string]string) (*sql.DB, error
 // may be passed as a map of pragma name to value; a pragma on the same key
 // as a default replaces it.
 func NewModerncConn(dbPath string, pragmas ...map[string]string) (*sql.DB, error) {
-	return modernc.NewConn(dbPath, pragmas...)
+	return databasesql.NewConn(dbPath, pragmas...)
 }

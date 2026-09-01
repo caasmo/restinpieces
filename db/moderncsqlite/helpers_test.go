@@ -13,7 +13,7 @@ import (
 )
 
 // buildLogDSN returns the modernc DSN for a log database file with the same
-// pragmas as db/modernc's defaultPragmas, so tests and benchmarks compare
+// pragmas as db/databasesql's defaultPragmas, so tests and benchmarks compare
 // like for like: busy_timeout 5000, WAL, synchronous NORMAL, foreign_keys
 // off, and mode=rw (the file must already exist).
 func buildLogDSN(dbPath string) string {

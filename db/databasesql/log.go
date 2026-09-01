@@ -1,4 +1,4 @@
-package modernc
+package databasesql
 
 import (
 	"context"

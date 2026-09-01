@@ -1,4 +1,4 @@
-package modernc
+package databasesql
 
 import (
 	"context"
@@ -115,9 +115,7 @@ func (d *Db) InsertJob(job db.Job) error {
 }
 
 // Claim locks and returns up to limit jobs for processing.
-func (d *Db) Claim(limit int) ([]*db.Job, error) {
-	var jobs []*db.Job
-
+func (d *Db) Claim(limit int) (jobs []*db.Job, err error) {
 	rows, err := d.db.Query(`UPDATE job_queue
 		SET status = 'processing',
 			locked_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
@@ -137,12 +135,14 @@ func (d *Db) Claim(limit int) ([]*db.Job, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to claim jobs: %w", err)
 	}
-	defer rows.Close()
+	defer func() {
+		err = errors.Join(err, rows.Close())
+	}()
 
 	for rows.Next() {
-		job, err := newJobFromRow(rows)
-		if err != nil {
-			return nil, err // Propagate parsing errors
+		job, rowErr := newJobFromRow(rows)
+		if rowErr != nil {
+			return nil, rowErr // Propagate parsing errors
 		}
 		jobs = append(jobs, job)
 	}

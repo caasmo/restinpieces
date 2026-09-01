@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/caasmo/restinpieces"
-	dbm "github.com/caasmo/restinpieces/db/modernc"
+	dbm "github.com/caasmo/restinpieces/db/databasesql"
 	sqlfs "github.com/caasmo/restinpieces/sql"
 )
 
