@@ -29,7 +29,7 @@ func main() {
 
 	// --- Create the Database Pool ---
 	// Use the helper from the library to create a pool with suitable defaults.
-	dbPool, err := restinpieces.NewZombiezenPool(*dbPath) // Use dbPath
+	dbPool, err := restinpieces.NewModerncPool(*dbPath) // Use dbPath
 	if err != nil {
 		slog.Error("failed to create database pool", "error", err)
 		os.Exit(1) // Exit if pool creation fails
@@ -44,7 +44,7 @@ func main() {
 
 	// --- Initialize the Application ---
 	_, srv, err := restinpieces.New(
-		restinpieces.WithZombiezenPool(dbPool),
+		restinpieces.WithModerncPool(dbPool),
 		restinpieces.WithAgeKeyPath(*ageKeyPath),
 	)
 	if err != nil {

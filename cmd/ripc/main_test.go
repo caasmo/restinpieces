@@ -27,7 +27,7 @@ func TestRun(t *testing.T) {
 	createDummyDB := func(t *testing.T, dir string) string {
 		t.Helper()
 		path := filepath.Join(dir, "test.db")
-		pool, err := restinpieces.NewZombiezenPool(path)
+		pool, err := restinpieces.NewModerncPool(path)
 		if err != nil {
 			t.Fatalf("Failed to create dummy db: %v", err)
 		}

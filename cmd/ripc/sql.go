@@ -1,47 +1,45 @@
 package main
 
 import (
-	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
 
 	"github.com/caasmo/restinpieces"
-	dbz "github.com/caasmo/restinpieces/db/zombiezen"
-	"github.com/caasmo/restinpieces/sql"
-	"zombiezen.com/go/sqlite"
-	"zombiezen.com/go/sqlite/sqlitex"
+	dbm "github.com/caasmo/restinpieces/db/modernc"
+	sqlfs "github.com/caasmo/restinpieces/sql"
 )
 
 var (
 	ErrCreateDbPool = errors.New("failed to create database pool")
-	ErrCreateDbImpl = errors.New("failed to instantiate zombiezen db from pool")
+	ErrCreateDbImpl = errors.New("failed to instantiate modernc db from pool")
 	ErrApplyLogSQL  = errors.New("failed to apply log SQL")
 )
 
-// appDb is the app database for ripc. It embeds the zombiezen app DB
+// appDb is the app database for ripc. It embeds the modernc app DB
 // and adds ad-hoc query helpers used only by the ripc CLI.
 type appDb struct {
-	pool *sqlitex.Pool
-	*dbz.Db
+	db *sql.DB
+	*dbm.Db
 }
 
 func newAppDb(dbPath string) (*appDb, error) {
-	pool, err := restinpieces.NewZombiezenPool(dbPath)
+	db, err := restinpieces.NewModerncPool(dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("%w (db_path: %s): %v", ErrCreateDbPool, dbPath, err)
 	}
-	zdb, err := dbz.New(pool)
+	mdb, err := dbm.New(db)
 	if err != nil {
-		_ = pool.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("%w: %v", ErrCreateDbImpl, err)
 	}
-	return &appDb{pool: pool, Db: zdb}, nil
+	return &appDb{db: db, Db: mdb}, nil
 }
 
 func (db *appDb) Close() error {
-	return db.pool.Close()
+	return db.db.Close()
 }
 
 type configRow struct {
@@ -52,133 +50,104 @@ type configRow struct {
 }
 
 func (db *appDb) configList(scopeFilter string) (rows []configRow, err error) {
-	conn, err := db.pool.Take(context.Background())
-	if err != nil {
-		return nil, fmt.Errorf("%w: failed to get db connection for list command", ErrDbConnection)
-	}
-	defer db.pool.Put(conn)
-
 	query := "SELECT scope, created_at, format, description FROM app_config ORDER BY created_at DESC;"
 	if scopeFilter != "" {
 		query = "SELECT scope, created_at, format, description FROM app_config WHERE scope = ? ORDER BY created_at DESC;"
 	}
 
-	stmt, err := conn.Prepare(query)
+	var qrows *sql.Rows
+	if scopeFilter != "" {
+		qrows, err = db.db.Query(query, scopeFilter)
+	} else {
+		qrows, err = db.db.Query(query)
+	}
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to prepare statement for list command", ErrQueryPrepare)
+		return nil, fmt.Errorf("%w: failed to query config for list command", ErrQueryPrepare)
 	}
 	defer func() {
-		if ferr := stmt.Finalize(); ferr != nil {
-			err = errors.Join(err, fmt.Errorf("failed to finalize statement: %w", ferr))
+		if ferr := qrows.Close(); ferr != nil {
+			err = errors.Join(err, fmt.Errorf("%w: failed to close list results: %w", ErrDbFinalize, ferr))
 		}
 	}()
 
-	if scopeFilter != "" {
-		stmt.BindText(1, scopeFilter)
+	for qrows.Next() {
+		var row configRow
+		if err := qrows.Scan(&row.Scope, &row.CreatedAt, &row.Format, &row.Description); err != nil {
+			return nil, fmt.Errorf("%w: failed to scan list results: %w", ErrDbStep, err)
+		}
+		rows = append(rows, row)
+	}
+	if err := qrows.Err(); err != nil {
+		return nil, fmt.Errorf("%w: failed to iterate list results: %w", ErrDbStep, err)
 	}
 
-	for {
-		hasRow, stepErr := stmt.Step()
-		if stepErr != nil {
-			return nil, fmt.Errorf("failed to step through list results: %w", stepErr)
-		}
-		if !hasRow {
-			break
-		}
-
-		rows = append(rows, configRow{
-			Scope:       stmt.GetText("scope"),
-			CreatedAt:   stmt.GetText("created_at"),
-			Format:      stmt.GetText("format"),
-			Description: stmt.GetText("description"),
-		})
-	}
-
-	return rows, err
+	return rows, nil
 }
 
 func (db *appDb) configScopes() (scopes []string, err error) {
-	conn, err := db.pool.Take(context.Background())
-	if err != nil {
-		return nil, fmt.Errorf("%w: for scopes command: %w", ErrDbConnection, err)
-	}
-	defer db.pool.Put(conn)
-
-	stmt, err := conn.Prepare("SELECT DISTINCT scope FROM app_config ORDER BY scope;")
+	qrows, err := db.db.Query("SELECT DISTINCT scope FROM app_config ORDER BY scope;")
 	if err != nil {
 		return nil, fmt.Errorf("%w: for scopes command: %w", ErrDbPrepare, err)
 	}
 	defer func() {
-		if ferr := stmt.Finalize(); ferr != nil {
+		if ferr := qrows.Close(); ferr != nil {
 			err = errors.Join(err, fmt.Errorf("%w: %w", ErrDbFinalize, ferr))
 		}
 	}()
 
-	for {
-		hasRow, stepErr := stmt.Step()
-		if stepErr != nil {
-			return nil, fmt.Errorf("%w: %w", ErrDbStep, stepErr)
+	for qrows.Next() {
+		var scope string
+		if err := qrows.Scan(&scope); err != nil {
+			return nil, fmt.Errorf("%w: for scopes command: %w", ErrDbStep, err)
 		}
-		if !hasRow {
-			break
-		}
-		scopes = append(scopes, stmt.GetText("scope"))
+		scopes = append(scopes, scope)
+	}
+	if err := qrows.Err(); err != nil {
+		return nil, fmt.Errorf("%w: for scopes command: %w", ErrDbStep, err)
 	}
 
-	return scopes, err
+	return scopes, nil
 }
 
 // TODO: refactor — createSchemas should not be a method on appDb; move to standalone helper or driver package (keep sql.go pure)
 func (db *appDb) createSchemas() error {
-	conn, err := db.pool.Take(context.Background())
-	if err != nil {
-		return fmt.Errorf("%w: for sql: %w", ErrDbConnection, err)
-	}
-	defer db.pool.Put(conn)
-
-	if err := applySQL(conn, "app"); err != nil {
+	if err := applySQL(db.db, "app"); err != nil {
 		return fmt.Errorf("%w: sql process failed: %w", ErrApplySQL, err)
 	}
-
 	return nil
 }
 
 // logDb is the log database for ripc. It mirrors appDb so both databases
 // share the same constructor + createSchemas + Close shape.
 type logDb struct {
-	pool *sqlitex.Pool
+	db *sql.DB
 }
 
 func newLogDb(dbPath string) (*logDb, error) {
-	pool, err := restinpieces.NewZombiezenPool(dbPath)
+	db, err := restinpieces.NewModerncPool(dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to open/create log database at %s: %w", ErrDbConnection, dbPath, err)
 	}
-	return &logDb{pool: pool}, nil
+	return &logDb{db: db}, nil
 }
 
 func (db *logDb) Close() error {
-	return db.pool.Close()
+	return db.db.Close()
 }
 
 func (db *logDb) createSchemas() error {
-	conn, err := db.pool.Take(context.Background())
-	if err != nil {
-		return fmt.Errorf("%w: failed to get connection from pool: %w", ErrDbConnection, err)
-	}
-	defer db.pool.Put(conn)
-
-	if err := applySQL(conn, "log"); err != nil {
+	if err := applySQL(db.db, "log"); err != nil {
 		return fmt.Errorf("%w: failed to execute log sql: %w", ErrApplyLogSQL, err)
 	}
-
 	return nil
 }
 
-// applySQL executes all .sql files in the given directory of the embedded SQL filesystem.
-// The embedded filesystem is expected to contain only one level of directories (app, log).
-func applySQL(conn *sqlite.Conn, dir string) error {
-	fsys, err := fs.Sub(sql.FS(), dir)
+// applySQL executes all .sql files in the given directory of the embedded
+// SQL filesystem. The embedded filesystem is expected to contain only one
+// level of directories (app, log). Each file may contain multiple
+// statements; the modernc driver executes them in a single Exec call.
+func applySQL(db *sql.DB, dir string) error {
+	fsys, err := fs.Sub(sqlfs.FS(), dir)
 	if err != nil {
 		return fmt.Errorf("could not access embedded sql dir %s: %w", dir, err)
 	}
@@ -201,8 +170,9 @@ func applySQL(conn *sqlite.Conn, dir string) error {
 			return fmt.Errorf("could not read embedded sql file %s/%s: %w", dir, e.Name(), err)
 		}
 
-		if err := sqlitex.ExecuteScript(conn, string(sqlBytes), nil); err != nil {
-			return fmt.Errorf("failed to execute sql file %s/%s: %w", dir, e.Name(), err)
+		_, execErr := db.Exec(string(sqlBytes))
+		if execErr != nil {
+			return fmt.Errorf("failed to execute sql file %s/%s: %w", dir, e.Name(), execErr)
 		}
 	}
 	return nil

@@ -72,7 +72,7 @@ To address this, the framework provides pure Go implementations of all available
 For the framework-side `backup` configuration, see [doc/backup.md](doc/backup.md).
 
 ### Database Drivers
-The framework defaults to using [zombiezen/go-sqlite](https://github.com/zombiezen/go-sqlite), a pure Go SQLite driver that offers excellent performance without relying on CGo. This simplifies the build process and ensures portability. For users who require an alternative, the framework is designed to be modular, and an implementation using the popular [crawshaw.io/sqlite](https://github.com/caasmo/restinpieces-sqlite-crawshaw) driver is also available.
+The framework defaults to using [modernc.org/sqlite](https://modernc.org/sqlite), a pure Go SQLite driver that offers excellent performance without relying on CGo. This simplifies the build process and ensures portability. For users who require an alternative, the framework is designed to be modular, and an implementation using the popular [crawshaw.io/sqlite](https://github.com/caasmo/restinpieces-sqlite-crawshaw) driver is also available.
 
 ### Router
 The framework uses Go's standard `http.ServeMux` as its default router for simplicity and compatibility with the standard library. As of Go 1.22, the standard mux includes support for path parameters. Recognizing that different applications have different routing needs, the router is implemented as a swappable component. For those seeking maximum performance, an alternative implementation using the highly optimized [julienschmidt/httprouter](https://github.com/julienschmidt/httprouter) is also provided. See [restinpieces-httprouter](https://github.com/caasmo/restinpieces-httprouter) for details.

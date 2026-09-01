@@ -51,7 +51,7 @@ func TestListScopes_Success_NoScopes(t *testing.T) {
 	}
 }
 
-func TestListScopes_Failure_DbConnectionError(t *testing.T) {
+func TestListScopes_Failure_ClosedDatabase(t *testing.T) {
 	db := newTestAppDb(t)
 	if err := db.Close(); err != nil {
 		t.Fatalf("failed to close database pool: %v", err)
@@ -65,7 +65,7 @@ func TestListScopes_Failure_DbConnectionError(t *testing.T) {
 		t.Fatal("expected an error, but got nil")
 	}
 
-	if !errors.Is(err, ErrDbConnection) {
-		t.Errorf("expected error to wrap ErrDbConnection, got %v", err)
+	if !errors.Is(err, ErrDbPrepare) {
+		t.Errorf("expected error to wrap ErrDbPrepare, got %v", err)
 	}
 }

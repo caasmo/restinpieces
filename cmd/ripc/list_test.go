@@ -58,7 +58,7 @@ func TestPrintConfigList_Success_NoItems(t *testing.T) {
 	}
 }
 
-func TestPrintConfigList_Failure_DbConnectionError(t *testing.T) {
+func TestPrintConfigList_Failure_ClosedDatabase(t *testing.T) {
 	db := newTestAppDb(t)
 	if err := db.Close(); err != nil {
 		t.Fatalf("failed to close database pool: %v", err)
@@ -68,8 +68,8 @@ func TestPrintConfigList_Failure_DbConnectionError(t *testing.T) {
 	ui := UI{Out: &stdout, Err: &stderr}
 	_, err := printConfigList(ui, db, "")
 
-	if !errors.Is(err, ErrDbConnection) {
-		t.Errorf("expected ErrDbConnection, got %v", err)
+	if !errors.Is(err, ErrQueryPrepare) {
+		t.Errorf("expected ErrQueryPrepare, got %v", err)
 	}
 }
 

@@ -15,6 +15,7 @@ require (
 	golang.org/x/oauth2 v0.28.0
 	golang.org/x/sync v0.14.0
 	golang.org/x/time v0.11.0
+	modernc.org/sqlite v1.37.1
 	zombiezen.com/go/sqlite v1.4.2
 )
 
@@ -39,5 +40,4 @@ require (
 	modernc.org/libc v1.65.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.37.1 // indirect
 )

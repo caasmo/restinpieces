@@ -12,7 +12,7 @@ import (
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/core/prerouter"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/db/zombiezen"
+	"github.com/caasmo/restinpieces/db/modernc"
 	"github.com/caasmo/restinpieces/log"
 	"github.com/caasmo/restinpieces/mail"
 	"github.com/caasmo/restinpieces/notify"
@@ -378,10 +378,9 @@ func (i *initializer) setupDefaultCache(cfg *config.Config) error {
 // The default logger uses batch inserts to maximize performance by:
 //   - Batching multiple log entries together before writing to disk
 //
-// We use a hardcoded zombiezen driver since:
+// We use a hardcoded modernc driver since:
 //   - Only the logger daemon needs access to this database
 //   - the database in in another file as the main db
-//   - Using the same driver as the main app would require additional wiring
 //
 // The log database path must be configured via config.Log.Batch.DbPath, which
 // is set authoritatively by `ripc log init`.
@@ -420,8 +419,8 @@ func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUs
 	return logDaemon, nil
 }
 
-func (i *initializer) newLog(logDbPath string) (*zombiezen.Log, error) {
-	conn, err := NewZombiezenConn(logDbPath)
+func (i *initializer) newLog(logDbPath string) (*modernc.Log, error) {
+	sqlDB, err := NewModerncConn(logDbPath)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"default sqlite logger: database not found at %s (log.batch.db_path). Please run 'ripc log init' to create it: %w",
@@ -430,9 +429,9 @@ func (i *initializer) newLog(logDbPath string) (*zombiezen.Log, error) {
 		)
 	}
 
-	logDb, err := zombiezen.NewLog(conn)
+	logDb, err := modernc.NewLog(sqlDB)
 	if err != nil {
-		closeErr := conn.Close()
+		closeErr := sqlDB.Close()
 		if closeErr != nil {
 			err = errors.Join(err, closeErr)
 		}
