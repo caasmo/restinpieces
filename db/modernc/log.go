@@ -3,8 +3,8 @@ package modernc
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/caasmo/restinpieces/db"
 )
@@ -32,11 +32,17 @@ func NewLog(sqlDB *sql.DB) (*Log, error) {
 	return l, nil
 }
 
-// InsertBatch writes a batch of log entries to the SQLite database.
-// It uses an explicit transaction that will be rolled back on any error.
-// The transaction begins with BEGIN IMMEDIATE: a RESERVED lock is acquired
-// immediately for better concurrency control, matching the previous driver.
-func (l *Log) InsertBatch(batch []db.Log) (err error) {
+// InsertBatch writes a batch of log entries to the SQLite database as a
+// single multi-row INSERT statement. One statement is atomic in SQLite:
+// the whole batch is committed or rolled back as a unit, so no explicit
+// transaction is needed.
+//
+// The statement uses 4 bind parameters per entry. SQLite rejects a single
+// statement with more than SQLITE_MAX_VARIABLE_NUMBER bind parameters
+// (default 32766) — at 4 parameters per entry that is 8191 entries.
+// Batches must stay below that ceiling or the statement fails with
+// "too many SQL variables"; the framework's default flush size is 100.
+func (l *Log) InsertBatch(batch []db.Log) error {
 	if l.db == nil {
 		return ErrConnectionClosed
 	}
@@ -44,56 +50,36 @@ func (l *Log) InsertBatch(batch []db.Log) (err error) {
 		return nil
 	}
 
-	// Pin one connection: all transaction statements must run on it.
-	conn, err := l.db.Conn(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to get connection for batch insert: %w", err)
-	}
-	defer func() {
-		closeErr := conn.Close()
-		err = errors.Join(err, closeErr)
-	}()
-
-	// Begin an immediate transaction for better concurrency control
-	if _, err = conn.ExecContext(context.Background(), "BEGIN IMMEDIATE;"); err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-
-	// Defer rollback in case we exit early
-	defer func() {
-		if err != nil {
-			_, _ = conn.ExecContext(context.Background(), "ROLLBACK;")
-		}
-	}()
-
-	// Prepare insert statement
-	stmt, err := conn.PrepareContext(context.Background(), "INSERT INTO logs (level, message, data, created) VALUES ($level, $message, $data, $created)")
-	if err != nil {
-		return fmt.Errorf("failed to prepare statement: %w", err)
-	}
-	defer func() {
-		if ferr := stmt.Close(); ferr != nil && err == nil {
-			err = fmt.Errorf("failed to close statement: %w", ferr)
-		}
-	}()
-
-	// Insert each record
+	args := make([]any, 0, len(batch)*4)
 	for _, entry := range batch {
-		if _, err = stmt.ExecContext(context.Background(),
-			sql.Named("level", entry.Level),
-			sql.Named("message", entry.Message),
-			sql.Named("data", entry.JsonData),
-			sql.Named("created", entry.Created)); err != nil {
-			return fmt.Errorf("failed to execute statement for record (msg: %q): %w", entry.Message, err)
-		}
+		args = append(args, entry.Level, entry.Message, entry.JsonData, entry.Created)
 	}
 
-	// Commit transaction if all inserts succeeded
-	if _, err = conn.ExecContext(context.Background(), "COMMIT;"); err != nil {
-		return fmt.Errorf("failed to commit transaction: %w", err)
+	if _, err := l.db.ExecContext(context.Background(), buildLogInsertStatement(len(batch)), args...); err != nil {
+		return fmt.Errorf("failed to execute batch insert statement: %w", err)
 	}
-
 	return nil
+}
+
+// buildLogInsertStatement returns the multi-row INSERT statement for
+// entries value tuples:
+//
+//	INSERT INTO logs (level, message, data, created) VALUES (?,?,?,?), (?,?,?,?), ...
+//
+// Positional '?' placeholders avoid the per-call allocation of named
+// parameters, and a single statement performs one argument conversion
+// round for the whole batch.
+func buildLogInsertStatement(entries int) string {
+	var sb strings.Builder
+	sb.Grow(56 + entries*11) // column list plus one tuple and separator per entry
+	sb.WriteString("INSERT INTO logs (level, message, data, created) VALUES ")
+	for i := 0; i < entries; i++ {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString("(?,?,?,?)")
+	}
+	return sb.String()
 }
 
 // Ping checks if the specified table exists.
