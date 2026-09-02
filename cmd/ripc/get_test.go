@@ -50,7 +50,7 @@ public_dir = "/var/www/public"
 [log]
   level = "info"
   [log.batch]
-    flush_size = 200
+    batch_size = 200
     db_path = "/var/log/app.db"
 
 [oauth2_providers.github]
@@ -77,7 +77,7 @@ func TestGetAndPrintConfigPaths_Success_NoFilter(t *testing.T) {
 	output := stdout.String()
 	expectedSubstrings := []string{
 		`log.batch.db_path = /var/log/app.db`,
-		`log.batch.flush_size = 200`,
+		`log.batch.batch_size = 200`,
 		`log.level = info`,
 		`oauth2_providers.github.display_name = GitHub`,
 		`oauth2_providers.github.name = github`,

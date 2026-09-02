@@ -47,7 +47,7 @@ func NewDefaultConfig() *Config {
 				},
 			},
 			Batch: BatchLogger{
-				FlushSize: 100, // 50-100 gives good performance; see BenchmarkLog_InsertBatch
+				BatchSize:     50, // 50 balances throughput and flush latency; see BenchmarkLog_InsertBatch
 				ChanSize:      1000,
 				FlushInterval: Duration{Duration: 5 * time.Second},
 				Level:         LogLevel{Level: slog.LevelInfo},

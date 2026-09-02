@@ -86,7 +86,7 @@ type LogRequestLimits struct {
 
 // BatchLogger contains batch logging configuration
 type BatchLogger struct {
-	FlushSize     int      `toml:"flush_size" comment:"Records to batch before writing"`
+	BatchSize     int      `toml:"batch_size" comment:"Records to batch before writing"`
 	ChanSize      int      `toml:"chan_size" comment:"Log record channel buffer size"`
 	FlushInterval Duration `toml:"flush_interval" comment:"Max time between flushes"`
 	Level         LogLevel `toml:"level" comment:"Minimum log level (debug, info, warn, error)"`

@@ -396,7 +396,7 @@ func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUs
 	logDbPath := cfg.Log.Batch.DbPath
 
 	i.app.Logger().Info("Using log database", "path", logDbPath)
-	logDb, err := i.newLog(logDbPath)
+	logDb, err := i.newLog(logDbPath, cfg.Log.Batch.BatchSize)
 	if err != nil {
 		return nil, err
 	}
@@ -419,7 +419,7 @@ func (i *initializer) setupDefaultLogger(configProvider *config.Provider, withUs
 	return logDaemon, nil
 }
 
-func (i *initializer) newLog(logDbPath string) (*databasesql.Log, error) {
+func (i *initializer) newLog(logDbPath string, batchSize int) (*databasesql.Log, error) {
 	sqlDB, err := NewModerncConn(logDbPath)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -429,7 +429,7 @@ func (i *initializer) newLog(logDbPath string) (*databasesql.Log, error) {
 		)
 	}
 
-	logDb, err := databasesql.NewLog(sqlDB)
+	logDb, err := databasesql.NewLog(sqlDB, batchSize)
 	if err != nil {
 		closeErr := sqlDB.Close()
 		if closeErr != nil {

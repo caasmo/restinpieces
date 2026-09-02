@@ -56,7 +56,7 @@ public_dir = "/var/www/public"
   addr = ":8080"
   enable_tls = true
 [log.batch]
-  flush_size = 200
+  batch_size = 200
 `
 
 func getTreeFromStore(t *testing.T, store *MockSetSecureStore, scope string) *toml.Tree {
@@ -99,7 +99,7 @@ func TestSetConfigValue_Success_Numeric(t *testing.T) {
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(setTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	path := "log.batch.flush_size"
+	path := "log.batch.batch_size"
 	value := "500"
 
 	err := setConfigValue(ui, mockStore, scope, "toml", "", path, value)

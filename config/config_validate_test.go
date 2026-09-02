@@ -180,15 +180,15 @@ func TestValidateBlockIp(t *testing.T) {
 
 func TestValidateLoggerBatch(t *testing.T) {
 	t.Parallel()
-	if err := validateLoggerBatch(&BatchLogger{ChanSize: 1, FlushSize: 1, FlushInterval: Duration{Duration: 1}, DbPath: "a"}); err != nil {
+	if err := validateLoggerBatch(&BatchLogger{ChanSize: 1, BatchSize: 1, FlushInterval: Duration{Duration: 1}, DbPath: "a"}); err != nil {
 		t.Errorf("valid case failed: %v", err)
 	}
 
 	invalidCases := []BatchLogger{
-		{ChanSize: 0, FlushSize: 1, FlushInterval: Duration{Duration: 1}, DbPath: "a"},
-		{ChanSize: 1, FlushSize: 0, FlushInterval: Duration{Duration: 1}, DbPath: "a"},
-		{ChanSize: 1, FlushSize: 1, FlushInterval: Duration{Duration: 0}, DbPath: "a"},
-		{ChanSize: 1, FlushSize: 1, FlushInterval: Duration{Duration: 1}, DbPath: ""},
+		{ChanSize: 0, BatchSize: 1, FlushInterval: Duration{Duration: 1}, DbPath: "a"},
+		{ChanSize: 1, BatchSize: 0, FlushInterval: Duration{Duration: 1}, DbPath: "a"},
+		{ChanSize: 1, BatchSize: 1, FlushInterval: Duration{Duration: 0}, DbPath: "a"},
+		{ChanSize: 1, BatchSize: 1, FlushInterval: Duration{Duration: 1}, DbPath: ""},
 	}
 	for _, cfg := range invalidCases {
 		if err := validateLoggerBatch(&cfg); err == nil {

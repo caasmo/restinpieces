@@ -372,7 +372,7 @@ func TestNewLog_FileNotFound(t *testing.T) {
 		app: &core.App{},
 	}
 
-	_, err := init.newLog(logPath)
+	_, err := init.newLog(logPath, 100)
 	if err == nil {
 		t.Fatal("expected error when log database file is missing")
 	}

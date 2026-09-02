@@ -241,8 +241,8 @@ func validateLoggerBatch(loggerBatch *BatchLogger) error {
 	if loggerBatch.ChanSize < 1 {
 		return fmt.Errorf("chan_size must be >= 1")
 	}
-	if loggerBatch.FlushSize < 1 {
-		return fmt.Errorf("flush_size must be >= 1")
+	if loggerBatch.BatchSize < 1 {
+		return fmt.Errorf("batch_size must be >= 1")
 	}
 	if loggerBatch.FlushInterval.Duration <= 0 {
 		return fmt.Errorf("flush_interval must be positive")

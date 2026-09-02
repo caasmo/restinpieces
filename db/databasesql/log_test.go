@@ -41,7 +41,7 @@ func newTestLogDB(t *testing.T) (*Log, string) {
 		t.Fatalf("Failed to execute logs.sql script: %v", err)
 	}
 
-	logDB, err := NewLog(logConn)
+	logDB, err := NewLog(logConn, 100)
 	if err != nil {
 		t.Fatalf("failed to create new log db: %v", err)
 	}

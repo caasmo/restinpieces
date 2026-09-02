@@ -12,7 +12,7 @@ import (
 func BenchmarkLog_InsertBatch(b *testing.B) {
 	for _, n := range []int{10, 50, 100} {
 		b.Run(fmt.Sprintf("N%d", n), func(b *testing.B) {
-			dbtest.BenchLog_InsertBatch(b, newBenchLog(b), n)
+			dbtest.BenchLog_InsertBatch(b, newBenchLog(b, n), n)
 		})
 	}
 }

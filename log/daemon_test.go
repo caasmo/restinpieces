@@ -115,7 +115,7 @@ func TestDaemon_FlushOnBatchSize(t *testing.T) {
 	// 1. Setup
 	mockDB := newMockDbLog()
 	cfg := config.NewDefaultConfig()
-	cfg.Log.Batch.FlushSize = 3
+	cfg.Log.Batch.BatchSize = 3
 	cfg.Log.Batch.FlushInterval.Duration = 1 * time.Minute // Long interval to prevent interference
 	provider := config.NewProvider(cfg)
 
@@ -168,7 +168,7 @@ func TestDaemon_FlushOnInterval(t *testing.T) {
 	// 1. Setup
 	mockDB := newMockDbLog()
 	cfg := config.NewDefaultConfig()
-	cfg.Log.Batch.FlushSize = 10 // Large size to ensure it doesn't trigger the flush
+	cfg.Log.Batch.BatchSize = 10 // Large size to ensure it doesn't trigger the flush
 	cfg.Log.Batch.FlushInterval.Duration = 20 * time.Millisecond // Short interval
 	provider := config.NewProvider(cfg)
 
@@ -218,7 +218,7 @@ func TestDaemon_ShutdownDrainsLogs(t *testing.T) {
 	// 1. Setup
 	mockDB := newMockDbLog()
 	cfg := config.NewDefaultConfig()
-	cfg.Log.Batch.FlushSize = 10 // High flush size to prevent premature flush
+	cfg.Log.Batch.BatchSize = 10 // High flush size to prevent premature flush
 	provider := config.NewProvider(cfg)
 
 	daemon, err := New(provider, newTestLogger(), mockDB)
@@ -266,7 +266,7 @@ func TestDaemon_SurvivesDbError(t *testing.T) {
 	opLogger := slog.New(slog.NewTextHandler(&logOutput, nil))
 
 	cfg := config.NewDefaultConfig()
-	cfg.Log.Batch.FlushSize = 2
+	cfg.Log.Batch.BatchSize = 2
 	provider := config.NewProvider(cfg)
 
 	daemon, err := New(provider, opLogger, mockDB)
@@ -326,7 +326,7 @@ func TestDaemon_SkipsUnserializableRecord(t *testing.T) {
 	opLogger := slog.New(slog.NewTextHandler(&logOutput, nil))
 
 	cfg := config.NewDefaultConfig()
-	cfg.Log.Batch.FlushSize = 2 // Flush after two records are processed
+	cfg.Log.Batch.BatchSize = 2 // Flush after two records are processed
 	provider := config.NewProvider(cfg)
 
 	daemon, err := New(provider, opLogger, mockDB)

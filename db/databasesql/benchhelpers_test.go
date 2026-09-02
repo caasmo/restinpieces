@@ -51,9 +51,10 @@ func newBenchDb(b *testing.B, schemaPaths ...string) *Db {
 
 // newBenchLog creates a log database on a real temp file, mirroring
 // newBenchDb for the Log type. Log uses a single connection, not a pool, so
-// it needs its own setup. The temp file and connection are cleaned up
-// automatically when the benchmark finishes.
-func newBenchLog(b *testing.B) *Log {
+// it needs its own setup. batchSize is the size the Log is built for,
+// matching the benchmark sub-run. The temp file and connection are cleaned
+// up automatically when the benchmark finishes.
+func newBenchLog(b *testing.B, batchSize int) *Log {
 	b.Helper()
 
 	dbPath := filepath.Join(b.TempDir(), "bench_log.db")
@@ -79,7 +80,7 @@ func newBenchLog(b *testing.B) *Log {
 		b.Fatalf("failed to execute logs.sql script: %v", err)
 	}
 
-	logDB, err := NewLog(sqlDB)
+	logDB, err := NewLog(sqlDB, batchSize)
 	if err != nil {
 		b.Fatalf("failed to create new log db: %v", err)
 	}
