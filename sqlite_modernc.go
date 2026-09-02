@@ -7,7 +7,9 @@ package restinpieces
 // These functions offer reasonable default configurations (like enabling WAL
 // mode) suitable for use with restinpieces. You can use these functions to
 // create the pool and then pass it to both restinpieces (via options like
-// WithModerncPool) and your own application's database access layer.
+// WithModerncPool) and your own application's database access layer. An
+// application that runs its own statements through a `databasesql.Db` registers
+// them the same way, by calling `RegisterStmt` during startup.
 
 import (
 	"database/sql"
@@ -24,6 +26,13 @@ func WithModerncPool(pool *sql.DB) Option {
 		if err != nil {
 			panic(fmt.Sprintf("failed to initialize modernc DB with existing pool: %v", err))
 		}
+
+		for name, sql := range databasesql.UsersStmts {
+			if _, err := dbInstance.RegisterStmt(name, sql); err != nil {
+				panic(fmt.Sprintf("failed to register statement: %v", err))
+			}
+		}
+
 		i.app.SetDb(dbInstance)
 		i.dbConfig = dbInstance
 	}

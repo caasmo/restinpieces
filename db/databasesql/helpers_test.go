@@ -45,3 +45,15 @@ func newTestDb(t *testing.T, schemaPaths ...string) *Db {
 	}
 	return mdb
 }
+
+// registerUsersStmts registers the users read statements on mdb,
+// mirroring what restinpieces.WithModerncPool does for the app.
+func registerUsersStmts(t testing.TB, mdb *Db) {
+	t.Helper()
+
+	for name, sql := range UsersStmts {
+		if _, err := mdb.RegisterStmt(name, sql); err != nil {
+			t.Fatalf("failed to register statement: %v", err)
+		}
+	}
+}

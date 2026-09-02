@@ -16,6 +16,21 @@ type rowScanner interface {
 // userColumns is the column list every users query selects.
 const userColumns = `id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`
 
+const (
+	StmtUserById    = "userById"
+	StmtUserByEmail = "userByEmail"
+)
+
+// UsersStmts maps the name of each users read statement to its SQL.
+// The users Db methods run these statements; restinpieces registers every
+// entry once at startup through WithModerncPool, so each statement is
+// prepared a single time before the first request.
+var UsersStmts = map[string]string{
+	StmtUserById: `SELECT ` + userColumns + ` FROM users WHERE id = ? LIMIT 1`,
+
+	StmtUserByEmail: `SELECT ` + userColumns + ` FROM users WHERE email = ? LIMIT 1`,
+}
+
 // newUserFromRow creates a User struct from a scanned database row.
 // BOOLEAN columns arrive as int64; they are converted with != 0.
 func newUserFromRow(row rowScanner) (*db.User, error) {
@@ -61,8 +76,12 @@ func newUserFromRow(row rowScanner) (*db.User, error) {
 // - error: Only returned for database errors, nil on successful query (even if no results)
 // Note: A nil user with nil error indicates no matching record was found
 func (d *Db) GetUserByEmail(email string) (*db.User, error) {
-	user, err := newUserFromRow(d.db.QueryRow(
-		`SELECT `+userColumns+` FROM users WHERE email = ? LIMIT 1`, email))
+	stmt, err := d.Stmt(StmtUserByEmail)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := newUserFromRow(stmt.QueryRow(email))
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
@@ -74,8 +93,12 @@ func (d *Db) GetUserByEmail(email string) (*db.User, error) {
 
 // GetUserById retrieves a user by ID.
 func (d *Db) GetUserById(id string) (*db.User, error) {
-	user, err := newUserFromRow(d.db.QueryRow(
-		`SELECT `+userColumns+` FROM users WHERE id = ? LIMIT 1`, id))
+	stmt, err := d.Stmt(StmtUserById)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := newUserFromRow(stmt.QueryRow(id))
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
