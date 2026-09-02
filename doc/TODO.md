@@ -441,3 +441,9 @@ Current `3600s bucket + 3m TTL` is worst of both
 - `cmd/ripc/sql.go` — holds a `*sqlitex.Pool` and imports the wrapper
 - `cmd/ripc/sql_helpers_test.go` — test pool helper
 - `go.mod` — the `zombiezen.com/go/sqlite` module dependency to be swapped for `modernc.org/sqlite`
+
+# log driver: logger does not support SIGHUP reload — batch_size change would require a stmt change
+
+- `db/databasesql/log.go` — `Log.stmt` is prepared once in `NewLog` for the startup `batchSize` (= config `log.batch.batch_size`); the daemon keeps that connection/statement for its whole life
+- SIGHUP config reload updates the provider only — the driver is not rebuilt, so a `batch_size` change silently drops every full flush to the slow partial path (`InsertBatch` ad-hoc `ExecContext`), and a `db_path` change is ignored
+- TODO: on reload, re-prepare `stmt` for the new size (or re-create the `Log`); until then restart required

@@ -61,7 +61,7 @@ func NewLog(conn driver.Conn, batchSize int) (*Log, error) {
 // statement with more than SQLITE_MAX_VARIABLE_NUMBER bind parameters
 // (default 32766) — at 4 parameters per entry that is 8191 entries.
 // Batches must stay below that ceiling or the statement fails with
-// "too many SQL variables"; the framework's default flush size is 100.
+// "too many SQL variables"; the framework's default batch size is 50.
 //
 // The multi-row INSERT is built and prepared in NewLog for the configured
 // batch size and reused; it is never re-built or re-prepared. A partial

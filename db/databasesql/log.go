@@ -15,17 +15,35 @@ var ErrConnectionClosed = fmt.Errorf("database connection is closed")
 // Verify interface implementation
 var _ db.DbLog = (*Log)(nil)
 
-// Log represents a connection to the SQLite database for logging purposes,
-// opened through the database/sql stdlib layer on a single-connection pool.
+// Log writes log batches to SQLite on a single-connection *sql.DB pool
+// (NewConn caps the pool at one). InsertBatch is the hot path, made lean by
+// two tricks: stmt is prepared once for batchSize and reused (no Prepare or
+// string building per flush), and args is pooled and rewritten in place per
+// flush (no allocation per flush from our code). Both force single-goroutine
+// use; the log daemon is the only caller.
 //
-// A Log must be used from a single goroutine: the arg slice and prepared
-// statement are reused across InsertBatch calls, so concurrent flushes
-// would overwrite each other's arguments.
+// Performance (per InsertBatch of 100 entries, benchtime=100x):
+//
+//	driver         B/op      allocs/op
+//	zombiezen      242       7
+//	databasesql    29.5 KiB  315      (this type)
+//	moderncsqlite  13.2 KiB  312      (raw driver.Conn, no database/sql)
+//
+// database/sql regresses zombiezen on memory: every flush it repacks the
+// batch from our []any into a fresh []driver.NamedValue — an unbox/convert/
+// re-box hop per value — while zombiezen binds row-by-row straight into the
+// C statement. Bypassing database/sql with a raw driver.Conn
+// (moderncsqlite) halves the bytes: the NamedValue rebuild disappears. Allocs
+// stay flat though, because the ~312 remaining are the modernc driver
+// binding the 4×N parameters — common to both modernc paths.
 type Log struct {
-	db        *sql.DB   // for Close and the partial-flush path
-	args      []any     // pooled bind args; values rewritten per flush
-	stmt      *sql.Stmt // multi-row INSERT for batchSize entries
-	batchSize int       // configured batch size; only batches of this size use stmt
+	db   *sql.DB   // pool; also serves the partial-flush path
+	stmt *sql.Stmt // prepared multi-row INSERT for batchSize entries
+	args []any     // pooled bind args; rewritten per flush
+	// TODO: batchSize mirrors config log.batch.batch_size, read once at
+	// startup. A config change requires re-preparing stmt for the new size;
+	// Log is not rebuilt on SIGHUP reload today.
+	batchSize int // configured batch size; only full batches use stmt
 }
 
 // NewLog wraps a single-connection *sql.DB (as returned by NewConn). It
@@ -53,7 +71,7 @@ func NewLog(sqlDB *sql.DB, batchSize int) (*Log, error) {
 // statement with more than SQLITE_MAX_VARIABLE_NUMBER bind parameters
 // (default 32766) — at 4 parameters per entry that is 8191 entries.
 // Batches must stay below that ceiling or the statement fails with
-// "too many SQL variables"; the framework's default flush size is 100.
+// "too many SQL variables"; the framework's default batch size is 50.
 //
 // The multi-row INSERT is built and prepared in NewLog for the configured
 // batch size and reused; it is never re-built or re-prepared. A partial
