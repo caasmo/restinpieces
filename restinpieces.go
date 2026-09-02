@@ -436,7 +436,7 @@ func (i *initializer) newLog(logDbPath string, batchSize int) (*databasesql.Log,
 			err = errors.Join(err, closeErr)
 		}
 		return nil, fmt.Errorf(
-			"default sqlite logger: database at %s is not initialized (missing log table). Please run 'ripc log init': %w",
+			"default sqlite logger: failed to prepare log statements at %s (missing logs table?). Please run 'ripc log init': %w",
 			logDbPath,
 			err,
 		)

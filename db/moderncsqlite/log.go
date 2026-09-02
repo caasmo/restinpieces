@@ -149,19 +149,6 @@ func buildInsertStmt(batchSize int) string {
 	return sb.String()
 }
 
-// Ping checks if the specified table exists.
-func (l *Log) Ping(tableName string) error {
-	if l.conn == nil {
-		return ErrConnectionClosed
-	}
-	exec := l.conn.(driver.ExecerContext)
-	query := fmt.Sprintf("SELECT 1 FROM %s LIMIT 1;", tableName)
-	if _, err := exec.ExecContext(context.Background(), query, nil); err != nil {
-		return fmt.Errorf("failed to ping table %s: %w", tableName, err)
-	}
-	return nil
-}
-
 // Close closes the underlying SQLite connection and the prepared statement.
 func (l *Log) Close() error {
 	if l.conn == nil {

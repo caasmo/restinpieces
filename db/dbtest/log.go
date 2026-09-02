@@ -48,22 +48,6 @@ func (s LogSuite) TestLog_InsertBatch(t *testing.T) {
 	})
 }
 
-func (s LogSuite) TestLog_Ping(t *testing.T) {
-	logDB := s.New(t)
-
-	t.Run("ValidTable", func(t *testing.T) {
-		if err := logDB.Ping("logs"); err != nil {
-			t.Fatalf("Ping() on an existing table returned an error: %v", err)
-		}
-	})
-
-	t.Run("NonExistentTable", func(t *testing.T) {
-		if err := logDB.Ping("non_existent_table"); err == nil {
-			t.Error("Ping() on a non-existent table should have returned an error")
-		}
-	})
-}
-
 func (s LogSuite) TestLog_Close(t *testing.T) {
 	t.Run("Successful Close", func(t *testing.T) {
 		logDB := s.New(t)
@@ -87,9 +71,6 @@ func (s LogSuite) TestLog_Close(t *testing.T) {
 		if err := logDB.Close(); err != nil {
 			t.Fatalf("failed to close log db for test setup: %v", err)
 		}
-		if err := logDB.Ping("logs"); err == nil {
-			t.Error("Ping() after Close() should have returned an error")
-		}
 		if err := logDB.InsertBatch([]db.Log{{}}); err == nil {
 			t.Error("InsertBatch() after Close() should have returned an error")
 		}
@@ -98,6 +79,5 @@ func (s LogSuite) TestLog_Close(t *testing.T) {
 
 func (s LogSuite) RunAll(t *testing.T) {
 	s.TestLog_InsertBatch(t)
-	s.TestLog_Ping(t)
 	s.TestLog_Close(t)
 }

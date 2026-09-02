@@ -29,14 +29,12 @@ type Log struct {
 }
 
 // NewLog wraps a single-connection *sql.DB (as returned by NewConn). It
-// validates that the required schema exists and prepares the multi-row
-// INSERT for batchSize entries, so InsertBatch does no per-flush string
-// building or prepare; the statement is never re-built or re-prepared.
+// prepares the multi-row INSERT for batchSize entries, so InsertBatch does
+// no per-flush string building or prepare; the statement is never re-built
+// or re-prepared. The prepare itself validates the schema: it fails when
+// the logs table or one of its columns is missing.
 func NewLog(sqlDB *sql.DB, batchSize int) (*Log, error) {
 	l := &Log{db: sqlDB, batchSize: batchSize}
-	if err := l.Ping("logs"); err != nil {
-		return nil, fmt.Errorf("schema validation failed: %w", err)
-	}
 
 	stmt, err := sqlDB.Prepare(buildLogInsertStatement(batchSize))
 	if err != nil {
@@ -133,19 +131,6 @@ func buildLogInsertStatement(entries int) string {
 		sb.WriteString(insertTuple)
 	}
 	return sb.String()
-}
-
-// Ping checks if the specified table exists.
-func (l *Log) Ping(tableName string) error {
-	if l.db == nil {
-		return ErrConnectionClosed
-	}
-	query := fmt.Sprintf("SELECT 1 FROM %s LIMIT 1;", tableName)
-	rows, err := l.db.Query(query)
-	if err != nil {
-		return fmt.Errorf("failed to ping table %s: %w", tableName, err)
-	}
-	return rows.Close()
 }
 
 // Close closes the underlying SQLite database and the prepared statement.

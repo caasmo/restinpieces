@@ -18,16 +18,11 @@ type Log struct {
 }
 
 // NewLog creates a Log from an existing connection.
-// It validates that the required schema exists before returning.
 func NewLog(conn *sqlite.Conn) (*Log, error) {
 	if conn == nil {
 		return nil, fmt.Errorf("conn cannot be nil")
 	}
-	l := &Log{conn: conn}
-	if err := l.Ping("logs"); err != nil {
-		return nil, fmt.Errorf("schema validation failed: %w", err)
-	}
-	return l, nil
+	return &Log{conn: conn}, nil
 }
 
 // InsertBatch writes a batch of log entries to the SQLite database.
@@ -86,34 +81,6 @@ func (l *Log) InsertBatch(batch []db.Log) (err error) {
 	// Commit transaction if all inserts succeeded
 	if err = sqlitex.Execute(l.conn, "COMMIT;", nil); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
-	}
-
-	return nil
-}
-
-// Ping checks if the specified table exists.
-func (l *Log) Ping(tableName string) (err error) {
-	if l.conn == nil {
-		return ErrConnectionClosed
-	}
-	query := fmt.Sprintf("SELECT 1 FROM %s LIMIT 1;", tableName)
-	var stmt *sqlite.Stmt
-	stmt, _, err = l.conn.PrepareTransient(query)
-	if err != nil {
-		return fmt.Errorf("failed to prepare ping statement for table %s: %w", tableName, err)
-	}
-	defer func() {
-		if ferr := stmt.Finalize(); ferr != nil && err == nil {
-			err = ferr
-		}
-	}()
-
-	if _, err = stmt.Step(); err != nil {
-		// Check if the error is due to a missing table
-		if sqlite.ErrCode(err) == sqlite.ResultError {
-			return fmt.Errorf("table '%s' not found: %w", tableName, err)
-		}
-		return fmt.Errorf("failed to execute ping statement for table %s: %w", tableName, err)
 	}
 
 	return nil

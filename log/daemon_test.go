@@ -70,11 +70,6 @@ func (m *mockDbLog) Close() error {
 	return nil
 }
 
-// Ping is a no-op for the mock.
-func (m *mockDbLog) Ping(tableName string) error {
-	return nil
-}
-
 // --- Test Helper Methods ---
 
 func (m *mockDbLog) getInsertedBatches() [][]db.Log {
