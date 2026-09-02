@@ -11,13 +11,8 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-// execer is the ExecContext method shared by *sql.DB and *sql.Conn.
-type execer interface {
-	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
-}
-
 // newJobFromRow creates a Job struct from a scanned database row.
-func newJobFromRow(row rowScanner) (*db.Job, error) {
+func newJobFromRow(row *sql.Rows) (*db.Job, error) {
 	var (
 		job             db.Job
 		payloadStr      string
@@ -90,15 +85,15 @@ func newJobFromRow(row rowScanner) (*db.Job, error) {
 }
 
 // insertJob performs the actual database insertion for a job using the
-// provided execer (a database or a pinned connection).
-func insertJob(exec execer, job db.Job) error {
+// provided connection.
+func insertJob(conn *sql.Conn, job db.Job) error {
 	// Format ScheduledFor time if it's not zero
 	var scheduledForStr string
 	if !job.ScheduledFor.IsZero() {
 		scheduledForStr = db.TimeFormat(job.ScheduledFor)
 	}
 
-	_, err := exec.ExecContext(context.Background(), `INSERT INTO job_queue
+	_, err := conn.ExecContext(context.Background(), `INSERT INTO job_queue
 		(job_type, payload, payload_extra, attempts, max_attempts, recurrent, interval, scheduled_for)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		job.JobType, string(job.Payload), string(job.PayloadExtra), job.Attempts,
@@ -110,8 +105,16 @@ func insertJob(exec execer, job db.Job) error {
 }
 
 // InsertJob adds a new job to the queue.
-func (d *Db) InsertJob(job db.Job) error {
-	return insertJob(d.db, job)
+func (d *Db) InsertJob(job db.Job) (err error) {
+	conn, err := d.db.Conn(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to get connection for insert job: %w", err)
+	}
+	defer func() {
+		err = errors.Join(err, conn.Close())
+	}()
+
+	return insertJob(conn, job)
 }
 
 // Claim locks and returns up to limit jobs for processing.
@@ -159,9 +162,9 @@ func (d *Db) Claim(limit int) (jobs []*db.Job, err error) {
 }
 
 // markCompleted performs the actual database update for marking a job
-// completed using the provided execer (a database or a pinned connection).
-func markCompleted(exec execer, jobID int64) error {
-	_, err := exec.ExecContext(context.Background(), `UPDATE job_queue
+// completed using the provided connection.
+func markCompleted(conn *sql.Conn, jobID int64) error {
+	_, err := conn.ExecContext(context.Background(), `UPDATE job_queue
 		SET status = 'completed',
 			completed_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
@@ -175,14 +178,22 @@ func markCompleted(exec execer, jobID int64) error {
 }
 
 // MarkCompleted marks a job as completed successfully.
-func (d *Db) MarkCompleted(jobID int64) error {
-	return markCompleted(d.db, jobID)
+func (d *Db) MarkCompleted(jobID int64) (err error) {
+	conn, err := d.db.Conn(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to get connection for mark completed: %w", err)
+	}
+	defer func() {
+		err = errors.Join(err, conn.Close())
+	}()
+
+	return markCompleted(conn, jobID)
 }
 
 // markFailed performs the actual database update for marking a job failed
-// using the provided execer (a database or a pinned connection).
-func markFailed(exec execer, jobID int64, errMsg string) error {
-	_, err := exec.ExecContext(context.Background(), `UPDATE job_queue
+// using the provided connection.
+func markFailed(conn *sql.Conn, jobID int64, errMsg string) error {
+	_, err := conn.ExecContext(context.Background(), `UPDATE job_queue
 		SET status = 'failed',
 			updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
 			locked_at = '',
@@ -195,8 +206,16 @@ func markFailed(exec execer, jobID int64, errMsg string) error {
 }
 
 // MarkFailed marks a job as failed.
-func (d *Db) MarkFailed(jobID int64, errMsg string) error {
-	return markFailed(d.db, jobID, errMsg)
+func (d *Db) MarkFailed(jobID int64, errMsg string) (err error) {
+	conn, err := d.db.Conn(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to get connection for mark failed: %w", err)
+	}
+	defer func() {
+		err = errors.Join(err, conn.Close())
+	}()
+
+	return markFailed(conn, jobID, errMsg)
 }
 
 // MarkRecurrentCompleted marks a job specified by completedJobID as completed

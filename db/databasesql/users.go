@@ -8,11 +8,6 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-// rowScanner is the Scan method shared by *sql.Row and *sql.Rows.
-type rowScanner interface {
-	Scan(dest ...any) error
-}
-
 // userColumns is the column list every users query selects.
 const userColumns = `id, name, password, verified, oauth2, avatar, email, emailVisibility, created, updated`
 
@@ -33,7 +28,7 @@ var UsersStmts = map[string]string{
 
 // newUserFromRow creates a User struct from a scanned database row.
 // BOOLEAN columns arrive as int64; they are converted with != 0.
-func newUserFromRow(row rowScanner) (*db.User, error) {
+func newUserFromRow(row *sql.Row) (*db.User, error) {
 	var (
 		u               db.User
 		verified        int64
