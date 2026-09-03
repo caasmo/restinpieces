@@ -31,10 +31,24 @@ func New(sqlDB *sql.DB) (*Db, error) {
 }
 
 // RegisterStmt prepares the statement for sql, stores it under name, and
-// returns it. Call it once at startup: database/sql has an internal cache
-// that keeps the prepared statement on each pool connection, so every call
-// reuses it and the SQL is parsed once instead of on every call. Calling
-// it again with the same name returns the stored statement.
+// returns it. Call it once at startup, before the Db runs statements.
+// Calling it again with the same name returns the stored statement.
+//
+// The statement is prepared with db.Prepare, so it belongs to the pool, not
+// to any single connection: every execution runs on whichever pool
+// connection is free. database/sql caches such statements internally per
+// connection — its css list, one prepared driver statement per connection —
+// so the SQL is parsed once per connection and reused by every later call
+// that lands on that connection.
+//
+// Because executions land on whichever connection is free, a registered
+// statement can never run inside a transaction: a transaction lives on a
+// single pinned connection, and the pool statement would execute outside it
+// (or block, if no connection is free). Register here only statements that
+// run standalone (autocommit). A statement that must run inside a
+// transaction is prepared on the pinned connection with conn.PrepareContext
+// instead — it is bound to that one connection, has no cache, and is
+// prepared again on every call.
 func (d *Db) RegisterStmt(name, sql string) (*sql.Stmt, error) {
 	if s, ok := d.stmts[name]; ok {
 		return s, nil

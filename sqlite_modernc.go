@@ -33,6 +33,12 @@ func WithModerncPool(pool *sql.DB) Option {
 			}
 		}
 
+		for name, sql := range databasesql.QueueStmts {
+			if _, err := dbInstance.RegisterStmt(name, sql); err != nil {
+				panic(fmt.Sprintf("failed to register statement: %v", err))
+			}
+		}
+
 		i.app.SetDb(dbInstance)
 		i.dbConfig = dbInstance
 	}

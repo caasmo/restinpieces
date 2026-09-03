@@ -6,9 +6,12 @@ import (
 	"github.com/caasmo/restinpieces/db/dbtest"
 )
 
-// newTestQueueDB creates a new in-memory SQLite database and applies the job_queue schema.
+// newTestQueueDB creates a new in-memory SQLite database with the job_queue
+// schema and registers the queue statements on it.
 func newTestQueueDB(t *testing.T) *Db {
-	return newTestDb(t, "app/job_queue.sql")
+	db := newTestDb(t, "app/job_queue.sql")
+	registerQueueStmts(t, db)
+	return db
 }
 
 func TestQueueSuite(t *testing.T) {

@@ -57,3 +57,15 @@ func registerUsersStmts(t testing.TB, mdb *Db) {
 		}
 	}
 }
+
+// registerQueueStmts registers the queue statements on mdb,
+// mirroring what restinpieces.WithModerncPool does for the app.
+func registerQueueStmts(t testing.TB, mdb *Db) {
+	t.Helper()
+
+	for name, sql := range QueueStmts {
+		if _, err := mdb.RegisterStmt(name, sql); err != nil {
+			t.Fatalf("failed to register statement: %v", err)
+		}
+	}
+}
