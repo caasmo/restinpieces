@@ -430,6 +430,12 @@ Current `3600s bucket + 3m TTL` is worst of both
 
 - `test.yml` prints per-package coverage to log only; also write markdown table to `$GITHUB_STEP_SUMMARY` (run summary) like `benchmark.yml` does
 
+# modernc: monitor upstream RowsColumnScanner support (Go 1.27)
+
+- Go 1.27 adds `database/sql.RowsColumnScanner`; check if `modernc.org/sqlite` implements it
+- if yes, adopt it where we scan rows (`db/databasesql/`)
+- ref: `db/databasesql/users.go`, `db/databasesql/queue.go`
+
 ### done
 
 # sqlite driver: substituted zombiezen with modernc (done)
