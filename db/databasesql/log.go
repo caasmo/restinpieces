@@ -23,19 +23,11 @@ var _ db.DbLog = (*Log)(nil)
 // use; the log daemon is the only caller.
 //
 // Performance (per InsertBatch of 100 entries, benchtime=100x):
+// 29.5 KiB/op, 315 allocs/op (this type).
 //
-//	driver         B/op      allocs/op
-//	zombiezen      242       7
-//	databasesql    29.5 KiB  315      (this type)
-//	moderncsqlite  13.2 KiB  312      (raw driver.Conn, no database/sql)
-//
-// database/sql regresses zombiezen on memory: every flush it repacks the
-// batch from our []any into a fresh []driver.NamedValue — an unbox/convert/
-// re-box hop per value — while zombiezen binds row-by-row straight into the
-// C statement. Bypassing database/sql with a raw driver.Conn
-// (moderncsqlite) halves the bytes: the NamedValue rebuild disappears. Allocs
-// stay flat though, because the ~312 remaining are the modernc driver
-// binding the 4×N parameters — common to both modernc paths.
+// database/sql repacks the batch from our []any into a fresh
+// []driver.NamedValue per flush — an unbox/convert/re-box hop per value.
+// The remaining allocs are the modernc driver binding the 4xN parameters.
 type Log struct {
 	db   *sql.DB   // pool; also serves the partial-flush path
 	stmt *sql.Stmt // prepared multi-row INSERT for batchSize entries

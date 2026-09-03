@@ -136,7 +136,6 @@ import (
 	"os"
 
 	"github.com/caasmo/restinpieces"
-	"github.com/caasmo/restinpieces/db/zombiezen"
 )
 
 func main() {
@@ -152,7 +151,7 @@ func main() {
 	}
 
 	// Create a database pool
-	pool, err := restinpieces.NewZombiezenPool(*dbPath)
+	pool, err := restinpieces.NewModerncPool(*dbPath)
 	if err != nil {
 		slog.Error("Failed to create database pool", "error", err, "path", *dbPath)
 		os.Exit(1)
@@ -161,7 +160,7 @@ func main() {
 
 	// Create a new application instance with required options
 	app, srv, err := restinpieces.New(
-		restinpieces.WithDbApp(zombiezen.New(pool)),
+		restinpieces.WithModerncPool(pool),
 		restinpieces.WithAgeKeyPath(*ageKeyPath),
 	)
 	if err != nil {
