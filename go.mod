@@ -16,7 +16,6 @@ require (
 	golang.org/x/sync v0.21.0
 	golang.org/x/time v0.11.0
 	modernc.org/sqlite v1.57.0
-	zombiezen.com/go/sqlite v1.4.2
 )
 
 require (
@@ -34,7 +33,6 @@ require (
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	modernc.org/libc v1.74.4 // indirect

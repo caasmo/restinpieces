@@ -67,3 +67,16 @@ like `BenchmarkLog_InsertBatch_Serial` and `BenchmarkQueue_Claim_Parallel`.
 
 Benchmark names appear in the comparison reports. Renaming one loses its
 history, so once a benchmark is released, its name stays.
+
+### Code verification
+
+Before merging, all four must pass:
+
+```sh
+go build ./...
+go vet ./...
+golangci-lint run ./...
+gofmt -l .
+```
+
+`gofmt -l .` must print nothing.
