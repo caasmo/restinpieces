@@ -65,7 +65,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 				ActivationRPS: 100, MaxSharePercent: 20,
 			},
 			requestSequence: generateRequestSequence(0, map[string]int{"1.1.1.1": 99}),
-			wantBlockedIPs: nil,
+			wantBlockedIPs:  nil,
 		},
 		{
 			// Purpose: This is a critical test for the circuit breaker's main gate.
@@ -81,7 +81,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			},
 			// Simulate 101 requests over ~252.5ms (400 RPS), which is below the 500 RPS activation.
 			requestSequence: generateRequestSequence(2500*time.Microsecond, map[string]int{"1.1.1.1": 101}),
-			wantBlockedIPs: nil,
+			wantBlockedIPs:  nil,
 		},
 		{
 			// Purpose: Verify that high server load alone does not trigger blocking
@@ -114,7 +114,7 @@ func TestTopKSketch_ProcessTick(t *testing.T) {
 			},
 			// Simulate 1000 RPS, with one IP sending 201 requests.
 			requestSequence: generateRequestSequence(0, map[string]int{"1.1.1.1": 201, "2.2.2.2": 199}),
-			wantBlockedIPs: []string{"1.1.1.1"},
+			wantBlockedIPs:  []string{"1.1.1.1"},
 		},
 		{
 			// Purpose: Ensure the logic can identify and block multiple offenders in the

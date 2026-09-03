@@ -87,7 +87,7 @@ func TestConfirmEmailChangeOtpHandler_Validation(t *testing.T) {
 			app := &App{
 				validator:     mockValidator,
 				authenticator: mockAuth,
-				dbAuth:         &mock.Db{},
+				dbAuth:        &mock.Db{},
 			}
 
 			app.ConfirmEmailChangeOtpHandler(rr, req)

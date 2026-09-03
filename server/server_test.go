@@ -10,8 +10,8 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
-	"io"
 	"fmt"
+	"io"
 	"log/slog"
 	"math/big"
 	"net"
@@ -279,7 +279,7 @@ func TestServer_Run_HandlesSIGHUP(t *testing.T) {
 	if err := syscall.Kill(syscall.Getpid(), syscall.SIGINT); err != nil {
 		t.Fatalf("Failed to send SIGINT for cleanup: %v", err)
 	}
-		select {
+	select {
 	case <-exitCalledChan:
 		// Final shutdown successful
 	case <-time.After(100 * time.Millisecond):
@@ -301,12 +301,12 @@ func TestServer_Run_HandlesSIGHUP(t *testing.T) {
 // The `serverError` channel buffer was increased to 2.
 //
 // How this test works:
-// 1. It configures the HTTP server to fail immediately (by enabling TLS without certs).
-// 2. It uses a `fakeDaemon` with a small `startDelay` to ensure the HTTP server
-//    error is sent first. The daemon is also configured to fail.
-// 3. The test verifies that the server can receive both errors without
-//    deadlocking and proceeds to a graceful shutdown, exiting with a non-zero
-//    code. A timeout in this test would indicate a regression of the deadlock bug.
+//  1. It configures the HTTP server to fail immediately (by enabling TLS without certs).
+//  2. It uses a `fakeDaemon` with a small `startDelay` to ensure the HTTP server
+//     error is sent first. The daemon is also configured to fail.
+//  3. The test verifies that the server can receive both errors without
+//     deadlocking and proceeds to a graceful shutdown, exiting with a non-zero
+//     code. A timeout in this test would indicate a regression of the deadlock bug.
 func TestServer_Run_HttpAndDaemonStartFailure(t *testing.T) {
 	// 1. Setup
 	// Create a server config that will cause an error during HTTP server setup

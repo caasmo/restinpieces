@@ -54,7 +54,7 @@ func NewServer(provider *config.Provider, handler http.Handler, logger *slog.Log
 		logger:         logger,
 		daemons:        make([]Daemon, 0), // Initialize empty slice
 		reloadFunc:     reloadFunc,
-		exitFunc:       os.Exit,           // Default to the real os.Exit
+		exitFunc:       os.Exit, // Default to the real os.Exit
 	}
 }
 
@@ -187,7 +187,7 @@ func (s *Server) Run() {
 		s.logger.Info("Starting daemon", "daemon_name", daemon.Name())
 		if err := daemon.Start(); err != nil {
 			s.logger.Error("Failed to start daemon, initiating shutdown", "daemon_name", daemon.Name(), "error", err)
-            serverError <- fmt.Errorf("daemon %q failed to start: %w", daemon.Name(), err)
+			serverError <- fmt.Errorf("daemon %q failed to start: %w", daemon.Name(), err)
 			break // Stop starting other daemons
 		}
 		s.logger.Info("Daemon started successfully", "daemon_name", daemon.Name())
@@ -215,9 +215,9 @@ func (s *Server) Run() {
 				s.handleSIGHUP()
 			}
 		case err := <-serverError:
-            s.logger.Error("Server error - initiating shutdown", "err", err)
-            serverErr = err
-            running = false
+			s.logger.Error("Server error - initiating shutdown", "err", err)
+			serverErr = err
+			running = false
 		}
 	}
 

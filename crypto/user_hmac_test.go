@@ -55,7 +55,7 @@ func TestUserMacUniqueness(t *testing.T) {
 func TestUserMacConsistency(t *testing.T) {
 	userID := "user123"
 	secret := "secure_secret_long_enough_to_be_safe"
-	
+
 	mac1 := GenerateUserMac(userID, secret)
 	mac2 := GenerateUserMac(userID, secret)
 

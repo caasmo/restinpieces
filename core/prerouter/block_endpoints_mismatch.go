@@ -36,7 +36,7 @@ func (b *BlockEndpointsMismatch) Execute(next http.Handler) http.Handler {
 
 		clientHash := r.Header.Get(core.HeaderEndpointsHash)
 
-        // this middleware is for sdk only
+		// this middleware is for sdk only
 		// No header: bootstrap case, let through
 		if clientHash == "" {
 			next.ServeHTTP(w, r)

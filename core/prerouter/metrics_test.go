@@ -37,10 +37,10 @@ func newTestMetricsMiddleware(app *core.App) (*Metrics, *prometheus.CounterVec) 
 
 func TestMetricsMiddleware(t *testing.T) {
 	testCases := []struct {
-		name               string
-		metricsActive      bool
-		responseStatusCode int
-		requestCount       int
+		name                string
+		metricsActive       bool
+		responseStatusCode  int
+		requestCount        int
 		useResponseRecorder bool // To test the robustness case
 		expectedMetricValue float64
 	}{
@@ -175,5 +175,3 @@ func TestNewMetrics_PanicOnReregister(t *testing.T) {
 	// This call must panic.
 	_ = NewMetrics(mockApp)
 }
-
-

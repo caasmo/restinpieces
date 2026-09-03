@@ -142,10 +142,10 @@ func TestConfirmEmailVerificationOtpHandler_ConfirmationLogic(t *testing.T) {
 
 	testConfig := &config.Config{
 		Jwt: config.Jwt{
-			VerificationEmailOtpSecret:       secret,
+			VerificationEmailOtpSecret:        secret,
 			VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
-			AuthSecret:                       "test_secret_32_bytes_long_xxxxxx",
-			AuthTokenDuration:                config.Duration{Duration: 15 * time.Minute},
+			AuthSecret:                        "test_secret_32_bytes_long_xxxxxx",
+			AuthTokenDuration:                 config.Duration{Duration: 15 * time.Minute},
 		},
 	}
 
@@ -273,10 +273,10 @@ func TestConfirmEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 
 	baseConfig := &config.Config{
 		Jwt: config.Jwt{
-			VerificationEmailOtpSecret:       secret,
+			VerificationEmailOtpSecret:        secret,
 			VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
-			AuthSecret:                       "test_secret_32_bytes_long_xxxxxx",
-			AuthTokenDuration:                config.Duration{Duration: 15 * time.Minute},
+			AuthSecret:                        "test_secret_32_bytes_long_xxxxxx",
+			AuthTokenDuration:                 config.Duration{Duration: 15 * time.Minute},
 		},
 	}
 
@@ -300,9 +300,9 @@ func TestConfirmEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 			name: "JWT session token generation failure (short secret)",
 			config: &config.Config{
 				Jwt: config.Jwt{
-					VerificationEmailOtpSecret:       secret,
+					VerificationEmailOtpSecret:        secret,
 					VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
-					AuthSecret:                       "short",
+					AuthSecret:                        "short",
 				},
 			},
 			dbSetup: func(m *mock.Db) {
@@ -355,4 +355,3 @@ func TestConfirmEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 		})
 	}
 }
-

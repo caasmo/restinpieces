@@ -163,13 +163,13 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    // http.Client.Get() returns a response whose body is an open network
-    // stream. Even if you've finished reading it, the underlying TCP
-    // connection stays open and occupied until the body is explicitly closed
-    //
-    // Go's http.Transport can reuse TCP connections (keep-alive), but only if
-    // the body is fully drained and closed.
-    defer func() { _ = resp.Body.Close() }()
+	// http.Client.Get() returns a response whose body is an open network
+	// stream. Even if you've finished reading it, the underlying TCP
+	// connection stays open and occupied until the body is explicitly closed
+	//
+	// Go's http.Transport can reuse TCP connections (keep-alive), but only if
+	// the body is fully drained and closed.
+	defer func() { _ = resp.Body.Close() }()
 
 	oauthUser, err := oauth2provider.UserFromUserInfoURL(resp, provider.Name)
 	if err != nil {

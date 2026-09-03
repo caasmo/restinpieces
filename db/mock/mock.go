@@ -127,6 +127,3 @@ func (m *Db) InsertConfig(scope string, contentData []byte, format string, descr
 	}
 	return nil // Default: Success
 }
-
-
-

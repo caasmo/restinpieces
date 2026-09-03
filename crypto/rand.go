@@ -2,9 +2,9 @@ package crypto
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"math/big"
-	"encoding/base64"
 )
 
 const AlphanumericAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -47,7 +47,6 @@ func RandomString(length int, alphabet string) string {
 
 	return string(b)
 }
-
 
 // Nonce generates a cryptographically secure random nonce suitable for use
 // in Content Security Policy (CSP) script-src and style-src directives.

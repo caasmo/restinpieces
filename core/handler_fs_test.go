@@ -470,4 +470,3 @@ func TestFSHandler_CustomNotFoundHandler(t *testing.T) {
 		}
 	})
 }
-

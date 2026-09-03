@@ -67,4 +67,3 @@ func TestLogSuite(t *testing.T) {
 		return logDB
 	}}.RunAll(t)
 }
-

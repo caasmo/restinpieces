@@ -49,7 +49,7 @@ func TestSetHeaders(t *testing.T) {
 
 func TestResponseHeaderValues(t *testing.T) {
 	// Verify critical security headers in our predefined maps
-	
+
 	t.Run("HeadersJson", func(t *testing.T) {
 		h := HeadersJson
 		checks := map[string]string{

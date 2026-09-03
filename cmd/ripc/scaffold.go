@@ -47,10 +47,10 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}
 //
 // Examples:
 //
-//   parentTomlKeyOf("backup.online") == "backup"
-//   parentTomlKeyOf("backup.sqlite-rsync.entries") == "backup.sqlite-rsync"
-//   parentTomlKeyOf("oauth2_providers") == ""
-//   parentTomlKeyOf("backup") == ""
+//	parentTomlKeyOf("backup.online") == "backup"
+//	parentTomlKeyOf("backup.sqlite-rsync.entries") == "backup.sqlite-rsync"
+//	parentTomlKeyOf("oauth2_providers") == ""
+//	parentTomlKeyOf("backup") == ""
 func parentTomlKeyOf(tomlKey string) string {
 	idx := strings.LastIndex(tomlKey, ".")
 	if idx == -1 {
@@ -66,20 +66,20 @@ func parentTomlKeyOf(tomlKey string) string {
 // pelletier/go-toml, trims surrounding whitespace, and prefixes each line
 // with two spaces so the block aligns under the label header:
 //
-//   label:
-//     source_path = ""
-//     strategy = "vacuum"
-//     frequency = "15m"
+//	label:
+//	  source_path = ""
+//	  strategy = "vacuum"
+//	  frequency = "15m"
 //
 // This is the single source of truth for the values shown in
 // scaffoldNextSteps — the literal stays, the values do not.
 //
 // Example:
 //
-//   NewBackupSqliteRsyncDefaults:
-//     source_path = ""
-//     strategy = "sqlite-rsync"
-//     sync_timeout = "15m"
+//	NewBackupSqliteRsyncDefaults:
+//	  source_path = ""
+//	  strategy = "sqlite-rsync"
+//	  sync_timeout = "15m"
 func defaultFieldsAndValues(defaults interface{}) string {
 	b, _ := toml.Marshal(defaults)
 	lines := strings.Split(strings.TrimSpace(string(b)), "\n")

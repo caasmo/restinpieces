@@ -23,7 +23,7 @@ func TestDummyPasswordHash(t *testing.T) {
 	// Verify that DummyPasswordHash is a valid bcrypt hash but fails for any input
 	// This is critical for timing attack mitigation.
 	inputs := []string{"password123", "restinpieces-qeq99qt", "", " "}
-	
+
 	for _, input := range inputs {
 		if CheckPassword(input, DummyPasswordHash) {
 			t.Errorf("CheckPassword(%q, DummyPasswordHash) = true, want false", input)

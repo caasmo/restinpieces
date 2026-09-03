@@ -290,10 +290,10 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 // its dependencies, such as the database or token generation, fail.
 func TestAuthWithPasswordHandler_DependencyFailures(t *testing.T) {
 	testCases := []struct {
-		name        string
-		dbSetup     func(*mock.Db)
-		config      *config.Config
-		wantError   jsonResponse
+		name      string
+		dbSetup   func(*mock.Db)
+		config    *config.Config
+		wantError jsonResponse
 	}{
 		{
 			name: "database failure on user lookup",

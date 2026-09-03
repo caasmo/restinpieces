@@ -22,7 +22,7 @@ func (m *mockCache) Set(key string, value interface{}, cost int64) bool { return
 func (m *mockCache) Get(key string) (interface{}, bool) {
 	return nil, false
 }
-func (m *mockCache) Del(key string)                                          {}
+func (m *mockCache) Del(key string) {}
 func (m *mockCache) SetWithTTL(key string, value interface{}, cost int64, ttl time.Duration) bool {
 	return true
 }

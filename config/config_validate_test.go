@@ -276,15 +276,15 @@ func TestValidateServer(t *testing.T) {
 func TestValidateJwt(t *testing.T) {
 	t.Parallel()
 	valid := Jwt{
-		AuthSecret:                     "a",
-		AuthTokenDuration:              Duration{Duration: 1},
-		PasswordResetSecret:            "c",
-		PasswordResetTokenDuration:     Duration{Duration: 1},
-		EmailChangeOtpSecret:           "d",
-		EmailChangeOtpTokenDuration:    Duration{Duration: 1},
-		VerificationEmailOtpSecret:     "e",
+		AuthSecret:                        "a",
+		AuthTokenDuration:                 Duration{Duration: 1},
+		PasswordResetSecret:               "c",
+		PasswordResetTokenDuration:        Duration{Duration: 1},
+		EmailChangeOtpSecret:              "d",
+		EmailChangeOtpTokenDuration:       Duration{Duration: 1},
+		VerificationEmailOtpSecret:        "e",
 		VerificationEmailOtpTokenDuration: Duration{Duration: 1},
-		Oauth2StateSecret:              "f",
+		Oauth2StateSecret:                 "f",
 	}
 	if err := validateJwt(&valid); err != nil {
 		t.Errorf("valid case failed: %v", err)
@@ -548,8 +548,8 @@ func TestValidateBackup(t *testing.T) {
 	t.Run("valid files mixed", func(t *testing.T) {
 		backupDir, appDB, otherDB := backupLocalFixture(t)
 		b := &Backup{
-			OnlineAPI: BackupOnlineAPI{"app": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}},
-			Vacuum: BackupVacuum{"other": {SourcePath: otherDB, DestPath: backupDir, Frequency: Duration{Duration: 30 * time.Minute}}},
+			OnlineAPI:   BackupOnlineAPI{"app": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}},
+			Vacuum:      BackupVacuum{"other": {SourcePath: otherDB, DestPath: backupDir, Frequency: Duration{Duration: 30 * time.Minute}}},
 			SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"rsync": {SourcePath: appDB, SyncTimeout: Duration{Duration: 15 * time.Minute}}}},
 		}
 		if err := ValidateBackup(b); err != nil {

@@ -42,8 +42,8 @@ func fastNow() int64 {
 //
 // LRU layout (left to right):
 //
-//   head (left, MRU) <-> A <-> B <-> C <-> tail (right, LRU)
-//      prev <-       -> next
+//	head (left, MRU) <-> A <-> B <-> C <-> tail (right, LRU)
+//	   prev <-       -> next
 //
 // prev points left toward head, next points right toward tail; -1 means no neighbor.
 type node[K comparable, V any] struct {
@@ -107,9 +107,9 @@ var _ Cache[string, any] = (*Default[string, any])(nil)
 
 // cacheLevels translates a level string to the cache's max-entry cap.
 var cacheLevels = map[string]int{
-	"small":      10_000,    // ~1 MB
-	"medium":     100_000,   // ~10 MB
-	"large":      1_000_000, // ~120 MB
+	"small":      10_000,     // ~1 MB
+	"medium":     100_000,    // ~10 MB
+	"large":      1_000_000,  // ~120 MB
 	"very-large": 10_000_000, // ~1.1 GB
 }
 

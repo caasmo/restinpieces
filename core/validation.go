@@ -147,4 +147,3 @@ func isCommonPassword(password string) bool {
 	_, found := commonPasswords[strings.ToLower(password)]
 	return found
 }
-

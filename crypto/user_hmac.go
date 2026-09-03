@@ -9,7 +9,7 @@ import (
 
 // ====================================================================================
 // STATELSS GATEKEEPER (HMAC)
-// These functions prevent Timing-Based User Enumeration and bypass expensive DB lookups 
+// These functions prevent Timing-Based User Enumeration and bypass expensive DB lookups
 // Authenticate()
 // ====================================================================================
 
@@ -19,10 +19,10 @@ import (
 func GenerateUserMac(userID string, serverSecret string) string {
 	h := hmac.New(sha256.New, []byte(serverSecret))
 	h.Write([]byte(userID))
-	
+
 	// Encode to hex and truncate to 16 chars (8 bytes / 64 bits of entropy)
 	fullHex := hex.EncodeToString(h.Sum(nil))
-	return fullHex[:16] 
+	return fullHex[:16]
 }
 
 // VerifyUserMac checks if the provided MAC matches the userID.

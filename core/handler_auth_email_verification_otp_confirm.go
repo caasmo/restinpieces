@@ -94,4 +94,3 @@ func (a *App) ConfirmEmailVerificationOtpHandler(w http.ResponseWriter, r *http.
 
 	writeAuthResponse(w, token, user)
 }
-

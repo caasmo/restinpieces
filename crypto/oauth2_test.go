@@ -174,4 +174,3 @@ func TestOauth2StateJWT(t *testing.T) {
 		}
 	})
 }
-

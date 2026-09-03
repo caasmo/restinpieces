@@ -58,7 +58,7 @@ func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResp
 	cfg := a.configProvider.Get()
 
 	// STEP 1: Fast, stateless gatekeeper (CPU only, Nanoseconds/Microseconds)
-	// We extract the user_id and verify the MAC. If an attacker forged the user_id, 
+	// We extract the user_id and verify the MAC. If an attacker forged the user_id,
 	// they won't have the correct MAC. The request dies here, saving a database hit.
 	userId, err := extractAndVerifyUserID(tokenString, cfg.Jwt.AuthSecret)
 	if err != nil {

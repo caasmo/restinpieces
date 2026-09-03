@@ -64,16 +64,16 @@ const (
 // (Time-of-Check to Time-of-Use) issues and expensive filesystem guesswork.
 //
 // WHY NOT http.FileServerFS?
-// 1. Performance: http.FileServerFS performs 2 to 4 filesystem operations (Open, Stat, Stat)
-//    to resolve directories to index.html and handle redirects.
-// 2. Compression: http.FileServerFS cannot serve pre-compressed assets (e.g. app.js.gz)
-//    while preserving the correct Content-Type (application/javascript). Without special
-//    handling, browsers receive a .gz file and treat it as a binary download.
-// 3. Private Resources: http.FileServerFS serves the entire tree. FSHandler enforces
-//    the "internal/" convention for files that the server must read but should never
-//    be HTTP-accessible. For example, placing a custom "internal/404.html" prevents
-//    users from requesting it directly at "/404.html" and receiving a 200 OK, which
-//    is semantically broken and bad for SEO.
+//  1. Performance: http.FileServerFS performs 2 to 4 filesystem operations (Open, Stat, Stat)
+//     to resolve directories to index.html and handle redirects.
+//  2. Compression: http.FileServerFS cannot serve pre-compressed assets (e.g. app.js.gz)
+//     while preserving the correct Content-Type (application/javascript). Without special
+//     handling, browsers receive a .gz file and treat it as a binary download.
+//  3. Private Resources: http.FileServerFS serves the entire tree. FSHandler enforces
+//     the "internal/" convention for files that the server must read but should never
+//     be HTTP-accessible. For example, placing a custom "internal/404.html" prevents
+//     users from requesting it directly at "/404.html" and receiving a 200 OK, which
+//     is semantically broken and bad for SEO.
 //
 // PARAMETERS:
 //
@@ -100,7 +100,7 @@ const (
 //  4. MPA Routes / Directories (No Extension):
 //     URLs without an extension are assumed to be directory paths.
 //     * Missing Trailing Slash: Returns HTTP 301 Redirect to append the slash,
-//       ensuring browser relative paths (like <img src="./logo.png">) work correctly.
+//     ensuring browser relative paths (like <img src="./logo.png">) work correctly.
 //     * Has Trailing Slash: Appends "index.html" strictly in-memory and serves it.
 //
 // COMPRESSION & HEADERS RULES:

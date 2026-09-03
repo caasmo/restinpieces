@@ -167,9 +167,9 @@ func TestRequestEmailVerificationOtpHandler_RequestLogic(t *testing.T) {
 
 	testConfig := &config.Config{
 		Jwt: config.Jwt{
-			AuthSecret:                       "test_secret_32_bytes_long_xxxxxx",
-			AuthTokenDuration:                config.Duration{Duration: 15 * time.Minute},
-			VerificationEmailOtpSecret:       "test_secret_32_bytes_long_xxxxxx",
+			AuthSecret:                        "test_secret_32_bytes_long_xxxxxx",
+			AuthTokenDuration:                 config.Duration{Duration: 15 * time.Minute},
+			VerificationEmailOtpSecret:        "test_secret_32_bytes_long_xxxxxx",
 			VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
 		},
 		RateLimits: config.RateLimits{
@@ -347,7 +347,7 @@ func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 			name: "OTP token generation failure (short secret)",
 			config: &config.Config{
 				Jwt: config.Jwt{
-					VerificationEmailOtpSecret:       "short",
+					VerificationEmailOtpSecret:        "short",
 					VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
 				},
 				RateLimits: config.RateLimits{
@@ -365,7 +365,7 @@ func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 			name: "job insertion failure",
 			config: &config.Config{
 				Jwt: config.Jwt{
-					VerificationEmailOtpSecret:       "test_secret_32_bytes_long_xxxxxx",
+					VerificationEmailOtpSecret:        "test_secret_32_bytes_long_xxxxxx",
 					VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
 				},
 				RateLimits: config.RateLimits{
@@ -421,4 +421,3 @@ func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 		})
 	}
 }
-

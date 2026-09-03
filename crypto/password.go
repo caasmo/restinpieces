@@ -29,21 +29,21 @@ func GenerateHash(password string) (string, error) {
 // was derived from is intentionally unknown and irrelevant — CheckPassword
 // against this hash will always return false, which is the desired behaviour.
 //
-//      package main
-//      
-//      import (
-//          "fmt"
-//          "github.com/caasmo/restinpieces/crypto"
-//      )
-//      
-//      func main() {
-//          hash, err := crypto.GenerateHash("restinpieces-qeq99qt")
-//          if err != nil {
-//              panic(err)
-//          }
-//          fmt.Println(hash)
-//      }
-// 
+//	package main
+//
+//	import (
+//	    "fmt"
+//	    "github.com/caasmo/restinpieces/crypto"
+//	)
+//
+//	func main() {
+//	    hash, err := crypto.GenerateHash("restinpieces-qeq99qt")
+//	    if err != nil {
+//	        panic(err)
+//	    }
+//	    fmt.Println(hash)
+//	}
+//
 // the dummy hash must be generated with the same cost as the production one
 // generated cost 10
 var DummyPasswordHash = "$2a$10$5kebOn7bqUSaEWKNMUzJ2elZSgL.od24R.S1TiFTUWXYapS2ILPDe"

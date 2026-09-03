@@ -21,30 +21,30 @@ const (
 // - Fields named "Enabled" require a server restart to take effect
 // - Other boolean fields typically require restart unless documented otherwise
 type Config struct {
-	PublicDir        string                    `toml:"public_dir" comment:"Directory containing static web assets"`
-	Source           string                    `toml:"-" comment:"[READONLY] Source of config - 'file:<path>' or 'db'"`
-	Jwt              Jwt                       `toml:"jwt" comment:"JSON Web Token settings"`
-	Scheduler        Scheduler                 `toml:"scheduler" comment:"Background job scheduler settings"`
-	Server           Server                    `toml:"server" comment:"HTTP server configuration"`
-	RateLimits       RateLimits                `toml:"rate_limits" comment:"Rate limiting settings"`
+	PublicDir  string     `toml:"public_dir" comment:"Directory containing static web assets"`
+	Source     string     `toml:"-" comment:"[READONLY] Source of config - 'file:<path>' or 'db'"`
+	Jwt        Jwt        `toml:"jwt" comment:"JSON Web Token settings"`
+	Scheduler  Scheduler  `toml:"scheduler" comment:"Background job scheduler settings"`
+	Server     Server     `toml:"server" comment:"HTTP server configuration"`
+	RateLimits RateLimits `toml:"rate_limits" comment:"Rate limiting settings"`
 	// TODO: refactor so map keys are labels, not domain identifiers.
 	//       The Name field inside OAuth2Provider already holds the provider
 	//       identifier. After refactor, lookup is by Name field, not map key.
 	//       See AGENTS.md "Config: map key rules".
-	OAuth2Providers  map[string]OAuth2Provider `toml:"oauth2_providers" comment:"OAuth2 provider configurations"`
-	Smtp             Smtp                      `toml:"smtp" comment:"SMTP email settings"`
-	Endpoints        Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
-	Maintenance      Maintenance               `toml:"maintenance" comment:"Maintenance mode settings"`
-	BlockIp          BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
-	BlockUaList      BlockUaList               `toml:"block_ua_list" comment:"User-Agent block list settings"`
-	BlockHost        BlockHost                 `toml:"block_host" comment:"Host blocking settings"`
-	BlockOversizedRequest  BlockOversizedRequest  `toml:"block_oversized_request" comment:"Request size limiting configuration"`
-	EndpointsBlockMismatch EndpointsBlockMismatch `toml:"endpoints_block_mismatch" comment:"Endpoints hash mismatch blocking settings"`
-	Notifier               Notifier               `toml:"notifier"`
-	Log              Log                       `toml:"log" comment:"Logging configuration"`
-	Metrics          Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
-	Backup           Backup                    `toml:"backup" comment:"Backup configuration"`
-	Cache            Cache                     `toml:"cache" comment:"Cache system settings"`
+	OAuth2Providers        map[string]OAuth2Provider `toml:"oauth2_providers" comment:"OAuth2 provider configurations"`
+	Smtp                   Smtp                      `toml:"smtp" comment:"SMTP email settings"`
+	Endpoints              Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
+	Maintenance            Maintenance               `toml:"maintenance" comment:"Maintenance mode settings"`
+	BlockIp                BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
+	BlockUaList            BlockUaList               `toml:"block_ua_list" comment:"User-Agent block list settings"`
+	BlockHost              BlockHost                 `toml:"block_host" comment:"Host blocking settings"`
+	BlockOversizedRequest  BlockOversizedRequest     `toml:"block_oversized_request" comment:"Request size limiting configuration"`
+	EndpointsBlockMismatch EndpointsBlockMismatch    `toml:"endpoints_block_mismatch" comment:"Endpoints hash mismatch blocking settings"`
+	Notifier               Notifier                  `toml:"notifier"`
+	Log                    Log                       `toml:"log" comment:"Logging configuration"`
+	Metrics                Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
+	Backup                 Backup                    `toml:"backup" comment:"Backup configuration"`
+	Cache                  Cache                     `toml:"cache" comment:"Cache system settings"`
 }
 
 // Cache contains settings for the cache system.
@@ -508,4 +508,3 @@ type EndpointsBlockMismatch struct {
 	// This can be toggled dynamically via a configuration reload.
 	Activated bool `toml:"activated" comment:"Activate endpoints hash mismatch blocking"`
 }
-

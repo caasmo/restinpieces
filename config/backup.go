@@ -92,7 +92,7 @@ type BackupVacuumEntry struct {
 // section because it needs topology (listen_addr) in addition to the
 // per-database entries.
 type BackupSqliteRsync struct {
-	ListenAddr string `toml:"listen_addr" comment:"TCP address the origin daemon listens on (e.g. '127.0.0.1:54321')."`
+	ListenAddr string                            `toml:"listen_addr" comment:"TCP address the origin daemon listens on (e.g. '127.0.0.1:54321')."`
 	Entries    map[string]BackupSqliteRsyncEntry `toml:"entries"`
 }
 

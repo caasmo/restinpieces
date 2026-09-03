@@ -138,8 +138,8 @@ func (d *Db) GetUserById(id string) (*db.User, error) {
 // This prevents account takeover via the unauthenticated registration endpoint:
 // an attacker who knows a valid email — whether the account was created with
 // a password or OAuth2 — cannot overwrite the real user's credentials.
-// OAuth2 users have password='' in the DB; without this protection the IIF
-// trick used previously (IIF(password='', excluded.password, password)) would
+// OAuth2 users have password=” in the DB; without this protection the IIF
+// trick used previously (IIF(password=”, excluded.password, password)) would
 // still allow overwriting their empty password with an attacker-chosen one.
 //
 // Changing a password is an authenticated action and belongs in a dedicated

@@ -52,8 +52,8 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	var req struct {
-		Identity string `json:"identity"`
-		Password string `json:"password"`
+		Identity        string `json:"identity"`
+		Password        string `json:"password"`
 		PasswordConfirm string `json:"password_confirm"`
 	}
 
@@ -62,18 +62,18 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-    // RFC 5321 technically makes the local part case-sensitive
-    // (User@example.com ≠ user@example.com), but in reality virtually every
-    // mail server treats it case-insensitively. OWASP and most auth guidance
-    // say: normalize to lowercase before storing and before lookup
-    req.Identity = strings.ToLower(strings.TrimSpace(req.Identity))
+	// RFC 5321 technically makes the local part case-sensitive
+	// (User@example.com ≠ user@example.com), but in reality virtually every
+	// mail server treats it case-insensitively. OWASP and most auth guidance
+	// say: normalize to lowercase before storing and before lookup
+	req.Identity = strings.ToLower(strings.TrimSpace(req.Identity))
 
-    // What NIST SP 800-63B §5.1.1.2 says about spaces
-    // "Verifiers SHOULD permit claimants to use any printable ASCII characters as well as the space character in memorized secrets."
-    // "Verifiers MAY remove leading and trailing whitespace prior to verification."
-    // we consistently add the same to the login handler
+	// What NIST SP 800-63B §5.1.1.2 says about spaces
+	// "Verifiers SHOULD permit claimants to use any printable ASCII characters as well as the space character in memorized secrets."
+	// "Verifiers MAY remove leading and trailing whitespace prior to verification."
+	// we consistently add the same to the login handler
 	req.Password = strings.TrimSpace(req.Password)
-    req.PasswordConfirm = strings.TrimSpace(req.PasswordConfirm)
+	req.PasswordConfirm = strings.TrimSpace(req.PasswordConfirm)
 
 	if req.Identity == "" || req.Password == "" || req.PasswordConfirm == "" {
 		WriteJsonError(w, errorMissingFields)
@@ -117,7 +117,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// untouched (see SQL: ON CONFLICT DO UPDATE does not SET password).
 	// We do not inspect the returned user — the response is always the same.
 	if _, err := a.DbAuth().CreateUserWithPassword(newUser); err != nil {
-        // Note: conflict is NOT an error — it's handled as nil by the DB layer.
+		// Note: conflict is NOT an error — it's handled as nil by the DB layer.
 		WriteJsonError(w, errorAuthDatabaseError)
 		return
 	}

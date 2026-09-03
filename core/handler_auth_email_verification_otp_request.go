@@ -40,7 +40,7 @@ import (
 // # Security: Persistent harassment
 //
 // Requiring the correct password closes the harassment vector entirely.
-// An attacker who knows a target email but not the password receives an 
+// An attacker who knows a target email but not the password receives an
 // error and no email is ever sent. The legitimate user is the only one who can
 // trigger mail delivery — the password is proof of prior registration.
 //
@@ -183,4 +183,3 @@ func (a *App) RequestEmailVerificationOtpHandler(w http.ResponseWriter, r *http.
 
 	writeOtpResponse(w, verificationToken)
 }
-

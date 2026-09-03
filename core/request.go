@@ -12,6 +12,7 @@ const (
 	MimeTypeJavaScript     = "application/javascript"
 	MimeTypeJavaScriptText = "text/javascript"
 )
+
 // GetClientIP extracts the client IP address from the request, handling proxies via configured header
 func (a *App) GetClientIP(r *http.Request) string {
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)

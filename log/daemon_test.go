@@ -20,8 +20,6 @@ func newTestLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
 }
 
-
-
 // mockDbLog is a mock implementation of the db.DbLog interface for testing the Daemon.
 // It provides mechanisms to inspect calls, simulate errors, and synchronize tests.
 type mockDbLog struct {
@@ -103,8 +101,6 @@ func (m *mockDbLog) waitForBatch(t *testing.T, timeout time.Duration) int {
 	}
 }
 
-
-
 // TestDaemon_FlushOnBatchSize verifies that the daemon writes to the DB when the batch size is reached.
 func TestDaemon_FlushOnBatchSize(t *testing.T) {
 	// 1. Setup
@@ -153,7 +149,7 @@ func TestDaemon_FlushOnBatchSize(t *testing.T) {
 	if len(batches) != 1 {
 		t.Fatalf("expected 1 batch to be written, got %d", len(batches))
 	}
-			if len(batches[0]) != 3 {
+	if len(batches[0]) != 3 {
 		t.Errorf("expected the batch to contain 3 records, got %d", len(batches[0]))
 	}
 }
@@ -163,7 +159,7 @@ func TestDaemon_FlushOnInterval(t *testing.T) {
 	// 1. Setup
 	mockDB := newMockDbLog()
 	cfg := config.NewDefaultConfig()
-	cfg.Log.Batch.BatchSize = 10 // Large size to ensure it doesn't trigger the flush
+	cfg.Log.Batch.BatchSize = 10                                 // Large size to ensure it doesn't trigger the flush
 	cfg.Log.Batch.FlushInterval.Duration = 20 * time.Millisecond // Short interval
 	provider := config.NewProvider(cfg)
 

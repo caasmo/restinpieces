@@ -81,7 +81,6 @@ func (m *Mailer) createMailClient() (*mailyak.MailYak, error) {
 	return mail, nil
 }
 
-
 // SendPasswordResetEmail sends a password reset message to the specified email address
 // with the password reset callback URL that includes the token
 func (m *Mailer) SendPasswordResetEmail(ctx context.Context, email, callbackURL string) error {

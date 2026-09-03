@@ -26,4 +26,3 @@ func New(pool *sqlitex.Pool) (*Db, error) {
 	}
 	return &Db{pool: pool}, nil
 }
-

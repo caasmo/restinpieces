@@ -82,23 +82,23 @@ var HeadersStatic = map[string]string{
 // HeadersHtml defines the default security and caching headers for HTML responses,
 // suitable for both static shell pages and SSR-hydrated pages (window.INITIAL_DATA pattern).
 var HeadersHtml = map[string]string{
-    // # Cache-Control
-    //
-    // The default "private, no-cache" is intentionally conservative:
-    //   - private: prevents CDN/proxy caching, safe when the response may carry user-specific data.
+	// # Cache-Control
+	//
+	// The default "private, no-cache" is intentionally conservative:
+	//   - private: prevents CDN/proxy caching, safe when the response may carry user-specific data.
 	//   - public: Allows caching by intermediate proxies and browsers.
-    //   - no-cache: requires revalidation before reuse, ensuring stale HTML is never served silently.
-    //   - no-store is intentionally avoided: it disables bfcache, degrading back-navigation UX
-    //     with no security benefit for most pages.
-    //
-    // Handlers should override Cache-Control when they know the response semantics:
-    //
-    //  SetHeaders(w, HeadersHtml, HeaderCachePublic)  // page is identical for all users (e.g. landing page)
-    //  SetHeaders(w, HeadersHtml, HeaderCacheNoStore) // page must not survive in any cache (e.g. post-payment)
-    //
-    // For SSR pages, consider whether the response is user-specific. A search results page
-    // (/search?q=...) drawn from a user corpus is a good candidate for "private, no-cache":
-    // results are stable within a session, so bfcache provides a real UX win on back-navigation.
+	//   - no-cache: requires revalidation before reuse, ensuring stale HTML is never served silently.
+	//   - no-store is intentionally avoided: it disables bfcache, degrading back-navigation UX
+	//     with no security benefit for most pages.
+	//
+	// Handlers should override Cache-Control when they know the response semantics:
+	//
+	//  SetHeaders(w, HeadersHtml, HeaderCachePublic)  // page is identical for all users (e.g. landing page)
+	//  SetHeaders(w, HeadersHtml, HeaderCacheNoStore) // page must not survive in any cache (e.g. post-payment)
+	//
+	// For SSR pages, consider whether the response is user-specific. A search results page
+	// (/search?q=...) drawn from a user corpus is a good candidate for "private, no-cache":
+	// results are stable within a session, so bfcache provides a real UX win on back-navigation.
 	"Cache-Control": "private, no-cache",
 
 	// Prevent browsers from MIME-sniffing the response away from declared Content-Type
@@ -137,27 +137,27 @@ var HeadersHtml = map[string]string{
 	// been tampered with (e.g., a compromised CDN or MITM attack). Inline code
 	// lacks this safeguard
 	// <script src="/script.js" integrity="sha256-..."></script>
-    //
-    //
-    // form-action 'self' (or 'none'):
-    //
-    // The Threat: Data Exfiltration via Form Hijacking.
-    // default-src does not govern form submissions. Form submissions are treated as navigations.
-    // if your app is a modern SPA without native HTML form submissions, go maximum strict: form-action 'none'
-    //
-    // base-uri 'self' (or 'none') The Threat: Base Tag Hijacking (Phishing & Redirection):
-    //
-    // The HTML <base> tag dictates how the browser resolves
-    // relative URLs. If an attacker can inject HTML into your page (even
-    // without executing JavaScript), they can inject: <base // href="https://evil.com/">
 	//
-    //
+	//
+	// form-action 'self' (or 'none'):
+	//
+	// The Threat: Data Exfiltration via Form Hijacking.
+	// default-src does not govern form submissions. Form submissions are treated as navigations.
+	// if your app is a modern SPA without native HTML form submissions, go maximum strict: form-action 'none'
+	//
+	// base-uri 'self' (or 'none') The Threat: Base Tag Hijacking (Phishing & Redirection):
+	//
+	// The HTML <base> tag dictates how the browser resolves
+	// relative URLs. If an attacker can inject HTML into your page (even
+	// without executing JavaScript), they can inject: <base // href="https://evil.com/">
+	//
+	//
 	// CSP wants you to:
 	// - Serve all code as external files from trusted origins ('self', trusted CDNs).
 	// - Avoid inline code entirely (no 'unsafe-inline' exceptions).
 	// - Use SRI to ensure file integrity
 	//"Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
-    "Content-Security-Policy": StrictCSP,
+	"Content-Security-Policy": StrictCSP,
 
 	// The Referrer-Policy HTTP header controls how much referrer information
 	// browsers include when navigating from your website to another site.
@@ -220,7 +220,7 @@ var HeadersTls = map[string]string{
 func SetHeaders(w http.ResponseWriter, headers ...map[string]string) {
 	for _, headerMap := range headers {
 		for key, value := range headerMap {
-            w.Header().Set(key, value) // canonicalizes the key automatically
+			w.Header().Set(key, value) // canonicalizes the key automatically
 		}
 	}
 }

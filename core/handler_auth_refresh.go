@@ -38,4 +38,3 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	writeAuthResponse(w, newToken, user)
 
 }
-

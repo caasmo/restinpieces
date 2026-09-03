@@ -73,8 +73,6 @@ func TestListEndpointsHandler(t *testing.T) {
 				t.Errorf("handler returned wrong status code: got %v want %v", status, tc.expectedStatusCode)
 			}
 
-			
-
 			// Unmarshal the response body
 			var actualBody JsonWithData
 			if err := json.Unmarshal(rr.Body.Bytes(), &actualBody); err != nil {

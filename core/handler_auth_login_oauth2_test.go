@@ -255,7 +255,7 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 			expectCreate: false,
 		},
 		{
-			name: "oauth2 token exchange fails",
+			name:    "oauth2 token exchange fails",
 			dbSetup: func(m *mock.Db) {},
 			tokenHandler: func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusBadRequest)
@@ -308,7 +308,7 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 		},
 	}
 
-		for _, tc := range testCases {
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			server, tokenURL, userInfoURL := mockOAuth2Server(t, tc.tokenHandler, tc.userInfoHandler)
 

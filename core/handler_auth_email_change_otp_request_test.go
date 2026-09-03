@@ -102,7 +102,7 @@ func TestRequestEmailChangeOtpHandler_Validation(t *testing.T) {
 			app := &App{
 				validator:     mockValidator,
 				authenticator: mockAuth,
-				dbAuth:         &mock.Db{},
+				dbAuth:        &mock.Db{},
 			}
 
 			app.RequestEmailChangeOtpHandler(rr, req)
@@ -125,7 +125,7 @@ func TestRequestEmailChangeOtpHandler_Logic(t *testing.T) {
 
 	testConfig := &config.Config{
 		Jwt: config.Jwt{
-			EmailChangeOtpSecret:       "test_secret_32_bytes_long_xxxxxx",
+			EmailChangeOtpSecret:        "test_secret_32_bytes_long_xxxxxx",
 			EmailChangeOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
 		},
 		RateLimits: config.RateLimits{
@@ -316,7 +316,7 @@ func TestRequestEmailChangeOtpHandler_Failures(t *testing.T) {
 			name: "queue insertion failure (logged but doesn't change response)",
 			config: &config.Config{
 				Jwt: config.Jwt{
-					EmailChangeOtpSecret:       "test_secret_32_bytes_long_xxxxxx",
+					EmailChangeOtpSecret:        "test_secret_32_bytes_long_xxxxxx",
 					EmailChangeOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
 				},
 				RateLimits: config.RateLimits{

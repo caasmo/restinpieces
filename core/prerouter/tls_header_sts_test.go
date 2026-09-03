@@ -14,9 +14,9 @@ func TestTLSHeaderSTS(t *testing.T) {
 	expectedHeaderValue := core.HeadersTls["Strict-Transport-Security"]
 
 	testCases := []struct {
-		name           string
-		isTLS          bool // Controls whether the request simulates HTTPS
-		expectHeader   bool // Controls whether we expect the HSTS header
+		name         string
+		isTLS        bool // Controls whether the request simulates HTTPS
+		expectHeader bool // Controls whether we expect the HSTS header
 	}{
 		{
 			name:         "Case: Request is over a TLS (HTTPS) Connection",
