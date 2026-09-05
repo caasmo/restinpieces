@@ -11,19 +11,19 @@
 
 # REST in pieces
 
-RestInPieces is a Go framework for building secure, high-performance servers. It is designed to be extended and customized, providing a solid foundation for your own applications while remaining lightweight and focused. The framework uses SQLite as its default database and [minimizes reliance on third-party packages](https://github.com/caasmo/restinpieces/actions/workflows/dependencies.yml), emphasizing simplicity and performance.
+RestInPieces is a Go framework for building servers backed by embedded SQLite. It is extensible via handlers, middleware, jobs and daemons, and [keeps third-party dependencies minimal](https://github.com/caasmo/restinpieces/actions/workflows/dependencies.yml).
 
 To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which walks you through the initial setup of a new application.
 
 ## Core Philosophy: One Process Application
 
-This framework is built on the philosophy of One Process Application architectural approach that consolidates an entire application and its core dependencies into a single, self-contained binary.
+The framework follows the One Process Application approach: the application and its dependencies ship as a single binary.
 
-The central idea is to "absorb" the typical components of a modern web service—such as the database, cache, and job queue—into one application binary. Instead of managing a complex stack of separate services (e.g., a database server, a Redis instance, a reverse proxy), you deploy a single binary. This dramatically simplifies development, deployment, and maintenance.
+Database, cache, and job queue run inside the application binary. Instead of operating separate services (e.g., a database server, a Redis instance, a reverse proxy), you deploy a single binary.
 
-By running a single Go binary with an embedded SQLite database on one VM, it allows developers to focus on building features rather than managing distributed systems, providing a high-performance foundation that can serve a growing business for years. When the time comes to scale beyond what a single large server can offer, the business will have the resources and clarity to do so effectively.
+One Go binary with embedded SQLite runs on one VM, with no separate services to operate. A single server handles growth until traffic requires sharding or a different architecture.
 
-This approach is heavily inspired by the ideas in [One Process Programming Notes](https://crawshaw.io/blog/one-process-programming-notes).
+This approach follows [One Process Programming Notes](https://crawshaw.io/blog/one-process-programming-notes).
 
 # Content
 
@@ -56,9 +56,9 @@ This approach is heavily inspired by the ideas in [One Process Programming Notes
 ## Key Features
 
 ### Data Durability
-The "one process" paradigm intentionally avoids external dependencies like separate database servers, as they would violate the architectural principle of maintaining a single process per virtual machine. Consequently, the framework relies on an embedded SQLite database for data persistence. This design choice places critical importance on the durability of the single database file.
+Single process per VM means no separate database server. The framework stores data in embedded SQLite, so the single database file must survive crashes and restarts.
 
-To address this, the framework provides pure Go implementations of all available SQLite sync protocols, in the [restinpieces-backup](https://github.com/caasmo/restinpieces-backup) repository, and continuous real-time replication with point-in-time recovery via [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream):
+The framework keeps copies of that file with pure-Go tools in the [restinpieces-backup](https://github.com/caasmo/restinpieces-backup) repository, and continuous replication with point-in-time recovery via [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream):
 
 | Method | Use | Implementation |
 | --- | --- | --- |
@@ -75,22 +75,22 @@ For the framework-side `backup` configuration, see [doc/backup.md](doc/backup.md
 The framework uses pure-Go [modernc.org/sqlite](https://modernc.org/sqlite); [zombiezen.com/go/sqlite](https://github.com/caasmo/restinpieces-sqlite-zombiezen) as the alternative.
 
 ### Router
-The framework uses Go's standard `http.ServeMux` as its default router for simplicity and compatibility with the standard library. As of Go 1.22, the standard mux includes support for path parameters. Recognizing that different applications have different routing needs, the router is implemented as a swappable component. For those seeking maximum performance, an alternative implementation using the highly optimized [julienschmidt/httprouter](https://github.com/julienschmidt/httprouter) is also provided. See [restinpieces-httprouter](https://github.com/caasmo/restinpieces-httprouter) for details.
+The framework uses Go's standard `http.ServeMux` as the default router. Since Go 1.22 it supports path parameters. The router is swappable; an alternative based on [julienschmidt/httprouter](https://github.com/julienschmidt/httprouter) is at [restinpieces-httprouter](https://github.com/caasmo/restinpieces-httprouter).
 
 ### Cache
-For in-memory caching, the framework ships its own preallocated LRU cache ([`package cache`](https://pkg.go.dev/github.com/caasmo/restinpieces/cache)), built entirely on the Go standard library. The `cache.Cache` interface lets you swap in your own implementation via `WithCache`; a [ristretto](https://github.com/dgraph-io/ristretto)-based implementation is available at [restinpieces-cache](https://github.com/caasmo/restinpieces-cache).
+For in-memory caching, the framework includes a preallocated LRU cache ([`package cache`](https://pkg.go.dev/github.com/caasmo/restinpieces/cache)) using only the Go standard library. The `cache.Cache` interface lets you swap in your own implementation via `WithCache`; a [ristretto](https://github.com/dgraph-io/ristretto)-based implementation is at [restinpieces-cache](https://github.com/caasmo/restinpieces-cache).
 
 ### Authentication
-The framework provides a comprehensive authentication system built around JSON Web Tokens (JWT). Session management is handled via bearer tokens sent in the `Authorization` header. A key security feature is the use of dynamic JWT signing keys, which are derived from a combination of user-specific credentials (email and password hash) and a global server secret. This ensures that a token's signature is invalidated if a user's password changes.
+The framework authenticates with JSON Web Tokens (JWT) sent as bearer tokens in the `Authorization` header. JWT signing keys derive from user credentials (email and password hash) plus a server secret, so changing the password invalidates existing tokens.
 
-The system supports multiple authentication and account management workflows through a set of API endpoints:
+Authentication and account management use these API endpoints:
 
-- **Password-based**: Includes endpoints for user registration (`/register-with-password`), login (`/auth-with-password`), and token refresh (`/auth-refresh`).
-- **OAuth2**: Provides a generic flow (`/auth-with-oauth2`) to authenticate users via third-party providers. It handles the token exchange, fetches user information, and creates or links the user account in the local database. An endpoint (`/list-oauth2-providers`) is available to discover configured providers.
-- **Account Management**: All account management processes, such as email verification, password reset, and email address changes, are handled through secure, multi-step flows. These flows typically involve generating a unique, short-lived JWT that is sent to the user's email via a background job queue, which the user then submits back to a confirmation endpoint.
+- **Password-based**: User registration (`/register-with-password`), login (`/auth-with-password`), and token refresh (`/auth-refresh`).
+- **OAuth2**: (`/auth-with-oauth2`) exchanges the provider token, fetches user info, and creates or links the local user account. (`/list-oauth2-providers`) lists configured providers.
+- **Account Management**: Email verification, password reset, and email change run as multi-step flows. Each flow sends a unique, short-lived JWT to the user's email via the job queue; the user submits it back to a confirmation endpoint.
 
 ### Security
-The "one process" paradigm simplifies deployment by running a single binary on a single VM, but it also means the application is directly exposed to the internet without a reverse proxy like Nginx acting as a first line of defense. This necessitates a defensive approach to security. The framework addresses this with a suite of built-in middleware designed to protect the server from common threats. These include dynamic IP blocking (`BlockIp`) to mitigate traffic spikes, hostname validation against a whitelist (`BlockHost`), request body size limitation (`BlockRequestBody`), and `User-Agent` filtering (`BlockUaList`). The framework also helps secure client communications by automatically setting security headers like `Strict-Transport-Security`.
+No reverse proxy sits in front of the binary, so the application is directly exposed to the internet. Built-in middleware covers common threats: dynamic IP blocking (`BlockIp`), hostname whitelist (`BlockHost`), request body size limit (`BlockRequestBody`), `User-Agent` filtering (`BlockUaList`), and `Strict-Transport-Security` headers.
 
 No CORS support is provided as it contradicts the One Process philosophy. If you need cross-origin requests, you'll need to implement CORS middleware yourself.
 
@@ -98,41 +98,37 @@ No CORS support is provided as it contradicts the One Process philosophy. If you
 The framework is built on standard Go patterns, utilizing middleware and handlers to provide a familiar and robust development experience. It features a set of discoverable API endpoints for essential services, such as token refreshing (`/api/refresh-auth`) and OAuth2 authentication (`/api/auth-with-oauth2`), facilitating easy integration and exploration.
 
 ### Configuration Management
-The framework's configuration is securely managed within the SQLite database.  The configuration is stored as encrypted, TOML-formatted content in the `app_config` table, the schema for which is detailed in `migrations/schema/app/app_config.sql`. Management is performed using the `ripc` command-line tool — a server-side tool that runs directly on the production machine, reading and writing the local SQLite database and age key files. It supports versioning, diffing, and rollbacks.  Beyond managing the core application's settings, `ripc` can be extended to handle custom configuration scopes for your own modules. For more details on the tool, see the [`ripc` documentation](doc/ripc.md). 
+Configuration lives in the SQLite database as encrypted TOML in the `app_config` table (schema: `migrations/schema/app/app_config.sql`). `ripc` manages it — a server-side tool that reads and writes the local database and age key files on the production machine. It supports versioning, diffing, and rollbacks. `ripc` also handles custom configuration scopes for your modules. See the [`ripc` documentation](doc/ripc.md). 
 
-`ripc` is though a **low-level primitive**, whereas [`ripdep`](doc/ripdep.md) ([source](scripts/ripdep)) is a high-level orchestrator.
+`ripc` runs on the server and edits local state; [`ripdep`](doc/ripdep.md) ([source](scripts/ripdep)) runs on your machine and calls `ripc` over SSH.
 
-A key feature is support for dynamic updates. The server listens for the `SIGHUP` signal to trigger a hot-reload of the configuration, allowing most settings to be changed in real-time without service interruption. While the majority of parameters can be updated on-the-fly, critical changes like modifications to TLS certificates require a full server reload to be applied.
+Configuration reloads on `SIGHUP` without restart. Most settings apply on reload; TLS certificates require a full restart.
 
 ### Deployment & Operations
 
-The framework provides **`ripdep`**, a comprehensive CLI tool designed to manage the full lifecycle of your application. It acts as a high-level wrapper around the `ripc` binary, orchestrating complex DevOps tasks and remote operations via SSH directly from your local developer machine (control plane).  In contrast, `ripc` is the server-side companion — it runs on the production machine itself, operating on the local filesystem.
--   **Remote DevOps**: Wraps low-level `ripc` commands to handle configuration, maintenance modes, and log monitoring without needing manual server access.
--   **Disaster Recovery**: Simplifies the process of bootstrapping new servers and recovering from backups (including Litestream integration) through dedicated commands like `build-bootstrap` and `build-recovery`.
+**`ripdep`** manages your application from your local machine over SSH by calling `ripc`. `ripc` runs on the production machine against the local filesystem.
+-   **Remote DevOps**: Run `ripc` commands remotely for configuration, maintenance modes, and log monitoring.
+-   **Disaster Recovery**: Bootstrap new servers and recover from backups (including Litestream) with `build-bootstrap` and `build-recovery`.
 
-This tool encourages a workflow where most configuration and operational decisions are made locally, then securely applied to the remote environment. For detailed usage, see the **[Deployment Guide](doc/ripdep.md)**.
+Edit configuration locally, then apply it to the remote host. See the **[Deployment Guide](doc/ripdep.md)**.
 
 ### Frontend Integration
 
-The framework includes a comprehensive JavaScript SDK designed for seamless frontend-backend interaction. The SDK offers full support for all authentication workflows, including password-based and OAuth2 flows, ensuring a consistent integration experience. Beyond authentication, it provides robust utilities for custom error handling, local storage management, and general-purpose request functions to simplify API communication. You can find example usage of the SDK and authentication endpoints at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk).
+The framework includes a JavaScript SDK for frontend-backend interaction. The SDK covers password-based and OAuth2 flows, plus error handling, local storage, and request helpers. See example usage at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk).
 
 ### Job Framework
-The framework includes a robust job queue system for handling asynchronous tasks, supporting both one-time and recurrent jobs. This is essential for offloading work from the request-response cycle, such as sending emails, processing data, or performing periodic maintenance.
+The framework includes a job queue for asynchronous tasks, one-time and recurrent. It moves work such as sending emails off the request-response cycle.
 
-The system is composed of a scheduler that claims jobs from the `job_queue` table and an executor that runs the corresponding handler. The framework provides built-in handlers for core functionalities like sending password reset emails, email verifications, and performing local database backups.
+A scheduler claims jobs from the `job_queue` table and an executor runs the handler. Built-in handlers send password reset emails, email verifications, and local database backups.
 
-You can easily extend the system to run your own custom tasks. This involves two main steps:
-1.  **Write a Job Handler**: Create a new handler that implements the `JobHandler` interface. This is where you define the logic for your task.
-2.  **Insert a Job**: Add a new record to the `job_queue` table in the database. The scheduler will automatically pick it up and execute it using your custom handler.
+To add your own tasks, in two steps:
+1.  **Write a Job Handler**: Implement the `JobHandler` interface with the task logic.
+2.  **Insert a Job**: Add a record to the `job_queue` table. The scheduler picks it up and runs it with your handler.
 
-This design allows for a clean separation of concerns and makes it straightforward to add new background processing capabilities to your application.
+Handlers stay separate from scheduling, so background work lives outside request handlers.
 
 ### Performance
-Engineered for high throughput, the framework is capable of handling thousands
-of requests per second while maintaining a minimal footprint by avoiding
-unnecessary external dependencies. Production-ready builds are further optimized
-for size and efficiency, ensuring rapid deployment and execution in resource-constrained
-environments.
+Component benchmarks cover cache, database, auth, and prerouter. Run them with `go test -bench=. -run=^$ -benchmem ./...`; releases compare results with benchstat (`.github/workflows/benchmark.yml`).
 
 ### Metrics
 The framework provides built-in metrics collection using the `prometheus/client_golang` library. It includes a middleware that tracks the total number of HTTP requests (`http_server_requests_total`), a counter labeled by HTTP status code, allowing for detailed monitoring of server responses. Metrics collection can be toggled on or off via configuration without a server restart and is exposed on a configurable endpoint (e.g., `/metrics`) for a Prometheus server to scrape.
