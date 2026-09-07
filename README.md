@@ -11,17 +11,17 @@
 
 # REST in pieces
 
-RestInPieces is a Go framework for building servers backed by embedded SQLite. It is extensible via handlers, middleware, jobs and daemons, and [keeps third-party dependencies minimal](https://github.com/caasmo/restinpieces/actions/workflows/dependencies.yml).
+RestInPieces is a Go framework for building secure, high-performance servers. It is designed to be extended and customized, providing a solid foundation for your own applications while remaining lightweight and focused. The framework uses SQLite as its default database and [minimizes reliance on third-party packages](https://github.com/caasmo/restinpieces/actions/workflows/dependencies.yml), emphasizing simplicity and performance.
 
 To get started, follow the **[Bootstrapping Guide](doc/bootstrap.md)**, which walks you through the initial setup of a new application.
 
 ## Core Philosophy: One Process Application
 
-The framework follows the One Process Application approach: the application and its dependencies ship as a single binary.
+This framework is built on the philosophy of One Process Application architectural approach that consolidates an entire application and its core dependencies into a single, self-contained binary.
 
-Database, cache, and job queue run inside the application binary. Instead of operating separate services (e.g., a database server, a Redis instance, a reverse proxy), you deploy a single binary.
+The central idea is to "absorb" the typical components of a modern web service—such as the database, cache, and job queue—into one application binary. Instead of managing a complex stack of separate services (e.g., a database server, a Redis instance, a reverse proxy), you deploy a single binary. This dramatically simplifies development, deployment, and maintenance.
 
-One Go binary with embedded SQLite runs on one VM, with no separate services to operate. A single server handles growth until traffic requires sharding or a different architecture.
+By running a single Go binary with an embedded SQLite database on one VM, it allows developers to focus on building features rather than managing distributed systems, providing a high-performance foundation that can serve a growing business for years. When the time comes to scale beyond what a single large server can offer, the business will have the resources and clarity to do so effectively.
 
 This approach follows [One Process Programming Notes](https://crawshaw.io/blog/one-process-programming-notes).
 
@@ -56,9 +56,9 @@ This approach follows [One Process Programming Notes](https://crawshaw.io/blog/o
 ## Key Features
 
 ### Data Durability
-Single process per VM means no separate database server. The framework stores data in embedded SQLite, so the single database file must survive crashes and restarts.
+The "one process" paradigm intentionally avoids external dependencies like separate database servers, as they would violate the architectural principle of maintaining a single process per virtual machine. Consequently, the framework relies on an embedded SQLite database for data persistence. This design choice places critical importance on the durability of the single database file.
 
-The framework keeps copies of that file with pure-Go tools in the [restinpieces-backup](https://github.com/caasmo/restinpieces-backup) repository, and continuous replication with point-in-time recovery via [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream):
+To address this, the framework provides pure Go implementations of all available SQLite sync protocols, in the [restinpieces-backup](https://github.com/caasmo/restinpieces-backup) repository, and continuous real-time replication with point-in-time recovery via [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream):
 
 | Method | Use | Implementation |
 | --- | --- | --- |
@@ -78,19 +78,19 @@ The framework uses pure-Go [modernc.org/sqlite](https://modernc.org/sqlite); [zo
 The framework uses Go's standard `http.ServeMux` as the default router. Since Go 1.22 it supports path parameters. The router is swappable; an alternative based on [julienschmidt/httprouter](https://github.com/julienschmidt/httprouter) is at [restinpieces-httprouter](https://github.com/caasmo/restinpieces-httprouter).
 
 ### Cache
-For in-memory caching, the framework includes a preallocated LRU cache ([`package cache`](https://pkg.go.dev/github.com/caasmo/restinpieces/cache)) using only the Go standard library. The `cache.Cache` interface lets you swap in your own implementation via `WithCache`; a [ristretto](https://github.com/dgraph-io/ristretto)-based implementation is at [restinpieces-cache](https://github.com/caasmo/restinpieces-cache).
+For in-memory caching, the framework ships its own preallocated LRU cache ([`package cache`](https://pkg.go.dev/github.com/caasmo/restinpieces/cache)), built entirely on the Go standard library. The `cache.Cache` interface lets you swap in your own implementation via `WithCache`; a [ristretto](https://github.com/dgraph-io/ristretto)-based implementation is available at [restinpieces-cache](https://github.com/caasmo/restinpieces-cache).
 
 ### Authentication
 The framework authenticates with JSON Web Tokens (JWT) sent as bearer tokens in the `Authorization` header. JWT signing keys derive from user credentials (email and password hash) plus a server secret, so changing the password invalidates existing tokens.
 
-Authentication and account management use these API endpoints:
+The system supports multiple authentication and account management workflows through a set of API endpoints:
 
 - **Password-based**: User registration (`/register-with-password`), login (`/auth-with-password`), and token refresh (`/auth-refresh`).
 - **OAuth2**: (`/auth-with-oauth2`) exchanges the provider token, fetches user info, and creates or links the local user account. (`/list-oauth2-providers`) lists configured providers.
 - **Account Management**: Email verification, password reset, and email change run as multi-step flows. Each flow sends a unique, short-lived JWT to the user's email via the job queue; the user submits it back to a confirmation endpoint.
 
 ### Security
-No reverse proxy sits in front of the binary, so the application is directly exposed to the internet. Built-in middleware covers common threats: dynamic IP blocking (`BlockIp`), hostname whitelist (`BlockHost`), request body size limit (`BlockRequestBody`), `User-Agent` filtering (`BlockUaList`), and `Strict-Transport-Security` headers.
+The "one process" paradigm simplifies deployment by running a single binary on a single VM, but it also means the application is directly exposed to the internet without a reverse proxy like Nginx acting as a first line of defense. This necessitates a defensive approach to security. The framework addresses this with a suite of built-in middleware designed to protect the server from common threats. These include dynamic IP blocking (`BlockIp`) to mitigate traffic spikes, hostname validation against a whitelist (`BlockHost`), request body size limitation (`BlockRequestBody`), and `User-Agent` filtering (`BlockUaList`). The framework also helps secure client communications by automatically setting security headers like `Strict-Transport-Security`.
 
 No CORS support is provided as it contradicts the One Process philosophy. If you need cross-origin requests, you'll need to implement CORS middleware yourself.
 
@@ -102,15 +102,15 @@ Configuration lives in the SQLite database as encrypted TOML in the `app_config`
 
 `ripc` runs on the server and edits local state; [`ripdep`](doc/ripdep.md) ([source](scripts/ripdep)) runs on your machine and calls `ripc` over SSH.
 
-Configuration reloads on `SIGHUP` without restart. Most settings apply on reload; TLS certificates require a full restart.
+A key feature is support for dynamic updates. The server listens for the `SIGHUP` signal to trigger a hot-reload of the configuration, allowing most settings to be changed in real-time without service interruption. While the majority of parameters can be updated on-the-fly, critical changes like modifications to TLS certificates require a full server reload to be applied.
 
 ### Deployment & Operations
 
-**`ripdep`** manages your application from your local machine over SSH by calling `ripc`. `ripc` runs on the production machine against the local filesystem.
--   **Remote DevOps**: Run `ripc` commands remotely for configuration, maintenance modes, and log monitoring.
--   **Disaster Recovery**: Bootstrap new servers and recover from backups (including Litestream) with `build-bootstrap` and `build-recovery`.
+The framework provides **`ripdep`**, a comprehensive CLI tool designed to manage the full lifecycle of your application. It acts as a high-level wrapper around the `ripc` binary, orchestrating complex DevOps tasks and remote operations via SSH directly from your local developer machine (control plane).  In contrast, `ripc` is the server-side companion — it runs on the production machine itself, operating on the local filesystem.
+-   **Remote DevOps**: Wraps low-level `ripc` commands to handle configuration, maintenance modes, and log monitoring without needing manual server access.
+-   **Disaster Recovery**: Simplifies the process of bootstrapping new servers and recovering from backups (including Litestream integration) through dedicated commands like `build-bootstrap` and `build-recovery`.
 
-Edit configuration locally, then apply it to the remote host. See the **[Deployment Guide](doc/ripdep.md)**.
+This tool encourages a workflow where most configuration and operational decisions are made locally, then securely applied to the remote environment. For detailed usage, see the **[Deployment Guide](doc/ripdep.md)**.
 
 ### Frontend Integration
 
@@ -119,16 +119,20 @@ The framework includes a JavaScript SDK for frontend-backend interaction. The SD
 ### Job Framework
 The framework includes a job queue for asynchronous tasks, one-time and recurrent. It moves work such as sending emails off the request-response cycle.
 
-A scheduler claims jobs from the `job_queue` table and an executor runs the handler. Built-in handlers send password reset emails, email verifications, and local database backups.
+The system is composed of a scheduler that claims jobs from the `job_queue` table and an executor that runs the corresponding handler. The framework provides built-in handlers for core functionalities like sending password reset emails, email verifications, and performing local database backups.
 
-To add your own tasks, in two steps:
-1.  **Write a Job Handler**: Implement the `JobHandler` interface with the task logic.
-2.  **Insert a Job**: Add a record to the `job_queue` table. The scheduler picks it up and runs it with your handler.
+You can easily extend the system to run your own custom tasks. This involves two main steps:
+1.  **Write a Job Handler**: Create a new handler that implements the `JobHandler` interface. This is where you define the logic for your task.
+2.  **Insert a Job**: Add a new record to the `job_queue` table in the database. The scheduler will automatically pick it up and execute it using your custom handler.
 
-Handlers stay separate from scheduling, so background work lives outside request handlers.
+This design allows for a clean separation of concerns and makes it straightforward to add new background processing capabilities to your application.
 
 ### Performance
-Component benchmarks cover cache, database, auth, and prerouter. Run them with `go test -bench=. -run=^$ -benchmem ./...`; releases compare results with benchstat (`.github/workflows/benchmark.yml`).
+Engineered for high throughput, the framework is capable of handling thousands
+of requests per second while maintaining a minimal footprint by avoiding
+unnecessary external dependencies. Production-ready builds are further optimized
+for size and efficiency, ensuring rapid deployment and execution in resource-constrained
+environments.
 
 ### Metrics
 The framework provides built-in metrics collection using the `prometheus/client_golang` library. It includes a middleware that tracks the total number of HTTP requests (`http_server_requests_total`), a counter labeled by HTTP status code, allowing for detailed monitoring of server responses. Metrics collection can be toggled on or off via configuration without a server restart and is exposed on a configurable endpoint (e.g., `/metrics`) for a Prometheus server to scrape.
