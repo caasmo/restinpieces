@@ -11,7 +11,6 @@
   - [First-Time Application Bootstrap](#1-first-time-application-bootstrap)
   - [Update Application Binary Version](#2-update-application-binary-version)
   - [Restore Application from Backup](#3-restore-application-from-backup)
-  - [Sync Database to a Standby Server](#4-sync-database-to-a-standby-server)
 - [Commands](#commands)
   - [build-release](#build-release)
   - [build-bootstrap](#build-bootstrap)
@@ -154,26 +153,6 @@ DB_PATH="/path/to/backup/data/app.db"
 ./ripdep deploy "$HOST" "${BUILD_BASE}/my-app"
 ```
 
-### 4. Sync Database to a Standby Server
-
-**Goal:** Provision or update a standby server with the latest database state restored from backups (e.g., S3 via Litestream).
-
-**Strategy:** Use `build-recovery` to restore the DB (potentially from S3) and package it, then use `deploy` to ship it.
-
-**Commands:**
-
-```bash
-BUILD_BASE="/tmp"
-HOST="user@standby-server.com"
-LITESTREAM_CONFIG="config/my-app/litestream.yml" # Restores from S3
-
-# 1. Build recovery artifact (only DB)
-./ripdep build-recovery "$BUILD_BASE" --with-db "$LITESTREAM_CONFIG"
-
-# 2. Deploy
-./ripdep deploy "$HOST" "${BUILD_BASE}/my-app"
-```
-
 ## Commands
 
 ### `build-release`
@@ -216,7 +195,7 @@ Creates a build directory from existing backups. This is used for disaster recov
 **Arguments & Flags:**
 *   `build-base-dir`: The base directory for the build output.
 *   `--with-release <path>`: Path to an existing release tarball (`.tar.gz`) to extract tools and configuration from.
-*   `--with-db <source>`: Path to a database source, which can be a database file (`.db`), a compressed backup (`.tar.gz`), or a Litestream config (`.yml`).
+*   `--with-db <source>`: Path to a database source, which can be a database file (`.db`) or a compressed backup (`.tar.gz`).
 
 **Example:**
 ```bash

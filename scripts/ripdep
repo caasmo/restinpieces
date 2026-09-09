@@ -19,7 +19,6 @@ CONFIG_BASE_DIR="${HOME}/src/restinpieces-litestream"
 HOOKS_DIR="${CONFIG_BASE_DIR}/hooks"
 
 # External Tool Configurations
-REPO_LITESTREAM="benbjohnson/litestream"
 REPO_RIPC="caasmo/restinpieces"
 # Filename of the age identity file. Created locally with ripc, required in project dir, deployed to app home.
 AGE_KEY_FILENAME="age.key"
@@ -36,8 +35,6 @@ TARGET_GOOS=${GOOS:-$HOST_GOOS}
 TARGET_GOARCH=${GOARCH:-$HOST_GOARCH}
 
 # Toold URL Templates
-# Litestream: %s=repo, %s=tag, %s=version_num, %s=os, %s=arch
-URL_TEMPLATE_LITESTREAM="https://github.com/%s/releases/download/%s/litestream-%s-%s-%s.tar.gz"
 # Ripc: %s=repo, %s=tag, %s=tag, %s=os, %s=arch
 URL_TEMPLATE_RIPC="https://github.com/%s/releases/download/%s/ripc-%s-%s-%s.tar.gz"
 URL_SERVICE_TEMPLATE="https://raw.githubusercontent.com/caasmo/restinpieces/master/restinpieces.service"
@@ -264,45 +261,6 @@ build_project_binary() {
     log_success "Built ${binary_name} in ${bin_dir}"
 }
 
-# Download and install Litestream binary
-download_litestream() {
-    local bin_dir=$1
-    local os=${2:-$TARGET_GOOS}
-    local arch=${3:-$TARGET_GOARCH}
-    
-    # Rename arch for litestream if needed (amd64 -> x86_64)
-    if [ "$arch" == "amd64" ]; then arch="x86_64"; fi
-
-    local ls_version
-    local ls_version_num
-    local url_ls
-    
-    # Get latest version
-    if ! ls_version=$(get_latest_release "$REPO_LITESTREAM"); then
-        log_error "Failed to fetch latest Litestream version."
-        return 1
-    fi
-    
-    log_info "Downloading Litestream ${ls_version} for ${os}/${arch}..."
-    
-    # Strip 'v' prefix if present
-    ls_version_num=${ls_version#v}
-    
-    # Build download URL
-    printf -v url_ls "$URL_TEMPLATE_LITESTREAM" "$REPO_LITESTREAM" "$ls_version" "$ls_version_num" "$os" "$arch"
-    
-    # Download and extract (pipefail ensures curl failures are caught)
-    if ! curl -sSLf "$url_ls" | tar -xz -C "${bin_dir}" litestream; then
-        log_error "Failed to download or extract Litestream from $url_ls" >&2
-        return 1
-    fi
-    
-    # Make executable
-    chmod +x "${bin_dir}/litestream"
-    
-    log_success "Litestream binary placed in ${bin_dir}/litestream"
-}
-
 # Download and install Ripc binary
 download_ripc() {
     local bin_dir=$1
@@ -385,25 +343,6 @@ create_app_db() {
 
 create_logs_db() {
     log_warning "log.db not activated, TODO"
-}
-
-
-add_litestream_configuration() {
-    local project_name=$1
-    local ripc_bin=$2
-    local key_path=$3
-    local db_path=$4
-    
-    local config_file="${CONFIG_BASE_DIR}/${project_name}/litestream.yml"
-
-    log_info "Checking Litestream configuration..."
-    if [ -f "$config_file" ]; then
-        log_info "Importing Litestream config from: $config_file"
-        "$ripc_bin" -agekey "$key_path" -dbpath "$db_path" save -scope litestream "$config_file"
-        log_success "Added ${config_file} to config store in $db_path"
-    else
-        log_warning "Build has no litestream support (config file not found at $config_file)"
-    fi
 }
 
 add_systemd_configuration() {
@@ -544,27 +483,10 @@ cmd_restore-db() {
         exit 1
     fi
 
-    local tmp_tools=""
-    # The trap will cleanup the tmp_tools dir on function exit.
-    trap 'cleanup_temp_dirs "$tmp_tools"' RETURN
-
     local data_dir="${target_dir}/data"
     mkdir -p "$data_dir"
 
-    if [[ "$source" == *.yml ]] || [[ "$source" == *.yaml ]]; then
-        log_info "Restoring database from Litestream config: ${source}..."
-        
-        tmp_tools=$(mktemp -d)
-        log_info "Created temporary directory for host tools: $tmp_tools"
-        
-        # We need to run litestream LOCALLY to restore, so download for HOST
-        download_litestream "$tmp_tools" "$HOST_GOOS" "$HOST_GOARCH"
-
-        if ! "${tmp_tools}/litestream" restore -config "$source" "${data_dir}/app.db"; then
-            log_error "Litestream restore failed."
-            exit 1
-        fi
-    elif [[ "$source" == *.db ]]; then
+    if [[ "$source" == *.db ]]; then
         log_info "Copying database file: ${source}..."
         cp "$source" "${data_dir}/app.db"
     elif [[ "$source" == *.tar.gz ]]; then
@@ -575,7 +497,7 @@ cmd_restore-db() {
         fi
     else
         log_error "Unknown database source type: ${source}"
-        log_error "Supported types: .yml, .yaml, .db, .tar.gz"
+        log_error "Supported types: .db, .tar.gz"
         exit 1
     fi
 
@@ -1349,8 +1271,7 @@ Usage: $0 build-recovery <build-dir> [options]
 
 Options:
   --with-release <path>      Path to an existing release tarball (.tar.gz).
-  --with-db <source>         Database source (.yml, .yaml, .db, or .tar.gz).
-                             If a .yml is provided, litestream restore is used.
+  --with-db <source>         Database file (.db) or compressed backup (.tar.gz).
 
 EOF
 }
