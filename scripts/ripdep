@@ -21,8 +21,8 @@ HOOKS_DIR="${CONFIG_BASE_DIR}/hooks"
 # External Tool Configurations
 REPO_LITESTREAM="benbjohnson/litestream"
 REPO_RIPC="caasmo/restinpieces"
-# just for build process
-REPO_AGE="FiloSottile/age"
+# Filename of the age identity file. Created locally with ripc, required in project dir, deployed to app home.
+AGE_KEY_FILENAME="age.key"
 # SQLite: %s=os, %s=arch, %s=version
 URL_TEMPLATE_SQLITE="https://sqlite.org/2025/sqlite-tools-%s-%s-3510100.zip"
 
@@ -38,8 +38,6 @@ TARGET_GOARCH=${GOARCH:-$HOST_GOARCH}
 # Toold URL Templates
 # Litestream: %s=repo, %s=tag, %s=version_num, %s=os, %s=arch
 URL_TEMPLATE_LITESTREAM="https://github.com/%s/releases/download/%s/litestream-%s-%s-%s.tar.gz"
-# Age: %s=repo, %s=tag, %s=tag, %s=os, %s=arch
-URL_TEMPLATE_AGE="https://github.com/%s/releases/download/%s/age-%s-%s-%s.tar.gz"
 # Ripc: %s=repo, %s=tag, %s=tag, %s=os, %s=arch
 URL_TEMPLATE_RIPC="https://github.com/%s/releases/download/%s/ripc-%s-%s-%s.tar.gz"
 URL_SERVICE_TEMPLATE="https://raw.githubusercontent.com/caasmo/restinpieces/master/restinpieces.service"
@@ -203,6 +201,17 @@ is_go_project() {
     return 0
 }
 
+# require_age_key: Checks project dir contains the age identity file.
+# Returns 0 if present, 1 otherwise.
+require_age_key() {
+    local project_path=$1
+    if [ ! -f "${project_path}/${AGE_KEY_FILENAME}" ]; then
+        log_error "${AGE_KEY_FILENAME} not found in project: ${project_path}/${AGE_KEY_FILENAME}"
+        return 1
+    fi
+    return 0
+}
+
 # ============================================ 
 # DEPLOYMENT FUNCTIONS - LOCAL
 # ============================================ 
@@ -294,35 +303,6 @@ download_litestream() {
     log_success "Litestream binary placed in ${bin_dir}/litestream"
 }
 
-# Download and install Age encryption binaries
-download_age() {
-    local bin_dir=$1
-    local os=${2:-$HOST_GOOS}     # Default to Host
-    local arch=${3:-$HOST_GOARCH} # Default to Host
-    
-    local age_version
-    local url_age
-    
-    # Get latest version
-    if ! age_version=$(get_latest_release "$REPO_AGE"); then
-        log_error "Failed to fetch latest Age version."
-        return 1
-    fi
-    
-    log_info "Downloading Age ${age_version} for ${os}/${arch}..."
-    
-    # Build download URL
-    printf -v url_age "$URL_TEMPLATE_AGE" "$REPO_AGE" "$age_version" "$age_version" "$os" "$arch"
-    
-    # Download and extract
-    if ! curl -sSLf "$url_age" | tar -xz -C "${bin_dir}" --strip-components=1 "age/age-keygen" "age/age"; then
-        log_error "Failed to download or extract Age from $url_age" >&2
-        return 1
-    fi
-    
-    log_success "Age binaries placed in ${bin_dir}"
-}
-
 # Download and install Ripc binary
 download_ripc() {
     local bin_dir=$1
@@ -386,15 +366,6 @@ download_sqlite() {
     chmod +x "${dest_dir}/sqlite3"
     
     log_success "SQLite tools downloaded to ${dest_dir}/sqlite3"
-}
-
-generate_age_key() {
-    local keygen_bin=$1
-    local output_path=$2
-    
-    log_info "Generating Age key..."
-    "$keygen_bin" -o "$output_path"
-    log_success "Generated age.key in $output_path"
 }
 
 create_app_db() {
@@ -1363,8 +1334,9 @@ Arguments:
   <project-path>     Path to the project source code to compile.
 
 Description:
-  Similar to build-release, but also generates a new encryption key,
-  a fresh database, and initializes service configurations.
+  Similar to build-release, but also creates a fresh database encrypted
+  with the project's existing age.key and adds the systemd service
+  configuration.
 
 EOF
 }
@@ -1487,6 +1459,10 @@ cmd_build-release() {
         log_error "Validation failed: Not a valid Go project."
         exit 1
     fi
+
+    if ! require_age_key "$project_path"; then
+        exit 1
+    fi
     
     local project_name
     if ! project_name=$(get_project_name_from_project_path "$project_path"); then
@@ -1587,6 +1563,10 @@ cmd_build-bootstrap() {
         exit 1
     fi
 
+    if ! require_age_key "$project_path"; then
+        exit 1
+    fi
+
     local project_name
     if ! project_name=$(get_project_name_from_project_path "$project_path"); then
         log_error "Aborting bootstrap: Could not determine project name."
@@ -1621,16 +1601,17 @@ cmd_build-bootstrap() {
     # -------------------------------------------------------------
     log_info "Downloading host tools for initialization ($HOST_GOOS/$HOST_GOARCH)..."
     download_ripc "$tmp_tools_dir" "$HOST_GOOS" "$HOST_GOARCH"
-    download_age "$tmp_tools_dir" "$HOST_GOOS" "$HOST_GOARCH"
 
     # -------------------------------------------------------------
     # 2. Run Initialization (using host tools)
     # -------------------------------------------------------------
     log_info "Bootstrapping application data..."
-    generate_age_key "$tmp_tools_dir/age-keygen" "$build_dir/age.key"
+
+    log_info "Using existing age key from project: ${project_path}/${AGE_KEY_FILENAME}"
+    cp "${project_path}/${AGE_KEY_FILENAME}" "${build_dir}/${AGE_KEY_FILENAME}"
+    log_success "Added age key to ${build_dir}/${AGE_KEY_FILENAME}"
+
     create_app_db "$tmp_tools_dir/ripc" "$build_dir/age.key" "$data_dir/app.db"
-    
-    add_litestream_configuration "$project_name" "$tmp_tools_dir/ripc" "$build_dir/age.key" "$data_dir/app.db"
     add_systemd_configuration "$project_name" "$build_dir"
 
     # -------------------------------------------------------------

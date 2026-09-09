@@ -1,8 +1,6 @@
 # `ripdep` - Restinpieces Deployment & Operations Tool
 
-`ripdep` is a CLI tool for building, packaging, and deploying
-[RestInPieces](https://github.com/caasmo/restinpieces) framework applications.
-It also orquestates high level dev ops operatios, like server migrations.
+`ripdep` is a CLI tool for building, packaging, and deploying [RestInPieces](https://github.com/caasmo/restinpieces) framework applications.  It also orquestates high level dev ops operatios, like server migrations.
 
 # Content
 
@@ -97,22 +95,18 @@ HOST="user@target-server.com"
 The `deploy` command automates the following manual steps:
 
 ```bash
-PROJECT_PATH="$PWD"
-BUILD_BASE="/tmp"
 HOST="user@target-server.com"
+BUILD_DIR="/tmp/my-app"
 
-# 1. Build
-./ripdep build-bootstrap "$BUILD_BASE" "$PROJECT_PATH"
+# 1. Package the artifact into a tarball
+./ripdep pack "$BUILD_DIR"
+TARBALL_PATH=$(find ~/src/backup/releases/my-app -name "*.tar.gz" -print -quit)
 
-# 2. Package the artifact into a tarball
-./ripdep pack "${BUILD_BASE}/my-app"
-TARBALL_PATH=$(find ~/src/backup/releases/my-app -name "*.tar.gz" -print -quit) 
-
-# 3. Push the tarball to the remote server
+# 2. Push the tarball to the remote server
 ./ripdep push "$HOST" "$TARBALL_PATH"
 
-# 4. SSH to the host and run the remote installer
-REMOTE_INSTALL_PATH=$(./ripdep get_remote_dir_from_tarball_path "$TARBALL_PATH")/bin/ripdep-remote 
+# 3. SSH to the host and run the remote installer
+REMOTE_INSTALL_PATH=$(./ripdep get_remote_dir_from_tarball_path "$TARBALL_PATH")/bin/ripdep-remote
 ssh -t "$HOST" "sudo $REMOTE_INSTALL_PATH install"
 ```
 
@@ -183,7 +177,15 @@ LITESTREAM_CONFIG="config/my-app/litestream.yml" # Restores from S3
 ## Commands
 
 ### `build-release`
-Creates a complete, self-contained build directory from the application's source code. It compiles the Go binary and downloads the `ripc` tool.
+Builds a versioned directory `<project>-<version>/` containing the following:
+```text
+<project>-<version>/
+├── bin/
+│   ├── <project> # compiled app binary
+│   ├── ripc # on-server config tool
+│   └── ripdep-remote # remote installer
+└── data/ # empty
+```
 
 **Arguments:**
 *   `build-base-dir`: The base directory where the build output will be created (e.g., `/tmp`). The script creates a subdirectory named after your project inside this directory.
@@ -196,7 +198,7 @@ Creates a complete, self-contained build directory from the application's source
 ```
 
 ### `build-bootstrap`
-Similar to `build-release`, but also generates a new encryption key, a fresh database, and initializes service configurations (Litestream and systemd). Use this for the first-ever deployment of an application.
+Similar to `build-release`, but also creates a fresh database and ships the project's existing `age.key`. The `age.key` identity file must already exist in the project directory (create it once with `age-keygen` during first-time setup); `build-bootstrap` fails when it is missing and never generates or downloads a key. Litestream is not configured by bootstrap. Use this for the first-ever deployment of an application.
 
 **Arguments:**
 *   `build-base-dir`: The base directory where the build output will be created.
