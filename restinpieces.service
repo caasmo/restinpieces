@@ -1,3 +1,4 @@
+# Rendered by ripdep: @RESTINPIECES_APP@ is replaced with the project name.
 [Unit]
 Description=restinpieces app server
 Documentation=https://github.com/caasmo/restinpieces
@@ -6,14 +7,14 @@ Wants=network-online.target # Ensures network is fully up
 
 [Service]
 # User and Group
-User=${RESTINPIECES_APP}
-Group=${RESTINPIECES_APP}
+User=@RESTINPIECES_APP@
+Group=@RESTINPIECES_APP@
 
 # Working Directory
-WorkingDirectory=/home/${RESTINPIECES_APP}
+WorkingDirectory=/home/@RESTINPIECES_APP@
 
 # Command to start the service
-ExecStart=/home/${RESTINPIECES_APP}/bin/${RESTINPIECES_APP} -dbpath data/app.db -agekey age.key
+ExecStart=/home/@RESTINPIECES_APP@/bin/@RESTINPIECES_APP@ -dbpath data/app.db -agekey age.key
 ExecReload=/bin/kill -HUP $MAINPID
 
 # Capabilities:
@@ -42,7 +43,7 @@ NoNewPrivileges=true
 # ProtectHome for services running from their own home is redundant with
 # ProtectSystem 
 #
-# Use ProtectSystem=strict + ReadWritePaths=/home/${RESTINPIECES_APP}/data, no
+# Use ProtectSystem=strict + ReadWritePaths=/home/@RESTINPIECES_APP@/data, no
 # need for BindReadOnlyPaths
 #
 # ProtectSystem=full            
@@ -74,17 +75,17 @@ ProtectSystem=strict
 #ProtectHome=tmpfs
 
 # Systemd takes the real file. Mounts it inside the sandbox. Sets flags: RW
-ReadWritePaths=/home/${RESTINPIECES_APP}/data
+ReadWritePaths=/home/@RESTINPIECES_APP@/data
 
 # This directive does exactly what you are asking for. It creates the "tunnel"
 # from the real hard drive into the sandbox (just like ReadWritePaths), but it
 # mounts that specific path as Read-Only.
 # Systemd takes the real file. Mounts it inside the sandbox. Sets flags: RO
 # 
-# Use ProtectSystem=strict + ReadWritePaths=/home/${RESTINPIECES_APP}/data, no
+# Use ProtectSystem=strict + ReadWritePaths=/home/@RESTINPIECES_APP@/data, no
 # need for BindReadOnlyPaths
-#BindReadOnlyPaths=/home/${RESTINPIECES_APP}/age.key
-#BindReadOnlyPaths=/home/${RESTINPIECES_APP}/bin
+#BindReadOnlyPaths=/home/@RESTINPIECES_APP@/age.key
+#BindReadOnlyPaths=/home/@RESTINPIECES_APP@/bin
 
 # It gives the service its own isolated /tmp and /var/tmp directories. These
 # are separate from the host system's /tmp. Prevents "tmp race" attacks where
