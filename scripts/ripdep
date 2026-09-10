@@ -1216,12 +1216,14 @@ cmd_maintenance() {
     log_success "Successfully set maintenance mode to '${state}' for '${project_name}' on '${host}'."
 }
 
+# TODO: consider deleting cmd_config; cmd_shell covers interactive remote ripc
+# use, and scripted one-shot remote ripc calls have no clear use case yet.
 cmd_config() {
     local host=${1:-}
     local project_name=${2:-}
 
     if [ -z "$host" ] || [ -z "$project_name" ]; then
-        log_error "Usage: $0 config <host> <project-name> [ripc-config-args...]"
+        log_error "Usage: $0 config <host> <project-name> [ripc-args...]"
         exit 1
     fi
     shift 2
@@ -1231,7 +1233,7 @@ cmd_config() {
     local db_path="/home/${project_name}/${APP_DATA_DIRNAME}/${APP_DB_FILENAME}"
     local ripc_bin="/home/${project_name}/${APP_BIN_DIRNAME}/ripc"
     
-    ssh -t -o LogLevel=ERROR "${host}" "sudo -u ${project_name} ${ripc_bin} -agekey ${key_path} -dbpath ${db_path} config $args"
+    ssh -t -o LogLevel=ERROR "${host}" "sudo -u ${project_name} ${ripc_bin} -agekey ${key_path} -dbpath ${db_path} $args"
 }
 
 cmd_shell() {
