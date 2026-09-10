@@ -44,11 +44,7 @@ chmod +x ripdep
 
 # Standard Application Layout
 
-`ripdep` follows a strict directory layout convention for both local build
-artifacts and remote installations. On the remote server, this structure is
-rooted in the application user's home directory: `/home/<app-name>`.
-This structure is essential for the security hardening and operational
-assumptions made by the tool.
+`ripdep` follows a strict directory layout convention for both local build artifacts and remote installations. On the remote server, this structure is rooted in the application user's home directory: `/home/<app-name>`. This structure is essential for the security hardening and operational assumptions made by the tool.
 
 ```text
 /home/<app-name>/
@@ -75,7 +71,7 @@ This section provides concrete, step-by-step instructions for common operational
 
 **Assumptions:**
 *   The application was developed locally, with its database (`app.db`, or `<project-name>.db`) and `age.key` present in the project directory. `build-bootstrap` copies both into the build directory and fails if either is missing.
-*   Git metadata is available so the version can be resolved from the latest tag or the short commit hash.
+*   The project is a git repository with no uncommitted changes and HEAD exactly on a tag; the version is taken from that tag. `app.db` and `age.key` must be gitignored so the worktree check does not flag them.
 *   The target server is fresh (no application user or `/home/<app-name>` yet) and reachable over SSH with `sudo`.
 
 **Strategy:** `build-bootstrap` copies the local database and `age.key` into the build, renders the systemd unit, and compiles the application and its tools. `deploy` then packs the build, pushes it to the server, and runs the remote installer.
@@ -120,8 +116,8 @@ ssh -t "$HOST" "sudo /tmp/my-app/v1.0.0/bin/ripdep-remote install"
 
 **Assumptions:**
 *   The application is already installed on the server: the service user, `/home/<app-name>`, and the systemd unit exist.
-*   The project directory contains `age.key`; `build-release` requires it even though the release artifact does not include it.
 *   The release artifact carries an empty `data/`, so the installer has no data files to overwrite and the live database and key stay untouched.
+*   The project is a git repository with no uncommitted changes and HEAD exactly on a tag; the version is taken from that tag.
 *   The target server is reachable over SSH with `sudo`.
 
 **Strategy:** Build an artifact containing only the new binary and supporting tools, but no data. The `deploy` (and underlying `install`) command ensures existing data files are not overwritten.
@@ -184,6 +180,8 @@ Builds a versioned directory `<project>-<version>/` containing the following:
 └── data/ # empty
 ```
 
+The project must be a git repository with no uncommitted changes and HEAD exactly on a tag; the build fails otherwise. The version is taken from that tag.
+
 **Arguments:**
 *   `build-base-dir`: The base directory where the build output will be created (e.g., `/tmp`). The script creates a subdirectory named after your project inside this directory.
 *   `project-path`: The path to the project source code to be compiled.
@@ -195,7 +193,7 @@ Builds a versioned directory `<project>-<version>/` containing the following:
 ```
 
 ### `build-bootstrap`
-Similar to `build-release`, but also copies the project's existing database and `age.key` into the build and adds the rendered systemd unit. Both files must already exist in the project directory: `age.key` is never generated or downloaded, and the database is never created — `build-bootstrap` fails when either is missing. Litestream is not configured by bootstrap. Use this for the first-ever deployment of an application.
+Similar to `build-release`, but also copies the project's existing database and `age.key` into the build and adds the rendered systemd unit. Both files must already exist in the project directory: `age.key` is never generated or downloaded, and the database is never created — `build-bootstrap` fails when either is missing. It has the same git pre-flight as `build-release`: a clean worktree with HEAD exactly on a tag. Litestream is not configured by bootstrap. Use this for the first-ever deployment of an application.
 
 **Arguments:**
 *   `build-base-dir`: The base directory where the build output will be created.

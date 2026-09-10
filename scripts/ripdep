@@ -125,8 +125,8 @@ get_latest_release() {
     echo "$version"
 }
 
-# get_latest_tag: Returns the latest git tag if available, otherwise the short commit hash.
-# Echos the tag/hash on success and returns 0.
+# get_latest_tag: returns the last tag reachable from HEAD.
+# Echos the tag on success and returns 0.
 # On failure, logs an error and returns 1.
 get_latest_tag() {
     if ! git rev-parse --git-dir > /dev/null 2>&1; then
@@ -135,19 +135,13 @@ get_latest_tag() {
     fi
 
     local tag
-    if tag=$(git describe --tags --abbrev=0 2>/dev/null); then
-        echo "$tag"
-        return 0
-    fi
-    
-    local hash
-    if hash=$(git rev-parse --short HEAD 2>/dev/null); then
-        echo "$hash"
-        return 0
+    if ! tag=$(git describe --tags --abbrev=0 2>/dev/null); then
+        log_error "No tag found."
+        return 1
     fi
 
-    log_error "Failed to get git tag or commit hash."
-    return 1
+    echo "$tag"
+    return 0
 }
 
 get_project_name_from_file_base() {
@@ -228,6 +222,42 @@ is_go_project() {
         log_error "No cmd/ directory found in project: ${project_path}"
         return 1
     fi
+    return 0
+}
+
+# require_clean_worktree: fails unless the project has no uncommitted changes
+# and HEAD is exactly on the last tag.
+# Returns 0 if clean and tagged, 1 otherwise.
+require_clean_worktree() {
+    local project_path=$1
+    local changes
+
+    if ! changes=$(cd "$project_path" && git status --porcelain); then
+        log_error "Failed to read git status in project: ${project_path}"
+        return 1
+    fi
+
+    if [ -n "$changes" ]; then
+        log_error "Worktree is not clean: ${project_path}"
+        return 1
+    fi
+
+    local tag
+    if ! tag=$(cd "$project_path" && get_latest_tag); then
+        return 1
+    fi
+
+    local head
+    head=$(cd "$project_path" && git rev-parse HEAD)
+
+    local tag_commit
+    tag_commit=$(cd "$project_path" && git rev-parse "${tag}^{commit}")
+
+    if [ "$head" != "$tag_commit" ]; then
+        log_error "HEAD is not on tag ${tag}: ${project_path}"
+        return 1
+    fi
+
     return 0
 }
 
@@ -1540,10 +1570,6 @@ cmd_build_release() {
         exit 1
     fi
 
-    if ! require_age_key "$project_path"; then
-        exit 1
-    fi
-    
     local project_name
     if ! project_name=$(get_project_name_from_project_path "$project_path"); then
         log_error "Aborting build: Could not determine project name."
@@ -1553,6 +1579,10 @@ cmd_build_release() {
     local version
     if ! version=$(cd "$project_path" && get_latest_tag); then
         log_error "Could not determine version for project: ${project_path}"
+        exit 1
+    fi
+
+    if ! require_clean_worktree "$project_path"; then
         exit 1
     fi
 
@@ -1624,6 +1654,10 @@ cmd_build_bootstrap() {
     local version
     if ! version=$(cd "$project_path" && get_latest_tag); then
         log_error "Could not determine version for project: ${project_path}"
+        exit 1
+    fi
+
+    if ! require_clean_worktree "$project_path"; then
         exit 1
     fi
 
