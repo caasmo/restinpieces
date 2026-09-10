@@ -16,11 +16,6 @@ RELEASES_BASE_DIR="${HOME}/src/backup/releases"
 # Directory for hook scripts that can be run at different stages.
 HOOKS_DIR="${HOME}/src/restinpieces-litestream/hooks"
 
-# External Tool Configurations
-# TODO: build ripc from the project's go.mod instead of downloading the latest
-# GitHub release, which can skew from the version the app was built against.
-REPO_RIPC="caasmo/restinpieces"
-
 # Filename of the age identity file. Created locally with ripc, required in project dir, deployed to app home.
 AGE_KEY_FILENAME="age.key"
 # Canonical project database filenames. No other "app.db" or ".db" literals allowed.
@@ -53,8 +48,6 @@ TARGET_GOOS=${GOOS:-$HOST_GOOS}
 TARGET_GOARCH=${GOARCH:-$HOST_GOARCH}
 
 # Toold URL Templates
-# Ripc: %s=repo, %s=tag, %s=tag, %s=os, %s=arch
-URL_TEMPLATE_RIPC="https://github.com/%s/releases/download/%s/ripc-%s-%s-%s.tar.gz"
 URL_TEMPLATE_SYSTEMD="https://raw.githubusercontent.com/caasmo/restinpieces/master/${SYSTEMD_FILENAME}"
 
 # SQLite: %s=os, %s=arch, %s=version
@@ -101,32 +94,6 @@ require_root() {
 
 require_command() {
     command -v "$1" >/dev/null 2>&1 || { log_error "Required command not found: $1"; exit 1; }
-}
-
-# Get the latest release tag from a GitHub repository
-#
-# proper robust fuctnion
-# return 1 for Function Errors
-# Variable Declaration Separation, this ensures exit codes are properly captured.
-# Explicit Error Checking Where Needed
-get_latest_release() {
-    local repo=$1
-    local url="https://api.github.com/repos/${repo}/releases/latest"
-    local version
-    
-    # Fetch version from GitHub API
-    if ! version=$(curl -sSf "$url" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'); then
-        log_error "Failed to fetch latest release for $repo"
-        return 1
-    fi
-    
-    # Validate we got a version
-    if [[ -z "$version" ]]; then
-        log_error "Empty version returned for $repo"
-        return 1
-    fi
-    
-    echo "$version"
 }
 
 # get_latest_tag: returns the last tag reachable from HEAD.
@@ -345,34 +312,14 @@ build_project_binary() {
     log_success "Built ${binary_name} in ${bin_dir}"
 }
 
-# Download and install Ripc binary
-download_ripc() {
-    require_command curl
-    require_command tar
+# Build ripc from the version pinned in the project's go.mod
+build_ripc() {
+    require_command go
     local bin_dir=$1
-    local os=${2:-$TARGET_GOOS}
-    local arch=${3:-$TARGET_GOARCH}
+    local project_path=$2
 
-    local ripc_version
-    local url_ripc
-    
-    # Get latest version
-    if ! ripc_version=$(get_latest_release "$REPO_RIPC"); then
-        log_error "Failed to fetch latest Ripc version."
-        return 1
-    fi
-    
-    log_info "Downloading Ripc ${ripc_version} for ${os}/${arch}..."
-    
-    # Build download URL
-    printf -v url_ripc "$URL_TEMPLATE_RIPC" "$REPO_RIPC" "$ripc_version" "$ripc_version" "$os" "$arch"
-    
-    # Download and extract
-    if ! curl -sSLf "$url_ripc" | tar -xz -C "${bin_dir}" --strip-components=1 ripc/ripc; then
-        log_error "Failed to download or extract Ripc from $url_ripc" >&2
-        return 1
-    fi
-    
+    log_info "Building ripc from ${project_path}/go.mod..."
+    (cd "$project_path" && go build -o "${bin_dir}/ripc" github.com/caasmo/restinpieces/cmd/ripc)
     log_success "Ripc binary placed in ${bin_dir}/ripc"
 }
 
@@ -1620,8 +1567,8 @@ cmd_build_release() {
     generate_remote_script "${bin_dir}/ripdep-remote"
     log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
-    log_info "Downloading release tools (ripc)..."
-    download_ripc "$bin_dir"
+    log_info "Building release tools (ripc)..."
+    build_ripc "$bin_dir" "$project_path"
 
     log_success "Release build completed successfully in: ${GREEN}${build_dir}${NC}"
 
@@ -1713,8 +1660,8 @@ cmd_build_bootstrap() {
     generate_remote_script "${bin_dir}/ripdep-remote"
     log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
-    log_info "Downloading target release tools (ripc)..."
-    download_ripc "$bin_dir" "$TARGET_GOOS" "$TARGET_GOARCH"
+    log_info "Building target release tools (ripc)..."
+    build_ripc "$bin_dir" "$project_path"
 
     log_success "Bootstrap build completed successfully in: ${GREEN}${build_dir}${NC}"
 
