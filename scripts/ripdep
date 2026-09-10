@@ -1413,9 +1413,11 @@ Arguments:
   <project-path>     Path to the project source code to compile.
 
 Description:
-  Similar to build-release, but also creates a fresh database encrypted
-  with the project's existing ${AGE_KEY_FILENAME} and adds the systemd service
-  configuration.
+  Similar to build-release, but also copies the project's existing database
+  and ${AGE_KEY_FILENAME} into the build and adds the systemd service
+  configuration. Both files must already exist in the project directory;
+  the key is never generated or downloaded and the database is never created.
+  The build fails if either is missing.
 
 EOF
 }

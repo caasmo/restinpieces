@@ -1,6 +1,6 @@
 # `ripdep` - Restinpieces Deployment & Operations Tool
 
-`ripdep` is a CLI tool for building, packaging, and deploying [RestInPieces](https://github.com/caasmo/restinpieces) framework applications.  It also orquestates high level dev ops operatios, like server migrations.
+`ripdep` is a CLI tool for building, packaging, and deploying [RestInPieces](https://github.com/caasmo/restinpieces) framework applications. It also orchestrates high-level DevOps operations, such as server migrations.
 
 # Content
 
@@ -71,9 +71,14 @@ This section provides concrete, step-by-step instructions for common operational
 
 ### 1. First-Time Application Bootstrap
 
-**Goal:** Deploy a new application to a fresh server. This includes compiling the binary, generating a new database, and installing everything.
+**Goal:** Deploy a new application to a fresh server: compile the binary, copy the existing database and `age.key`, and install the service (user, directory layout, binaries, data, and systemd unit).
 
-**Strategy:** Use the `build-bootstrap` command to create a complete artifact with a fresh database and configuration. Then use `deploy` to ship it.
+**Assumptions:**
+*   The application was developed locally, with its database (`app.db`, or `<project-name>.db`) and `age.key` present in the project directory. `build-bootstrap` copies both into the build directory and fails if either is missing.
+*   Git metadata is available so the version can be resolved from the latest tag or the short commit hash.
+*   The target server is fresh (no application user or `/home/<app-name>` yet) and reachable over SSH with `sudo`.
+
+**Strategy:** `build-bootstrap` copies the local database and `age.key` into the build, renders the systemd unit, and compiles the application and its tools. `deploy` then packs the build, pushes it to the server, and runs the remote installer.
 
 **Commands:**
 
@@ -102,16 +107,22 @@ BUILD_DIR="/tmp/my-app"
 TARBALL_PATH=$(find ~/src/backup/releases/my-app -name "*.tar.gz" -print -quit)
 
 # 2. Push the tarball to the remote server
+# 'push' stages the build under /tmp/my-app/<version>/ and prints the exact installer command
 ./ripdep push "$HOST" "$TARBALL_PATH"
 
 # 3. SSH to the host and run the remote installer
-REMOTE_INSTALL_PATH=$(./ripdep get_remote_dir_from_tarball_path "$TARBALL_PATH")/bin/ripdep-remote
-ssh -t "$HOST" "sudo $REMOTE_INSTALL_PATH install"
+ssh -t "$HOST" "sudo /tmp/my-app/v1.0.0/bin/ripdep-remote install"
 ```
 
 ### 2. Update Application Binary Version
 
 **Goal:** Deploy a new version of the application code to an existing server, preserving all existing data (database, keys, etc.).
+
+**Assumptions:**
+*   The application is already installed on the server: the service user, `/home/<app-name>`, and the systemd unit exist.
+*   The project directory contains `age.key`; `build-release` requires it even though the release artifact does not include it.
+*   The release artifact carries an empty `data/`, so the installer has no data files to overwrite and the live database and key stay untouched.
+*   The target server is reachable over SSH with `sudo`.
 
 **Strategy:** Build an artifact containing only the new binary and supporting tools, but no data. The `deploy` (and underlying `install`) command ensures existing data files are not overwritten.
 
@@ -135,6 +146,13 @@ ssh -t "$HOST" "sudo systemctl restart my-app"
 ### 3. Restore Application from Backup
 
 **Goal:** Provision a new server (e.g., a new standby replica) using a database from an existing backup.
+
+**Assumptions:**
+*   At least one of `--with-release` or `--with-db` is provided.
+*   `--with-release` points to a release tarball named `<project>-<version>.tar.gz`; the project name and version are read from that file name.
+*   `--with-db` points to a database file (`.db`) or a compressed snapshot (`.tar.gz`). When no release is given, the project name is inferred from the database source's parent directory name.
+*   `age.key` sits next to the `--with-db` source: `build-recovery` copies it only from that directory, and without the matching key the restored database cannot be decrypted.
+*   The target server is fresh and reachable over SSH with `sudo`.
 
 **Strategy:** Build a recovery artifact using `build-recovery`, then ship it with `deploy`.
 
@@ -177,7 +195,7 @@ Builds a versioned directory `<project>-<version>/` containing the following:
 ```
 
 ### `build-bootstrap`
-Similar to `build-release`, but also creates a fresh database and ships the project's existing `age.key`. The `age.key` identity file must already exist in the project directory (create it once with `age-keygen` during first-time setup); `build-bootstrap` fails when it is missing and never generates or downloads a key. Litestream is not configured by bootstrap. Use this for the first-ever deployment of an application.
+Similar to `build-release`, but also copies the project's existing database and `age.key` into the build and adds the rendered systemd unit. Both files must already exist in the project directory: `age.key` is never generated or downloaded, and the database is never created — `build-bootstrap` fails when either is missing. Litestream is not configured by bootstrap. Use this for the first-ever deployment of an application.
 
 **Arguments:**
 *   `build-base-dir`: The base directory where the build output will be created.
