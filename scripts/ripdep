@@ -13,32 +13,36 @@ set -euo pipefail
 REMOTE_BASE_DIR="/tmp"
 # Local directory for storing final release artifacts (tarballs).
 RELEASES_BASE_DIR="${HOME}/src/backup/releases"
-# Local directory containing project-specific configuration files.
-CONFIG_BASE_DIR="${HOME}/src/restinpieces-litestream"
 # Directory for hook scripts that can be run at different stages.
-HOOKS_DIR="${CONFIG_BASE_DIR}/hooks"
+HOOKS_DIR="${HOME}/src/restinpieces-litestream/hooks"
 
 # External Tool Configurations
+# TODO: build ripc from the project's go.mod instead of downloading the latest
+# GitHub release, which can skew from the version the app was built against.
 REPO_RIPC="caasmo/restinpieces"
+
 # Filename of the age identity file. Created locally with ripc, required in project dir, deployed to app home.
 AGE_KEY_FILENAME="age.key"
 # Canonical project database filenames. No other "app.db" or ".db" literals allowed.
 APP_DB_FILENAME="app.db"
 DB_SUFFIX=".db"
+
 # Canonical app layout directory names. Shared by local build artifacts and the
 # remote install, which both expect bin/, data/ (and logs/ on the remote host).
 APP_BIN_DIRNAME="bin"
 APP_DATA_DIRNAME="data"
 APP_LOGS_DIRNAME="logs"
+
 # Placeholder in systemd templates, replaced with the project name.
 # @...@ syntax is used because systemd expands $VAR/${VAR} itself in ExecStart.
 SYSTEMD_APP_PLACEHOLDER="@RESTINPIECES_APP@"
+# Filename of the systemd file: looked up in the project directory, otherwise
+# downloaded from URL_TEMPLATE_SYSTEMD. Copied into the build dir under
+# SYSTEMD_FILENAME_TEMPLATE.
+SYSTEMD_FILENAME="systemd.service"
 # Filename pattern of the rendered systemd conf in a build dir. Shared with the
 # remote installer, which searches for the same pattern.
-SYSTEMD_CONF_FILENAME_TEMPLATE="systemd-%s.service"
-# SQLite: %s=os, %s=arch, %s=version
-URL_TEMPLATE_SQLITE="https://sqlite.org/2025/sqlite-tools-%s-%s-3510100.zip"
-
+SYSTEMD_FILENAME_TEMPLATE="systemd-%s.service"
 
 # Host architecture (actual build machine - always correct)
 HOST_GOOS=$(go env GOHOSTOS)
@@ -51,7 +55,10 @@ TARGET_GOARCH=${GOARCH:-$HOST_GOARCH}
 # Toold URL Templates
 # Ripc: %s=repo, %s=tag, %s=tag, %s=os, %s=arch
 URL_TEMPLATE_RIPC="https://github.com/%s/releases/download/%s/ripc-%s-%s-%s.tar.gz"
-URL_TEMPLATE_SYSTEMD="https://raw.githubusercontent.com/caasmo/restinpieces/master/restinpieces.service"
+URL_TEMPLATE_SYSTEMD="https://raw.githubusercontent.com/caasmo/restinpieces/master/${SYSTEMD_FILENAME}"
+
+# SQLite: %s=os, %s=arch, %s=version
+URL_TEMPLATE_SQLITE="https://sqlite.org/2025/sqlite-tools-%s-%s-3510100.zip"
 
 # Filename template for the tarball
 TARBALL_FILENAME_TEMPLATE="%s-%s.tar.gz"
@@ -422,12 +429,13 @@ create_logs_db() {
     log_warning "log.db not activated, TODO"
 }
 
-# get_systemd_template: copies the project's local systemd template, or downloads
-# the generic template, into the destination conf file.
+# get_systemd_template: copies the systemd template from the project directory, or
+# downloads the generic template, into the destination conf file.
 get_systemd_template() {
-    local project_name=$1
+    local project_path=$1
     local dest_conf_file=$2
-    local local_template_path="${CONFIG_BASE_DIR}/${project_name}/${project_name}.service"
+
+    local local_template_path="${project_path}/${SYSTEMD_FILENAME}"
 
     if [ -f "$local_template_path" ]; then
         log_info "Found local systemd template at: $local_template_path"
@@ -470,15 +478,16 @@ validate_systemd_conf() {
 # inside the build dir.
 create_systemd_conf() {
     local project_name=$1
-    local build_dir=$2
+    local project_path=$2
+    local build_dir=$3
 
     log_info "Adding Systemd configuration..."
 
     local conf_filename
-    printf -v conf_filename "$SYSTEMD_CONF_FILENAME_TEMPLATE" "$project_name"
+    printf -v conf_filename "$SYSTEMD_FILENAME_TEMPLATE" "$project_name"
     local dest_conf_file="${build_dir}/${conf_filename}"
 
-    get_systemd_template "$project_name" "$dest_conf_file"
+    get_systemd_template "$project_path" "$dest_conf_file"
     render_systemd_template "$dest_conf_file" "$project_name"
     validate_systemd_conf "$dest_conf_file" "$project_name"
 
@@ -844,7 +853,7 @@ generate_remote_script() {
         echo "APP_DATA_DIRNAME=\"${APP_DATA_DIRNAME}\""
         echo "APP_LOGS_DIRNAME=\"${APP_LOGS_DIRNAME}\""
         echo "AGE_KEY_FILENAME=\"${AGE_KEY_FILENAME}\""
-        echo "SYSTEMD_CONF_FILENAME_TEMPLATE=\"${SYSTEMD_CONF_FILENAME_TEMPLATE}\""
+        echo "SYSTEMD_FILENAME_TEMPLATE=\"${SYSTEMD_FILENAME_TEMPLATE}\""
         cat <<'EOF'
 
 # Colors for output
@@ -992,11 +1001,11 @@ deploy_systemd_service() {
     local source_dir=$1
     log_info "Deploying systemd service..."
     local conf_filename
-    printf -v conf_filename "$SYSTEMD_CONF_FILENAME_TEMPLATE" "$project_name"
+    printf -v conf_filename "$SYSTEMD_FILENAME_TEMPLATE" "$project_name"
     local service_file=$(find "${source_dir}" -name "$conf_filename" | head -n 1)
     if [ -z "$service_file" ]; then
-        log_error "Service file not found in ${source_dir}"
-        exit 1
+        log_warning "No service file in ${source_dir}; keeping the installed unit."
+        return 0
     fi
     cp "$service_file" "/etc/systemd/system/${project_name}.service"
     systemctl daemon-reload
@@ -1631,8 +1640,6 @@ cmd_build_bootstrap() {
     log_info "  Project version            : ${GREEN}$version${NC}"
     log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"
     log_info "  Target OS/Arch             : ${GREEN}$TARGET_GOOS/$TARGET_GOARCH${NC}"
-    log_info "  Config base directory      : $CONFIG_BASE_DIR"
-    log_info "  Config project directory   : $CONFIG_BASE_DIR/$project_name"
     log_info ""
     
     # -------------------------------------------------------------
@@ -1646,7 +1653,7 @@ cmd_build_bootstrap() {
     # -------------------------------------------------------------
     # 2. Add systemd service configuration
     # -------------------------------------------------------------
-    create_systemd_conf "$project_name" "$build_dir"
+    create_systemd_conf "$project_name" "$project_path" "$build_dir"
 
     # -------------------------------------------------------------
     # 3. Assemble Target Payload (for remote deployment)

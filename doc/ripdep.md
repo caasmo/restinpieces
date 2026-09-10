@@ -259,7 +259,7 @@ A high-level orchestrator that automates the `pack`, `push`, and `install` seque
 
 ## Debugging on a Remote Server
 
-Once a service is installed on a remote machine, you may need to debug it. The `restinpieces.service` unit is heavily sandboxed for security, which can sometimes make troubleshooting tricky. Here’s a guide to effective debugging.
+Once a service is installed on a remote machine, you may need to debug it. The `systemd.service` unit is heavily sandboxed for security, which can sometimes make troubleshooting tricky. Here’s a guide to effective debugging.
 
 ### 1. Check Status and Logs
 
@@ -305,7 +305,7 @@ If the logs aren't clear, the most effective technique is to become the service 
 
 If the application runs perfectly when executed manually (Step 2) but fails when started via `systemctl`, the problem is almost certainly one of the security restrictions in the `.service` file.
 
--   **Common Cause:** The service is trying to access a file or directory path that it's not allowed to. The `restinpieces.service` uses `ProtectSystem=strict`, which makes most of the filesystem read-only. Only paths listed in `ReadWritePaths` (like `/home/my-app/data`) are writable.
+-   **Common Cause:** The service is trying to access a file or directory path that it's not allowed to. The `systemd.service` uses `ProtectSystem=strict`, which makes most of the filesystem read-only. Only paths listed in `ReadWritePaths` (like `/home/my-app/data`) are writable.
 
 -   **The Strategy:** To find the offending directive, temporarily disable the security settings.
     1.  SSH into the remote machine and edit the service file: `sudo nano /etc/systemd/system/my-app.service`.

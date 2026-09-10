@@ -10,7 +10,7 @@ The approach focuses on:
 
 ## Systemd Hardening
 
-The `systemd` setup, [`restinpieces.service`](https://github.com/caasmo/restinpieces/blob/master/restinpieces.service), provides robust security and isolation, leveraging almost the same underlying Linux kernel features that containers use.
+The `systemd` setup, [`systemd.service`](https://github.com/caasmo/restinpieces/blob/master/systemd.service), provides robust security and isolation, leveraging almost the same underlying Linux kernel features that containers use.
 
 The `ripdep` tool configures and deploys each service with a strong security baseline:
 *   ✅ User/group isolation per app (`User=`, `Group=`)

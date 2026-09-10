@@ -36,7 +36,7 @@ ripc set backup.sqlite-rsync.entries.app-rsync.source_path ""
 
 To deactivate all backups, remove every entry. Empty maps are valid and make backups a no-op. Deactivating does not delete files on disk and does not require removing the daemon. You can reactivate by setting the paths again.
 
-Config changes apply on `SIGHUP` reload (no restart). With the canonical systemd service ([restinpieces.service](../restinpieces.service)):
+Config changes apply on `SIGHUP` reload (no restart). With the canonical systemd service ([systemd.service](../systemd.service)):
 
 ```bash
 systemctl reload restinpieces
