@@ -225,14 +225,14 @@ is_go_project() {
     return 0
 }
 
-# require_clean_worktree: fails unless the project has no uncommitted changes
-# and HEAD is exactly on the last tag.
+# require_clean_worktree: fails unless tracked files have no uncommitted changes
+# and HEAD is exactly on the last tag. Untracked files are allowed.
 # Returns 0 if clean and tagged, 1 otherwise.
 require_clean_worktree() {
     local project_path=$1
     local changes
 
-    if ! changes=$(cd "$project_path" && git status --porcelain); then
+    if ! changes=$(cd "$project_path" && git status --porcelain --untracked-files=no); then
         log_error "Failed to read git status in project: ${project_path}"
         return 1
     fi
