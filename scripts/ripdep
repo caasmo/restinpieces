@@ -22,6 +22,14 @@ HOOKS_DIR="${CONFIG_BASE_DIR}/hooks"
 REPO_RIPC="caasmo/restinpieces"
 # Filename of the age identity file. Created locally with ripc, required in project dir, deployed to app home.
 AGE_KEY_FILENAME="age.key"
+# Canonical project database filenames. No other "app.db" or ".db" literals allowed.
+APP_DB_FILENAME="app.db"
+DB_SUFFIX=".db"
+# Canonical app layout directory names. Shared by local build artifacts and the
+# remote install, which both expect bin/, data/ (and logs/ on the remote host).
+APP_BIN_DIRNAME="bin"
+APP_DATA_DIRNAME="data"
+APP_LOGS_DIRNAME="logs"
 # SQLite: %s=os, %s=arch, %s=version
 URL_TEMPLATE_SQLITE="https://sqlite.org/2025/sqlite-tools-%s-%s-3510100.zip"
 
@@ -172,10 +180,22 @@ get_remote_dir_from_tarball_path() {
     echo "${REMOTE_BASE_DIR}/${project_name}/${version}"
 }
 
+# get_bin_dir: echoes the standard bin/ subdirectory path under a given directory.
+get_bin_dir() {
+    local dir=$1
+    echo "${dir}/${APP_BIN_DIRNAME}"
+}
+
+# get_data_dir: echoes the standard data/ subdirectory path under a given directory.
+get_data_dir() {
+    local dir=$1
+    echo "${dir}/${APP_DATA_DIRNAME}"
+}
+
 # seems_build_dir: returns 0 if the directory has bin/ and data/ subdirs.
 seems_build_dir() {
     local dir=$1
-    [ -d "${dir}/bin" ] && [ -d "${dir}/data" ]
+    [ -d "$(get_bin_dir "$dir")" ] && [ -d "$(get_data_dir "$dir")" ]
 }
 
 # is_go_project: Checks if a given path is a valid Go project for this script.
@@ -213,10 +233,12 @@ require_age_key() {
 # DEPLOYMENT FUNCTIONS - LOCAL
 # ============================================ 
 
-setup_build_dir() {
+recreate_build_dir() {
     local build_dir=$1
-    local bin_dir=$2
-    local data_dir=$3
+    local bin_dir
+    bin_dir=$(get_bin_dir "$build_dir")
+    local data_dir
+    data_dir=$(get_data_dir "$build_dir")
     
     # Clean and create
     if [ -d "$build_dir" ]; then
@@ -326,26 +348,30 @@ download_sqlite() {
     log_success "SQLite tools downloaded to ${dest_dir}/sqlite3"
 }
 
-create_app_db() {
-    local ripc_bin=$1
-    local key_path=$2
-    local db_path=$3
-    
-    log_info "Creating app.db..."
-    if [ -f "$db_path" ]; then
-        log_warning "app.db already exists: $db_path"
-        exit 1
+# find_project_db: locates the project database, never creates.
+# Checks <project_name>.db first, then app.db fallback.
+# Echoes full path if found, echoes "" if none.
+find_project_db() {
+    local project_path=$1
+    local project_name=$2
+    local candidate="${project_path}/${project_name}${DB_SUFFIX}"
+    if [ -f "$candidate" ]; then
+        echo "$candidate"
+        return 0
     fi
-    
-    "$ripc_bin" -agekey "$key_path" -dbpath "$db_path" app create
-    log_success "Created app.db in $db_path"
+    candidate="${project_path}/${APP_DB_FILENAME}"
+    if [ -f "$candidate" ]; then
+        echo "$candidate"
+        return 0
+    fi
+    echo ""
 }
 
 create_logs_db() {
     log_warning "log.db not activated, TODO"
 }
 
-add_systemd_configuration() {
+build_systemd_conf_file() {
     local project_name=$1
     local build_dir=$2
     
@@ -473,8 +499,8 @@ cmd_unpack() {
     log_success "Unpacked release to ${target_dir}"
 }
 
-# cmd_restore-db: Restores a database from a source into a directory.
-cmd_restore-db() {
+# cmd_restore_db: Restores a database from a source into a directory.
+cmd_restore_db() {
     local source=$1
     local target_dir=$2
 
@@ -483,12 +509,13 @@ cmd_restore-db() {
         exit 1
     fi
 
-    local data_dir="${target_dir}/data"
+    local data_dir
+    data_dir=$(get_data_dir "$target_dir")
     mkdir -p "$data_dir"
 
     if [[ "$source" == *.db ]]; then
         log_info "Copying database file: ${source}..."
-        cp "$source" "${data_dir}/app.db"
+        cp "$source" "${data_dir}/${APP_DB_FILENAME}"
     elif [[ "$source" == *.tar.gz ]]; then
         log_info "Unpacking database snapshot: ${source}..."
         if ! tar -xzf "$source" -C "$data_dir"; then
@@ -501,11 +528,11 @@ cmd_restore-db() {
         exit 1
     fi
 
-    log_success "Database restored to ${data_dir}/app.db"
+    log_success "Database restored to ${data_dir}/${APP_DB_FILENAME}"
 }
 
-# cmd_build-recovery: Assembles a build directory for recovery.
-cmd_build-recovery() {
+# cmd_build_recovery: Assembles a build directory for recovery.
+cmd_build_recovery() {
     # Check for help first
     if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
         show_build_recovery_help
@@ -539,6 +566,31 @@ cmd_build-recovery() {
 
     local tmp_tools=""
     # The trap will cleanup the tmp_tools dir on function exit.
+ 	# very tricky behavior of trap:
+	#
+    # - In bash, when you set multiple trap commands for the same signal (in
+    # this case RETURN), each new trap overwrites the previous one rather than
+    # adding to it. Make sure to have one trap call
+	# 
+    # - quotes:
+    #   Single quotes - variable expands when trap FIRES
+	#       trap 'cleanup_temp_dirs "$release_source_dir" "$tmp_tools"' RETURN
+    #   Double quotes - variable expands when trap is SET
+    #       trap "rm -rf \"$tmp_tools\"" RETURN  
+    #       # Becomes literally: trap "rm -rf \"/tmp/tmp.abc123\"" RETURN
+    #
+    # - the most tricky thing: trap ... RETURN bubbles up through the call
+    # stack like an uncaught exception, that means it triggers after each
+    # funcion ends:
+    # if Set in cmd_build → fires when cmd_build returns ✅ but Trap persists
+    # bubbling → fires AGAIN when main returns ❌ At that point, tmp_tools and
+    # release_source_dir are local variables from cmd_build which no longer
+    # exist
+    #
+    # - Best practices  
+    #   - always check you have one trap per signal in the function
+    #   - always stop bubbling up in the caller of the function with trap
+    #       trap - RETURN
     trap 'cleanup_temp_dirs "$tmp_tools"' RETURN
 
     local project_name
@@ -555,11 +607,13 @@ cmd_build-recovery() {
     fi
 
     local build_dir="${build_base_dir}/${project_name}-${version}"
-    local bin_dir="${build_dir}/bin"
-    local data_dir="${build_dir}/data"
+    local bin_dir
+    bin_dir=$(get_bin_dir "$build_dir")
+    local data_dir
+    data_dir=$(get_data_dir "$build_dir")
 
     log_info "Recovery Build for project: ${GREEN}${project_name}${NC} version: ${GREEN}${version}${NC}"
-    setup_build_dir "$build_dir" "$bin_dir" "$data_dir"
+    recreate_build_dir "$build_dir"
 
     # 1. Handle Release Unpacking
     if [ -n "$with_release" ]; then
@@ -568,14 +622,14 @@ cmd_build-recovery() {
 
     # 2. Handle Database Restoration
     if [ -n "$with_db" ]; then
-        cmd_restore-db "$with_db" "$build_dir"
+        cmd_restore_db "$with_db" "$build_dir"
         
-        # Look for age.key in the same dir as the db source
+        # Look for the age key in the same dir as the db source
         local source_dir=$(dirname "$with_db")
-        if [ -f "${source_dir}/age.key" ]; then
-            log_info "Found age.key in database source directory. Copying..."
-            cp "${source_dir}/age.key" "$build_dir/"
-            log_success "Copied age.key to ${build_dir}/age.key"
+        if [ -f "${source_dir}/${AGE_KEY_FILENAME}" ]; then
+            log_info "Found ${AGE_KEY_FILENAME} in database source directory. Copying..."
+            cp "${source_dir}/${AGE_KEY_FILENAME}" "$build_dir/"
+            log_success "Copied ${AGE_KEY_FILENAME} to ${build_dir}/${AGE_KEY_FILENAME}"
         fi
     fi
 
@@ -693,7 +747,7 @@ cmd_push() {
         echo "" # Add a blank line for readability
         log_info "Next step: Log in to the remote machine and run the installer:"
         log_info "    ssh ${host}"
-        log_info "    sudo ${remote_dir}/bin/ripdep-remote install"
+        log_info "    sudo ${remote_dir}/${APP_BIN_DIRNAME}/ripdep-remote install"
     fi
 }
 
@@ -704,11 +758,19 @@ cmd_push() {
 generate_remote_script() {
     local output_path=$1
 
-    # Use a quoted heredoc to prevent local variable expansion.
-    # All logic inside is for the remote machine.
-    cat > "$output_path" <<'EOF'
-#!/bin/bash
-set -euo pipefail
+    # The remote script needs the canonical app layout constants, but its body
+    # is a quoted heredoc so local variables do not expand inside it. Emit the
+    # constants as an expanding preamble, then append the quoted body.
+    {
+        echo "#!/bin/bash"
+        echo "set -euo pipefail"
+        echo ""
+        echo "# Canonical app layout names (mirrors the parent script)."
+        echo "APP_BIN_DIRNAME=\"${APP_BIN_DIRNAME}\""
+        echo "APP_DATA_DIRNAME=\"${APP_DATA_DIRNAME}\""
+        echo "APP_LOGS_DIRNAME=\"${APP_LOGS_DIRNAME}\""
+        echo "AGE_KEY_FILENAME=\"${AGE_KEY_FILENAME}\""
+        cat <<'EOF'
 
 # Colors for output
 RED=$'\033[0;31m'
@@ -796,8 +858,8 @@ create_service_user() {
 
 create_directory_structure() {
     log_info "Creating directory structure..."
-    local data_dir="/home/${project_name}/data"
-    local dirs=( "/home/${project_name}/bin" "$data_dir" "/home/${project_name}/logs" )
+    local data_dir="/home/${project_name}/${APP_DATA_DIRNAME}"
+    local dirs=( "/home/${project_name}/${APP_BIN_DIRNAME}" "$data_dir" "/home/${project_name}/${APP_LOGS_DIRNAME}" )
     for dir in "${dirs[@]}"; do
         if [ ! -d "$dir" ]; then
             mkdir -p "$dir"
@@ -811,39 +873,39 @@ create_directory_structure() {
 
 deploy_binaries() {
     local source_dir=$1
-    log_info "Deploying binaries from ${source_dir}/bin..."
-    if [ ! -d "${source_dir}/bin" ]; then
+    log_info "Deploying binaries from ${source_dir}/${APP_BIN_DIRNAME}..."
+    if [ ! -d "${source_dir}/${APP_BIN_DIRNAME}" ]; then
         log_error "No bin/ directory found in ${source_dir}"
         exit 1
     fi
-    for binary in "${source_dir}"/bin/*; do
+    for binary in "${source_dir}/${APP_BIN_DIRNAME}"/*; do
         if [ -f "$binary" ]; then
             local basename=$(basename "$binary")
             # This loop now also installs the ripdep-remote script itself,
             # making it available for future undeploy commands.
             install -m 700 -o "${project_name}" -g "${project_name}" \
-                "$binary" "/home/${project_name}/bin/${basename}"
-            log_success "Installed binary: ${basename} to /home/${project_name}/bin/${basename}"
+                "$binary" "/home/${project_name}/${APP_BIN_DIRNAME}/${basename}"
+            log_success "Installed binary: ${basename} to /home/${project_name}/${APP_BIN_DIRNAME}/${basename}"
         fi
     done
 }
 
 deploy_data_files() {
     local source_dir=$1
-    log_info "Deploying data files from ${source_dir}/data..."
-    if [ -f "${source_dir}/age.key" ]; then
-        local dest_key="/home/${project_name}/age.key"
+    log_info "Deploying data files from ${source_dir}/${APP_DATA_DIRNAME}..."
+    if [ -f "${source_dir}/${AGE_KEY_FILENAME}" ]; then
+        local dest_key="/home/${project_name}/${AGE_KEY_FILENAME}"
         install -m 600 -o "${project_name}" -g "${project_name}" \
-            "${source_dir}/age.key" "$dest_key"
-        log_success "Installed age.key to $dest_key"
+            "${source_dir}/${AGE_KEY_FILENAME}" "$dest_key"
+        log_success "Installed ${AGE_KEY_FILENAME} to $dest_key"
     fi
-    if [ ! -d "${source_dir}/data" ]; then
+    if [ ! -d "${source_dir}/${APP_DATA_DIRNAME}" ]; then
         return 0
     fi
-    for datafile in "${source_dir}"/data/*; do
+    for datafile in "${source_dir}/${APP_DATA_DIRNAME}"/*; do
         if [ -f "$datafile" ]; then
             local basename=$(basename "$datafile")
-            local dest="/home/${project_name}/data/${basename}"
+            local dest="/home/${project_name}/${APP_DATA_DIRNAME}/${basename}"
             install -m 600 -o "${project_name}" -g "${project_name}" \
                 "$datafile" "$dest"
             log_success "Installed data file: ${basename} to $dest"
@@ -935,6 +997,7 @@ main() {
 main "$@"
 
 EOF
+    } > "$output_path"
 
     # Make the generated script executable
     chmod +x "$output_path"
@@ -982,7 +1045,7 @@ cmd_deploy() {
         exit 1
     fi
 
-    ssh -t -o LogLevel=ERROR "${host}" "sudo ${remote_dir}/bin/ripdep-remote install ${install_args}"
+    ssh -t -o LogLevel=ERROR "${host}" "sudo ${remote_dir}/${APP_BIN_DIRNAME}/ripdep-remote install ${install_args}"
     
     # --- Step 5: Cleanup ---
     # We perform cleanup from the deployment script (running as the SSH user)
@@ -1022,7 +1085,7 @@ cmd_undeploy() {
     fi
 
     log_info "Uninstalling application on ${host}..."
-    local deployed_script_path="/home/${project_name}/bin/ripdep-remote"
+    local deployed_script_path="/home/${project_name}/${APP_BIN_DIRNAME}/ripdep-remote"
     log_info "→ Orchestrating remote uninstall using the deployed script..."
 
     # The script can safely delete itself (via userdel -r inside the uninstall command)
@@ -1065,6 +1128,10 @@ cmd_maintenance() {
     remote_script_header=$(cat <<EOF
 project_name="$project_name"
 activated_value="$state"
+app_bin_dirname="$APP_BIN_DIRNAME"
+app_data_dirname="$APP_DATA_DIRNAME"
+app_db_filename="$APP_DB_FILENAME"
+age_key_filename="$AGE_KEY_FILENAME"
 EOF
 )
 
@@ -1072,9 +1139,9 @@ EOF
     local remote_script_body
     remote_script_body=$(cat <<'EOF'
 set -e
-db_path="/home/$project_name/data/app.db"
-key_path="/home/$project_name/age.key"
-ripc_bin="/home/$project_name/bin/ripc"
+db_path="/home/$project_name/$app_data_dirname/$app_db_filename"
+key_path="/home/$project_name/$age_key_filename"
+ripc_bin="/home/$project_name/$app_bin_dirname/ripc"
 
 echo "→ Updating maintenance.activated to $activated_value..."
 sudo -u "$project_name" "$ripc_bin" -dbpath "$db_path" -agekey "$key_path" set maintenance.activated "$activated_value"
@@ -1106,9 +1173,9 @@ cmd_config() {
     shift 2
     local args="$*"
 
-    local key_path="/home/${project_name}/age.key"
-    local db_path="/home/${project_name}/data/app.db"
-    local ripc_bin="/home/${project_name}/bin/ripc"
+    local key_path="/home/${project_name}/${AGE_KEY_FILENAME}"
+    local db_path="/home/${project_name}/${APP_DATA_DIRNAME}/${APP_DB_FILENAME}"
+    local ripc_bin="/home/${project_name}/${APP_BIN_DIRNAME}/ripc"
     
     ssh -t -o LogLevel=ERROR "${host}" "sudo -u ${project_name} ${ripc_bin} -agekey ${key_path} -dbpath ${db_path} config $args"
 }
@@ -1151,7 +1218,7 @@ cmd_db_status() {
     require_local
     local host=${1:-}
     log_info "Checking database status on ${host}..."
-    ssh -t -o LogLevel=ERROR "${host}" "ls -lh /home/${project_name}/data/*.db"
+    ssh -t -o LogLevel=ERROR "${host}" "ls -lh /home/${project_name}/${APP_DATA_DIRNAME}/*.db"
 }
 
 cmd_backup() {
@@ -1257,7 +1324,7 @@ Arguments:
 
 Description:
   Similar to build-release, but also creates a fresh database encrypted
-  with the project's existing age.key and adds the systemd service
+  with the project's existing ${AGE_KEY_FILENAME} and adds the systemd service
   configuration.
 
 EOF
@@ -1355,12 +1422,12 @@ cleanup_temp_dirs() {
     return $exit_code
 }
 
-# cmd_build-release: Builds a standard release artifact from source code.
+# cmd_build_release: Builds a standard release artifact from source code.
 #
 # This command is used for updating an existing application with a new version of the code.
 # It compiles the Go binary and includes the necessary tools (`ripc`, `ripdep`)
 # but does *not* create a new database or encryption keys, ensuring that existing data is preserved on deployment.
-cmd_build-release() {
+cmd_build_release() {
     # Check for help first
     if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
         show_build_release_help
@@ -1398,9 +1465,11 @@ cmd_build-release() {
     fi
 
     local build_dir="${build_base_dir}/${project_name}-${version}"
-    local bin_dir="${build_dir}/bin"
-    local data_dir="${build_dir}/data"
-    setup_build_dir "$build_dir" "$bin_dir" "$data_dir"
+    local bin_dir
+    bin_dir=$(get_bin_dir "$build_dir")
+    local data_dir
+    data_dir=$(get_data_dir "$build_dir")
+    recreate_build_dir "$build_dir"
 
     log_info "Build configuration:"
     log_info "  Build base directory       : $build_base_dir"
@@ -1432,7 +1501,7 @@ cmd_build-release() {
     log_info "    $0 deploy <host> ${build_dir}"
 }
 
-cmd_build-bootstrap() {
+cmd_build_bootstrap() {
     # Check for help first
     if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
         show_build_bootstrap_help
@@ -1446,36 +1515,6 @@ cmd_build-bootstrap() {
     local build_base_dir=$1
     local project_path=$2
 
-    local tmp_tools_dir
-    tmp_tools_dir=$(mktemp -d)
-
-    # The trap will cleanup the tmp_tools dir on function exit.
- 	# very tricky behavior of trap:
-	#
-    # - In bash, when you set multiple trap commands for the same signal (in
-    # this case RETURN), each new trap overwrites the previous one rather than
-    # adding to it. Make sure to have one trap call
-	# 
-    # - quotes:
-    #   Single quotes - variable expands when trap FIRES
-	#       trap 'cleanup_temp_dirs "$release_source_dir" "$tmp_tools"' RETURN
-    #   Double quotes - variable expands when trap is SET
-    #       trap "rm -rf \"$tmp_tools\"" RETURN  
-    #       # Becomes literally: trap "rm -rf \"/tmp/tmp.abc123\"" RETURN
-    #
-    # - the most tricky thing: trap ... RETURN bubbles up through the call
-    # stack like an uncaught exception, that means it triggers after each
-    # funcion ends:
-    # if Set in cmd_build → fires when cmd_build returns ✅ but Trap persists
-    # bubbling → fires AGAIN when main returns ❌ At that point, tmp_tools and
-    # release_source_dir are local variables from cmd_build which no longer
-    # exist
-    #
-    # - Best practices  
-    #   - always check you have one trap per signal in the function
-    #   - always stop bubbling up in the caller of the function with trap
-    #       trap - RETURN
-    trap 'cleanup_temp_dirs "$tmp_tools_dir"' RETURN
 
     log_info "Creating a new bootstrap build..."
 
@@ -1501,9 +1540,11 @@ cmd_build-bootstrap() {
     fi
 
     local build_dir="${build_base_dir}/${project_name}-${version}"
-    local bin_dir="${build_dir}/bin"
-    local data_dir="${build_dir}/data"
-    setup_build_dir "$build_dir" "$bin_dir" "$data_dir"
+    local bin_dir
+    bin_dir=$(get_bin_dir "$build_dir")
+    local data_dir
+    data_dir=$(get_data_dir "$build_dir")
+    recreate_build_dir "$build_dir"
 
     log_info "Build configuration:"
     log_info "  Build base directory       : $build_base_dir"
@@ -1518,13 +1559,7 @@ cmd_build-bootstrap() {
     log_info ""
     
     # -------------------------------------------------------------
-    # 1. Prepare Host Tools (for local initialization)
-    # -------------------------------------------------------------
-    log_info "Downloading host tools for initialization ($HOST_GOOS/$HOST_GOARCH)..."
-    download_ripc "$tmp_tools_dir" "$HOST_GOOS" "$HOST_GOARCH"
-
-    # -------------------------------------------------------------
-    # 2. Run Initialization (using host tools)
+    # 1. Bootstrap application data from existing project db
     # -------------------------------------------------------------
     log_info "Bootstrapping application data..."
 
@@ -1532,8 +1567,17 @@ cmd_build-bootstrap() {
     cp "${project_path}/${AGE_KEY_FILENAME}" "${build_dir}/${AGE_KEY_FILENAME}"
     log_success "Added age key to ${build_dir}/${AGE_KEY_FILENAME}"
 
-    create_app_db "$tmp_tools_dir/ripc" "$build_dir/age.key" "$data_dir/app.db"
-    add_systemd_configuration "$project_name" "$build_dir"
+    local source_db
+    source_db=$(find_project_db "$project_path" "$project_name")
+    if [ -z "$source_db" ]; then
+        log_error "No project database found in ${project_path}: tried ${project_name}${DB_SUFFIX} and ${APP_DB_FILENAME}"
+        exit 1
+    fi
+    log_info "Found project database: $source_db"
+    cp "$source_db" "${data_dir}/${APP_DB_FILENAME}"
+    log_success "Copied $(basename "$source_db") to ${data_dir}/${APP_DB_FILENAME}"
+
+    build_systemd_conf_file "$project_name" "$build_dir"
 
     # -------------------------------------------------------------
     # 3. Assemble Target Payload (for remote deployment)
@@ -1599,11 +1643,11 @@ main() {
     shift
     
     case "$cmd" in
-        build-release) cmd_build-release "$@" ;;
-        build-bootstrap) cmd_build-bootstrap "$@" ;;
-        build-recovery) cmd_build-recovery "$@" ;;
+        build-release) cmd_build_release "$@" ;;
+        build-bootstrap) cmd_build_bootstrap "$@" ;;
+        build-recovery) cmd_build_recovery "$@" ;;
         unpack) cmd_unpack "$@" ;;
-        restore) cmd_restore-db "$@" ;;
+        restore) cmd_restore_db "$@" ;;
         pack) cmd_pack "$@" ;; 
         push) cmd_push "$@" ;; 
         deploy) cmd_deploy "$@" ;; 
