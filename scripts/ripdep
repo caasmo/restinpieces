@@ -367,6 +367,24 @@ find_project_db() {
     echo ""
 }
 
+# copy_project_db: copies the project database into the build's data/ directory.
+# Exits with an error if the project has no database.
+copy_project_db() {
+    local project_path=$1
+    local project_name=$2
+    local data_dir=$3
+
+    local source_db
+    source_db=$(find_project_db "$project_path" "$project_name")
+    if [ -z "$source_db" ]; then
+        log_error "No project database found in ${project_path}: tried ${project_name}${DB_SUFFIX} and ${APP_DB_FILENAME}"
+        exit 1
+    fi
+    log_info "Found project database: $source_db"
+    cp "$source_db" "${data_dir}/${APP_DB_FILENAME}"
+    log_success "Copied $(basename "$source_db") to ${data_dir}/${APP_DB_FILENAME}"
+}
+
 create_logs_db() {
     log_warning "log.db not activated, TODO"
 }
@@ -1477,8 +1495,8 @@ cmd_build_release() {
     log_info "  Project path               : ${project_path}"
     log_info "  Project name               : ${GREEN}$project_name${NC}"
     log_info "  Project version            : ${GREEN}$version${NC}"
-	log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"                                                                             │
-	log_info "  Target OS/Arch             : ${GREEN}$TARGET_GOOS/$TARGET_GOARCH${NC}"                                                                             │
+    log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"
+    log_info "  Target OS/Arch             : ${GREEN}$TARGET_GOOS/$TARGET_GOARCH${NC}"
     log_info ""
     
     # Build project binary, naming it after the project
@@ -1552,14 +1570,14 @@ cmd_build_bootstrap() {
     log_info "  Project path               : ${project_path}"
     log_info "  Project name               : ${GREEN}$project_name${NC}"
     log_info "  Project version            : ${GREEN}$version${NC}"
-	log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"                                                                             │
-	log_info "  Target OS/Arch             : ${GREEN}$TARGET_GOOS/$TARGET_GOARCH${NC}"                                                                             │
+    log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"
+    log_info "  Target OS/Arch             : ${GREEN}$TARGET_GOOS/$TARGET_GOARCH${NC}"
     log_info "  Config base directory      : $CONFIG_BASE_DIR"
     log_info "  Config project directory   : $CONFIG_BASE_DIR/$project_name"
     log_info ""
     
     # -------------------------------------------------------------
-    # 1. Bootstrap application data from existing project db
+    # 1. Bootstrap application data from existing project
     # -------------------------------------------------------------
     log_info "Bootstrapping application data..."
 
@@ -1567,16 +1585,11 @@ cmd_build_bootstrap() {
     cp "${project_path}/${AGE_KEY_FILENAME}" "${build_dir}/${AGE_KEY_FILENAME}"
     log_success "Added age key to ${build_dir}/${AGE_KEY_FILENAME}"
 
-    local source_db
-    source_db=$(find_project_db "$project_path" "$project_name")
-    if [ -z "$source_db" ]; then
-        log_error "No project database found in ${project_path}: tried ${project_name}${DB_SUFFIX} and ${APP_DB_FILENAME}"
-        exit 1
-    fi
-    log_info "Found project database: $source_db"
-    cp "$source_db" "${data_dir}/${APP_DB_FILENAME}"
-    log_success "Copied $(basename "$source_db") to ${data_dir}/${APP_DB_FILENAME}"
+    copy_project_db "$project_path" "$project_name" "$data_dir"
 
+    # -------------------------------------------------------------
+    # 2. Add systemd service configuration
+    # -------------------------------------------------------------
     build_systemd_conf_file "$project_name" "$build_dir"
 
     # -------------------------------------------------------------
