@@ -177,14 +177,12 @@ Builds a versioned directory `<project>-<version>/` containing the following:
 │   ├── <project> # compiled app binary
 │   ├── ripc # on-server config tool
 │   └── ripdep-remote # remote installer
-└── data/ # empty
+└── data/ # empty, you can manually add other sqlite db files here
 ```
-
-The project must be a git repository with no uncommitted changes and HEAD exactly on a tag; the build fails otherwise. The version is taken from that tag.
 
 **Arguments:**
 *   `build-base-dir`: The base directory where the build output will be created (e.g., `/tmp`). The script creates a subdirectory named after your project inside this directory.
-*   `project-path`: The path to the project source code to be compiled.
+*   `project-path`: The path to the project source code to be compiled. Must be a git repository with no uncommitted changes and HEAD exactly on a tag; the build fails otherwise. The version is taken from that tag.
 
 **Example:**
 ```bash
@@ -193,11 +191,23 @@ The project must be a git repository with no uncommitted changes and HEAD exactl
 ```
 
 ### `build-bootstrap`
-Similar to `build-release`, but also copies the project's existing database and `age.key` into the build and adds the rendered systemd unit. Both files must already exist in the project directory: `age.key` is never generated or downloaded, and the database is never created — `build-bootstrap` fails when either is missing. It has the same git pre-flight as `build-release`: a clean worktree with HEAD exactly on a tag. Litestream is not configured by bootstrap. Use this for the first-ever deployment of an application.
+Use this for the first-ever deployment of an application. `age.key` and the database must already exist in the project directory — they are never generated or created, the build fails when either is missing.
+Builds a versioned directory `<project>-<version>/` containing the following:
+```text
+<project>-<version>/
+├── age.key
+├── systemd-<project>.service
+├── bin/
+│   ├── <project> # compiled app binary
+│   ├── ripc # on-server config tool
+│   └── ripdep-remote # remote installer
+└── data/
+    └── app.db
+```
 
 **Arguments:**
 *   `build-base-dir`: The base directory where the build output will be created.
-*   `project-path`: The path to the project source code to be compiled.
+*   `project-path`: The path to the project source code to be compiled. Must be a git repository with no uncommitted changes and HEAD exactly on a tag; the build fails otherwise. The version is taken from that tag.
 
 **Example:**
 ```bash
@@ -207,6 +217,18 @@ Similar to `build-release`, but also copies the project's existing database and 
 
 ### `build-recovery`
 Creates a build directory from existing backups. This is used for disaster recovery or for provisioning a new server from an existing application's data.
+Builds a versioned directory `<project>-<version>/` containing the following:
+```text
+<project>-<version>/
+├── age.key # if found next to the --with-db source
+├── systemd-<project>.service # if from --with-release
+├── bin/
+│   ├── <project> # if from --with-release
+│   ├── ripc # if from --with-release
+│   └── ripdep-remote # remote installer
+└── data/
+    └── app.db # from --with-db
+```
 
 **Arguments & Flags:**
 *   `build-base-dir`: The base directory for the build output.

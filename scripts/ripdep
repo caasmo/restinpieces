@@ -99,6 +99,10 @@ require_root() {
     fi
 }
 
+require_command() {
+    command -v "$1" >/dev/null 2>&1 || { log_error "Required command not found: $1"; exit 1; }
+}
+
 # Get the latest release tag from a GitHub repository
 #
 # proper robust fuctnion
@@ -309,6 +313,7 @@ recreate_build_dir() {
 }
 
 build_project_binary() {
+    require_command go
     local bin_dir=$1 project_path=$2 binary_name=$3
     local project_name
     project_name=$(basename "$project_path")
@@ -342,6 +347,8 @@ build_project_binary() {
 
 # Download and install Ripc binary
 download_ripc() {
+    require_command curl
+    require_command tar
     local bin_dir=$1
     local os=${2:-$TARGET_GOOS}
     local arch=${3:-$TARGET_GOARCH}
@@ -371,6 +378,8 @@ download_ripc() {
 
 # Download and install SQLite tools
 download_sqlite() {
+    require_command curl
+    require_command unzip
     local dest_dir=$1
     local os=${2:-$HOST_GOOS}
     local arch=${3:-$HOST_GOARCH}
@@ -442,6 +451,7 @@ require_project_db() {
 # copy_project_db: copies the project database into the build's data/ directory.
 # Exits with an error if the project has no database.
 copy_project_db() {
+    require_command sqlite3
     local project_path=$1
     local project_name=$2
     local data_dir=$3
@@ -451,8 +461,8 @@ copy_project_db() {
         exit 1
     fi
     log_info "Found project database: $source_db"
-    cp "$source_db" "${data_dir}/${APP_DB_FILENAME}"
-    log_success "Copied $(basename "$source_db") to ${data_dir}/${APP_DB_FILENAME}"
+    sqlite3 "$source_db" ".backup '${data_dir}/${APP_DB_FILENAME}'"
+    log_success "Backed up $(basename "$source_db") to ${data_dir}/${APP_DB_FILENAME}"
 }
 
 create_logs_db() {
@@ -778,10 +788,10 @@ cmd_build_recovery() {
 
     echo "" # Add a blank line for readability
     log_info "Next steps:"
-    log_info "  To package this build into a release artifact:"
-    log_info "    $0 pack ${build_dir}"
     log_info "  To deploy this build to a remote host (includes packing):"
     log_info "    $0 deploy <host> ${build_dir}"
+    log_info "  To package this build into a release artifact:"
+    log_info "    $0 pack ${build_dir}"
 }
 
 # ============================================ 
@@ -1617,10 +1627,10 @@ cmd_build_release() {
 
     echo "" # Add a blank line for readability
     log_info "Next steps:"
-    log_info "  To package this build into a release artifact:"
-    log_info "    $0 pack ${build_dir}"
     log_info "  To deploy this build to a remote host (includes packing):"
     log_info "    $0 deploy <host> ${build_dir}"
+    log_info "  To package this build into a release artifact:"
+    log_info "    $0 pack ${build_dir}"
 }
 
 cmd_build_bootstrap() {
@@ -1710,10 +1720,10 @@ cmd_build_bootstrap() {
 
     echo "" # Add a blank line for readability
     log_info "Next steps:"
-    log_info "  To package this build into a release artifact:"
-    log_info "    $0 pack ${build_dir}"
     log_info "  To deploy this build to a remote host (includes packing):"
     log_info "    $0 deploy <host> ${build_dir}"
+    log_info "  To package this build into a release artifact:"
+    log_info "    $0 pack ${build_dir}"
 }
 
 # ============================================ 
