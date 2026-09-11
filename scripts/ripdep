@@ -312,14 +312,20 @@ build_project_binary() {
     log_success "Built ${binary_name} in ${bin_dir}"
 }
 
-# Build ripc from the version pinned in the project's go.mod
+# Install ripc from the version pinned in the project's go.mod.
 build_ripc() {
     require_command go
     local bin_dir=$1
     local project_path=$2
 
-    log_info "Building ripc from ${project_path}/go.mod..."
-    (cd "$project_path" && go build -o "${bin_dir}/ripc" github.com/caasmo/restinpieces/cmd/ripc)
+    local ripc_version
+    if ! ripc_version=$(cd "$project_path" && go list -m -f '{{.Version}}' github.com/caasmo/restinpieces); then
+        log_error "Could not determine the restinpieces version pinned in ${project_path}/go.mod"
+        exit 1
+    fi
+
+    log_info "Installing ripc ${ripc_version}..."
+    GOBIN="$bin_dir" go install "github.com/caasmo/restinpieces/cmd/ripc@${ripc_version}"
     log_success "Ripc binary placed in ${bin_dir}/ripc"
 }
 
