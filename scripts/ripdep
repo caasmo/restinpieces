@@ -844,7 +844,7 @@ generate_remote_script() {
         echo "set -euo pipefail"
         echo ""
         echo "# Canonical app names (mirrors the parent script)."
-        echo "PROJECT_NAME=\"${project_name}\""
+        printf 'PROJECT_NAME=%q\n' "$project_name"
         echo "APP_BIN_DIRNAME=\"${APP_BIN_DIRNAME}\""
         echo "APP_DATA_DIRNAME=\"${APP_DATA_DIRNAME}\""
         echo "APP_LOGS_DIRNAME=\"${APP_LOGS_DIRNAME}\""
