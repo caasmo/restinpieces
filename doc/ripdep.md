@@ -9,7 +9,7 @@
 - [Standard Application Layout](#standard-application-layout)
 - [Use Cases](#use-cases)
   - [First-Time Application Bootstrap](#1-first-time-application-bootstrap)
-  - [Update Application Binary Version](#2-update-application-binary-version)
+  - [Update Application](#2-update-application)
   - [Restore Application from Backup](#3-restore-application-from-backup)
 - [Commands](#commands)
   - [build-release](#build-release)
@@ -19,6 +19,7 @@
   - [push](#push)
   - [install (Remote)](#install-remote)
   - [deploy](#deploy)
+  - [shell](#shell)
 - [Debugging on a Remote Server](#debugging-on-a-remote-server)
   - [Check Status and Logs](#1-check-status-and-logs)
   - [Log in and Run Manually](#2-log-in-and-run-manually)
@@ -74,7 +75,7 @@ This section provides concrete, step-by-step instructions for common operational
 *   The project is a git repository with no uncommitted changes and HEAD exactly on a tag; the version is taken from that tag. `app.db` and `age.key` must be gitignored so the worktree check does not flag them.
 *   The target server is fresh (no application user or `/home/<app-name>` yet) and reachable over SSH with `sudo`.
 
-**Strategy:** `build-bootstrap` copies the local database and `age.key` into the build, renders the systemd unit, and compiles the application and its tools. `deploy` then packs the build, pushes it to the server, and runs the remote installer.
+**Strategy:** `build-bootstrap` builds the application binary and copies the local database, `age.key`, and systemd unit into the build directory. `deploy` then packs the build, pushes it to the server, and runs the remote installer.
 
 **Commands:**
 
@@ -83,10 +84,10 @@ PROJECT_PATH="$PWD"
 BUILD_BASE="/tmp"
 HOST="user@target-server.com"
 
-# 1. Build a complete, bootstrap artifact from source
+# 1. Build locally a complete bootstrap artifact from source
 ./ripdep build-bootstrap "$BUILD_BASE" "$PROJECT_PATH"
 
-# 2. Deploy
+# 2. Deploy to remote
 ./ripdep deploy "$HOST" "${BUILD_BASE}/my-app"
 ```
 
@@ -110,7 +111,7 @@ TARBALL_PATH=$(find ~/src/backup/releases/my-app -name "*.tar.gz" -print -quit)
 ssh -t "$HOST" "sudo /tmp/my-app/v1.0.0/bin/ripdep-remote install"
 ```
 
-### 2. Update Application Binary Version
+### 2. Update Application
 
 **Goal:** Deploy a new version of the application code to an existing server, preserving all existing data (database, keys, etc.).
 
@@ -144,13 +145,9 @@ ssh -t "$HOST" "sudo systemctl restart my-app"
 **Goal:** Provision a new server (e.g., a new standby replica) using a database from an existing backup.
 
 **Assumptions:**
-*   At least one of `--with-release` or `--with-db` is provided.
-*   `--with-release` points to a release tarball named `<project>-<version>.tar.gz`; the project name and version are read from that file name.
-*   `--with-db` points to a database file (`.db`) or a compressed snapshot (`.tar.gz`). When no release is given, the project name is inferred from the database source's parent directory name.
-*   `age.key` sits next to the `--with-db` source: `build-recovery` copies it only from that directory, and without the matching key the restored database cannot be decrypted.
-*   The target server is fresh and reachable over SSH with `sudo`.
+*   The database or the application is broken.
 
-**Strategy:** Build a recovery artifact using `build-recovery`, then ship it with `deploy`.
+**Strategy:** Build a recovery artifact using `build-recovery`, then ship it with `deploy` to a fresh server reachable over SSH with `sudo`. At least one of `--with-release` or `--with-db` is required. `--with-release` points to a release tarball named `<project>-<version>.tar.gz`; the project name and version are read from that file name. `--with-db` points to a database file (`.db`) or a compressed snapshot (`.tar.gz`); when no release is given, the project name is inferred from the database source's parent directory name. `age.key` must be in the same directory as the `--with-db` source; without the matching key the restored database cannot be decrypted.
 
 **Commands:**
 
@@ -293,6 +290,18 @@ A high-level orchestrator that automates the `pack`, `push`, and `install` seque
 ```bash
 # Deploys the build located in /tmp/my-app
 ./ripdep deploy user@server.com /tmp/my-app
+```
+
+### `shell`
+Opens an interactive shell as the application user on the remote server. `ripc` is on `PATH` and already points at the database and age key, so config commands run directly.
+
+**Arguments & Flags:**
+*   `host`: **(Required)** The remote server address (e.g., `user@server.com`).
+*   `project-name`: **(Required)** The application name (service user and `/home/<project-name>`).
+
+**Example:**
+```bash
+./ripdep shell user@server.com my-app
 ```
 
 ## Debugging on a Remote Server

@@ -325,8 +325,16 @@ build_ripc() {
         exit 1
     fi
 
-    log_info "Installing ripc ${ripc_version}..."
-    GOBIN="$bin_dir" go install "github.com/caasmo/restinpieces/cmd/ripc@${ripc_version}"
+    log_info "Building ripc ${ripc_version} for ${TARGET_GOOS}/${TARGET_GOARCH}..."
+    local tmp_dir
+    tmp_dir=$(mktemp -d)
+    (
+        cd "$tmp_dir" \
+            && go mod init tmp >/dev/null \
+            && go get "github.com/caasmo/restinpieces/cmd/ripc@${ripc_version}" >/dev/null \
+            && go build -ldflags="-s -w" -trimpath -o "${bin_dir}/ripc" "github.com/caasmo/restinpieces/cmd/ripc"
+    )
+    rm -rf "$tmp_dir"
     log_success "Ripc binary placed in ${bin_dir}/ripc"
 }
 
@@ -1266,7 +1274,7 @@ cmd_shell() {
          RIPC_DB=/home/${project_name}/${APP_DATA_DIRNAME}/${APP_DB_FILENAME} \
          RIPC_AGE_KEY_PATH=/home/${project_name}/${AGE_KEY_FILENAME} \
          PROJECT_NAME=${project_name} \
-         bash -l"
+         bash -lc 'cd /home/${project_name} && exec bash -l'"
 }
 
 cmd_status() {
