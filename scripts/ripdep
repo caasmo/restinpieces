@@ -883,7 +883,8 @@ HELPEOF
 stop_service() {
     local project_name=$1
     log_info "Stopping and disabling service '${project_name}'..."
-    if systemctl list-unit-files "${project_name}.service" >/dev/null 2>&1; then
+    # 'systemctl cat' is a reliable existence probe; 'list-unit-files' is not.
+    if systemctl cat "${project_name}.service" >/dev/null 2>&1; then
         if systemctl is-active --quiet "${project_name}"; then
             log_info "→ Service is active. Stopping..."
             systemctl stop "${project_name}"
@@ -1271,27 +1272,23 @@ cmd_shell() {
 }
 
 cmd_status() {
-    require_local
     local host=${1:-}
     ssh -t -o LogLevel=ERROR "${host}" "systemctl status ${SERVICE_NAME} --no-pager"
 }
 
 cmd_logs() {
-    require_local
     local host=${1:-}
     local lines=${2:-50}
     ssh -t -o LogLevel=ERROR "${host}" "journalctl -u ${SERVICE_NAME} -n $lines -f"
 }
 
 cmd_restart() {
-    require_local
     local host=${1:-}
     ssh -t -o LogLevel=ERROR "${host}" "sudo systemctl restart ${SERVICE_NAME}"
     log_success "Restart command sent"
 }
 
 cmd_db_backup() {
-    require_local
     local host=${1:-}
     # Litestream config is now likely managed differently or needs to be retrieved
     # Assuming standard path based on previous usage, but we removed 'etc'.
@@ -1305,7 +1302,6 @@ cmd_db_backup() {
 }
 
 cmd_db_status() {
-    require_local
     local host=${1:-}
     log_info "Checking database status on ${host}..."
     ssh -t -o LogLevel=ERROR "${host}" "ls -lh /home/${project_name}/${APP_DATA_DIRNAME}/*.db"
