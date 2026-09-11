@@ -1,7 +1,6 @@
-# Rendered by ripdep: @RESTINPIECES_APP@ is replaced with the project name.
+# Rendered by ripdep; edit the source template, not this file.
 [Unit]
-Description=restinpieces app server
-Documentation=https://github.com/caasmo/restinpieces
+Description=@RESTINPIECES_APP@ server
 After=network-online.target
 Wants=network-online.target # Ensures network is fully up
 
