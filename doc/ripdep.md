@@ -1,8 +1,8 @@
 # `ripdep` - Restinpieces Deployment & Operations Tool
 
-`ripdep` is a CLI tool for building, packaging, and deploying [RestInPieces](https://github.com/caasmo/restinpieces) framework applications. It also orchestrates high-level DevOps operations, such as server migrations.
+`ripdep` is a CLI tool for building, packaging, and deploying [RestInPieces](https://github.com/caasmo/restinpieces) framework applications, and for running operations on the servers where they are deployed.
 
-# Content
+## Content
 
 - [Relationship with ripc](#relationship-with-ripc)
 - [Installation](#installation)
@@ -16,23 +16,28 @@
   - [build-bootstrap](#build-bootstrap)
   - [build-recovery](#build-recovery)
   - [pack](#pack)
+  - [unpack](#unpack)
+  - [restore](#restore)
   - [push](#push)
   - [install (Remote)](#install-remote)
   - [deploy](#deploy)
+  - [undeploy](#undeploy)
+  - [backup](#backup)
+  - [maintenance](#maintenance)
+  - [config](#config)
   - [shell](#shell)
+  - [status](#status)
+  - [logs](#logs)
+  - [restart](#restart)
+  - [db-status](#db-status)
 - [Debugging on a Remote Server](#debugging-on-a-remote-server)
   - [Check Status and Logs](#1-check-status-and-logs)
   - [Log in and Run Manually](#2-log-in-and-run-manually)
-  - [Debugging the Systemd Sandbox](#3-debugging-the-systemd-sandbox)
+  - [Debug the Systemd Sandbox](#3-debug-the-systemd-sandbox)
 
 ## Relationship with `ripc`
 
-`ripdep` acts as a high-level orchestrator that wraps the **low-level primitive**, [`ripc`](ripc.md) ([source](../cmd/ripc)). This separation follows a tiered design:
-
--   **ripdep (Control Plane):** Runs on your local machine (or any machine with SSH access to the server). It focuses on user-facing workflows and operational tasks, combining multiple primitives, performing pre-flight checks, and orchestrating actions across server fleets.
--   **ripc (Server-side):** Runs directly on the production machine, operating on the local SQLite database and age key files. It provides direct, unopinionated access to configuration and state with a stable, composable interface intended for automation and scripting.
-
-This architecture ensures that `ripc` remains a stable foundation for CI/CD while `ripdep` can rapidly evolve to support new deployment use cases.
+`ripdep` runs on your local machine. It builds the application binary and [`ripc`](ripc.md) ([source](../cmd/ripc)), copies them to the remote server over SSH, and runs remote operations there. `ripc` is the on-server tool: it reads and writes the local SQLite database and age key files directly.
 
 ## Installation
 
@@ -43,57 +48,54 @@ curl -O https://raw.githubusercontent.com/caasmo/restinpieces/refs/heads/master/
 chmod +x ripdep
 ```
 
-# Standard Application Layout
+## Standard Application Layout
 
-`ripdep` follows a strict directory layout convention for both local build artifacts and remote installations. On the remote server, this structure is rooted in the application user's home directory: `/home/<app-name>`. This structure is essential for the security hardening and operational assumptions made by the tool.
+On the remote server the application lives in `/home/<app-name>`. The build commands produce artifacts that mirror the `bin/` and `data/` parts of this layout.
 
 ```text
 /home/<app-name>/
 ├── age.key
 ├── bin
-│   ├── <app-name> (e.g. restinpieces-litestream)
-│   ├── ripc
-│   └── ripdep-remote
+│   ├── <app-name> (e.g. restinpieces-litestream)
+│   ├── ripc
+│   └── ripdep-remote
 ├── data
-│   └── app.db
+│   └── app.db
+└── logs
 ```
 
-*   **`age.key`**: The primary encryption key for the application's secure configuration.
-*   **`bin/`**: Contains the main application binary, the `ripc` CLI for on-server management, and `ripdep-remote` which handles the server-side installation logic.
-*   **`data/`**: The persistent storage directory containing the SQLite database (`app.db`).
+*   **`age.key`**: the encryption key for the application's configuration.
+*   **`bin/`**: the application binary, the `ripc` CLI for on-server management, and `ripdep-remote`, the server-side installer.
+*   **`data/`**: the SQLite database.
+*   **`logs/`**: service logs.
 
 ## Use Cases
 
-This section provides concrete, step-by-step instructions for common operational scenarios.
-
 ### 1. First-Time Application Bootstrap
 
-**Goal:** Deploy a new application to a fresh server: compile the binary, copy the existing database and `age.key`, and install the service (user, directory layout, binaries, data, and systemd unit).
+Deploy a new application to a fresh server. `build-bootstrap` compiles the binary and copies the project's existing `age.key`, database, and systemd unit into the build directory. `deploy` packs the build, uploads it, and runs the remote installer, which creates the service user, the `/home/<app-name>` layout, and the systemd unit.
 
-**Assumptions:**
-*   The application was developed locally, with its database (`app.db`, or `<project-name>.db`) and `age.key` present in the project directory. `build-bootstrap` copies both into the build directory and fails if either is missing.
-*   The project is a git repository with no uncommitted changes and HEAD exactly on a tag; the version is taken from that tag. `app.db` and `age.key` must be gitignored so the worktree check does not flag them.
+Requirements:
+
+*   The project is a git repository with no uncommitted changes and HEAD exactly on a tag; the tag is the version. `app.db` and `age.key` must be gitignored so the worktree check passes.
+*   `age.key` and the database (`app.db` or `<project-name>.db`) exist in the project directory. `build-bootstrap` copies both and fails if either is missing.
 *   The target server is fresh (no application user or `/home/<app-name>` yet) and reachable over SSH with `sudo`.
 
-**Strategy:** `build-bootstrap` builds the application binary and copies the local database, `age.key`, and systemd unit into the build directory. `deploy` then packs the build, pushes it to the server, and runs the remote installer.
-
-**Commands:**
+Commands:
 
 ```bash
 PROJECT_PATH="$PWD"
 BUILD_BASE="/tmp"
 HOST="user@target-server.com"
 
-# 1. Build locally a complete bootstrap artifact from source
+# 1. Build a complete bootstrap artifact locally
 ./ripdep build-bootstrap "$BUILD_BASE" "$PROJECT_PATH"
 
 # 2. Deploy to remote
 ./ripdep deploy "$HOST" "${BUILD_BASE}/my-app"
 ```
 
-#### Low-Level Breakdown
-
-The `deploy` command automates the following manual steps:
+The `deploy` command performs these steps:
 
 ```bash
 HOST="user@target-server.com"
@@ -113,17 +115,15 @@ ssh -t "$HOST" "sudo /tmp/my-app/v1.0.0/bin/ripdep-remote install"
 
 ### 2. Update Application
 
-**Goal:** Deploy a new version of the application code to an existing server, preserving all existing data (database, keys, etc.).
+Deploy a new version of the application code to an existing server, preserving all existing data. `build-release` builds an artifact with an empty `data/`, so the installer has no data files to overwrite and the live database and key stay as they are. Restart the service to run the new binary.
 
-**Assumptions:**
-*   The application is already installed on the server: the service user, `/home/<app-name>`, and the systemd unit exist.
-*   The release artifact carries an empty `data/`, so the installer has no data files to overwrite and the live database and key stay untouched.
-*   The project is a git repository with no uncommitted changes and HEAD exactly on a tag; the version is taken from that tag.
+Requirements:
+
+*   The application is already installed: the service user, `/home/<app-name>`, and the systemd unit exist.
+*   The project is a git repository with no uncommitted changes and HEAD exactly on a tag; the tag is the version.
 *   The target server is reachable over SSH with `sudo`.
 
-**Strategy:** Build an artifact containing only the new binary and supporting tools, but no data. The `deploy` (and underlying `install`) command ensures existing data files are not overwritten.
-
-**Commands:**
+Commands:
 
 ```bash
 PROJECT_PATH="$PWD"
@@ -142,19 +142,21 @@ ssh -t "$HOST" "sudo systemctl restart my-app"
 
 ### 3. Restore Application from Backup
 
-**Goal:** Provision a new server (e.g., a new standby replica) using a database from an existing backup.
+Provision a new server (for example, a standby replica) from an existing backup. `build-recovery` assembles an artifact from a release tarball and/or a database backup, and `deploy` ships it to a fresh server reachable over SSH with `sudo`.
 
-**Assumptions:**
-*   The database or the application is broken.
+Requirements:
 
-**Strategy:** Build a recovery artifact using `build-recovery`, then ship it with `deploy` to a fresh server reachable over SSH with `sudo`. At least one of `--with-release` or `--with-db` is required. `--with-release` points to a release tarball named `<project>-<version>.tar.gz`; the project name and version are read from that file name. `--with-db` points to a database file (`.db`) or a compressed snapshot (`.tar.gz`); when no release is given, the project name is inferred from the database source's parent directory name. `age.key` must be in the same directory as the `--with-db` source; without the matching key the restored database cannot be decrypted.
+*   At least one of `--with-release` or `--with-db` is required.
+*   `--with-release` points to a release tarball named `<project>-<version>.tar.gz`; the project name and version are read from the filename.
+*   `--with-db` points to a database file (`.db`) or a compressed snapshot (`.tar.gz`). When no release is given, the project name is taken from the database source's parent directory name.
+*   `age.key` must sit next to the `--with-db` source; without it the restored database cannot be decrypted.
 
-**Commands:**
+Commands:
 
 ```bash
 BUILD_BASE="/tmp"
 HOST="user@new-server.com"
-RELEASE_PATH="/path/to/previous/release.tar.gz" 
+RELEASE_PATH="/path/to/previous/release.tar.gz"
 DB_PATH="/path/to/backup/data/app.db"
 
 # 1. Build the recovery artifact
@@ -167,29 +169,35 @@ DB_PATH="/path/to/backup/data/app.db"
 ## Commands
 
 ### `build-release`
-Builds a versioned directory `<project>-<version>/` containing the following:
+Builds `<project>-<version>/` for updating an existing installation:
+
 ```text
 <project>-<version>/
 ├── bin/
 │   ├── <project> # compiled app binary
 │   ├── ripc # on-server config tool
 │   └── ripdep-remote # remote installer
-└── data/ # empty, you can manually add other sqlite db files here
+└── data/ # empty
 ```
 
 **Arguments:**
-*   `build-base-dir`: The base directory where the build output will be created (e.g., `/tmp`). The script creates a subdirectory named after your project inside this directory.
-*   `project-path`: The path to the project source code to be compiled. Must be a git repository with no uncommitted changes and HEAD exactly on a tag; the build fails otherwise. The version is taken from that tag.
+*   `build-base-dir`: the base directory for the build output (e.g. `/tmp`). The build directory `<project>-<version>` is created inside it.
+*   `project-path`: the project source to compile. It must be a Go project whose worktree is clean and whose HEAD is exactly on the latest tag; the build fails otherwise. The tag is the version.
+
+Cross-compile by setting `GOOS` and `GOARCH`; the host platform is the default.
 
 **Example:**
 ```bash
 # Creates a release build in /tmp/my-app
 ./ripdep build-release /tmp /path/to/my-app
+
+# Cross-compile for another target
+GOOS=linux GOARCH=arm64 ./ripdep build-release /tmp /path/to/my-app
 ```
 
 ### `build-bootstrap`
-Use this for the first-ever deployment of an application. `age.key` and the database must already exist in the project directory — they are never generated or created, the build fails when either is missing.
-Builds a versioned directory `<project>-<version>/` containing the following:
+First-ever deployment. Same as `build-release`, plus it copies the project's `age.key` and database and renders the systemd unit:
+
 ```text
 <project>-<version>/
 ├── age.key
@@ -202,9 +210,11 @@ Builds a versioned directory `<project>-<version>/` containing the following:
     └── app.db
 ```
 
+`age.key` and the database must already exist in the project directory; the build fails if either is missing. The database is located as `<project-name>.db`, falling back to `app.db`. The systemd unit is read from `<project>/systemd.service` if present, otherwise downloaded from the framework repository.
+
 **Arguments:**
-*   `build-base-dir`: The base directory where the build output will be created.
-*   `project-path`: The path to the project source code to be compiled. Must be a git repository with no uncommitted changes and HEAD exactly on a tag; the build fails otherwise. The version is taken from that tag.
+*   `build-base-dir`: the base directory for the build output.
+*   `project-path`: the project source to compile, with the same git requirements as `build-release`.
 
 **Example:**
 ```bash
@@ -213,8 +223,13 @@ Builds a versioned directory `<project>-<version>/` containing the following:
 ```
 
 ### `build-recovery`
-Creates a build directory from existing backups. This is used for disaster recovery or for provisioning a new server from an existing application's data.
-Builds a versioned directory `<project>-<version>/` containing the following:
+Assembles an artifact from existing backups for disaster recovery or for provisioning a new server from an existing application's data. At least one flag is required:
+
+*   `--with-release <path>`: extract binaries, tools, and the systemd unit from a release tarball.
+*   `--with-db <source>`: restore a database from a `.db` file or a `.tar.gz` snapshot.
+
+If `age.key` sits next to the `--with-db` source it is copied in. The version comes from the release tarball, or `recovery-<YYYYMMDD>` if only a database is given. Every `data/*.db` is checked with `PRAGMA integrity_check` and the build fails on corruption.
+
 ```text
 <project>-<version>/
 ├── age.key # if found next to the --with-db source
@@ -227,10 +242,10 @@ Builds a versioned directory `<project>-<version>/` containing the following:
     └── app.db # from --with-db
 ```
 
-**Arguments & Flags:**
-*   `build-base-dir`: The base directory for the build output.
-*   `--with-release <path>`: Path to an existing release tarball (`.tar.gz`) to extract tools and configuration from.
-*   `--with-db <source>`: Path to a database source, which can be a database file (`.db`) or a compressed backup (`.tar.gz`).
+**Arguments:**
+*   `build-base-dir`: the base directory for the build output.
+*   `--with-release <path>`: path to a release tarball (`.tar.gz`).
+*   `--with-db <source>`: path to a database file (`.db`) or compressed backup (`.tar.gz`).
 
 **Example:**
 ```bash
@@ -239,10 +254,10 @@ Builds a versioned directory `<project>-<version>/` containing the following:
 ```
 
 ### `pack`
-Packages the specified build directory into a compressed TAR archive (`.tar.gz`), ready for deployment. The resulting artifact is placed in the releases directory (e.g., `~/src/backup/releases/<project_name>/`).
+Packs a build directory into `<build-dir>.tar.gz` and writes it to `~/src/backup/releases/<project>/`. The build directory must contain `bin/` and `data/`.
 
-**Arguments & Flags:**
-*   `build-dir`: **(Required)** The path to the completed build directory that you want to package.
+**Arguments:**
+*   `build-dir`: the completed build directory to package.
 
 **Example:**
 ```bash
@@ -250,12 +265,36 @@ Packages the specified build directory into a compressed TAR archive (`.tar.gz`)
 ./ripdep pack /tmp/my-app
 ```
 
-### `push`
-Uploads a release TAR archive to a remote server and extracts it into a temporary, version-stamped directory (e.g., `/tmp/<project_name>/<version>`). This stages the application for the `install` command.
+### `unpack`
+Extracts a release tarball into a directory. Used by `build-recovery`.
 
-**Arguments & Flags:**
-*   `host`: **(Required)** The remote server address (e.g., `user@server.com`).
-*   `tarball-path`: **(Required)** The local path to the release archive created by the `pack` command.
+**Arguments:**
+*   `tarball`: the release tarball to extract.
+*   `dir`: the target directory.
+
+**Example:**
+```bash
+./ripdep unpack ./my-app-v1.0.0.tar.gz /tmp/my-app
+```
+
+### `restore`
+Restores a database into `<dir>/data/app.db`. A `.db` source is copied; a `.tar.gz` source is extracted.
+
+**Arguments:**
+*   `source`: the database file (`.db`) or compressed snapshot (`.tar.gz`).
+*   `dir`: the target directory.
+
+**Example:**
+```bash
+./ripdep restore ./app.db /tmp/my-app
+```
+
+### `push`
+Uploads a release tarball to `/tmp/<project>/<version>/` on the server and extracts it there. This stages the release without touching a running installation. Prints the `install` command for the next step.
+
+**Arguments:**
+*   `host`: the remote server address (e.g. `user@server.com`).
+*   `tarball-path`: the local release archive created by `pack`.
 
 **Example:**
 ```bash
@@ -263,15 +302,15 @@ Uploads a release TAR archive to a remote server and extracts it into a temporar
 ```
 
 ### `install` (Remote)
-Finalizes the installation on the remote server. This command is intended to be run *on the remote machine* via `ssh` and requires `sudo` privileges. It handles creating the application user, setting up directories, deploying files, and installing the `systemd` unit.
+Runs on the server as root. Creates the service user, the `/home/<app-name>` layout, installs binaries and data files, and installs the systemd unit. It derives the project name and paths from its own location, so it takes no arguments.
 
-It also establishes a secure file structure with strict permissions:
-*   `drwx------ (700)` for the `/home/{app-name}/data` directory.
-*   `-rw------- (600)` for the `/home/{app-name}/age.key` and all database files.
-*   `-rwx------ (700)` for binaries in the `/home/{app-name}/bin` directory.
+Permissions:
 
-**Arguments & Flags:**
-*   This command is self-configuring and does not require path arguments, as it determines them from its own location on the remote server.
+*   `700` for `/home/<app-name>/data`.
+*   `600` for `/home/<app-name>/age.key` and all database files.
+*   `700` for binaries in `/home/<app-name>/bin`.
+
+The generated `ripdep-remote` also provides `uninstall`, which stops the service, removes the unit, and deletes the user and home directory.
 
 **Example:**
 ```bash
@@ -280,11 +319,12 @@ sudo /tmp/my-app/v1.0.0/bin/ripdep-remote install
 ```
 
 ### `deploy`
-A high-level orchestrator that automates the `pack`, `push`, and `install` sequence for a pre-existing build directory. This is the simplest way to get a finished build running on a remote server. **It does not create the build itself.**
+Runs `pack`, `push`, and `install` for a pre-built directory, then removes the staging directory on the server. It does not build the artifact itself.
 
-**Arguments & Flags:**
-*   `host`: **(Required)** The remote server address (e.g., `user@server.com`).
-*   `build-dir`: **(Required)** The path to the completed build directory to be deployed.
+**Arguments:**
+*   `host`: the remote server address (e.g. `user@server.com`).
+*   `build-dir`: the completed build directory to deploy.
+*   `install-options`: passed through to the remote `install` command.
 
 **Example:**
 ```bash
@@ -292,72 +332,147 @@ A high-level orchestrator that automates the `pack`, `push`, and `install` seque
 ./ripdep deploy user@server.com /tmp/my-app
 ```
 
-### `shell`
-Opens an interactive shell as the application user on the remote server. `ripc` is on `PATH` and already points at the database and age key, so config commands run directly.
+### `undeploy`
+Stops and disables the service, removes the systemd unit, and deletes the service user and home directory. Prompts for confirmation unless `-y` or `--force` is given.
 
-**Arguments & Flags:**
-*   `host`: **(Required)** The remote server address (e.g., `user@server.com`).
-*   `project-name`: **(Required)** The application name (service user and `/home/<project-name>`).
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+*   `-y`, `--force`: skip the confirmation prompt.
+
+**Example:**
+```bash
+./ripdep undeploy user@server.com my-app -y
+```
+
+### `backup`
+Creates a tarball of `/home/<project-name>` on the server, downloads it to the current directory as `<project-name>-backup-<timestamp>.tar.gz`, and deletes the remote copy.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+
+**Example:**
+```bash
+./ripdep backup user@server.com my-app
+```
+
+### `maintenance`
+Sets `maintenance.activated` with `ripc` and reloads the service.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+*   `state`: `true` or `false`.
+
+**Example:**
+```bash
+./ripdep maintenance user@server.com my-app true
+```
+
+### `config`
+Runs a `ripc` command on the server as the project user.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+*   `ripc-args`: arguments passed to `ripc`.
+
+**Example:**
+```bash
+./ripdep config user@server.com my-app set server.port 8080
+```
+
+### `shell`
+Opens an interactive shell as the project user. `ripc` is on `PATH` and points at the database and age key, so config commands run directly.
+
+**Arguments:**
+*   `host`: the remote server address (e.g. `user@server.com`).
+*   `project-name`: the application name.
 
 **Example:**
 ```bash
 ./ripdep shell user@server.com my-app
 ```
 
+### `status`
+Runs `systemctl status` for the service.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+
+**Example:**
+```bash
+./ripdep status user@server.com my-app
+```
+
+### `logs`
+Follows the service journal, showing the last `lines` entries.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+*   `lines`: number of entries to show before following (default `50`).
+
+**Example:**
+```bash
+./ripdep logs user@server.com my-app
+```
+
+### `restart`
+Restarts the service.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+
+**Example:**
+```bash
+./ripdep restart user@server.com my-app
+```
+
+### `db-status`
+Lists the database files in `data/`.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+
+**Example:**
+```bash
+./ripdep db-status user@server.com my-app
+```
+
 ## Debugging on a Remote Server
 
-Once a service is installed on a remote machine, you may need to debug it. The `systemd.service` unit is heavily sandboxed for security, which can sometimes make troubleshooting tricky. Here’s a guide to effective debugging.
+The systemd unit is sandboxed, which can hide the cause of a failure. Work through these steps.
 
 ### 1. Check Status and Logs
 
-The first step is always to check what `systemd` is reporting.
-
--   **Check Service Status:** Get a quick overview of the service's state (e.g., active, failed) and see the latest log entries.
-    ```bash
-    # On the remote machine
-    sudo systemctl status my-app.service
-
-    # Or via the ripdep wrapper
-    ./scripts/ripdep status <host> my-app
-    ```
-
--   **Inspect the Full Logs:** The service logs all its output to the systemd journal. This is the primary source of truth for errors.
-    ```bash
-    # On the remote machine, to view and follow logs
-    sudo journalctl -u my-app.service -f
-
-    # Or via the ripdep wrapper
-    ./scripts/ripdep logs <host> my-app
-    ```
+-   `sudo systemctl status my-app.service` shows the service state and recent log lines. Or use `./ripdep status <host> my-app`.
+-   `sudo journalctl -u my-app.service -f` follows the full journal, the primary source of errors. Or use `./ripdep logs <host> my-app`.
 
 ### 2. Log in and Run Manually
 
-If the logs aren't clear, the most effective technique is to become the service user and run the start command directly. This bypasses the systemd sandbox and helps you determine if the issue is with the application itself or its environment.
+If the logs are unclear, run the start command as the service user to bypass the systemd sandbox. The `install` command creates the service user with `/bin/bash` for this purpose.
 
-1.  **Become the Service User:** The `install` command creates the service user with `/bin/bash` as its shell precisely to enable this kind of debugging.
-    ```bash
-    # On the remote machine
-    sudo su - my-app
-    ```
-    This drops you into a shell as `my-app` in its home directory (`/home/my-app`).
+1.  Become the service user: `sudo su - my-app`. This drops you into `/home/my-app`.
+2.  Run the `ExecStart` command from the unit file:
 
-2.  **Run the `ExecStart` Command:** From there, execute the `ExecStart` command found in the `.service` file.
-    ```bash
-    # You are now the 'my-app' user in /home/my-app
-    ./bin/my-app -dbpath data/app.db -agekey age.key
-    ```
-    Any application panics, configuration errors, or file permission issues will now print directly to your terminal.
+```bash
+./bin/my-app -dbpath data/app.db -agekey age.key
+```
 
-### 3. Debugging the Systemd Sandbox
+Panics, configuration errors, and file permission errors now print directly to your terminal.
 
-If the application runs perfectly when executed manually (Step 2) but fails when started via `systemctl`, the problem is almost certainly one of the security restrictions in the `.service` file.
+### 3. Debug the Systemd Sandbox
 
--   **Common Cause:** The service is trying to access a file or directory path that it's not allowed to. The `systemd.service` uses `ProtectSystem=strict`, which makes most of the filesystem read-only. Only paths listed in `ReadWritePaths` (like `/home/my-app/data`) are writable.
+If the application runs manually but fails under `systemctl`, a security directive is blocking it. `ProtectSystem=strict` makes most of the filesystem read-only; only paths in `ReadWritePaths` (such as `/home/my-app/data`) are writable.
 
--   **The Strategy:** To find the offending directive, temporarily disable the security settings.
-    1.  SSH into the remote machine and edit the service file: `sudo nano /etc/systemd/system/my-app.service`.
-    2.  Comment out a block of security settings (e.g., all directives under `=== FILESYSTEM HARDENING ===`).
-    3.  Tell systemd to reload the configuration: `sudo systemctl daemon-reload`.
-    4.  Try restarting the service: `sudo systemctl restart my-app.service`.
+1.  Edit the unit: `sudo nano /etc/systemd/system/my-app.service`.
+2.  Comment out a block of directives (for example, everything under `=== FILESYSTEM HARDENING ===`).
+3.  Reload systemd: `sudo systemctl daemon-reload`.
+4.  Restart the service: `sudo systemctl restart my-app.service`.
 
-If the service starts, you've confirmed the issue is in the block you commented out. You can then re-enable the directives one by one (repeating steps 3 and 4) to pinpoint the exact setting causing the problem.
+If the service starts, the cause is in the block you commented out. Re-enable directives one at a time, repeating steps 3 and 4, to find the exact one.
