@@ -196,7 +196,7 @@ Builds a versioned directory `<project>-<version>/` containing the following:
 ```text
 <project>-<version>/
 ├── age.key
-├── systemd-<project>.service
+├── <project>.service
 ├── bin/
 │   ├── <project> # compiled app binary
 │   ├── ripc # on-server config tool
@@ -221,7 +221,7 @@ Builds a versioned directory `<project>-<version>/` containing the following:
 ```text
 <project>-<version>/
 ├── age.key # if found next to the --with-db source
-├── systemd-<project>.service # if from --with-release
+├── <project>.service # if from --with-release
 ├── bin/
 │   ├── <project> # if from --with-release
 │   ├── ripc # if from --with-release

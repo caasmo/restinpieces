@@ -36,8 +36,9 @@ SYSTEMD_APP_PLACEHOLDER="@RESTINPIECES_APP@"
 # SYSTEMD_FILENAME_TEMPLATE.
 SYSTEMD_FILENAME="systemd.service"
 # Filename pattern of the rendered systemd conf in a build dir. Shared with the
-# remote installer, which searches for the same pattern.
-SYSTEMD_FILENAME_TEMPLATE="systemd-%s.service"
+# remote installer, which searches for the same pattern. Matches the installed
+# unit name, /etc/systemd/system/<project>.service, so no rename is needed.
+SYSTEMD_FILENAME_TEMPLATE="%s.service"
 
 # Host architecture (actual build machine - always correct)
 HOST_GOOS=$(go env GOHOSTOS)
@@ -734,7 +735,7 @@ cmd_build_recovery() {
     fi
 
     # 3. Ensure self-contained script
-    generate_remote_script "${bin_dir}/ripdep-remote"
+    generate_remote_script "$project_name" "${bin_dir}/ripdep-remote"
     log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
     log_success "Recovery build completed successfully in: ${GREEN}${build_dir}${NC}"
@@ -832,7 +833,8 @@ cmd_push() {
 # ============================================ 
 
 generate_remote_script() {
-    local output_path=$1
+    local project_name=$1
+    local output_path=$2
 
     # The remote script needs the canonical app layout constants, but its body
     # is a quoted heredoc so local variables do not expand inside it. Emit the
@@ -842,6 +844,7 @@ generate_remote_script() {
         echo "set -euo pipefail"
         echo ""
         echo "# Canonical app names (mirrors the parent script)."
+        echo "PROJECT_NAME=\"${project_name}\""
         echo "APP_BIN_DIRNAME=\"${APP_BIN_DIRNAME}\""
         echo "APP_DATA_DIRNAME=\"${APP_DATA_DIRNAME}\""
         echo "APP_LOGS_DIRNAME=\"${APP_LOGS_DIRNAME}\""
@@ -875,7 +878,7 @@ show_uninstall_help() {
     cat <<HELPEOF
 ${GREEN}ripdep uninstall${NC} - Uninstall the project on a VM.
 
-Usage: $0 uninstall <project-name>
+Usage: $0 uninstall [project-name]
 
 HELPEOF
 }
@@ -1024,20 +1027,15 @@ handle_database() {
 cmd_install() {
     require_root
     
-    # --- CONTEXT INTROSPECTION ---
-    # The script determines its context from its own execution path ($0),
-    # which is expected to be inside the extracted archive.
-    # e.g., /tmp/myproject/v1.2.0/bin/ripdep
+    # The project name is baked in at build time, so the installer, the
+    # rendered systemd unit, and the service user all agree on the name.
+    local project_name="${PROJECT_NAME}"
+
+    # The payload (bin/, data/, unit file) sits two levels above this script.
     local script_path
     script_path=$(realpath "$0")
-
-    # The source dir is the root of the extracted archive, two levels above /bin/
     local source_dir
     source_dir=$(dirname "$(dirname "$script_path")")
-
-    # The service name is the name of the parent directory of our versioned source dir
-    local project_name
-    project_name=$(basename "$(dirname "$source_dir")")
 
     log_info "Installing service '${project_name}' from source '${source_dir}'..."
     
@@ -1054,7 +1052,7 @@ cmd_install() {
 
 cmd_uninstall() {
     require_root
-    local project_name=${1:-}
+    local project_name=${1:-$PROJECT_NAME}
     if [ -z "$project_name" ]; then
         show_uninstall_help
         exit 1
@@ -1273,36 +1271,43 @@ cmd_shell() {
 
 cmd_status() {
     local host=${1:-}
-    ssh -t -o LogLevel=ERROR "${host}" "systemctl status ${SERVICE_NAME} --no-pager"
+    local project_name=${2:-}
+    if [ -z "$host" ] || [ -z "$project_name" ]; then
+        log_error "Usage: $0 status <host> <project-name>"
+        exit 1
+    fi
+    ssh -t -o LogLevel=ERROR "${host}" "systemctl status ${project_name} --no-pager"
 }
 
 cmd_logs() {
     local host=${1:-}
-    local lines=${2:-50}
-    ssh -t -o LogLevel=ERROR "${host}" "journalctl -u ${SERVICE_NAME} -n $lines -f"
+    local project_name=${2:-}
+    local lines=${3:-50}
+    if [ -z "$host" ] || [ -z "$project_name" ]; then
+        log_error "Usage: $0 logs <host> <project-name> [lines]"
+        exit 1
+    fi
+    ssh -t -o LogLevel=ERROR "${host}" "journalctl -u ${project_name} -n $lines -f"
 }
 
 cmd_restart() {
     local host=${1:-}
-    ssh -t -o LogLevel=ERROR "${host}" "sudo systemctl restart ${SERVICE_NAME}"
+    local project_name=${2:-}
+    if [ -z "$host" ] || [ -z "$project_name" ]; then
+        log_error "Usage: $0 restart <host> <project-name>"
+        exit 1
+    fi
+    ssh -t -o LogLevel=ERROR "${host}" "sudo systemctl restart ${project_name}"
     log_success "Restart command sent"
-}
-
-cmd_db_backup() {
-    local host=${1:-}
-    # Litestream config is now likely managed differently or needs to be retrieved
-    # Assuming standard path based on previous usage, but we removed 'etc'.
-    # Litestream config is injected into app.db now.
-    # So we might need to invoke ripc to run litestream or export config?
-    # TODO says "all configuration is inside the app.db encrypted".
-    # Litestream might need to be run via a wrapper that extracts config?
-    # Or maybe we skip this command for now as it wasn't explicitly redefined in TODO?
-    # Leaving it with a warning.
-    log_warning "db-backup: Litestream config is now internal. Manual backup command needs update."
 }
 
 cmd_db_status() {
     local host=${1:-}
+    local project_name=${2:-}
+    if [ -z "$host" ] || [ -z "$project_name" ]; then
+        log_error "Usage: $0 db-status <host> <project-name>"
+        exit 1
+    fi
     log_info "Checking database status on ${host}..."
     ssh -t -o LogLevel=ERROR "${host}" "ls -lh /home/${project_name}/${APP_DATA_DIRNAME}/*.db"
 }
@@ -1379,9 +1384,10 @@ Commands:
   maintenance <host> <project-name> <true|false> Toggle maintenance mode for a project.
   config <host> <project-name> [args]        Run ripc commands on a remote host.
   shell <host> <project-name>                Open an interactive shell as the project user on a VM.
-  status <host>                              Check service status on a remote host.
-  logs <host> [lines]                        Tail service logs from a remote host.
-  restart <host>                             Restart the service on a remote host.
+  status <host> <project-name>               Check service status on a remote host.
+  logs <host> <project-name> [lines]         Tail service logs from a remote host.
+  restart <host> <project-name>              Restart the service on a remote host.
+  db-status <host> <project-name>            Check database status on a remote host.
 
 EOF
 }
@@ -1574,7 +1580,7 @@ cmd_build_release() {
     build_project_binary "$bin_dir" "$project_path" "$project_name"
 
     # Generate the remote script to make the artifact self-contained
-    generate_remote_script "${bin_dir}/ripdep-remote"
+    generate_remote_script "$project_name" "${bin_dir}/ripdep-remote"
     log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
     log_info "Building release tools (ripc)..."
@@ -1667,7 +1673,7 @@ cmd_build_bootstrap() {
     build_project_binary "$bin_dir" "$project_path" "$project_name"
 
     # Generate the remote script to make the artifact self-contained
-    generate_remote_script "${bin_dir}/ripdep-remote"
+    generate_remote_script "$project_name" "${bin_dir}/ripdep-remote"
     log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
     log_info "Building target release tools (ripc)..."
@@ -1738,7 +1744,6 @@ main() {
         status) cmd_status "$@" ;; 
         logs) cmd_logs "$@" ;; 
         restart) cmd_restart "$@" ;; 
-        db-backup) cmd_db_backup "$@" ;; 
         db-status) cmd_db_status "$@" ;; 
         help|--help|-h) show_help ;; 
         *) log_error "Unknown command: $cmd"; show_help; exit 1 ;; 
