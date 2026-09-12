@@ -985,19 +985,29 @@ deploy_binaries() {
     done
 }
 
-deploy_data_files() {
+deploy_age_key() {
     local project_name=$1
     local source_dir=$2
-    log_info "Deploying data files from ${source_dir}/${APP_DATA_DIRNAME}..."
+    log_info "Deploying age key..."
     if [ -f "${source_dir}/${AGE_KEY_FILENAME}" ]; then
         local dest_key="/home/${project_name}/${AGE_KEY_FILENAME}"
         install -m 600 -o "${project_name}" -g "${project_name}" \
             "${source_dir}/${AGE_KEY_FILENAME}" "$dest_key"
         log_success "Installed ${AGE_KEY_FILENAME} to $dest_key"
-    fi
-    if [ ! -d "${source_dir}/${APP_DATA_DIRNAME}" ]; then
         return 0
     fi
+    log_info "No age key in ${source_dir}."
+}
+
+deploy_data_files() {
+    local project_name=$1
+    local source_dir=$2
+    log_info "Deploying data files from ${source_dir}/${APP_DATA_DIRNAME}..."
+    if [ ! -d "${source_dir}/${APP_DATA_DIRNAME}" ]; then
+        log_info "No data files in ${source_dir}."
+        return 0
+    fi
+    local deployed=0
     for datafile in "${source_dir}/${APP_DATA_DIRNAME}"/*; do
         if [ -f "$datafile" ]; then
             local basename=$(basename "$datafile")
@@ -1005,8 +1015,12 @@ deploy_data_files() {
             install -m 600 -o "${project_name}" -g "${project_name}" \
                 "$datafile" "$dest"
             log_success "Installed data file: ${basename} to $dest"
+            deployed=1
         fi
     done
+    if [ "$deployed" -eq 0 ]; then
+        log_info "No data files in ${source_dir}."
+    fi
 }
 
 deploy_systemd_service() {
@@ -1017,7 +1031,7 @@ deploy_systemd_service() {
     printf -v conf_filename "$SYSTEMD_FILENAME_TEMPLATE" "$project_name"
     local service_file=$(find "${source_dir}" -name "$conf_filename" | head -n 1)
     if [ -z "$service_file" ]; then
-        log_warning "No service file in ${source_dir}; keeping the installed unit."
+        log_info "No service file in ${source_dir}; keeping the installed unit."
         return 0
     fi
     cp "$service_file" "/etc/systemd/system/${project_name}.service"
@@ -1050,6 +1064,7 @@ cmd_install() {
     create_service_user "$project_name"
     create_directory_structure "$project_name"
     deploy_binaries "$project_name" "$source_dir"
+    deploy_age_key "$project_name" "$source_dir"
     deploy_data_files "$project_name" "$source_dir"
     deploy_systemd_service "$project_name" "$source_dir"
     handle_database
