@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/caasmo/restinpieces/config"
-	"github.com/pelletier/go-toml/v2"
+	toml "github.com/pelletier/go-toml"
 )
 
 var ErrUpdateLogPath = errors.New("failed to update log path")
@@ -68,18 +68,19 @@ func logInit(ui UI, secureStore config.SecureStore, appDbPath string, logPathArg
 }
 
 func updateLogPathInConfig(secureStore config.SecureStore, logPath string) error {
-	var cfg config.Config
 	decryptedBytes, _, err := secureStore.Get(config.ScopeApplication, 0)
-	if err == nil && len(decryptedBytes) > 0 {
-		err = toml.Unmarshal(decryptedBytes, &cfg)
-		if err != nil {
-			return fmt.Errorf("%w: failed to parse config for log path update: %w", ErrUpdateLogPath, err)
-		}
+	if err != nil {
+		return fmt.Errorf("%w: failed to retrieve config for log path update: %w", ErrSecureStoreGet, err)
 	}
 
-	cfg.Log.Batch.DbPath = logPath
+	tree, err := toml.LoadBytes(decryptedBytes)
+	if err != nil {
+		return fmt.Errorf("%w: failed to parse config for log path update: %w", ErrUpdateLogPath, err)
+	}
 
-	tomlBytes, err := toml.Marshal(cfg)
+	tree.Set("log.batch.db_path", logPath)
+
+	tomlBytes, err := toml.Marshal(tree)
 	if err != nil {
 		return fmt.Errorf("%w: failed to marshal config for log path update: %w", ErrConfigMarshal, err)
 	}
