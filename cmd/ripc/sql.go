@@ -142,6 +142,55 @@ func (db *logDb) createSchemas() error {
 	return nil
 }
 
+// logRecord is one row of the logs table read by the tail command.
+type logRecord struct {
+	ID      int64
+	Created string
+	Level   int64
+	Message string
+	Data    string
+}
+
+// maxID returns the highest log id currently stored, or 0 when the table
+// is empty. It is the starting cursor for the tail command.
+func (db *logDb) maxID() (int64, error) {
+	var maxID int64
+	scanErr := db.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM logs;").Scan(&maxID)
+	if scanErr != nil {
+		return 0, fmt.Errorf("%w: failed to query max log id: %w", ErrQueryPrepare, scanErr)
+	}
+	return maxID, nil
+}
+
+// tail returns every log record with an id greater than afterID, oldest
+// first. The id range keeps the query on the primary key index with no sort.
+func (db *logDb) tail(afterID int64) (records []logRecord, err error) {
+	qrows, err := db.db.Query("SELECT id, created, level, message, data FROM logs WHERE id > ? ORDER BY id ASC;", afterID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to query log records: %w", ErrQueryPrepare, err)
+	}
+	defer func() {
+		if cerr := qrows.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("%w: failed to close log records: %w", ErrDbFinalize, cerr))
+		}
+	}()
+
+	for qrows.Next() {
+		var record logRecord
+		scanErr := qrows.Scan(&record.ID, &record.Created, &record.Level, &record.Message, &record.Data)
+		if scanErr != nil {
+			return nil, fmt.Errorf("%w: failed to scan log record: %w", ErrDbStep, scanErr)
+		}
+		records = append(records, record)
+	}
+	iterErr := qrows.Err()
+	if iterErr != nil {
+		return nil, fmt.Errorf("%w: failed to iterate log records: %w", ErrDbStep, iterErr)
+	}
+
+	return records, nil
+}
+
 // applySQL executes all .sql files in the given directory of the embedded
 // SQL filesystem. The embedded filesystem is expected to contain only one
 // level of directories (app, log). Each file may contain multiple

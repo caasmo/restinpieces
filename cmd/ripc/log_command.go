@@ -20,6 +20,7 @@ func printLogUsage(w io.Writer) {
 			{
 				Subcommands: []Subcommand{
 					{"init <logpath>", "Initialize the log database for the default batch logger"},
+					{"tail", "Follow new records from the log database"},
 				},
 			},
 		},
@@ -46,6 +47,8 @@ func handleLogCommand(secureStore config.SecureStore, dbPath string, commandArgs
 			logPath = subcommandArgs[0]
 		}
 		return handleLogInitCommand(secureStore, dbPath, logPath, ui)
+	case "tail":
+		return handleLogTailCommand(secureStore, ui)
 	default:
 		printLogUsage(ui.Err)
 		return fmt.Errorf("unknown log subcommand: %s", subcommand)
@@ -63,6 +66,11 @@ func parseLogSubcommand(commandArgs []string) (string, []string, error) {
 		}
 		if len(subcommandArgs) > 1 {
 			return "", nil, fmt.Errorf("'init' takes exactly one log path argument: %w", ErrTooManyArguments)
+		}
+		return subcommand, subcommandArgs, nil
+	case "tail":
+		if len(subcommandArgs) > 0 {
+			return "", nil, fmt.Errorf("'tail' takes no arguments: %w", ErrTooManyArguments)
 		}
 		return subcommand, subcommandArgs, nil
 	default:

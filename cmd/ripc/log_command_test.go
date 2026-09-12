@@ -39,6 +39,19 @@ func TestParseLogSubcommand(t *testing.T) {
 			args:        []string{"init", "arg1", "arg2"},
 			expectedErr: ErrTooManyArguments,
 		},
+		// 'tail' subcommand
+		{
+			name:         "TailNoArgs",
+			args:         []string{"tail"},
+			expectedCmd:  "tail",
+			expectedArgs: []string{},
+			expectedErr:  nil,
+		},
+		{
+			name:        "TailTooManyArgs",
+			args:        []string{"tail", "extra"},
+			expectedErr: ErrTooManyArguments,
+		},
 	}
 
 	for _, tc := range testCases {

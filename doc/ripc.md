@@ -245,6 +245,8 @@ Manages the log database.
 
 -   **`init`**: Initializes the log database and schema.
     -   `ripc log init`
+-   **`tail`**: Follows new records from the log database, printing one line per record. It reads `log.batch.db_path` from the configuration and runs until interrupted.
+    -   `ripc log tail`
 
 ### `help`
 
