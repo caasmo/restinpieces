@@ -10,6 +10,9 @@ import (
 )
 
 func main() {
+	// Flag names are part of the systemd unit contract, see
+	// systemd.service ExecStart and doc/ripdep.md. Rename them only
+	// together with the unit.
 	dbPath := flag.String("dbpath", "", "Path to the SQLite database file (required)")
 	ageKeyPath := flag.String("agekey", "", "Path to the age identity (private key) file (required)")
 
