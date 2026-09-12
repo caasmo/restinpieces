@@ -34,6 +34,8 @@
   - [Check Status and Logs](#1-check-status-and-logs)
   - [Log in and Run Manually](#2-log-in-and-run-manually)
   - [Debug the Systemd Sandbox](#3-debug-the-systemd-sandbox)
+- [Systemd Unit Contract](#systemd-unit-contract)
+- [Systemd Unit Contract](#systemd-unit-contract)
 
 ## Relationship with `ripc`
 
@@ -476,3 +478,7 @@ If the application runs manually but fails under `systemctl`, a security directi
 4.  Restart the service: `sudo systemctl restart my-app.service`.
 
 If the service starts, the cause is in the block you commented out. Re-enable directives one at a time, repeating steps 3 and 4, to find the exact one.
+
+## Systemd Unit Contract
+
+The unit hardcodes the flags and values your app gets: `bin/<app> -dbpath data/app.db -agekey age.key`. Make sure your app uses those flags.

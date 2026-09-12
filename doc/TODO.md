@@ -1,5 +1,6 @@
 ### TODOs
 
+- ripc scaffold rm <type> <key>: remove a scaffolded section (backup-online, backup-vacuum, backup-sqlite-rsync, oauth2). `set ...source_path ""` deactivates backups but leaves the section behind; oauth2 has no deactivate. Needs v1 tree Delete on the section path + Save, same pattern as `set`/`gen`.
 - ripc: all mutating config subcommands should validate before Save (fail-fast on `set`)
     - `ripc set backup.sqlite-rsync.listen_addr bad` currently reports `Successfully set` then fails on next `HUP` (`backup config validation failed: ... missing port`). Every mutating subcommand (`set`, `scaffold`, `migrate`, `save`) should `toml/v2.Unmarshal` the updated bytes into `config.Config` and call `config.Validate` before `SecureStore.Save`.
     - Keeps single source of truth (`config.Validate` / `ValidateBackup`), gives immediate operator feedback, avoids persisting invalid rows.
