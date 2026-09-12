@@ -15,6 +15,7 @@
   - [dump](#dump)
   - [scopes](#scopes)
   - [set](#set-path-value)
+  - [gen](#gen-filter)
   - [save](#save-file)
   - [scaffold](#scaffold-type-label)
   - [migrate](#migrate)
@@ -132,6 +133,15 @@ Lists all unique configuration scopes.
 Sets a configuration value at a given path.
 
     ripc set -desc "Update port" server.http_port 8080
+
+### `gen [filter]`
+
+Regenerates fresh values for configuration values.
+
+    ripc gen jwt.auth_secret
+    ripc gen jwt
+
+If a string is given, only values whose path contains that string are regenerated. For example, `ripc gen jwt` regenerates all five `jwt.*` values in a single configuration version.
 
 ### `save <file>`
 

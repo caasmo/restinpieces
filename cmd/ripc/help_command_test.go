@@ -17,6 +17,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 	originalPrintDump := printDumpUsageFunc
 	originalPrintScopes := printScopesUsageFunc
 	originalPrintSet := printSetUsageFunc
+	originalPrintGen := printGenUsageFunc
 	originalPrintSave := printSaveUsageFunc
 	originalPrintScaffold := printScaffoldUsageFunc
 	originalPrintMigrate := printMigrateUsageFunc
@@ -32,6 +33,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 		printDumpUsageFunc = originalPrintDump
 		printScopesUsageFunc = originalPrintScopes
 		printSetUsageFunc = originalPrintSet
+		printGenUsageFunc = originalPrintGen
 		printSaveUsageFunc = originalPrintSave
 		printScaffoldUsageFunc = originalPrintScaffold
 		printMigrateUsageFunc = originalPrintMigrate
@@ -48,6 +50,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 	printDumpUsageFunc = func(w io.Writer) { calledTopic = "dump" }
 	printScopesUsageFunc = func(w io.Writer) { calledTopic = "scopes" }
 	printSetUsageFunc = func(w io.Writer) { calledTopic = "set" }
+	printGenUsageFunc = func(w io.Writer) { calledTopic = "gen" }
 	printSaveUsageFunc = func(w io.Writer) { calledTopic = "save" }
 	printScaffoldUsageFunc = func(w io.Writer) { calledTopic = "scaffold" }
 	printMigrateUsageFunc = func(w io.Writer) { calledTopic = "migrate" }
@@ -67,6 +70,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 		{topic: "dump", expectTopic: "dump"},
 		{topic: "scopes", expectTopic: "scopes"},
 		{topic: "set", expectTopic: "set"},
+		{topic: "gen", expectTopic: "gen"},
 		{topic: "save", expectTopic: "save"},
 		{topic: "scaffold", expectTopic: "scaffold"},
 		{topic: "migrate", expectTopic: "migrate"},

@@ -180,6 +180,22 @@ func TestPrintUsageFuncs(t *testing.T) {
 			},
 		},
 		{
+			name:  "gen",
+			usage: printGenUsage,
+			want: []string{
+				"gen [options] [filter]",
+				"Generates fresh values for configuration values.",
+				"Arguments:",
+				"filter",
+				"Optional substring filter on generatable paths",
+				"Options:",
+				"-scope string",
+				"-desc string",
+				"ripc gen jwt.auth_secret",
+				"ripc gen jwt",
+			},
+		},
+		{
 			name:  "save",
 			usage: printSaveUsage,
 			want: []string{

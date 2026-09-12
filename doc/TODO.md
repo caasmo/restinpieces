@@ -453,3 +453,9 @@ Current `3600s bucket + 3m TTL` is worst of both
 - `db/databasesql/log.go` — `Log.stmt` is prepared once in `NewLog` for the startup `batchSize` (= config `log.batch.batch_size`); the daemon keeps that connection/statement for its whole life
 - SIGHUP config reload updates the provider only — the driver is not rebuilt, so a `batch_size` change silently drops every full flush to the slow partial path (`InsertBatch` ad-hoc `ExecContext`), and a `db_path` change is ignored
 - TODO: on reload, re-prepare `stmt` for the new size (or re-create the `Log`); until then restart required
+
+# ripc get: maybe add a --runtime flag to show what the app sees
+
+- `ripc get` prints stored values only; `ripc dump --runtime` prints defaults merged with stored overrides (what the app actually uses)
+- a `get --runtime` flag would apply the same merge then filter by path, so operators see the effective value for one key
+- ref: `cmd/ripc/get.go`, `cmd/ripc/dump.go` (runtime merge precedent), `cmd/ripc/main.go` (shared `--runtime` opt), `config/default.go` (defaults source)
