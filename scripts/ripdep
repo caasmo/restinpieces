@@ -1324,6 +1324,17 @@ cmd_restart() {
     log_success "Restart command sent"
 }
 
+cmd_reload() {
+    local host=${1:-}
+    local project_name=${2:-}
+    if [ -z "$host" ] || [ -z "$project_name" ]; then
+        log_error "Usage: $0 reload <host> <project-name>"
+        exit 1
+    fi
+    ssh -t -o LogLevel=ERROR "${host}" "sudo systemctl reload ${project_name}"
+    log_success "Reload command sent"
+}
+
 cmd_db_status() {
     local host=${1:-}
     local project_name=${2:-}
@@ -1410,6 +1421,7 @@ Commands:
   status <host> <project-name>               Check service status on a remote host.
   logs <host> <project-name> [lines]         Tail service logs from a remote host.
   restart <host> <project-name>              Restart the service on a remote host.
+  reload <host> <project-name>               Reload service config on a remote host.
   db-status <host> <project-name>            Check database status on a remote host.
 
 EOF
@@ -1767,6 +1779,7 @@ main() {
         status) cmd_status "$@" ;; 
         logs) cmd_logs "$@" ;; 
         restart) cmd_restart "$@" ;; 
+        reload) cmd_reload "$@" ;;
         db-status) cmd_db_status "$@" ;; 
         help|--help|-h) show_help ;; 
         *) log_error "Unknown command: $cmd"; show_help; exit 1 ;; 
