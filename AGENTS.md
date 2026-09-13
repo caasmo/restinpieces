@@ -68,6 +68,10 @@ like `BenchmarkLog_InsertBatch_Serial` and `BenchmarkQueue_Claim_Parallel`.
 Benchmark names appear in the comparison reports. Renaming one loses its
 history, so once a benchmark is released, its name stays.
 
+### Docs: writing style
+
+Docs speak to a junior developer or a DevOps operator: plain outcome words, never framework jargon. Say what to do first, then why. Never introduce a new noun when a simple word exists — reaching for a synonym means the sentence needs restructuring, not rewording.
+
 ### Code verification
 
 Before merging, all four must pass:
