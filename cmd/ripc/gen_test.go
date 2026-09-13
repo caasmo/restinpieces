@@ -278,3 +278,35 @@ func TestHandleGenCommand_Help(t *testing.T) {
 		t.Errorf("expected empty stderr, got: %q", stderr.String())
 	}
 }
+
+// failingGenerator always fails, for testing generator error handling.
+type failingGenerator struct{}
+
+func (failingGenerator) Generate() (string, error) {
+	return "", errors.New("boom")
+}
+
+func TestGenFuncs_ContainsUserAgentRegexp(t *testing.T) {
+	if _, ok := genFuncs["block_ua_list.list"]; !ok {
+		t.Error(`expected genFuncs to contain "block_ua_list.list"`)
+	}
+}
+
+func TestGenerate_Failure_GeneratorError(t *testing.T) {
+	scope := "app"
+	conf := "[test]\n  failing = \"old\"\n"
+	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(conf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	genFuncs["test.failing"] = failingGenerator{}
+	defer delete(genFuncs, "test.failing")
+
+	err := generate(ui, mockStore, scope, "", "test.failing")
+	if err == nil || err.Error() != "boom" {
+		t.Fatalf("expected generator error, got %v", err)
+	}
+	if len(mockStore.saveHistory) != 0 {
+		t.Errorf("expected no save on generator error, got %d", len(mockStore.saveHistory))
+	}
+}

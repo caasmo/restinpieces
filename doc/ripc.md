@@ -15,6 +15,7 @@
   - [dump](#dump)
   - [scopes](#scopes)
   - [set](#set-path-value)
+  - [add](#add-path-value)
   - [gen](#gen-filter)
   - [save](#save-file)
   - [scaffold](#scaffold-type-label)
@@ -134,6 +135,14 @@ Sets a configuration value at a given path.
 
     ripc set -desc "Update port" server.http_port 8080
 
+### `add <path> <value>`
+
+Appends a value to a configuration key that holds several values.
+
+    ripc add block_ua_list.list SemrushBot
+
+`add` can be run again safely: adding a value that is already present leaves the configuration unchanged. For `block_ua_list.list`, the value is added as a user agent inside the parentheses.
+
 ### `gen [filter]`
 
 Regenerates fresh values for configuration values.
@@ -142,6 +151,8 @@ Regenerates fresh values for configuration values.
     ripc gen jwt
 
 If a string is given, only values whose path contains that string are regenerated. For example, `ripc gen jwt` regenerates all five `jwt.*` values in a single configuration version.
+
+`gen block_ua_list` downloads the current user-agent list from https://github.com/ai-robots-txt/ai.robots.txt and stores it as the `block_ua_list.list` regular expression.
 
 ### `save <file>`
 
