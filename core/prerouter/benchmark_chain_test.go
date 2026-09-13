@@ -37,11 +37,11 @@ func buildChain(app *core.App) http.Handler {
 		preRouterChain.WithMiddleware(testMetrics.Execute)
 	}
 
-	// 5. BlockUaList
-	preRouterChain.WithMiddleware(NewBlockUaList(app).Execute)
-
-	// 6. BlockHost
+	// 5. BlockHost
 	preRouterChain.WithMiddleware(NewBlockHost(app).Execute)
+
+	// 6. BlockUaList
+	preRouterChain.WithMiddleware(NewBlockUaList(app).Execute)
 
 	// 7. TLSHeaderSTS
 	preRouterChain.WithMiddleware(NewTLSHeaderSTS().Execute)

@@ -196,7 +196,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 	preRouterChain := router.NewChain(i.app.Router())
 
 	// Add Internal Middleware. Order Matters, first added are run first.
-	// Execution order will be: RequestLog -> BlockIp -> BlockUa -> TLSHeaderSTS -> Maintenance -> i.app.Router()
+	// Execution order is: Recorder -> RequestLog -> BlockIp -> Metrics -> BlockHost -> BlockUaList -> TLSHeaderSTS -> Maintenance -> BlockOversizedRequest -> BlockEndpointsMismatch -> i.app.Router()
 
 	logger.Info(ft.Start("Setting up Prerouter Middleware Chain ..."))
 
@@ -240,16 +240,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 		logger.Info(ft.Disabled("Metrics middleware disabled"), "enabled", cfg.Metrics.Enabled)
 	}
 
-	// 4. BlockUaList Middleware
-	blockUaList := prerouter.NewBlockUaList(i.app)
-	preRouterChain.WithMiddleware(blockUaList.Execute)
-	if cfg.BlockUaList.Activated {
-		logger.Info(ft.Active("BlockUaList middleware active"), "activated", cfg.BlockUaList.Activated)
-	} else {
-		logger.Info(ft.Inactive("BlockUaList middleware inactive"), "activated", cfg.BlockUaList.Activated)
-	}
-
-	// 5. BlockHost Middleware
+	// 4. BlockHost Middleware (UA regexp costs 10x a host check, so unknown hosts fail here first)
 	blockHost := prerouter.NewBlockHost(i.app)
 	preRouterChain.WithMiddleware(blockHost.Execute)
 	if cfg.BlockHost.Activated {
@@ -258,12 +249,21 @@ func (i *initializer) setupPrerouter() http.Handler {
 		logger.Info(ft.Inactive("BlockHost middleware inactive"), "activated", cfg.BlockHost.Activated)
 	}
 
-	// 4. TLSHeaderSTS Middleware
+	// 5. BlockUaList Middleware
+	blockUaList := prerouter.NewBlockUaList(i.app)
+	preRouterChain.WithMiddleware(blockUaList.Execute)
+	if cfg.BlockUaList.Activated {
+		logger.Info(ft.Active("BlockUaList middleware active"), "activated", cfg.BlockUaList.Activated)
+	} else {
+		logger.Info(ft.Inactive("BlockUaList middleware inactive"), "activated", cfg.BlockUaList.Activated)
+	}
+
+	// 6. TLSHeaderSTS Middleware
 	tlsHeaderSTS := prerouter.NewTLSHeaderSTS()
 	preRouterChain.WithMiddleware(tlsHeaderSTS.Execute)
 	logger.Info(ft.Seed("TLSHeaderSTS middleware added"), "tls_enabled", cfg.Server.EnableTLS)
 
-	// 5. Maintenance Middleware
+	// 7. Maintenance Middleware
 	maintenance := prerouter.NewMaintenance(i.app)
 	preRouterChain.WithMiddleware(maintenance.Execute)
 	if cfg.Maintenance.Activated {
@@ -272,7 +272,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 		logger.Info(ft.Inactive("Maintenance middleware inactive"), "activated", cfg.Maintenance.Activated)
 	}
 
-	// 6. BlockOversizedRequest Middleware
+	// 8. BlockOversizedRequest Middleware
 	blockOversizedRequest := prerouter.NewBlockOversizedRequest(i.app)
 	preRouterChain.WithMiddleware(blockOversizedRequest.Execute)
 	if cfg.BlockOversizedRequest.Activated {
@@ -281,7 +281,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 		logger.Info(ft.Inactive("BlockOversizedRequest middleware inactive"), "activated", cfg.BlockOversizedRequest.Activated)
 	}
 
-	// 7. BlockEndpointsMismatch Middleware
+	// 9. BlockEndpointsMismatch Middleware
 	blockEndpointsMismatch := prerouter.NewBlockEndpointsMismatch(i.app)
 	preRouterChain.WithMiddleware(blockEndpointsMismatch.Execute)
 	if cfg.EndpointsBlockMismatch.Activated {
