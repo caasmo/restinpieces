@@ -13,18 +13,41 @@ import (
 	toml "github.com/pelletier/go-toml"
 )
 
-// generateSecret returns a fresh 32-character alphanumeric secret.
-func generateSecret() string {
-	return crypto.RandomString(32, crypto.AlphanumericAlphabet)
+// generator produces a fresh value for one configuration path.
+type generator interface {
+	Generate() (string, error)
 }
 
-// genFuncs maps configuration paths to the function that generates a fresh value for them.
-var genFuncs = map[string]func() string{
-	"jwt.auth_secret":                   generateSecret,
-	"jwt.password_reset_secret":         generateSecret,
-	"jwt.email_change_otp_secret":       generateSecret,
-	"jwt.verification_email_otp_secret": generateSecret,
-	"jwt.oauth2_state_secret":           generateSecret,
+// secretGenerator produces a fresh random secret.
+type secretGenerator struct{}
+
+// Generate returns a fresh 32-character alphanumeric secret.
+func (secretGenerator) Generate() (string, error) {
+	return crypto.RandomString(32, crypto.AlphanumericAlphabet), nil
+}
+
+// userAgentRegexpGenerator produces the block_ua_list.list regular expression
+// from the upstream user-agent list.
+type userAgentRegexpGenerator struct{}
+
+func (userAgentRegexpGenerator) Generate() (string, error) {
+	agents, err := fetchUserAgents(userAgentURL)
+	if err != nil {
+		return "", err
+	}
+
+	return config.BuildUserAgentRegexp(agents)
+}
+
+// genFuncs maps each configuration path to the generator that produces its
+// value.
+var genFuncs = map[string]generator{
+	"jwt.auth_secret":                   secretGenerator{},
+	"jwt.password_reset_secret":         secretGenerator{},
+	"jwt.email_change_otp_secret":       secretGenerator{},
+	"jwt.verification_email_otp_secret": secretGenerator{},
+	"jwt.oauth2_state_secret":           secretGenerator{},
+	"block_ua_list.list":                userAgentRegexpGenerator{},
 }
 
 func printGenUsage(w io.Writer) {
@@ -41,6 +64,7 @@ func printGenUsage(w io.Writer) {
 		Examples: []string{
 			"ripc gen jwt.auth_secret",
 			"ripc gen jwt",
+			"ripc gen block_ua_list",
 		},
 	}
 	help.Print(w, prog)
@@ -133,7 +157,10 @@ func generate(ui UI, secureCfg config.SecureStore, scope string, description str
 	}
 
 	for _, path := range matched {
-		fresh := genFuncs[path]()
+		fresh, genErr := genFuncs[path].Generate()
+		if genErr != nil {
+			return genErr
+		}
 		tree.Set(path, fresh)
 	}
 

@@ -89,6 +89,7 @@ func run(args []string, output io.Writer) error {
 					Title: "Modifying Configuration",
 					Subcommands: []Subcommand{
 						{"set", "Set a configuration value"},
+						{"add", "Append a value to a collection configuration key"},
 						{"gen", "Generate fresh values for configuration values"},
 						{"save", "Save file contents to the configuration"},
 						{"scaffold", "Scaffold a configuration entry with defaults"},
@@ -189,6 +190,8 @@ func run(args []string, output io.Writer) error {
 		return handleScopesCommand(db, commandArgs, ui)
 	case "set":
 		return handleSetCommand(secureStore, commandArgs, ui)
+	case "add":
+		return handleAddCommand(secureStore, commandArgs, ui)
 	case "gen":
 		return handleGenCommand(secureStore, commandArgs, ui)
 	case "save":
