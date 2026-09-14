@@ -2,7 +2,6 @@ package config
 
 import (
 	"log/slog"
-	"regexp"
 	"time"
 )
 
@@ -123,11 +122,9 @@ func NewDefaultConfig() *Config {
 		Maintenance: Maintenance{
 			Activated: false,
 		},
-		BlockUaList: BlockUaList{
+		BlockUserAgent: BlockUserAgent{
 			Activated: true,
-			List: Regexp{
-				Regexp: regexp.MustCompile(`(BotName\.v1|Super\-Bot|My\ Bot|AnotherBot)`),
-			},
+			Agents:    []string{},
 		},
 		BlockHost: BlockHost{
 			Activated:    true,

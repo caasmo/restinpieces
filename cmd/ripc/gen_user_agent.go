@@ -10,7 +10,7 @@ import (
 )
 
 // This file downloads the upstream user-agent list that fills
-// block_ua_list.list.
+// block_user_agent.agents.
 
 // Errors returned by the download.
 var (

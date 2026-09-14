@@ -282,13 +282,13 @@ func TestHandleGenCommand_Help(t *testing.T) {
 // failingGenerator always fails, for testing generator error handling.
 type failingGenerator struct{}
 
-func (failingGenerator) Generate() (string, error) {
-	return "", errors.New("boom")
+func (failingGenerator) Generate(tree *toml.Tree, path string) error {
+	return errors.New("boom")
 }
 
 func TestGenFuncs_ContainsUserAgentRegexp(t *testing.T) {
-	if _, ok := genFuncs["block_ua_list.list"]; !ok {
-		t.Error(`expected genFuncs to contain "block_ua_list.list"`)
+	if _, ok := genFuncs["block_user_agent.agents"]; !ok {
+		t.Error(`expected genFuncs to contain "block_user_agent.agents"`)
 	}
 }
 

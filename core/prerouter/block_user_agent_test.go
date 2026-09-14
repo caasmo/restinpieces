@@ -3,7 +3,6 @@ package prerouter
 import (
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
@@ -23,16 +22,16 @@ func (m *mockNextHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func TestBlockUaList(t *testing.T) {
 	testCases := []struct {
 		name               string
-		config             config.BlockUaList
+		config             config.BlockUserAgent
 		requestUserAgent   string
 		expectedStatusCode int
 		expectNextCalled   bool
 	}{
 		{
 			name: "Case: Middleware is Inactive",
-			config: config.BlockUaList{
+			config: config.BlockUserAgent{
 				Activated: false,
-				List:      config.Regexp{Regexp: regexp.MustCompile(`^BadBot/.*$`)},
+				Agents:    []string{"BadBot"},
 			},
 			requestUserAgent:   "BadBot/1.0",
 			expectedStatusCode: http.StatusOK,
@@ -40,9 +39,9 @@ func TestBlockUaList(t *testing.T) {
 		},
 		{
 			name: "Case: Matching User-Agent is Blocked",
-			config: config.BlockUaList{
+			config: config.BlockUserAgent{
 				Activated: true,
-				List:      config.Regexp{Regexp: regexp.MustCompile(`^BadBot/.*$`)},
+				Agents:    []string{"BadBot"},
 			},
 			requestUserAgent:   "BadBot/1.0",
 			expectedStatusCode: http.StatusForbidden,
@@ -50,9 +49,9 @@ func TestBlockUaList(t *testing.T) {
 		},
 		{
 			name: "Case: Non-Matching User-Agent is Allowed",
-			config: config.BlockUaList{
+			config: config.BlockUserAgent{
 				Activated: true,
-				List:      config.Regexp{Regexp: regexp.MustCompile(`^BadBot/.*$`)},
+				Agents:    []string{"BadBot"},
 			},
 			requestUserAgent:   "GoodBot/1.0",
 			expectedStatusCode: http.StatusOK,
@@ -60,19 +59,19 @@ func TestBlockUaList(t *testing.T) {
 		},
 		{
 			name: "Case: Request Has No User-Agent Header",
-			config: config.BlockUaList{
+			config: config.BlockUserAgent{
 				Activated: true,
-				List:      config.Regexp{Regexp: regexp.MustCompile(`^BadBot/.*$`)},
+				Agents:    []string{"BadBot"},
 			},
 			requestUserAgent:   "", // No User-Agent header will be set
 			expectedStatusCode: http.StatusOK,
 			expectNextCalled:   true,
 		},
 		{
-			name: "Case: Middleware Active but Regex is Nil",
-			config: config.BlockUaList{
+			name: "Case: Middleware Active but List is Empty",
+			config: config.BlockUserAgent{
 				Activated: true,
-				List:      config.Regexp{Regexp: nil}, // Simulate invalid or missing regex
+				Agents:    []string{},
 			},
 			requestUserAgent:   "AnyBot/1.0",
 			expectedStatusCode: http.StatusOK,
@@ -85,13 +84,13 @@ func TestBlockUaList(t *testing.T) {
 			// Setup: Create a mock app and set the configuration for this test case.
 			mockApp := &core.App{}
 			cfg := &config.Config{
-				BlockUaList: tc.config,
+				BlockUserAgent: tc.config,
 			}
 			provider := config.NewProvider(cfg)
 			mockApp.SetConfigProvider(provider)
 
 			// Setup: Create the middleware instance.
-			middleware := NewBlockUaList(mockApp)
+			middleware := NewBlockUserAgent(mockApp)
 
 			// Setup: Create a test request.
 			req := httptest.NewRequest("GET", "/", nil)

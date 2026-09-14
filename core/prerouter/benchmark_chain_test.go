@@ -40,8 +40,8 @@ func buildChain(app *core.App) http.Handler {
 	// 5. BlockHost
 	preRouterChain.WithMiddleware(NewBlockHost(app).Execute)
 
-	// 6. BlockUaList
-	preRouterChain.WithMiddleware(NewBlockUaList(app).Execute)
+	// 6. BlockUserAgent
+	preRouterChain.WithMiddleware(NewBlockUserAgent(app).Execute)
 
 	// 7. TLSHeaderSTS
 	preRouterChain.WithMiddleware(NewTLSHeaderSTS().Execute)

@@ -249,13 +249,13 @@ func (i *initializer) setupPrerouter() http.Handler {
 		logger.Info(ft.Inactive("BlockHost middleware inactive"), "activated", cfg.BlockHost.Activated)
 	}
 
-	// 5. BlockUaList Middleware
-	blockUaList := prerouter.NewBlockUaList(i.app)
-	preRouterChain.WithMiddleware(blockUaList.Execute)
-	if cfg.BlockUaList.Activated {
-		logger.Info(ft.Active("BlockUaList middleware active"), "activated", cfg.BlockUaList.Activated)
+	// 5. BlockUserAgent Middleware
+	blockUserAgent := prerouter.NewBlockUserAgent(i.app)
+	preRouterChain.WithMiddleware(blockUserAgent.Execute)
+	if cfg.BlockUserAgent.Activated {
+		logger.Info(ft.Active("BlockUserAgent middleware active"), "activated", cfg.BlockUserAgent.Activated)
 	} else {
-		logger.Info(ft.Inactive("BlockUaList middleware inactive"), "activated", cfg.BlockUaList.Activated)
+		logger.Info(ft.Inactive("BlockUserAgent middleware inactive"), "activated", cfg.BlockUserAgent.Activated)
 	}
 
 	// 6. TLSHeaderSTS Middleware

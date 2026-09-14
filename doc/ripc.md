@@ -139,9 +139,9 @@ Sets a configuration value at a given path.
 
 Appends a value to a configuration key that holds several values.
 
-    ripc add block_ua_list.list SemrushBot
+    ripc add block_user_agent.agents SemrushBot
 
-`add` can be run again safely: adding a value that is already present leaves the configuration unchanged. For `block_ua_list.list`, the value is added as a user agent inside the parentheses.
+`add` can be run again safely: adding a value that is already present leaves the configuration unchanged. For `block_user_agent.agents`, the value is appended to the slice.
 
 ### `gen [filter]`
 
@@ -152,7 +152,7 @@ Regenerates fresh values for configuration values.
 
 If a string is given, only values whose path contains that string are regenerated. For example, `ripc gen jwt` regenerates all five `jwt.*` values in a single configuration version.
 
-`gen block_ua_list` downloads the current user-agent list from https://github.com/ai-robots-txt/ai.robots.txt and stores it as the `block_ua_list.list` regular expression.
+`gen block_user_agent` downloads the current user-agent list from https://github.com/ai-robots-txt/ai.robots.txt and stores it as the `block_user_agent.agents` slice.
 
 ### `save <file>`
 

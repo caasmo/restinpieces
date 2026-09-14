@@ -11,7 +11,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"regexp"
 	"testing"
 	"time"
 )
@@ -107,7 +106,7 @@ func TestValidate(t *testing.T) {
 		{"invalid jwt", func(c *Config) { c.Jwt.AuthSecret = "" }},
 		{"invalid smtp", func(c *Config) { c.Smtp.Host = "" }},
 		{"invalid oauth", func(c *Config) { c.OAuth2Providers["google"] = OAuth2Provider{} }},
-		{"invalid block ua", func(c *Config) { c.BlockUaList.List.Regexp = nil }},
+		{"invalid block ua", func(c *Config) { c.BlockUserAgent.Agents = []string{""} }},
 		{"invalid block host", func(c *Config) { c.BlockHost.AllowedHosts = []string{""} }},
 		{"invalid notifier", func(c *Config) { c.Notifier.Discord.WebhookURL = "" }},
 		{"invalid logger batch", func(c *Config) { c.Log.Batch.DbPath = "" }},
@@ -330,17 +329,17 @@ func TestValidateSmtp(t *testing.T) {
 
 func TestValidateBlockUaList(t *testing.T) {
 	t.Parallel()
-	valid := BlockUaList{Activated: true, List: Regexp{Regexp: regexp.MustCompile("a")}}
-	if err := validateBlockUaList(&valid); err != nil {
+	valid := BlockUserAgent{Activated: true, Agents: []string{"a"}}
+	if err := validateBlockUserAgent(&valid); err != nil {
 		t.Errorf("valid case failed: %v", err)
 	}
-	if err := validateBlockUaList(&BlockUaList{Activated: false}); err != nil {
+	if err := validateBlockUserAgent(&BlockUserAgent{Activated: false}); err != nil {
 		t.Errorf("disabled case failed: %v", err)
 	}
 
-	invalid := BlockUaList{Activated: true, List: Regexp{}}
-	if err := validateBlockUaList(&invalid); err == nil {
-		t.Errorf("validateBlockUaList with nil regex expected error, got nil")
+	invalid := BlockUserAgent{Activated: true, Agents: []string{""}}
+	if err := validateBlockUserAgent(&invalid); err == nil {
+		t.Errorf("validateBlockUserAgent with empty string expected error, got nil")
 	}
 }
 

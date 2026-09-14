@@ -27,8 +27,8 @@ func Validate(cfg *Config) error {
 	if err := validateOAuth2Providers(cfg.OAuth2Providers); err != nil {
 		return fmt.Errorf("oauth2 providers validation failed: %w", err)
 	}
-	if err := validateBlockUaList(&cfg.BlockUaList); err != nil {
-		return fmt.Errorf("block_ua_list config validation failed: %w", err)
+	if err := validateBlockUserAgent(&cfg.BlockUserAgent); err != nil {
+		return fmt.Errorf("block_user_agent config validation failed: %w", err)
 	}
 	if err := validateBlockHost(&cfg.BlockHost); err != nil {
 		return fmt.Errorf("block_host config validation failed: %w", err)
@@ -461,17 +461,27 @@ func validateSmtp(smtp *Smtp) error {
 
 // validateAcme function removed.
 
-// validateBlockUaList checks the BlockUaList configuration section.
-func validateBlockUaList(blockUaList *BlockUaList) error {
-	if !blockUaList.Activated {
-		return nil // No validation needed if UA blocking is disabled
+// maxUserAgents is the largest number of user agents allowed in
+// block_user_agent.agents. The list is matched against every incoming
+// request with strings.Contains, and each stored agent adds work to that
+// match. The limit keeps the cost per request small while leaving room
+// for local additions.
+const maxUserAgents = 250
+
+// validateBlockUserAgent checks the BlockUserAgent configuration section.
+func validateBlockUserAgent(blockUserAgent *BlockUserAgent) error {
+	if !blockUserAgent.Activated {
+		return nil
 	}
 
-	// If activated, the regex must have been compiled successfully.
-	// The Regexp field in our custom type will be nil if compilation failed
-	// during UnmarshalText or if the input string was empty.
-	if blockUaList.List.Regexp == nil {
-		return fmt.Errorf("block_ua_list.list regex is invalid or empty, but blocking is activated")
+	if len(blockUserAgent.Agents) > maxUserAgents {
+		return fmt.Errorf("too many user agents: %d agents (max %d)", len(blockUserAgent.Agents), maxUserAgents)
+	}
+
+	for _, agent := range blockUserAgent.Agents {
+		if agent == "" {
+			return fmt.Errorf("block_user_agent.agents must not contain empty strings")
+		}
 	}
 
 	return nil

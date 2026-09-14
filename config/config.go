@@ -36,7 +36,7 @@ type Config struct {
 	Endpoints              Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
 	Maintenance            Maintenance               `toml:"maintenance" comment:"Maintenance mode settings"`
 	BlockIp                BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
-	BlockUaList            BlockUaList               `toml:"block_ua_list" comment:"User-Agent block list settings"`
+	BlockUserAgent         BlockUserAgent            `toml:"block_user_agent" comment:"User-Agent blocking settings"`
 	BlockHost              BlockHost                 `toml:"block_host" comment:"Host blocking settings"`
 	BlockOversizedRequest  BlockOversizedRequest     `toml:"block_oversized_request" comment:"Request size limiting configuration"`
 	EndpointsBlockMismatch EndpointsBlockMismatch    `toml:"endpoints_block_mismatch" comment:"Endpoints hash mismatch blocking settings"`
@@ -412,23 +412,14 @@ type Maintenance struct {
 	Activated bool `toml:"activated" comment:"Currently in maintenance mode"`
 }
 
-// BlockUaList holds configuration for blocking requests based on User-Agent patterns.
+// BlockUserAgent holds configuration for blocking requests based on User-Agent substrings.
 // This is useful for filtering out bots, scrapers, or other unwanted clients.
-type BlockUaList struct {
-	// Activated controls whether the User-Agent block list is currently active.
+type BlockUserAgent struct {
+	// Activated controls whether User-Agent blocking is currently active.
 	// This can be toggled dynamically via a configuration reload.
-	Activated bool `toml:"activated" comment:"Activate User-Agent block list"`
-	// List holds a compiled regular expression for matching User-Agent strings.
-	// RE2 Syntax Notes: Go uses the RE2 regex engine. For literal matching:
-	// - Metacharacters like '.' MUST be escaped (e.g., `\.`).
-	// - Characters like '-' or ' ' outside character classes `[]` are literal
-	//   and do NOT require escaping, though RE2 tolerates unnecessary escapes (e.g., `\-`).
-	// TOML Marshaling: When marshaling to TOML, the `go-toml` library might use
-	// double quotes (`"..."`) with escaped backslashes (`\\`) or single quotes (`'...'`)
-	// for literal strings. Both forms are correctly unmarshaled back into the
-	// intended regex pattern string by the TOML parser before being compiled.
-	// For manual TOML editing, use single quotes (`'...'`) for easier pasting of patterns.
-	List Regexp `toml:"list" comment:"Regex for matching User-Agents to block"`
+	Activated bool `toml:"activated" comment:"Activate User-Agent blocking"`
+	// Agents holds User-Agent substrings to block, matched with strings.Contains.
+	Agents []string `toml:"agents" comment:"User-Agent substrings to block"`
 }
 
 // Discord holds the configuration for sending notifications via a Discord webhook.

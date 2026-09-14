@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -134,10 +133,10 @@ func BenchmarkBlockIp_Blocked(b *testing.B) {
 // BenchmarkBlockUaList_NoMatch measures the cost of a UA check that doesn't match.
 func BenchmarkBlockUaList_NoMatch(b *testing.B) {
 	app := newBenchmarkApp(b, func(cfg *config.Config) {
-		cfg.BlockUaList.Activated = true
-		cfg.BlockUaList.List.Regexp = regexp.MustCompile(`^BadBot/.*`)
+		cfg.BlockUserAgent.Activated = true
+		cfg.BlockUserAgent.Agents = []string{"BadBot"}
 	})
-	middleware := NewBlockUaList(app).Execute(noOpHandler)
+	middleware := NewBlockUserAgent(app).Execute(noOpHandler)
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Set("User-Agent", "GoodBot/1.0")
 
@@ -152,10 +151,10 @@ func BenchmarkBlockUaList_NoMatch(b *testing.B) {
 // BenchmarkBlockUaList_Match measures the cost of a UA check that matches and blocks.
 func BenchmarkBlockUaList_Match(b *testing.B) {
 	app := newBenchmarkApp(b, func(cfg *config.Config) {
-		cfg.BlockUaList.Activated = true
-		cfg.BlockUaList.List.Regexp = regexp.MustCompile(`^BadBot/.*`)
+		cfg.BlockUserAgent.Activated = true
+		cfg.BlockUserAgent.Agents = []string{"BadBot"}
 	})
-	middleware := NewBlockUaList(app).Execute(noOpHandler)
+	middleware := NewBlockUserAgent(app).Execute(noOpHandler)
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Set("User-Agent", "BadBot/2.0")
 

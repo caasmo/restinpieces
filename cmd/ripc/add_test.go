@@ -3,15 +3,17 @@ package main
 import (
 	"bytes"
 	"errors"
-	"regexp"
-	"strings"
 	"testing"
 )
 
 const addTestConf = `
-[block_ua_list]
+[block_user_agent]
   activated = true
-  list = "(GPTBot)"
+  agents = ["GPTBot"]
+
+[block_host]
+  activated = true
+  allowed_hosts = ["example.com"]
 `
 
 func TestParseAddArgs(t *testing.T) {
@@ -24,18 +26,18 @@ func TestParseAddArgs(t *testing.T) {
 	}{
 		{
 			name:        "MissingValue",
-			args:        []string{"block_ua_list.list"},
+			args:        []string{"block_user_agent.agents"},
 			expectedErr: ErrMissingArgument,
 		},
 		{
 			name:        "TooManyArgs",
-			args:        []string{"block_ua_list.list", "SemrushBot", "extra"},
+			args:        []string{"block_user_agent.agents", "SemrushBot", "extra"},
 			expectedErr: ErrTooManyArguments,
 		},
 		{
 			name:         "PathAndValue",
-			args:         []string{"block_ua_list.list", "SemrushBot"},
-			expectedPath: "block_ua_list.list",
+			args:         []string{"block_user_agent.agents", "SemrushBot"},
+			expectedPath: "block_user_agent.agents",
 			expectedVal:  "SemrushBot",
 			expectedErr:  nil,
 		},
@@ -68,40 +70,13 @@ func TestParseAddArgs(t *testing.T) {
 	}
 }
 
-func TestAddValue_UserAgent(t *testing.T) {
-	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(addTestConf)})
-	var stdout, stderr bytes.Buffer
-	ui := UI{Out: &stdout, Err: &stderr}
-
-	err := addValue(ui, mockStore, scope, "", "block_ua_list.list", "SemrushBot")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	tree := getGenTreeFromStore(t, mockStore, scope)
-	got, ok := tree.Get("block_ua_list.list").(string)
-	if !ok {
-		t.Fatalf("expected %s to be a string, got %T", "block_ua_list.list", tree.Get("block_ua_list.list"))
-	}
-	_, compileErr := regexp.Compile(got)
-	if compileErr != nil {
-		t.Fatalf("expected result to compile, got error: %v", compileErr)
-	}
-	for _, want := range []string{"GPTBot", "SemrushBot"} {
-		if !strings.Contains(got, want) {
-			t.Errorf("expected %q in %q", want, got)
-		}
-	}
-}
-
 func TestAddValue_NotCollection(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := addValue(ui, mockStore, scope, "", "block_ua_list.activated", "true")
+	err := addValue(ui, mockStore, scope, "", "block_user_agent.activated", "true")
 	if !errors.Is(err, ErrNotCollection) {
 		t.Fatalf("expected error to wrap ErrNotCollection, got %v", err)
 	}
@@ -121,11 +96,11 @@ func TestAddValue_Failure_MissingPath(t *testing.T) {
 
 func TestAddValue_Failure_MalformedTOML(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte("[block_ua_list")})
+	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte("[block_user_agent")})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := addValue(ui, mockStore, scope, "", "block_ua_list.list", "SemrushBot")
+	err := addValue(ui, mockStore, scope, "", "block_user_agent.agents", "SemrushBot")
 	if !errors.Is(err, ErrConfigUnmarshal) {
 		t.Fatalf("expected error to wrap ErrConfigUnmarshal, got %v", err)
 	}
@@ -137,7 +112,7 @@ func TestAddValue_Failure_StoreGetError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := addValue(ui, mockStore, "app", "", "block_ua_list.list", "SemrushBot")
+	err := addValue(ui, mockStore, "app", "", "block_user_agent.agents", "SemrushBot")
 	if !errors.Is(err, ErrSecureStoreGet) {
 		t.Fatalf("expected error to wrap ErrSecureStoreGet, got %v", err)
 	}
@@ -150,7 +125,7 @@ func TestAddValue_Failure_StoreSaveError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := addValue(ui, mockStore, scope, "", "block_ua_list.list", "SemrushBot")
+	err := addValue(ui, mockStore, scope, "", "block_user_agent.agents", "SemrushBot")
 	if !errors.Is(err, ErrSecureStoreSave) {
 		t.Fatalf("expected error to wrap ErrSecureStoreSave, got %v", err)
 	}

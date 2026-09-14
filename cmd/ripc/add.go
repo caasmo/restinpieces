@@ -26,7 +26,7 @@ func printAddUsage(w io.Writer) {
 			commandOptions.Opt("desc"),
 		},
 		Examples: []string{
-			"ripc add block_ua_list.list SemrushBot",
+			"ripc add block_user_agent.agents SemrushBot",
 		},
 	}
 	help.Print(w, prog)
@@ -84,14 +84,16 @@ func parseAddArgs(args []string) (AddOptions, error) {
 	return opts, nil
 }
 
-// adder adds one value to a configuration value.
+// adder adds one value to a configuration value by writing
+// directly into the tree.
 type adder interface {
-	Add(existing interface{}, value string) (interface{}, error)
+	Add(tree *toml.Tree, path, value string) error
 }
 
 // addFuncs maps addable configuration paths to their adder.
 var addFuncs = map[string]adder{
-	"block_ua_list.list": userAgentAdder{},
+	"block_user_agent.agents":  userAgentAdder{},
+	"block_host.allowed_hosts": blockHostAdder{},
 }
 
 // addValue adds one value to a configuration key; it is separate from
@@ -120,13 +122,9 @@ func addValue(ui UI, secureCfg config.SecureStore, scope string, description str
 		return fmt.Errorf("%w: path '%s' is not addable", ErrNotCollection, tomlPath)
 	}
 
-	existing := tree.Get(tomlPath)
-	updated, err := adder.Add(existing, value)
-	if err != nil {
+	if err := adder.Add(tree, tomlPath, value); err != nil {
 		return err
 	}
-
-	tree.Set(tomlPath, updated)
 
 	updatedTomlBytes, err := toml.Marshal(tree)
 	if err != nil {

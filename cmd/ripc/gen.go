@@ -13,30 +13,32 @@ import (
 	toml "github.com/pelletier/go-toml"
 )
 
-// generator produces a fresh value for one configuration path.
+// generator produces a fresh value for one configuration path
+// by writing it directly into the tree.
 type generator interface {
-	Generate() (string, error)
+	Generate(tree *toml.Tree, path string) error
 }
 
 // secretGenerator produces a fresh random secret.
 type secretGenerator struct{}
 
-// Generate returns a fresh 32-character alphanumeric secret.
-func (secretGenerator) Generate() (string, error) {
-	return crypto.RandomString(32, crypto.AlphanumericAlphabet), nil
+func (secretGenerator) Generate(tree *toml.Tree, path string) error {
+	tree.Set(path, crypto.RandomString(32, crypto.AlphanumericAlphabet))
+	return nil
 }
 
-// userAgentRegexpGenerator produces the block_ua_list.list regular expression
+// userAgentGenerator produces the block_user_agent.agents slice
 // from the upstream user-agent list.
-type userAgentRegexpGenerator struct{}
+type userAgentGenerator struct{}
 
-func (userAgentRegexpGenerator) Generate() (string, error) {
+func (userAgentGenerator) Generate(tree *toml.Tree, path string) error {
 	agents, err := fetchUserAgents(userAgentURL)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	return config.BuildUserAgentRegexp(agents)
+	tree.Set(path, agents)
+	return nil
 }
 
 // genFuncs maps each configuration path to the generator that produces its
@@ -47,7 +49,7 @@ var genFuncs = map[string]generator{
 	"jwt.email_change_otp_secret":       secretGenerator{},
 	"jwt.verification_email_otp_secret": secretGenerator{},
 	"jwt.oauth2_state_secret":           secretGenerator{},
-	"block_ua_list.list":                userAgentRegexpGenerator{},
+	"block_user_agent.agents":           userAgentGenerator{},
 }
 
 func printGenUsage(w io.Writer) {
@@ -64,7 +66,7 @@ func printGenUsage(w io.Writer) {
 		Examples: []string{
 			"ripc gen jwt.auth_secret",
 			"ripc gen jwt",
-			"ripc gen block_ua_list",
+			"ripc gen block_user_agent",
 		},
 	}
 	help.Print(w, prog)
@@ -157,11 +159,9 @@ func generate(ui UI, secureCfg config.SecureStore, scope string, description str
 	}
 
 	for _, path := range matched {
-		fresh, genErr := genFuncs[path].Generate()
-		if genErr != nil {
+		if genErr := genFuncs[path].Generate(tree, path); genErr != nil {
 			return genErr
 		}
-		tree.Set(path, fresh)
 	}
 
 	updatedTomlBytes, err := toml.Marshal(tree)
