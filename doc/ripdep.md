@@ -29,7 +29,6 @@
   - [status](#status)
   - [logs](#logs)
   - [restart](#restart)
-  - [db-status](#db-status)
 - [Debugging on a Remote Server](#debugging-on-a-remote-server)
   - [Check Status and Logs](#1-check-status-and-logs)
   - [Log in and Run Manually](#2-log-in-and-run-manually)
@@ -432,18 +431,6 @@ Restarts the service.
 **Example:**
 ```bash
 ./ripdep restart user@server.com my-app
-```
-
-### `db-status`
-Lists the database files in `data/`.
-
-**Arguments:**
-*   `host`: the remote server address.
-*   `project-name`: the application name.
-
-**Example:**
-```bash
-./ripdep db-status user@server.com my-app
 ```
 
 ## Debugging on a Remote Server
