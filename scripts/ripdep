@@ -1310,7 +1310,7 @@ cmd_logs() {
         log_error "Usage: $0 logs <host> <project-name> [lines]"
         exit 1
     fi
-    ssh -t -o LogLevel=ERROR "${host}" "journalctl -u ${project_name} -n $lines -f"
+    ssh -t -o LogLevel=ERROR "${host}" "sudo journalctl -u ${project_name} -n $lines -f"
 }
 
 cmd_restart() {

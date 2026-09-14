@@ -90,3 +90,7 @@ gofmt -l .
 1. Run the generating-release-notes skill to write `RELEASE_<short-hash>.md`.
 2. Tag verbatim (preserves markdown `#` headers): `git tag -a vX.Y.Z -F RELEASE_<short-hash>.md --cleanup=verbatim`
 3. Verify: `git cat-file -p vX.Y.Z`
+
+### Todo
+
+`doc/TODO.md`

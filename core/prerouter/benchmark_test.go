@@ -166,6 +166,24 @@ func BenchmarkBlockUaList_Match(b *testing.B) {
 	}
 }
 
+// BenchmarkRecovery_Panic measures the cost of recovering a panic, including
+// the stack capture and the error log record.
+func BenchmarkRecovery_Panic(b *testing.B) {
+	app := newBenchmarkApp(b)
+	panicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		panic("boom")
+	})
+	middleware := NewRecovery(app).Execute(panicHandler)
+	req := httptest.NewRequest("GET", "/", nil)
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for b.Loop() {
+		middleware.ServeHTTP(httptest.NewRecorder(), req)
+	}
+}
+
 // BenchmarkBlockHost_Allowed measures an allowed host check.
 func BenchmarkBlockHost_Allowed(b *testing.B) {
 	app := newBenchmarkApp(b, func(cfg *config.Config) {

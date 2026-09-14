@@ -18,7 +18,10 @@ func buildChain(app *core.App) http.Handler {
 
 	// Middlewares are added in the order of execution, matching the logic
 	// in router.WithMiddleware where the first middleware added is the first to execute.
-	// Execution Order: Recorder -> RequestLog -> BlockIp -> Metrics -> ...
+	// Execution Order: Recovery -> Recorder -> RequestLog -> BlockIp -> Metrics -> ...
+
+	// 0. Recovery
+	preRouterChain.WithMiddleware(NewRecovery(app).Execute)
 
 	// 1. Recorder
 	preRouterChain.WithMiddleware(NewRecorder(app).Execute)
