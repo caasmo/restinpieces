@@ -1,13 +1,6 @@
 
 
 
-# server: http.Server ErrorLog bypasses default logger, panic level open
-
-- `server/server.go` `Run` builds main + redirect `http.Server` without `ErrorLog`, so TLS handshake errors and `http: panic serving` go to std log → stderr → journalctl, never through `log/batch_handler.go`
-- fix: `ErrorLog: slog.NewLogLogger(s.logger.Handler(), slog.LevelDebug)` on both servers
-- open: panics share the same `ErrorLog`, all-Debug quiets panics too — maybe a recovery middleware like ecosystem (`slog-http.Recovery`, `chi/httplog`, `gin-contrib/slog`): recover in prerouter chain, log at `Error` with stack, write 500, so `net/http` never sees the panic
-- ref: `server/server.go:123`, `log/batch_handler.go:45`, `restinpieces.go:setupPrerouter`
-
 # secureStore: GetConfig nil content causes misleading "decrypt failed" error
 
 - `databasesql.GetConfig` returns `nil, "", nil` when no rows match scope (ResultFunc never called)
@@ -103,6 +96,14 @@ Current `3600s bucket + 3m TTL` is worst of both
 - ref: `core/prerouter/block_host.go`, `restinpieces.go` (chain order), `server/server.go` (single-cert TLS), `config/config.go` (`BlockHost`, `Server`)
 
 ### done
+
+# server: http.Server ErrorLog bypasses default logger, panic level open (done)
+
+- `server/server.go` `Run` sets `ErrorLog: slog.NewLogLogger(s.logger.Handler(), slog.LevelDebug)` on the main and redirect servers, so TLS handshake errors go through `log/batch_handler.go` instead of the std logger → stderr
+- net/http has no slog support: `ErrorLog` is a `*log.Logger`, so `slog.NewLogLogger` adapts the application's slog handler
+- `core/prerouter/recovery.go` adds the `Recovery` middleware: catches handler panics, logs at `Error` with a 2 KB stack, answers 500, and re-panics `http.ErrAbortHandler`
+- `restinpieces.go:setupPrerouter` wires `Recovery` as the first middleware, so net/http never sees a handler panic
+- ref: `server/server.go:Run`, `core/prerouter/recovery.go`, `restinpieces.go:setupPrerouter`
 
 # sqlite driver: substituted zombiezen with modernc (done)
 

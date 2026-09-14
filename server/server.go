@@ -120,6 +120,12 @@ func (s *Server) Run() {
 
 	s.logServerConfig(&serverCfg)
 
+	// net/http's ErrorLog field is a *log.Logger, not a *slog.Logger: the
+	// standard library's HTTP server has no slog support. slog.NewLogLogger
+	// adapts the application's slog handler, so TLS handshake errors and
+	// panics that reach net/http go through the application logger.
+	errorLog := slog.NewLogLogger(s.logger.Handler(), slog.LevelDebug)
+
 	srv := &http.Server{
 		Addr:              serverCfg.Addr,
 		Handler:           s.handler, // Use the handler field here
@@ -127,6 +133,7 @@ func (s *Server) Run() {
 		ReadHeaderTimeout: serverCfg.ReadHeaderTimeout.Duration,
 		WriteTimeout:      serverCfg.WriteTimeout.Duration,
 		IdleTimeout:       serverCfg.IdleTimeout.Duration,
+		ErrorLog:          errorLog,
 	}
 
 	var redirectServer *http.Server
@@ -158,6 +165,7 @@ func (s *Server) Run() {
 					ReadHeaderTimeout: time.Second,
 					WriteTimeout:      time.Second,
 					IdleTimeout:       time.Second,
+					ErrorLog:          errorLog,
 				}
 
 				go func() {
