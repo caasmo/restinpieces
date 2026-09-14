@@ -286,7 +286,7 @@ func (failingGenerator) Generate(tree *toml.Tree, path string) error {
 	return errors.New("boom")
 }
 
-func TestGenFuncs_ContainsUserAgentRegexp(t *testing.T) {
+func TestGenFuncs_ContainsUserAgent(t *testing.T) {
 	if _, ok := genFuncs["block_user_agent.agents"]; !ok {
 		t.Error(`expected genFuncs to contain "block_user_agent.agents"`)
 	}

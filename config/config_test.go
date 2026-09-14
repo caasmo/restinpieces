@@ -3,7 +3,6 @@ package config
 import (
 	"log/slog"
 	"reflect"
-	"regexp"
 	"sync"
 	"testing"
 	"time"
@@ -165,59 +164,6 @@ func TestLogLevel_MarshalText(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := tc.level.MarshalText()
-			if err != nil {
-				t.Fatalf("MarshalText() returned an unexpected error: %v", err)
-			}
-			if string(got) != tc.want {
-				t.Errorf("MarshalText() got = %q, want %q", string(got), tc.want)
-			}
-		})
-	}
-}
-
-func TestRegexp_UnmarshalText(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name      string
-		input     string
-		want      string // We check the string representation of the compiled regex
-		expectErr bool
-	}{
-		{"Valid regex", "^test$", "^test$", false},
-		{"Invalid regex", "^test(", "", true},
-		{"Empty input gives nil regex", "", "", false},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			var r Regexp
-			err := r.UnmarshalText([]byte(tc.input))
-
-			if (err != nil) != tc.expectErr {
-				t.Fatalf("UnmarshalText() error = %v, expectErr %v", err, tc.expectErr)
-			}
-			if !tc.expectErr && r.String() != tc.want {
-				t.Errorf("UnmarshalText() got = %v, want %v", r.String(), tc.want)
-			}
-		})
-	}
-}
-
-func TestRegexp_MarshalText(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name  string
-		regex *regexp.Regexp
-		want  string
-	}{
-		{"Valid regex", regexp.MustCompile(`^test$`), `^test$`},
-		{"Nil regex", nil, ``},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			r := Regexp{Regexp: tc.regex}
-			got, err := r.MarshalText()
 			if err != nil {
 				t.Fatalf("MarshalText() returned an unexpected error: %v", err)
 			}

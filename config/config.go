@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"log/slog"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -148,30 +147,6 @@ func (d *Duration) UnmarshalText(text []byte) error {
 // ensuring durations are written as strings.
 func (d Duration) MarshalText() ([]byte, error) {
 	return []byte(d.String()), nil
-}
-
-// Regexp is a wrapper around *regexp.Regexp that supports TOML unmarshalling
-// from a string value directly into a compiled regular expression.
-type Regexp struct {
-	*regexp.Regexp
-}
-
-// UnmarshalText implements the encoding.TextUnmarshaler interface.
-func (r *Regexp) UnmarshalText(text []byte) error {
-	var err error
-	r.Regexp, err = regexp.Compile(string(text))
-	if err != nil {
-		return fmt.Errorf("failed to compile regex '%s': %w", string(text), err)
-	}
-	return nil
-}
-
-// MarshalText implements the encoding.TextMarshaler interface.
-func (r Regexp) MarshalText() ([]byte, error) {
-	if r.Regexp == nil {
-		return []byte(""), nil
-	}
-	return []byte(r.String()), nil
 }
 
 type Jwt struct {
