@@ -437,6 +437,17 @@ Current `3600s bucket + 3m TTL` is worst of both
 - if yes, adopt it where we scan rows (`db/databasesql/`)
 - ref: `db/databasesql/users.go`, `db/databasesql/queue.go`
 
+# client-ip: centralize all remote ip through getClientIP
+
+- only `App.GetClientIP` respects `server.client_ip_proxy_header`; other paths ignore it, so logs and blocking diverge behind a proxy
+- ref: `core/request.go` (`App.GetClientIP`), `core/prerouter/block_ip.go` (local `GetClientIP`), `core/prerouter/request_log.go` (`RemoteIP`), `core/handler_metrics.go` (`RemoteAddr` split), `config/config.go` (`Server.ClientIpProxyHeader`)
+
+# block-host: SNI + additional prerouter cheap checks
+
+- direct-IP `Host` passes SNI==Host, so SNI alone does not catch it; `allowed_hosts` does. SNI check catches domain-fronting (SNI legit, Host evil).
+- keep inside `BlockHost.Execute` (cheap strings, before UA match): normalize Host (lowercase, strip port/trailing dot), optional reject of IP-literal Host, optional SNI check (ServerName in allowed_hosts and == Host, empty SNI passes, same 403). Off by default so TLS-terminating proxies do not break.
+- ref: `core/prerouter/block_host.go`, `restinpieces.go` (chain order), `server/server.go` (single-cert TLS), `config/config.go` (`BlockHost`, `Server`)
+
 ### done
 
 # sqlite driver: substituted zombiezen with modernc (done)

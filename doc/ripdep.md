@@ -24,7 +24,7 @@
   - [undeploy](#undeploy)
   - [backup](#backup)
   - [maintenance](#maintenance)
-  - [config](#config)
+  - [ripc](#ripc)
   - [shell](#shell)
   - [status](#status)
   - [logs](#logs)
@@ -372,8 +372,8 @@ Sets `maintenance.activated` with `ripc` and reloads the service.
 ./ripdep maintenance user@server.com my-app true
 ```
 
-### `config`
-Runs a `ripc` command on the server as the project user.
+### `ripc`
+Runs a `ripc` command on the server as the project user from the application home directory, so relative config paths resolve like the running service.
 
 **Arguments:**
 *   `host`: the remote server address.
@@ -382,7 +382,7 @@ Runs a `ripc` command on the server as the project user.
 
 **Example:**
 ```bash
-./ripdep config user@server.com my-app set server.port 8080
+./ripdep ripc user@server.com my-app set server.port 8080
 ```
 
 ### `shell`

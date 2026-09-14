@@ -1248,14 +1248,14 @@ cmd_maintenance() {
     log_success "Successfully set maintenance mode to '${state}' for '${project_name}' on '${host}'."
 }
 
-# TODO: consider deleting cmd_config; cmd_shell covers interactive remote ripc
+# TODO: consider deleting cmd_ripc; cmd_shell covers interactive remote ripc
 # use, and scripted one-shot remote ripc calls have no clear use case yet.
-cmd_config() {
+cmd_ripc() {
     local host=${1:-}
     local project_name=${2:-}
 
     if [ -z "$host" ] || [ -z "$project_name" ]; then
-        log_error "Usage: $0 config <host> <project-name> [ripc-args...]"
+        log_error "Usage: $0 ripc <host> <project-name> [ripc-args...]"
         exit 1
     fi
     shift 2
@@ -1264,8 +1264,8 @@ cmd_config() {
     local key_path="/home/${project_name}/${AGE_KEY_FILENAME}"
     local db_path="/home/${project_name}/${APP_DATA_DIRNAME}/${APP_DB_FILENAME}"
     local ripc_bin="/home/${project_name}/${APP_BIN_DIRNAME}/ripc"
-    
-    ssh -t -o LogLevel=ERROR "${host}" "sudo -u ${project_name} ${ripc_bin} -agekey ${key_path} -dbpath ${db_path} $args"
+
+    ssh -t -o LogLevel=ERROR "${host}" "sudo -u ${project_name} sh -c 'cd /home/${project_name} && exec ${ripc_bin} -agekey ${key_path} -dbpath ${db_path} $args'"
 }
 
 cmd_shell() {
@@ -1416,7 +1416,7 @@ Commands:
   undeploy <host> <project-name>             Permanently remove a project and all its data from a host.
   backup <host> <project-name>               Creates and downloads a backup of a project.
   maintenance <host> <project-name> <true|false> Toggle maintenance mode for a project.
-  config <host> <project-name> [args]        Run ripc commands on a remote host.
+  ripc <host> <project-name> [args]          Run ripc commands on a remote host.
   shell <host> <project-name>                Open an interactive shell as the project user on a VM.
   status <host> <project-name>               Check service status on a remote host.
   logs <host> <project-name> [lines]         Tail service logs from a remote host.
@@ -1774,7 +1774,7 @@ main() {
         undeploy) cmd_undeploy "$@" ;;
         backup) cmd_backup "$@" ;;
         maintenance) cmd_maintenance "$@" ;; 
-        config) cmd_config "$@" ;; 
+        ripc) cmd_ripc "$@" ;;
         shell) cmd_shell "$@" ;; 
         status) cmd_status "$@" ;; 
         logs) cmd_logs "$@" ;; 

@@ -14,15 +14,19 @@ import (
 // caught up with the writer.
 const logPollInterval = 3 * time.Second
 
+// logTailOffset is how many recent records the tail prints on startup
+// before following new ones.
+const logTailOffset = 10
+
 // handleLogTailCommand is the command-level wrapper. It executes the core
 // logic and returns any error to the caller.
 func handleLogTailCommand(secureStore config.SecureStore, ui UI) error {
 	return logTail(ui, secureStore)
 }
 
-// logTail follows the log database, printing every record appended after the
-// command started. It polls every logPollInterval and runs until the process
-// is interrupted.
+// logTail follows the log database, printing the recent records first and
+// then every record appended while it runs. It polls every logPollInterval
+// and runs until the process is interrupted.
 func logTail(ui UI, secureStore config.SecureStore) (err error) {
 	logDbPath, err := readLogDbPath(secureStore)
 	if err != nil {
@@ -39,9 +43,13 @@ func logTail(ui UI, secureStore config.SecureStore) (err error) {
 		}
 	}()
 
-	lastID, err := ldb.maxID()
+	maxID, err := ldb.maxID()
 	if err != nil {
 		return err
+	}
+	lastID := maxID - logTailOffset
+	if lastID < 0 {
+		lastID = 0
 	}
 
 	for {
