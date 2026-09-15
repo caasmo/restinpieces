@@ -22,9 +22,10 @@ const (
 	ScaffoldTypeBackupVacuum      = "backup-vacuum"
 	ScaffoldTypeBackupSqliteRsync = "backup-sqlite-rsync"
 	ScaffoldTypeOAuth2            = "oauth2"
+	ScaffoldTypeAcmeDNS01         = "acme-dns-01"
 )
 
-var knownScaffoldTypes = []string{ScaffoldTypeBackupOnline, ScaffoldTypeBackupVacuum, ScaffoldTypeBackupSqliteRsync, ScaffoldTypeOAuth2}
+var knownScaffoldTypes = []string{ScaffoldTypeBackupOnline, ScaffoldTypeBackupVacuum, ScaffoldTypeBackupSqliteRsync, ScaffoldTypeOAuth2, ScaffoldTypeAcmeDNS01}
 
 func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}, sectionDefaults interface{}, err error) {
 	switch scaffoldType {
@@ -36,6 +37,8 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}
 		return "backup.sqlite-rsync.entries", config.NewBackupSqliteRsyncEntryDefaults(), config.NewBackupSqliteRsyncDefaults(), nil
 	case ScaffoldTypeOAuth2:
 		return "oauth2_providers", config.NewOAuth2ProviderDefaults(), nil, nil
+	case ScaffoldTypeAcmeDNS01:
+		return "acme.dns-01", config.NewAcmeDNS01EntryDefaults(), config.NewAcmeDefaults(), nil
 	default:
 		return "", nil, nil, fmt.Errorf("%w: '%s'. Known types: %s", ErrScaffoldTypeUnknown, scaffoldType, strings.Join(knownScaffoldTypes, ", "))
 	}
@@ -133,6 +136,19 @@ Next steps:
 4. Reload the app:
 	systemctl reload myapp
 Deactivate: ripc set backup.online.%s.source_path ""`, label, block, label, label, label, label)
+	case ScaffoldTypeAcmeDNS01:
+		return fmt.Sprintf(`
+%s:
+%s
+
+Next steps:
+1. Set the DNS provider implementation (required):
+	ripc set acme.dns-01.%s.provider cloudflare
+2. Set the provider's credentials (required):
+	ripc set acme.dns-01.%s.credentials.api_token @/path/to/token
+3. Reload the app:
+	systemctl reload myapp
+Deactivate: ripc set acme.dns-01.%s.provider ""`, label, block, label, label, label)
 	default:
 		return ""
 	}
@@ -141,10 +157,10 @@ Deactivate: ripc set backup.online.%s.source_path ""`, label, block, label, labe
 func printScaffoldUsage(w io.Writer) {
 	help := Spec{
 		Usage:       "scaffold [options] <type> <key>",
-		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key> or backup.sqlite-rsync.entries.<key>; use a best-practice label <dbfile>-<strategy> (e.g. app-online, analytics-vacuum, app-rsync) so the map key reveals the database and the engine.",
+		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key>, backup.sqlite-rsync.entries.<key> or acme.dns-01.<key>; use a best-practice label that reveals what the entry is for (e.g. app-online, analytics-vacuum, app-rsync, deeploid_cf).",
 		Args: []ArgSpec{
-			{"type", "Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync or oauth2)"},
-			{"key", "Key of the new entry — required backup label, e.g. app-online, app-vacuum, app-rsync (file + method)"},
+			{"type", "Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync, oauth2 or acme-dns-01)"},
+			{"key", "Key of the new entry — required backup label or acme dns-01 label, e.g. app-online, app-rsync, deeploid_cf"},
 		},
 		Subcommands: []SubcommandGroup{
 			{
@@ -154,6 +170,7 @@ func printScaffoldUsage(w io.Writer) {
 					{"backup-vacuum", "Scaffold a backup.vacuum entry for VACUUM INTO (blocking)"},
 					{"backup-sqlite-rsync", "Scaffold a backup.sqlite-rsync.entries entry for sqlite-rsync (origin serve)"},
 					{"oauth2", "Scaffold an oauth2_providers entry"},
+					{"acme-dns-01", "Scaffold an acme.dns-01 entry for the DNS-01 challenge"},
 				},
 			},
 		},
@@ -165,6 +182,7 @@ func printScaffoldUsage(w io.Writer) {
 			"ripc scaffold backup-vacuum app-vacuum",
 			"ripc scaffold backup-sqlite-rsync app-rsync",
 			"ripc scaffold oauth2 my_google",
+			"ripc scaffold acme-dns-01 deeploid_cf",
 		},
 	}
 	help.Print(w, prog)
@@ -258,7 +276,7 @@ func scaffoldConfigValue(
 		return fmt.Errorf("%w: failed to save updated config for scope '%s': %w",
 			ErrSecureStoreSave, scope, err)
 	}
-	_, err = fmt.Fprintf(ui.Err, "Successfully scaffolded backup '%s' in scope '%s'\n", key, scope)
+	_, err = fmt.Fprintf(ui.Err, "Successfully scaffolded '%s' in scope '%s'\n", key, scope)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}

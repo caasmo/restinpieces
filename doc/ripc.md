@@ -170,6 +170,7 @@ Creates a complete configuration section with defaults. `set` changes a single f
 | `backup-vacuum` | `backup.vacuum.<label>` | VACUUM INTO |
 | `backup-sqlite-rsync` | `backup.sqlite-rsync.entries.<label>` | sqlite-rsync |
 | `oauth2` | `oauth2_providers.<label>` | OAuth2 provider |
+| `acme-dns-01` | `acme.dns-01.<label>` | DNS-01 challenge (Cloudflare) |
 
 **Example: configure backup of type `sqlite-rsync` for application SQLite file `/tmp/app.db`**
 
@@ -180,7 +181,7 @@ ripc scaffold backup-sqlite-rsync myapp
 ```
 
 ```
-Successfully scaffolded backup 'myapp' in scope 'application'
+Successfully scaffolded 'myapp' in scope 'application'
 
 myapp:
   source_path = ""

@@ -61,10 +61,12 @@ func NewDefaultConfig() *Config {
 			WriteTimeout:            Duration{Duration: 3 * time.Second},
 			IdleTimeout:             Duration{Duration: 1 * time.Minute},
 			ClientIpProxyHeader:     "",
-			EnableTLS:               false,
-			CertData:                "",
-			KeyData:                 "",
-			RedirectAddr:            "",
+			Tls: Tls{
+				Enabled:      false,
+				Certificate:  "",
+				PrivateKey:   "",
+				RedirectAddr: "",
+			},
 		},
 		RateLimits: RateLimits{
 			PasswordResetCooldown:        Duration{Duration: 2 * time.Hour},
@@ -165,6 +167,7 @@ func NewDefaultConfig() *Config {
 			// created via ripc scaffold. Map keys are
 			// user-chosen labels (not domain identifiers) — see AGENTS.md.
 		},
+		Acme: NewAcmeDefaults(),
 		Cache: Cache{
 			Level: "medium",
 		},
@@ -205,5 +208,24 @@ func NewBackupSqliteRsyncDefaults() BackupSqliteRsync {
 func NewOAuth2ProviderDefaults() OAuth2Provider {
 	return OAuth2Provider{
 		PKCE: true,
+	}
+}
+
+// NewAcmeDefaults returns the Acme section defaults. The dns-01 map is nil by
+// default (the zero value); entries are created via ripc scaffold.
+func NewAcmeDefaults() Acme {
+	return Acme{
+		Factor: 0.33,
+	}
+}
+
+// NewAcmeDNS01EntryDefaults returns a dns-01 entry with sensible defaults for
+// use by ripc scaffold. Provider is empty — the user must set it. Credentials
+// starts with an api_token key, the field most providers need.
+func NewAcmeDNS01EntryDefaults() AcmeDNS01Entry {
+	return AcmeDNS01Entry{
+		Credentials: map[string]string{
+			"api_token": "",
+		},
 	}
 }

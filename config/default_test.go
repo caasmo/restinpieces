@@ -102,3 +102,23 @@ func TestNewOAuth2ProviderDefaults(t *testing.T) {
 		t.Errorf("PKCE: got %v, want true", v.PKCE)
 	}
 }
+
+func TestNewAcmeDefaults(t *testing.T) {
+	v := NewAcmeDefaults()
+	if v.Factor != 0.33 {
+		t.Errorf("Factor: got %v, want %v", v.Factor, 0.33)
+	}
+	if v.DNS01 != nil {
+		t.Errorf("DNS01: got %v, want nil", v.DNS01)
+	}
+}
+
+func TestNewAcmeDNS01EntryDefaults(t *testing.T) {
+	v := NewAcmeDNS01EntryDefaults()
+	if v.Provider != "" {
+		t.Errorf("Provider: got %q, want empty", v.Provider)
+	}
+	if _, ok := v.Credentials["api_token"]; !ok {
+		t.Errorf("Credentials: got %v, want an api_token key", v.Credentials)
+	}
+}

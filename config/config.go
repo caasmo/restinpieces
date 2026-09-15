@@ -43,6 +43,7 @@ type Config struct {
 	Log                    Log                       `toml:"log" comment:"Logging configuration"`
 	Metrics                Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
 	Backup                 Backup                    `toml:"backup" comment:"Backup configuration"`
+	Acme                   Acme                      `toml:"acme" comment:"ACME certificate settings"`
 	Cache                  Cache                     `toml:"cache" comment:"Cache system settings"`
 }
 
@@ -212,23 +213,29 @@ type Server struct {
 	// Common values: "X-Forwarded-For", "X-Real-IP". Leave empty if not behind a proxy.
 	ClientIpProxyHeader string `toml:"client_ip_proxy_header" comment:"Header to trust for client IP (e.g. 'X-Forwarded-For')"`
 
-	// Enable HTTPS/TLS for secure connections
-	EnableTLS bool `toml:"enable_tls" comment:"Enable HTTPS/TLS"`
+	// Tls holds the server's TLS settings.
+	Tls Tls `toml:"tls" comment:"TLS settings"`
+}
 
-	// PEM-encoded TLS certificate data (alternative to cert_file)
-	CertData string `toml:"cert_data" comment:"PEM-encoded TLS certificate (alternative to file)"`
+// Tls holds the server's TLS settings.
+type Tls struct {
+	// Enabled turns HTTPS on.
+	Enabled bool `toml:"enabled" comment:"Enable HTTPS/TLS"`
 
-	// PEM-encoded TLS private key data (alternative to key_file)
-	KeyData string `toml:"key_data" comment:"PEM-encoded TLS private key (alternative to file)"`
+	// Certificate is the PEM-encoded certificate chain the server serves.
+	Certificate string `toml:"certificate" comment:"PEM-encoded TLS certificate chain"`
 
-	// Address for HTTP->HTTPS redirect server (e.g. ":80")
-	// Only used when enable_tls is true
+	// PrivateKey is the PEM-encoded private key matching Certificate.
+	PrivateKey string `toml:"private_key" comment:"PEM-encoded TLS private key"`
+
+	// Address for HTTP->HTTPS redirect server (e.g. ":80").
+	// Only used when Enabled is true.
 	RedirectAddr string `toml:"redirect_addr" comment:"HTTP->HTTPS redirect address (e.g. ':80')"`
 }
 
 func (s *Server) BaseURL() string {
 	scheme := "http"
-	if s.EnableTLS {
+	if s.Tls.Enabled {
 		scheme = "https"
 	}
 	return fmt.Sprintf("%s://%s", scheme, sanitizeAddrEmptyHost(s.Addr))

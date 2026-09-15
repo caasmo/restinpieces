@@ -77,9 +77,9 @@ func newTestConfig() *Config {
 	cfg.Notifier.Discord.WebhookURL = "https://discord.com/api/webhooks/123/abc"
 	// TLS tests are limited without real certs.
 	// We disable it for the base valid config.
-	cfg.Server.EnableTLS = false
-	cfg.Server.CertData = ""
-	cfg.Server.KeyData = ""
+	cfg.Server.Tls.Enabled = false
+	cfg.Server.Tls.Certificate = ""
+	cfg.Server.Tls.PrivateKey = ""
 	cfg.Log.Batch.DbPath = "test-logs.db"
 	return cfg
 }
@@ -247,7 +247,7 @@ func TestValidateServer(t *testing.T) {
 	validCases := []Server{
 		{Addr: ":8080"},
 		{Addr: "localhost:8080"},
-		{Addr: ":8080", RedirectAddr: ":80"},
+		{Addr: ":8080", Tls: Tls{RedirectAddr: ":80"}},
 	}
 	for _, cfg := range validCases {
 		if err := validateServer(&cfg); err != nil {
@@ -259,11 +259,11 @@ func TestValidateServer(t *testing.T) {
 		{},
 		{Addr: "localhost"},
 		{Addr: ":99999"},
-		{Addr: ":8080", RedirectAddr: "localhost"},
-		{Addr: ":8080", RedirectAddr: ":99999"}, // Invalid redirect port
-		{Addr: ":8443", EnableTLS: true, KeyData: "key"},
-		{Addr: ":8443", EnableTLS: true, CertData: "cert"},
-		{Addr: ":8443", EnableTLS: true, CertData: "cert", KeyData: "key"}, // invalid cert data
+		{Addr: ":8080", Tls: Tls{RedirectAddr: "localhost"}},
+		{Addr: ":8080", Tls: Tls{RedirectAddr: ":99999"}}, // Invalid redirect port
+		{Addr: ":8443", Tls: Tls{Enabled: true, PrivateKey: "key"}},
+		{Addr: ":8443", Tls: Tls{Enabled: true, Certificate: "cert"}},
+		{Addr: ":8443", Tls: Tls{Enabled: true, Certificate: "cert", PrivateKey: "key"}}, // invalid cert data
 	}
 	for _, cfg := range invalidCases {
 		if err := validateServer(&cfg); err == nil {
@@ -400,15 +400,15 @@ func TestValidateServerTLS(t *testing.T) {
 		server    *Server
 		expectErr bool
 	}{
-		{"TLS disabled", &Server{EnableTLS: false}, false},
-		{"Valid TLS", &Server{EnableTLS: true, CertData: validCert, KeyData: validKey}, false},
-		{"Missing CertData", &Server{EnableTLS: true, KeyData: validKey}, true},
-		{"Missing KeyData", &Server{EnableTLS: true, CertData: validCert}, true},
-		{"Invalid PEM block", &Server{EnableTLS: true, CertData: "not a pem block", KeyData: validKey}, true},
-		{"Wrong PEM block type", &Server{EnableTLS: true, CertData: string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: []byte("dummy")})), KeyData: validKey}, true},
-		{"Expired certificate", &Server{EnableTLS: true, CertData: expiredCert, KeyData: validKey}, true},
-		{"Not yet valid certificate", &Server{EnableTLS: true, CertData: futureCert, KeyData: validKey}, true},
-		{"Invalid certificate bytes", &Server{EnableTLS: true, CertData: string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: []byte("dummy")})), KeyData: validKey}, true},
+		{"TLS disabled", &Server{Tls: Tls{Enabled: false}}, false},
+		{"Valid TLS", &Server{Tls: Tls{Enabled: true, Certificate: validCert, PrivateKey: validKey}}, false},
+		{"Missing CertData", &Server{Tls: Tls{Enabled: true, PrivateKey: validKey}}, true},
+		{"Missing KeyData", &Server{Tls: Tls{Enabled: true, Certificate: validCert}}, true},
+		{"Invalid PEM block", &Server{Tls: Tls{Enabled: true, Certificate: "not a pem block", PrivateKey: validKey}}, true},
+		{"Wrong PEM block type", &Server{Tls: Tls{Enabled: true, Certificate: string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: []byte("dummy")})), PrivateKey: validKey}}, true},
+		{"Expired certificate", &Server{Tls: Tls{Enabled: true, Certificate: expiredCert, PrivateKey: validKey}}, true},
+		{"Not yet valid certificate", &Server{Tls: Tls{Enabled: true, Certificate: futureCert, PrivateKey: validKey}}, true},
+		{"Invalid certificate bytes", &Server{Tls: Tls{Enabled: true, Certificate: string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: []byte("dummy")})), PrivateKey: validKey}}, true},
 	}
 
 	for _, tc := range testCases {
@@ -654,4 +654,143 @@ func TestValidateBackup(t *testing.T) {
 			t.Fatalf("zero sync_timeout should be allowed, got %v", err)
 		}
 	})
+}
+
+func TestValidateAcme(t *testing.T) {
+	tests := []struct {
+		name    string
+		acme    Acme
+		wantErr bool
+	}{
+		{
+			name:    "inactive section",
+			acme:    Acme{},
+			wantErr: false,
+		},
+		{
+			name: "valid section",
+			acme: Acme{
+				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:        []string{"example.com", "*.example.com"},
+				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+				Factor:         0.33,
+				DNS01: AcmeDNS01{
+					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing email",
+			acme: Acme{
+				Account:        AcmeAccount{Key: "key"},
+				Domains:        []string{"example.com"},
+				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+				Factor:         0.33,
+				DNS01: AcmeDNS01{
+					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing ca_directory_url",
+			acme: Acme{
+				Account: AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains: []string{"example.com"},
+				Factor:  0.33,
+				DNS01: AcmeDNS01{
+					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing domains",
+			acme: Acme{
+				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+				Factor:         0.33,
+				DNS01: AcmeDNS01{
+					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "factor out of range",
+			acme: Acme{
+				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:        []string{"example.com"},
+				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+				Factor:         1,
+				DNS01: AcmeDNS01{
+					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "no active dns-01 entry",
+			acme: Acme{
+				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:        []string{"example.com"},
+				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+				Factor:         0.33,
+				DNS01: AcmeDNS01{
+					"deeploid_cf": {Provider: "", Credentials: map[string]string{"api_token": "token"}},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "two active dns-01 entries",
+			acme: Acme{
+				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:        []string{"example.com"},
+				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+				Factor:         0.33,
+				DNS01: AcmeDNS01{
+					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+					"deeploid_hz": {Provider: "hetzner", Credentials: map[string]string{"api_token": "token"}},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty credentials",
+			acme: Acme{
+				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:        []string{"example.com"},
+				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+				Factor:         0.33,
+				DNS01: AcmeDNS01{
+					"deeploid_cf": {Provider: "cloudflare"},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid label",
+			acme: Acme{
+				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:        []string{"example.com"},
+				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
+				Factor:         0.33,
+				DNS01: AcmeDNS01{
+					"my label": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateAcme(&tt.acme)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateAcme() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
 }

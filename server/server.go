@@ -145,7 +145,7 @@ func (s *Server) Run() {
 	// 2. The main goroutine (if a daemon fails to start).
 	serverError := make(chan error, 2)
 	go func() {
-		if serverCfg.EnableTLS {
+		if serverCfg.Tls.Enabled {
 			// Start HTTPS server
 			tlsConfig, err := createTLSConfig(&serverCfg)
 			if err != nil {
@@ -157,9 +157,9 @@ func (s *Server) Run() {
 			s.logger.Info("Starting HTTPS server", "addr", serverCfg.Addr)
 
 			// Start HTTP->HTTPS redirect server if configured
-			if serverCfg.RedirectAddr != "" {
+			if serverCfg.Tls.RedirectAddr != "" {
 				redirectServer = &http.Server{
-					Addr:              serverCfg.RedirectAddr,
+					Addr:              serverCfg.Tls.RedirectAddr,
 					Handler:           s.redirectToHTTPS(),
 					ReadTimeout:       time.Second,
 					ReadHeaderTimeout: time.Second,
@@ -169,7 +169,7 @@ func (s *Server) Run() {
 				}
 
 				go func() {
-					s.logger.Info("Starting HTTP redirect server", "addr", serverCfg.RedirectAddr)
+					s.logger.Info("Starting HTTP redirect server", "addr", serverCfg.Tls.RedirectAddr)
 					if err := redirectServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 						serverError <- fmt.Errorf("redirect server error: %w", err)
 					}
@@ -303,17 +303,17 @@ func (s *Server) Run() {
 // logServerConfig logs server configuration with consistent "Server:" prefix
 func (s *Server) logServerConfig(cfg *config.Server) {
 	protocol := "HTTP"
-	if cfg.EnableTLS {
+	if cfg.Tls.Enabled {
 		protocol = "HTTPS"
 	}
 
 	s.logger.Info("Server:", "address", cfg.Addr, "protocol", protocol)
 
-	if cfg.EnableTLS {
-		if len(cfg.CertData) > 0 && len(cfg.KeyData) > 0 {
+	if cfg.Tls.Enabled {
+		if len(cfg.Tls.Certificate) > 0 && len(cfg.Tls.PrivateKey) > 0 {
 			s.logger.Info("Server:", "tls_cert_source", "in-memory_data",
-				"cert_data_length", len(cfg.CertData),
-				"key_data_length", len(cfg.KeyData))
+				"cert_data_length", len(cfg.Tls.Certificate),
+				"key_data_length", len(cfg.Tls.PrivateKey))
 		} else {
 			// This case should ideally be caught by validation if TLS is enabled
 			s.logger.Warn("Server:", "tls_source", "none_configured_or_invalid")
@@ -339,13 +339,13 @@ func createTLSConfig(cfg *config.Server) (*tls.Config, error) {
 	var err error
 
 	// Decide which certificate source to use
-	if len(cfg.CertData) > 0 && len(cfg.KeyData) > 0 {
-		cert, err = tls.X509KeyPair([]byte(cfg.CertData), []byte(cfg.KeyData))
+	if len(cfg.Tls.Certificate) > 0 && len(cfg.Tls.PrivateKey) > 0 {
+		cert, err = tls.X509KeyPair([]byte(cfg.Tls.Certificate), []byte(cfg.Tls.PrivateKey))
 		if err != nil {
 			return nil, fmt.Errorf("failed to load TLS key pair from config data: %w", err)
 		}
 	} else {
-		// Validation should ensure CertData/KeyData are present if EnableTLS is true
+		// Validation should ensure the certificate and key are present if TLS is enabled
 		return nil, fmt.Errorf("no valid TLS certificate data found in configuration")
 	}
 

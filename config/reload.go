@@ -15,17 +15,17 @@ func checkChangedRestartFields(oldCfg, newCfg *Config) []string {
 	if oldCfg.Server.Addr != newCfg.Server.Addr {
 		changed = append(changed, "Server.Addr")
 	}
-	if oldCfg.Server.EnableTLS != newCfg.Server.EnableTLS {
-		changed = append(changed, "Server.EnableTLS")
+	if oldCfg.Server.Tls.Enabled != newCfg.Server.Tls.Enabled {
+		changed = append(changed, "Server.Tls.Enabled")
 	}
-	if oldCfg.Server.CertData != newCfg.Server.CertData {
-		changed = append(changed, "Server.CertData")
+	if oldCfg.Server.Tls.Certificate != newCfg.Server.Tls.Certificate {
+		changed = append(changed, "Server.Tls.Certificate")
 	}
-	if oldCfg.Server.KeyData != newCfg.Server.KeyData {
-		changed = append(changed, "Server.KeyData")
+	if oldCfg.Server.Tls.PrivateKey != newCfg.Server.Tls.PrivateKey {
+		changed = append(changed, "Server.Tls.PrivateKey")
 	}
-	if oldCfg.Server.RedirectAddr != newCfg.Server.RedirectAddr {
-		changed = append(changed, "Server.RedirectAddr")
+	if oldCfg.Server.Tls.RedirectAddr != newCfg.Server.Tls.RedirectAddr {
+		changed = append(changed, "Server.Tls.RedirectAddr")
 	}
 
 	return changed

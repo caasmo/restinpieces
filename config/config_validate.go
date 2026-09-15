@@ -23,7 +23,9 @@ func Validate(cfg *Config) error {
 	if err := validateSmtp(&cfg.Smtp); err != nil {
 		return fmt.Errorf("smtp config validation failed: %w", err)
 	}
-	// validateAcme call removed
+	if err := ValidateAcme(&cfg.Acme); err != nil {
+		return fmt.Errorf("acme config validation failed: %w", err)
+	}
 	if err := validateOAuth2Providers(cfg.OAuth2Providers); err != nil {
 		return fmt.Errorf("oauth2 providers validation failed: %w", err)
 	}
@@ -78,12 +80,10 @@ func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
 	return nil
 }
 
-// isValidBackupLabel reports whether label is a valid backup map key.
+// isValidMapKeyLabel reports whether label is a valid config map key.
 //
-// The label is the <key> in backup.online.<key>, backup.vacuum.<key>
-// and backup.sqlite-rsync.entries.<key> and therefore part of every
-// dot-path the tooling uses (ripc set/get/paths, TOML, origin wire
-// label). It must not contain whitespace or '.'.
+// Map keys are user-chosen labels and part of every dot-path the tooling uses
+// (ripc set/get/paths, TOML). A key must not contain whitespace or '.'.
 //
 //   - whitespace (space, tab, newline) would require shell quoting and
 //     would be marshaled as a quoted TOML key (e.g. [backup.online."my label"]),
@@ -91,9 +91,9 @@ func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
 //   - '.' would be split by the TOML tree as a nesting level
 //     (backup.online.a.b → map entry a with sub-table b, not entry "a.b").
 //
-// Valid:   "app-online", "app-vacuum", "app-rsync", "app_db", "analytics".
+// Valid:   "app-online", "app_db", "deeploid_cf".
 // Invalid: "my label", "my.label", "", "app db", "a\tb".
-func isValidBackupLabel(label string) bool {
+func isValidMapKeyLabel(label string) bool {
 	if label == "" {
 		return false
 	}
@@ -105,7 +105,7 @@ func isValidBackupLabel(label string) bool {
 
 func ValidateBackup(backup *Backup) error {
 	for key, e := range backup.OnlineAPI {
-		if !isValidBackupLabel(key) {
+		if !isValidMapKeyLabel(key) {
 			return fmt.Errorf("online: map key %q must not contain whitespace or '.'", key)
 		}
 		if err := validateBackupOnlineAPI(key, e); err != nil {
@@ -113,7 +113,7 @@ func ValidateBackup(backup *Backup) error {
 		}
 	}
 	for key, e := range backup.Vacuum {
-		if !isValidBackupLabel(key) {
+		if !isValidMapKeyLabel(key) {
 			return fmt.Errorf("vacuum: map key %q must not contain whitespace or '.'", key)
 		}
 		if err := validateBackupVacuum(key, e); err != nil {
@@ -130,13 +130,59 @@ func ValidateBackup(backup *Backup) error {
 		}
 	}
 	for key, e := range backup.SqliteRsync.Entries {
-		if !isValidBackupLabel(key) {
+		if !isValidMapKeyLabel(key) {
 			return fmt.Errorf("sqlite-rsync.entries: map key %q must not contain whitespace or '.'", key)
 		}
 		if err := validateBackupSqliteRsync(key, e); err != nil {
 			return err
 		}
 	}
+	return nil
+}
+
+// ValidateAcme checks the Acme configuration section. Map labels and entry
+// credentials are always validated; the account, domains, CA directory URL and
+// factor are only required once an account key is set.
+func ValidateAcme(acme *Acme) error {
+	for key, e := range acme.DNS01 {
+		if !isValidMapKeyLabel(key) {
+			return fmt.Errorf("dns-01: map key %q must not contain whitespace or '.'", key)
+		}
+		if e.Provider == "" {
+			continue // deactivated entry
+		}
+		if len(e.Credentials) == 0 {
+			return fmt.Errorf("dns-01.%s.credentials cannot be empty when provider is set", key)
+		}
+	}
+
+	if acme.Account.Key == "" {
+		return nil // section not configured
+	}
+
+	if acme.Account.Email == "" {
+		return fmt.Errorf("account.email cannot be empty")
+	}
+	if len(acme.Domains) == 0 {
+		return fmt.Errorf("domains cannot be empty")
+	}
+	if acme.CADirectoryURL == "" {
+		return fmt.Errorf("ca_directory_url cannot be empty")
+	}
+	if acme.Factor <= 0 || acme.Factor >= 1 {
+		return fmt.Errorf("factor must be between 0 and 1, got %v", acme.Factor)
+	}
+
+	active := 0
+	for _, e := range acme.DNS01 {
+		if e.Provider != "" {
+			active++
+		}
+	}
+	if active != 1 {
+		return fmt.Errorf("exactly one dns-01 entry must set a provider, got %d", active)
+	}
+
 	return nil
 }
 
@@ -350,61 +396,61 @@ func validateServerAddr(server *Server) error {
 
 func validateServerRedirectAddr(server *Server) error {
 	// If RedirectPort is empty, no redirect server is configured (valid case)
-	if server.RedirectAddr == "" {
+	if server.Tls.RedirectAddr == "" {
 		return nil
 	}
 
 	// Construct the redirect address from the main server's host and redirect port
-	_, port, err := net.SplitHostPort(server.RedirectAddr)
+	_, port, err := net.SplitHostPort(server.Tls.RedirectAddr)
 	if err != nil {
-		return fmt.Errorf("failed to parse host from server address '%s': %w", server.Addr, err)
+		return fmt.Errorf("server.tls.redirect_addr: failed to parse host from address '%s': %w", server.Tls.RedirectAddr, err)
 	}
 
 	// Validate the port component
 	if err := validateServerPort(port); err != nil {
-		return fmt.Errorf("invalid server port in address '%s': %w", server.Addr, err)
+		return fmt.Errorf("server.tls.redirect_addr: invalid port in address '%s': %w", server.Tls.RedirectAddr, err)
 	}
 
 	return nil
 }
 
-// validateServerTLS checks that CertData and KeyData are present if TLS is enabled.
+// validateServerTLS checks that the certificate and key are present and valid
+// when TLS is enabled.
 func validateServerTLS(server *Server) error {
-	if !server.EnableTLS {
+	if !server.Tls.Enabled {
 		return nil // No validation needed if TLS is disabled
 	}
 
-	// If TLS is enabled, CertData and KeyData must not be empty.
-	// CertFile and KeyFile are ignored if CertData/KeyData are present.
-	if server.CertData == "" {
-		return fmt.Errorf("server.cert_data cannot be empty when TLS is enabled")
+	// If TLS is enabled, the certificate and private key must not be empty.
+	if server.Tls.Certificate == "" {
+		return fmt.Errorf("server.tls.certificate cannot be empty when TLS is enabled")
 	}
-	if server.KeyData == "" {
-		return fmt.Errorf("server.key_data cannot be empty when TLS is enabled")
+	if server.Tls.PrivateKey == "" {
+		return fmt.Errorf("server.tls.private_key cannot be empty when TLS is enabled")
 	}
 
 	// Decode PEM block for the certificate
-	block, _ := pem.Decode([]byte(server.CertData))
+	block, _ := pem.Decode([]byte(server.Tls.Certificate))
 	if block == nil {
-		return fmt.Errorf("server.cert_data: failed to decode PEM block containing the certificate")
+		return fmt.Errorf("server.tls.certificate: failed to decode PEM block containing the certificate")
 	}
 	if block.Type != "CERTIFICATE" {
-		return fmt.Errorf("server.cert_data: PEM block type is '%s', expected 'CERTIFICATE'", block.Type)
+		return fmt.Errorf("server.tls.certificate: PEM block type is '%s', expected 'CERTIFICATE'", block.Type)
 	}
 
 	// Parse the certificate
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return fmt.Errorf("server.cert_data: failed to parse certificate: %w", err)
+		return fmt.Errorf("server.tls.certificate: failed to parse certificate: %w", err)
 	}
 
 	// Check certificate validity period
 	now := time.Now()
 	if now.Before(cert.NotBefore) {
-		return fmt.Errorf("server.cert_data: certificate is not yet valid (valid from %s)", cert.NotBefore.Format(time.RFC3339))
+		return fmt.Errorf("server.tls.certificate: certificate is not yet valid (valid from %s)", cert.NotBefore.Format(time.RFC3339))
 	}
 	if now.After(cert.NotAfter) {
-		return fmt.Errorf("server.cert_data: certificate has expired (expired on %s)", cert.NotAfter.Format(time.RFC3339))
+		return fmt.Errorf("server.tls.certificate: certificate has expired (expired on %s)", cert.NotAfter.Format(time.RFC3339))
 	}
 
 	// Optionally: Add more checks here, e.g., KeyUsage, BasicConstraints, etc.
@@ -458,8 +504,6 @@ func validateSmtp(smtp *Smtp) error {
 	}
 	return nil
 }
-
-// validateAcme function removed.
 
 // maxUserAgents is the largest number of user agents allowed in
 // block_user_agent.agents. The list is matched against every incoming

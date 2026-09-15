@@ -42,7 +42,7 @@ func TestScaffoldConfigValue_BackupOnline(t *testing.T) {
 	if got := filesTree.Get("pages_per_step"); got != int64(100) {
 		t.Errorf("expected 100, got %v", got)
 	}
-	if !strings.Contains(stderr.String(), "Successfully scaffolded backup 'app-online'") {
+	if !strings.Contains(stderr.String(), "Successfully scaffolded 'app-online'") {
 		t.Errorf("expected success line with backup label, got %q", stderr.String())
 	}
 	if !strings.Contains(stderr.String(), "app-online:") {
@@ -352,5 +352,40 @@ func TestHandleScaffoldCommand_Help(t *testing.T) {
 	}
 	if stderr.Len() != 0 {
 		t.Errorf("expected empty stderr, got: %q", stderr.String())
+	}
+}
+
+func TestScaffoldConfigValue_AcmeDNS01(t *testing.T) {
+	scope := config.ScopeApplication
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeAcmeDNS01, "deeploid_cf")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	tree := getTreeFromStore(t, mockStore, scope)
+	// The scaffold creates the missing [acme] section with the default factor,
+	// then the entry under dns-01.<label>.
+	if got := tree.Get("acme.factor"); got != 0.33 {
+		t.Errorf("expected default factor, got %v", got)
+	}
+	path := "acme.dns-01.deeploid_cf"
+	entryTree, ok := tree.Get(path).(*toml.Tree)
+	if !ok {
+		t.Fatalf("expected subtree at %s", path)
+	}
+	if got := entryTree.Get("provider"); got != "" {
+		t.Errorf("expected empty provider, got %v", got)
+	}
+	credentials, ok := entryTree.Get("credentials").(*toml.Tree)
+	if !ok {
+		t.Fatalf("expected credentials subtree at %s.credentials", path)
+	}
+	if got := credentials.Get("api_token"); got != "" {
+		t.Errorf("expected empty api_token, got %v", got)
+	}
+	if !strings.Contains(stderr.String(), "ripc set acme.dns-01.deeploid_cf.provider") {
+		t.Errorf("expected next steps command, got %q", stderr.String())
 	}
 }

@@ -1,6 +1,3 @@
-
-
-
 # secureStore: GetConfig nil content causes misleading "decrypt failed" error
 
 - `databasesql.GetConfig` returns `nil, "", nil` when no rows match scope (ResultFunc never called)
@@ -38,26 +35,6 @@
 - fix: track started daemons (append after each successful `Start()`) and stop only those — already fixed in the go-daemon-runner extraction (impl-daemon-runner.md Phase 3, `startedDaemons`)
 - ref: `server/server.go:184-194` (start loop), `server/server.go:262-276` (shutdown loop)
 
-# logs schema: random TEXT primary key scatters inserts and bloats sqlite-rsync syncs
-
-- the `logs` table uses a random TEXT primary key: `id TEXT PRIMARY KEY DEFAULT ('r'||lower(hex(randomblob(7)))) NOT NULL`
-- nothing writes it: `InsertBatch` (`db/databasesql/log.go`) inserts only `(level, message, data, created)`; the id is filled purely by the schema default
-- nothing reads it: no SELECT, no reference, no consumer anywhere in restinpieces or writeplay; the tailsqlitelogs reader selects `created, level, message, data` — never `id`. (The `users` table uses the same random id for a reason — external users need a stable, unguessable identifier. `logs` has no such need.)
-- a `TEXT PRIMARY KEY` in SQLite creates an implicit unique index (`sqlite_autoindex_logs_1`), so every insert writes into **three** B-trees: the PK autoindex (random key → random leaf), `idx_logs_level`, and `idx_logs_message`
-- the random key scatters each row to a different leaf page and causes page splits; measured: 5 log rows ≈ 14–21 `page_updates` on the next sqlite-rsync replica sync, versus ~1 page for a quiet minute
-- proposal: drop the random `id` from `logs`; the table already has an implicit sequential `rowid`, so inserts append at the tail of one B-tree. Either:
-  - drop `id` entirely: `CREATE TABLE IF NOT EXISTS logs (level INTEGER DEFAULT 0 NOT NULL, message TEXT DEFAULT "" NOT NULL, data JSON DEFAULT "{}" NOT NULL, created TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ')) NOT NULL)`
-  - or use `INTEGER PRIMARY KEY` (rowid alias) for an explicit conventional key — still sequential/append-only, no autoindex
-- schema change in `migrations/schema/log/logs.sql`, affects the app DB migration, not daemon code
-- ref: `sql/schema/log/logs.sql:6`, `db/databasesql/log.go:55`
-
-# block_ip: buckets + TTL redundant — 40ns vs 90ns
-
-Buckets are pointless with TTL.
-
-With `SetWithTTL + no buckets` = precise 3m, but `Get` 90ns (TTL branch + `time.Now()`)
-With `Set + buckets at 3m` = coarse 3m, but `Get` 40ns (no TTL, `expiration==0` skips `time.Now()`), fastest under attack
-Current `3600s bucket + 3m TTL` is worst of both
 
 # cache: rotating cursor sweep (W/K) — reclaim expired never-read entries
 
@@ -65,8 +42,6 @@ Current `3600s bucket + 3m TTL` is worst of both
 - TODO: inline sweep, no goroutine, bounded `W/K`. `W = window` nodes per sweep, `K = every` K writes — e.g. `W=64, K=64` → `W/K=1` check/write, full pass every `maxEntries` writes, one constant for all levels. Hook `sweepIfDue()` at top of `SetWithTTL` (under lock); `sweep()` walks `W` slots from `cursor` (wraps), skips free, frees `expiration !=0 && fastNow()>expiration`.
 - Live-vs-free still open: `used bool` vs `expiration==0` sentinel vs map lookup (Q41/Q42, you choose). `cost` not involved (Q39).
 - Refs: `cache/default.go:77-79`, `192-193`, `brainstorm-remove-ristretto.md` Q10/Q22/Q33/Q40.
-
-# BlockRequestBody maybe we shoudl check less is too much checks
 
 # server: implement MaxHeaderBytes
 
@@ -95,31 +70,19 @@ Current `3600s bucket + 3m TTL` is worst of both
 - keep inside `BlockHost.Execute` (cheap strings, before UA match): normalize Host (lowercase, strip port/trailing dot), optional reject of IP-literal Host, optional SNI check (ServerName in allowed_hosts and == Host, empty SNI passes, same 403). Off by default so TLS-terminating proxies do not break.
 - ref: `core/prerouter/block_host.go`, `restinpieces.go` (chain order), `server/server.go` (single-cert TLS), `config/config.go` (`BlockHost`, `Server`)
 
-### done
+# jobs: recurrent jobs are config data
 
-# server: http.Server ErrorLog bypasses default logger, panic level open (done)
+- recurrent jobs (schedule, payload, active flag) currently live only in the queue tables; they are configuration, not runtime state
+- proposal: declare them in config (a `jobs` map, one entry per job) and seed/sync the queue from config on startup or reload
+- operators then manage schedules with `ripc set` / `dump` / `diff` like any other config, instead of ad-hoc job rows
+- ref: `db/databasesql/queue.go`, `config/config.go`
 
-- `server/server.go` `Run` sets `ErrorLog: slog.NewLogLogger(s.logger.Handler(), slog.LevelDebug)` on the main and redirect servers, so TLS handshake errors go through `log/batch_handler.go` instead of the std logger → stderr
-- net/http has no slog support: `ErrorLog` is a `*log.Logger`, so `slog.NewLogLogger` adapts the application's slog handler
-- `core/prerouter/recovery.go` adds the `Recovery` middleware: catches handler panics, logs at `Error` with a 2 KB stack, answers 500, and re-panics `http.ErrAbortHandler`
-- `restinpieces.go:setupPrerouter` wires `Recovery` as the first middleware, so net/http never sees a handler panic
-- ref: `server/server.go:Run`, `core/prerouter/recovery.go`, `restinpieces.go:setupPrerouter`
-
-# sqlite driver: substituted zombiezen with modernc (done)
-
-- `db/zombiezen/` removed; replaced by modernc-backed `db/databasesql/` (`db.go`, `config.go`, `users.go`, `queue.go`, `queue_admin.go`, `log.go`, `pool.go`, `conn.go` and their `*_test.go`)
-- `db/databasesql/db.go`, `db/databasesql/log.go` — package entry points `New`, `NewLog`
-- `sqlite_modernc.go` — root public constructor API (`NewModerncPool`, `NewModerncConn`, `WithModerncPool`), returns `*sql.DB`
-- `restinpieces.go` — `newLog` uses `databasesql.NewLog`
-- `cmd/ripc/sql.go` — holds a `*sql.DB` and imports `databasesql`
-- `cmd/ripc/sql_helpers_test.go` — test pool helper
-- `go.mod` — `zombiezen.com/go/sqlite` dependency removed in favor of `modernc.org/sqlite`
-
-# log driver: logger does not support SIGHUP reload — batch_size change would require a stmt change
-
-- `db/databasesql/log.go` — `Log.stmt` is prepared once in `NewLog` for the startup `batchSize` (= config `log.batch.batch_size`); the daemon keeps that connection/statement for its whole life
-- SIGHUP config reload updates the provider only — the driver is not rebuilt, so a `batch_size` change silently drops every full flush to the slow partial path (`InsertBatch` ad-hoc `ExecContext`), and a `db_path` change is ignored
-- TODO: on reload, re-prepare `stmt` for the new size (or re-create the `Log`); until then restart required
+Plain version: does something that already exists tell you when this last ran or when it expires?
+- The cert has its expiry date written on it. Read the file, compare to today, decide. Nothing to store.
+- The replica file has a modification time. Same trick. That's what the replica daemon actually does.
+- "Email a weekly digest Monday 9am" — nothing on disk knows a week has passed. You have to write down the last time it ran.
+That's the whole distinction. One question, no jargon.
+And it's not even the interesting part. Your point is the interesting part: if you do need to write something down, what you write down is when it last ran. Not the interval. The interval is config. The framework puts the interval in the row and then makes a new row every cycle — that's the mess, and it's the same mess whether the schedule lives in a daemon or a queue.
 
 # ripc get: maybe add a --runtime flag to show what the app sees
 
@@ -149,16 +112,6 @@ Document in the README (or elsewhere) that a `restinpieces-*` repo is meant to b
 
 `config.Provider` is the in-between step. End state: delete `provider.go`, `core.App` owns the box, and every consumer takes `*atomic.Pointer[config.Config]` and reads `Load()` at each use.
 
-## ripc log tail: log tail with a filter, also it should start not on maxid but maxid - offset
-
-References: cmd/ripc/log_tail.go, cmd/ripc/sql.go, cmd/ripc/log_command.go, doc/ripc.md
-
-## ripc add: append to a collection-valued key
-
-`ripc add <path> <value>` — TOML arrays append if absent. Validate before save.
-
-References: cmd/ripc/set.go, config/config.go, config/config_validate.go, doc/ripc.md
-
 ## ripc get: misleading get strips quotes so valid TOML looks broken
 
 `get` prints values with `%v`, so `["149.56.131.18"]` shows as `[149.56.131.18]`.
@@ -169,26 +122,10 @@ References: cmd/ripc/get.go, cmd/ripc/get_test.go, doc/ripc.md
 
 References: cmd/ripc/log_tail.go, cmd/ripc/sql.go, cmd/ripc/log_command.go, doc/ripc.md
 
-## ripc gen: add gen block_ua_list from upstream bot list
-
-References: cmd/ripc/gen.go, cmd/ripc/gen_test.go, config/config.go, config/config_validate.go, config/default.go, doc/ripc.md
-
-## config.BlockUaList: send block_ua_list.list to hell, use block_user_agent.regexp
-
-References: config/config.go, config/config_validate.go, config/default.go, core/prerouter/block_ua_list.go, doc/ripc.md
 
 ## ripc blame: track when a particular key changes
 
 References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/gen.go, cmd/ripc/get.go, cmd/ripc/paths.go, cmd/ripc/main.go, doc/ripc.md
-
-## BlockUa matching: replace regexp with Contains loop
-
-Contains is ~100x faster than the regexp on the pinned 175-agent production list.
-
-References: scripts/ua_bench_test.go, config/user_agent.go, core/prerouter/block_ua_list.go
-        log_error "Build failed: Multiple dirs in cmd/ but none match '${project_name}', or cmd/ is empty."
-# othres
-# TODO
 
 
 ### Maybe
@@ -251,21 +188,8 @@ References: scripts/ua_bench_test.go, config/user_agent.go, core/prerouter/block
         - users of secureConfig: create the secure config?
             -  we still need dbconfig
         - dbConfig
-- startup: 
-    - func of type Option func(rip), or no options at all 
-    - WithCache() crete empty app and set or apply
-    -WithDaemon create empty server and apply
-    -WithJobHandler 
-    - WithMetrics, will make handler, middleware and conf
-    - we can still retiurn app and server. 
-    - jsut not options
-- NewWithConfig(restinpieces.Config{
-- updatebenchmark: to own paclkage resuse modernc and 
-- modernc?
 - add prometheus.
 - s3 integration
-- cache alternative syncMap, no garbage collection, noOP
-- propably multidomain
 - ETag or Last-Modified: Enables efficient cache validation for performance. -> no: user
     - no we are talking about html.
     - at most a weak etag like deploy tag

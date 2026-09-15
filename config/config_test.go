@@ -181,9 +181,9 @@ func TestServer_BaseURL(t *testing.T) {
 		server Server
 		want   string
 	}{
-		{"HTTP", Server{Addr: "example.com:80", EnableTLS: false}, "http://example.com:80"},
-		{"HTTPS", Server{Addr: "example.com:443", EnableTLS: true}, "https://example.com:443"},
-		{"Empty host becomes localhost", Server{Addr: ":8080", EnableTLS: false}, "http://localhost:8080"},
+		{"HTTP", Server{Addr: "example.com:80", Tls: Tls{Enabled: false}}, "http://example.com:80"},
+		{"HTTPS", Server{Addr: "example.com:443", Tls: Tls{Enabled: true}}, "https://example.com:443"},
+		{"Empty host becomes localhost", Server{Addr: ":8080", Tls: Tls{Enabled: false}}, "http://localhost:8080"},
 	}
 
 	for _, tc := range testCases {

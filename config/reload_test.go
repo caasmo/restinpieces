@@ -64,10 +64,10 @@ func TestCheckChangedRestartFields(t *testing.T) {
 		{
 			name: "Multiple restart fields changed",
 			modifier: func(cfg *Config) {
-				cfg.Server.EnableTLS = !baseCfg.Server.EnableTLS
-				cfg.Server.RedirectAddr = ":8081"
+				cfg.Server.Tls.Enabled = !baseCfg.Server.Tls.Enabled
+				cfg.Server.Tls.RedirectAddr = ":8081"
 			},
-			expectFields: []string{"Server.EnableTLS", "Server.RedirectAddr"},
+			expectFields: []string{"Server.Tls.Enabled", "Server.Tls.RedirectAddr"},
 		},
 	}
 

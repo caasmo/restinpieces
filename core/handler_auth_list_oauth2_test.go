@@ -168,7 +168,7 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 				cfg := config.NewDefaultConfig()
 				cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 				cfg.Server.Addr = "test.com:443" // BaseURL derives from Addr
-				cfg.Server.EnableTLS = true      // to get https scheme
+				cfg.Server.Tls.Enabled = true    // to get https scheme
 				cfg.OAuth2Providers = map[string]config.OAuth2Provider{
 					"providerWithPath": {
 						RedirectURLPath: "/callback/path",

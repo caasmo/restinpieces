@@ -313,9 +313,9 @@ func TestServer_Run_HttpAndDaemonStartFailure(t *testing.T) {
 	// (e.g., by enabling TLS without providing certificates).
 	server, provider := newTestServer(t, nil)
 	cfg := provider.Get()
-	cfg.Server.EnableTLS = true // Enable TLS
-	cfg.Server.CertData = ""    // but provide no cert
-	cfg.Server.KeyData = ""     // which will cause createTLSConfig to fail
+	cfg.Server.Tls.Enabled = true   // Enable TLS
+	cfg.Server.Tls.Certificate = "" // but provide no cert
+	cfg.Server.Tls.PrivateKey = ""  // which will cause createTLSConfig to fail
 	provider.Update(cfg)
 
 	// Add a daemon that is also configured to fail on start.
@@ -365,7 +365,7 @@ func TestRedirectToHTTPS(t *testing.T) {
 	server, provider := newTestServer(t, nil)
 	cfg := provider.Get()
 	// Configure the server's BaseURL by setting the relevant fields in the config.
-	cfg.Server.EnableTLS = true
+	cfg.Server.Tls.Enabled = true
 	cfg.Server.Addr = "secure.example.com:8443" // This will be used by BaseURL()
 	provider.Update(cfg)
 
@@ -478,8 +478,10 @@ func TestAddJobHandler_NilExecutor(t *testing.T) {
 func TestCreateTLSConfig_Success(t *testing.T) {
 	certPEM, keyPEM := generateTestCert(t)
 	cfg := &config.Server{
-		CertData: string(certPEM),
-		KeyData:  string(keyPEM),
+		Tls: config.Tls{
+			Certificate: string(certPEM),
+			PrivateKey:  string(keyPEM),
+		},
 	}
 
 	tlsConfig, err := createTLSConfig(cfg)
@@ -502,8 +504,10 @@ func TestCreateTLSConfig_InvalidKeyPair(t *testing.T) {
 	certPEM, _ := generateTestCert(t)
 	_, keyPEM2 := generateTestCert(t) // Mismatched key
 	cfg := &config.Server{
-		CertData: string(certPEM),
-		KeyData:  string(keyPEM2),
+		Tls: config.Tls{
+			Certificate: string(certPEM),
+			PrivateKey:  string(keyPEM2),
+		},
 	}
 
 	_, err := createTLSConfig(cfg)
@@ -524,13 +528,17 @@ func TestCreateTLSConfig_MissingData(t *testing.T) {
 		{
 			name: "Missing CertData",
 			cfg: &config.Server{
-				KeyData: string(keyPEM),
+				Tls: config.Tls{
+					PrivateKey: string(keyPEM),
+				},
 			},
 		},
 		{
 			name: "Missing KeyData",
 			cfg: &config.Server{
-				CertData: string(certPEM),
+				Tls: config.Tls{
+					Certificate: string(certPEM),
+				},
 			},
 		},
 		{
@@ -593,10 +601,10 @@ func TestServer_Run_TLS_Success(t *testing.T) {
 	port := getFreePort(t)
 
 	cfg := provider.Get()
-	cfg.Server.EnableTLS = true
+	cfg.Server.Tls.Enabled = true
 	cfg.Server.Addr = fmt.Sprintf("localhost:%d", port)
-	cfg.Server.CertData = string(certPEM)
-	cfg.Server.KeyData = string(keyPEM)
+	cfg.Server.Tls.Certificate = string(certPEM)
+	cfg.Server.Tls.PrivateKey = string(keyPEM)
 	provider.Update(cfg)
 
 	exitCalledChan := make(chan int, 1)
@@ -650,11 +658,11 @@ func TestServer_Run_TLS_WithRedirect_Success(t *testing.T) {
 	httpPort := getFreePort(t)
 
 	cfg := provider.Get()
-	cfg.Server.EnableTLS = true
+	cfg.Server.Tls.Enabled = true
 	cfg.Server.Addr = fmt.Sprintf("localhost:%d", httpsPort)
-	cfg.Server.RedirectAddr = fmt.Sprintf("localhost:%d", httpPort)
-	cfg.Server.CertData = string(certPEM)
-	cfg.Server.KeyData = string(keyPEM)
+	cfg.Server.Tls.RedirectAddr = fmt.Sprintf("localhost:%d", httpPort)
+	cfg.Server.Tls.Certificate = string(certPEM)
+	cfg.Server.Tls.PrivateKey = string(keyPEM)
 	provider.Update(cfg)
 
 	exitCalledChan := make(chan int, 1)
@@ -676,7 +684,7 @@ func TestServer_Run_TLS_WithRedirect_Success(t *testing.T) {
 	}
 
 	// Make request to the HTTP redirect server
-	resp, err := noRedirectClient.Get("http://" + cfg.Server.RedirectAddr + "/test")
+	resp, err := noRedirectClient.Get("http://" + cfg.Server.Tls.RedirectAddr + "/test")
 	if err != nil {
 		t.Fatalf("HTTP request to redirect server failed: %v", err)
 	}
@@ -740,10 +748,10 @@ func TestServer_Run_TLS_ListenAndServeTLSError(t *testing.T) {
 	certPEM, keyPEM := generateTestCert(t)
 
 	cfg := provider.Get()
-	cfg.Server.EnableTLS = true
+	cfg.Server.Tls.Enabled = true
 	cfg.Server.Addr = fmt.Sprintf("localhost:%d", port) // Use the busy port
-	cfg.Server.CertData = string(certPEM)
-	cfg.Server.KeyData = string(keyPEM)
+	cfg.Server.Tls.Certificate = string(certPEM)
+	cfg.Server.Tls.PrivateKey = string(keyPEM)
 	provider.Update(cfg)
 
 	exitCalledChan := make(chan int, 1)
@@ -784,11 +792,11 @@ func TestServer_Run_TLS_RedirectServerFail(t *testing.T) {
 	httpsPort := getFreePort(t)
 
 	cfg := provider.Get()
-	cfg.Server.EnableTLS = true
+	cfg.Server.Tls.Enabled = true
 	cfg.Server.Addr = fmt.Sprintf("localhost:%d", httpsPort)
-	cfg.Server.RedirectAddr = fmt.Sprintf("localhost:%d", redirectPort) // Use busy port
-	cfg.Server.CertData = string(certPEM)
-	cfg.Server.KeyData = string(keyPEM)
+	cfg.Server.Tls.RedirectAddr = fmt.Sprintf("localhost:%d", redirectPort) // Use busy port
+	cfg.Server.Tls.Certificate = string(certPEM)
+	cfg.Server.Tls.PrivateKey = string(keyPEM)
 	provider.Update(cfg)
 
 	exitCalledChan := make(chan int, 1)
