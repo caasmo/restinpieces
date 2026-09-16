@@ -1382,7 +1382,31 @@ cmd_backup() {
     log_success "Backup command finished."
 }
 
-# ============================================ 
+cmd_cp() {
+    local host=${1:-}
+    local project_name=${2:-}
+    local local_file=${3:-}
+
+    if [ -z "$host" ] || [ -z "$project_name" ] || [ -z "$local_file" ]; then
+        log_error "Usage: $0 cp <host> <project-name> <local-file>"
+        exit 1
+    fi
+
+    if [ ! -f "$local_file" ]; then
+        log_error "Not a file: ${local_file}"
+        exit 1
+    fi
+
+    local base
+    base=$(basename "$local_file")
+
+    log_info "Copying ${local_file} to ${host}:/home/${project_name}/${base}..."
+    scp "$local_file" "${host}:/tmp/${base}"
+    ssh -t -o LogLevel=ERROR "$host" "sudo cp /tmp/${base} /home/${project_name}/${base} && sudo chown ${project_name}:${project_name} /home/${project_name}/${base} && sudo chmod 600 /home/${project_name}/${base} && rm -f /tmp/${base}"
+    log_success "Copied to /home/${project_name}/${base}"
+}
+
+# ============================================
 # HELP AND MAIN ENTRY POINT
 # ============================================ 
 
@@ -1404,6 +1428,7 @@ Commands:
   deploy <host> <build_dir> [opts]           Build, pack, push, and install in one command.
   undeploy <host> <project-name>             Permanently remove a project and all its data from a host.
   backup <host> <project-name>               Creates and downloads a backup of a project.
+  cp <host> <project-name> <local-file>       Copy a file into /home/<project-name>/.
   maintenance <host> <project-name> <true|false> Toggle maintenance mode for a project.
   ripc <host> <project-name> [args]          Run ripc commands on a remote host.
   shell <host> <project-name>                Open an interactive shell as the project user on a VM.
@@ -1761,6 +1786,7 @@ main() {
         deploy) cmd_deploy "$@" ;; 
         undeploy) cmd_undeploy "$@" ;;
         backup) cmd_backup "$@" ;;
+        cp) cmd_cp "$@" ;;
         maintenance) cmd_maintenance "$@" ;; 
         ripc) cmd_ripc "$@" ;;
         shell) cmd_shell "$@" ;; 
