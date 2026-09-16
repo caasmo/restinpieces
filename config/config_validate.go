@@ -142,7 +142,7 @@ func ValidateBackup(backup *Backup) error {
 
 // ValidateAcme checks the Acme configuration section. Map labels and entry
 // credentials are always validated; the account, domains, CA directory URL and
-// factor are only required once an account key is set.
+// remaining lifetime fraction are only required once an account key is set.
 func ValidateAcme(acme *Acme) error {
 	for key, e := range acme.DNS01 {
 		if !isValidMapKeyLabel(key) {
@@ -169,8 +169,8 @@ func ValidateAcme(acme *Acme) error {
 	if acme.CADirectoryURL == "" {
 		return fmt.Errorf("ca_directory_url cannot be empty")
 	}
-	if acme.Factor <= 0 || acme.Factor >= 1 {
-		return fmt.Errorf("factor must be between 0 and 1, got %v", acme.Factor)
+	if acme.RemainingLifetimeFraction <= 0 || acme.RemainingLifetimeFraction >= 1 {
+		return fmt.Errorf("remaining_lifetime_fraction must be between 0 and 1, got %v", acme.RemainingLifetimeFraction)
 	}
 
 	active := 0

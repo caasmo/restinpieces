@@ -215,7 +215,7 @@ func NewOAuth2ProviderDefaults() OAuth2Provider {
 // default (the zero value); entries are created via ripc scaffold.
 func NewAcmeDefaults() Acme {
 	return Acme{
-		Factor: 0.33,
+		RemainingLifetimeFraction: 0.25,
 	}
 }
 

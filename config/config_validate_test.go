@@ -670,10 +670,10 @@ func TestValidateAcme(t *testing.T) {
 		{
 			name: "valid section",
 			acme: Acme{
-				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
-				Domains:        []string{"example.com", "*.example.com"},
-				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-				Factor:         0.33,
+				Account:                   AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:                   []string{"example.com", "*.example.com"},
+				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
+				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
 					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},
@@ -683,10 +683,10 @@ func TestValidateAcme(t *testing.T) {
 		{
 			name: "missing email",
 			acme: Acme{
-				Account:        AcmeAccount{Key: "key"},
-				Domains:        []string{"example.com"},
-				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-				Factor:         0.33,
+				Account:                   AcmeAccount{Key: "key"},
+				Domains:                   []string{"example.com"},
+				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
+				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
 					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},
@@ -696,9 +696,9 @@ func TestValidateAcme(t *testing.T) {
 		{
 			name: "missing ca_directory_url",
 			acme: Acme{
-				Account: AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
-				Domains: []string{"example.com"},
-				Factor:  0.33,
+				Account:                   AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:                   []string{"example.com"},
+				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
 					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},
@@ -708,9 +708,9 @@ func TestValidateAcme(t *testing.T) {
 		{
 			name: "missing domains",
 			acme: Acme{
-				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
-				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-				Factor:         0.33,
+				Account:                   AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
+				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
 					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},
@@ -718,12 +718,12 @@ func TestValidateAcme(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "factor out of range",
+			name: "remaining lifetime fraction out of range",
 			acme: Acme{
-				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
-				Domains:        []string{"example.com"},
-				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-				Factor:         1,
+				Account:                   AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:                   []string{"example.com"},
+				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
+				RemainingLifetimeFraction: 1,
 				DNS01: AcmeDNS01{
 					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},
@@ -733,10 +733,10 @@ func TestValidateAcme(t *testing.T) {
 		{
 			name: "no active dns-01 entry",
 			acme: Acme{
-				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
-				Domains:        []string{"example.com"},
-				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-				Factor:         0.33,
+				Account:                   AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:                   []string{"example.com"},
+				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
+				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
 					"deeploid_cf": {Provider: "", Credentials: map[string]string{"api_token": "token"}},
 				},
@@ -746,10 +746,10 @@ func TestValidateAcme(t *testing.T) {
 		{
 			name: "two active dns-01 entries",
 			acme: Acme{
-				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
-				Domains:        []string{"example.com"},
-				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-				Factor:         0.33,
+				Account:                   AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:                   []string{"example.com"},
+				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
+				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
 					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 					"deeploid_hz": {Provider: "hetzner", Credentials: map[string]string{"api_token": "token"}},
@@ -760,10 +760,10 @@ func TestValidateAcme(t *testing.T) {
 		{
 			name: "empty credentials",
 			acme: Acme{
-				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
-				Domains:        []string{"example.com"},
-				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-				Factor:         0.33,
+				Account:                   AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:                   []string{"example.com"},
+				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
+				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
 					"deeploid_cf": {Provider: "cloudflare"},
 				},
@@ -773,10 +773,10 @@ func TestValidateAcme(t *testing.T) {
 		{
 			name: "invalid label",
 			acme: Acme{
-				Account:        AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
-				Domains:        []string{"example.com"},
-				CADirectoryURL: "https://acme-v02.api.letsencrypt.org/directory",
-				Factor:         0.33,
+				Account:                   AcmeAccount{Email: "hostmaster@example.org", Key: "key"},
+				Domains:                   []string{"example.com"},
+				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
+				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
 					"my label": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},

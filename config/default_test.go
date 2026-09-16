@@ -105,8 +105,8 @@ func TestNewOAuth2ProviderDefaults(t *testing.T) {
 
 func TestNewAcmeDefaults(t *testing.T) {
 	v := NewAcmeDefaults()
-	if v.Factor != 0.33 {
-		t.Errorf("Factor: got %v, want %v", v.Factor, 0.33)
+	if v.RemainingLifetimeFraction != 0.25 {
+		t.Errorf("RemainingLifetimeFraction: got %v, want %v", v.RemainingLifetimeFraction, 0.25)
 	}
 	if v.DNS01 != nil {
 		t.Errorf("DNS01: got %v, want nil", v.DNS01)

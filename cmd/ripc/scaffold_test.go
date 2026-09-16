@@ -365,10 +365,10 @@ func TestScaffoldConfigValue_AcmeDNS01(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	tree := getTreeFromStore(t, mockStore, scope)
-	// The scaffold creates the missing [acme] section with the default factor,
-	// then the entry under dns-01.<label>.
-	if got := tree.Get("acme.factor"); got != 0.33 {
-		t.Errorf("expected default factor, got %v", got)
+	// The scaffold creates the missing [acme] section with the default
+	// remaining lifetime fraction, then the entry under dns-01.<label>.
+	if got := tree.Get("acme.remaining_lifetime_fraction"); got != 0.25 {
+		t.Errorf("expected default remaining lifetime fraction, got %v", got)
 	}
 	path := "acme.dns-01.deeploid_cf"
 	entryTree, ok := tree.Get(path).(*toml.Tree)
