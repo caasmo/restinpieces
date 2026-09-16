@@ -96,6 +96,14 @@ func getAndPrintConfigPaths(ui UI, secureStore config.SecureStore, scopeName str
 
 	if len(filteredPaths) == 1 {
 		value := allPathsWithValues[filteredPaths[0]]
+		if valueHasLinebreak(value) {
+			_, err := fmt.Fprint(ui.Out, value)
+			if err != nil {
+				return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
+			}
+			return nil
+		}
+
 		_, err := fmt.Fprintf(ui.Out, "%v\n", value)
 		if err != nil {
 			return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
@@ -105,12 +113,33 @@ func getAndPrintConfigPaths(ui UI, secureStore config.SecureStore, scopeName str
 
 	for _, path := range filteredPaths {
 		value := allPathsWithValues[path]
+		if valueHasLinebreak(value) {
+			_, err := fmt.Fprintf(ui.Out, "%s = %v", path, value)
+			if err != nil {
+				return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
+			}
+			continue
+		}
+
 		_, err := fmt.Fprintf(ui.Out, "%s = %v\n", path, value)
 		if err != nil {
 			return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
 		}
 	}
 	return nil
+}
+
+// valueHasLinebreak reports whether value is text that already ends with a
+// newline. Get prints raw values and lists, and it is also used to export PEM
+// blocks with a redirect to a file, so printing another newline would add a
+// blank line at the end of the entry.
+func valueHasLinebreak(value interface{}) bool {
+	text, ok := value.(string)
+	if !ok {
+		return false
+	}
+
+	return strings.HasSuffix(text, "\n")
 }
 
 func listTomlPathsWithValuesRecursive(tree *toml.Tree, prefix string, pathsWithValues *map[string]interface{}) {

@@ -54,12 +54,16 @@ type Acme struct {
 // AcmeAccount is the ACME account identity, shared by all challenge types.
 type AcmeAccount struct {
 	// Email is the account contact address. It must be at a domain you control;
-	// Let's Encrypt rejects reserved domains such as example.com.
+	// Let's Encrypt rejects reserved domains such as example.com. Let's Encrypt
+	// no longer stores or uses it for anything, so no mailbox needs to exist;
+	// another CA may still use it.
 	Email string `toml:"email" comment:"Account contact email"`
 
-	// Key is the account private key in PEM form. lego accepts ECDSA (P-256 or
-	// P-384) and RSA; Ed25519 is not supported. It identifies the account, so
-	// keep it secret and reuse it.
+	// Key is the account private key in PEM form. Generate it with:
+	//   openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256 -out account.key
+	// lego accepts ECDSA (P-256 or P-384) and RSA; Ed25519 is not supported.
+	// The key is the account identity: the same key always resolves to the
+	// same account, regardless of the email. Keep it secret and reuse it.
 	Key string `toml:"key" comment:"PEM account private key (ECDSA or RSA)"`
 }
 

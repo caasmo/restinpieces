@@ -155,6 +155,31 @@ func TestGetAndPrintConfigPaths_Success_SingleMatch(t *testing.T) {
 	}
 }
 
+func TestGetAndPrintConfigPaths_MultiMatchNoExtraBlankLine(t *testing.T) {
+	scope := "app"
+	mockStore := NewMockGetSecureStore(map[string][]byte{
+		scope: []byte("[acme]\n  profile = \"tlsserver\"\n  certificate = \"-----BEGIN-----\\nline\\n-----END-----\\n\"\n"),
+	})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := getAndPrintConfigPaths(ui, mockStore, scope, "acme")
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	output := stdout.String()
+	if strings.Contains(output, "-----END-----\n\n") {
+		t.Errorf("Expected no blank line after PEM value, got %q", output)
+	}
+
+	for _, want := range []string{"acme.certificate = ", "acme.profile = tlsserver"} {
+		if !strings.Contains(output, want) {
+			t.Errorf("Expected output to contain %q, got %q", want, output)
+		}
+	}
+}
+
 // TestGetAndPrintConfigPaths_NoResults_WithFilter verifies the message for a non-matching filter.
 func TestGetAndPrintConfigPaths_NoResults_WithFilter(t *testing.T) {
 	scope := "app"
@@ -250,5 +275,29 @@ func TestHandleGetCommand_Help(t *testing.T) {
 	}
 	if stderr.Len() != 0 {
 		t.Errorf("expected empty stderr, got: %q", stderr.String())
+	}
+}
+
+func TestValueHasLinebreak(t *testing.T) {
+	tests := []struct {
+		name  string
+		value interface{}
+		want  bool
+	}{
+		{name: "unix newline", value: "line\n", want: true},
+		{name: "windows newline", value: "line\r\n", want: true},
+		{name: "pem ending", value: "-----END CERTIFICATE-----\n", want: true},
+		{name: "no newline", value: ":8080", want: false},
+		{name: "empty", value: "", want: false},
+		{name: "number", value: int64(200), want: false},
+		{name: "bool", value: true, want: false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := valueHasLinebreak(tt.value); got != tt.want {
+				t.Errorf("valueHasLinebreak(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
 	}
 }
