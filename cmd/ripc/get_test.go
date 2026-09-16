@@ -133,6 +133,28 @@ func TestGetAndPrintConfigPaths_Success_WithFilter(t *testing.T) {
 	}
 }
 
+// TestGetAndPrintConfigPaths_Success_SingleMatch verifies a single match prints value only.
+func TestGetAndPrintConfigPaths_Success_SingleMatch(t *testing.T) {
+	scope := "app"
+	mockStore := NewMockGetSecureStore(map[string][]byte{
+		scope: []byte(conf),
+	})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := getAndPrintConfigPaths(ui, mockStore, scope, "server.addr")
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	output := stdout.String()
+	expectedOutput := ":8080\n"
+	if output != expectedOutput {
+		t.Errorf("Expected single value output %q, got %q", expectedOutput, output)
+	}
+}
+
 // TestGetAndPrintConfigPaths_NoResults_WithFilter verifies the message for a non-matching filter.
 func TestGetAndPrintConfigPaths_NoResults_WithFilter(t *testing.T) {
 	scope := "app"

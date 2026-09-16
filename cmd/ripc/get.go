@@ -94,9 +94,19 @@ func getAndPrintConfigPaths(ui UI, secureStore config.SecureStore, scopeName str
 
 	sort.Strings(filteredPaths) // Ensure consistent order for output
 
+	if len(filteredPaths) == 1 {
+		value := allPathsWithValues[filteredPaths[0]]
+		_, err := fmt.Fprintf(ui.Out, "%v\n", value)
+		if err != nil {
+			return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
+		}
+		return nil
+	}
+
 	for _, path := range filteredPaths {
 		value := allPathsWithValues[path]
-		if _, err := fmt.Fprintf(ui.Out, "%s = %v\n", path, value); err != nil {
+		_, err := fmt.Fprintf(ui.Out, "%s = %v\n", path, value)
+		if err != nil {
 			return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
 		}
 	}
