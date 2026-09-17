@@ -98,6 +98,40 @@ func TestRequestLog_SuccessfulRequest(t *testing.T) {
 	}
 }
 
+// TestRequestLog_ProxyHeader verifies the log uses the configured proxy header.
+func TestRequestLog_ProxyHeader(t *testing.T) {
+	// --- Setup ---
+	mockApp := &core.App{}
+	logBuffer := new(bytes.Buffer)
+	memHandler := newMemoryHandler(logBuffer)
+	mockApp.SetLogger(slog.New(memHandler))
+
+	cfg := config.NewDefaultConfig()
+	cfg.Log.Request.Activated = true
+	cfg.Server.ClientIpProxyHeader = "CF-Connecting-IP"
+	provider := config.NewProvider(cfg)
+	mockApp.SetConfigProvider(provider)
+
+	nextHandler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
+	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(nextHandler))
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.RemoteAddr = "198.51.100.7:12345"
+	req.Header.Set("CF-Connecting-IP", "203.0.113.9")
+
+	// --- Execution ---
+	handlerChain.ServeHTTP(httptest.NewRecorder(), req)
+
+	// --- Verification ---
+	logRecord, err := memHandler.LastRecord()
+	if err != nil {
+		t.Fatalf("Failed to parse log output: %v", err)
+	}
+	if ip, _ := logRecord["remote_ip"].(string); ip != "203.0.113.9" {
+		t.Errorf("Expected remote_ip '203.0.113.9', got '%v'", logRecord["remote_ip"])
+	}
+}
+
 // TestRequestLog_Deactivated ensures no log is written when the middleware is disabled.
 func TestRequestLog_Deactivated(t *testing.T) {
 	// --- Setup ---

@@ -59,11 +59,6 @@
 - if yes, adopt it where we scan rows (`db/databasesql/`)
 - ref: `db/databasesql/users.go`, `db/databasesql/queue.go`
 
-# client-ip: centralize all remote ip through getClientIP
-
-- only `App.GetClientIP` respects `server.client_ip_proxy_header`; other paths ignore it, so logs and blocking diverge behind a proxy
-- ref: `core/request.go` (`App.GetClientIP`), `core/prerouter/block_ip.go` (local `GetClientIP`), `core/prerouter/request_log.go` (`RemoteIP`), `core/handler_metrics.go` (`RemoteAddr` split), `config/config.go` (`Server.ClientIpProxyHeader`)
-
 # block-host: SNI + additional prerouter cheap checks
 
 - direct-IP `Host` passes SNI==Host, so SNI alone does not catch it; `allowed_hosts` does. SNI check catches domain-fronting (SNI legit, Host evil).

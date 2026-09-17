@@ -2,7 +2,6 @@ package prerouter
 
 import (
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -15,17 +14,6 @@ const (
 	blockingDuration = 3 * time.Minute // Default blocking duration
 	defaultBlockCost = 1               // Default cost for blocked IP entries
 )
-
-// dummy TODO
-func GetClientIP(r *http.Request) string {
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		// Handle error potentially, or use RemoteAddr directly if no port
-		ip = r.RemoteAddr
-	}
-
-	return ip
-}
 
 // The primary goal of this middleware is to act as a simple, robust circuit
 // breaker to try to prevent server collapse, not to be a nuanced,
@@ -105,9 +93,7 @@ func (b *BlockIp) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Check if IP blocking is enabled first
 		if b.IsEnabled() {
-			// Get client IP from request using app's method
-			// TODO
-			ip := GetClientIP(r)
+			ip := b.app.ClientIP(r)
 
 			// Check if the IP is already blocked (cache check)
 			if b.IsBlocked(ip) {

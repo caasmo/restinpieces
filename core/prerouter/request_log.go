@@ -1,9 +1,7 @@
 package prerouter
 
 import (
-	"net"
 	"net/http"
-	"net/netip"
 	"strings"
 
 	"github.com/caasmo/restinpieces/core"
@@ -14,24 +12,6 @@ const (
 	maxBodySize = 1 << 20 // 1MB
 	logMessage  = "http_request"
 )
-
-// RemoteIP returns the normalized IP address from the request.
-// It attempts to parse the IP from the host-port combination and falls back
-// to the raw RemoteAddr if parsing fails at any stage.
-func RemoteIP(r *http.Request) string {
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		// If splitting fails, RemoteAddr might not have a port.
-		// Use the whole string and try to parse it directly.
-		ip = r.RemoteAddr
-	}
-
-	parsed, err := netip.ParseAddr(ip)
-	if err != nil {
-		return ip // Fallback to the best IP string we have
-	}
-	return parsed.StringExpanded()
-}
 
 // cutStr limits string length, adding ellipsis if the string is truncated.
 // The total length of the returned string will not exceed max.
@@ -102,7 +82,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.String("uri", cutStr(req.URL.RequestURI(), limits.URILength)))
 		attrs = append(attrs, slog.Int("status", rec.Status))
 		attrs = append(attrs, slog.Duration("duration", duration))
-		attrs = append(attrs, slog.String("remote_ip", cutStr(RemoteIP(req), limits.RemoteIPLength)))
+		attrs = append(attrs, slog.String("remote_ip", cutStr(r.app.ClientIP(req), limits.RemoteIPLength)))
 		attrs = append(attrs, slog.String("user_agent", cutStr(req.UserAgent(), limits.UserAgentLength)))
 		attrs = append(attrs, slog.String("referer", cutStr(req.Referer(), limits.RefererLength)))
 		attrs = append(attrs, slog.String("host", cutStr(req.Host, limits.RemoteIPLength)))

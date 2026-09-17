@@ -14,31 +14,6 @@ import (
 	"github.com/caasmo/restinpieces/topk"
 )
 
-// TestBlockIP_GetClientIP verifies the IP extraction logic from a request.
-func TestBlockIP_GetClientIP(t *testing.T) {
-	testCases := []struct {
-		name       string
-		remoteAddr string
-		expectedIP string
-	}{
-		{"IPv4 with port", "192.0.2.1:12345", "192.0.2.1"},
-		{"IPv4 without port", "192.0.2.1", "192.0.2.1"},
-		{"IPv6 with port", "[2001:db8::1]:12345", "2001:db8::1"},
-		{"IPv6 without port", "2001:db8::1", "2001:db8::1"},
-		{"Invalid address", "invalid-address", "invalid-address"},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			req := httptest.NewRequest("GET", "/", nil)
-			req.RemoteAddr = tc.remoteAddr
-			if got := GetClientIP(req); got != tc.expectedIP {
-				t.Errorf("expected IP '%s', but got '%s'", tc.expectedIP, got)
-			}
-		})
-	}
-}
-
 // TestBlockIP_WhenIPIsAlreadyBlocked verifies that a pre-blocked IP is rejected.
 func TestBlockIP_WhenIPIsAlreadyBlocked(t *testing.T) {
 	// --- Setup ---

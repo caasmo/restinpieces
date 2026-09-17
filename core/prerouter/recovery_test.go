@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 )
 
@@ -41,6 +42,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 			memHandler := newMemoryHandler(logBuffer)
 			mockApp := &core.App{}
 			mockApp.SetLogger(slog.New(memHandler))
+			mockApp.SetConfigProvider(config.NewProvider(config.NewDefaultConfig()))
 
 			req := httptest.NewRequest("GET", "/boom", nil)
 			rr := httptest.NewRecorder()
@@ -82,6 +84,7 @@ func TestRecoveryMiddleware_AbortHandler(t *testing.T) {
 	memHandler := newMemoryHandler(logBuffer)
 	mockApp := &core.App{}
 	mockApp.SetLogger(slog.New(memHandler))
+	mockApp.SetConfigProvider(config.NewProvider(config.NewDefaultConfig()))
 
 	panicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		panic(http.ErrAbortHandler)

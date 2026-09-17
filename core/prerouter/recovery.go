@@ -55,7 +55,7 @@ func (rc *Recovery) Execute(next http.Handler) http.Handler {
 				"panic", panicValue,
 				"method", r.Method,
 				"uri", r.URL.RequestURI(),
-				"remote_ip", RemoteIP(r),
+				"remote_ip", rc.app.ClientIP(r),
 				"stack", string(stack),
 			)
 

@@ -2,7 +2,6 @@ package core
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -19,7 +18,7 @@ func (a *App) MetricsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get client IP
-	clientIP := strings.Split(r.RemoteAddr, ":")[0]
+	clientIP := a.ClientIP(r)
 	if clientIP == "" {
 		WriteJsonError(w, errorInvalidRequest)
 		return

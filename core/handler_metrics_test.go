@@ -66,6 +66,16 @@ func TestMetricsHandler(t *testing.T) {
 			expectedStatus: http.StatusBadRequest,
 			expectedBody:   "err_invalid_input",
 		},
+		{
+			name: "ipv6 allowed",
+			config: config.Metrics{
+				Enabled:    true,
+				AllowedIPs: []string{"2001:db8::1"},
+			},
+			remoteAddr:     "[2001:db8::1]:12345",
+			expectedStatus: http.StatusOK,
+			expectedBody:   "go_goroutines",
+		},
 	}
 
 	for _, tc := range testCases {

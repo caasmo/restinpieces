@@ -210,8 +210,9 @@ type Server struct {
 	IdleTimeout Duration `toml:"idle_timeout" comment:"Max time for idle keep-alive connections"`
 
 	// If behind a trusted proxy, specify the header containing the real client IP.
-	// Common values: "X-Forwarded-For", "X-Real-IP". Leave empty if not behind a proxy.
-	ClientIpProxyHeader string `toml:"client_ip_proxy_header" comment:"Header to trust for client IP (e.g. 'X-Forwarded-For')"`
+	// With Cloudflare, use "CF-Connecting-IP". "X-Forwarded-For" and "X-Real-IP"
+	// also work. Leave empty if not behind a proxy.
+	ClientIpProxyHeader string `toml:"client_ip_proxy_header" comment:"Header to trust for client IP (e.g. 'CF-Connecting-IP')"`
 
 	// Tls holds the server's TLS settings.
 	Tls Tls `toml:"tls" comment:"TLS settings"`

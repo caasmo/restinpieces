@@ -8,7 +8,7 @@ import (
 	"github.com/caasmo/restinpieces/config"
 )
 
-func TestGetClientIP(t *testing.T) {
+func TestClientIP(t *testing.T) {
 	testCases := []struct {
 		name                string
 		remoteAddr          string
@@ -54,6 +54,34 @@ func TestGetClientIP(t *testing.T) {
 			clientIpProxyHeader: "X-Forwarded-For",
 			expectedIP:          "192.0.2.1",
 		},
+		{
+			name:       "direct connection ipv6 no port",
+			remoteAddr: "2001:db8::1",
+			expectedIP: "2001:db8::1",
+		},
+		{
+			name:       "direct connection expanded ipv6",
+			remoteAddr: "[2001:0db8:0000:0000:0000:0000:0000:0001]:12345",
+			expectedIP: "2001:db8::1",
+		},
+		{
+			name:       "direct connection ipv4 mapped to ipv6",
+			remoteAddr: "[::ffff:192.0.2.1]:12345",
+			expectedIP: "192.0.2.1",
+		},
+		{
+			name:       "direct connection invalid address",
+			remoteAddr: "invalid-address",
+			expectedIP: "invalid-address",
+		},
+		{
+			name:                "proxy connection ipv6",
+			remoteAddr:          "198.51.100.1:54321",
+			proxyHeader:         "CF-Connecting-IP",
+			proxyHeaderValue:    "2001:0db8:0000:0000:0000:0000:0000:0001",
+			clientIpProxyHeader: "CF-Connecting-IP",
+			expectedIP:          "2001:db8::1",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -75,7 +103,7 @@ func TestGetClientIP(t *testing.T) {
 			}
 
 			// Execute
-			ip := app.GetClientIP(req)
+			ip := app.ClientIP(req)
 
 			// Verify
 			if ip != tc.expectedIP {
