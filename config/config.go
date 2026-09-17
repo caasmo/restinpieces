@@ -60,8 +60,10 @@ type BlockHost struct {
 	Activated bool `toml:"activated" comment:"Activate host blocking"`
 	// AllowedHosts is a list of hostnames that are allowed to access the server.
 	// If the list is empty, all hosts are allowed.
-	// Supports exact matches (e.g., "example.com") and wildcard subdomains (e.g., "*.example.com").
-	AllowedHosts []string `toml:"allowed_hosts" comment:"List of allowed hostnames (e.g., 'example.com', '*.example.com')"`
+	// An entry matches exactly (e.g., "example.com"); a leading "*" (e.g., "*example.com")
+	// matches the domain and all of its subdomains.
+	// Entries are lowercase; matching the request host ignores case, the port, and a trailing dot.
+	AllowedHosts []string `toml:"allowed_hosts" comment:"List of allowed hostnames (e.g., 'example.com', '*example.com')"`
 }
 
 // Log contains Default (Batch) log configuration

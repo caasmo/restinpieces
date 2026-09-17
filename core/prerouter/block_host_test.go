@@ -48,24 +48,24 @@ func TestBlockHost(t *testing.T) {
 			expectNextCalled:   false,
 		},
 		{
-			name: "Case: Host Matches a Wildcard Subdomain",
+			name: "Case: Wildcard Domain Matches a Subdomain",
 			config: config.BlockHost{
 				Activated:    true,
-				AllowedHosts: []string{"*.example.com"},
+				AllowedHosts: []string{"*example.com"},
 			},
 			requestHost:        "api.example.com",
 			expectedStatusCode: http.StatusOK,
 			expectNextCalled:   true,
 		},
 		{
-			name: "Case: Host is Bare Domain and Wildcard Exists",
+			name: "Case: Wildcard Domain Matches the Bare Domain",
 			config: config.BlockHost{
 				Activated:    true,
-				AllowedHosts: []string{"*.example.com"},
+				AllowedHosts: []string{"*example.com"},
 			},
 			requestHost:        "example.com",
-			expectedStatusCode: http.StatusForbidden,
-			expectNextCalled:   false,
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   true,
 		},
 		{
 			name: "Case: AllowedHosts List is Empty",
@@ -96,6 +96,56 @@ func TestBlockHost(t *testing.T) {
 			requestHost:        "unauthorized.com:8080",
 			expectedStatusCode: http.StatusForbidden,
 			expectNextCalled:   false,
+		},
+		{
+			name: "Case: Wildcard Domain Does Not Match a Similar Domain",
+			config: config.BlockHost{
+				Activated:    true,
+				AllowedHosts: []string{"*example.com"},
+			},
+			requestHost:        "notexample.com",
+			expectedStatusCode: http.StatusForbidden,
+			expectNextCalled:   false,
+		},
+		{
+			name: "Case: Exact Entry Does Not Match a Subdomain",
+			config: config.BlockHost{
+				Activated:    true,
+				AllowedHosts: []string{"example.com"},
+			},
+			requestHost:        "api.example.com",
+			expectedStatusCode: http.StatusForbidden,
+			expectNextCalled:   false,
+		},
+		{
+			name: "Case: Host Case Differs from Allowed Entry",
+			config: config.BlockHost{
+				Activated:    true,
+				AllowedHosts: []string{"example.com"},
+			},
+			requestHost:        "Example.COM",
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   true,
+		},
+		{
+			name: "Case: Host Has a Trailing Dot",
+			config: config.BlockHost{
+				Activated:    true,
+				AllowedHosts: []string{"example.com"},
+			},
+			requestHost:        "example.com.",
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   true,
+		},
+		{
+			name: "Case: IPv6 Host with Port Matches Entry",
+			config: config.BlockHost{
+				Activated:    true,
+				AllowedHosts: []string{"2001:db8::1"},
+			},
+			requestHost:        "[2001:db8::1]:8080",
+			expectedStatusCode: http.StatusOK,
+			expectNextCalled:   true,
 		},
 	}
 

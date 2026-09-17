@@ -31,40 +31,50 @@ func (b *BlockHost) Execute(next http.Handler) http.Handler {
 			return
 		}
 
-		// Use net.SplitHostPort to reliably separate host and port
-		requestHost, _, err := net.SplitHostPort(r.Host)
-		if err != nil {
-			// If SplitHostPort fails, it might be because there's no port.
-			// In that case, r.Host is just the host, so we use it directly.
-			// This also covers cases like IPv6 addresses without brackets.
-			requestHost = r.Host
-		}
-
-		matched := false
-		for _, allowedHost := range cfg.AllowedHosts {
-			// Check for wildcard match (e.g., *.example.com)
-			if strings.HasPrefix(allowedHost, "*.") {
-				suffix := allowedHost[1:] // e.g., ".example.com"
-				// The request host must end with the suffix, but must not be the bare domain itself.
-				// e.g., "sub.example.com" should match, but "example.com" should not.
-				if strings.HasSuffix(requestHost, suffix) && requestHost != suffix[1:] {
-					matched = true
-					break
-				}
-			} else {
-				// Check for exact match
-				if requestHost == allowedHost {
-					matched = true
-					break
-				}
-			}
-		}
-
-		if !matched {
+		if !isHostHeaderAllowed(r.Host, cfg.AllowedHosts) {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// isHostHeaderAllowed reports whether the Host header value matches any of the
+// allowed host entries.
+func isHostHeaderAllowed(requestHost string, allowedHosts []string) bool {
+	requestHost = normalizeHost(requestHost)
+
+	for _, allowedHost := range allowedHosts {
+		if strings.HasPrefix(allowedHost, "*") {
+			domain := allowedHost[1:] // e.g., "example.com"
+			if requestHost == domain || strings.HasSuffix(requestHost, "."+domain) {
+				return true
+			}
+
+			continue
+		}
+
+		if requestHost == allowedHost {
+			return true
+		}
+	}
+
+	return false
+}
+
+// normalizeHost returns the form used to compare hostnames: lowercase, with
+// the port and a trailing dot removed. net.SplitHostPort separates the port
+// reliably; when it fails there is no port, and the host is used as it is.
+// This also covers IPv6 addresses without brackets.
+func normalizeHost(host string) string {
+	hostWithoutPort, _, err := net.SplitHostPort(host)
+	if err == nil {
+		host = hostWithoutPort
+	}
+
+	host = strings.TrimSuffix(host, ".")
+	host = strings.Trim(host, "[]")
+
+	return strings.ToLower(host)
 }

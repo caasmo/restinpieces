@@ -567,7 +567,29 @@ func validateBlockHost(blockHost *BlockHost) error {
 		if strings.ContainsAny(host, " \t\r\n") {
 			return fmt.Errorf("block_host.allowed_hosts: host '%s' contains whitespace characters", host)
 		}
+		if strings.Contains(host, "/") {
+			return fmt.Errorf("block_host.allowed_hosts: host '%s' must be a hostname, not a URL or path", host)
+		}
+		if strings.ContainsAny(host, "[]") {
+			return fmt.Errorf("block_host.allowed_hosts: host '%s' must not include brackets", host)
+		}
+		if strings.Contains(host, ":") && net.ParseIP(host) == nil {
+			return fmt.Errorf("block_host.allowed_hosts: host '%s' must not include a port", host)
+		}
+		if host != strings.ToLower(host) {
+			return fmt.Errorf("block_host.allowed_hosts: host '%s' must be lowercase", host)
+		}
+		if strings.HasSuffix(host, ".") {
+			return fmt.Errorf("block_host.allowed_hosts: host '%s' must not end with a dot", host)
+		}
+
+		hasWildcard := strings.Contains(host, "*")
+		validWildcard := strings.HasPrefix(host, "*") && strings.Count(host, "*") == 1 && len(host) > 1 && host[1] != '.'
+		if hasWildcard && !validWildcard {
+			return fmt.Errorf("block_host.allowed_hosts: host '%s' must use a wildcard like '*example.com'", host)
+		}
 	}
+
 	return nil
 }
 

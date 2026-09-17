@@ -345,7 +345,8 @@ func TestValidateBlockUaList(t *testing.T) {
 
 func TestValidateBlockHost(t *testing.T) {
 	t.Parallel()
-	valid := BlockHost{Activated: true, AllowedHosts: []string{"a", "b"}}
+
+	valid := BlockHost{Activated: true, AllowedHosts: []string{"a", "b", "example.com", "*example.com", "203.0.113.10", "2001:db8::1"}}
 	if err := validateBlockHost(&valid); err != nil {
 		t.Errorf("valid case failed: %v", err)
 	}
@@ -356,6 +357,17 @@ func TestValidateBlockHost(t *testing.T) {
 	invalidCases := []BlockHost{
 		{Activated: true, AllowedHosts: []string{""}},
 		{Activated: true, AllowedHosts: []string{"a b"}},
+		{Activated: true, AllowedHosts: []string{"https://example.com"}},
+		{Activated: true, AllowedHosts: []string{"example.com/path"}},
+		{Activated: true, AllowedHosts: []string{"example.com:443"}},
+		{Activated: true, AllowedHosts: []string{"[2001:db8::1]"}},
+		{Activated: true, AllowedHosts: []string{"Example.com"}},
+		{Activated: true, AllowedHosts: []string{"example.com."}},
+		{Activated: true, AllowedHosts: []string{"*"}},
+		{Activated: true, AllowedHosts: []string{"*."}},
+		{Activated: true, AllowedHosts: []string{"*.example.com"}},
+		{Activated: true, AllowedHosts: []string{"foo.*.com"}},
+		{Activated: true, AllowedHosts: []string{"**example.com"}},
 	}
 	for _, cfg := range invalidCases {
 		if err := validateBlockHost(&cfg); err == nil {
