@@ -24,17 +24,18 @@
   - [deploy](#deploy)
   - [undeploy](#undeploy)
   - [backup](#backup)
+  - [cp](#cp)
   - [maintenance](#maintenance)
   - [ripc](#ripc)
   - [shell](#shell)
   - [status](#status)
   - [logs](#logs)
   - [restart](#restart)
+  - [reload](#reload)
 - [Debugging on a Remote Server](#debugging-on-a-remote-server)
   - [Check Status and Logs](#1-check-status-and-logs)
   - [Log in and Run Manually](#2-log-in-and-run-manually)
   - [Debug the Systemd Sandbox](#3-debug-the-systemd-sandbox)
-- [Systemd Unit Contract](#systemd-unit-contract)
 - [Systemd Unit Contract](#systemd-unit-contract)
 
 ## Relationship with `ripc`
@@ -87,14 +88,17 @@ Commands:
 
 ```bash
 PROJECT_PATH="$PWD"
+PROJECT_NAME=$(basename "$PROJECT_PATH")
 BUILD_BASE="/tmp"
 HOST="user@target-server.com"
+VERSION=$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)
+BUILD_DIR="${BUILD_BASE}/${PROJECT_NAME}-${VERSION}"
 
 # 1. Build a complete bootstrap artifact locally
 ./ripdep build-bootstrap "$BUILD_BASE" "$PROJECT_PATH"
 
 # 2. Deploy to remote
-./ripdep deploy "$HOST" "${BUILD_BASE}/my-app"
+./ripdep deploy "$HOST" "$BUILD_DIR"
 ```
 
 The `deploy` command performs these steps:
@@ -129,17 +133,20 @@ Commands:
 
 ```bash
 PROJECT_PATH="$PWD"
+PROJECT_NAME=$(basename "$PROJECT_PATH")
 BUILD_BASE="/tmp"
 HOST="user@target-server.com"
+VERSION=$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)
+BUILD_DIR="${BUILD_BASE}/${PROJECT_NAME}-${VERSION}"
 
 # 1. Build an update artifact
 ./ripdep build-release "$BUILD_BASE" "$PROJECT_PATH"
 
 # 2. Deploy
-./ripdep deploy "$HOST" "${BUILD_BASE}/my-app"
+./ripdep deploy "$HOST" "$BUILD_DIR"
 
 # 3. Restart application to pick up new binary
-ssh -t "$HOST" "sudo systemctl restart my-app"
+./ripdep restart "$HOST" "$PROJECT_NAME"
 ```
 
 ### 3. Restore Application from Backup
@@ -181,7 +188,7 @@ PROJECT_PATH="$PWD"
 ln -s "$PROJECT_PATH" "/tmp/${APP_NAME}"
 ./ripdep build-release /tmp "/tmp/${APP_NAME}"
 ./ripdep deploy user@server.com "/tmp/${APP_NAME}-$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)"
-ssh -t user@server.com "sudo systemctl restart ${APP_NAME}"
+./ripdep restart user@server.com "${APP_NAME}"
 ```
 
 ## Commands
@@ -375,6 +382,19 @@ Creates a tarball of `/home/<project-name>` on the server, downloads it to the c
 ./ripdep backup user@server.com my-app
 ```
 
+### `cp`
+Copies a local file into `/home/<project-name>/` on the server, owned by the service user with `600` permissions.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+*   `local-file`: the local file to copy.
+
+**Example:**
+```bash
+./ripdep cp user@server.com my-app ./age.key
+```
+
 ### `maintenance`
 Sets `maintenance.activated` with `ripc` and reloads the service.
 
@@ -448,6 +468,18 @@ Restarts the service.
 **Example:**
 ```bash
 ./ripdep restart user@server.com my-app
+```
+
+### `reload`
+Reloads the service configuration without restarting the process.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+
+**Example:**
+```bash
+./ripdep reload user@server.com my-app
 ```
 
 ## Debugging on a Remote Server
