@@ -102,13 +102,13 @@ func (s *Server) redirectToHTTPS() http.HandlerFunc {
 		serverCfg := s.configProvider.Get().Server
 
 		// Construct target URL by combining:
-		// - BaseURL() provides the scheme://host:port (always correct format)
+		// - PublicURL provides the scheme://host:port visitors use
 		// - RequestURI() provides the path and query (always starts with /, includes ? if query exists)
 		// This handles all cases correctly:
 		// - Empty path becomes "/"
 		// - Query strings are preserved
 		// - Special characters remain properly encoded
-		target := serverCfg.BaseURL() + r.URL.RequestURI()
+		target := serverCfg.PublicURL + r.URL.RequestURI()
 
 		// Perform the redirect with HTTP 301 (Moved Permanently)
 		http.Redirect(w, r, target, http.StatusMovedPermanently)
@@ -308,7 +308,7 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 		protocol = "HTTPS"
 	}
 
-	s.logger.Info("Server:", "address", cfg.Addr, "protocol", protocol)
+	s.logger.Info("Server:", "address", cfg.Addr, "public_url", cfg.PublicURL, "protocol", protocol)
 
 	if cfg.Tls.Enabled {
 		if len(cfg.Tls.Certificate) > 0 && len(cfg.Tls.PrivateKey) > 0 {

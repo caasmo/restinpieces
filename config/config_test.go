@@ -174,27 +174,6 @@ func TestLogLevel_MarshalText(t *testing.T) {
 	}
 }
 
-func TestServer_BaseURL(t *testing.T) {
-	t.Parallel()
-	testCases := []struct {
-		name   string
-		server Server
-		want   string
-	}{
-		{"HTTP", Server{Addr: "example.com:80", Tls: Tls{Enabled: false}}, "http://example.com:80"},
-		{"HTTPS", Server{Addr: "example.com:443", Tls: Tls{Enabled: true}}, "https://example.com:443"},
-		{"Empty host becomes localhost", Server{Addr: ":8080", Tls: Tls{Enabled: false}}, "http://localhost:8080"},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := tc.server.BaseURL(); got != tc.want {
-				t.Errorf("BaseURL() = %v, want %v", got, tc.want)
-			}
-		})
-	}
-}
-
 func TestEndpoints_Path(t *testing.T) {
 	t.Parallel()
 	testCases := []struct {

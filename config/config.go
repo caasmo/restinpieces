@@ -192,9 +192,24 @@ type Scheduler struct {
 }
 
 type Server struct {
-	// Network address and port the HTTP server listens on.
+	// Network address and port the HTTP server listens on. This is where the
+	// server accepts connections; it is not the address visitors use, which is
+	// PublicURL.
 	// Examples: ":8080" (all interfaces, port 8080), "localhost:9000"
 	Addr string `toml:"addr" comment:"HTTP listen address (e.g. ':8080')"`
+
+	// PublicURL is the address visitors use to reach the application, for
+	// example "https://example.com". It does not have to match Addr or the TLS
+	// setting: behind a proxy that terminates TLS, the application can listen
+	// on ":8080" without TLS while visitors use "https://example.com".
+	//
+	// The application builds absolute addresses from it: the callback URL it
+	// gives an OAuth2 provider, and the address the plain HTTP server redirects
+	// to when server.tls.redirect_addr is set. It is read on every request, so
+	// a reload applies a change without a restart. Use "https://" when visitors
+	// use HTTPS: with TLS and the redirect server both on, "http://" loops, and
+	// most providers reject an "http://" callback except for localhost.
+	PublicURL string `toml:"public_url" comment:"Address visitors use (e.g. 'https://example.com')"`
 
 	// Maximum duration the server waits for ongoing requests to complete before shutting down.
 	ShutdownGracefulTimeout Duration `toml:"shutdown_graceful_timeout" comment:"Max time to wait for graceful shutdown"`
@@ -253,14 +268,6 @@ type Tls struct {
 	MTLSCertificates string `toml:"mtls_certificates" comment:"PEM bundle of accepted client certificates (Cloudflare AOP)"`
 }
 
-func (s *Server) BaseURL() string {
-	scheme := "http"
-	if s.Tls.Enabled {
-		scheme = "https"
-	}
-	return fmt.Sprintf("%s://%s", scheme, sanitizeAddrEmptyHost(s.Addr))
-}
-
 type RateLimits struct {
 	// Minimum time a user must wait between requesting password resets for the same account.
 	PasswordResetCooldown Duration `toml:"password_reset_cooldown" comment:"Min time between password reset requests"`
@@ -271,12 +278,14 @@ type RateLimits struct {
 }
 
 type OAuth2Provider struct {
-	Name            string   `toml:"name" comment:"Provider identifier (e.g. 'google')"`
-	ClientID        string   `toml:"client_id" comment:"OAuth2 client ID (set via env)"`
-	ClientSecret    string   `toml:"client_secret" comment:"OAuth2 client secret (set via env)"`
-	DisplayName     string   `toml:"display_name" comment:"User-facing provider name"`
-	RedirectURL     string   `toml:"redirect_url" comment:"Callback URL (leave empty for dynamic)"`
-	RedirectURLPath string   `toml:"redirect_url_path" comment:"Callback URL path (e.g. '/oauth2/callback') - uses server host/port"`
+	Name         string `toml:"name" comment:"Provider identifier (e.g. 'google')"`
+	ClientID     string `toml:"client_id" comment:"OAuth2 client ID (set via env)"`
+	ClientSecret string `toml:"client_secret" comment:"OAuth2 client secret (set via env)"`
+	DisplayName  string `toml:"display_name" comment:"User-facing provider name"`
+	// RedirectURLPath is the callback path the provider sends the visitor back
+	// to, for example "/oauth2/google/callback". The complete callback address
+	// is this path added to server.public_url.
+	RedirectURLPath string   `toml:"redirect_url_path" comment:"Callback path added to server.public_url (e.g. '/oauth2/google/callback')"`
 	AuthURL         string   `toml:"auth_url" comment:"OAuth2 authorization endpoint"`
 	TokenURL        string   `toml:"token_url" comment:"OAuth2 token endpoint"`
 	UserInfoURL     string   `toml:"user_info_url" comment:"User info API endpoint"`

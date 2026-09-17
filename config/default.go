@@ -55,6 +55,7 @@ func NewDefaultConfig() *Config {
 		},
 		Server: Server{
 			Addr:                    ":8080",
+			PublicURL:               "http://localhost:8080",
 			ShutdownGracefulTimeout: Duration{Duration: 15 * time.Second},
 			ReadTimeout:             Duration{Duration: 2 * time.Second},
 			ReadHeaderTimeout:       Duration{Duration: 2 * time.Second},
@@ -79,7 +80,6 @@ func NewDefaultConfig() *Config {
 			"google": {
 				Name:            "google",
 				DisplayName:     "Google",
-				RedirectURL:     "",
 				RedirectURLPath: "/oauth2/google/callback",
 				AuthURL:         "https://accounts.google.com/o/oauth2/v2/auth",
 				TokenURL:        "https://oauth2.googleapis.com/token",

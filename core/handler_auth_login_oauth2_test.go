@@ -559,8 +559,7 @@ func TestAuthWithOAuth2Handler_Security_RedirectURI(t *testing.T) {
 	cfg := config.NewDefaultConfig()
 	cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
 	cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
-	cfg.Server.Addr = "myapp.com"
-	cfg.Server.Tls.Enabled = true
+	cfg.Server.PublicURL = "https://myapp.com"
 	cfg.OAuth2Providers = map[string]config.OAuth2Provider{
 		"google": {
 			TokenURL: tokenURL, UserInfoURL: userInfoURL, Name: config.OAuth2ProviderGoogle,

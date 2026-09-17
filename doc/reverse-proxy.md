@@ -8,6 +8,10 @@ Every `ripc` command below runs in the application shell described in [Post-Depl
 
 ## TL;DR
 
+### `server.public_url`
+
+The address visitors use, for example `https://example.com`. Set it so the callback URLs given to OAuth2 providers and the HTTP→HTTPS redirect point at the public address instead of the local one. It does not have to match `server.addr`.
+
 ### `server.client_ip_proxy_header`
 
 The header your proxy fills with the visitor's address (`X-Forwarded-For` in nginx, `CF-Connecting-IP` in Cloudflare). Set it so the request log, the IP blocker, and metrics see each visitor instead of the proxy.
@@ -18,15 +22,26 @@ The header your proxy fills with the visitor's connection type (`X-Forwarded-Pro
 
 ### `server.tls.mtls_certificates`
 
-The certificate your proxy proves itself with, read from a file with `@`. Set it so nobody else can reach the application and fake the two headers above.
+The certificate your proxy proves itself with, read from a file with `@`. Set it so nobody else can reach the application and fake the two proxy headers above.
 
-Apply the first two with `sudo systemctl reload <app-name>`; the third is read at startup, so use `sudo systemctl restart <app-name>`. When visitors reach the application directly and it terminates TLS itself, none of the three is needed.
+Apply the first three with `sudo systemctl reload <app-name>`; the mTLS certificate is read at startup, so use `sudo systemctl restart <app-name>`. When visitors reach the application directly and it terminates TLS itself, none of the proxy settings is needed; only `server.public_url` must name the address visitors use.
 
 ## Content
 
+- [Point callbacks and redirects at the public address](#point-callbacks-and-redirects-at-the-public-address)
 - [Let the application see the visitor's address](#let-the-application-see-the-visitors-address)
 - [Let the application see whether the visitor used HTTPS](#let-the-application-see-whether-the-visitor-used-https)
 - [Prove the connection comes from the proxy (mTLS)](#prove-the-connection-comes-from-the-proxy-mtls)
+
+## Point callbacks and redirects at the public address
+
+Set `server.public_url` to the address visitors use, for example `https://example.com`:
+
+```bash
+ripc set server.public_url "https://example.com"
+```
+
+The application builds the OAuth2 callback and the HTTP→HTTPS redirect from this value. If it is left at the default, they point at `http://localhost:8080`, which visitors cannot reach.
 
 ## Let the application see the visitor's address
 

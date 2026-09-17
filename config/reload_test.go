@@ -76,6 +76,13 @@ func TestCheckChangedRestartFields(t *testing.T) {
 			},
 			expectFields: []string{"Server.Tls.MTLSCertificates"},
 		},
+		{
+			name: "Reloadable field change (Server.PublicURL)",
+			modifier: func(cfg *Config) {
+				cfg.Server.PublicURL = "https://example.com"
+			},
+			expectFields: []string{},
+		},
 	}
 
 	for _, tc := range testCases {

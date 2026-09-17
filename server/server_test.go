@@ -364,9 +364,8 @@ func TestRedirectToHTTPS(t *testing.T) {
 	// 1. Setup
 	server, provider := newTestServer(t, nil)
 	cfg := provider.Get()
-	// Configure the server's BaseURL by setting the relevant fields in the config.
-	cfg.Server.Tls.Enabled = true
-	cfg.Server.Addr = "secure.example.com:8443" // This will be used by BaseURL()
+	// Configure the address visitors use; the redirect target is built from it.
+	cfg.Server.PublicURL = "https://secure.example.com:8443"
 	provider.Update(cfg)
 
 	handler := server.redirectToHTTPS()
@@ -716,6 +715,7 @@ func TestServer_Run_TLS_WithRedirect_Success(t *testing.T) {
 	cfg := provider.Get()
 	cfg.Server.Tls.Enabled = true
 	cfg.Server.Addr = fmt.Sprintf("localhost:%d", httpsPort)
+	cfg.Server.PublicURL = fmt.Sprintf("https://localhost:%d", httpsPort)
 	cfg.Server.Tls.RedirectAddr = fmt.Sprintf("localhost:%d", httpPort)
 	cfg.Server.Tls.Certificate = string(certPEM)
 	cfg.Server.Tls.PrivateKey = string(keyPEM)
@@ -753,7 +753,7 @@ func TestServer_Run_TLS_WithRedirect_Success(t *testing.T) {
 	if resp.StatusCode != http.StatusMovedPermanently {
 		t.Errorf("expected status 301, got %d", resp.StatusCode)
 	}
-	expectedLocation := "https://" + cfg.Server.Addr + "/test"
+	expectedLocation := cfg.Server.PublicURL + "/test"
 	if loc := resp.Header.Get("Location"); loc != expectedLocation {
 		t.Errorf("expected redirect location %q, got %q", expectedLocation, loc)
 	}

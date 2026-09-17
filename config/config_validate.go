@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -330,8 +331,11 @@ func validateRequestLog(requestLog *LogRequest) error {
 
 func validateOAuth2Providers(providers map[string]OAuth2Provider) error {
 	for name, provider := range providers {
-		if provider.RedirectURL == "" && provider.RedirectURLPath == "" {
-			return fmt.Errorf("oauth2 provider '%s' must have either RedirectURL or RedirectURLPath configured", name)
+		if provider.RedirectURLPath == "" {
+			return fmt.Errorf("oauth2 provider '%s' must have redirect_url_path configured", name)
+		}
+		if !strings.HasPrefix(provider.RedirectURLPath, "/") || strings.HasPrefix(provider.RedirectURLPath, "//") {
+			return fmt.Errorf("oauth2 provider '%s' redirect_url_path '%s' must start with a single '/'", name, provider.RedirectURLPath)
 		}
 		if provider.UserInfoURL != "" && !strings.HasPrefix(provider.UserInfoURL, "https://") {
 			return fmt.Errorf("oauth2 provider '%s' UserInfoURL must use HTTPS: %s", name, provider.UserInfoURL)
@@ -354,6 +358,10 @@ func validateServer(server *Server) error {
 		return err
 	}
 
+	if err := validateServerPublicURL(server); err != nil {
+		return err
+	}
+
 	if err := validateServerRedirectAddr(server); err != nil {
 		return err
 	}
@@ -367,13 +375,6 @@ func validateServer(server *Server) error {
 	}
 
 	return nil
-}
-
-func sanitizeAddrEmptyHost(addr string) string {
-	if strings.HasPrefix(addr, ":") {
-		return "localhost" + addr
-	}
-	return addr
 }
 
 // validateServerAddr checks the Server.Addr field.
@@ -393,6 +394,35 @@ func validateServerAddr(server *Server) error {
 	// Validate the port component
 	if err := validateServerPort(port); err != nil {
 		return fmt.Errorf("invalid server port in address '%s': %w", server.Addr, err)
+	}
+
+	return nil
+}
+
+// validateServerPublicURL checks server.public_url, the address visitors use
+// to reach the application.
+//
+// The address must be absolute and carry no path, query, fragment, or user
+// information, because the application adds a path to it when it builds the
+// callback URL for an OAuth2 provider and the target of the HTTP redirect.
+func validateServerPublicURL(server *Server) error {
+	if server.PublicURL == "" {
+		return fmt.Errorf("server.public_url cannot be empty")
+	}
+
+	parsed, err := url.Parse(server.PublicURL)
+	if err != nil {
+		return fmt.Errorf("server.public_url '%s' is not a valid URL: %w", server.PublicURL, err)
+	}
+
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return fmt.Errorf("server.public_url '%s' must start with http:// or https://", server.PublicURL)
+	}
+	if parsed.Host == "" {
+		return fmt.Errorf("server.public_url '%s' must include a host", server.PublicURL)
+	}
+	if parsed.Path != "" || parsed.RawQuery != "" || parsed.Fragment != "" || parsed.User != nil {
+		return fmt.Errorf("server.public_url '%s' must not include a path, query, fragment, or user information", server.PublicURL)
 	}
 
 	return nil

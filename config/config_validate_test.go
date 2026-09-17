@@ -103,6 +103,7 @@ func TestValidate(t *testing.T) {
 		mutator func(*Config)
 	}{
 		{"invalid server", func(c *Config) { c.Server.Addr = "invalid" }},
+		{"invalid public url", func(c *Config) { c.Server.PublicURL = "" }},
 		{"invalid jwt", func(c *Config) { c.Jwt.AuthSecret = "" }},
 		{"invalid smtp", func(c *Config) { c.Smtp.Host = "" }},
 		{"invalid oauth", func(c *Config) { c.OAuth2Providers["google"] = OAuth2Provider{} }},
@@ -222,8 +223,8 @@ func TestValidateRequestLog(t *testing.T) {
 func TestValidateOAuth2Providers(t *testing.T) {
 	t.Parallel()
 	validCases := []map[string]OAuth2Provider{
-		{"google": {RedirectURL: "/cb"}},
 		{"google": {RedirectURLPath: "/cb"}},
+		{"google": {RedirectURLPath: "/oauth2/google/callback"}},
 	}
 	for _, cfg := range validCases {
 		if err := validateOAuth2Providers(cfg); err != nil {
@@ -233,7 +234,9 @@ func TestValidateOAuth2Providers(t *testing.T) {
 
 	invalidCases := []map[string]OAuth2Provider{
 		{"google": {}},
-		{"google": {RedirectURL: "/cb", UserInfoURL: "http://example.com"}},
+		{"google": {RedirectURLPath: "cb"}},
+		{"google": {RedirectURLPath: "//example.com/cb"}},
+		{"google": {RedirectURLPath: "/cb", UserInfoURL: "http://example.com"}},
 	}
 	for _, cfg := range invalidCases {
 		if err := validateOAuth2Providers(cfg); err == nil {
@@ -245,9 +248,9 @@ func TestValidateOAuth2Providers(t *testing.T) {
 func TestValidateServer(t *testing.T) {
 	t.Parallel()
 	validCases := []Server{
-		{Addr: ":8080"},
-		{Addr: "localhost:8080"},
-		{Addr: ":8080", Tls: Tls{RedirectAddr: ":80"}},
+		{Addr: ":8080", PublicURL: "http://localhost:8080"},
+		{Addr: "localhost:8080", PublicURL: "http://localhost:8080"},
+		{Addr: ":8080", PublicURL: "https://example.com", Tls: Tls{RedirectAddr: ":80"}},
 	}
 	for _, cfg := range validCases {
 		if err := validateServer(&cfg); err != nil {
@@ -259,11 +262,19 @@ func TestValidateServer(t *testing.T) {
 		{},
 		{Addr: "localhost"},
 		{Addr: ":99999"},
-		{Addr: ":8080", Tls: Tls{RedirectAddr: "localhost"}},
-		{Addr: ":8080", Tls: Tls{RedirectAddr: ":99999"}}, // Invalid redirect port
-		{Addr: ":8443", Tls: Tls{Enabled: true, PrivateKey: "key"}},
-		{Addr: ":8443", Tls: Tls{Enabled: true, Certificate: "cert"}},
-		{Addr: ":8443", Tls: Tls{Enabled: true, Certificate: "cert", PrivateKey: "key"}}, // invalid cert data
+		{Addr: ":8080"},
+		{Addr: ":8080", PublicURL: "example.com"},
+		{Addr: ":8080", PublicURL: "ftp://example.com"},
+		{Addr: ":8080", PublicURL: "https://example.com/"},
+		{Addr: ":8080", PublicURL: "https://example.com/path"},
+		{Addr: ":8080", PublicURL: "https://example.com?x=1"},
+		{Addr: ":8080", PublicURL: "https://user@example.com"},
+		{Addr: ":8080", PublicURL: "https://"},
+		{Addr: ":8080", PublicURL: "http://localhost:8080", Tls: Tls{RedirectAddr: "localhost"}},
+		{Addr: ":8080", PublicURL: "http://localhost:8080", Tls: Tls{RedirectAddr: ":99999"}}, // Invalid redirect port
+		{Addr: ":8443", PublicURL: "https://example.com", Tls: Tls{Enabled: true, PrivateKey: "key"}},
+		{Addr: ":8443", PublicURL: "https://example.com", Tls: Tls{Enabled: true, Certificate: "cert"}},
+		{Addr: ":8443", PublicURL: "https://example.com", Tls: Tls{Enabled: true, Certificate: "cert", PrivateKey: "key"}}, // invalid cert data
 	}
 	for _, cfg := range invalidCases {
 		if err := validateServer(&cfg); err == nil {

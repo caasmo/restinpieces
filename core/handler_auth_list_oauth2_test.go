@@ -30,14 +30,14 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 				cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 				cfg.OAuth2Providers = map[string]config.OAuth2Provider{
 					"google": {
-						DisplayName:  "Google",
-						ClientID:     "google-client-id",
-						ClientSecret: "google-client-secret",
-						RedirectURL:  "https://app.example.com/oauth2/callback",
-						Scopes:       []string{"email", "profile"},
-						AuthURL:      "https://accounts.google.com/o/oauth2/v2/auth",
-						TokenURL:     "https://oauth2.googleapis.com/token",
-						PKCE:         false,
+						DisplayName:     "Google",
+						ClientID:        "google-client-id",
+						ClientSecret:    "google-client-secret",
+						RedirectURLPath: "/oauth2/callback",
+						Scopes:          []string{"email", "profile"},
+						AuthURL:         "https://accounts.google.com/o/oauth2/v2/auth",
+						TokenURL:        "https://oauth2.googleapis.com/token",
+						PKCE:            false,
 					},
 				}
 				return cfg
@@ -111,9 +111,10 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 				cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 				cfg.OAuth2Providers = map[string]config.OAuth2Provider{
 					"github": {
-						DisplayName: "GitHub",
-						ClientID:    "github-client-id",
-						PKCE:        true,
+						DisplayName:     "GitHub",
+						ClientID:        "github-client-id",
+						RedirectURLPath: "/oauth2/github/callback",
+						PKCE:            true,
 					},
 				}
 				return cfg
@@ -163,18 +164,14 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 			},
 		},
 		{
-			name: "redirectUrl logic with path and absolute URL",
+			name: "redirectUrl builds the callback from the public URL and the path",
 			setupConfig: func() *config.Config {
 				cfg := config.NewDefaultConfig()
 				cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
-				cfg.Server.Addr = "test.com:443" // BaseURL derives from Addr
-				cfg.Server.Tls.Enabled = true    // to get https scheme
+				cfg.Server.PublicURL = "https://test.com"
 				cfg.OAuth2Providers = map[string]config.OAuth2Provider{
 					"providerWithPath": {
 						RedirectURLPath: "/callback/path",
-					},
-					"providerWithURL": {
-						RedirectURL: "https://absolute.com/callback",
 					},
 				}
 				return cfg
@@ -196,28 +193,16 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 				var providers []OAuth2ProviderInfo
 				providersBytes, _ := json.Marshal(providersData)
 				if err := json.Unmarshal(providersBytes, &providers); err != nil {
-					t.Fatalf("Failed to unmarshal providers: %v", err)
+					t.Fatalf("Failed to unmarshal providers from response data: %v", err)
 				}
 
-				if len(providers) != 2 {
-					t.Fatalf("expected 2 providers, got %d", len(providers))
+				if len(providers) != 1 {
+					t.Fatalf("expected 1 provider, got %d", len(providers))
 				}
 
-				providerMap := make(map[string]OAuth2ProviderInfo)
-				for _, p := range providers {
-					providerMap[p.Name] = p
-				}
-
-				pWithPath := providerMap["providerWithPath"]
-				// BaseURL() will be https://test.com
-				expectedPathURL := cfg.Server.BaseURL() + "/callback/path"
-				if pWithPath.RedirectURL != expectedPathURL {
-					t.Errorf("expected redirectURL '%s', got '%s'", expectedPathURL, pWithPath.RedirectURL)
-				}
-
-				pWithURL := providerMap["providerWithURL"]
-				if pWithURL.RedirectURL != "https://absolute.com/callback" {
-					t.Errorf("expected redirectURL '%s', got '%s'", "https://absolute.com/callback", pWithURL.RedirectURL)
+				expectedPathURL := cfg.Server.PublicURL + "/callback/path"
+				if providers[0].RedirectURL != expectedPathURL {
+					t.Errorf("expected redirectURL '%s', got '%s'", expectedPathURL, providers[0].RedirectURL)
 				}
 			},
 		},

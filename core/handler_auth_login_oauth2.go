@@ -231,13 +231,13 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	writeAuthResponse(w, jwtToken, user)
 }
 
-// redirectUrl returns the complete redirect URL to use for this provider.
-// If RedirectURLPath is set, it combines with the server's base URL.
-// Otherwise falls back to RedirectURL if set.
-// Returns empty string if neither is configured.
+// redirectUrl returns the complete callback URL for a provider: the server's
+// public address followed by the provider's callback path.
+//
+// The address is built here on the server and is never taken from the request.
+// A caller could send their own address and intercept the authorization code.
+// Both the provider list and the sign-in completion use this function, so the
+// address is the same in both steps.
 func redirectUrl(srvConf config.Server, provider config.OAuth2Provider) string {
-	if provider.RedirectURLPath != "" {
-		return srvConf.BaseURL() + provider.RedirectURLPath
-	}
-	return provider.RedirectURL
+	return srvConf.PublicURL + provider.RedirectURLPath
 }
