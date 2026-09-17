@@ -27,6 +27,9 @@ func checkChangedRestartFields(oldCfg, newCfg *Config) []string {
 	if oldCfg.Server.Tls.RedirectAddr != newCfg.Server.Tls.RedirectAddr {
 		changed = append(changed, "Server.Tls.RedirectAddr")
 	}
+	if oldCfg.Server.Tls.MTLSCertificates != newCfg.Server.Tls.MTLSCertificates {
+		changed = append(changed, "Server.Tls.MTLSCertificates")
+	}
 
 	return changed
 }

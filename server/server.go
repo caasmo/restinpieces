@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/queue/executor"      // Added executor import
@@ -318,6 +319,9 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 			// This case should ideally be caught by validation if TLS is enabled
 			s.logger.Warn("Server:", "tls_source", "none_configured_or_invalid")
 		}
+		if cfg.Tls.MTLSCertificates != "" {
+			s.logger.Info("Server:", "mtls", "required")
+		}
 	}
 
 	s.logger.Info("Server:",
@@ -345,12 +349,11 @@ func createTLSConfig(cfg *config.Server) (*tls.Config, error) {
 			return nil, fmt.Errorf("failed to load TLS key pair from config data: %w", err)
 		}
 	} else {
-		// Validation should ensure the certificate and key are present if TLS is enabled
+		// Validation should ensure that the certificate and key are present if TLS is enabled
 		return nil, fmt.Errorf("no valid TLS certificate data found in configuration")
 	}
 
-	// Create and return the TLS config with the loaded certificate
-	return &tls.Config{
+	tlsConfig := &tls.Config{
 		Certificates: []tls.Certificate{cert},
 		MinVersion:   tls.VersionTLS13,           // Enforce TLS 1.3
 		NextProtos:   []string{"h2", "http/1.1"}, // Keep HTTP/2 support
@@ -359,5 +362,29 @@ func createTLSConfig(cfg *config.Server) (*tls.Config, error) {
 			tls.CurveP256,
 			tls.CurveP384,
 		},
-	}, nil
+	}
+
+	if cfg.Tls.MTLSCertificates != "" {
+		clientCertificates, err := newCertificatePool(cfg.Tls.MTLSCertificates)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load trusted client certificates from config data: %w", err)
+		}
+
+		tlsConfig.ClientCAs = clientCertificates
+		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+	}
+
+	return tlsConfig, nil
+}
+
+// newCertificatePool parses one or more PEM certificates into a pool the TLS
+// handshake can verify a client certificate against.
+func newCertificatePool(pemBundle string) (*x509.CertPool, error) {
+	pool := x509.NewCertPool()
+	added := pool.AppendCertsFromPEM([]byte(pemBundle))
+	if !added {
+		return nil, fmt.Errorf("no certificates found in PEM bundle")
+	}
+
+	return pool, nil
 }

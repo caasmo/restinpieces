@@ -500,6 +500,62 @@ func TestCreateTLSConfig_Success(t *testing.T) {
 	}
 }
 
+func TestCreateTLSConfig_MTLSCertificates(t *testing.T) {
+	certPEM, keyPEM := generateTestCert(t)
+	clientCAPEM, _ := generateTestCert(t)
+
+	testCases := []struct {
+		name             string
+		mtlsCertificates string
+		expectErr        bool
+		expectClientAuth tls.ClientAuthType
+	}{
+		{
+			name:             "client certificates not requested",
+			expectClientAuth: tls.NoClientCert,
+		},
+		{
+			name:             "client certificates required",
+			mtlsCertificates: string(clientCAPEM),
+			expectClientAuth: tls.RequireAndVerifyClientCert,
+		},
+		{
+			name:             "invalid trusted client certificate bundle",
+			mtlsCertificates: "not a pem block",
+			expectErr:        true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &config.Server{
+				Tls: config.Tls{
+					Certificate:      string(certPEM),
+					PrivateKey:       string(keyPEM),
+					MTLSCertificates: tc.mtlsCertificates,
+				},
+			}
+
+			tlsConfig, err := createTLSConfig(cfg)
+			if tc.expectErr {
+				if err == nil {
+					t.Fatal("createTLSConfig should have returned an error but did not")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("createTLSConfig returned an unexpected error: %v", err)
+			}
+			if tlsConfig.ClientAuth != tc.expectClientAuth {
+				t.Errorf("expected ClientAuth %v, got %v", tc.expectClientAuth, tlsConfig.ClientAuth)
+			}
+			if tc.mtlsCertificates != "" && tlsConfig.ClientCAs == nil {
+				t.Error("expected the ClientCAs pool to be set")
+			}
+		})
+	}
+}
+
 func TestCreateTLSConfig_InvalidKeyPair(t *testing.T) {
 	certPEM, _ := generateTestCert(t)
 	_, keyPEM2 := generateTestCert(t) // Mismatched key

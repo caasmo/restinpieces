@@ -421,6 +421,32 @@ func TestValidateServerTLS(t *testing.T) {
 	}
 }
 
+func TestValidateServerMTLSCertificates(t *testing.T) {
+	t.Parallel()
+
+	validBundle, _ := newTestCert(t, time.Now().Add(-1*time.Hour), time.Now().Add(1*time.Hour))
+
+	testCases := []struct {
+		name      string
+		server    *Server
+		expectErr bool
+	}{
+		{"Not set", &Server{Tls: Tls{Enabled: true}}, false},
+		{"TLS disabled with bundle set", &Server{Tls: Tls{Enabled: false, MTLSCertificates: validBundle}}, true},
+		{"Valid bundle", &Server{Tls: Tls{Enabled: true, MTLSCertificates: validBundle}}, false},
+		{"Invalid bundle", &Server{Tls: Tls{Enabled: true, MTLSCertificates: "not a pem block"}}, true},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateServerMTLSCertificates(tc.server)
+			if (err != nil) != tc.expectErr {
+				t.Fatalf("validateServerMTLSCertificates() error = %v, expectErr %v", err, tc.expectErr)
+			}
+		})
+	}
+}
+
 func TestValidateServerPort(t *testing.T) {
 	t.Parallel()
 

@@ -232,6 +232,17 @@ type Tls struct {
 	// Address for HTTP->HTTPS redirect server (e.g. ":80").
 	// Only used when Enabled is true.
 	RedirectAddr string `toml:"redirect_addr" comment:"HTTP->HTTPS redirect address (e.g. ':80')"`
+
+	// MTLSCertificates is a PEM bundle of public certificates this
+	// server accepts as proof of identity from the programs or servers that
+	// connect to it over TLS. When it is not empty, a TLS client must present
+	// a certificate that is one of these certificates or is signed by one of
+	// them; otherwise the connection is stopped during the TLS handshake.
+	//
+	// The usual use is a proxy in front of this server, such as Cloudflare's
+	// Authenticated Origin Pulls: paste the certificate Cloudflare publishes
+	// for that feature into this bundle. An empty bundle turns the check off.
+	MTLSCertificates string `toml:"mtls_certificates" comment:"PEM bundle of accepted client certificates (Cloudflare AOP)"`
 }
 
 func (s *Server) BaseURL() string {

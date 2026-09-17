@@ -62,10 +62,11 @@ func NewDefaultConfig() *Config {
 			IdleTimeout:             Duration{Duration: 1 * time.Minute},
 			ClientIpProxyHeader:     "",
 			Tls: Tls{
-				Enabled:      false,
-				Certificate:  "",
-				PrivateKey:   "",
-				RedirectAddr: "",
+				Enabled:          false,
+				Certificate:      "",
+				PrivateKey:       "",
+				RedirectAddr:     "",
+				MTLSCertificates: "",
 			},
 		},
 		RateLimits: RateLimits{

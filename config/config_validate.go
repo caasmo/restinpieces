@@ -362,6 +362,10 @@ func validateServer(server *Server) error {
 		return err
 	}
 
+	if err := validateServerMTLSCertificates(server); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -454,6 +458,26 @@ func validateServerTLS(server *Server) error {
 	}
 
 	// Optionally: Add more checks here, e.g., KeyUsage, BasicConstraints, etc.
+
+	return nil
+}
+
+// validateServerMTLSCertificates checks the
+// server.tls.mtls_certificates value when it is set.
+func validateServerMTLSCertificates(server *Server) error {
+	if server.Tls.MTLSCertificates == "" {
+		return nil
+	}
+
+	if !server.Tls.Enabled {
+		return fmt.Errorf("server.tls.mtls_certificates requires server.tls.enabled to be true")
+	}
+
+	pool := x509.NewCertPool()
+	added := pool.AppendCertsFromPEM([]byte(server.Tls.MTLSCertificates))
+	if !added {
+		return fmt.Errorf("server.tls.mtls_certificates: no certificates found in PEM data")
+	}
 
 	return nil
 }

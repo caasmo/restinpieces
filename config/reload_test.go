@@ -69,6 +69,13 @@ func TestCheckChangedRestartFields(t *testing.T) {
 			},
 			expectFields: []string{"Server.Tls.Enabled", "Server.Tls.RedirectAddr"},
 		},
+		{
+			name: "Restart field change (Server.Tls.MTLSCertificates)",
+			modifier: func(cfg *Config) {
+				cfg.Server.Tls.MTLSCertificates = "test-pem"
+			},
+			expectFields: []string{"Server.Tls.MTLSCertificates"},
+		},
 	}
 
 	for _, tc := range testCases {
