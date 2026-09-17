@@ -47,7 +47,7 @@ func buildChain(app *core.App) http.Handler {
 	preRouterChain.WithMiddleware(NewBlockUserAgent(app).Execute)
 
 	// 7. TLSHeaderSTS
-	preRouterChain.WithMiddleware(NewTLSHeaderSTS().Execute)
+	preRouterChain.WithMiddleware(NewTLSHeaderSTS(app).Execute)
 
 	// 8. Maintenance
 	preRouterChain.WithMiddleware(NewMaintenance(app).Execute)

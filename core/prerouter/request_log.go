@@ -87,7 +87,7 @@ func (r *RequestLog) Execute(next http.Handler) http.Handler {
 		attrs = append(attrs, slog.String("referer", cutStr(req.Referer(), limits.RefererLength)))
 		attrs = append(attrs, slog.String("host", cutStr(req.Host, limits.RemoteIPLength)))
 		attrs = append(attrs, slog.String("proto", req.Proto))
-		attrs = append(attrs, slog.Bool("tls", req.TLS != nil))
+		attrs = append(attrs, slog.Bool("tls", r.app.ClientUsesTLS(req)))
 		attrs = append(attrs, slog.Int64("request_content_length", req.ContentLength))
 		attrs = append(attrs, slog.Int64("response_content_length", rec.BytesWritten))
 		attrs = append(attrs, emptyAuth)

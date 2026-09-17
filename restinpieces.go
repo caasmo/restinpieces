@@ -264,7 +264,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 	}
 
 	// 7. TLSHeaderSTS Middleware
-	tlsHeaderSTS := prerouter.NewTLSHeaderSTS()
+	tlsHeaderSTS := prerouter.NewTLSHeaderSTS(i.app)
 	preRouterChain.WithMiddleware(tlsHeaderSTS.Execute)
 	logger.Info(ft.Seed("TLSHeaderSTS middleware added"), "tls_enabled", cfg.Server.Tls.Enabled)
 

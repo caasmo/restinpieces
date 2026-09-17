@@ -1,6 +1,7 @@
 package core
 
 import (
+	"crypto/tls"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -108,6 +109,105 @@ func TestClientIP(t *testing.T) {
 			// Verify
 			if ip != tc.expectedIP {
 				t.Errorf("GetClientIP() = %q, want %q", ip, tc.expectedIP)
+			}
+		})
+	}
+}
+
+func TestClientUsesTLS(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		tlsConnection        bool
+		proxyHeader          string
+		proxyHeaderValue     string
+		clientTLSProxyHeader string
+		expected             bool
+	}{
+		{
+			name:          "direct connection over tls",
+			tlsConnection: true,
+			expected:      true,
+		},
+		{
+			name:     "direct connection without tls",
+			expected: false,
+		},
+		{
+			name:                 "proxy says https",
+			proxyHeader:          "X-Forwarded-Proto",
+			proxyHeaderValue:     "https",
+			clientTLSProxyHeader: "X-Forwarded-Proto",
+			expected:             true,
+		},
+		{
+			name:                 "proxy says http",
+			proxyHeader:          "X-Forwarded-Proto",
+			proxyHeaderValue:     "http",
+			clientTLSProxyHeader: "X-Forwarded-Proto",
+			expected:             false,
+		},
+		{
+			name:                 "proxy says https in upper case",
+			proxyHeader:          "X-Forwarded-Proto",
+			proxyHeaderValue:     "HTTPS",
+			clientTLSProxyHeader: "X-Forwarded-Proto",
+			expected:             true,
+		},
+		{
+			name:                 "proxy sends several values",
+			proxyHeader:          "X-Forwarded-Proto",
+			proxyHeaderValue:     "https, http",
+			clientTLSProxyHeader: "X-Forwarded-Proto",
+			expected:             true,
+		},
+		{
+			name:                 "proxy header not set",
+			proxyHeader:          "X-Forwarded-Proto",
+			clientTLSProxyHeader: "X-Forwarded-Proto",
+			expected:             false,
+		},
+		{
+			name:             "proxy header not configured",
+			proxyHeader:      "X-Forwarded-Proto",
+			proxyHeaderValue: "https",
+			expected:         false,
+		},
+		{
+			name:                 "tls connection wins over proxy http",
+			tlsConnection:        true,
+			proxyHeader:          "X-Forwarded-Proto",
+			proxyHeaderValue:     "http",
+			clientTLSProxyHeader: "X-Forwarded-Proto",
+			expected:             true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Setup
+			cfg := &config.Config{
+				Server: config.Server{ClientTLSProxyHeader: tc.clientTLSProxyHeader},
+			}
+			provider := &config.Provider{}
+			provider.Update(cfg)
+
+			app := &App{}
+			app.SetConfigProvider(provider)
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			if tc.tlsConnection {
+				req.TLS = &tls.ConnectionState{}
+			}
+			if tc.proxyHeader != "" {
+				req.Header.Set(tc.proxyHeader, tc.proxyHeaderValue)
+			}
+
+			// Execute
+			usesTLS := app.ClientUsesTLS(req)
+
+			// Verify
+			if usesTLS != tc.expected {
+				t.Errorf("ClientUsesTLS() = %v, want %v", usesTLS, tc.expected)
 			}
 		})
 	}

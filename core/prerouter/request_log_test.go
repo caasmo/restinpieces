@@ -242,6 +242,40 @@ func TestRequestLog_HttpsRequest(t *testing.T) {
 	}
 }
 
+// TestRequestLog_TLSProxyHeader verifies the 'tls' field follows the configured proxy header.
+func TestRequestLog_TLSProxyHeader(t *testing.T) {
+	// --- Setup ---
+	mockApp := &core.App{}
+	logBuffer := new(bytes.Buffer)
+	memHandler := newMemoryHandler(logBuffer)
+	mockApp.SetLogger(slog.New(memHandler))
+
+	cfg := config.NewDefaultConfig()
+	cfg.Log.Request.Activated = true
+	cfg.Server.ClientTLSProxyHeader = "X-Forwarded-Proto"
+	provider := config.NewProvider(cfg)
+	mockApp.SetConfigProvider(provider)
+
+	nextHandler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
+	handlerChain := NewRecorder(mockApp).Execute(NewRequestLog(mockApp).Execute(nextHandler))
+
+	req := httptest.NewRequest("GET", "/secure", nil)
+	req.Header.Set("X-Forwarded-Proto", "https")
+
+	// --- Execution ---
+	handlerChain.ServeHTTP(httptest.NewRecorder(), req)
+
+	// --- Verification ---
+	logRecord, err := memHandler.LastRecord()
+	if err != nil {
+		t.Fatalf("Failed to parse log output: %v", err)
+	}
+	usesTLS, ok := logRecord["tls"].(bool)
+	if !ok || !usesTLS {
+		t.Errorf("Expected 'tls' field to be true, but it was not")
+	}
+}
+
 // TestRequestLog_InvalidRemoteIP verifies the fallback for a malformed RemoteAddr.
 func TestRequestLog_InvalidRemoteIP(t *testing.T) {
 	// --- Setup ---

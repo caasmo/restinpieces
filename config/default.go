@@ -61,6 +61,7 @@ func NewDefaultConfig() *Config {
 			WriteTimeout:            Duration{Duration: 3 * time.Second},
 			IdleTimeout:             Duration{Duration: 1 * time.Minute},
 			ClientIpProxyHeader:     "",
+			ClientTLSProxyHeader:    "",
 			Tls: Tls{
 				Enabled:          false,
 				Certificate:      "",

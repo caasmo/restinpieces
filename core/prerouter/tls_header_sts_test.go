@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 )
 
@@ -14,32 +15,62 @@ func TestTLSHeaderSTS(t *testing.T) {
 	expectedHeaderValue := core.HeadersTls["Strict-Transport-Security"]
 
 	testCases := []struct {
-		name         string
-		isTLS        bool // Controls whether the request simulates HTTPS
-		expectHeader bool // Controls whether we expect the HSTS header
+		name                 string
+		tlsConnection        bool // Controls whether the request simulates HTTPS
+		proxyHeader          string
+		proxyHeaderValue     string
+		clientTLSProxyHeader string
+		expectHeader         bool // Controls whether we expect the HSTS header
 	}{
 		{
-			name:         "Case: Request is over a TLS (HTTPS) Connection",
-			isTLS:        true,
-			expectHeader: true,
+			name:          "Case: Request is over a TLS (HTTPS) Connection",
+			tlsConnection: true,
+			expectHeader:  true,
 		},
 		{
-			name:         "Case: Request is over a non-TLS (HTTP) Connection",
-			isTLS:        false,
-			expectHeader: false,
+			name:          "Case: Request is over a non-TLS (HTTP) Connection",
+			tlsConnection: false,
+			expectHeader:  false,
+		},
+		{
+			name:                 "Case: Proxy header says the visitor used TLS",
+			proxyHeader:          "X-Forwarded-Proto",
+			proxyHeaderValue:     "https",
+			clientTLSProxyHeader: "X-Forwarded-Proto",
+			expectHeader:         true,
+		},
+		{
+			name:                 "Case: Proxy header says the visitor did not use TLS",
+			proxyHeader:          "X-Forwarded-Proto",
+			proxyHeaderValue:     "http",
+			clientTLSProxyHeader: "X-Forwarded-Proto",
+			expectHeader:         false,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Setup: Create the app with the test configuration.
+			cfg := &config.Config{
+				Server: config.Server{ClientTLSProxyHeader: tc.clientTLSProxyHeader},
+			}
+			provider := &config.Provider{}
+			provider.Update(cfg)
+
+			app := &core.App{}
+			app.SetConfigProvider(provider)
+
 			// Setup: Create the middleware instance.
-			middleware := NewTLSHeaderSTS()
+			middleware := NewTLSHeaderSTS(app)
 
 			// Setup: Create a test request.
 			req := httptest.NewRequest("GET", "/", nil)
-			if tc.isTLS {
+			if tc.tlsConnection {
 				// To simulate an HTTPS request, we set a non-nil TLS field.
 				req.TLS = &tls.ConnectionState{}
+			}
+			if tc.proxyHeader != "" {
+				req.Header.Set(tc.proxyHeader, tc.proxyHeaderValue)
 			}
 
 			// Setup: Create a response recorder and a mock next handler.

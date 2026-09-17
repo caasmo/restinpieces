@@ -6,13 +6,35 @@ Two kinds of proxy are common. A local proxy runs on your own machine or network
 
 Every `ripc` command below runs in the application shell described in [Post-Deploy Configuration](post-deploy-config.md). After changing a setting, apply it with `sudo systemctl reload <app-name>`; settings that are read at startup need `sudo systemctl restart <app-name>` instead.
 
+## TL;DR
+
+### `server.client_ip_proxy_header`
+
+The header your proxy fills with the visitor's address (`X-Forwarded-For` in nginx, `CF-Connecting-IP` in Cloudflare). Set it so the request log, the IP blocker, and metrics see each visitor instead of the proxy.
+
+### `server.client_tls_proxy_header`
+
+The header your proxy fills with the visitor's connection type (`X-Forwarded-Proto` in nginx and Cloudflare). Set it so HSTS appears and the log's `tls` field is true when the visitor used HTTPS.
+
+### `server.tls.mtls_certificates`
+
+The certificate your proxy proves itself with, read from a file with `@`. Set it so nobody else can reach the application and fake the two headers above.
+
+Apply the first two with `sudo systemctl reload <app-name>`; the third is read at startup, so use `sudo systemctl restart <app-name>`. When visitors reach the application directly and it terminates TLS itself, none of the three is needed.
+
+## Content
+
+- [Let the application see the visitor's address](#let-the-application-see-the-visitors-address)
+- [Let the application see whether the visitor used HTTPS](#let-the-application-see-whether-the-visitor-used-https)
+- [Prove the connection comes from the proxy (mTLS)](#prove-the-connection-comes-from-the-proxy-mtls)
+
 ## Let the application see the visitor's address
 
 A request that arrives through a proxy carries the proxy's address in the connection. Without a setting, the application would log and count the proxy as if it were every visitor: the request log shows one address for everyone, the IP blocker treats all traffic as one client, and the metrics allowed list matches the proxy instead of the visitor.
 
 The setting that fixes this is `server.client_ip_proxy_header`. It is empty by default, and an empty value means "use the address of the connection". Set it to the name of the header your proxy fills with the visitor's address.
 
-### nginx
+### Example: nginx
 
 Send the visitor's address from nginx:
 
@@ -32,7 +54,7 @@ ripc set server.client_ip_proxy_header X-Forwarded-For
 
 `X-Real-IP` works as well; configure it in nginx with `proxy_set_header X-Real-IP $remote_addr;` and set the same name in the application. When a header contains several addresses separated by commas, the application uses the first one.
 
-### Cloudflare
+### Example: Cloudflare
 
 Set the header Cloudflare uses:
 
@@ -51,6 +73,55 @@ ripc log tail
 
 `ripc get` shows the configured header name. After a reload, `ripc log tail` shows the `remote_ip` field of new requests; it must contain the visitor's address, which differs between visitors, instead of the proxy's address, which is the same for everyone.
 
+## Let the application see whether the visitor used HTTPS
+
+The application sends the HSTS header — the instruction that tells browsers to use HTTPS on this site from now on — only when the connection the request arrived on is HTTPS. With a proxy that ends the visitor's TLS and forwards plain HTTP, that connection is plain even though the visitor is on HTTPS, so the header never appears and the `tls` field of the request log says false for every visitor. A local proxy such as nginx or Caddy that terminates TLS is the usual case.
+
+The setting that fixes this is `server.client_tls_proxy_header`. It is empty by default, and an empty value means "believe the connection". Set it to the name of the header your proxy fills with the visitor's connection type: the value `https` means the visitor used HTTPS, and any other value means the visitor did not. Any proxy that fills such a header works; the examples below use nginx and Cloudflare.
+
+Nothing needs to be set when the proxy forwards over HTTPS or when the application terminates TLS itself; the connection already tells the truth.
+
+### Example: nginx
+
+Send the visitor's connection type from nginx:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Then set the same header name in the application:
+
+```bash
+ripc set server.client_tls_proxy_header X-Forwarded-Proto
+```
+
+### Example: Cloudflare
+
+Cloudflare fills `X-Forwarded-Proto` on every proxied request, so the command is the same:
+
+```bash
+ripc set server.client_tls_proxy_header X-Forwarded-Proto
+```
+
+On a DNS-only (grey) record Cloudflare is not in the path; the application's connection is the visitor's, so the setting does nothing.
+
+### Check it worked
+
+```bash
+ripc get server.client_tls_proxy_header
+ripc log tail
+```
+
+After a reload, the `tls` field of new requests is true when the visitor used HTTPS. The HSTS header appears in the response of a secure request:
+
+```bash
+curl -sI https://example.com/ | grep -i strict-transport-security
+```
+
 ## Prove the connection comes from the proxy (mTLS)
 
 The visitor's address is only as trustworthy as the connection it arrives on: anyone who can reach the application directly can send the same header with any address. Mutual TLS, or mTLS, closes that gap: with normal TLS only the server proves who it is, while with mTLS the other side, here the proxy, must prove who it is as well. Cloudflare calls its side of this Authenticated Origin Pulls; nginx calls it client certificate verification.
@@ -59,7 +130,7 @@ Fill `server.tls.mtls_certificates` with the certificates the application should
 
 A client whose certificate is missing, expired, or not signed by one of the stored certificates is stopped during the TLS handshake. The request never reaches the HTTP layer, so it cannot influence the request log, the IP blocker, or the visitor's address.
 
-### Cloudflare: Authenticated Origin Pulls
+### Example: Cloudflare Authenticated Origin Pulls
 
 Turn on Authenticated Origin Pulls in the Cloudflare dashboard under SSL/TLS → Origin Server, and make sure Cloudflare connects to your origin over HTTPS with the encryption mode Full or Full (strict) under SSL/TLS → Overview. The origin is the server that runs the application. Then give the application Cloudflare's certificate, with `@` making `ripc set` read the value from the file:
 
@@ -71,7 +142,7 @@ sudo systemctl restart <app-name>
 
 Cloudflare now presents a certificate signed by that bundle on every connection it opens to your origin. A connection straight to the origin's address has no such certificate and fails during the handshake, which is what makes `CF-Connecting-IP` trustworthy.
 
-### nginx
+### Example: nginx
 
 nginx can present a certificate of its own when it forwards to the application. Create one, point nginx at it, and tell the application to accept it.
 

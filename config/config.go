@@ -214,6 +214,12 @@ type Server struct {
 	// also work. Leave empty if not behind a proxy.
 	ClientIpProxyHeader string `toml:"client_ip_proxy_header" comment:"Header to trust for client IP (e.g. 'CF-Connecting-IP')"`
 
+	// ClientTLSProxyHeader is the name of the request header a trusted proxy
+	// fills with whether the visitor's connection used TLS. Most proxies use
+	// "X-Forwarded-Proto"; the value "https" means the visitor used TLS.
+	// Leave empty when this server terminates TLS itself.
+	ClientTLSProxyHeader string `toml:"client_tls_proxy_header" comment:"Header saying whether the visitor used TLS (e.g. 'X-Forwarded-Proto')"`
+
 	// Tls holds the server's TLS settings.
 	Tls Tls `toml:"tls" comment:"TLS settings"`
 }

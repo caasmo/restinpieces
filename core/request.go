@@ -48,6 +48,41 @@ func (a *App) ClientIP(r *http.Request) string {
 	return normalizeIP(forwardedIP)
 }
 
+// clientTLSProxyHeaderValue is the value the configured proxy header carries
+// when the visitor's connection used TLS.
+const clientTLSProxyHeaderValue = "https"
+
+// ClientUsesTLS reports whether the visitor's request arrived over TLS.
+//
+// The connection to this server is only the last leg of the path. With a
+// proxy in front, the visitor's connection ends at the proxy and this
+// server's connection starts there, and a proxy that ends the visitor's TLS
+// can forward plain HTTP. The type of the visitor's connection then travels
+// in a header, named by a config setting; the value "https" means the visitor
+// used TLS. When the header is not configured or absent, the answer is
+// whether this connection itself is TLS.
+func (a *App) ClientUsesTLS(r *http.Request) bool {
+	if r.TLS != nil {
+		return true
+	}
+
+	header := a.Config().Server.ClientTLSProxyHeader
+	if header == "" {
+		return false
+	}
+
+	forwarded := r.Header.Get(header)
+	if forwarded == "" {
+		return false
+	}
+
+	// A forwarded header holds one value per proxy in the path, separated by
+	// commas. By convention the first entry describes the visitor's connection.
+	parts := strings.Split(forwarded, ",")
+	value := strings.TrimSpace(parts[0])
+	return strings.EqualFold(value, clientTLSProxyHeaderValue)
+}
+
 // normalizeIP returns one fixed text form for an IP address.
 //
 // It accepts the shapes that appear in requests: "192.0.2.1",
