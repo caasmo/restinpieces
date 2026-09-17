@@ -44,14 +44,6 @@ ripc set server.client_ip_proxy_header CF-Connecting-IP
 
 Cloudflare writes exactly one address into `CF-Connecting-IP`, which makes it more reliable than `X-Forwarded-For`. Cloudflare adds the header only when the DNS record is proxied, the orange cloud. On a DNS-only record, the grey cloud, visitors reach your server directly and the application already sees the real address, so the setting does nothing.
 
-### Only set this when a proxy is in front
-
-A header is just text in the request, and anyone who can reach the application directly can send it with any address they choose. Set `server.client_ip_proxy_header` only when a proxy is the only way in. With Cloudflare, restrict the origin firewall to [Cloudflare's IP ranges](https://www.cloudflare.com/ips/); connections that do not come from Cloudflare are then refused before they reach the application.
-
-### The address has one fixed form
-
-Whatever shape the request used, the application keeps one text form per address. IPv6 addresses are shortened to their compact form (`2001:db8::1`), and an IPv4 address written in its IPv6 form (`::ffff:192.0.2.1`) becomes `192.0.2.1`. Write entries in `metrics.allowed_ips` in the shortened form.
-
 ### Check it worked
 
 ```bash
