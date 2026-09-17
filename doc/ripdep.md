@@ -179,15 +179,20 @@ DB_PATH="/path/to/backup/data/app.db"
 
 To run the same application twice on one server under two names, build through a symlink named after the second app. The deployed name is the last part of the project path, so the symlink name becomes the service name.
 
+The link must sit in the same parent directory as the real project, so run the commands from inside the project directory and let `../` be that parent.
+
 The second service must already exist on the server; a release build only updates it, so create it first with `build-bootstrap` or `build-recovery`.
 
 ```bash
+cd /path/to/my-app
 APP_NAME="my-app-2"
 PROJECT_PATH="$PWD"
 
-ln -s "$PROJECT_PATH" "/tmp/${APP_NAME}"
-./ripdep build-release /tmp "/tmp/${APP_NAME}"
-./ripdep deploy user@server.com "/tmp/${APP_NAME}-$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)"
+ln -s "$PROJECT_PATH" "../${APP_NAME}"
+./ripdep build-release /tmp "../${APP_NAME}"
+
+# The build prints its directory, e.g. /tmp/my-app-2-v1.0.0
+./ripdep deploy user@server.com "/tmp/${APP_NAME}-v1.0.0"
 ./ripdep restart user@server.com "${APP_NAME}"
 ```
 
