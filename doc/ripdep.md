@@ -11,6 +11,7 @@
   - [First-Time Application Bootstrap](#1-first-time-application-bootstrap)
   - [Update Application](#2-update-application)
   - [Restore Application from Backup](#3-restore-application-from-backup)
+  - [Deploy the Same Application Under a Different Name](#4-deploy-the-same-application-under-a-different-name)
 - [Commands](#commands)
   - [build-release](#build-release)
   - [build-bootstrap](#build-bootstrap)
@@ -167,6 +168,22 @@ DB_PATH="/path/to/backup/data/app.db"
 ./ripdep deploy "$HOST" "${BUILD_BASE}/my-app"
 ```
 
+### 4. Deploy the Same Application Under a Different Name
+
+To run the same application twice on one server under two names, build through a symlink named after the second app. The deployed name is the last part of the project path, so the symlink name becomes the service name.
+
+The second service must already exist on the server; a release build only updates it, so create it first with `build-bootstrap` or `build-recovery`.
+
+```bash
+APP_NAME="my-app-2"
+PROJECT_PATH="$PWD"
+
+ln -s "$PROJECT_PATH" "/tmp/${APP_NAME}"
+./ripdep build-release /tmp "/tmp/${APP_NAME}"
+./ripdep deploy user@server.com "/tmp/${APP_NAME}-$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)"
+ssh -t user@server.com "sudo systemctl restart ${APP_NAME}"
+```
+
 ## Commands
 
 ### `build-release`
@@ -183,7 +200,7 @@ Builds `<project>-<version>/` for updating an existing installation:
 
 **Arguments:**
 *   `build-base-dir`: the base directory for the build output (e.g. `/tmp`). The build directory `<project>-<version>` is created inside it.
-*   `project-path`: the project source to compile. It must be a Go project whose worktree is clean and whose HEAD is exactly on the latest tag; the build fails otherwise. The tag is the version.
+*   `project-path`: the project source to compile. It must be a Go project whose worktree is clean and whose HEAD is exactly on the latest tag; the build fails otherwise. The tag is the version. The deployed name is the last part of this path, so building through a symlink deploys under the symlink's name (see [Deploy the Same Application Under a Different Name](#4-deploy-the-same-application-under-a-different-name)).
 
 Cross-compile by setting `GOOS` and `GOARCH`; the host platform is the default.
 

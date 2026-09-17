@@ -1,3 +1,17 @@
+## Public repository: no private data
+
+This repository is public. Never write private or identifying information into any file here — docs, examples, comments, tests, or commit messages. Deleting it later does not remove it from git history, so it must never be committed in the first place.
+
+Never include:
+
+- private project or application names
+- real IP addresses or hostnames
+- real domains or subdomains
+- real email addresses or user names
+- credentials, keys, or tokens
+
+Use placeholders instead: `my-app`, `example.com`, `user@example.com`, and the RFC 5737 test addresses (`192.0.2.0/24`, `198.51.100.0/24`, `203.0.113.0/24`).
+
 ## Architecture
 
 ### Use of pelletier/v1 and v2

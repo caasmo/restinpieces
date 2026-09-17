@@ -117,6 +117,13 @@ References: cmd/ripc/log_tail.go, cmd/ripc/sql.go, cmd/ripc/log_command.go, doc/
 References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/gen.go, cmd/ripc/get.go, cmd/ripc/paths.go, cmd/ripc/main.go, doc/ripc.md
 
 
+# server: redirect server runs outside the prerouter chain, so BlockIp, BlockHost, and request logging never see port-80 traffic
+
+- `server/server.go` — `Run` starts the redirect server with `redirectToHTTPS` as its handler, outside the prerouter chain
+- `core/prerouter/block_ip.go`, `core/prerouter/block_host.go`, `core/prerouter/request_log.go` — the middleware that never sees that traffic
+- `doc/post-deploy-config.md` — documents the limitation
+
+
 ### Maybe
 - request resource rate limiting 
         - user id/ip, where to put the middleware
