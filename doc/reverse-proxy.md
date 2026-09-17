@@ -10,7 +10,7 @@ Every `ripc` command below runs in the application shell described in [Post-Depl
 
 ### `server.public_url`
 
-The address visitors use, for example `https://example.com`. Set it so the callback URLs given to OAuth2 providers and the HTTP→HTTPS redirect point at the public address instead of the local one. It does not have to match `server.addr`.
+The address visitors use, for example `https://example.com`. Set it so the OAuth2 callback and the HTTP→HTTPS redirect point at your site, not at `localhost`. It does not have to match `server.addr`.
 
 ### `server.client_ip_proxy_header`
 
@@ -41,7 +41,9 @@ Set `server.public_url` to the address visitors use, for example `https://exampl
 ripc set server.public_url "https://example.com"
 ```
 
-The application builds the OAuth2 callback and the HTTP→HTTPS redirect from this value. If it is left at the default, they point at `http://localhost:8080`, which visitors cannot reach.
+`server.addr` is a localhost or IP address the application listens on, for example `:8080` or `127.0.0.1:8080`. `server.public_url` is the public address visitors use. They differ because visitors reach the proxy, which forwards to the application.
+
+The application builds the OAuth2 callback and the HTTP→HTTPS redirect from `server.public_url`. If it is left at the default, they point at `http://localhost:8080`, which visitors cannot reach.
 
 ## Let the application see the visitor's address
 
