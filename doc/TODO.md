@@ -195,3 +195,15 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/gen.go, cmd/ripc/get.go
 - block jwt: cache db,  
 - block referrer
 - rand source in app. performacen rand
+
+# jobs: max_attempts must be implemented — maybe in the future all jobs are defined in config and the defaults seed the framework's one-shot email sends
+
+- `max_attempts` is stored in `job_queue` but never enforced: `StmtClaim` increments `attempts`, `MarkFailed` records the error, and nothing compares the two, so a failing job is retried forever
+- workflow to control `max_attempts` for every job type:
+    1. every job type has one `max_attempts` value in config: scheduled jobs in `scheduler.jobs.<label>.max_attempts`, one-shot types in the defaults (`NewDefaultConfig` seeds the framework's email verification, password reset, email change and dummy types)
+    2. at insert time the type's value is copied onto the row (`db.Job.MaxAttempts`): the scheduler for scheduled jobs, the core handlers for one-shot jobs
+    3. `StmtClaim` stops picking up a failed row once `attempts >= max_attempts`; the row stays failed with its last error and shows in `ripc job list`
+    4. `max_attempts = 0` means unlimited, today's behavior, so a type without a policy keeps retrying
+    5. a changed value applies to the next run that is inserted; rows already in the queue keep the value they were inserted with
+- ref: `sql/schema/app/job_queue.sql`, `db/databasesql/queue.go`, `queue/scheduler/scheduler.go`, `config/config.go`, `config/default.go`
+
