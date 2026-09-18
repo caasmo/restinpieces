@@ -95,7 +95,7 @@ func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
 //   - '.' would be split by the TOML tree as a nesting level
 //     (backup.online.a.b → map entry a with sub-table b, not entry "a.b").
 //
-// Valid:   "app-online", "app_db", "deeploid_cf".
+// Valid:   "app-online", "app_db", "my_cf".
 // Invalid: "my label", "my.label", "", "app db", "a\tb".
 func isValidMapKeyLabel(label string) bool {
 	if label == "" {

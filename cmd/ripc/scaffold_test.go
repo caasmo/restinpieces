@@ -370,7 +370,7 @@ func TestScaffoldConfigValue_AcmeDNS01(t *testing.T) {
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeAcmeDNS01, "deeploid_cf")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeAcmeDNS01, "my_cf")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -380,7 +380,7 @@ func TestScaffoldConfigValue_AcmeDNS01(t *testing.T) {
 	if got := tree.Get("acme.remaining_lifetime_fraction"); got != 0.25 {
 		t.Errorf("expected default remaining lifetime fraction, got %v", got)
 	}
-	path := "acme.dns-01.deeploid_cf"
+	path := "acme.dns-01.my_cf"
 	entryTree, ok := tree.Get(path).(*toml.Tree)
 	if !ok {
 		t.Fatalf("expected subtree at %s", path)
@@ -395,7 +395,7 @@ func TestScaffoldConfigValue_AcmeDNS01(t *testing.T) {
 	if got := credentials.Get("api_token"); got != "" {
 		t.Errorf("expected empty api_token, got %v", got)
 	}
-	if !strings.Contains(stderr.String(), "ripc set acme.dns-01.deeploid_cf.provider") {
+	if !strings.Contains(stderr.String(), "ripc set acme.dns-01.my_cf.provider") {
 		t.Errorf("expected next steps command, got %q", stderr.String())
 	}
 }

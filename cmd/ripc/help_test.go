@@ -234,7 +234,7 @@ func TestPrintUsageFuncs(t *testing.T) {
 				"ripc scaffold backup-online app-online",
 				"ripc scaffold backup-vacuum app-vacuum",
 				"ripc scaffold backup-sqlite-rsync app-rsync",
-				"ripc scaffold acme-dns-01 deeploid_cf",
+				"ripc scaffold acme-dns-01 my_cf",
 				"ripc scaffold job acme_cert",
 			},
 			notWant: []string{"-scope string"},

@@ -175,10 +175,10 @@ Deactivate: ripc set scheduler.jobs.%s.activated false`, label, block, label, la
 func printScaffoldUsage(w io.Writer) {
 	help := Spec{
 		Usage:       "scaffold [options] <type> <key>",
-		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key>, backup.sqlite-rsync.entries.<key>, acme.dns-01.<key> or scheduler.jobs.<key>; use a best-practice label that reveals what the entry is for (e.g. app-online, analytics-vacuum, app-rsync, deeploid_cf).",
+		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key>, backup.sqlite-rsync.entries.<key>, acme.dns-01.<key> or scheduler.jobs.<key>; use a best-practice label that reveals what the entry is for (e.g. app-online, analytics-vacuum, app-rsync, my_cf).",
 		Args: []ArgSpec{
 			{"type", "Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync, oauth2, acme-dns-01 or job)"},
-			{"key", "Key of the new entry — required backup label, acme dns-01 label or job label, e.g. app-online, app-rsync, deeploid_cf, acme_cert"},
+			{"key", "Key of the new entry — required backup label, acme dns-01 label or job label, e.g. app-online, app-rsync, my_cf, acme_cert"},
 		},
 		Subcommands: []SubcommandGroup{
 			{
@@ -201,7 +201,7 @@ func printScaffoldUsage(w io.Writer) {
 			"ripc scaffold backup-vacuum app-vacuum",
 			"ripc scaffold backup-sqlite-rsync app-rsync",
 			"ripc scaffold oauth2 my_google",
-			"ripc scaffold acme-dns-01 deeploid_cf",
+			"ripc scaffold acme-dns-01 my_cf",
 			"ripc scaffold job acme_cert",
 		},
 	}

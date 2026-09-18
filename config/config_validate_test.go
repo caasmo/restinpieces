@@ -724,7 +724,7 @@ func TestValidateAcme(t *testing.T) {
 				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
 				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
-					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+					"my_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},
 			},
 			wantErr: false,
@@ -737,7 +737,7 @@ func TestValidateAcme(t *testing.T) {
 				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
 				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
-					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+					"my_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},
 			},
 			wantErr: true,
@@ -749,7 +749,7 @@ func TestValidateAcme(t *testing.T) {
 				Domains:                   []string{"example.com"},
 				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
-					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+					"my_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},
 			},
 			wantErr: true,
@@ -761,7 +761,7 @@ func TestValidateAcme(t *testing.T) {
 				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
 				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
-					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+					"my_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},
 			},
 			wantErr: true,
@@ -774,7 +774,7 @@ func TestValidateAcme(t *testing.T) {
 				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
 				RemainingLifetimeFraction: 1,
 				DNS01: AcmeDNS01{
-					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+					"my_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
 				},
 			},
 			wantErr: true,
@@ -787,7 +787,7 @@ func TestValidateAcme(t *testing.T) {
 				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
 				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
-					"deeploid_cf": {Provider: "", Credentials: map[string]string{"api_token": "token"}},
+					"my_cf": {Provider: "", Credentials: map[string]string{"api_token": "token"}},
 				},
 			},
 			wantErr: true,
@@ -800,8 +800,8 @@ func TestValidateAcme(t *testing.T) {
 				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
 				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
-					"deeploid_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
-					"deeploid_hz": {Provider: "hetzner", Credentials: map[string]string{"api_token": "token"}},
+					"my_cf": {Provider: "cloudflare", Credentials: map[string]string{"api_token": "token"}},
+					"my_hz": {Provider: "hetzner", Credentials: map[string]string{"api_token": "token"}},
 				},
 			},
 			wantErr: true,
@@ -814,7 +814,7 @@ func TestValidateAcme(t *testing.T) {
 				CADirectoryURL:            "https://acme-v02.api.letsencrypt.org/directory",
 				RemainingLifetimeFraction: 0.33,
 				DNS01: AcmeDNS01{
-					"deeploid_cf": {Provider: "cloudflare"},
+					"my_cf": {Provider: "cloudflare"},
 				},
 			},
 			wantErr: true,
