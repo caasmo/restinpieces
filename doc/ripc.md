@@ -171,6 +171,7 @@ Creates a complete configuration section with defaults. `set` changes a single f
 | `backup-sqlite-rsync` | `backup.sqlite-rsync.entries.<label>` | sqlite-rsync |
 | `oauth2` | `oauth2_providers.<label>` | OAuth2 provider |
 | `acme-dns-01` | `acme.dns-01.<label>` | DNS-01 challenge (Cloudflare) |
+| `job` | `scheduler.jobs.<label>` | Job that runs on a schedule |
 
 **Example: configure backup of type `sqlite-rsync` for application SQLite file `/tmp/app.db`**
 
@@ -206,6 +207,32 @@ Verify:
 ```
 ripc get myapp
 ripc paths myapp
+```
+
+**Example: declare a job that runs on a schedule**
+
+```
+ripc scaffold job acme_cert
+```
+
+```
+Successfully scaffolded 'acme_cert' in scope 'application'
+
+acme_cert:
+  job_type = ""
+  interval = "1h0m0s"
+  activated = false
+
+Next steps:
+1. Set the job handler type (required):
+	ripc set scheduler.jobs.acme_cert.job_type job_type_acme_cert
+2. Activate it (required):
+	ripc set scheduler.jobs.acme_cert.activated true
+3. Optionally adjust the interval:
+	ripc set scheduler.jobs.acme_cert.interval 1h
+4. Reload the app:
+	systemctl reload myapp
+Deactivate: ripc set scheduler.jobs.acme_cert.activated false
 ```
 
 ### `migrate`

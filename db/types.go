@@ -53,8 +53,6 @@ type Job struct {
 	LockedAt     time.Time       `json:"locked_at,omitempty"`
 	CompletedAt  time.Time       `json:"completed_at,omitempty"`
 	LastError    string          `json:"last_error,omitempty"`
-	Recurrent    bool            `json:"recurrent"`
-	Interval     time.Duration   `json:"interval"` // Go duration
 }
 
 // PayloadEmailVerification contains the email verification details

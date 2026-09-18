@@ -24,17 +24,10 @@ CREATE TABLE job_queue (
     locked_by TEXT NOT NULL DEFAULT '',     -- Worker ID that claimed this job
     locked_at TEXT NOT NULL DEFAULT '',     -- When the job was claimed
     completed_at TEXT NOT NULL DEFAULT '',  -- When the job was completed
-    last_error TEXT NOT NULL DEFAULT '',          -- Last error message if failed
-
-	-- fields for recurrence
-	recurrent BOOLEAN NOT NULL DEFAULT FALSE,
-	interval TEXT NOT NULL DEFAULT '', -- go duration
-    
-    -- Indexes for efficient querying (using CREATE INDEX instead of inline INDEX)
-    UNIQUE (payload, job_type)
+    last_error TEXT NOT NULL DEFAULT ''          -- Last error message if failed
 );
 
--- This means the combination of payload and job_type must be unique among all rows where status is either 'pending' or 'processing'.
+-- This means the combination of payload and job_type must be unique among all rows where status is pending, processing or failed.
 -- This differs from a traditional table constraint defined with ALTER TABLE or in the table definition, but it functions as a constraint nonetheless. SQLite will prevent inserts or updates that would violate this uniqueness rule within the specified subset of rows.
 -- CREATE UNIQUE INDEX idx_job_unique_active ON job_queue (payload, job_type) WHERE status NOT IN ('completed');
 -- Create separate index statements
@@ -42,4 +35,7 @@ CREATE TABLE job_queue (
 --CREATE INDEX idx_job_type ON job_queue (job_type, status);
 -- CREATE INDEX idx_locked_by ON job_queue (locked_by);
 CREATE INDEX idx_job_queue_status_id ON job_queue(status, id);
-CREATE UNIQUE INDEX idx_job_unique ON job_queue (payload, job_type);
+-- Unique on (payload, job_type), only for rows that are not completed. So a
+-- job type has at most one unfinished row per payload, and a new row can be
+-- added after the old one completes.
+CREATE UNIQUE INDEX idx_job_queue_incomplete ON job_queue (payload, job_type) WHERE status != 'completed';

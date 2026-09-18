@@ -189,6 +189,9 @@ type Scheduler struct {
 	// For I/O-bound tasks, a value between 2 and 8 is recommended.
 	// For CPU-bound tasks, this should typically be 1.
 	ConcurrencyMultiplier int `toml:"concurrency_multiplier" comment:"Workers per CPU core (2-8 for I/O bound)"`
+	// Jobs lists the jobs that run on a schedule. The scheduler adds one run
+	// per activated job and adds the next run after every completion.
+	Jobs Jobs `toml:"jobs" comment:"Scheduled job definitions"`
 }
 
 type Server struct {

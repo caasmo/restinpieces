@@ -4,12 +4,6 @@ import (
 	"time"
 )
 
-// PayloadRecurrent is used as the unique payload for recurrent jobs.
-// The ScheduledFor field makes each instance unique.
-type PayloadRecurrent struct {
-	ScheduledFor time.Time `json:"scheduled_for"`
-}
-
 // Job types
 const ()
 

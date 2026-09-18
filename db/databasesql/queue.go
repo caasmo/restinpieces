@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
+	"strings"
 
 	"github.com/caasmo/restinpieces/db"
 )
@@ -37,11 +37,11 @@ var QueueStmts = map[string]string{
 			LIMIT ?
 		)
 		RETURNING id, job_type, payload, payload_extra, status, attempts, max_attempts, created_at, updated_at,
-			scheduled_for, locked_by, locked_at, completed_at, last_error, recurrent, interval`,
+			scheduled_for, locked_by, locked_at, completed_at, last_error`,
 
 	StmtInsertJob: `INSERT INTO job_queue
-		(job_type, payload, payload_extra, attempts, max_attempts, recurrent, interval, scheduled_for)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		(job_type, payload, payload_extra, attempts, max_attempts, scheduled_for)
+		VALUES (?, ?, ?, ?, ?, ?)`,
 
 	StmtMarkCompleted: `UPDATE job_queue
 		SET status = 'completed',
@@ -65,26 +65,23 @@ func newJobFromRow(row *sql.Rows) (*db.Job, error) {
 		job             db.Job
 		payloadStr      string
 		payloadExtraStr string
-		recurrent       int64
 		createdAtStr    string
 		updatedAtStr    string
 		scheduledForStr string
 		lockedAtStr     string
 		completedAtStr  string
-		intervalStr     string
 	)
 	err := row.Scan(
 		&job.ID, &job.JobType, &payloadStr, &payloadExtraStr, &job.Status,
 		&job.Attempts, &job.MaxAttempts, &createdAtStr, &updatedAtStr,
 		&scheduledForStr, &job.LockedBy, &lockedAtStr, &completedAtStr,
-		&job.LastError, &recurrent, &intervalStr,
+		&job.LastError,
 	)
 	if err != nil {
 		return nil, err
 	}
 	job.Payload = json.RawMessage(payloadStr)
 	job.PayloadExtra = json.RawMessage(payloadExtraStr)
-	job.Recurrent = recurrent != 0
 
 	createdAt, err := db.TimeParse(createdAtStr)
 	if err != nil {
@@ -121,14 +118,6 @@ func newJobFromRow(row *sql.Rows) (*db.Job, error) {
 		job.CompletedAt = completedAt
 	}
 
-	if intervalStr != "" {
-		interval, err := time.ParseDuration(intervalStr)
-		if err != nil {
-			return nil, fmt.Errorf("error parsing interval duration '%s': %w", intervalStr, err)
-		}
-		job.Interval = interval
-	}
-
 	return &job, nil
 }
 
@@ -143,7 +132,7 @@ func insertJob(stmt *sql.Stmt, job db.Job) error {
 
 	_, err := stmt.ExecContext(context.Background(),
 		job.JobType, string(job.Payload), string(job.PayloadExtra), job.Attempts,
-		job.MaxAttempts, job.Recurrent, job.Interval.String(), scheduledForStr)
+		job.MaxAttempts, scheduledForStr)
 	if err != nil {
 		return fmt.Errorf("queue insert failed: %w", err)
 	}
@@ -158,6 +147,42 @@ func (d *Db) InsertJob(job db.Job) error {
 	}
 
 	return insertJob(stmt, job)
+}
+
+// SeedRecurrent queues each configured job, skipping job types that already
+// have an unfinished run. Pending, processing and failed runs count as
+// unfinished; completed runs do not, so a finished job is queued again.
+//
+// Only job_type and scheduled_for are written: configured jobs have no
+// payload. Skipping is enforced by the idx_job_queue_incomplete index, so
+// two app instances can call this on the same tick without queuing a job
+// twice.
+func (d *Db) SeedRecurrent(jobs []db.Job) error {
+	if len(jobs) == 0 {
+		return nil
+	}
+
+	values := make([]string, 0, len(jobs))
+	args := make([]any, 0, len(jobs)*2)
+	for _, job := range jobs {
+		scheduledFor := ""
+		if !job.ScheduledFor.IsZero() {
+			scheduledFor = db.TimeFormat(job.ScheduledFor)
+		}
+		values = append(values, "(?, ?)")
+		args = append(args, job.JobType, scheduledFor)
+	}
+
+	query := `INSERT INTO job_queue (job_type, scheduled_for)
+		VALUES ` + strings.Join(values, ", ") + `
+		ON CONFLICT (payload, job_type) WHERE status != 'completed'
+		DO NOTHING`
+
+	_, err := d.db.Exec(query, args...)
+	if err != nil {
+		return fmt.Errorf("queue seed recurrent failed: %w", err)
+	}
+	return nil
 }
 
 // Claim locks and returns up to limit jobs for processing.

@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"encoding/json" // Added for marshalling recurrent payload
 	"errors"
 	"log/slog"
 	"runtime"
@@ -10,7 +9,6 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/executor"
 	"golang.org/x/sync/errgroup"
 )
@@ -121,6 +119,11 @@ func (s *Scheduler) processJobs() {
 	// Get current scheduler config from provider for this tick
 	schedulerCfg := s.configProvider.Get().Scheduler
 
+	addErr := s.seedRecurrent(schedulerCfg.Jobs)
+	if addErr != nil {
+		s.logger.Error("⏰scheduler: failed to seed recurrent jobs", "err", addErr)
+	}
+
 	// Claim jobs up to configured limit per tick
 	jobs, err := s.db.Claim(schedulerCfg.MaxJobsPerTick)
 	if err != nil {
@@ -152,18 +155,19 @@ func (s *Scheduler) processJobs() {
 			case err == nil:
 				s.logger.Info("⏰scheduler: job execution successful", "jobID", jobCopy.ID, "jobType", jobCopy.JobType)
 
-				if !jobCopy.Recurrent {
+				entry, found := s.configProvider.Get().Scheduler.Jobs.Get(jobCopy.JobType)
+				if !found || !entry.Activated {
 					if updateErr := s.db.MarkCompleted(jobCopy.ID); updateErr != nil {
 						s.logger.Error("⏰scheduler: failed to mark job as completed", "jobID", jobCopy.ID, "error", updateErr)
 					} else {
-						s.logger.Info("⏰scheduler: non-recurrent job marked completed", "jobID", jobCopy.ID)
+						s.logger.Info("⏰scheduler: job is not active in config, marked completed", "jobID", jobCopy.ID)
 					}
 					processed++
 					break // Exit the switch case for this job
 				}
 
 				// Handle recurrent jobs
-				newJob := nextRecurrentJob(*jobCopy)
+				newJob := nextRecurrent(*jobCopy, entry)
 				if updateErr := s.db.MarkRecurrentCompleted(jobCopy.ID, newJob); updateErr != nil {
 					s.logger.Error("⏰scheduler: failed to mark recurrent job completed and schedule next", "jobID", jobCopy.ID, "error", updateErr)
 				} else {
@@ -239,31 +243,43 @@ func (s *Scheduler) executeJobWithContext(ctx context.Context, job db.Job) error
 	return s.executor.Execute(ctx, job)
 }
 
-// nextRecurrentJob creates a new Job instance for the next run of a recurrent job.
-// It calculates the next scheduled time based on the previous schedule and interval,
-// and resets necessary fields. Assumes the completedJob is valid and recurrent.
-func nextRecurrentJob(completedJob db.Job) db.Job {
+// seedRecurrent adds one run to the queue for every activated job in the
+// config that has no run in the queue yet. A job with a pending, processing
+// or failed row is skipped: it is already queued, running, or waiting for a
+// retry.
+//
+// A deactivated job gets no new run. A run that is already queued still runs,
+// and no new run is added after it.
+func (s *Scheduler) seedRecurrent(configJobs config.Jobs) error {
+	now := time.Now()
+	newJobs := make([]db.Job, 0, len(configJobs))
 
-	// Calculate the next schedule based on the *previous* scheduled time and interval.
-	nextScheduledFor := completedJob.ScheduledFor.Add(completedJob.Interval)
-
-	// Create the unique payload for this recurrent run
-	recurrentPayload := queue.PayloadRecurrent{ScheduledFor: nextScheduledFor}
-	payloadJSON, _ := json.Marshal(recurrentPayload) // Ignore error, assume it won't fail
-
-	// Create the new job instance for the next run.
-	newJob := db.Job{
-		JobType:      completedJob.JobType,
-		Payload:      payloadJSON, // Use the unique marshaled payload
-		PayloadExtra: completedJob.PayloadExtra,
-		MaxAttempts:  completedJob.MaxAttempts, // MaxAttempts is copied
-		Recurrent:    true,                     // It's a recurrent job
-		Interval:     completedJob.Interval,    // Interval is copied
-		CreatedAt:    completedJob.CreatedAt,   // Preserve original creation time
-		ScheduledFor: nextScheduledFor,         // Set the calculated next schedule
+	for _, entry := range configJobs {
+		if !entry.Activated {
+			continue
+		}
+		newJobs = append(newJobs, db.Job{
+			JobType:      entry.JobType,
+			ScheduledFor: now.Add(entry.Interval.Duration),
+		})
+	}
+	if len(newJobs) == 0 {
+		return nil
 	}
 
-	return newJob
+	return s.db.SeedRecurrent(newJobs)
+}
+
+// nextRecurrent builds the next run of a job that just completed. The next
+// run is one interval after the completed run's scheduled time. The interval
+// is read from the current config, so changing it takes effect from the next
+// run on. The new run has no payload: a job declared in config has no
+// parameters.
+func nextRecurrent(completedJob db.Job, entry config.JobEntry) db.Job {
+	return db.Job{
+		JobType:      completedJob.JobType,
+		ScheduledFor: completedJob.ScheduledFor.Add(entry.Interval.Duration),
+	}
 }
 
 // Executor returns the job executor used by the scheduler.

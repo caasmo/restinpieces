@@ -19,6 +19,9 @@ type DbAuth interface {
 // DbQueue defines database operations related to the job queue.
 type DbQueue interface {
 	InsertJob(job Job) error
+	// SeedRecurrent queues each configured job, skipping job types that
+	// already have an unfinished run (pending, processing or failed).
+	SeedRecurrent(jobs []Job) error
 	Claim(limit int) ([]*Job, error)
 	MarkCompleted(jobID int64) error
 	MarkFailed(jobID int64, errMsg string) error

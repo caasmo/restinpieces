@@ -16,6 +16,7 @@ public_dir = "/var/www/public"
   addr = ":8080"
 [backup]
 [oauth2_providers]
+[scheduler]
 `
 
 func TestScaffoldConfigValue_BackupOnline(t *testing.T) {
@@ -333,6 +334,15 @@ func TestScaffoldNextSteps(t *testing.T) {
 			t.Fatalf("expected empty for oauth2, got %q", got)
 		}
 	})
+	t.Run("job", func(t *testing.T) {
+		got := scaffoldNextSteps(ScaffoldTypeJob, "acme_cert", config.NewJobEntryDefaults())
+		if !strings.Contains(got, "\tripc set scheduler.jobs.acme_cert.job_type job_type_acme_cert") {
+			t.Fatalf("expected job_type command, got %q", got)
+		}
+		if !strings.Contains(got, "Deactivate: ripc set scheduler.jobs.acme_cert.activated false") {
+			t.Fatalf("expected Deactivate line, got %q", got)
+		}
+	})
 }
 
 // TestHandleScaffoldCommand_Help verifies that -h prints usage to stdout and
@@ -386,6 +396,35 @@ func TestScaffoldConfigValue_AcmeDNS01(t *testing.T) {
 		t.Errorf("expected empty api_token, got %v", got)
 	}
 	if !strings.Contains(stderr.String(), "ripc set acme.dns-01.deeploid_cf.provider") {
+		t.Errorf("expected next steps command, got %q", stderr.String())
+	}
+}
+
+func TestScaffoldConfigValue_Job(t *testing.T) {
+	scope := config.ScopeApplication
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeJob, "acme_cert")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	tree := getTreeFromStore(t, mockStore, scope)
+	path := "scheduler.jobs.acme_cert"
+	entryTree, ok := tree.Get(path).(*toml.Tree)
+	if !ok {
+		t.Fatalf("expected subtree at %s", path)
+	}
+	if got := entryTree.Get("job_type"); got != "" {
+		t.Errorf("expected empty job_type, got %v", got)
+	}
+	if got := entryTree.Get("interval"); got != "1h0m0s" {
+		t.Errorf("expected interval 1h, got %v", got)
+	}
+	if got := entryTree.Get("activated"); got != false {
+		t.Errorf("expected activated false, got %v", got)
+	}
+	if !strings.Contains(stderr.String(), "ripc set scheduler.jobs.acme_cert.job_type") {
 		t.Errorf("expected next steps command, got %q", stderr.String())
 	}
 }

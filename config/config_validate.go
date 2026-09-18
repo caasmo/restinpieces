@@ -54,6 +54,9 @@ func Validate(cfg *Config) error {
 	if err := validateCache(&cfg.Cache); err != nil {
 		return fmt.Errorf("cache config validation failed: %w", err)
 	}
+	if err := ValidateJobs(cfg.Scheduler.Jobs); err != nil {
+		return fmt.Errorf("scheduler jobs config validation failed: %w", err)
+	}
 	if err := ValidateBackup(&cfg.Backup); err != nil {
 		return fmt.Errorf("backup config validation failed: %w", err)
 	}
@@ -656,6 +659,40 @@ func validateServerPort(portStr string) error {
 
 	if portNum < 1 || portNum > 65535 {
 		return fmt.Errorf("invalid RedirectPort '%d': port number must be between 1 and 65535", portNum)
+	}
+
+	return nil
+}
+
+// ValidateJobs checks the scheduler.jobs entries.
+//
+// A job that is not activated may have an empty job_type: ripc scaffold
+// creates it that way, and it stays valid until you set a handler. An
+// activated job must have a handler name, and every job must have an interval
+// greater than zero. Two entries must not use the same non-empty job_type,
+// because the scheduler looks up an entry by type.
+func ValidateJobs(jobs Jobs) error {
+	jobTypes := make(map[string]string, len(jobs))
+
+	for label, entry := range jobs {
+		if !isValidMapKeyLabel(label) {
+			return fmt.Errorf("jobs: map key %q must not contain whitespace or '.'", label)
+		}
+		if entry.Interval.Duration <= 0 {
+			return fmt.Errorf("jobs.%s.interval must be positive", label)
+		}
+		if entry.JobType != "" {
+			if other, ok := jobTypes[entry.JobType]; ok {
+				return fmt.Errorf("jobs.%s.job_type %q is already used by jobs.%s", label, entry.JobType, other)
+			}
+			jobTypes[entry.JobType] = label
+		}
+		if !entry.Activated {
+			continue
+		}
+		if entry.JobType == "" {
+			return fmt.Errorf("jobs.%s.job_type cannot be empty when activated", label)
+		}
 	}
 
 	return nil

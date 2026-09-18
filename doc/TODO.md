@@ -59,13 +59,6 @@
 - if yes, adopt it where we scan rows (`db/databasesql/`)
 - ref: `db/databasesql/users.go`, `db/databasesql/queue.go`
 
-# jobs: recurrent jobs are config data
-
-- recurrent jobs (schedule, payload, active flag) currently live only in the queue tables; they are configuration, not runtime state
-- proposal: declare them in config (a `jobs` map, one entry per job) and seed/sync the queue from config on startup or reload
-- operators then manage schedules with `ripc set` / `dump` / `diff` like any other config, instead of ad-hoc job rows
-- ref: `db/databasesql/queue.go`, `config/config.go`
-
 Plain version: does something that already exists tell you when this last ran or when it expires?
 - The cert has its expiry date written on it. Read the file, compare to today, decide. Nothing to store.
 - The replica file has a modification time. Same trick. That's what the replica daemon actually does.

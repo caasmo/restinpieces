@@ -128,12 +128,7 @@ func (s QueueSuite) TestRecurrentJob(t *testing.T) {
 	testDB := s.Db
 
 	// 1. Insert a recurrent job
-	recurrentJob := db.Job{
-		JobType:   "recurrent_job",
-		Recurrent: true,
-		Interval:  1 * time.Hour,
-	}
-	err := testDB.InsertJob(recurrentJob)
+	err := testDB.InsertJob(db.Job{JobType: "recurrent_job"})
 	if err != nil {
 		t.Fatalf("InsertJob for recurrent job failed: %v", err)
 	}
@@ -158,23 +153,15 @@ func (s QueueSuite) TestRecurrentJob(t *testing.T) {
 		t.Fatal("recurrent job was not claimed")
 	}
 
-	// 3. Define the next job instance, mimicking the scheduler's behavior
-	// by creating a new, unique payload for the next run.
-	nextScheduledFor := time.Now().Add(claimedJob.Interval)
-	recurrentPayload := map[string]string{"scheduled_for": nextScheduledFor.Format(time.RFC3339)}
-	payloadJSON, _ := json.Marshal(recurrentPayload)
-
+	// 3. Define the next run, mimicking the scheduler's behavior: the next
+	// run is scheduled from the config interval, and the new row has an empty
+	// payload.
 	nextJob := db.Job{
 		JobType:      claimedJob.JobType,
-		Payload:      payloadJSON, // Use the new, unique payload
-		PayloadExtra: claimedJob.PayloadExtra,
-		MaxAttempts:  claimedJob.MaxAttempts,
-		Recurrent:    claimedJob.Recurrent,
-		Interval:     claimedJob.Interval,
-		ScheduledFor: nextScheduledFor,
+		ScheduledFor: time.Now().Add(time.Hour),
 	}
 
-	// 4. Mark the current job as completed, which should re-queue it
+	// 4. Mark the current job as completed and insert the next one in one transaction
 	err = testDB.MarkRecurrentCompleted(claimedJob.ID, nextJob)
 	if err != nil {
 		t.Fatalf("MarkRecurrentCompleted failed: %v", err)
@@ -207,6 +194,82 @@ func (s QueueSuite) TestRecurrentJob(t *testing.T) {
 	if newPendingJob.ScheduledFor.IsZero() {
 		t.Error("expected new job to have a future ScheduledFor time")
 	}
+}
+
+func (s QueueSuite) TestSeedRecurrent(t *testing.T) {
+	testDB := s.Db
+
+	countQueuedJobs := func(t *testing.T, jobs []*db.Job) int {
+		t.Helper()
+		count := 0
+		for _, j := range jobs {
+			if j.JobType == "queued_job" {
+				count++
+			}
+		}
+		return count
+	}
+
+	t.Run("Skip a job that is already in the queue", func(t *testing.T) {
+		queuedJobs := []db.Job{{JobType: "queued_job", ScheduledFor: time.Now().Add(-time.Minute)}}
+		err := testDB.SeedRecurrent(queuedJobs)
+		if err != nil {
+			t.Fatalf("first SeedRecurrent failed: %v", err)
+		}
+
+		err = testDB.SeedRecurrent(queuedJobs)
+		if err != nil {
+			t.Fatalf("second SeedRecurrent failed: %v", err)
+		}
+
+		jobs, err := testDB.ListJobs(0)
+		if err != nil {
+			t.Fatalf("ListJobs failed: %v", err)
+		}
+		if got := countQueuedJobs(t, jobs); got != 1 {
+			t.Fatalf("expected 1 queued_job row, got %d", got)
+		}
+	})
+
+	t.Run("A completed job can be added again", func(t *testing.T) {
+		var claimedJob *db.Job
+		for i := 0; i < 10; i++ {
+			jobs, err := testDB.Claim(1)
+			if err != nil {
+				t.Fatalf("Claim failed: %v", err)
+			}
+			for _, j := range jobs {
+				if j.JobType == "queued_job" {
+					claimedJob = j
+				}
+			}
+			if claimedJob != nil {
+				break
+			}
+		}
+		if claimedJob == nil {
+			t.Fatal("queued_job was not claimed")
+		}
+
+		err := testDB.MarkCompleted(claimedJob.ID)
+		if err != nil {
+			t.Fatalf("MarkCompleted failed: %v", err)
+		}
+
+		queuedJobs := []db.Job{{JobType: "queued_job", ScheduledFor: time.Now().Add(-time.Minute)}}
+		err = testDB.SeedRecurrent(queuedJobs)
+		if err != nil {
+			t.Fatalf("SeedRecurrent after completion failed: %v", err)
+		}
+
+		jobs, err := testDB.ListJobs(0)
+		if err != nil {
+			t.Fatalf("ListJobs failed: %v", err)
+		}
+		if got := countQueuedJobs(t, jobs); got != 2 {
+			t.Fatalf("expected 2 queued_job rows (1 completed, 1 in the queue), got %d", got)
+		}
+	})
 }
 
 func (s QueueSuite) TestJobAdminAndEdgeCases(t *testing.T) {
@@ -299,4 +362,5 @@ func (s QueueSuite) RunAll(t *testing.T) {
 	s.TestJobLifecycle(t)
 	s.TestRecurrentJob(t)
 	s.TestJobAdminAndEdgeCases(t)
+	s.TestSeedRecurrent(t)
 }

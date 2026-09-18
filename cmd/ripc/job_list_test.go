@@ -43,8 +43,6 @@ func TestListJobs_SuccessWithJobs(t *testing.T) {
 				JobType:      "backup",
 				Status:       "pending",
 				ScheduledFor: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-				Recurrent:    true,
-				Interval:     24 * time.Hour,
 				Attempts:     0,
 				MaxAttempts:  3,
 				Payload:      []byte("short payload"),
@@ -56,7 +54,6 @@ func TestListJobs_SuccessWithJobs(t *testing.T) {
 				JobType:      "email",
 				Status:       "failed",
 				ScheduledFor: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC),
-				Recurrent:    false,
 				Attempts:     3,
 				MaxAttempts:  3,
 				Payload:      []byte("{}"),
@@ -102,7 +99,7 @@ func TestListJobs_SuccessWithJobs(t *testing.T) {
 	assertLineContains(t, lines[2], "1", "backup", "pending", "this is a very lo...")
 
 	// Check job 2 data and truncation
-	assertLineContains(t, lines[3], "2", "email", "failed", "N/A", "SMTP connection failed: timeout after 30s, this...")
+	assertLineContains(t, lines[3], "2", "email", "failed", "SMTP connection failed: timeout after 30s, this...")
 }
 
 func TestListJobs_SuccessNoJobs(t *testing.T) {

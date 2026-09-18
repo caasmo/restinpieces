@@ -43,21 +43,16 @@ func listJobs(ui UI, dbConn rdb.DbQueueAdmin, limit int) error {
 
 	// Format the output using a tabwriter for alignment
 	w := tabwriter.NewWriter(ui.Out, 0, 0, 2, ' ', 0)
-	if _, err := fmt.Fprintln(w, "ID\tTYPE\tSTATUS\tSCHEDULED FOR\tINTERVAL\tATTEMPTS\tPAYLOAD\tPAYLOAD EXTRA\tLAST ERROR"); err != nil {
+	if _, err := fmt.Fprintln(w, "ID\tTYPE\tSTATUS\tSCHEDULED FOR\tATTEMPTS\tPAYLOAD\tPAYLOAD EXTRA\tLAST ERROR"); err != nil {
 		return fmt.Errorf("%w: failed to write header: %v", ErrWriteOutput, err)
 	}
-	if _, err := fmt.Fprintln(w, "--\t----\t------\t-------------\t--------\t--------\t-------\t-------------\t----------"); err != nil {
+	if _, err := fmt.Fprintln(w, "--\t----\t------\t-------------\t--------\t-------\t-------------\t----------"); err != nil {
 		return fmt.Errorf("%w: failed to write header separator: %v", ErrWriteOutput, err)
 	}
 	for _, job := range jobs {
 		scheduledFor := "N/A"
 		if !job.ScheduledFor.IsZero() {
 			scheduledFor = job.ScheduledFor.Format(time.RFC3339)
-		}
-
-		interval := "N/A"
-		if job.Recurrent {
-			interval = job.Interval.String()
 		}
 
 		payload := string(job.Payload)
@@ -75,12 +70,11 @@ func listJobs(ui UI, dbConn rdb.DbQueueAdmin, limit int) error {
 			lastError = lastError[:47] + "..."
 		}
 
-		if _, err := fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\t%d/%d\t%s\t%s\t%s\n",
+		if _, err := fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%d/%d\t%s\t%s\t%s\n",
 			job.ID,
 			job.JobType,
 			job.Status,
 			scheduledFor,
-			interval,
 			job.Attempts,
 			job.MaxAttempts,
 			payload,

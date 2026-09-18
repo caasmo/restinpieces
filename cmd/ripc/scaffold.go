@@ -23,9 +23,10 @@ const (
 	ScaffoldTypeBackupSqliteRsync = "backup-sqlite-rsync"
 	ScaffoldTypeOAuth2            = "oauth2"
 	ScaffoldTypeAcmeDNS01         = "acme-dns-01"
+	ScaffoldTypeJob               = "job"
 )
 
-var knownScaffoldTypes = []string{ScaffoldTypeBackupOnline, ScaffoldTypeBackupVacuum, ScaffoldTypeBackupSqliteRsync, ScaffoldTypeOAuth2, ScaffoldTypeAcmeDNS01}
+var knownScaffoldTypes = []string{ScaffoldTypeBackupOnline, ScaffoldTypeBackupVacuum, ScaffoldTypeBackupSqliteRsync, ScaffoldTypeOAuth2, ScaffoldTypeAcmeDNS01, ScaffoldTypeJob}
 
 func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}, sectionDefaults interface{}, err error) {
 	switch scaffoldType {
@@ -39,6 +40,8 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}
 		return "oauth2_providers", config.NewOAuth2ProviderDefaults(), nil, nil
 	case ScaffoldTypeAcmeDNS01:
 		return "acme.dns-01", config.NewAcmeDNS01EntryDefaults(), config.NewAcmeDefaults(), nil
+	case ScaffoldTypeJob:
+		return "scheduler.jobs", config.NewJobEntryDefaults(), nil, nil
 	default:
 		return "", nil, nil, fmt.Errorf("%w: '%s'. Known types: %s", ErrScaffoldTypeUnknown, scaffoldType, strings.Join(knownScaffoldTypes, ", "))
 	}
@@ -149,6 +152,21 @@ Next steps:
 3. Reload the app:
 	systemctl reload myapp
 Deactivate: ripc set acme.dns-01.%s.provider ""`, label, block, label, label, label)
+	case ScaffoldTypeJob:
+		return fmt.Sprintf(`
+%s:
+%s
+
+Next steps:
+1. Set the job handler type (required):
+	ripc set scheduler.jobs.%s.job_type job_type_acme_cert
+2. Activate it (required):
+	ripc set scheduler.jobs.%s.activated true
+3. Optionally adjust the interval:
+	ripc set scheduler.jobs.%s.interval 1h
+4. Reload the app:
+	systemctl reload myapp
+Deactivate: ripc set scheduler.jobs.%s.activated false`, label, block, label, label, label, label)
 	default:
 		return ""
 	}
@@ -157,10 +175,10 @@ Deactivate: ripc set acme.dns-01.%s.provider ""`, label, block, label, label, la
 func printScaffoldUsage(w io.Writer) {
 	help := Spec{
 		Usage:       "scaffold [options] <type> <key>",
-		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key>, backup.sqlite-rsync.entries.<key> or acme.dns-01.<key>; use a best-practice label that reveals what the entry is for (e.g. app-online, analytics-vacuum, app-rsync, deeploid_cf).",
+		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key>, backup.sqlite-rsync.entries.<key>, acme.dns-01.<key> or scheduler.jobs.<key>; use a best-practice label that reveals what the entry is for (e.g. app-online, analytics-vacuum, app-rsync, deeploid_cf).",
 		Args: []ArgSpec{
-			{"type", "Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync, oauth2 or acme-dns-01)"},
-			{"key", "Key of the new entry — required backup label or acme dns-01 label, e.g. app-online, app-rsync, deeploid_cf"},
+			{"type", "Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync, oauth2, acme-dns-01 or job)"},
+			{"key", "Key of the new entry — required backup label, acme dns-01 label or job label, e.g. app-online, app-rsync, deeploid_cf, acme_cert"},
 		},
 		Subcommands: []SubcommandGroup{
 			{
@@ -171,6 +189,7 @@ func printScaffoldUsage(w io.Writer) {
 					{"backup-sqlite-rsync", "Scaffold a backup.sqlite-rsync.entries entry for sqlite-rsync (origin serve)"},
 					{"oauth2", "Scaffold an oauth2_providers entry"},
 					{"acme-dns-01", "Scaffold an acme.dns-01 entry for the DNS-01 challenge"},
+					{"job", "Scaffold a scheduler.jobs entry for a job that runs on a schedule"},
 				},
 			},
 		},
@@ -183,6 +202,7 @@ func printScaffoldUsage(w io.Writer) {
 			"ripc scaffold backup-sqlite-rsync app-rsync",
 			"ripc scaffold oauth2 my_google",
 			"ripc scaffold acme-dns-01 deeploid_cf",
+			"ripc scaffold job acme_cert",
 		},
 	}
 	help.Print(w, prog)

@@ -122,3 +122,16 @@ func TestNewAcmeDNS01EntryDefaults(t *testing.T) {
 		t.Errorf("Credentials: got %v, want an api_token key", v.Credentials)
 	}
 }
+
+func TestNewJobEntryDefaults(t *testing.T) {
+	v := NewJobEntryDefaults()
+	if v.JobType != "" {
+		t.Errorf("JobType: got %q, want empty", v.JobType)
+	}
+	if v.Interval.Duration != time.Hour {
+		t.Errorf("Interval: got %v, want 1h", v.Interval)
+	}
+	if v.Activated != false {
+		t.Errorf("Activated: got %v, want false", v.Activated)
+	}
+}

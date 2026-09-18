@@ -21,6 +21,7 @@ type Db struct {
 
 	// --- Mock DbQueue Methods ---
 	InsertJobFunc              func(job db.Job) error
+	SeedRecurrentFunc          func(jobs []db.Job) error
 	ClaimFunc                  func(limit int) ([]*db.Job, error)
 	MarkCompletedFunc          func(jobID int64) error
 	MarkFailedFunc             func(jobID int64, errMsg string) error
@@ -85,6 +86,12 @@ func (m *Db) UpdateEmail(userId string, newEmail string) error {
 func (m *Db) InsertJob(job db.Job) error {
 	if m.InsertJobFunc != nil {
 		return m.InsertJobFunc(job)
+	}
+	return nil // Default: Success
+}
+func (m *Db) SeedRecurrent(jobs []db.Job) error {
+	if m.SeedRecurrentFunc != nil {
+		return m.SeedRecurrentFunc(jobs)
 	}
 	return nil // Default: Success
 }

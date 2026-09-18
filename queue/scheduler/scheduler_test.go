@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"log/slog"
@@ -100,6 +99,10 @@ func TestScheduler_ProcessJobs(t *testing.T) {
 
 	t.Run("Success - Recurrent", func(t *testing.T) {
 		scheduledFor := time.Now().Add(10 * time.Minute)
+		recurrentCfg := cfg
+		recurrentCfg.Jobs = config.Jobs{
+			"recurrent": {JobType: "recurrent_job", Interval: config.Duration{Duration: time.Hour}, Activated: true},
+		}
 		var recurrentCompletedID int64
 		var recurrentNewJob db.Job
 		queue := &mock.Db{
@@ -107,8 +110,6 @@ func TestScheduler_ProcessJobs(t *testing.T) {
 				return []*db.Job{{
 					ID:           1,
 					JobType:      "recurrent_job",
-					Recurrent:    true,
-					Interval:     time.Hour,
 					ScheduledFor: scheduledFor,
 				}}, nil
 			},
@@ -118,7 +119,7 @@ func TestScheduler_ProcessJobs(t *testing.T) {
 				return nil
 			},
 		}
-		scheduler := newTestScheduler(t, cfg, queue)
+		scheduler := newTestScheduler(t, recurrentCfg, queue)
 
 		scheduler.Executor().Register("recurrent_job", FuncHandler(func(ctx context.Context, job db.Job) error {
 			return nil
@@ -132,15 +133,76 @@ func TestScheduler_ProcessJobs(t *testing.T) {
 		if recurrentNewJob.JobType != "recurrent_job" {
 			t.Errorf("expected next job type 'recurrent_job', got %q", recurrentNewJob.JobType)
 		}
-		if !recurrentNewJob.Recurrent {
-			t.Error("expected next job to be recurrent")
-		}
-		if recurrentNewJob.Interval != time.Hour {
-			t.Errorf("expected next job interval to be 1h, got %v", recurrentNewJob.Interval)
-		}
 		expectedScheduledFor := scheduledFor.Add(time.Hour)
 		if !recurrentNewJob.ScheduledFor.Equal(expectedScheduledFor) {
 			t.Errorf("expected next job scheduled for %v, got %v", expectedScheduledFor, recurrentNewJob.ScheduledFor)
+		}
+	})
+
+	t.Run("Success - Deactivated entry", func(t *testing.T) {
+		deactivatedCfg := cfg
+		deactivatedCfg.Jobs = config.Jobs{
+			"recurrent": {JobType: "recurrent_job", Interval: config.Duration{Duration: time.Hour}},
+		}
+		var markCompletedID int64
+		var markRecurrentCalled bool
+		queue := &mock.Db{
+			ClaimFunc: func(limit int) ([]*db.Job, error) {
+				return []*db.Job{{ID: 1, JobType: "recurrent_job"}}, nil
+			},
+			MarkCompletedFunc: func(jobID int64) error {
+				markCompletedID = jobID
+				return nil
+			},
+			MarkRecurrentCompletedFunc: func(completedJobID int64, newJob db.Job) error {
+				markRecurrentCalled = true
+				return nil
+			},
+		}
+		scheduler := newTestScheduler(t, deactivatedCfg, queue)
+
+		scheduler.Executor().Register("recurrent_job", FuncHandler(func(ctx context.Context, job db.Job) error {
+			return nil
+		}))
+
+		scheduler.processJobs()
+
+		if markCompletedID != 1 {
+			t.Errorf("expected MarkCompleted to be called with job 1, got %d", markCompletedID)
+		}
+		if markRecurrentCalled {
+			t.Error("MarkRecurrentCompleted was called for a deactivated entry")
+		}
+	})
+
+	t.Run("Add activated jobs", func(t *testing.T) {
+		jobsCfg := cfg
+		jobsCfg.Jobs = config.Jobs{
+			"acme_cert": {JobType: "job_type_acme_cert", Interval: config.Duration{Duration: time.Hour}, Activated: true},
+			"paused":    {JobType: "job_type_paused", Interval: config.Duration{Duration: time.Hour}},
+		}
+		var addedJobs []db.Job
+		queue := &mock.Db{
+			SeedRecurrentFunc: func(jobs []db.Job) error {
+				addedJobs = append(addedJobs, jobs...)
+				return nil
+			},
+		}
+		scheduler := newTestScheduler(t, jobsCfg, queue)
+
+		before := time.Now()
+		scheduler.processJobs()
+
+		if len(addedJobs) != 1 {
+			t.Fatalf("expected 1 added job, got %d", len(addedJobs))
+		}
+		if addedJobs[0].JobType != "job_type_acme_cert" {
+			t.Errorf("expected added type 'job_type_acme_cert', got %q", addedJobs[0].JobType)
+		}
+		earliest := before.Add(time.Hour)
+		latest := time.Now().Add(time.Hour)
+		if addedJobs[0].ScheduledFor.Before(earliest) || addedJobs[0].ScheduledFor.After(latest) {
+			t.Errorf("expected scheduled_for between %v and %v, got %v", earliest, latest, addedJobs[0].ScheduledFor)
 		}
 	})
 
@@ -204,52 +266,29 @@ func TestScheduler_ProcessJobs(t *testing.T) {
 	})
 }
 
-func TestNextRecurrentJob(t *testing.T) {
-	now := time.Now()
-	interval := 1 * time.Hour
-	scheduledFor := now.Add(-interval)
-
+func TestNextRecurrent(t *testing.T) {
+	scheduledFor := time.Now().Add(-time.Hour)
+	entry := config.JobEntry{
+		JobType:   "job_type_acme_cert",
+		Interval:  config.Duration{Duration: 6 * time.Hour},
+		Activated: true,
+	}
 	completedJob := db.Job{
 		ID:           1,
-		JobType:      "my_recurrent_job",
-		PayloadExtra: json.RawMessage(`{"meta":"data"}`),
-		MaxAttempts:  5,
-		Recurrent:    true,
-		Interval:     interval,
-		CreatedAt:    now.Add(-2 * interval),
+		JobType:      entry.JobType,
 		ScheduledFor: scheduledFor,
 	}
 
-	newJob := nextRecurrentJob(completedJob)
+	newJob := nextRecurrent(completedJob, entry)
 
-	if newJob.JobType != completedJob.JobType {
-		t.Errorf("JobType mismatch: got %s, want %s", newJob.JobType, completedJob.JobType)
+	if newJob.JobType != entry.JobType {
+		t.Errorf("JobType mismatch: got %s, want %s", newJob.JobType, entry.JobType)
 	}
-	if !newJob.Recurrent {
-		t.Error("Expected new job to be recurrent")
-	}
-	if newJob.Interval != completedJob.Interval {
-		t.Errorf("Interval mismatch: got %v, want %v", newJob.Interval, completedJob.Interval)
-	}
-	if newJob.MaxAttempts != completedJob.MaxAttempts {
-		t.Errorf("MaxAttempts mismatch: got %d, want %d", newJob.MaxAttempts, completedJob.MaxAttempts)
-	}
-	if newJob.CreatedAt != completedJob.CreatedAt {
-		t.Errorf("CreatedAt should be preserved, got %v, want %v", newJob.CreatedAt, completedJob.CreatedAt)
-	}
-
-	expectedScheduledFor := completedJob.ScheduledFor.Add(completedJob.Interval)
+	expectedScheduledFor := scheduledFor.Add(entry.Interval.Duration)
 	if !newJob.ScheduledFor.Equal(expectedScheduledFor) {
 		t.Errorf("ScheduledFor mismatch: got %v, want %v", newJob.ScheduledFor, expectedScheduledFor)
 	}
-
-	var payload struct {
-		ScheduledFor time.Time `json:"scheduled_for"`
-	}
-	if err := json.Unmarshal(newJob.Payload, &payload); err != nil {
-		t.Fatalf("Failed to unmarshal new job payload: %v", err)
-	}
-	if !payload.ScheduledFor.Equal(expectedScheduledFor) {
-		t.Errorf("Payload ScheduledFor mismatch: got %v, want %v", payload.ScheduledFor, expectedScheduledFor)
+	if len(newJob.Payload) != 0 {
+		t.Errorf("expected empty payload, got %s", newJob.Payload)
 	}
 }

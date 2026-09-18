@@ -10,7 +10,7 @@ import (
 // creation time.
 func (d *Db) ListJobs(limit int) (jobs []*db.Job, err error) {
 	query := `SELECT id, job_type, payload, payload_extra, status, attempts, max_attempts, created_at, updated_at,
-			scheduled_for, locked_by, locked_at, completed_at, last_error, recurrent, interval
+			scheduled_for, locked_by, locked_at, completed_at, last_error
 		FROM job_queue ORDER BY created_at DESC, id DESC`
 	if limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d", limit)

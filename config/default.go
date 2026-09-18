@@ -34,6 +34,7 @@ func NewDefaultConfig() *Config {
 			Interval:              Duration{Duration: 60 * time.Second},
 			MaxJobsPerTick:        10,
 			ConcurrencyMultiplier: 2,
+			Jobs:                  NewJobsDefaults(),
 		},
 		Log: Log{
 			Request: LogRequest{
@@ -230,4 +231,18 @@ func NewAcmeDNS01EntryDefaults() AcmeDNS01Entry {
 			"api_token": "",
 		},
 	}
+}
+
+// NewJobEntryDefaults returns a job entry with default values for use by ripc
+// scaffold. JobType is empty and Activated is false, so you must set both.
+func NewJobEntryDefaults() JobEntry {
+	return JobEntry{
+		Interval: Duration{Duration: 1 * time.Hour},
+	}
+}
+
+// NewJobsDefaults returns an empty jobs map. Entries are created via ripc
+// scaffold.
+func NewJobsDefaults() Jobs {
+	return Jobs{}
 }
