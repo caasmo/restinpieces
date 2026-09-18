@@ -166,11 +166,11 @@ Creates a complete configuration section with defaults. `set` changes a single f
 
 | Type | Path | Description |
 |------|------|-------------|
-| `backup-online` | `backup.online.<label>` | Online Backup API |
-| `backup-vacuum` | `backup.vacuum.<label>` | VACUUM INTO |
-| `backup-sqlite-rsync` | `backup.sqlite-rsync.entries.<label>` | sqlite-rsync |
+| `backup-online` | `backup.online.<label>` | Online Backup API ([restinpieces-backup](https://github.com/caasmo/restinpieces-backup)) |
+| `backup-vacuum` | `backup.vacuum.<label>` | VACUUM INTO ([restinpieces-backup](https://github.com/caasmo/restinpieces-backup)) |
+| `backup-sqlite-rsync` | `backup.sqlite-rsync.entries.<label>` | sqlite-rsync ([restinpieces-backup](https://github.com/caasmo/restinpieces-backup)) |
 | `oauth2` | `oauth2_providers.<label>` | OAuth2 provider |
-| `acme-dns-01` | `acme.dns-01.<label>` | DNS-01 challenge (Cloudflare) |
+| `acme-dns-01` | `acme.dns-01.<label>` | DNS-01 challenge (Cloudflare, [restinpieces-acme](https://github.com/caasmo/restinpieces-acme)) |
 | `job` | `scheduler.jobs.<label>` | Job that runs on a schedule |
 
 **Example: configure backup of type `sqlite-rsync` for application SQLite file `/tmp/app.db`**
@@ -211,6 +211,8 @@ ripc paths myapp
 
 **Example: declare a job that runs on a schedule**
 
+Use the certificate renewal job from [restinpieces-acme](https://github.com/caasmo/restinpieces-acme). Your app registers its handler, then you declare when it runs:
+
 ```
 ripc scaffold job acme_cert
 ```
@@ -234,6 +236,23 @@ Next steps:
 	systemctl reload myapp
 Deactivate: ripc set scheduler.jobs.acme_cert.activated false
 ```
+
+Point the entry at the handler from `restinpieces-acme`, then turn it on:
+
+```
+ripc set scheduler.jobs.acme_cert.job_type job_type_acme_cert
+ripc set scheduler.jobs.acme_cert.activated true
+systemctl reload myapp
+```
+
+Verify:
+
+```
+ripc get scheduler.jobs.acme_cert
+ripc job list
+```
+
+The scheduler adds one pending run. When it completes, the next run is added automatically. See the handler and renewal details in [restinpieces-acme](https://github.com/caasmo/restinpieces-acme).
 
 ### `migrate`
 
