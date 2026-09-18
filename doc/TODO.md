@@ -200,3 +200,18 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/gen.go, cmd/ripc/get.go
     5. a changed value applies to the next run that is inserted; rows already in the queue keep the value they were inserted with
 - ref: `sql/schema/app/job_queue.sql`, `db/databasesql/queue.go`, `queue/scheduler/scheduler.go`, `config/config.go`, `config/default.go`
 
+# scheduler: failed job keeps trying without checking conf
+
+- `processJobs` claims `pending` + `failed` due rows and executes them with no `activated` check, so deactivating `scheduler.jobs.<label>` does not stop an already-failed row from retrying every tick (seen live: LE 429 rate limit kept being hammered by job 7476)
+- `activated` is only read for seeding new rows (`seedRecurrent`) and after success (to decide `MarkCompleted` vs next recurrent); the failure path just `MarkFailed` and the row stays claimable
+- to stop a failed row today you must `ripc job rm <id>`; deactivation alone is not enough
+- ref: `queue/scheduler/scheduler.go:118-132`, `queue/scheduler/scheduler.go:158-167`, `queue/scheduler/scheduler.go:202-211`, `db/databasesql/queue.go:26-40`
+
+# ripc set: allows table to string swaps that corrupt config
+
+- `set` only checks `tree.Has(path)`, not the shape, so `ripc set acme ""` swaps the whole `[acme]` table for `acme = ""` at the TOML root (seen live)
+- the save succeeds, then every strict load fails: `migrate`, `dump --runtime`, startup — `cannot decode TOML string into struct field config.Config.Acme of type config.Acme`
+- robust fix (talked, not built): after `Set` + `Marshal`, trial-unmarshal into empty `Config` before `Save`; on failure abort the save, keep the old row, return the decoder error with a `run migrate` hint
+- open: scope `set` only (`save` stays raw as escape hatch); already-broken db refuses further `set`s until `migrate`
+- ref: `cmd/ripc/set.go:118-127`, `cmd/ripc/get.go:97-107`, `config/config.go:46`, `config/acme.go:8-52`
+

@@ -133,7 +133,9 @@ func TestGetAndPrintConfigPaths_Success_WithFilter(t *testing.T) {
 	}
 }
 
-// TestGetAndPrintConfigPaths_Success_SingleMatch verifies a single match prints value only.
+// TestGetAndPrintConfigPaths_Success_SingleMatch verifies a single match prints
+// the value byte-exact with no added newline, so `get > file` + `set @file`
+// round-trips.
 func TestGetAndPrintConfigPaths_Success_SingleMatch(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockGetSecureStore(map[string][]byte{
@@ -149,9 +151,33 @@ func TestGetAndPrintConfigPaths_Success_SingleMatch(t *testing.T) {
 	}
 
 	output := stdout.String()
-	expectedOutput := ":8080\n"
+	expectedOutput := ":8080"
 	if output != expectedOutput {
 		t.Errorf("Expected single value output %q, got %q", expectedOutput, output)
+	}
+}
+
+// TestGetAndPrintConfigPaths_SingleMatchRoundTrip verifies a single-line value
+// exported with get can be stored again byte-exact: no trailing newline is
+// added that would poison header values like API tokens.
+func TestGetAndPrintConfigPaths_SingleMatchRoundTrip(t *testing.T) {
+	scope := "app"
+	mockStore := NewMockGetSecureStore(map[string][]byte{
+		scope: []byte("[acme]\n  profile = \"tlsserver\"\n"),
+	})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := getAndPrintConfigPaths(ui, mockStore, scope, "acme.profile")
+
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+
+	output := stdout.String()
+	expectedOutput := "tlsserver"
+	if output != expectedOutput {
+		t.Errorf("Expected round-trip safe output %q, got %q", expectedOutput, output)
 	}
 }
 

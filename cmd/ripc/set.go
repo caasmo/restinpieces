@@ -126,6 +126,11 @@ func setConfigValue(
 		return fmt.Errorf("%w: failed to marshal updated config: %w", ErrConfigMarshal, err)
 	}
 
+	validationErr := validateUpdated(updatedTomlBytes, configPath)
+	if validationErr != nil {
+		return validationErr
+	}
+
 	if description == "" {
 		description = fmt.Sprintf("Updated field '%s'", configPath)
 	}
@@ -143,6 +148,18 @@ func setConfigValue(
 
 	if _, err := fmt.Fprintf(ui.Err, "Successfully set '%s' in scope '%s'\n", configPath, scope); err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
+	}
+	return nil
+}
+
+// validateUpdated tries reading the updated config back into the app shape.
+// A bad type swap (like a table turned into a string) fails here, before
+// anything reaches the database.
+func validateUpdated(data []byte, configPath string) error {
+	var shape config.Config
+	unmarshalErr := toml.Unmarshal(data, &shape)
+	if unmarshalErr != nil {
+		return fmt.Errorf("%w: refusing to save, value at '%s' breaks config shape, run migrate to repair: %w", ErrConfigUnmarshal, configPath, unmarshalErr)
 	}
 	return nil
 }

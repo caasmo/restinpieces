@@ -256,3 +256,23 @@ func TestHandleSetCommand_Help(t *testing.T) {
 		t.Errorf("expected empty stderr, got: %q", stderr.String())
 	}
 }
+
+// TestSetConfigValue_RefusesTableToStringSwap verifies the live acme case:
+// setting a table path to a plain string must fail before save, keeping the
+// old row untouched.
+func TestSetConfigValue_RefusesTableToStringSwap(t *testing.T) {
+	scope := "app"
+	conf := "[acme]\n  profile = \"tlsserver\"\n[server]\n  addr = \":8080\"\n"
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(conf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := setConfigValue(ui, mockStore, scope, "toml", "", "acme", `""`)
+
+	if !errors.Is(err, ErrConfigUnmarshal) {
+		t.Fatalf("expected error to wrap ErrConfigUnmarshal, got %v", err)
+	}
+	if len(mockStore.saveHistory) != 0 {
+		t.Errorf("expected no save on shape break, got %d saves", len(mockStore.saveHistory))
+	}
+}
