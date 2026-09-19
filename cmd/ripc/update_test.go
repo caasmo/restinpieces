@@ -9,8 +9,8 @@ import (
 	toml "github.com/pelletier/go-toml"
 )
 
-// MockGenSecureStore is a test-only implementation of config.SecureStore for gen command tests.
-type MockGenSecureStore struct {
+// MockUpdateSecureStore is a test-only implementation of config.SecureStore for update command tests.
+type MockUpdateSecureStore struct {
 	data           map[string][]byte
 	format         string
 	saveHistory    []string
@@ -18,17 +18,17 @@ type MockGenSecureStore struct {
 	ForceSaveError bool
 }
 
-func NewMockGenSecureStore(initialData map[string][]byte) *MockGenSecureStore {
+func NewMockUpdateSecureStore(initialData map[string][]byte) *MockUpdateSecureStore {
 	if initialData == nil {
 		initialData = make(map[string][]byte)
 	}
-	return &MockGenSecureStore{
+	return &MockUpdateSecureStore{
 		data:   initialData,
 		format: "toml",
 	}
 }
 
-func (m *MockGenSecureStore) Get(scope string, generation int) ([]byte, string, error) {
+func (m *MockUpdateSecureStore) Get(scope string, generation int) ([]byte, string, error) {
 	if m.ForceGetError {
 		return nil, "", fmt.Errorf("forced get error: %w", ErrSecureStoreGet)
 	}
@@ -39,7 +39,7 @@ func (m *MockGenSecureStore) Get(scope string, generation int) ([]byte, string, 
 	return data, m.format, nil
 }
 
-func (m *MockGenSecureStore) Save(scope string, data []byte, format string, description string) error {
+func (m *MockUpdateSecureStore) Save(scope string, data []byte, format string, description string) error {
 	if m.ForceSaveError {
 		return fmt.Errorf("forced save error: %w", ErrSecureStoreSave)
 	}
@@ -49,7 +49,7 @@ func (m *MockGenSecureStore) Save(scope string, data []byte, format string, desc
 	return nil
 }
 
-const genTestConf = `
+const updateTestConf = `
 [server]
   addr = ":8080"
 
@@ -70,7 +70,7 @@ func isAlphanumeric(s string) bool {
 	return true
 }
 
-func getGenTreeFromStore(t *testing.T, store *MockGenSecureStore, scope string) *toml.Tree {
+func getUpdateTreeFromStore(t *testing.T, store *MockUpdateSecureStore, scope string) *toml.Tree {
 	t.Helper()
 	data, _, err := store.Get(scope, 0)
 	if err != nil {
@@ -83,13 +83,13 @@ func getGenTreeFromStore(t *testing.T, store *MockGenSecureStore, scope string) 
 	return tree
 }
 
-func TestGenerate_SingleKey(t *testing.T) {
+func TestUpdate_SingleKey(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(genTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(updateTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := generate(ui, mockStore, scope, "", "jwt.auth_secret")
+	err := updateValues(ui, mockStore, scope, "", "jwt.auth_secret")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestGenerate_SingleKey(t *testing.T) {
 		t.Fatalf("expected 1 save, got %d", len(mockStore.saveHistory))
 	}
 
-	tree := getGenTreeFromStore(t, mockStore, scope)
+	tree := getUpdateTreeFromStore(t, mockStore, scope)
 	fresh := tree.Get("jwt.auth_secret")
 	freshStr, ok := fresh.(string)
 	if !ok {
@@ -127,13 +127,13 @@ func TestGenerate_SingleKey(t *testing.T) {
 	}
 }
 
-func TestGenerate_JwtFilter(t *testing.T) {
+func TestUpdate_JwtFilter(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(genTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(updateTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := generate(ui, mockStore, scope, "", "jwt")
+	err := updateValues(ui, mockStore, scope, "", "jwt")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -142,12 +142,12 @@ func TestGenerate_JwtFilter(t *testing.T) {
 		t.Fatalf("expected 1 save, got %d", len(mockStore.saveHistory))
 	}
 
-	expectedDesc := "Generated 'jwt.auth_secret, jwt.email_change_otp_secret, jwt.oauth2_state_secret, jwt.password_reset_secret, jwt.verification_email_otp_secret'"
+	expectedDesc := "Updated 'jwt.auth_secret, jwt.email_change_otp_secret, jwt.oauth2_state_secret, jwt.password_reset_secret, jwt.verification_email_otp_secret'"
 	if mockStore.saveHistory[0] != expectedDesc {
 		t.Errorf("expected save description %q, got %q", expectedDesc, mockStore.saveHistory[0])
 	}
 
-	tree := getGenTreeFromStore(t, mockStore, scope)
+	tree := getUpdateTreeFromStore(t, mockStore, scope)
 	for _, path := range []string{
 		"jwt.auth_secret",
 		"jwt.password_reset_secret",
@@ -169,14 +169,14 @@ func TestGenerate_JwtFilter(t *testing.T) {
 	}
 }
 
-func TestGenerate_CustomDesc(t *testing.T) {
+func TestUpdate_CustomDesc(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(genTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(updateTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 	description := "rotate after incident"
 
-	err := generate(ui, mockStore, scope, description, "jwt.auth_secret")
+	err := updateValues(ui, mockStore, scope, description, "jwt.auth_secret")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -186,41 +186,37 @@ func TestGenerate_CustomDesc(t *testing.T) {
 	}
 }
 
-func TestGenerate_Failure_MissingPath(t *testing.T) {
+func TestUpdate_Failure_MissingPath(t *testing.T) {
 	scope := "app"
-	missingConf := `
-[jwt]
-  auth_secret = "old"
-`
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(missingConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(updateTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := generate(ui, mockStore, scope, "", "jwt")
+	err := updateValues(ui, mockStore, scope, "", "tls")
 	if !errors.Is(err, ErrPathNotFound) {
 		t.Errorf("expected error to wrap ErrPathNotFound, got %v", err)
 	}
 }
 
-func TestGenerate_Failure_MalformedTOML(t *testing.T) {
+func TestUpdate_Failure_MalformedTOML(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte("[jwt")})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte("[jwt")})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := generate(ui, mockStore, scope, "", "jwt")
+	err := updateValues(ui, mockStore, scope, "", "jwt")
 	if !errors.Is(err, ErrConfigUnmarshal) {
 		t.Errorf("expected error to wrap ErrConfigUnmarshal, got %v", err)
 	}
 }
 
-func TestGenerate_NoMatch(t *testing.T) {
+func TestUpdate_NoMatch(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(genTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(updateTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := generate(ui, mockStore, scope, "", "server.port")
+	err := updateValues(ui, mockStore, scope, "", "server.port")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -231,43 +227,43 @@ func TestGenerate_NoMatch(t *testing.T) {
 	if stdout.Len() != 0 {
 		t.Errorf("expected empty stdout, got %q", stdout.String())
 	}
-	expectedStderr := "No generatable paths matching 'server.port' found in scope 'app'.\n"
+	expectedStderr := "No updatable paths matching 'server.port' found in scope 'app'.\n"
 	if stderr.String() != expectedStderr {
 		t.Errorf("expected stderr %q, got %q", expectedStderr, stderr.String())
 	}
 }
 
-func TestGenerate_Failure_StoreReadError(t *testing.T) {
-	mockStore := NewMockGenSecureStore(nil)
+func TestUpdate_Failure_StoreReadError(t *testing.T) {
+	mockStore := NewMockUpdateSecureStore(nil)
 	mockStore.ForceGetError = true
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := generate(ui, mockStore, "app", "", "jwt")
+	err := updateValues(ui, mockStore, "app", "", "jwt")
 	if !errors.Is(err, ErrSecureStoreGet) {
 		t.Errorf("expected error to wrap ErrSecureStoreGet, got %v", err)
 	}
 }
 
-func TestGenerate_Failure_StoreSaveError(t *testing.T) {
+func TestUpdate_Failure_StoreSaveError(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(genTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(updateTestConf)})
 	mockStore.ForceSaveError = true
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := generate(ui, mockStore, scope, "", "jwt")
+	err := updateValues(ui, mockStore, scope, "", "jwt")
 	if !errors.Is(err, ErrSecureStoreSave) {
 		t.Errorf("expected error to wrap ErrSecureStoreSave, got %v", err)
 	}
 }
 
-func TestHandleGenCommand_Help(t *testing.T) {
-	mockStore := NewMockGenSecureStore(nil)
+func TestHandleUpdateCommand_Help(t *testing.T) {
+	mockStore := NewMockUpdateSecureStore(nil)
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := handleGenCommand(mockStore, []string{"-h"}, ui)
+	err := handleUpdateCommand(mockStore, []string{"-h"}, ui)
 	if err != nil {
 		t.Fatalf("expected no error for -h, got %v", err)
 	}
@@ -279,34 +275,38 @@ func TestHandleGenCommand_Help(t *testing.T) {
 	}
 }
 
-// failingGenerator always fails, for testing generator error handling.
-type failingGenerator struct{}
+// failingUpdater always fails, for testing updater error handling.
+type failingUpdater struct{}
 
-func (failingGenerator) Generate(tree *toml.Tree, path string) error {
+func (failingUpdater) Update(tree *toml.Tree, path string) error {
 	return errors.New("boom")
 }
 
-func TestGenFuncs_ContainsUserAgent(t *testing.T) {
-	if _, ok := genFuncs["block_user_agent.agents"]; !ok {
-		t.Error(`expected genFuncs to contain "block_user_agent.agents"`)
+func (failingUpdater) Print(ui UI, tree *toml.Tree, path string) error {
+	return nil
+}
+
+func TestUpdaters_ContainsUserAgent(t *testing.T) {
+	if _, ok := updaters["block_user_agent.agents"]; !ok {
+		t.Error(`expected updaters to contain "block_user_agent.agents"`)
 	}
 }
 
-func TestGenerate_Failure_GeneratorError(t *testing.T) {
+func TestUpdate_Failure_UpdaterError(t *testing.T) {
 	scope := "app"
 	conf := "[test]\n  failing = \"old\"\n"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(conf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(conf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	genFuncs["test.failing"] = failingGenerator{}
-	defer delete(genFuncs, "test.failing")
+	updaters["test.failing"] = failingUpdater{}
+	defer delete(updaters, "test.failing")
 
-	err := generate(ui, mockStore, scope, "", "test.failing")
+	err := updateValues(ui, mockStore, scope, "", "test.failing")
 	if err == nil || err.Error() != "boom" {
-		t.Fatalf("expected generator error, got %v", err)
+		t.Fatalf("expected updater error, got %v", err)
 	}
 	if len(mockStore.saveHistory) != 0 {
-		t.Errorf("expected no save on generator error, got %d", len(mockStore.saveHistory))
+		t.Errorf("expected no save on updater error, got %d", len(mockStore.saveHistory))
 	}
 }

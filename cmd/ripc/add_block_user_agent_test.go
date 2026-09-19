@@ -8,7 +8,7 @@ import (
 
 func TestAddValue_UserAgent_Append(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -17,7 +17,7 @@ func TestAddValue_UserAgent_Append(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	tree := getGenTreeFromStore(t, mockStore, scope)
+	tree := getUpdateTreeFromStore(t, mockStore, scope)
 	raw, ok := tree.Get("block_user_agent.agents").([]interface{})
 	if !ok {
 		t.Fatalf("expected block_user_agent.agents to be a list, got %T", tree.Get("block_user_agent.agents"))
@@ -48,7 +48,7 @@ func TestAddValue_UserAgent_Append(t *testing.T) {
 
 func TestAddValue_UserAgent_DuplicateSkip(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -57,7 +57,7 @@ func TestAddValue_UserAgent_DuplicateSkip(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	tree := getGenTreeFromStore(t, mockStore, scope)
+	tree := getUpdateTreeFromStore(t, mockStore, scope)
 	raw, ok := tree.Get("block_user_agent.agents").([]interface{})
 	if !ok {
 		t.Fatalf("expected block_user_agent.agents to be a list, got %T", tree.Get("block_user_agent.agents"))
@@ -73,7 +73,7 @@ func TestAddValue_UserAgent_DuplicateSkip(t *testing.T) {
 
 func TestAddValue_UserAgent_EmptyValue(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 

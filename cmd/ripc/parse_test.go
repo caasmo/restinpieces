@@ -19,7 +19,7 @@ func TestParseArgs(t *testing.T) {
 	testSaveParsing(t)
 	testGetParsing(t)
 	testMigrateParsing(t)
-	testGenParsing(t)
+	testUpdateParsing(t)
 }
 
 func testSetParsing(t *testing.T) {
@@ -331,9 +331,9 @@ func testMigrateParsing(t *testing.T) {
 	})
 }
 
-func testGenParsing(t *testing.T) {
-	t.Run("GenSuccess", func(t *testing.T) {
-		opts, err := parseGenArgs([]string{"--scope", "test", "--desc", "my desc", "filter"})
+func testUpdateParsing(t *testing.T) {
+	t.Run("UpdateSuccess", func(t *testing.T) {
+		opts, err := parseUpdateArgs([]string{"--scope", "test", "--desc", "my desc", "filter"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -348,13 +348,23 @@ func testGenParsing(t *testing.T) {
 		}
 	})
 
-	t.Run("GenTooManyArgs", func(t *testing.T) {
-		_, err := parseGenArgs([]string{"filter", "extra"})
+	t.Run("UpdateMissingFilter", func(t *testing.T) {
+		_, err := parseUpdateArgs([]string{})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}
-		if !errors.Is(err, ErrTooManyArguments) {
-			t.Fatalf("expected error to wrap %v, but got %v", ErrTooManyArguments, err)
+		if !errors.Is(err, ErrMissingArgument) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrMissingArgument, err)
+		}
+	})
+
+	t.Run("UpdateTooManyArgs", func(t *testing.T) {
+		_, err := parseUpdateArgs([]string{"filter", "extra"})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrMissingArgument) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrMissingArgument, err)
 		}
 	})
 }

@@ -15,7 +15,7 @@ var (
 	printDumpUsageFunc     = printDumpUsage
 	printScopesUsageFunc   = printScopesUsage
 	printSetUsageFunc      = printSetUsage
-	printGenUsageFunc      = printGenUsage
+	printUpdateUsageFunc   = printUpdateUsage
 	printSaveUsageFunc     = printSaveUsage
 	printScaffoldUsageFunc = printScaffoldUsage
 	printMigrateUsageFunc  = printMigrateUsage
@@ -60,8 +60,8 @@ func runHelpTopic(topic string, ui UI) error {
 		printScopesUsageFunc(ui.Out)
 	case "set":
 		printSetUsageFunc(ui.Out)
-	case "gen":
-		printGenUsageFunc(ui.Out)
+	case "update":
+		printUpdateUsageFunc(ui.Out)
 	case "save":
 		printSaveUsageFunc(ui.Out)
 	case "scaffold":

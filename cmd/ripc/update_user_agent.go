@@ -9,8 +9,7 @@ import (
 	"time"
 )
 
-// This file downloads the upstream user-agent list that fills
-// block_user_agent.agents.
+// This file downloads the upstream user-agent list that fills block_user_agent.agents.
 
 // Errors returned by the download.
 var (

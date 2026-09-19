@@ -72,7 +72,7 @@ func TestParseAddArgs(t *testing.T) {
 
 func TestAddValue_NotCollection(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -84,7 +84,7 @@ func TestAddValue_NotCollection(t *testing.T) {
 
 func TestAddValue_Failure_MissingPath(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -96,7 +96,7 @@ func TestAddValue_Failure_MissingPath(t *testing.T) {
 
 func TestAddValue_Failure_MalformedTOML(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte("[block_user_agent")})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte("[block_user_agent")})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -107,7 +107,7 @@ func TestAddValue_Failure_MalformedTOML(t *testing.T) {
 }
 
 func TestAddValue_Failure_StoreGetError(t *testing.T) {
-	mockStore := NewMockGenSecureStore(nil)
+	mockStore := NewMockUpdateSecureStore(nil)
 	mockStore.ForceGetError = true
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -120,7 +120,7 @@ func TestAddValue_Failure_StoreGetError(t *testing.T) {
 
 func TestAddValue_Failure_StoreSaveError(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockGenSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	mockStore.ForceSaveError = true
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -132,7 +132,7 @@ func TestAddValue_Failure_StoreSaveError(t *testing.T) {
 }
 
 func TestHandleAddCommand_Help(t *testing.T) {
-	mockStore := NewMockGenSecureStore(nil)
+	mockStore := NewMockUpdateSecureStore(nil)
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 

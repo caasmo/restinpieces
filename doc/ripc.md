@@ -16,7 +16,7 @@
   - [scopes](#scopes)
   - [set](#set-path-value)
   - [add](#add-path-value)
-  - [gen](#gen-filter)
+  - [update](#update-filter)
   - [save](#save-file)
   - [scaffold](#scaffold-type-label)
   - [migrate](#migrate)
@@ -143,16 +143,17 @@ Appends a value to a configuration key that holds several values.
 
 `add` can be run again safely: adding a value that is already present leaves the configuration unchanged. For `block_user_agent.agents`, the value is appended to the slice.
 
-### `gen [filter]`
+### `update <filter>`
 
-Regenerates fresh values for configuration values.
+Fills configuration values in place.
 
-    ripc gen jwt.auth_secret
-    ripc gen jwt
+    ripc update jwt.auth_secret
+    ripc update jwt
+    ripc update tls
 
-If a string is given, only values whose path contains that string are regenerated. For example, `ripc gen jwt` regenerates all five `jwt.*` values in a single configuration version.
+The filter is required. Only values whose path contains it are filled in a single configuration version. For example, `ripc update jwt` fills all five `jwt.*` values at once.
 
-`gen block_user_agent` downloads the current user-agent list from https://github.com/ai-robots-txt/ai.robots.txt and stores it as the `block_user_agent.agents` slice.
+`ripc update tls` copies the staged pair into the live server settings: `acme.certificate` to `server.tls.certificate` and `acme.private_key` to `server.tls.private_key`. It refuses empty, unparsable, mismatched or expired input and writes nothing then. After success, restart the app so the server serves the new pair.
 
 ### `save <file>`
 

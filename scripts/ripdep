@@ -1335,6 +1335,17 @@ cmd_reload() {
     log_success "Reload command sent"
 }
 
+cmd_stop() {
+    local host=${1:-}
+    local project_name=${2:-}
+    if [ -z "$host" ] || [ -z "$project_name" ]; then
+        log_error "Usage: $0 stop <host> <project-name>"
+        exit 1
+    fi
+    ssh -t -o LogLevel=ERROR "${host}" "sudo systemctl stop ${project_name}"
+    log_success "Stop command sent"
+}
+
 cmd_backup() {
     local host=${1:-}
     local project_name=${2:-}
@@ -1436,6 +1447,7 @@ Commands:
   logs <host> <project-name> [lines]         Tail service logs from a remote host.
   restart <host> <project-name>              Restart the service on a remote host.
   reload <host> <project-name>               Reload service config on a remote host.
+  stop <host> <project-name>                 Stop the service on a remote host.
 
 EOF
 }
@@ -1794,6 +1806,7 @@ main() {
         logs) cmd_logs "$@" ;; 
         restart) cmd_restart "$@" ;; 
         reload) cmd_reload "$@" ;;
+        stop) cmd_stop "$@" ;;
         help|--help|-h) show_help ;; 
         *) log_error "Unknown command: $cmd"; show_help; exit 1 ;; 
     esac
