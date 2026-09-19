@@ -44,7 +44,7 @@ systemctl reload restinpieces
 
 ## Configuration
 
-Configuration lives under `[backup]` in [config/backup.go](../config/backup.go). Each strategy has its own table. The table you scaffold into selects the engine.
+Configuration lives under `[backup]` in [config/backup.go](../config/backup.go). Each strategy has its own TOML table. The TOML table you scaffold into selects the engine.
 
 | Strategy | Description |
 |---|---|

@@ -1,7 +1,7 @@
 package config
 
 // Acme holds the ACME (Let's Encrypt) configuration. Each challenge type has
-// its own table; the table you configure determines the challenge. The
+// its own TOML table; the one you configure determines the challenge. The
 // collection is keyed by an arbitrary user-chosen label — see AGENTS.md
 // "Config: map key rules". The engine that consumes this shape lives in
 // restinpieces-acme; the framework only hosts the shape and its validation.

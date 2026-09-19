@@ -258,7 +258,7 @@ func TestHandleSetCommand_Help(t *testing.T) {
 }
 
 // TestSetConfigValue_RefusesTableToStringSwap verifies the live acme case:
-// setting a table path to a plain string must fail before save, keeping the
+// setting a TOML table path to a plain string must fail before save, keeping the
 // old row untouched.
 func TestSetConfigValue_RefusesTableToStringSwap(t *testing.T) {
 	scope := "app"

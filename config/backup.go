@@ -1,7 +1,7 @@
 package config
 
-// Backup holds the backup configuration. Each strategy has its own table;
-// the table you scaffold into determines the engine. The three collections
+// Backup holds the backup configuration. Each strategy has its own TOML table;
+// the one you scaffold into determines the engine. The three collections
 // are keyed by an arbitrary user-chosen label (e.g. "app1", "app2") —
 // see AGENTS.md "Config: map key rules". The engines that consume this
 // shape live in restinpieces-backup; the framework only hosts the shape

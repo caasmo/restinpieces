@@ -93,7 +93,7 @@ func validateBlockOversizedRequest(cfg *BlockOversizedRequest) error {
 //     would be marshaled as a quoted TOML key (e.g. [backup.online."my label"]),
 //     breaking copy-pasteable `ripc set backup.online.<key>.source_path` commands.
 //   - '.' would be split by the TOML tree as a nesting level
-//     (backup.online.a.b → map entry a with sub-table b, not entry "a.b").
+//     (backup.online.a.b → map entry a with TOML sub-table b, not entry "a.b").
 //
 // Valid:   "app-online", "app_db", "my_cf".
 // Invalid: "my label", "my.label", "", "app db", "a\tb".

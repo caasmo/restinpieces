@@ -45,6 +45,7 @@ This approach follows [One Process Programming Notes](https://crawshaw.io/blog/o
 - [Notifications](#notifications)
 - [Mailer](#mailer)
 - [Middleware](#middleware)
+- [ACME certificates](#acme-certificates)
 - [Extensibility](#extensibility)
 
 ### Building on the Framework
@@ -170,6 +171,9 @@ The framework provides a collection of built-in middleware to handle common cros
 -   **TLSHeaderSTS**: Sets the `Strict-Transport-Security` (HSTS) header for all responses served over a TLS connection, instructing browsers to communicate with the server only over HTTPS.
 -   **Maintenance**: When activated via configuration, this middleware puts the server into maintenance mode. It responds to all requests with a `503 Service Unavailable` status code, allowing for system updates without shutting down the server.
 -   **Gzip**: Serves pre-compressed static assets (`.gz` files) from a given file system (`fs.FS`) to clients that support gzip encoding. This reduces bandwidth and improves load times. If a compressed file is not found, it seamlessly falls back to the next handler.
+
+### ACME certificates
+The framework holds only the `[acme]` settings in [config/acme.go](config/acme.go); renewal runs in [restinpieces-acme](https://github.com/caasmo/restinpieces-acme). Start with [doc/acme.md](doc/acme.md).
 
 ## Examples
 

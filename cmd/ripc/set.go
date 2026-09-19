@@ -153,7 +153,7 @@ func setConfigValue(
 }
 
 // validateUpdated tries reading the updated config back into the app shape.
-// A bad type swap (like a table turned into a string) fails here, before
+// A bad type swap (like a TOML table turned into a string) fails here, before
 // anything reaches the database.
 func validateUpdated(data []byte, configPath string) error {
 	var shape config.Config
