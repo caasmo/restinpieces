@@ -3,8 +3,64 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"testing"
+
+	toml "github.com/pelletier/go-toml"
 )
+
+// MockAddSecureStore is a test-only implementation of config.SecureStore for add command tests.
+type MockAddSecureStore struct {
+	data           map[string][]byte
+	format         string
+	saveHistory    []string
+	ForceGetError  bool
+	ForceSaveError bool
+}
+
+func NewMockAddSecureStore(initialData map[string][]byte) *MockAddSecureStore {
+	if initialData == nil {
+		initialData = make(map[string][]byte)
+	}
+	return &MockAddSecureStore{
+		data:   initialData,
+		format: "toml",
+	}
+}
+
+func (m *MockAddSecureStore) Get(scope string, generation int) ([]byte, string, error) {
+	if m.ForceGetError {
+		return nil, "", fmt.Errorf("forced get error: %w", ErrSecureStoreGet)
+	}
+	data, ok := m.data[scope]
+	if !ok {
+		return []byte{}, m.format, nil
+	}
+	return data, m.format, nil
+}
+
+func (m *MockAddSecureStore) Save(scope string, data []byte, format string, description string) error {
+	if m.ForceSaveError {
+		return fmt.Errorf("forced save error: %w", ErrSecureStoreSave)
+	}
+	m.data[scope] = data
+	m.format = format
+	m.saveHistory = append(m.saveHistory, description)
+	return nil
+}
+
+func getAddTreeFromStore(t *testing.T, store *MockAddSecureStore, scope string) *toml.Tree {
+	t.Helper()
+	data, _, err := store.Get(scope, 0)
+	if err != nil {
+		t.Fatalf("failed to get data from mock store: %v", err)
+	}
+	tree, err := toml.LoadBytes(data)
+	if err != nil {
+		t.Fatalf("failed to load toml from store data: %v", err)
+	}
+	return tree
+}
 
 const addTestConf = `
 [block_user_agent]
@@ -72,7 +128,7 @@ func TestParseAddArgs(t *testing.T) {
 
 func TestAddValue_NotCollection(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockAddSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -84,7 +140,7 @@ func TestAddValue_NotCollection(t *testing.T) {
 
 func TestAddValue_Failure_MissingPath(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockAddSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -96,7 +152,7 @@ func TestAddValue_Failure_MissingPath(t *testing.T) {
 
 func TestAddValue_Failure_MalformedTOML(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte("[block_user_agent")})
+	mockStore := NewMockAddSecureStore(map[string][]byte{scope: []byte("[block_user_agent")})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -107,7 +163,7 @@ func TestAddValue_Failure_MalformedTOML(t *testing.T) {
 }
 
 func TestAddValue_Failure_StoreGetError(t *testing.T) {
-	mockStore := NewMockUpdateSecureStore(nil)
+	mockStore := NewMockAddSecureStore(nil)
 	mockStore.ForceGetError = true
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -120,7 +176,7 @@ func TestAddValue_Failure_StoreGetError(t *testing.T) {
 
 func TestAddValue_Failure_StoreSaveError(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockAddSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	mockStore.ForceSaveError = true
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -132,7 +188,7 @@ func TestAddValue_Failure_StoreSaveError(t *testing.T) {
 }
 
 func TestHandleAddCommand_Help(t *testing.T) {
-	mockStore := NewMockUpdateSecureStore(nil)
+	mockStore := NewMockAddSecureStore(nil)
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 

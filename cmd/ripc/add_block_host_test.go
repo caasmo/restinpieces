@@ -8,7 +8,7 @@ import (
 
 func TestAddValue_BlockHost_Append(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockAddSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -17,7 +17,7 @@ func TestAddValue_BlockHost_Append(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	tree := getUpdateTreeFromStore(t, mockStore, scope)
+	tree := getAddTreeFromStore(t, mockStore, scope)
 	raw, ok := tree.Get("block_host.allowed_hosts").([]interface{})
 	if !ok {
 		t.Fatalf("expected block_host.allowed_hosts to be a list, got %T", tree.Get("block_host.allowed_hosts"))
@@ -48,7 +48,7 @@ func TestAddValue_BlockHost_Append(t *testing.T) {
 
 func TestAddValue_BlockHost_DuplicateSkip(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockAddSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -57,7 +57,7 @@ func TestAddValue_BlockHost_DuplicateSkip(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	tree := getUpdateTreeFromStore(t, mockStore, scope)
+	tree := getAddTreeFromStore(t, mockStore, scope)
 	raw, ok := tree.Get("block_host.allowed_hosts").([]interface{})
 	if !ok {
 		t.Fatalf("expected block_host.allowed_hosts to be a list, got %T", tree.Get("block_host.allowed_hosts"))
@@ -73,7 +73,7 @@ func TestAddValue_BlockHost_DuplicateSkip(t *testing.T) {
 
 func TestAddValue_BlockHost_EmptyValue(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(addTestConf)})
+	mockStore := NewMockAddSecureStore(map[string][]byte{scope: []byte(addTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
