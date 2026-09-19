@@ -23,10 +23,9 @@ APP_DB_FILENAME="app.db"
 DB_SUFFIX=".db"
 
 # Canonical app layout directory names. Shared by local build artifacts and the
-# remote install, which both expect bin/, data/ (and logs/ on the remote host).
+# remote install, which both expect bin/ and data/.
 APP_BIN_DIRNAME="bin"
 APP_DATA_DIRNAME="data"
-APP_LOGS_DIRNAME="logs"
 
 # Placeholder in systemd templates, replaced with the project name.
 # @...@ syntax is used because systemd expands $VAR/${VAR} itself in ExecStart.
@@ -427,6 +426,42 @@ copy_project_db() {
     log_success "Backed up $(basename "$source_db") to ${data_dir}/${APP_DB_FILENAME}"
 }
 
+# check_log_db_path_systemd: warns when log.batch.db_path in app.db points
+# outside the systemd-writable data/ directory.
+# Systemd runs with ProtectSystem=strict and only ReadWritePaths for
+# /home/<project>/data, so any other path fails at runtime.
+check_log_db_path_systemd() {
+    local ripc_bin=$1
+    local age_key_path=$2
+    local db_path=$3
+    local project_name=$4
+
+    if [ ! -x "$ripc_bin" ] || [ ! -f "$age_key_path" ] || [ ! -f "$db_path" ]; then
+        return 0
+    fi
+
+    local log_path
+    if ! log_path=$("$ripc_bin" -agekey "$age_key_path" -dbpath "$db_path" get log.batch.db_path 2>/dev/null); then
+        return 0
+    fi
+
+    if [ -z "$log_path" ]; then
+        return 0
+    fi
+
+    if [[ "$log_path" == data/* ]]; then
+        return 0
+    fi
+
+    if [[ "$log_path" == "/home/${project_name}/data/"* ]]; then
+        return 0
+    fi
+
+    log_warning "log.batch.db_path is '${log_path}', outside the systemd-writable data/ directory."
+    log_warning "Systemd will not allow that path (ProtectSystem=strict, ReadWritePaths only /home/${project_name}/data)."
+    log_warning "Fix the service file (add ReadWritePaths for that path) or move the log database into data/, e.g.: ripc log init data/logs.db"
+}
+
 create_logs_db() {
     log_warning "log.db not activated, TODO"
 }
@@ -746,6 +781,8 @@ cmd_build_recovery() {
     generate_remote_script "$project_name" "${bin_dir}/ripdep-remote"
     log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
 
+    check_log_db_path_systemd "${bin_dir}/ripc" "${build_dir}/${AGE_KEY_FILENAME}" "${data_dir}/${APP_DB_FILENAME}" "$project_name"
+
     log_success "Recovery build completed successfully in: ${GREEN}${build_dir}${NC}"
 
     echo "" # Add a blank line for readability
@@ -855,7 +892,6 @@ generate_remote_script() {
         printf 'PROJECT_NAME=%q\n' "$project_name"
         echo "APP_BIN_DIRNAME=\"${APP_BIN_DIRNAME}\""
         echo "APP_DATA_DIRNAME=\"${APP_DATA_DIRNAME}\""
-        echo "APP_LOGS_DIRNAME=\"${APP_LOGS_DIRNAME}\""
         echo "AGE_KEY_FILENAME=\"${AGE_KEY_FILENAME}\""
         echo "SYSTEMD_FILENAME_TEMPLATE=\"${SYSTEMD_FILENAME_TEMPLATE}\""
         cat <<'EOF'
@@ -953,7 +989,7 @@ create_directory_structure() {
     local project_name=$1
     log_info "Creating directory structure..."
     local data_dir="/home/${project_name}/${APP_DATA_DIRNAME}"
-    local dirs=( "/home/${project_name}/${APP_BIN_DIRNAME}" "$data_dir" "/home/${project_name}/${APP_LOGS_DIRNAME}" )
+    local dirs=( "/home/${project_name}/${APP_BIN_DIRNAME}" "$data_dir" )
     for dir in "${dirs[@]}"; do
         if [ ! -d "$dir" ]; then
             mkdir -p "$dir"
@@ -1302,12 +1338,12 @@ cmd_status() {
     ssh -t -o LogLevel=ERROR "${host}" "systemctl status ${project_name} --no-pager"
 }
 
-cmd_logs() {
+cmd_journal() {
     local host=${1:-}
     local project_name=${2:-}
     local lines=${3:-50}
     if [ -z "$host" ] || [ -z "$project_name" ]; then
-        log_error "Usage: $0 logs <host> <project-name> [lines]"
+        log_error "Usage: $0 journal <host> <project-name> [lines]"
         exit 1
     fi
     ssh -t -o LogLevel=ERROR "${host}" "sudo journalctl -u ${project_name} -n $lines -f"
@@ -1444,7 +1480,7 @@ Commands:
   ripc <host> <project-name> [args]          Run ripc commands on a remote host.
   shell <host> <project-name>                Open an interactive shell as the project user on a VM.
   status <host> <project-name>               Check service status on a remote host.
-  logs <host> <project-name> [lines]         Tail service logs from a remote host.
+  journal <host> <project-name> [lines]      Tail systemd journal for a service on a remote host.
   restart <host> <project-name>              Restart the service on a remote host.
   reload <host> <project-name>               Reload service config on a remote host.
   stop <host> <project-name>                 Stop the service on a remote host.
@@ -1739,6 +1775,8 @@ cmd_build_bootstrap() {
     log_info "Building target release tools (ripc)..."
     build_ripc "$bin_dir" "$project_path"
 
+    check_log_db_path_systemd "${bin_dir}/ripc" "${build_dir}/${AGE_KEY_FILENAME}" "${data_dir}/${APP_DB_FILENAME}" "$project_name"
+
     log_success "Bootstrap build completed successfully in: ${GREEN}${build_dir}${NC}"
 
     echo "" # Add a blank line for readability
@@ -1803,7 +1841,7 @@ main() {
         ripc) cmd_ripc "$@" ;;
         shell) cmd_shell "$@" ;; 
         status) cmd_status "$@" ;; 
-        logs) cmd_logs "$@" ;; 
+        journal) cmd_journal "$@" ;; 
         restart) cmd_restart "$@" ;; 
         reload) cmd_reload "$@" ;;
         stop) cmd_stop "$@" ;;

@@ -64,13 +64,11 @@ On the remote server the application lives in `/home/<app-name>`. The build comm
 │   └── ripdep-remote
 ├── data
 │   └── app.db
-└── logs
 ```
 
 *   **`age.key`**: the encryption key for the application's configuration.
 *   **`bin/`**: the application binary, the `ripc` CLI for on-server management, and `ripdep-remote`, the server-side installer.
-*   **`data/`**: the SQLite database.
-*   **`logs/`**: service logs.
+*   **`data/`**: the SQLite databases, including the log database. Systemd only allows writes here, so keep `log.batch.db_path` under `data/`.
 
 ## Use Cases
 
@@ -450,8 +448,8 @@ Runs `systemctl status` for the service.
 ./ripdep status user@server.com my-app
 ```
 
-### `logs`
-Follows the service journal, showing the last `lines` entries.
+### `journal`
+Follows the systemd journal, showing the last `lines` entries.
 
 **Arguments:**
 *   `host`: the remote server address.
@@ -460,7 +458,7 @@ Follows the service journal, showing the last `lines` entries.
 
 **Example:**
 ```bash
-./ripdep logs user@server.com my-app
+./ripdep journal user@server.com my-app
 ```
 
 ### `restart`
@@ -494,7 +492,7 @@ The systemd unit is sandboxed, which can hide the cause of a failure. Work throu
 ### 1. Check Status and Logs
 
 -   `sudo systemctl status my-app.service` shows the service state and recent log lines. Or use `./ripdep status <host> my-app`.
--   `sudo journalctl -u my-app.service -f` follows the full journal, the primary source of errors. Or use `./ripdep logs <host> my-app`.
+-   `sudo journalctl -u my-app.service -f` follows the full journal, the primary source of errors. Or use `./ripdep journal <host> my-app`.
 
 ### 2. Log in and Run Manually
 
