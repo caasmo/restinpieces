@@ -7,9 +7,11 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	toml "github.com/pelletier/go-toml"
 )
 
-// This file downloads the upstream user-agent list that fills block_user_agent.agents.
+// This file produces the block_user_agent.agents value from the upstream user-agent list.
 
 // Errors returned by the download.
 var (
@@ -68,4 +70,28 @@ func fetchUserAgents(url string) (agents []string, err error) {
 	}
 
 	return agents, nil
+}
+
+// userAgentUpdater produces the block_user_agent.agents slice from the upstream user-agent list.
+type userAgentUpdater struct{}
+
+func (userAgentUpdater) Update(tree *toml.Tree, arg string) error {
+	agents, err := fetchUserAgents(userAgentURL)
+	if err != nil {
+		return err
+	}
+
+	tree.Set(tomlPathBlockUserAgentAgents, agents)
+	return nil
+}
+
+// Print reports the filled agents value.
+func (userAgentUpdater) Print(ui UI, tree *toml.Tree, arg string) error {
+	path := tomlPathBlockUserAgentAgents
+	_, err := fmt.Fprintf(ui.Err, "%s = %v\n", path, tree.Get(path))
+	if err != nil {
+		return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
+	}
+
+	return nil
 }

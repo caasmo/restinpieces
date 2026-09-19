@@ -333,7 +333,7 @@ func testMigrateParsing(t *testing.T) {
 
 func testUpdateParsing(t *testing.T) {
 	t.Run("UpdateSuccess", func(t *testing.T) {
-		opts, err := parseUpdateArgs([]string{"--scope", "test", "--desc", "my desc", "filter"})
+		opts, err := parseUpdateArgs([]string{"--scope", "test", "--desc", "my desc", "jwt"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
@@ -343,12 +343,12 @@ func testUpdateParsing(t *testing.T) {
 		if opts.Desc != "my desc" {
 			t.Errorf("expected desc 'my desc', got %q", opts.Desc)
 		}
-		if opts.Filter != "filter" {
-			t.Errorf("expected filter 'filter', got %q", opts.Filter)
+		if opts.Label != "jwt" {
+			t.Errorf("expected label 'jwt', got %q", opts.Label)
 		}
 	})
 
-	t.Run("UpdateMissingFilter", func(t *testing.T) {
+	t.Run("UpdateMissingLabel", func(t *testing.T) {
 		_, err := parseUpdateArgs([]string{})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
@@ -359,7 +359,7 @@ func testUpdateParsing(t *testing.T) {
 	})
 
 	t.Run("UpdateTooManyArgs", func(t *testing.T) {
-		_, err := parseUpdateArgs([]string{"filter", "extra"})
+		_, err := parseUpdateArgs([]string{"jwt", "extra"})
 		if err == nil {
 			t.Fatal("expected error, but got nil")
 		}

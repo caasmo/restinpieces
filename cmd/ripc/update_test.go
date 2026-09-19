@@ -127,7 +127,7 @@ func TestUpdate_SingleKey(t *testing.T) {
 	}
 }
 
-func TestUpdate_JwtFilter(t *testing.T) {
+func TestUpdate_JwtLabel(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(updateTestConf)})
 	var stdout, stderr bytes.Buffer
@@ -196,6 +196,9 @@ func TestUpdate_Failure_MissingPath(t *testing.T) {
 	if !errors.Is(err, ErrPathNotFound) {
 		t.Errorf("expected error to wrap ErrPathNotFound, got %v", err)
 	}
+	if len(mockStore.saveHistory) != 0 {
+		t.Errorf("expected no save on updater error, got %d", len(mockStore.saveHistory))
+	}
 }
 
 func TestUpdate_Failure_MalformedTOML(t *testing.T) {
@@ -210,26 +213,19 @@ func TestUpdate_Failure_MalformedTOML(t *testing.T) {
 	}
 }
 
-func TestUpdate_NoMatch(t *testing.T) {
+func TestUpdate_UnknownLabel(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(updateTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
 	err := updateValues(ui, mockStore, scope, "", "server.port")
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	if !errors.Is(err, ErrUnknownUpdateLabel) {
+		t.Fatalf("expected error to wrap ErrUnknownUpdateLabel, got %v", err)
 	}
 
 	if len(mockStore.saveHistory) != 0 {
 		t.Errorf("expected 0 saves, got %d", len(mockStore.saveHistory))
-	}
-	if stdout.Len() != 0 {
-		t.Errorf("expected empty stdout, got %q", stdout.String())
-	}
-	expectedStderr := "No updatable paths matching 'server.port' found in scope 'app'.\n"
-	if stderr.String() != expectedStderr {
-		t.Errorf("expected stderr %q, got %q", expectedStderr, stderr.String())
 	}
 }
 
@@ -275,38 +271,25 @@ func TestHandleUpdateCommand_Help(t *testing.T) {
 	}
 }
 
-// failingUpdater always fails, for testing updater error handling.
-type failingUpdater struct{}
-
-func (failingUpdater) Update(tree *toml.Tree, path string) error {
-	return errors.New("boom")
-}
-
-func (failingUpdater) Print(ui UI, tree *toml.Tree, path string) error {
-	return nil
-}
-
-func TestUpdaters_ContainsUserAgent(t *testing.T) {
-	if _, ok := updaters["block_user_agent.agents"]; !ok {
-		t.Error(`expected updaters to contain "block_user_agent.agents"`)
+func TestUpdateGroups_ContainsUserAgent(t *testing.T) {
+	group, ok := updateGroups["block_user_agent"]
+	if !ok {
+		t.Fatal(`expected updateGroups to contain "block_user_agent"`)
+	}
+	if group.updater == nil {
+		t.Error("expected block_user_agent to have an updater")
 	}
 }
 
-func TestUpdate_Failure_UpdaterError(t *testing.T) {
-	scope := "app"
-	conf := "[test]\n  failing = \"old\"\n"
-	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(conf)})
-	var stdout, stderr bytes.Buffer
-	ui := UI{Out: &stdout, Err: &stderr}
+func TestUpdate_RefusesPartialNames(t *testing.T) {
+	for _, arg := range []string{"s", "se", "ss", ""} {
+		mockStore := NewMockUpdateSecureStore(nil)
+		var stdout, stderr bytes.Buffer
+		ui := UI{Out: &stdout, Err: &stderr}
 
-	updaters["test.failing"] = failingUpdater{}
-	defer delete(updaters, "test.failing")
-
-	err := updateValues(ui, mockStore, scope, "", "test.failing")
-	if err == nil || err.Error() != "boom" {
-		t.Fatalf("expected updater error, got %v", err)
-	}
-	if len(mockStore.saveHistory) != 0 {
-		t.Errorf("expected no save on updater error, got %d", len(mockStore.saveHistory))
+		err := updateValues(ui, mockStore, "app", "", arg)
+		if !errors.Is(err, ErrUnknownUpdateLabel) {
+			t.Errorf("updateValues(%q) expected ErrUnknownUpdateLabel, got %v", arg, err)
+		}
 	}
 }

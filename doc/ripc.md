@@ -16,7 +16,7 @@
   - [scopes](#scopes)
   - [set](#set-path-value)
   - [add](#add-path-value)
-  - [update](#update-filter)
+  - [update](#update-label)
   - [save](#save-file)
   - [scaffold](#scaffold-type-label)
   - [migrate](#migrate)
@@ -143,7 +143,7 @@ Appends a value to a configuration key that holds several values.
 
 `add` can be run again safely: adding a value that is already present leaves the configuration unchanged. For `block_user_agent.agents`, the value is appended to the slice.
 
-### `update <filter>`
+### `update <label>`
 
 Fills configuration values in place.
 
@@ -151,7 +151,7 @@ Fills configuration values in place.
     ripc update jwt
     ripc update tls
 
-The filter is required. Only values whose path contains it are filled in a single configuration version. For example, `ripc update jwt` fills all five `jwt.*` values at once.
+The label is required. It must name a group (`jwt`, `tls` or `block_user_agent`) or an exact configuration path such as `jwt.auth_secret` or `server.tls`; partial names are refused. All named values are filled in a single configuration version. For example, `ripc update jwt` fills all five `jwt.*` values at once.
 
 `ripc update tls` copies the staged pair into the live server settings: `acme.certificate` to `server.tls.certificate` and `acme.private_key` to `server.tls.private_key`. It refuses empty, unparsable, mismatched or expired input and writes nothing then. After success, restart the app so the server serves the new pair.
 

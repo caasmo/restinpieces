@@ -63,14 +63,20 @@ func newTlsTestPair(t *testing.T, notBefore, notAfter time.Time) (string, string
 }
 
 func updateTlsTestConf(certificatePEM string, privateKeyPEM string) string {
+	return updateTlsTestConfWithLive(certificatePEM, privateKeyPEM, "old", "old")
+}
+
+// updateTlsTestConfWithLive builds a config with the staged pair under acme and
+// the given live pair under server.tls.
+func updateTlsTestConfWithLive(certificatePEM string, privateKeyPEM string, liveCertificate string, livePrivateKey string) string {
 	tree, err := toml.Load("")
 	if err != nil {
 		panic(err)
 	}
 	tree.Set("acme.certificate", certificatePEM)
 	tree.Set("acme.private_key", privateKeyPEM)
-	tree.Set("server.tls.certificate", "old")
-	tree.Set("server.tls.private_key", "old")
+	tree.Set("server.tls.certificate", liveCertificate)
+	tree.Set("server.tls.private_key", livePrivateKey)
 	tree.Set("server.addr", ":8080")
 	out, err := toml.Marshal(tree)
 	if err != nil {
@@ -110,6 +116,25 @@ func TestUpdate_TlsHappyPath(t *testing.T) {
 	}
 	if strings.Contains(output, "BEGIN CERTIFICATE") || strings.Contains(output, "BEGIN EC PRIVATE KEY") || strings.Contains(output, "BEGIN PRIVATE KEY") {
 		t.Errorf("expected no PEM text in output, got %q", output)
+	}
+}
+
+func TestUpdate_TlsSamePairWritesNothing(t *testing.T) {
+	now := time.Now()
+	certificatePEM, privateKeyPEM := newTlsTestPair(t, now.Add(-time.Hour), now.Add(24*time.Hour))
+	scope := "app"
+	conf := updateTlsTestConfWithLive(certificatePEM, privateKeyPEM, certificatePEM, privateKeyPEM)
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(conf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := updateValues(ui, mockStore, scope, "", "tls")
+	if !errors.Is(err, ErrTLSSamePair) {
+		t.Fatalf("expected error to wrap ErrTLSSamePair, got %v", err)
+	}
+
+	if len(mockStore.saveHistory) != 0 {
+		t.Fatalf("expected 0 saves when the pair is already live, got %d", len(mockStore.saveHistory))
 	}
 }
 
@@ -156,8 +181,8 @@ func TestUpdate_TlsBadPrivateKeyWritesNothing(t *testing.T) {
 	ui := UI{Out: &stdout, Err: &stderr}
 
 	err := updateValues(ui, mockStore, scope, "", "tls")
-	if !errors.Is(err, ErrTLSBadPrivateKey) {
-		t.Fatalf("expected error to wrap ErrTLSBadPrivateKey, got %v", err)
+	if !errors.Is(err, ErrTLSPairUnusable) {
+		t.Fatalf("expected error to wrap ErrTLSPairUnusable, got %v", err)
 	}
 
 	if len(mockStore.saveHistory) != 0 {
@@ -175,8 +200,8 @@ func TestUpdate_TlsMismatchedPairWritesNothing(t *testing.T) {
 	ui := UI{Out: &stdout, Err: &stderr}
 
 	err := updateValues(ui, mockStore, scope, "", "tls")
-	if !errors.Is(err, ErrTLSKeyMismatch) {
-		t.Fatalf("expected error to wrap ErrTLSKeyMismatch, got %v", err)
+	if !errors.Is(err, ErrTLSPairUnusable) {
+		t.Fatalf("expected error to wrap ErrTLSPairUnusable, got %v", err)
 	}
 
 	if len(mockStore.saveHistory) != 0 {
@@ -202,7 +227,7 @@ func TestUpdate_TlsExpiredWritesNothing(t *testing.T) {
 	}
 }
 
-func TestUpdate_MissingFilter(t *testing.T) {
+func TestUpdate_MissingLabel(t *testing.T) {
 	mockStore := NewMockUpdateSecureStore(nil)
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -213,7 +238,7 @@ func TestUpdate_MissingFilter(t *testing.T) {
 	}
 }
 
-func TestUpdate_TlsSinglePathMatchesNothing(t *testing.T) {
+func TestUpdate_TlsFieldPathUnknown(t *testing.T) {
 	now := time.Now()
 	certificatePEM, privateKeyPEM := newTlsTestPair(t, now.Add(-time.Hour), now.Add(24*time.Hour))
 	scope := "app"
@@ -222,8 +247,8 @@ func TestUpdate_TlsSinglePathMatchesNothing(t *testing.T) {
 	ui := UI{Out: &stdout, Err: &stderr}
 
 	err := updateValues(ui, mockStore, scope, "", "server.tls.certificate")
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
+	if !errors.Is(err, ErrUnknownUpdateLabel) {
+		t.Fatalf("expected error to wrap ErrUnknownUpdateLabel, got %v", err)
 	}
 
 	if len(mockStore.saveHistory) != 0 {

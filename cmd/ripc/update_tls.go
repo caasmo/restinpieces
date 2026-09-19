@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bytes"
-	"crypto"
 	"crypto/sha256"
+	"crypto/tls"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/pem"
@@ -18,21 +17,21 @@ import (
 // tlsUpdater fills server.tls.certificate from the staged acme.certificate and server.tls.private_key from the staged acme.private_key.
 type tlsUpdater struct{}
 
-func (tlsUpdater) Update(tree *toml.Tree, path string) error {
-	certificatePEM, ok := tree.Get("acme.certificate").(string)
+func (tlsUpdater) Update(tree *toml.Tree, arg string) error {
+	certificatePEM, ok := tree.Get(tomlPathAcmeCertificate).(string)
 	if !ok {
-		return fmt.Errorf("%w: acme.certificate is not a string", ErrPathNotFound)
+		return fmt.Errorf("%w: %s is not a string", ErrPathNotFound, tomlPathAcmeCertificate)
 	}
-	privateKeyPEM, ok := tree.Get("acme.private_key").(string)
+	privateKeyPEM, ok := tree.Get(tomlPathAcmePrivateKey).(string)
 	if !ok {
-		return fmt.Errorf("%w: acme.private_key is not a string", ErrPathNotFound)
+		return fmt.Errorf("%w: %s is not a string", ErrPathNotFound, tomlPathAcmePrivateKey)
 	}
 
-	err := validateNonEmptyValue(certificatePEM, "acme.certificate")
+	err := validateNonEmptyValue(certificatePEM, tomlPathAcmeCertificate)
 	if err != nil {
 		return err
 	}
-	err = validateNonEmptyValue(privateKeyPEM, "acme.private_key")
+	err = validateNonEmptyValue(privateKeyPEM, tomlPathAcmePrivateKey)
 	if err != nil {
 		return err
 	}
@@ -42,12 +41,7 @@ func (tlsUpdater) Update(tree *toml.Tree, path string) error {
 		return err
 	}
 
-	privateKey, err := validatePrivateKey(privateKeyPEM)
-	if err != nil {
-		return err
-	}
-
-	err = validatePrivateKeyMatchesCertificate(leaf, privateKey)
+	err = validateKeyPair(certificatePEM, privateKeyPEM)
 	if err != nil {
 		return err
 	}
@@ -57,43 +51,31 @@ func (tlsUpdater) Update(tree *toml.Tree, path string) error {
 		return err
 	}
 
-	tree.Set("server.tls.certificate", certificatePEM)
-	tree.Set("server.tls.private_key", privateKeyPEM)
+	err = validatePairDiffers(tree, certificatePEM, privateKeyPEM)
+	if err != nil {
+		return err
+	}
+
+	tree.Set(tomlPathServerTLSCertificate, certificatePEM)
+	tree.Set(tomlPathServerTLSPrivateKey, privateKeyPEM)
 	return nil
 }
 
-// Print reports staged and live fingerprints with expiries. Fingerprints are full and never truncated; certificate chains and keys are never printed.
-func (tlsUpdater) Print(ui UI, tree *toml.Tree, path string) error {
-	certificatePEM, _ := tree.Get("acme.certificate").(string)
-	privateKeyPEM, _ := tree.Get("acme.private_key").(string)
+// Print reports the staged and live certificate fingerprints with their expiry. The fingerprint is the SHA256 of the certificate DER, matching `openssl x509 -fingerprint -sha256`; it is full and never truncated, and chains and keys are never printed.
+func (tlsUpdater) Print(ui UI, tree *toml.Tree, arg string) error {
+	certificatePEM, _ := tree.Get(tomlPathAcmeCertificate).(string)
 
 	leaf, err := validateCertificate(certificatePEM)
 	if err != nil {
 		return err
 	}
 
-	privateKey, err := validatePrivateKey(privateKeyPEM)
-	if err != nil {
-		return err
-	}
-
-	fingerprint, err := fingerprintPublicKey(leaf.PublicKey)
-	if err != nil {
-		return err
-	}
-
-	keyFingerprint, err := fingerprintPublicKey(privateKey.Public())
-	if err != nil {
-		return err
-	}
-
+	fingerprint := fingerprintCertificate(leaf)
 	expiry := leaf.NotAfter.Format("2006-01-02")
 
 	lines := []string{
-		fmt.Sprintf("%-22s SHA256 %s (expires %s)", "acme.certificate", fingerprint, expiry),
-		fmt.Sprintf("%-22s SHA256 %s (expires %s)", "server.tls.certificate", fingerprint, expiry),
-		fmt.Sprintf("%-22s SHA256 %s", "acme.private_key", keyFingerprint),
-		fmt.Sprintf("%-22s SHA256 %s", "server.tls.private_key", keyFingerprint),
+		fmt.Sprintf("%-22s SHA256 %s (expires %s)", tomlPathAcmeCertificate, fingerprint, expiry),
+		fmt.Sprintf("%-22s SHA256 %s (expires %s)", tomlPathServerTLSCertificate, fingerprint, expiry),
 	}
 
 	for _, line := range lines {
@@ -106,14 +88,9 @@ func (tlsUpdater) Print(ui UI, tree *toml.Tree, path string) error {
 	return nil
 }
 
-// fingerprintPublicKey returns the full SHA256 fingerprint of a public key in openssl colon form.
-func fingerprintPublicKey(publicKey any) (string, error) {
-	der, err := x509.MarshalPKIXPublicKey(publicKey)
-	if err != nil {
-		return "", fmt.Errorf("%w: failed to marshal public key: %w", ErrTLSKeyMismatch, err)
-	}
-
-	sum := sha256.Sum256(der)
+// fingerprintCertificate returns the full SHA256 fingerprint of the certificate DER in openssl colon form, matching `openssl x509 -fingerprint -sha256`.
+func fingerprintCertificate(certificate *x509.Certificate) string {
+	sum := sha256.Sum256(certificate.Raw)
 	hexed := strings.ToUpper(hex.EncodeToString(sum[:]))
 
 	groups := make([]string, 0, len(hexed)/2)
@@ -121,7 +98,7 @@ func fingerprintPublicKey(publicKey any) (string, error) {
 		groups = append(groups, hexed[i:i+2])
 	}
 
-	return strings.Join(groups, ":"), nil
+	return strings.Join(groups, ":")
 }
 
 // validateNonEmptyValue reports an empty staged value under its path.
@@ -150,59 +127,11 @@ func validateCertificate(certificatePEM string) (*x509.Certificate, error) {
 	return cert, nil
 }
 
-// validatePrivateKey parses a PEM private key in EC, PKCS8 or PKCS1 form.
-func validatePrivateKey(privateKeyPEM string) (crypto.Signer, error) {
-	block, _ := pem.Decode([]byte(privateKeyPEM))
-	if block == nil {
-		return nil, fmt.Errorf("%w: staged private key is not a PEM block", ErrTLSBadPrivateKey)
-	}
-
-	signer, err := validateECPrivateKey(block.Bytes)
-	if err == nil {
-		return signer, nil
-	}
-
-	key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-	if err == nil {
-		signer, ok := key.(crypto.Signer)
-		if !ok {
-			return nil, fmt.Errorf("%w: PKCS8 key does not implement crypto.Signer", ErrTLSBadPrivateKey)
-		}
-		return signer, nil
-	}
-
-	rsaKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+// validateKeyPair reports whether the staged private key parses and matches the staged certificate.
+func validateKeyPair(certificatePEM string, privateKeyPEM string) error {
+	_, err := tls.X509KeyPair([]byte(certificatePEM), []byte(privateKeyPEM))
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to parse staged private key as EC, PKCS8 or PKCS1", ErrTLSBadPrivateKey)
-	}
-
-	return rsaKey, nil
-}
-
-// validateECPrivateKey parses DER bytes as an EC private key.
-func validateECPrivateKey(der []byte) (crypto.Signer, error) {
-	key, err := x509.ParseECPrivateKey(der)
-	if err != nil {
-		return nil, err
-	}
-
-	return key, nil
-}
-
-// validatePrivateKeyMatchesCertificate reports whether privateKey is the key pair of the certificate. It compares the public keys in their DER form, the only comparison that is reliable across key types.
-func validatePrivateKeyMatchesCertificate(leaf *x509.Certificate, privateKey crypto.Signer) error {
-	certPublicKey, err := x509.MarshalPKIXPublicKey(leaf.PublicKey)
-	if err != nil {
-		return fmt.Errorf("%w: failed to marshal certificate public key: %w", ErrTLSKeyMismatch, err)
-	}
-
-	keyPublicKey, err := x509.MarshalPKIXPublicKey(privateKey.Public())
-	if err != nil {
-		return fmt.Errorf("%w: failed to marshal private key public part: %w", ErrTLSKeyMismatch, err)
-	}
-
-	if !bytes.Equal(certPublicKey, keyPublicKey) {
-		return fmt.Errorf("%w: staged private key does not match the staged certificate", ErrTLSKeyMismatch)
+		return fmt.Errorf("%w: %w", ErrTLSPairUnusable, err)
 	}
 
 	return nil
@@ -221,11 +150,22 @@ func validateCertificateFresh(leaf *x509.Certificate, now time.Time) error {
 	return nil
 }
 
+// validatePairDiffers reports an already-current live pair, so the staged pair is not written again.
+func validatePairDiffers(tree *toml.Tree, certificatePEM string, privateKeyPEM string) error {
+	liveCertificate, _ := tree.Get(tomlPathServerTLSCertificate).(string)
+	livePrivateKey, _ := tree.Get(tomlPathServerTLSPrivateKey).(string)
+	if certificatePEM == liveCertificate && privateKeyPEM == livePrivateKey {
+		return fmt.Errorf("%w: %s already matches the staged pair", ErrTLSSamePair, tomlPathServerTLS)
+	}
+
+	return nil
+}
+
 // Errors returned by the TLS staged-to-live checks. A failure writes nothing.
 var (
 	ErrTLSEmptyStaged    = errors.New("staged value is empty")
 	ErrTLSBadCertificate = errors.New("staged certificate is not usable")
-	ErrTLSBadPrivateKey  = errors.New("staged private key is not usable")
-	ErrTLSKeyMismatch    = errors.New("staged pair does not match")
+	ErrTLSPairUnusable   = errors.New("staged certificate and private key are not a usable pair")
 	ErrTLSExpired        = errors.New("staged certificate is not fresh")
+	ErrTLSSamePair       = errors.New("staged pair is already the live pair")
 )

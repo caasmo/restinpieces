@@ -107,7 +107,7 @@ References: cmd/ripc/log_tail.go, cmd/ripc/sql.go, cmd/ripc/log_command.go, doc/
 
 ## ripc blame: track when a particular key changes
 
-References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/gen.go, cmd/ripc/get.go, cmd/ripc/paths.go, cmd/ripc/main.go, doc/ripc.md
+References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get.go, cmd/ripc/paths.go, cmd/ripc/main.go, doc/ripc.md
 
 
 # server: redirect server runs outside the prerouter chain, so BlockIp, BlockHost, and request logging never see port-80 traffic

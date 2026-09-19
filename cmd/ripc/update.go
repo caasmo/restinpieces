@@ -5,83 +5,74 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"slices"
 	"sort"
 	"strings"
 
 	"github.com/caasmo/restinpieces/config"
-	"github.com/caasmo/restinpieces/crypto"
 	toml "github.com/pelletier/go-toml"
 )
 
-// updater produces a fresh value for one configuration path by writing it directly into the tree, then reports what it wrote.
+// ErrUnknownUpdateLabel reports an update argument that names no known label or registered configuration path.
+var ErrUnknownUpdateLabel = errors.New("unknown update label")
+
+// TOML paths used by the update command, matching the toml tags in the config
+// structs: Jwt, BlockUserAgent and Server.Tls (config/config.go) and Acme
+// (config/acme.go).
+const (
+	tomlPathJwtAuthSecret                 = "jwt.auth_secret"
+	tomlPathJwtPasswordResetSecret        = "jwt.password_reset_secret"
+	tomlPathJwtEmailChangeOtpSecret       = "jwt.email_change_otp_secret"
+	tomlPathJwtVerificationEmailOtpSecret = "jwt.verification_email_otp_secret"
+	tomlPathJwtOauth2StateSecret          = "jwt.oauth2_state_secret"
+	tomlPathBlockUserAgentAgents          = "block_user_agent.agents"
+	tomlPathServerTLS                     = "server.tls"
+	tomlPathServerTLSCertificate          = "server.tls.certificate"
+	tomlPathServerTLSPrivateKey           = "server.tls.private_key"
+	tomlPathAcmeCertificate               = "acme.certificate"
+	tomlPathAcmePrivateKey                = "acme.private_key"
+)
+
+// updater produces a fresh value for one update argument by writing it directly into the tree, then reports what it wrote. The argument is a label or a single configuration path.
 type updater interface {
-	Update(tree *toml.Tree, path string) error
-	Print(ui UI, tree *toml.Tree, path string) error
+	Update(tree *toml.Tree, arg string) error
+	Print(ui UI, tree *toml.Tree, arg string) error
 }
 
-// secretUpdater produces a fresh random secret.
-type secretUpdater struct{}
-
-func (secretUpdater) Update(tree *toml.Tree, path string) error {
-	tree.Set(path, crypto.RandomString(32, crypto.AlphanumericAlphabet))
-	return nil
+// updateGroup is one update group: the configuration paths it covers and the
+// updater that fills them. A group with no paths, such as block_user_agent or
+// tls, is triggered by its own name only.
+type updateGroup struct {
+	paths   []string
+	updater updater
 }
 
-// Print reports the fresh secret by prefix and length only. Full secrets never reach scrollback.
-func (secretUpdater) Print(ui UI, tree *toml.Tree, path string) error {
-	value, _ := tree.Get(path).(string)
-	prefix := value
-	if len(prefix) > 7 {
-		prefix = prefix[:7]
-	}
-	_, err := fmt.Fprintf(ui.Err, "%s = %s... (%d chars)\n", path, prefix, len(value))
-	if err != nil {
-		return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
-	}
-
-	return nil
-}
-
-// userAgentUpdater produces the block_user_agent.agents slice from the upstream user-agent list.
-type userAgentUpdater struct{}
-
-func (userAgentUpdater) Update(tree *toml.Tree, path string) error {
-	agents, err := fetchUserAgents(userAgentURL)
-	if err != nil {
-		return err
-	}
-
-	tree.Set(path, agents)
-	return nil
-}
-
-// Print reports the filled agents value.
-func (userAgentUpdater) Print(ui UI, tree *toml.Tree, path string) error {
-	_, err := fmt.Fprintf(ui.Err, "%s = %v\n", path, tree.Get(path))
-	if err != nil {
-		return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
-	}
-
-	return nil
-}
-
-// updaters maps each configuration path to the updater that produces its value. TLS is one entry: the pair moves together, so a filter can never match half of it.
-var updaters = map[string]updater{
-	"jwt.auth_secret":                   secretUpdater{},
-	"jwt.password_reset_secret":         secretUpdater{},
-	"jwt.email_change_otp_secret":       secretUpdater{},
-	"jwt.verification_email_otp_secret": secretUpdater{},
-	"jwt.oauth2_state_secret":           secretUpdater{},
-	"block_user_agent.agents":           userAgentUpdater{},
-	"server.tls":                        tlsUpdater{},
+// updateGroups maps each user-facing label to its paths and updater.
+var updateGroups = map[string]updateGroup{
+	"jwt": {
+		paths: []string{
+			tomlPathJwtAuthSecret,
+			tomlPathJwtPasswordResetSecret,
+			tomlPathJwtEmailChangeOtpSecret,
+			tomlPathJwtVerificationEmailOtpSecret,
+			tomlPathJwtOauth2StateSecret,
+		},
+		updater: jwtUpdater{},
+	},
+	"block_user_agent": {
+		updater: userAgentUpdater{},
+	},
+	"tls": {
+		updater: tlsUpdater{},
+	},
 }
 
 func printUpdateUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "update <filter>",
+		Usage:       "update <label>",
 		Description: "Fills configuration values in place.",
 		Args: []ArgSpec{
-			{"filter", "Required substring filter on updatable paths"},
+			{"label", "Label (jwt, tls, block_user_agent) or configuration path"},
 		},
 		Options: []OptSpec{
 			commandOptions.Opt("scope"),
@@ -98,9 +89,9 @@ func printUpdateUsage(w io.Writer) {
 
 // UpdateOptions holds the parsed options for the 'update' command.
 type UpdateOptions struct {
-	Scope  string // --scope
-	Desc   string // --desc
-	Filter string // optional positional filter argument
+	Scope string // --scope
+	Desc  string // --desc
+	Label string // required positional label argument
 }
 
 // handleUpdateCommand parses the arguments for the 'update' command and executes the core logic, returning any error to the caller.
@@ -114,7 +105,7 @@ func handleUpdateCommand(secureStore config.SecureStore, args []string, ui UI) e
 		printUpdateUsage(ui.Err)
 		return err
 	}
-	return updateValues(ui, secureStore, opts.Scope, opts.Desc, opts.Filter)
+	return updateValues(ui, secureStore, opts.Scope, opts.Desc, opts.Label)
 }
 
 // parseUpdateArgs parses the arguments for the 'update' command.
@@ -136,14 +127,19 @@ func parseUpdateArgs(args []string) (UpdateOptions, error) {
 		return UpdateOptions{}, fmt.Errorf("parsing update flags: %w: %v", ErrInvalidFlag, err)
 	}
 	if updateCmd.NArg() != 1 {
-		return UpdateOptions{}, fmt.Errorf("'update' requires exactly one filter argument: %w", ErrMissingArgument)
+		return UpdateOptions{}, fmt.Errorf("'update' requires exactly one label argument: %w", ErrMissingArgument)
 	}
-	opts.Filter = updateCmd.Arg(0)
+	opts.Label = updateCmd.Arg(0)
 	return opts, nil
 }
 
 // updateValues contains the testable core logic for filling values in place. It accepts UI for output, making it easy to test.
-func updateValues(ui UI, secureCfg config.SecureStore, scope string, description string, filter string) error {
+func updateValues(ui UI, secureCfg config.SecureStore, scope string, description string, arg string) error {
+	group, ok := resolveUpdateGroup(arg)
+	if !ok {
+		return fmt.Errorf("%w: %q; use a label (%s) or a configuration path", ErrUnknownUpdateLabel, arg, strings.Join(knownUpdateLabels(), ", "))
+	}
+
 	if scope == "" {
 		scope = config.ScopeApplication
 	}
@@ -158,26 +154,9 @@ func updateValues(ui UI, secureCfg config.SecureStore, scope string, description
 		return fmt.Errorf("%w: failed to load config data for scope '%s': %w", ErrConfigUnmarshal, scope, err)
 	}
 
-	matched := make([]string, 0, len(updaters))
-	for path := range updaters {
-		if strings.Contains(path, filter) {
-			matched = append(matched, path)
-		}
-	}
-	sort.Strings(matched)
-
-	if len(matched) == 0 {
-		_, writeErr := fmt.Fprintf(ui.Err, "No updatable paths matching '%s' found in scope '%s'.\n", filter, scope)
-		if writeErr != nil {
-			return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, writeErr)
-		}
-		return nil
-	}
-
-	for _, path := range matched {
-		if updateErr := updaters[path].Update(tree, path); updateErr != nil {
-			return updateErr
-		}
+	err = group.updater.Update(tree, arg)
+	if err != nil {
+		return err
 	}
 
 	updatedTomlBytes, err := toml.Marshal(tree)
@@ -186,7 +165,7 @@ func updateValues(ui UI, secureCfg config.SecureStore, scope string, description
 	}
 
 	if description == "" {
-		description = fmt.Sprintf("Updated '%s'", strings.Join(matched, ", "))
+		description = fmt.Sprintf("Updated '%s'", strings.Join(tomlPaths(arg), ", "))
 	}
 
 	err = secureCfg.Save(scope, updatedTomlBytes, fileFormat, description)
@@ -194,10 +173,46 @@ func updateValues(ui UI, secureCfg config.SecureStore, scope string, description
 		return fmt.Errorf("%w: failed to save updated config for scope '%s': %w", ErrSecureStoreSave, scope, err)
 	}
 
-	for _, path := range matched {
-		if printErr := updaters[path].Print(ui, tree, path); printErr != nil {
-			return printErr
-		}
+	err = group.updater.Print(ui, tree, arg)
+	if err != nil {
+		return err
 	}
 	return nil
+}
+
+// resolveUpdateGroup returns the update group the argument names: the group
+// whose label is the argument, or the group that covers the argument as one of
+// its configuration paths.
+func resolveUpdateGroup(arg string) (updateGroup, bool) {
+	for label, group := range updateGroups {
+		if label == arg || slices.Contains(group.paths, arg) {
+			return group, true
+		}
+	}
+
+	return updateGroup{}, false
+}
+
+// tomlPaths returns the configuration paths the argument names: the paths of a
+// group, or the argument itself when it is a configuration path.
+func tomlPaths(arg string) []string {
+	group, ok := updateGroups[arg]
+	if !ok {
+		return []string{arg}
+	}
+
+	paths := make([]string, len(group.paths))
+	copy(paths, group.paths)
+	sort.Strings(paths)
+	return paths
+}
+
+// knownUpdateLabels returns the registered label names in stable order.
+func knownUpdateLabels() []string {
+	labels := make([]string, 0, len(updateGroups))
+	for label := range updateGroups {
+		labels = append(labels, label)
+	}
+	sort.Strings(labels)
+	return labels
 }
