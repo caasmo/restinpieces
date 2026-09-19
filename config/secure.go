@@ -92,6 +92,10 @@ func (s *secureStoreAge) Get(scope string, generation int) ([]byte, string, erro
 		return nil, "", fmt.Errorf("securestore: failed to get config: %w", err)
 	}
 
+	if len(encrypted) == 0 {
+		return nil, "", fmt.Errorf("securestore: no configuration found for scope '%s' generation %d", scope, generation)
+	}
+
 	identities, err := loadAndParseIdentities(s.ageKeyPath, "decryption")
 	if err != nil {
 		return nil, "", err

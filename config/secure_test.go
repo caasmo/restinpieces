@@ -43,7 +43,7 @@ func TestSecureStore_SaveAndGet_Roundtrip(t *testing.T) {
 		GetConfigFunc: func(scope string, generation int) ([]byte, string, error) {
 			data, ok := storage[scope]
 			if !ok {
-				return nil, "", errors.New("not found")
+				return nil, "", nil
 			}
 			return data, "toml", nil
 		},
@@ -129,6 +129,19 @@ func TestGet_Failures(t *testing.T) {
 			name: "Invalid Key File Path",
 			store: func() SecureStore {
 				s, _ := NewSecureStoreAge(&mock.Db{}, "/path/to/nonexistent/key.txt")
+				return s
+			}(),
+			expectErr: true,
+		},
+		{
+			name: "Not found returns clear error",
+			store: func() SecureStore {
+				mockDB := &mock.Db{
+					GetConfigFunc: func(scope string, generation int) ([]byte, string, error) {
+						return nil, "", nil
+					},
+				}
+				s, _ := NewSecureStoreAge(mockDB, keyPath)
 				return s
 			}(),
 			expectErr: true,

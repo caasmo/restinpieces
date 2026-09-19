@@ -176,6 +176,23 @@ func TestSetupConfig(t *testing.T) {
 		}
 	})
 
+	t.Run("Failure on missing config", func(t *testing.T) {
+		dbCfg := &mock.Db{}
+		dbCfg.GetConfigFunc = func(scope string, generation int) ([]byte, string, error) {
+			return nil, "", nil
+		}
+		app := &core.App{}
+		init := &initializer{
+			app:        app,
+			dbConfig:   dbCfg,
+			ageKeyPath: ageKeyPath,
+		}
+		_, err := init.setupConfig()
+		if err == nil {
+			t.Fatal("Expected an error but got none")
+		}
+	})
+
 	t.Run("Failure on invalid TOML data", func(t *testing.T) {
 		// Encrypt invalid data
 		encryptedBytes := &bytes.Buffer{}
