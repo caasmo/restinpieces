@@ -336,7 +336,7 @@ func TestScaffoldNextSteps(t *testing.T) {
 	})
 	t.Run("job", func(t *testing.T) {
 		got := scaffoldNextSteps(ScaffoldTypeJob, "acme_cert", config.NewJobEntryDefaults())
-		if !strings.Contains(got, "\tripc set scheduler.jobs.acme_cert.job_type job_type_acme_cert") {
+		if !strings.Contains(got, "\tripc set scheduler.jobs.acme_cert.job_type acme_cert") {
 			t.Fatalf("expected job_type command, got %q", got)
 		}
 		if !strings.Contains(got, "Deactivate: ripc set scheduler.jobs.acme_cert.activated false") {

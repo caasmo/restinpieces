@@ -6,7 +6,7 @@ import (
 	"github.com/caasmo/restinpieces/db"
 )
 
-const JobTypeDummy = "job_type_dummy"
+const JobTypeDummy = "dummy"
 
 // PayloadDummy is used for timing equalization jobs.
 // It contains a random ID to ensure that dummy jobs never hit

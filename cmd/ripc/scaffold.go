@@ -159,7 +159,7 @@ Deactivate: ripc set acme.dns-01.%s.provider ""`, label, block, label, label, la
 
 Next steps:
 1. Set the job handler type (required):
-	ripc set scheduler.jobs.%s.job_type job_type_acme_cert
+	ripc set scheduler.jobs.%s.job_type acme_cert
 2. Activate it (required):
 	ripc set scheduler.jobs.%s.activated true
 3. Optionally adjust the interval:

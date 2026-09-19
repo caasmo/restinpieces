@@ -857,7 +857,7 @@ func TestValidateJobs(t *testing.T) {
 		{
 			name: "valid activated job",
 			jobs: Jobs{
-				"acme_cert": {JobType: "job_type_acme_cert", Interval: Duration{Duration: time.Hour}, Activated: true},
+				"acme_cert": {JobType: "acme_cert", Interval: Duration{Duration: time.Hour}, Activated: true},
 			},
 		},
 		{
@@ -876,37 +876,37 @@ func TestValidateJobs(t *testing.T) {
 		{
 			name: "zero interval",
 			jobs: Jobs{
-				"acme_cert": {JobType: "job_type_acme_cert", Interval: Duration{Duration: 0}},
+				"acme_cert": {JobType: "acme_cert", Interval: Duration{Duration: 0}},
 			},
 			wantErr: true,
 		},
 		{
 			name: "negative interval",
 			jobs: Jobs{
-				"acme_cert": {JobType: "job_type_acme_cert", Interval: Duration{Duration: -time.Hour}},
+				"acme_cert": {JobType: "acme_cert", Interval: Duration{Duration: -time.Hour}},
 			},
 			wantErr: true,
 		},
 		{
 			name: "label with dot",
 			jobs: Jobs{
-				"acme.cert": {JobType: "job_type_acme_cert", Interval: Duration{Duration: time.Hour}, Activated: true},
+				"acme.cert": {JobType: "acme_cert", Interval: Duration{Duration: time.Hour}, Activated: true},
 			},
 			wantErr: true,
 		},
 		{
 			name: "duplicate job type",
 			jobs: Jobs{
-				"first":  {JobType: "job_type_acme_cert", Interval: Duration{Duration: time.Hour}, Activated: true},
-				"second": {JobType: "job_type_acme_cert", Interval: Duration{Duration: time.Hour}, Activated: true},
+				"first":  {JobType: "acme_cert", Interval: Duration{Duration: time.Hour}, Activated: true},
+				"second": {JobType: "acme_cert", Interval: Duration{Duration: time.Hour}, Activated: true},
 			},
 			wantErr: true,
 		},
 		{
 			name: "deactivated entry duplicates an activated job type",
 			jobs: Jobs{
-				"first":  {JobType: "job_type_acme_cert", Interval: Duration{Duration: time.Hour}, Activated: true},
-				"second": {JobType: "job_type_acme_cert", Interval: Duration{Duration: time.Hour}},
+				"first":  {JobType: "acme_cert", Interval: Duration{Duration: time.Hour}, Activated: true},
+				"second": {JobType: "acme_cert", Interval: Duration{Duration: time.Hour}},
 			},
 			wantErr: true,
 		},

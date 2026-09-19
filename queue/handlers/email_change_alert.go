@@ -9,7 +9,7 @@ import (
 	"github.com/caasmo/restinpieces/mail"
 )
 
-const JobTypeEmailChangeAlert = "job_type_email_change_alert"
+const JobTypeEmailChangeAlert = "email_change_alert"
 
 type PayloadEmailChangeAlert struct {
 	OldEmail string `json:"old_email"`

@@ -99,7 +99,7 @@ Certificates renew only while this scheduler job runs. The job runs code from [r
 
 ```bash
 ripc scaffold job acme_cert
-ripc set scheduler.jobs.acme_cert.job_type job_type_acme_cert
+ripc set scheduler.jobs.acme_cert.job_type acme_cert
 ripc set scheduler.jobs.acme_cert.activated true
 ripc set scheduler.jobs.acme_cert.interval 1h
 ```

@@ -158,13 +158,17 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 # jobs: max_attempts must be implemented — maybe in the future all jobs are defined in config and the defaults seed the framework's one-shot email sends
 
 - `max_attempts` is stored in `job_queue` but never enforced: `StmtClaim` increments `attempts`, `MarkFailed` records the error, and nothing compares the two, so a failing job is retried forever
-- workflow to control `max_attempts` for every job type:
-    1. every job type has one `max_attempts` value in config: scheduled jobs in `scheduler.jobs.<label>.max_attempts`, one-shot types in the defaults (`NewDefaultConfig` seeds the framework's email verification, password reset, email change and dummy types)
-    2. at insert time the type's value is copied onto the row (`db.Job.MaxAttempts`): the scheduler for scheduled jobs, the core handlers for one-shot jobs
-    3. `StmtClaim` stops picking up a failed row once `attempts >= max_attempts`; the row stays failed with its last error and shows in `ripc job list`
-    4. `max_attempts = 0` means unlimited, today's behavior, so a type without a policy keeps retrying
-    5. a changed value applies to the next run that is inserted; rows already in the queue keep the value they were inserted with
-- ref: `sql/schema/app/job_queue.sql`, `db/databasesql/queue.go`, `queue/scheduler/scheduler.go`, `config/config.go`, `config/default.go`
+- `max_attempts` is policy, so it lives in config, not on the row. The row keeps only `attempts` (state). Enforcement compares the row's `attempts` against the config value at claim time; the `max_attempts` column is the leftover to delete — do not copy the value onto the row at insert time, that is config in the job table
+- every job type gets one `max_attempts` value in config, keyed by job type
+- the framework's internal job types are a hardcoded slice in `cmd/ripc/app_create.go`; `app create` writes one `jobs.<label>` entry per item. This is the only consumer — reload and the scheduler read the stored `jobs.<label>` entries from the DB, so `config` never imports the list and there is no import cycle
+- each list item carries the label, the type constant and the default `max_attempts`
+- drop the `job_type_` prefix from the constant values (e.g. `JobTypeDummy = "dummy"`); each constant stays in its own handler file. External packages (acme, backup) must follow the same convention so config stays consistent
+- `ripc scaffold job` writes `max_attempts = 5` by default
+- the operator can change it later, for example for `acme_cert`
+- `acme_cert` is just a ready-made label the framework offers for the user to hook a job; users can ignore it and scaffold their own
+- manual migration: delete all rows in `job_queue` (`DELETE FROM job_queue;`) — old prefixed `job_type` values are not rewritten
+- settle: the internal types are one-shot. If they get entries in `scheduler.jobs`, `ValidateJobs` demands a positive `interval` and the scheduler will seed them recurrently — wrong. Either they get their own config section, or the scheduler must skip seeding them
+- ref: `cmd/ripc/app_create.go`, `cmd/ripc/scaffold.go`, `queue/handlers/`, `config/job.go`, `config/config_validate.go`, `queue/scheduler/scheduler.go`, `db/databasesql/queue.go`, `sql/schema/app/job_queue.sql`
 
 # scheduler: failed job keeps trying without checking conf
 

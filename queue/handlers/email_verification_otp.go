@@ -9,7 +9,7 @@ import (
 	"github.com/caasmo/restinpieces/mail"
 )
 
-const JobTypeEmailVerificationOtp = "job_type_email_verification_otp"
+const JobTypeEmailVerificationOtp = "email_verification_otp"
 
 // PayloadEmailVerificationOtp contains the details for deduplicating queued email tasks
 type PayloadEmailVerificationOtp struct {

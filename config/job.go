@@ -12,8 +12,8 @@ type Jobs map[string]JobEntry
 // after it.
 type JobEntry struct {
 	// JobType is the handler name the application registered with
-	// Server.AddJobHandler, for example "job_type_acme_cert".
-	JobType string `toml:"job_type" comment:"Job handler type registered by the app (e.g. 'job_type_acme_cert')"`
+	// Server.AddJobHandler, for example "acme_cert".
+	JobType string `toml:"job_type" comment:"Job handler type registered by the app (e.g. 'acme_cert')"`
 
 	// Interval is how often the job runs, for example "1h". The next run is
 	// scheduled one interval after the completed run's scheduled time.

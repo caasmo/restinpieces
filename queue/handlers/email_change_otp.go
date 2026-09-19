@@ -9,7 +9,7 @@ import (
 	"github.com/caasmo/restinpieces/mail"
 )
 
-const JobTypeEmailChangeOtp = "job_type_email_change_otp"
+const JobTypeEmailChangeOtp = "email_change_otp"
 
 type PayloadEmailChangeOtp struct {
 	NewEmail       string `json:"new_email"`

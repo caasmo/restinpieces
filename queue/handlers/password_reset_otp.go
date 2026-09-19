@@ -9,7 +9,7 @@ import (
 	"github.com/caasmo/restinpieces/mail"
 )
 
-const JobTypePasswordResetOtp = "job_type_password_reset_otp"
+const JobTypePasswordResetOtp = "password_reset_otp"
 
 type PayloadPasswordResetOtp struct {
 	Email          string `json:"email"`

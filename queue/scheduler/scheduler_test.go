@@ -178,8 +178,8 @@ func TestScheduler_ProcessJobs(t *testing.T) {
 	t.Run("Add activated jobs", func(t *testing.T) {
 		jobsCfg := cfg
 		jobsCfg.Jobs = config.Jobs{
-			"acme_cert": {JobType: "job_type_acme_cert", Interval: config.Duration{Duration: time.Hour}, Activated: true},
-			"paused":    {JobType: "job_type_paused", Interval: config.Duration{Duration: time.Hour}},
+			"acme_cert": {JobType: "acme_cert", Interval: config.Duration{Duration: time.Hour}, Activated: true},
+			"paused":    {JobType: "paused", Interval: config.Duration{Duration: time.Hour}},
 		}
 		var addedJobs []db.Job
 		queue := &mock.Db{
@@ -196,8 +196,8 @@ func TestScheduler_ProcessJobs(t *testing.T) {
 		if len(addedJobs) != 1 {
 			t.Fatalf("expected 1 added job, got %d", len(addedJobs))
 		}
-		if addedJobs[0].JobType != "job_type_acme_cert" {
-			t.Errorf("expected added type 'job_type_acme_cert', got %q", addedJobs[0].JobType)
+		if addedJobs[0].JobType != "acme_cert" {
+			t.Errorf("expected added type 'acme_cert', got %q", addedJobs[0].JobType)
 		}
 		earliest := before.Add(time.Hour)
 		latest := time.Now().Add(time.Hour)
@@ -269,7 +269,7 @@ func TestScheduler_ProcessJobs(t *testing.T) {
 func TestNextRecurrent(t *testing.T) {
 	scheduledFor := time.Now().Add(-time.Hour)
 	entry := config.JobEntry{
-		JobType:   "job_type_acme_cert",
+		JobType:   "acme_cert",
 		Interval:  config.Duration{Duration: 6 * time.Hour},
 		Activated: true,
 	}

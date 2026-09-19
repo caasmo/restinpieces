@@ -228,7 +228,7 @@ acme_cert:
 
 Next steps:
 1. Set the job handler type (required):
-	ripc set scheduler.jobs.acme_cert.job_type job_type_acme_cert
+	ripc set scheduler.jobs.acme_cert.job_type acme_cert
 2. Activate it (required):
 	ripc set scheduler.jobs.acme_cert.activated true
 3. Optionally adjust the interval:
@@ -241,7 +241,7 @@ Deactivate: ripc set scheduler.jobs.acme_cert.activated false
 Point the entry at the handler from `restinpieces-acme`, then turn it on:
 
 ```
-ripc set scheduler.jobs.acme_cert.job_type job_type_acme_cert
+ripc set scheduler.jobs.acme_cert.job_type acme_cert
 ripc set scheduler.jobs.acme_cert.activated true
 systemctl reload myapp
 ```
