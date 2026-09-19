@@ -26,6 +26,12 @@ jobs:
       - name: Show coverage by package
         run: |
           echo "=== Package-level Coverage ==="
+          {
+            echo "## Package coverage"
+            echo ""
+            echo "| Package | Coverage |"
+            echo "| --- | --- |"
+          } >> "$GITHUB_STEP_SUMMARY"
           MODULE=$(go list -m)
           go list ./... | grep -v "^${MODULE}$" | while read pkg; do
             coverage=$(go test -cover "$pkg" 2>/dev/null | grep "coverage:" | awk '{print $5}')
@@ -34,8 +40,10 @@ jobs:
             if [ -n "$coverage" ] && [ "$coverage" != "statements" ]; then
               printf "%-30s %s\n" "$dir" "$coverage"
             else
+              coverage="0.0%"
               printf "%-30s %s\n" "$dir" "0.0%"
             fi
+            echo "| ${dir} | ${coverage} |" >> "$GITHUB_STEP_SUMMARY"
           done
       - name: Generate coverage endpoint
         run: |
