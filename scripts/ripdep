@@ -484,10 +484,6 @@ check_log_db_path_systemd() {
     log_warning "Fix the service file (add ReadWritePaths for that path) or move the log database into data/, e.g.: ripc log init data/logs.db"
 }
 
-create_logs_db() {
-    log_warning "log.db not activated, TODO"
-}
-
 # get_systemd_template: copies the systemd template from the project directory, or
 # downloads the generic template, into the destination conf file.
 get_systemd_template() {
@@ -563,8 +559,8 @@ create_systemd_conf() {
 # the RELEASES_BASE_DIR variable (e.g., ~/src/backup/releases/<project_name>/).
 #
 # Tarball Naming:
-# The name of the output tarball is primarily determined by the main project binary found
-# in the build directory's 'bin/' subfolder. It includes the project name and the Git tag version.
+# The name of the output tarball is the build directory basename plus .tar.gz
+# (e.g. /tmp/myproject-v1.2.3 packs to myproject-v1.2.3.tar.gz).
 # The tarball overwrites any existing file with the same name.
 #
 # Example Tarball Name:
@@ -647,7 +643,7 @@ cmd_restore_db() {
     local target_dir=$2
 
     if [ -z "$source" ] || [ -z "$target_dir" ]; then
-        log_error "Usage: $0 restore-db <source> <target_dir>"
+        log_error "Usage: $0 restore <source> <target_dir>"
         exit 1
     fi
 
@@ -1097,11 +1093,6 @@ deploy_systemd_service() {
     log_success "Deployed ${project_name}.service to /etc/systemd/system/${project_name}.service"
 }
 
-handle_database() {
-    # Placeholder for future logic
-    :
-}
-
 # --- Main Remote Commands ---
 
 cmd_install() {
@@ -1125,8 +1116,7 @@ cmd_install() {
     deploy_age_key "$project_name" "$source_dir"
     deploy_data_files "$project_name" "$source_dir"
     deploy_systemd_service "$project_name" "$source_dir"
-    handle_database
-    
+
     log_success "Installation complete!"
     log_info "To start service: systemctl enable --now ${project_name}"
 }
@@ -1177,12 +1167,9 @@ cmd_deploy() {
     local build_dir=${2:-}
 
     if [ -z "$host" ] || [ -z "$build_dir" ]; then
-        log_error "Usage: $0 deploy <host> <build_dir> [install-options...]"
+        log_error "Usage: $0 deploy <host> <build_dir>"
         exit 1
     fi
-
-    shift 2 # Consume the host and build_dir arguments
-    local install_args="$*" # The rest are options for the remote install command
 
     # --- Step 1: Pack the application ---
     log_info "Step 1: Packing application locally..."
@@ -1197,7 +1184,7 @@ cmd_deploy() {
     
     local tarball_name="${build_name}.tar.gz"
     local tarball_path="${RELEASES_BASE_DIR}/${project_name}/${tarball_name}"
-    log_info "Determined tarball path: $tarball_path"
+    log_info "Step 2: Determined tarball path: $tarball_path"
     
     # --- Step 3: Push the application ---
     log_info "Step 3: Pushing application to ${host}..."
@@ -1212,7 +1199,7 @@ cmd_deploy() {
         exit 1
     fi
 
-    ssh -t -o LogLevel=ERROR "${host}" "sudo ${remote_dir}/${APP_BIN_DIRNAME}/ripdep-remote install ${install_args}"
+    ssh -t -o LogLevel=ERROR "${host}" "sudo ${remote_dir}/${APP_BIN_DIRNAME}/ripdep-remote install"
     
     # --- Step 5: Cleanup ---
     # We perform cleanup from the deployment script (running as the SSH user)
@@ -1306,8 +1293,6 @@ cmd_maintenance() {
     log_success "Set maintenance mode to '${state}' and reloaded '${project_name}' on '${host}'."
 }
 
-# TODO: consider deleting cmd_ripc; cmd_shell covers interactive remote ripc
-# use, and scripted one-shot remote ripc calls have no clear use case yet.
 cmd_ripc() {
     local host=${1:-}
     local project_name=${2:-}
@@ -1493,8 +1478,8 @@ Commands:
   restore <source> <dir>                     Restore a database into a directory.
   pack <build_dir>                           Package a build directory into a tarball.
   push <host> <tarball_path>                 Upload a specific tarball to a VM.
-  install [opts]                             Install on VM (run remotely).
-  deploy <host> <build_dir> [opts]           Build, pack, push, and install in one command.
+  install                                  Install on VM (run remotely).
+  deploy <host> <build_dir>                Pack, push, and install in one command.
   undeploy <host> <project-name>             Permanently remove a project and all its data from a host.
   backup <host> <project-name>               Creates and downloads a backup of a project.
   cp <host> <project-name> <local-file>       Copy a file into /home/<project-name>/.
@@ -1560,10 +1545,9 @@ show_install_help() {
     cat <<EOF
 ${GREEN}ripdep install${NC} - Install the service on a VM.
 
-Usage: $0 install [options]
+Usage: $0 install
 
-Options:
-  --restore-from-backup      (Legacy flag, placeholder for future logic).
+Takes no arguments. The project name is baked in at build time.
 
 EOF
 }
@@ -1638,7 +1622,7 @@ cleanup_temp_dirs() {
 # cmd_build_release: Builds a standard release artifact from source code.
 #
 # This command is used for updating an existing application with a new version of the code.
-# It compiles the Go binary and includes the necessary tools (`ripc`, `ripdep`)
+# It compiles the Go binary and includes the necessary tools (`ripc`, `ripdep-remote`)
 # but does *not* create a new database or encryption keys, ensuring that existing data is preserved on deployment.
 cmd_build_release() {
     # Check for help first
