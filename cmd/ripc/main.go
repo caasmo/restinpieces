@@ -20,6 +20,15 @@ var (
 	ErrCreateSecureStore = errors.New("failed to instantiate secure store")
 )
 
+// BuildTag and BuildCommit are set at compile time via
+// -ldflags "-X main.BuildTag=$VERSION -X main.BuildCommit=$COMMIT".
+// The GitHub release workflow sets both from the tag and its commit,
+// ripdep sets both when it compiles ripc. Defaults mean a local dev build.
+var (
+	BuildTag    = "dev"
+	BuildCommit = "unknown"
+)
+
 // prog is the invoked program path, the single source of truth for the
 // program name in usage output.
 var prog = os.Args[0]
@@ -110,6 +119,7 @@ func run(args []string, output io.Writer) error {
 						{"app", "Manage application lifecycle (e.g., creating the database)"},
 						{"job", "Manage background jobs"},
 						{"log", "Manage the log database"},
+						{"version", "Print the build tag and commit"},
 						{"help", "Show help for a specific command"},
 					},
 				},
@@ -129,6 +139,19 @@ func run(args []string, output io.Writer) error {
 		return fmt.Errorf("%w: %v", ErrInvalidFlag, err)
 	}
 
+	cmdArgs := fs.Args()
+	if len(cmdArgs) > 0 {
+		command := cmdArgs[0]
+		commandArgs := cmdArgs[1:]
+		// version and help need no database, age key, or flags.
+		if command == "version" {
+			return handleVersionCommand(commandArgs, ui)
+		}
+		if command == "help" {
+			return handleHelpCommand(commandArgs, fs.Usage, ui)
+		}
+	}
+
 	if *ageIdentityPathFlag == "" {
 		fs.Usage()
 		return fmt.Errorf("%w: -agekey flag or RIPC_AGE_KEY_PATH env must be provided", ErrMissingFlag)
@@ -138,7 +161,6 @@ func run(args []string, output io.Writer) error {
 		return fmt.Errorf("%w: -dbpath flag or RIPC_DB env must be provided", ErrMissingFlag)
 	}
 
-	cmdArgs := fs.Args()
 	if len(cmdArgs) < 1 {
 		fs.Usage()
 		return nil // Successfully show usage and exit.
@@ -210,6 +232,8 @@ func run(args []string, output io.Writer) error {
 		return handleJobCommand(db, commandArgs, ui)
 	case "log":
 		return handleLogCommand(secureStore, *dbPathFlag, commandArgs, ui)
+	case "version":
+		return handleVersionCommand(commandArgs, ui)
 	case "help":
 		return handleHelpCommand(commandArgs, fs.Usage, ui)
 	default:

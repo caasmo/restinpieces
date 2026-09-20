@@ -115,6 +115,25 @@ get_latest_tag() {
     return 0
 }
 
+# get_tag_commit: prints the short commit behind a tag via ls-remote.
+# Usage: get_tag_commit <tag>
+# Echos the first 8 SHA chars on success, "unknown" when unresolvable.
+get_tag_commit() {
+    local tag=$1
+    require_command git
+    local line
+    if line=$(git ls-remote https://github.com/caasmo/restinpieces.git "$tag" 2>/dev/null); then
+        local sha
+        sha=$(printf '%s' "$line" | cut -f1)
+        if [ -n "$sha" ]; then
+            echo "${sha:0:8}"
+            return 0
+        fi
+    fi
+    echo "unknown"
+    return 0
+}
+
 get_project_name_from_file_base() {
     # This function extracts the project name from a string like "my-project-v1.0".
     # It assumes the format is "<project-name>-<version>".
@@ -324,14 +343,17 @@ build_ripc() {
         exit 1
     fi
 
-    log_info "Building ripc ${ripc_version} for ${TARGET_GOOS}/${TARGET_GOARCH}..."
+    local ripc_commit
+    ripc_commit=$(get_tag_commit "$ripc_version")
+
+    log_info "Building ripc ${ripc_version} ${ripc_commit} for ${TARGET_GOOS}/${TARGET_GOARCH}..."
     local tmp_dir
     tmp_dir=$(mktemp -d)
     (
         cd "$tmp_dir" \
             && go mod init tmp >/dev/null \
             && go get "github.com/caasmo/restinpieces/cmd/ripc@${ripc_version}" >/dev/null \
-            && go build -ldflags="-s -w" -trimpath -o "${bin_dir}/ripc" "github.com/caasmo/restinpieces/cmd/ripc"
+            && go build -ldflags="-s -w -X main.BuildTag=${ripc_version} -X main.BuildCommit=${ripc_commit}" -trimpath -o "${bin_dir}/ripc" "github.com/caasmo/restinpieces/cmd/ripc"
     )
     rm -rf "$tmp_dir"
     log_success "Ripc binary placed in ${bin_dir}/ripc"

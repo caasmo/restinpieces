@@ -26,11 +26,12 @@ jobs:
         with:
           fetch-depth: 0
       - name: Build binary
-        run: |        
+        run: |
           VERSION="$GITHUB_REF_NAME"
+          COMMIT="${GITHUB_SHA:0:8}"
           DIR="$(mktemp -d)"
           mkdir "$DIR/ripc"
-          go build -o "$DIR/ripc" -ldflags "-X main.BuildTag=$VERSION" -trimpath ./cmd/...
+          go build -o "$DIR/ripc" -ldflags "-X main.BuildTag=$VERSION -X main.BuildCommit=$COMMIT" -trimpath ./cmd/ripc
           tar -cvzf "ripc-$VERSION-$GOOS-$GOARCH.tar.gz" -C "$DIR" ripc
         env:
           CGO_ENABLED: 0

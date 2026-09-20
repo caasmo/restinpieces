@@ -95,7 +95,21 @@ ripc update tls
 
 ## Renewal on a schedule
 
-Certificates renew only while this scheduler job runs. The job runs code from [restinpieces-acme](https://github.com/caasmo/restinpieces-acme); add it with:
+Certificates renew only while this scheduler job runs. That takes two steps: register the handler in your code, then declare the schedule with `ripc`. The schedule alone does nothing — without the handler every run fails with `no handler registered for job type: acme_cert`.
+
+Register what [`cmd/example/main.go`](https://github.com/caasmo/restinpieces-acme/blob/master/cmd/example/main.go) does after `restinpieces.New()` in your app's `main.go`:
+
+```go
+certHandler := acme.NewCertHandler(app.ConfigStore(), logger)
+
+err = srv.AddJobHandler("acme_cert", certHandler)
+if err != nil {
+    logger.Error("Failed to register certificate job handler", "error", err)
+    os.Exit(1)
+}
+```
+
+The `job_type` you set below must match the `"acme_cert"` name you register above. Then add the schedule:
 
 ```bash
 ripc scaffold job acme_cert

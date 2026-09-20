@@ -177,3 +177,13 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - direction talked: filter-then-grab — build the switched-off type list each tick and have `Claim` skip those types; one-off types are never on the list so they always run; FIFO and per-tick limit unchanged
 - ref: `queue/scheduler/scheduler.go:118-132`, `db/databasesql/queue.go:26-40`
 
+# auth: failed-login throttle for login/signup (in-house)
+
+- per-IP and per-email failure counters in `app.Cache()`; lock after N with a TTL
+- refs: `core/handler_auth_login_password.go`, `core/handler_auth_register_password.go`, `cache/default.go` (`SetWithTTL`), `core/prerouter/block_ip.go` (middleware shape, `app.ClientIP`), `queue/queue.go` (`CoolDownBucket`), `config/config.go` (`RateLimits`)
+
+# auth: proof-of-work challenge for login/signup (in-house)
+
+- server issues nonce+difficulty, client JS solves it, handler verifies before processing; gate signup and login after failures
+- refs: `core/handler_auth_register_password.go`, `core/handler_auth_login_password.go`, `core/prerouter/`, `restinpieces-js-sdk`
+

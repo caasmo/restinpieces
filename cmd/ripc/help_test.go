@@ -290,6 +290,16 @@ func TestPrintUsageFuncs(t *testing.T) {
 				"ripc rollback 3",
 			},
 		},
+		{
+			name:  "version",
+			usage: printVersionUsage,
+			want: []string{
+				"version",
+				"Prints the ripc build tag and commit.",
+				"ripc version",
+			},
+			notWant: []string{"Options:"},
+		},
 	}
 
 	for _, tc := range testCases {

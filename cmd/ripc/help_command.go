@@ -24,6 +24,7 @@ var (
 	printRollbackUsageFunc = printRollbackUsage
 	printJobUsageFunc      = printJobUsage
 	printLogUsageFunc      = printLogUsage
+	printVersionUsageFunc  = printVersionUsage
 )
 
 // handleHelpCommand is the command-level wrapper. It executes the core logic
@@ -78,6 +79,8 @@ func runHelpTopic(topic string, ui UI) error {
 		printJobUsageFunc(ui.Out)
 	case "log":
 		printLogUsageFunc(ui.Out)
+	case "version":
+		printVersionUsageFunc(ui.Out)
 	default:
 		return ErrUnknownHelpTopic
 	}

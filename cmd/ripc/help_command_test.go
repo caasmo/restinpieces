@@ -26,6 +26,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 	originalPrintRollback := printRollbackUsageFunc
 	originalPrintJob := printJobUsageFunc
 	originalPrintLog := printLogUsageFunc
+	originalPrintVersion := printVersionUsageFunc
 	defer func() {
 		printAppUsageFunc = originalPrintApp
 		printGetUsageFunc = originalPrintGet
@@ -42,6 +43,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 		printRollbackUsageFunc = originalPrintRollback
 		printJobUsageFunc = originalPrintJob
 		printLogUsageFunc = originalPrintLog
+		printVersionUsageFunc = originalPrintVersion
 	}()
 
 	printAppUsageFunc = func(w io.Writer) { calledTopic = "app" }
@@ -59,6 +61,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 	printRollbackUsageFunc = func(w io.Writer) { calledTopic = "rollback" }
 	printJobUsageFunc = func(w io.Writer) { calledTopic = "job" }
 	printLogUsageFunc = func(w io.Writer) { calledTopic = "log" }
+	printVersionUsageFunc = func(w io.Writer) { calledTopic = "version" }
 
 	testCases := []struct {
 		topic       string
@@ -79,6 +82,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 		{topic: "rollback", expectTopic: "rollback"},
 		{topic: "job", expectTopic: "job"},
 		{topic: "log", expectTopic: "log"},
+		{topic: "version", expectTopic: "version"},
 	}
 
 	for _, tc := range testCases {
