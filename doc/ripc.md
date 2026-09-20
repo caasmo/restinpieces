@@ -145,15 +145,19 @@ Appends a value to a configuration key that holds several values.
 
 ### `update <label>`
 
-Generates new secrets, refreshes the bot block list, or activates the staged TLS certificate.
+`update` writes values you should not write by hand. Give it a group name to update the whole group at once, or one full path to update a single value.
 
-    ripc update jwt.auth_secret
+| Label | What it does |
+|-------|----------------|
+| `jwt` | Generates 32-char random secrets that sign auth tokens, password reset links, email change codes, verification mail, and OAuth2 state. |
+| `tls` | Moves the staged `acme.certificate` and `acme.private_key` into the live `server.tls.certificate` and `server.tls.private_key`. |
+| `block_user_agent` | Downloads the upstream bot list into `block_user_agent.agents`. |
+
     ripc update jwt
+    ripc update jwt.auth_secret
     ripc update tls
 
-The label is required. It must name a group (`jwt`, `tls` or `block_user_agent`) or an exact configuration path such as `jwt.auth_secret` or `server.tls`; partial names are refused. All named values are filled in a single configuration version. For example, `ripc update jwt` fills all five `jwt.*` values at once.
-
-`ripc update tls` copies the staged pair into the live server settings: `acme.certificate` to `server.tls.certificate` and `acme.private_key` to `server.tls.private_key`. It refuses empty, unparsable, mismatched or expired input and writes nothing then. After success, restart the app so the server serves the new pair.
+`ripc update tls` checks the staged pair first and stops when it is empty, broken, mismatched, or expired. After it succeeds, restart the app so the server uses the new pair.
 
 ### `save <file>`
 
