@@ -145,7 +145,7 @@ Appends a value to a configuration key that holds several values.
 
 ### `update <label>`
 
-Fills configuration values in place.
+Generates new secrets, refreshes the bot block list, or activates the staged TLS certificate.
 
     ripc update jwt.auth_secret
     ripc update jwt

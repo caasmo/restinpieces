@@ -99,7 +99,7 @@ func run(args []string, output io.Writer) error {
 					Subcommands: []Subcommand{
 						{"set", "Set a configuration value"},
 						{"add", "Append a value to a collection configuration key"},
-						{"update", "Fill configuration values in place"},
+						{"update", "Generate secrets, bot list, or TLS certificate"},
 						{"save", "Save file contents to the configuration"},
 						{"scaffold", "Scaffold a configuration entry with defaults"},
 						{"migrate", "Migrate configuration to current framework version"},

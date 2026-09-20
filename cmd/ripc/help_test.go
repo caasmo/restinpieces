@@ -184,7 +184,7 @@ func TestPrintUsageFuncs(t *testing.T) {
 			usage: printUpdateUsage,
 			want: []string{
 				"update <label>",
-				"Fills configuration values in place.",
+				"Generates new secrets, refreshes the bot block list, or activates the staged TLS certificate.",
 				"Arguments:",
 				"label",
 				"Label (jwt, tls, block_user_agent) or configuration path",

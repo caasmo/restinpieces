@@ -40,8 +40,8 @@ type updater interface {
 }
 
 // updateGroup is one update group: the configuration paths it covers and the
-// updater that fills them. A group with no paths, such as block_user_agent or
-// tls, is triggered by its own name only.
+// updater that writes fresh values into them. A group with no paths, such as
+// block_user_agent or tls, is triggered by its own name only.
 type updateGroup struct {
 	paths   []string
 	updater updater
@@ -70,7 +70,7 @@ var updateGroups = map[string]updateGroup{
 func printUpdateUsage(w io.Writer) {
 	help := Spec{
 		Usage:       "update <label>",
-		Description: "Fills configuration values in place.",
+		Description: "Generates new secrets, refreshes the bot block list, or activates the staged TLS certificate.",
 		Args: []ArgSpec{
 			{"label", "Label (jwt, tls, block_user_agent) or configuration path"},
 		},
@@ -133,7 +133,7 @@ func parseUpdateArgs(args []string) (UpdateOptions, error) {
 	return opts, nil
 }
 
-// updateValues contains the testable core logic for filling values in place. It accepts UI for output, making it easy to test.
+// updateValues contains the testable core logic for writing fresh values. It accepts UI for output, making it easy to test.
 func updateValues(ui UI, secureCfg config.SecureStore, scope string, description string, arg string) error {
 	group, ok := resolveUpdateGroup(arg)
 	if !ok {
