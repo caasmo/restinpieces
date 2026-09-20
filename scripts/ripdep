@@ -1486,8 +1486,8 @@ ${GREEN}ripdep${NC} - Deployment and operations tool
 Usage: $0 <COMMAND> [ARGS...]
 
 Commands:
-  build-release <build_dir> <project_path>   Build a release artifact from source code.
-  build-bootstrap <build_dir> <project_path> Build a bootstrap artifact from source code.
+  build-release <project-path> [build-base-dir]   Build a release artifact from source code.
+  build-bootstrap <project-path> [build-base-dir] Build a bootstrap artifact from source code.
   build-recovery <build_dir> [opts]          Build an artifact from backups (recovery).
   unpack <tarball> <dir>                     Extract a release tarball into a directory.
   restore <source> <dir>                     Restore a database into a directory.
@@ -1514,11 +1514,11 @@ show_build_release_help() {
     cat <<EOF
 ${GREEN}ripdep build-release${NC} - Build a release artifact from source.
 
-Usage: $0 build-release <build-base-dir> <project-path>
+Usage: $0 build-release <project-path> [build-base-dir]
 
 Arguments:
-  <build-base-dir>  The base directory where the build output will be created.
   <project-path>     Path to the project source code to compile.
+  <build-base-dir>  The base directory where the build output will be created (default: /tmp).
 
 EOF
 }
@@ -1527,11 +1527,11 @@ show_build_bootstrap_help() {
     cat <<EOF
 ${GREEN}ripdep build-bootstrap${NC} - Build a bootstrap artifact from source.
 
-Usage: $0 build-bootstrap <build-base-dir> <project-path>
+Usage: $0 build-bootstrap <project-path> [build-base-dir]
 
 Arguments:
-  <build-base-dir>  The base directory where the build output will be created.
   <project-path>     Path to the project source code to compile.
+  <build-base-dir>  The base directory where the build output will be created (default: /tmp).
 
 Description:
   Similar to build-release, but also copies the project's existing database
@@ -1647,12 +1647,12 @@ cmd_build_release() {
         exit 0
     fi
 
-    if [ "$#" -ne 2 ]; then
-        log_error "Usage: $0 build-release <build-base-dir> <project-path>"
+    if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+        log_error "Usage: $0 build-release <project-path> [build-base-dir]"
         exit 1
     fi
-    local build_base_dir=$1
-    local project_path=$2
+    local project_path=$1
+    local build_base_dir=${2:-/tmp}
 
     log_info "Creating a new release build..."
 
@@ -1685,9 +1685,9 @@ cmd_build_release() {
     recreate_build_dir "$build_dir"
 
     log_info "Build configuration:"
+    log_info "  Project path               : ${project_path}"
     log_info "  Build base directory       : $build_base_dir"
     log_info "  Build project directory    : $build_dir"
-    log_info "  Project path               : ${project_path}"
     log_info "  Project name               : ${GREEN}$project_name${NC}"
     log_info "  Project version            : ${GREEN}$version${NC}"
     log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"
@@ -1721,12 +1721,12 @@ cmd_build_bootstrap() {
         exit 0
     fi
 
-    if [ "$#" -ne 2 ]; then
-        log_error "Usage: $0 build-bootstrap <build-base-dir> <project-path>"
+    if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+        log_error "Usage: $0 build-bootstrap <project-path> [build-base-dir]"
         exit 1
     fi
-    local build_base_dir=$1
-    local project_path=$2
+    local project_path=$1
+    local build_base_dir=${2:-/tmp}
 
 
     log_info "Creating a new bootstrap build..."
@@ -1760,9 +1760,9 @@ cmd_build_bootstrap() {
     recreate_build_dir "$build_dir"
 
     log_info "Build configuration:"
+    log_info "  Project path               : ${project_path}"
     log_info "  Build base directory       : $build_base_dir"
     log_info "  Build project directory    : $build_dir"
-    log_info "  Project path               : ${project_path}"
     log_info "  Project name               : ${GREEN}$project_name${NC}"
     log_info "  Project version            : ${GREEN}$version${NC}"
     log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"

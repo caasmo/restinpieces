@@ -93,7 +93,7 @@ VERSION=$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)
 BUILD_DIR="${BUILD_BASE}/${PROJECT_NAME}-${VERSION}"
 
 # 1. Build a complete bootstrap artifact locally
-./ripdep build-bootstrap "$BUILD_BASE" "$PROJECT_PATH"
+./ripdep build-bootstrap "$PROJECT_PATH" "$BUILD_BASE"
 
 # 2. Deploy to remote
 ./ripdep deploy "$HOST" "$BUILD_DIR"
@@ -138,7 +138,7 @@ VERSION=$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)
 BUILD_DIR="${BUILD_BASE}/${PROJECT_NAME}-${VERSION}"
 
 # 1. Build an update artifact
-./ripdep build-release "$BUILD_BASE" "$PROJECT_PATH"
+./ripdep build-release "$PROJECT_PATH"
 
 # 2. Deploy
 ./ripdep deploy "$HOST" "$BUILD_DIR"
@@ -187,7 +187,7 @@ APP_NAME="my-app-2"
 PROJECT_PATH="$PWD"
 
 ln -s "$PROJECT_PATH" "../${APP_NAME}"
-./ripdep build-release /tmp "../${APP_NAME}"
+./ripdep build-release "../${APP_NAME}"
 
 # The build prints its directory, e.g. /tmp/my-app-2-v1.0.0
 ./ripdep deploy user@server.com "/tmp/${APP_NAME}-v1.0.0"
@@ -209,18 +209,21 @@ Builds `<project>-<version>/` for updating an existing installation:
 ```
 
 **Arguments:**
-*   `build-base-dir`: the base directory for the build output (e.g. `/tmp`). The build directory `<project>-<version>` is created inside it.
 *   `project-path`: the project source to compile. It must be a Go project whose worktree is clean and whose HEAD is exactly on the latest tag; the build fails otherwise. The tag is the version. The deployed name is the last part of this path, so building through a symlink deploys under the symlink's name (see [Deploy the Same Application Under a Different Name](#4-deploy-the-same-application-under-a-different-name)).
+*   `build-base-dir`: the base directory for the build output (default `/tmp`). The build directory `<project>-<version>` is created inside it.
 
 Cross-compile by setting `GOOS` and `GOARCH`; the host platform is the default.
 
 **Example:**
 ```bash
 # Creates a release build in /tmp/my-app
-./ripdep build-release /tmp /path/to/my-app
+./ripdep build-release /path/to/my-app /tmp
+
+# The build base defaults to /tmp
+./ripdep build-release /path/to/my-app
 
 # Cross-compile for another target
-GOOS=linux GOARCH=arm64 ./ripdep build-release /tmp /path/to/my-app
+GOOS=linux GOARCH=arm64 ./ripdep build-release /path/to/my-app
 ```
 
 ### `build-bootstrap`
@@ -241,13 +244,13 @@ First-ever deployment. Same as `build-release`, plus it copies the project's `ag
 `age.key` and the database must already exist in the project directory; the build fails if either is missing. The database is located as `<project-name>.db`, falling back to `app.db`. The systemd unit is read from `<project>/systemd.service` if present, otherwise downloaded from the framework repository.
 
 **Arguments:**
-*   `build-base-dir`: the base directory for the build output.
 *   `project-path`: the project source to compile, with the same git requirements as `build-release`.
+*   `build-base-dir`: the base directory for the build output (default `/tmp`).
 
 **Example:**
 ```bash
 # Creates a bootstrap build in /tmp/my-app
-./ripdep build-bootstrap /tmp /path/to/my-app
+./ripdep build-bootstrap /path/to/my-app /tmp
 ```
 
 ### `build-recovery`
