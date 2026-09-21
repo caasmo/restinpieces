@@ -114,6 +114,7 @@ func TestValidate(t *testing.T) {
 		{"invalid request log", func(c *Config) { c.Log.Request.Limits.URILength = 0 }},
 		{"invalid block ip", func(c *Config) { c.BlockIp.Level = "" }},
 		{"invalid cache", func(c *Config) { c.Cache.Level = "" }},
+		{"invalid s3", func(c *Config) { c.S3.Endpoint = "s3.example.com" }},
 	}
 
 	for _, tt := range errorCases {

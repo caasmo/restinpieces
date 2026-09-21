@@ -33,7 +33,7 @@
 // with services that follow the same API, such as Cloudflare R2,
 // Backblaze B2 and MinIO. Only the standard library is used.
 //
-// The client covers the object operations a backup tool needs: put,
+// The client covers object operations for storing and reading objects: put,
 // get, head, list and delete. Objects travel in a single request, so
 // one object must stay under the 5 GiB S3 limit; multipart upload is
 // not implemented. PutObject takes the object as a byte slice, so the

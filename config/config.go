@@ -45,6 +45,7 @@ type Config struct {
 	Backup                 Backup                    `toml:"backup" comment:"Backup configuration"`
 	Acme                   Acme                      `toml:"acme" comment:"ACME certificate settings"`
 	Cache                  Cache                     `toml:"cache" comment:"Cache system settings"`
+	S3                     S3                        `toml:"s3" comment:"S3 object storage settings"`
 }
 
 // Cache contains settings for the cache system.

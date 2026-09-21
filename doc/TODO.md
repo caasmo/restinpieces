@@ -192,3 +192,10 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - migrate from `encoding/json` to `encoding/json/v2` (`go 1.25.0` in `go.mod`)
 - refs: `core/auth.go`, `db/types.go`, `db/databasesql/queue.go`, `oauth2/oauth2.go`, `log/daemon.go`, `notify/discord/discord.go`, `queue/handlers/`
 
+# config: remove the exported ValidateBackup
+
+- `ValidateBackup` is exported only so the restinpieces-backup daemons can validate their `[backup]` section on their own
+- the framework owns the shape and its validation, so the section validator should not be part of the public API
+- decide the replacement before changing the call sites: validate through the framework's `Validate`, or through a loader that validates the section
+- refs: `config/config_validate.go`, `config/backup.go`, `restinpieces-backup/cmd/vacuum/daemon/main.go`, `restinpieces-backup/sqlitersync/origin/daemon.go`
+
