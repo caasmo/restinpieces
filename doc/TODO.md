@@ -187,3 +187,8 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - server issues nonce+difficulty, client JS solves it, handler verifies before processing; gate signup and login after failures
 - refs: `core/handler_auth_register_password.go`, `core/handler_auth_login_password.go`, `core/prerouter/`, `restinpieces-js-sdk`
 
+# json: update to go json v2
+
+- migrate from `encoding/json` to `encoding/json/v2` (`go 1.25.0` in `go.mod`)
+- refs: `core/auth.go`, `db/types.go`, `db/databasesql/queue.go`, `oauth2/oauth2.go`, `log/daemon.go`, `notify/discord/discord.go`, `queue/handlers/`
+

@@ -145,7 +145,7 @@ Appends a value to a configuration key that holds several values.
 
 ### `update <label>`
 
-`update` writes values you should not write by hand. Give it a group name to update the whole group at once, or one full path to update a single value.
+`update` writes values you should not write by hand. Give it a label to update all its configuration paths at once, or one configuration path to update a single value. The following labels are supported:
 
 | Label | What it does |
 |-------|----------------|
@@ -156,8 +156,6 @@ Appends a value to a configuration key that holds several values.
     ripc update jwt
     ripc update jwt.auth_secret
     ripc update tls
-
-`ripc update tls` checks the staged pair first and stops when it is empty, broken, mismatched, or expired. After it succeeds, restart the app so the server uses the new pair.
 
 ### `save <file>`
 
