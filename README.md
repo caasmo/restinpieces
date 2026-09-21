@@ -72,6 +72,8 @@ To address this, the framework provides pure Go implementations of all available
 
 For the framework-side `backup` configuration, see [doc/backup.md](doc/backup.md).
 
+The repository also ships a small S3 client, documented in [doc/s3.md](doc/s3.md).
+
 ### Database Drivers
 The framework uses pure-Go [modernc.org/sqlite](https://modernc.org/sqlite); [zombiezen.com/go/sqlite](https://github.com/caasmo/restinpieces-sqlite-zombiezen) as the alternative.
 

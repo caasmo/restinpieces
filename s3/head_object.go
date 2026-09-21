@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"time"
@@ -63,7 +64,7 @@ func (o *HeadObjectResponse) load(headers http.Header) {
 // existence and to retrieve its metadata.
 //
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html
-func (s3 *S3) HeadObject(ctx context.Context, key string, optFuncs ...func(*http.Request)) (*HeadObjectResponse, error) {
+func (s3 *S3) HeadObject(ctx context.Context, key string, optFuncs ...func(*http.Request)) (result *HeadObjectResponse, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, s3.URL(key), nil)
 	if err != nil {
 		return nil, err
@@ -80,9 +81,11 @@ func (s3 *S3) HeadObject(ctx context.Context, key string, optFuncs ...func(*http
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err = errors.Join(err, resp.Body.Close())
+	}()
 
-	result := &HeadObjectResponse{}
+	result = &HeadObjectResponse{}
 	result.load(resp.Header)
 
 	return result, nil

@@ -26,14 +26,18 @@
 //	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //	THE SOFTWARE.
 
-// Package s3 implements a lightweight client for interacting with the
-// REST APIs of any S3 compatible service.
+// Package s3 is a small client for S3-compatible object storage.
 //
-// It implements only the minimal functionality required by PocketBase
-// such as objects list, get, copy, delete and upload.
+// It talks to the S3 REST API over plain HTTP and signs every request
+// with AWS Signature Version 4. That makes it work with Amazon S3 and
+// with services that follow the same API, such as Cloudflare R2,
+// Backblaze B2 and MinIO. Only the standard library is used.
 //
-// For more details why we don't use the official aws-sdk-go-v2, you could check
-// https://github.com/pocketbase/pocketbase/discussions/6562.
+// The client covers the object operations a backup tool needs: put,
+// get, head, list and delete. Objects travel in a single request, so
+// one object must stay under the 5 GiB S3 limit; multipart upload is
+// not implemented. PutObject takes the object as a byte slice, so the
+// caller must be able to hold the whole object in memory.
 //
 // Example:
 //
@@ -100,9 +104,14 @@ type S3 struct {
 func (s3 *S3) URL(path string) string {
 	scheme := "https"
 	endpoint := strings.TrimRight(s3.Endpoint, "/")
-	if after, ok := strings.CutPrefix(endpoint, "https://"); ok {
+
+	after, ok := strings.CutPrefix(endpoint, "https://")
+	if ok {
 		endpoint = after
-	} else if after, ok := strings.CutPrefix(endpoint, "http://"); ok {
+	}
+
+	after, ok = strings.CutPrefix(endpoint, "http://")
+	if ok {
 		endpoint = after
 		scheme = "http"
 	}
@@ -152,22 +161,25 @@ func (s3 *S3) SignAndSend(req *http.Request) (*http.Response, error) {
 	}
 
 	if resp.StatusCode >= 400 {
-		defer resp.Body.Close()
-
 		respErr := &ResponseError{
 			Status: resp.StatusCode,
 		}
 
 		respErr.Raw, err = io.ReadAll(resp.Body)
+		closeErr := resp.Body.Close()
 		if err != nil && !errors.Is(err, io.EOF) {
-			return nil, errors.Join(err, respErr)
+			return nil, errors.Join(err, closeErr, respErr)
 		}
 
 		if len(respErr.Raw) > 0 {
 			err = xml.Unmarshal(respErr.Raw, respErr)
 			if err != nil {
-				return nil, errors.Join(err, respErr)
+				return nil, errors.Join(err, closeErr, respErr)
 			}
+		}
+
+		if closeErr != nil {
+			return nil, errors.Join(closeErr, respErr)
 		}
 
 		return nil, respErr

@@ -3,6 +3,7 @@ package s3
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -91,7 +92,7 @@ func (l *ListParams) Encode() string {
 // ListObjects retrieves paginated objects list.
 //
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
-func (s3 *S3) ListObjects(ctx context.Context, params ListParams, optReqFuncs ...func(*http.Request)) (*ListObjectsResponse, error) {
+func (s3 *S3) ListObjects(ctx context.Context, params ListParams, optReqFuncs ...func(*http.Request)) (result *ListObjectsResponse, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s3.URL("?"+params.Encode()), nil)
 	if err != nil {
 		return nil, err
@@ -108,9 +109,11 @@ func (s3 *S3) ListObjects(ctx context.Context, params ListParams, optReqFuncs ..
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err = errors.Join(err, resp.Body.Close())
+	}()
 
-	result := &ListObjectsResponse{}
+	result = &ListObjectsResponse{}
 
 	err = xml.NewDecoder(resp.Body).Decode(result)
 	if err != nil {
