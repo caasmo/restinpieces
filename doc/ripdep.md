@@ -14,6 +14,7 @@
   - [Deploy the Same Application Under a Different Name](#4-deploy-the-same-application-under-a-different-name)
 - [Commands](#commands)
   - [build-release](#build-release)
+  - [build-binary-release](#build-binary-release)
   - [build-bootstrap](#build-bootstrap)
   - [build-recovery](#build-recovery)
   - [pack](#pack)
@@ -226,6 +227,30 @@ Cross-compile by setting `GOOS` and `GOARCH`; the host platform is the default.
 GOOS=linux GOARCH=arm64 ./ripdep build-release /path/to/my-app
 ```
 
+### `build-binary-release`
+Builds `<project>-<version>/` for a project whose binaries are already built:
+
+```text
+<project>-<version>/
+├── <home files and systemd units> # copied from the source root
+├── bin/
+│   ├── <binaries> # copied from the source bin/
+│   └── ripdep-remote # remote installer
+└── data/ # empty
+```
+
+Use this for projects that ship ready-to-run binaries: put them in the source `bin/` directory, put the other files (for example a Prometheus scrape file and the systemd units) in the source root, and tag the repository. The version is the latest git tag; the worktree must be clean and HEAD must be on the tag, exactly like `build-release`. No database and no `age.key` are required.
+
+**Arguments:**
+*   `source-dir`: the project directory holding the binaries and the other files. The deployed name is the last part of this path.
+*   `build-base-dir`: the base directory for the build output (default `/tmp`). The build directory `<project>-<version>` is created inside it.
+
+**Example:**
+```bash
+# Creates a binary release build in /tmp/my-app
+./ripdep build-binary-release /path/to/my-app /tmp
+```
+
 ### `build-bootstrap`
 First-ever deployment. Same as `build-release`, plus it copies the project's `age.key` and database and renders the systemd unit:
 
@@ -333,15 +358,17 @@ Uploads a release tarball to `/tmp/<project>/<version>/` on the server and extra
 ```
 
 ### `install` (Remote)
-Runs on the server as root. Creates the service user, the `/home/<app-name>` layout, installs binaries and data files, and installs the systemd unit. It derives the project name and paths from its own location, so it takes no arguments.
+Runs on the server as root. Creates the service user, the `/home/<app-name>` layout, installs binaries, data files, and the remaining files from the build root, and installs the systemd units. It derives the project name and paths from its own location, so it takes no arguments.
 
 Permissions:
 
 *   `700` for `/home/<app-name>/data`.
-*   `600` for `/home/<app-name>/age.key` and all database files.
+*   `600` for every file copied from the build root, including `/home/<app-name>/age.key`, and all database files.
 *   `700` for binaries in `/home/<app-name>/bin`.
 
-The generated `ripdep-remote` also provides `uninstall`, which stops the service, removes the unit, and deletes the user and home directory.
+Every `*.service` file in the build root named `<project>.service` or `<project>-*.service` is installed into `/etc/systemd/system` after `systemd-analyze verify` accepts it; any other `*.service` file is skipped.
+
+The generated `ripdep-remote` also provides `uninstall`, which stops the services, removes the systemd units, and deletes the user and home directory.
 
 **Example:**
 ```bash
@@ -364,7 +391,7 @@ Runs `pack`, `push`, and `install` for a pre-built directory, then removes the s
 ```
 
 ### `undeploy`
-Stops and disables the service, removes the systemd unit, and deletes the service user and home directory. Prompts for confirmation unless `-y` or `--force` is given.
+Stops and disables the project's systemd units, removes them, and deletes the service user and home directory. Prompts for confirmation unless `-y` or `--force` is given.
 
 **Arguments:**
 *   `host`: the remote server address.
@@ -524,3 +551,5 @@ If the service starts, the cause is in the block you commented out. Re-enable di
 ## Systemd Unit Contract
 
 The unit hardcodes the flags and values your app gets: `bin/<app> -dbpath data/app.db -agekey age.key`. Make sure your app uses those flags.
+
+A project may ship more than one systemd unit in the build root, for example `my-app.service` and `my-app-tunnel.service`. Every `*.service` file named `my-app.service` or `my-app-*.service` is installed; any other `*.service` file is skipped.

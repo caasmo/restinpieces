@@ -448,6 +448,39 @@ copy_project_db() {
     log_success "Backed up $(basename "$source_db") to ${data_dir}/${APP_DB_FILENAME}"
 }
 
+# copy_bin_files: copies every file from the source bin/ directory into the
+# build bin/ directory.
+copy_bin_files() {
+    local source_dir=$1
+    local bin_dir=$2
+
+    local source_bin="${source_dir}/${APP_BIN_DIRNAME}"
+    local binary
+    for binary in "${source_bin}"/*; do
+        if [ ! -f "$binary" ]; then
+            continue
+        fi
+        cp "$binary" "${bin_dir}/"
+        log_success "Copied binary: $(basename "$binary") to ${bin_dir}"
+    done
+}
+
+# copy_home_files: copies every file from the source directory into the build
+# directory. Directories (including bin/ and data/) and dotfiles are skipped.
+copy_home_files() {
+    local source_dir=$1
+    local build_dir=$2
+
+    local rootfile
+    for rootfile in "${source_dir}"/*; do
+        if [ ! -f "$rootfile" ]; then
+            continue
+        fi
+        cp "$rootfile" "${build_dir}/"
+        log_success "Copied home file: $(basename "$rootfile") to ${build_dir}"
+    done
+}
+
 # check_log_db_path_systemd: warns when log.batch.db_path in app.db points
 # outside the systemd-writable data/ directory.
 # Systemd runs with ProtectSystem=strict and only ReadWritePaths for
@@ -518,18 +551,7 @@ render_systemd_template() {
     printf '%s\n' "${content//"$SYSTEMD_APP_PLACEHOLDER"/$project_name}" > "$conf_file"
 }
 
-# validate_systemd_conf: fails if the project name is missing from the rendered conf.
-validate_systemd_conf() {
-    local conf_file=$1
-    local project_name=$2
-
-    if ! grep -qF "$project_name" "$conf_file"; then
-        log_error "Validation failed: project name '${project_name}' not found in ${conf_file}"
-        exit 1
-    fi
-}
-
-# create_systemd_conf: obtains, renders, and validates the project's systemd conf
+# create_systemd_conf: obtains and renders the project's systemd conf
 # inside the build dir.
 create_systemd_conf() {
     local project_name=$1
@@ -544,7 +566,6 @@ create_systemd_conf() {
 
     get_systemd_template "$project_path" "$dest_conf_file"
     render_systemd_template "$dest_conf_file" "$project_name"
-    validate_systemd_conf "$dest_conf_file" "$project_name"
 
     log_success "Created systemd conf at $dest_conf_file"
 }
@@ -866,11 +887,9 @@ cmd_push() {
     # Extract on remote
     log_info "Extracting on remote..."
 
-	#maybe delete the tarball after succesful extract?
-	# rm -f ${remote_dir}/${tarball_name}
-
 	if ! ssh -o LogLevel=ERROR "${host}" "
         if tar -xzf ${remote_dir}/${tarball_name} -C ${remote_dir}; then
+            rm -f ${remote_dir}/${tarball_name}
             exit 0
         else
             echo 'Extraction failed, cleaning up...' >&2
@@ -911,7 +930,6 @@ generate_remote_script() {
         echo "APP_BIN_DIRNAME=\"${APP_BIN_DIRNAME}\""
         echo "APP_DATA_DIRNAME=\"${APP_DATA_DIRNAME}\""
         echo "AGE_KEY_FILENAME=\"${AGE_KEY_FILENAME}\""
-        echo "SYSTEMD_FILENAME_TEMPLATE=\"${SYSTEMD_FILENAME_TEMPLATE}\""
         cat <<'EOF'
 
 # Colors for output
@@ -934,6 +952,26 @@ require_root() {
     fi
 }
 
+require_command() {
+    command -v "$1" >/dev/null 2>&1 || { log_error "Required command not found: $1"; exit 1; }
+}
+
+# is_project_systemd_unit: reports whether a systemd unit file name belongs to
+# the project: <project>.service or <project>-<name>.service.
+is_project_systemd_unit() {
+    local project_name=$1
+    local systemd_unit_name=$2
+
+    if [[ "$systemd_unit_name" == "${project_name}.service" ]]; then
+        return 0
+    fi
+    if [[ "$systemd_unit_name" == "${project_name}-"* ]]; then
+        return 0
+    fi
+
+    return 1
+}
+
 # --- UNINSTALL HELPERS ---
 
 show_uninstall_help() {
@@ -945,36 +983,36 @@ Usage: $0 uninstall [project-name]
 HELPEOF
 }
 
-stop_service() {
+stop_services() {
     local project_name=$1
-    log_info "Stopping and disabling service '${project_name}'..."
-    # 'systemctl cat' is a reliable existence probe; 'list-unit-files' is not.
-    if systemctl cat "${project_name}.service" >/dev/null 2>&1; then
-        if systemctl is-active --quiet "${project_name}"; then
-            log_info "→ Service is active. Stopping..."
-            systemctl stop "${project_name}"
+    log_info "Stopping and disabling services for '${project_name}'..."
+    local service_path
+    for service_path in /etc/systemd/system/*.service; do
+        local service_name=$(basename "$service_path")
+        is_project_systemd_unit "$project_name" "$service_name" || continue
+        if systemctl is-active --quiet "${service_name}"; then
+            log_info "→ Stopping ${service_name}"
+            systemctl stop "${service_name}"
         fi
-        if systemctl is-enabled --quiet "${project_name}"; then
-            log_info "→ Service is enabled. Disabling..."
-            systemctl disable "${project_name}"
+        if systemctl is-enabled --quiet "${service_name}"; then
+            log_info "→ Disabling ${service_name}"
+            systemctl disable "${service_name}"
         fi
-    else
-        log_warning "→ Service ${project_name}.service not found, skipping stop/disable."
-    fi
+    done
     log_success "Service stop/disable phase finished."
 }
 
-remove_systemd_service() {
+remove_systemd_services() {
     local project_name=$1
-    local service_path="/etc/systemd/system/${project_name}.service"
-    log_info "Deleting systemd service file for '${project_name}'..."
-    if [ -f "${service_path}" ]; then
-        log_info "→ Removing systemd service file: ${service_path}"
+    log_info "Deleting systemd service files for '${project_name}'..."
+    local service_path
+    for service_path in /etc/systemd/system/*.service; do
+        local service_name=$(basename "$service_path")
+        is_project_systemd_unit "$project_name" "$service_name" || continue
+        log_info "→ Removing ${service_path}"
         rm -f "${service_path}"
-        systemctl daemon-reload
-    else
-        log_warning "→ Service file ${service_path} not found."
-    fi
+    done
+    systemctl daemon-reload
     log_success "Systemd file cleanup finished."
 }
 
@@ -1039,20 +1077,6 @@ deploy_binaries() {
     done
 }
 
-deploy_age_key() {
-    local project_name=$1
-    local source_dir=$2
-    log_info "Deploying age key..."
-    if [ -f "${source_dir}/${AGE_KEY_FILENAME}" ]; then
-        local dest_key="/home/${project_name}/${AGE_KEY_FILENAME}"
-        install -m 600 -o "${project_name}" -g "${project_name}" \
-            "${source_dir}/${AGE_KEY_FILENAME}" "$dest_key"
-        log_success "Installed ${AGE_KEY_FILENAME} to $dest_key"
-        return 0
-    fi
-    log_info "No age key in ${source_dir}."
-}
-
 deploy_data_files() {
     local project_name=$1
     local source_dir=$2
@@ -1077,20 +1101,74 @@ deploy_data_files() {
     fi
 }
 
-deploy_systemd_service() {
+# deploy_home_files: installs every file from the staged build into the project
+# home, including the age key. The systemd units have their own deployment step.
+deploy_home_files() {
     local project_name=$1
     local source_dir=$2
-    log_info "Deploying systemd service..."
-    local conf_filename
-    printf -v conf_filename "$SYSTEMD_FILENAME_TEMPLATE" "$project_name"
-    local service_file=$(find "${source_dir}" -name "$conf_filename" | head -n 1)
-    if [ -z "$service_file" ]; then
-        log_info "No service file in ${source_dir}; keeping the installed unit."
+    log_info "Deploying home files from ${source_dir}..."
+    local deployed=0
+    local rootfile
+    for rootfile in "${source_dir}"/*; do
+        if [ ! -f "$rootfile" ]; then
+            continue
+        fi
+        local basename=$(basename "$rootfile")
+        if [[ "$basename" == *.service ]]; then
+            continue
+        fi
+        install -m 600 -o "${project_name}" -g "${project_name}" \
+            "$rootfile" "/home/${project_name}/${basename}"
+        log_success "Installed home file: ${basename} to /home/${project_name}/${basename}"
+        deployed=1
+    done
+    if [ "$deployed" -eq 0 ]; then
+        log_info "No home files in ${source_dir}."
+    fi
+}
+
+deploy_systemd_services() {
+    local project_name=$1
+    local source_dir=$2
+    log_info "Deploying systemd services..."
+
+    local systemd_units=()
+    local systemd_unit
+    for systemd_unit in "${source_dir}"/*.service; do
+        if [ ! -f "$systemd_unit" ]; then
+            continue
+        fi
+        local systemd_unit_name=$(basename "$systemd_unit")
+        if ! is_project_systemd_unit "$project_name" "$systemd_unit_name"; then
+            log_warning "Skipping ${systemd_unit_name}: the name must be ${project_name}.service or ${project_name}-*.service."
+            continue
+        fi
+        systemd_units+=("$systemd_unit")
+    done
+
+    if [ "${#systemd_units[@]}" -eq 0 ]; then
+        log_info "No service files for ${project_name} in ${source_dir}; keeping the installed systemd units."
         return 0
     fi
-    cp "$service_file" "/etc/systemd/system/${project_name}.service"
+
+    require_command systemd-analyze
+
+    # The staged directory joins the search path, so systemd units that
+    # reference each other verify together. --recursive-errors=no fails on a
+    # problem in one of these systemd units, not on a problem in the systemd
+    # units they reference.
+    if ! systemd-analyze verify --recursive-errors=no "${systemd_units[@]}"; then
+        log_error "Validation failed: systemd-analyze verify reported errors"
+        exit 1
+    fi
+
+    for systemd_unit in "${systemd_units[@]}"; do
+        local systemd_unit_name=$(basename "$systemd_unit")
+        cp "$systemd_unit" "/etc/systemd/system/${systemd_unit_name}"
+        log_success "Deployed ${systemd_unit_name} to /etc/systemd/system/${systemd_unit_name}"
+    done
+
     systemctl daemon-reload
-    log_success "Deployed ${project_name}.service to /etc/systemd/system/${project_name}.service"
 }
 
 # --- Main Remote Commands ---
@@ -1113,9 +1191,9 @@ cmd_install() {
     create_service_user "$project_name"
     create_directory_structure "$project_name"
     deploy_binaries "$project_name" "$source_dir"
-    deploy_age_key "$project_name" "$source_dir"
     deploy_data_files "$project_name" "$source_dir"
-    deploy_systemd_service "$project_name" "$source_dir"
+    deploy_home_files "$project_name" "$source_dir"
+    deploy_systemd_services "$project_name" "$source_dir"
 
     log_success "Installation complete!"
     log_info "To start service: systemctl enable --now ${project_name}"
@@ -1129,8 +1207,8 @@ cmd_uninstall() {
         exit 1
     fi
     log_info "Uninstalling service '${project_name}'..."
-    stop_service "$project_name"
-    remove_systemd_service "$project_name"
+    stop_services "$project_name"
+    remove_systemd_services "$project_name"
     delete_service_user "$project_name"
     log_success "Successfully uninstalled '${project_name}'."
 }
@@ -1471,8 +1549,9 @@ ${GREEN}ripdep${NC} - Deployment and operations tool
 Usage: $0 <COMMAND> [ARGS...]
 
 Commands:
-  build-release <project-path> [build-base-dir]   Build a release artifact from source code.
-  build-bootstrap <project-path> [build-base-dir] Build a bootstrap artifact from source code.
+  build-release <project-path> [build-base-dir]      Build a release artifact from source code.
+  build-binary-release <source-dir> [build-base-dir] Build a release artifact from existing binaries.
+  build-bootstrap <project-path> [build-base-dir]    Build a bootstrap artifact from source code.
   build-recovery <build_dir> [opts]          Build an artifact from backups (recovery).
   unpack <tarball> <dir>                     Extract a release tarball into a directory.
   restore <source> <dir>                     Restore a database into a directory.
@@ -1504,6 +1583,27 @@ Usage: $0 build-release <project-path> [build-base-dir]
 Arguments:
   <project-path>     Path to the project source code to compile.
   <build-base-dir>  The base directory where the build output will be created (default: /tmp).
+
+EOF
+}
+
+show_build_binary_release_help() {
+    cat <<EOF
+${GREEN}ripdep build-binary-release${NC} - Build a release artifact from existing binaries.
+
+Usage: $0 build-binary-release <source-dir> [build-base-dir]
+
+Arguments:
+  <source-dir>     Directory holding the ready-to-run binaries in ${APP_BIN_DIRNAME}/ and the other files in its root.
+  <build-base-dir>  The base directory where the build output will be created (default: /tmp).
+
+Description:
+  For projects that ship ready-to-run binaries. The binaries are copied
+  from ${APP_BIN_DIRNAME}/, every file in the source root is copied to the build
+  root, and the remote installer is generated. The installer copies every file
+  to the project home, except the *.service files, which are installed as
+  systemd units. No database and no ${AGE_KEY_FILENAME} are required. The version
+  is the latest git tag; the worktree must be clean and HEAD must be on the tag.
 
 EOF
 }
@@ -1698,6 +1798,80 @@ cmd_build_release() {
     log_info "    $0 pack ${build_dir}"
 }
 
+# cmd_build_binary_release: Builds a release artifact from existing binaries,
+# without compiling.
+#
+# Use this for projects that ship ready-to-run binaries: the binaries go in
+# bin/ and the files to deploy go in the source root. The installer copies them
+# to the project home, except the *.service files, which are installed as
+# systemd units. The version is the latest git tag.
+cmd_build_binary_release() {
+    # Check for help first
+    if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
+        show_build_binary_release_help
+        exit 0
+    fi
+
+    if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+        log_error "Usage: $0 build-binary-release <source-dir> [build-base-dir]"
+        exit 1
+    fi
+    local source_dir=$1
+    local build_base_dir=${2:-/tmp}
+
+    log_info "Creating a new binary release build..."
+
+    if [ ! -d "$source_dir" ]; then
+        log_error "Source directory does not exist: ${source_dir}"
+        exit 1
+    fi
+
+    local project_name
+    if ! project_name=$(get_project_name_from_project_path "$source_dir"); then
+        log_error "Aborting build: Could not determine project name."
+        exit 1
+    fi
+
+    local version
+    if ! version=$(cd "$source_dir" && get_latest_tag); then
+        log_error "Could not determine version for project: ${source_dir}"
+        exit 1
+    fi
+
+    if ! require_clean_worktree "$source_dir"; then
+        exit 1
+    fi
+
+    local build_dir="${build_base_dir}/${project_name}-${version}"
+    local bin_dir
+    bin_dir=$(get_bin_dir "$build_dir")
+    recreate_build_dir "$build_dir"
+
+    log_info "Build configuration:"
+    log_info "  Source directory           : ${source_dir}"
+    log_info "  Build base directory       : $build_base_dir"
+    log_info "  Build project directory    : $build_dir"
+    log_info "  Project name               : ${GREEN}$project_name${NC}"
+    log_info "  Project version            : ${GREEN}$version${NC}"
+    log_info ""
+
+    copy_bin_files "$source_dir" "$bin_dir"
+    copy_home_files "$source_dir" "$build_dir"
+
+    # Generate the remote script to make the artifact self-contained
+    generate_remote_script "$project_name" "${bin_dir}/ripdep-remote"
+    log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
+
+    log_success "Binary release build completed successfully in: ${GREEN}${build_dir}${NC}"
+
+    echo "" # Add a blank line for readability
+    log_info "Next steps:"
+    log_info "  To deploy this build to a remote host (includes packing):"
+    log_info "    $0 deploy <host> ${build_dir}"
+    log_info "  To package this build into a release artifact:"
+    log_info "    $0 pack ${build_dir}"
+}
+
 cmd_build_bootstrap() {
     # Check for help first
     if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
@@ -1833,6 +2007,7 @@ main() {
     
     case "$cmd" in
         build-release) cmd_build_release "$@" ;;
+        build-binary-release) cmd_build_binary_release "$@" ;;
         build-bootstrap) cmd_build_bootstrap "$@" ;;
         build-recovery) cmd_build_recovery "$@" ;;
         unpack) cmd_unpack "$@" ;;

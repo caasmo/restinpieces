@@ -199,3 +199,19 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - decide the replacement before changing the call sites: validate through the framework's `Validate`, or through a loader that validates the section
 - refs: `config/config_validate.go`, `config/backup.go`, `restinpieces-backup/cmd/vacuum/daemon/main.go`, `restinpieces-backup/sqlitersync/origin/daemon.go`
 
+# ripc log tail: create filter for tail as argument it matches message field
+
+- `ripc log tail [message]` filters by the `message` column (exact match, e.g. `http_request`)
+- refs: `cmd/ripc/log_command.go`, `cmd/ripc/log_tail.go`, `cmd/ripc/sql.go`, `sql/schema/log/logs.sql`
+
+# metrics: Prometheus metrics is an internal feature — serve it from a daemon, never from the app router, never exposed to the internet
+
+- most important point: we do not pollute the app router; Prometheus metrics is an internal feature and should not be exposed to the internet
+- remove `App.MetricsHandler` (`core/handler_metrics.go`) and its route registration in `routes.go`; the prerouter counter (`core/prerouter/metrics.go`) stays, the dashboard reads `http_server_requests_total`
+- drop `Metrics.AllowedIPs` (`config/config.go`): a loopback listener replaces the allow-list, and slices are not allowed in config (AGENTS.md)
+- new daemon in the origin shape (`restinpieces-backup/sqlitersync/origin/daemon.go`): `daemon.Base`, `Run()` binds the listener synchronously so a bind error is a startup failure, `Stop` cancels and joins, `Start()` shim for `server.Daemon`, registered via `srv.AddDaemon` (example: `restinpieces-backup/cmd/sqlite-rsync/origin/restinpieces/main.go`)
+- auto-register next to the log daemon and the scheduler in `restinpieces.go` when `metrics.enabled`, so an app needs no wiring
+- open: `metrics.listen_addr` with a loopback default and loopback-only validation in `config/config_validate.go`, versus a fixed loopback address; default port undecided
+- refs: `core/handler_metrics.go`, `routes.go`, `config/config.go` (`Metrics`), `config/default.go`, `config/config_validate.go`, `restinpieces.go`
+- follows into the monitoring repo: the scrape target in `victoriametrics/config.yaml` moves from the app's `:8080` to the daemon's address
+
