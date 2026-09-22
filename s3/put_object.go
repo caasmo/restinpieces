@@ -1,25 +1,40 @@
 package s3
 
 import (
-	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net/http"
 )
 
-// PutObject uploads data as the object named by key.
+// PutObject uploads the object named by key, reading its content from body.
 //
-// The object travels in one PUT request; an existing object with the
-// same key is replaced. Objects larger than 5 GiB cannot be uploaded
-// this way, and the whole object is passed as a byte slice, so it must
-// fit in memory.
+// The object travels in one PUT request; an existing object with the same
+// key is replaced. Multipart upload is not implemented, so the object must
+// stay under the 5 GiB S3 limit. body is read while the request is sent, so
+// the object does not have to fit in memory. If body is also an io.Closer,
+// it is closed when the upload ends, on success or failure.
+//
+// size is the number of bytes in body. Pass a negative value when the size
+// is unknown; the request is then sent in chunks.
 //
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
-func (s3 *S3) PutObject(ctx context.Context, key string, data []byte, optFuncs ...func(*http.Request)) (err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, s3.URL(key), bytes.NewReader(data))
+func (s3 *S3) PutObject(ctx context.Context, key string, body io.Reader, size int64, optFuncs ...func(*http.Request)) (err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, s3.URL(key), body)
 	if err != nil {
+		closer, ok := body.(io.Closer)
+		if ok {
+			err = errors.Join(err, closer.Close())
+		}
 		return err
 	}
+
+	// a negative size means the caller does not know the length; -1 is the
+	// sentinel that makes the request send the body in chunks
+	if size < 0 {
+		size = -1
+	}
+	req.ContentLength = size
 
 	// apply optional request funcs
 	for _, fn := range optFuncs {

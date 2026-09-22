@@ -20,6 +20,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -81,7 +82,7 @@ func run() int {
 	payload := []byte("restinpieces s3 smoke test")
 
 	_, _ = fmt.Printf("PUT %s ... ", key)
-	err := client.PutObject(ctx, key, payload)
+	err := client.PutObject(ctx, key, bytes.NewReader(payload), int64(len(payload)))
 	if err != nil {
 		_, _ = fmt.Printf("FAIL: %v\n", err)
 		return 1

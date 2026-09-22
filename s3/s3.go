@@ -36,8 +36,8 @@
 // The client covers object operations for storing and reading objects: put,
 // get, head, list and delete. Objects travel in a single request, so
 // one object must stay under the 5 GiB S3 limit; multipart upload is
-// not implemented. PutObject takes the object as a byte slice, so the
-// caller must be able to hold the whole object in memory.
+// not implemented. PutObject reads the object from an io.Reader while
+// the request is sent, so the object does not have to fit in memory.
 //
 // Example:
 //
