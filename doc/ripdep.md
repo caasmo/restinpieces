@@ -33,6 +33,8 @@
   - [logs](#logs)
   - [restart](#restart)
   - [reload](#reload)
+  - [stop](#stop)
+  - [enable](#enable)
 - [Debugging on a Remote Server](#debugging-on-a-remote-server)
   - [Check Status and Logs](#1-check-status-and-logs)
   - [Log in and Run Manually](#2-log-in-and-run-manually)
@@ -515,6 +517,30 @@ Reloads the service configuration without restarting the process.
 ./ripdep reload user@server.com my-app
 ```
 
+### `stop`
+Stops every systemd unit the project owns.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+
+**Example:**
+```bash
+./ripdep stop user@server.com my-app
+```
+
+### `enable`
+Enables and starts every systemd unit the project owns, `<project-name>.service` and `<project-name>-*.service`, in one `systemctl enable --now`.
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+
+**Example:**
+```bash
+./ripdep enable user@server.com my-app
+```
+
 ## Debugging on a Remote Server
 
 The systemd unit is sandboxed, which can hide the cause of a failure. Work through these steps.
@@ -553,3 +579,7 @@ If the service starts, the cause is in the block you commented out. Re-enable di
 The unit hardcodes the flags and values your app gets: `bin/<app> -dbpath data/app.db -agekey age.key`. Make sure your app uses those flags.
 
 A project may ship more than one systemd unit in the build root, for example `my-app.service` and `my-app-tunnel.service`. Every `*.service` file named `my-app.service` or `my-app-*.service` is installed; any other `*.service` file is skipped.
+
+Commands that act on the service — `status`, `journal`, `stop`, `restart`, `reload`, and `enable` — operate on every unit the project owns, in one systemd transaction.
+
+When a unit reads a value from an environment file, write the reference as `${VAR}`. systemd expands `${VAR}` inside an argument such as `-flag=${VAR}`, but a bare `$VAR` only when it stands as a whole word. A unit written as `-flag=$VAR` is passed the literal text `$VAR` and the service fails to start.

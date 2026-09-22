@@ -131,11 +131,7 @@ You can easily extend the system to run your own custom tasks. This involves two
 This design allows for a clean separation of concerns and makes it straightforward to add new background processing capabilities to your application.
 
 ### Performance
-Engineered for high throughput, the framework is capable of handling thousands
-of requests per second while maintaining a minimal footprint by avoiding
-unnecessary external dependencies. Production-ready builds are further optimized
-for size and efficiency, ensuring rapid deployment and execution in resource-constrained
-environments.
+Engineered for high throughput, the framework is capable of handling thousands of requests per second while maintaining a minimal footprint by avoiding unnecessary external dependencies. Production-ready builds are further optimized for size and efficiency, ensuring rapid deployment and execution in resource-constrained environments.
 
 ### Metrics
 The framework provides built-in metrics collection using the `prometheus/client_golang` library. It includes a middleware that tracks the total number of HTTP requests (`http_server_requests_total`), a counter labeled by HTTP status code, allowing for detailed monitoring of server responses. Metrics collection can be toggled on or off via configuration without a server restart and is exposed on a configurable endpoint (e.g., `/metrics`) for a Prometheus server to scrape.
