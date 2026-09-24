@@ -10,7 +10,7 @@ The framework has no backup code, to keep dependencies minimal. It only provides
   - [`backup.online.<label>` — Online Backup API](#backuponline-label--online-backup-api)
   - [`backup.vacuum.<label>` — VACUUM INTO](#backupvacuum-label--vacuum-into)
   - [`backup.sqlite-rsync` — sqlite-rsync origin](#backupsqlite-rsync--sqlite-rsync-origin)
-  - [`backup.s3_upload.<label>` — S3 upload](#backups3_uploadlabel--s3-upload)
+  - [`backup.s3.<label>` — S3 upload](#backups3label--s3-upload)
 - [Stable Hardlink (`latest-`)](#stable-hardlink-latest-)
 
 ## Enabling Backups
@@ -33,7 +33,7 @@ To deactivate one entry, empty its `source_path` (or `dest_path` for online/vacu
 ```bash
 ripc set backup.online.app-online.source_path ""
 ripc set backup.sqlite-rsync.entries.app-rsync.source_path ""
-ripc set backup.s3_upload.app-s3.backup_label ""
+ripc set backup.s3.app-s3.backup_label ""
 ```
 
 To deactivate all backups, remove every entry. Empty maps are valid and make backups a no-op. Deactivating does not delete files on disk and does not require removing the daemon. You can reactivate by setting the paths again.
@@ -48,14 +48,14 @@ systemctl reload restinpieces
 
 Configuration lives under `[backup]` in [config/backup.go](../config/backup.go). Each strategy has its own TOML table. The TOML table you scaffold into selects the engine.
 
-A label is unique across all tables: it names one backup, and `s3_upload` entries refer to it by name. Validation rejects the same label in two tables.
+A label is unique across all tables: it names one backup, and `s3` entries refer to it by name. Validation rejects the same label in two tables.
 
 | Strategy | Description |
 |---|---|
 | `online` | Online Backup API entries. |
 | `vacuum` | VACUUM INTO entries. |
 | `sqlite-rsync` | sqlite-rsync origin. |
-| `s3_upload` | Uploads the newest backup of an online or vacuum label to an S3-compatible bucket. |
+| `s3` | Uploads the newest backup of an online or vacuum label to an S3-compatible bucket. |
 
 ### `backup.online.<label>` — Online Backup API
 
@@ -94,9 +94,9 @@ Each `backup.sqlite-rsync.entries.<label>` entry:
 | `source_path` | string | `""` (deactivated) | SQLite file to serve. Empty deactivates. |
 | `sync_timeout` | duration | `15m` | Longest one sync may run. 0 uses default 15m. |
 
-### `backup.s3_upload.<label>` — S3 upload
+### `backup.s3.<label>` — S3 upload
 
-Each `s3_upload` entry uploads the newest backup of one backup label to the bucket configured in the top-level [`s3`](s3.md) section. The map key is a label and must be unique across all backup tables.
+Each `s3` entry uploads the newest backup of one backup label to the bucket configured in the top-level [`s3`](s3.md) section. The map key is a label and must be unique across all backup tables.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
@@ -133,7 +133,7 @@ listen_addr = "127.0.0.1:54321"
 source_path = "/data/app3.db"
 sync_timeout = "15m"
 
-[backup.s3_upload.app4]
+[backup.s3.app4]
 backup_label = "app1"
 frequency = "5m"
 age_recipient = "age1..."

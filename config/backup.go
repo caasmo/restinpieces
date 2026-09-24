@@ -10,7 +10,7 @@ type Backup struct {
 	OnlineAPI   BackupOnlineAPI   `toml:"online"`
 	Vacuum      BackupVacuum      `toml:"vacuum"`
 	SqliteRsync BackupSqliteRsync `toml:"sqlite-rsync"`
-	S3Upload    BackupS3Upload    `toml:"s3_upload"`
+	S3          BackupS3          `toml:"s3"`
 }
 
 // BackupOnlineAPI holds per-database configuration for the Online Backup API
@@ -112,18 +112,18 @@ type BackupSqliteRsyncEntry struct {
 	SyncTimeout Duration `toml:"sync_timeout" comment:"Longest one sync may run (e.g. '15m'). Zero uses the default of 15 minutes."`
 }
 
-// BackupS3Upload holds the S3 upload entries. Each entry is keyed by a
+// BackupS3 holds the S3 entries. Each entry is keyed by a
 // label you choose (for example "app-s3"). backup_label names the online
 // or vacuum backup to upload, and the entry uploads that backup's newest
 // backup to the bucket configured in the top-level [s3] section.
-type BackupS3Upload map[string]BackupS3UploadEntry
+type BackupS3 map[string]BackupS3Entry
 
-// BackupS3UploadEntry is one S3 upload entry.
+// BackupS3Entry is one S3 entry.
 //
 // Empty backup_label deactivates the entry. Frequency is parsed via
 // time.ParseDuration (e.g. "5m"); zero means the 5m default. An empty
 // AgeRecipient uploads the backup without encryption.
-type BackupS3UploadEntry struct {
+type BackupS3Entry struct {
 	// BackupLabel is the label of the online or vacuum backup to upload,
 	// for example "app-online". The label must be unique across all backup
 	// tables.
@@ -151,6 +151,6 @@ func (c Config) BackupVacuum() BackupVacuum {
 	return c.Backup.Vacuum
 }
 
-func (c Config) BackupS3Upload() BackupS3Upload {
-	return c.Backup.S3Upload
+func (c Config) BackupS3() BackupS3 {
+	return c.Backup.S3
 }

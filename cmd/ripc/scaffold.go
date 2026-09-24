@@ -21,13 +21,13 @@ const (
 	ScaffoldTypeBackupOnline      = "backup-online"
 	ScaffoldTypeBackupVacuum      = "backup-vacuum"
 	ScaffoldTypeBackupSqliteRsync = "backup-sqlite-rsync"
-	ScaffoldTypeBackupS3Upload    = "backup-s3-upload"
+	ScaffoldTypeBackupS3          = "backup-s3"
 	ScaffoldTypeOAuth2            = "oauth2"
 	ScaffoldTypeAcmeDNS01         = "acme-dns-01"
 	ScaffoldTypeJob               = "job"
 )
 
-var knownScaffoldTypes = []string{ScaffoldTypeBackupOnline, ScaffoldTypeBackupVacuum, ScaffoldTypeBackupSqliteRsync, ScaffoldTypeBackupS3Upload, ScaffoldTypeOAuth2, ScaffoldTypeAcmeDNS01, ScaffoldTypeJob}
+var knownScaffoldTypes = []string{ScaffoldTypeBackupOnline, ScaffoldTypeBackupVacuum, ScaffoldTypeBackupSqliteRsync, ScaffoldTypeBackupS3, ScaffoldTypeOAuth2, ScaffoldTypeAcmeDNS01, ScaffoldTypeJob}
 
 func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}, sectionDefaults interface{}, err error) {
 	switch scaffoldType {
@@ -37,8 +37,8 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}
 		return "backup.vacuum", config.NewBackupVacuumEntryDefaults(), nil, nil
 	case ScaffoldTypeBackupSqliteRsync:
 		return "backup.sqlite-rsync.entries", config.NewBackupSqliteRsyncEntryDefaults(), config.NewBackupSqliteRsyncDefaults(), nil
-	case ScaffoldTypeBackupS3Upload:
-		return "backup.s3_upload", config.NewBackupS3UploadEntryDefaults(), nil, nil
+	case ScaffoldTypeBackupS3:
+		return "backup.s3", config.NewBackupS3EntryDefaults(), nil, nil
 	case ScaffoldTypeOAuth2:
 		return "oauth2_providers", config.NewOAuth2ProviderDefaults(), nil, nil
 	case ScaffoldTypeAcmeDNS01:
@@ -101,19 +101,19 @@ func defaultFieldsAndValues(defaults interface{}) string {
 func scaffoldNextSteps(scaffoldType, label string, defaults interface{}) string {
 	block := defaultFieldsAndValues(defaults)
 	switch scaffoldType {
-	case ScaffoldTypeBackupS3Upload:
+	case ScaffoldTypeBackupS3:
 		return fmt.Sprintf(`
 %s:
 %s
 
 Next steps:
 1. Set the label of the backup to upload (required):
-	ripc set backup.s3_upload.%s.backup_label app-online
+	ripc set backup.s3.%s.backup_label app-online
 2. Set the age recipient (required to encrypt):
-	ripc set backup.s3_upload.%s.age_recipient age1...
+	ripc set backup.s3.%s.age_recipient age1...
 3. Reload the app:
 	systemctl reload myapp
-Deactivate: ripc set backup.s3_upload.%s.backup_label ""`, label, block, label, label, label)
+Deactivate: ripc set backup.s3.%s.backup_label ""`, label, block, label, label, label)
 	case ScaffoldTypeBackupSqliteRsync:
 		return fmt.Sprintf(`
 %s:
@@ -191,9 +191,9 @@ Deactivate: ripc set scheduler.jobs.%s.activated false`, label, block, label, la
 func printScaffoldUsage(w io.Writer) {
 	help := Spec{
 		Usage:       "scaffold [options] <type> <key>",
-		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key>, backup.sqlite-rsync.entries.<key>, backup.s3_upload.<key>, acme.dns-01.<key> or scheduler.jobs.<key>; use a best-practice label that reveals what the entry is for (e.g. app-online, analytics-vacuum, app-rsync, my_cf).",
+		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key>, backup.sqlite-rsync.entries.<key>, backup.s3.<key>, acme.dns-01.<key> or scheduler.jobs.<key>; use a best-practice label that reveals what the entry is for (e.g. app-online, analytics-vacuum, app-rsync, my_cf).",
 		Args: []ArgSpec{
-			{"type", "Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync, backup-s3-upload, oauth2, acme-dns-01 or job)"},
+			{"type", "Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync, backup-s3, oauth2, acme-dns-01 or job)"},
 			{"key", "Key of the new entry — required backup label, acme dns-01 label or job label, e.g. app-online, app-rsync, my_cf, acme_cert"},
 		},
 		Subcommands: []SubcommandGroup{
@@ -203,7 +203,7 @@ func printScaffoldUsage(w io.Writer) {
 					{"backup-online", "Scaffold a backup.online entry for Online API (non-blocking)"},
 					{"backup-vacuum", "Scaffold a backup.vacuum entry for VACUUM INTO (blocking)"},
 					{"backup-sqlite-rsync", "Scaffold a backup.sqlite-rsync.entries entry for sqlite-rsync (origin serve)"},
-					{"backup-s3-upload", "Scaffold a backup.s3_upload entry that uploads a backup to S3"},
+					{"backup-s3", "Scaffold a backup.s3 entry that uploads a backup to S3"},
 					{"oauth2", "Scaffold an oauth2_providers entry"},
 					{"acme-dns-01", "Scaffold an acme.dns-01 entry for the DNS-01 challenge"},
 					{"job", "Scaffold a scheduler.jobs entry for a job that runs on a schedule"},
@@ -217,7 +217,7 @@ func printScaffoldUsage(w io.Writer) {
 			"ripc scaffold backup-online app-online",
 			"ripc scaffold backup-vacuum app-vacuum",
 			"ripc scaffold backup-sqlite-rsync app-rsync",
-			"ripc scaffold backup-s3-upload app-s3",
+			"ripc scaffold backup-s3 app-s3",
 			"ripc scaffold oauth2 my_google",
 			"ripc scaffold acme-dns-01 my_cf",
 			"ripc scaffold job acme_cert",

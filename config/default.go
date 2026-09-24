@@ -191,11 +191,11 @@ func NewBackupVacuumEntryDefaults() BackupVacuumEntry {
 	}
 }
 
-// NewBackupS3UploadEntryDefaults returns an S3 upload entry with defaults
+// NewBackupS3EntryDefaults returns an S3 entry with defaults
 // for ripc scaffold. Frequency defaults to 5m; BackupLabel and
 // AgeRecipient are empty, so the user sets them.
-func NewBackupS3UploadEntryDefaults() BackupS3UploadEntry {
-	return BackupS3UploadEntry{
+func NewBackupS3EntryDefaults() BackupS3Entry {
+	return BackupS3Entry{
 		Frequency: Duration{Duration: 5 * time.Minute},
 	}
 }

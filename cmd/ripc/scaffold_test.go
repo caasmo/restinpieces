@@ -105,17 +105,17 @@ func TestScaffoldConfigValue_BackupSqliteRsync(t *testing.T) {
 	}
 }
 
-func TestScaffoldConfigValue_BackupS3Upload(t *testing.T) {
+func TestScaffoldConfigValue_BackupS3(t *testing.T) {
 	scope := config.ScopeApplication
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
-	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupS3Upload, "app-s3")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupS3, "app-s3")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	tree := getTreeFromStore(t, mockStore, scope)
-	path := "backup.s3_upload.app-s3"
+	path := "backup.s3.app-s3"
 	entryTree, ok := tree.Get(path).(*toml.Tree)
 	if !ok {
 		t.Fatalf("expected subtree at %s", path)
@@ -126,7 +126,7 @@ func TestScaffoldConfigValue_BackupS3Upload(t *testing.T) {
 	if !entryTree.Has("backup_label") {
 		t.Errorf("expected backup_label field in scaffolded entry")
 	}
-	if !strings.Contains(stderr.String(), "ripc set backup.s3_upload.app-s3.backup_label") {
+	if !strings.Contains(stderr.String(), "ripc set backup.s3.app-s3.backup_label") {
 		t.Errorf("expected next steps command, got %q", stderr.String())
 	}
 }

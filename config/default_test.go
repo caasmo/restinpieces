@@ -60,8 +60,8 @@ func TestNewBackupVacuumEntryDefaults(t *testing.T) {
 	}
 }
 
-func TestNewBackupS3UploadEntryDefaults(t *testing.T) {
-	v := NewBackupS3UploadEntryDefaults()
+func TestNewBackupS3EntryDefaults(t *testing.T) {
+	v := NewBackupS3EntryDefaults()
 	if v.BackupLabel != "" {
 		t.Errorf("BackupLabel: got %q, want empty", v.BackupLabel)
 	}

@@ -149,11 +149,11 @@ func ValidateBackup(backup *Backup) error {
 			return err
 		}
 	}
-	for key, e := range backup.S3Upload {
+	for key, e := range backup.S3 {
 		if !isValidMapKeyLabel(key) {
-			return fmt.Errorf("s3_upload: map key %q must not contain whitespace or '.'", key)
+			return fmt.Errorf("s3: map key %q must not contain whitespace or '.'", key)
 		}
-		if err := validateBackupS3Upload(key, e, backup); err != nil {
+		if err := validateBackupS3(key, e, backup); err != nil {
 			return err
 		}
 	}
@@ -268,8 +268,8 @@ func validateBackupLabels(backup *Backup) error {
 			return err
 		}
 	}
-	for key := range backup.S3Upload {
-		if err := validateBackupLabel(labels, "s3_upload", key); err != nil {
+	for key := range backup.S3 {
+		if err := validateBackupLabel(labels, "s3", key); err != nil {
 			return err
 		}
 	}
@@ -287,18 +287,18 @@ func validateBackupLabel(labels map[string]string, table, label string) error {
 	return nil
 }
 
-// validateBackupS3Upload checks one S3 upload entry: the age recipient
+// validateBackupS3 checks one S3 entry: the age recipient
 // must be a valid key and backup_label must name an online or vacuum
 // backup. An empty backup_label deactivates it. A zero frequency means
 // the daemon default; a negative one is rejected.
-func validateBackupS3Upload(key string, e BackupS3UploadEntry, backup *Backup) error {
+func validateBackupS3(key string, e BackupS3Entry, backup *Backup) error {
 	if e.Frequency.Duration < 0 {
-		return fmt.Errorf("s3_upload.%s.frequency cannot be negative", key)
+		return fmt.Errorf("s3.%s.frequency cannot be negative", key)
 	}
 	if e.AgeRecipient != "" {
 		_, err := age.ParseX25519Recipient(e.AgeRecipient)
 		if err != nil {
-			return fmt.Errorf("s3_upload.%s.age_recipient is not a valid age recipient: %w", key, err)
+			return fmt.Errorf("s3.%s.age_recipient is not a valid age recipient: %w", key, err)
 		}
 	}
 	if e.BackupLabel == "" {
@@ -307,7 +307,7 @@ func validateBackupS3Upload(key string, e BackupS3UploadEntry, backup *Backup) e
 	_, online := backup.OnlineAPI[e.BackupLabel]
 	_, vacuum := backup.Vacuum[e.BackupLabel]
 	if !online && !vacuum {
-		return fmt.Errorf("s3_upload.%s.backup_label %q does not name an online or vacuum entry", key, e.BackupLabel)
+		return fmt.Errorf("s3.%s.backup_label %q does not name an online or vacuum entry", key, e.BackupLabel)
 	}
 	return nil
 }
