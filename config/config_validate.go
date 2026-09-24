@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"filippo.io/age"
 )
 
 // Validate checks the entire configuration for correctness.
@@ -111,6 +113,9 @@ func isValidMapKeyLabel(label string) bool {
 }
 
 func ValidateBackup(backup *Backup) error {
+	if err := validateBackupLabels(backup); err != nil {
+		return err
+	}
 	for key, e := range backup.OnlineAPI {
 		if !isValidMapKeyLabel(key) {
 			return fmt.Errorf("online: map key %q must not contain whitespace or '.'", key)
@@ -141,6 +146,14 @@ func ValidateBackup(backup *Backup) error {
 			return fmt.Errorf("sqlite-rsync.entries: map key %q must not contain whitespace or '.'", key)
 		}
 		if err := validateBackupSqliteRsync(key, e); err != nil {
+			return err
+		}
+	}
+	for key, e := range backup.S3Upload {
+		if !isValidMapKeyLabel(key) {
+			return fmt.Errorf("s3_upload: map key %q must not contain whitespace or '.'", key)
+		}
+		if err := validateBackupS3Upload(key, e, backup); err != nil {
 			return err
 		}
 	}
@@ -231,6 +244,70 @@ func validateBackupSqliteRsync(key string, e BackupSqliteRsyncEntry) error {
 	}
 	if e.SyncTimeout.Duration < 0 {
 		return fmt.Errorf("sqlite-rsync.entries.%s.sync_timeout cannot be negative", key)
+	}
+	return nil
+}
+
+// validateBackupLabels checks that no two backup entries share a label.
+// Every label names exactly one backup, and S3 upload entries point at a
+// backup by its label, so a duplicate would be ambiguous.
+func validateBackupLabels(backup *Backup) error {
+	labels := make(map[string]string)
+	for key := range backup.OnlineAPI {
+		if err := validateBackupLabel(labels, "online", key); err != nil {
+			return err
+		}
+	}
+	for key := range backup.Vacuum {
+		if err := validateBackupLabel(labels, "vacuum", key); err != nil {
+			return err
+		}
+	}
+	for key := range backup.SqliteRsync.Entries {
+		if err := validateBackupLabel(labels, "sqlite-rsync.entries", key); err != nil {
+			return err
+		}
+	}
+	for key := range backup.S3Upload {
+		if err := validateBackupLabel(labels, "s3_upload", key); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// validateBackupLabel checks the label is not already owned by another
+// table and records the owner.
+func validateBackupLabel(labels map[string]string, table, label string) error {
+	other, ok := labels[label]
+	if ok {
+		return fmt.Errorf("label %q is used by both %s and %s", label, other, table)
+	}
+	labels[label] = table
+	return nil
+}
+
+// validateBackupS3Upload checks one S3 upload entry: the age recipient
+// must be a valid key and backup_label must name an online or vacuum
+// backup. An empty backup_label deactivates it. A zero frequency means
+// the daemon default; a negative one is rejected.
+func validateBackupS3Upload(key string, e BackupS3UploadEntry, backup *Backup) error {
+	if e.Frequency.Duration < 0 {
+		return fmt.Errorf("s3_upload.%s.frequency cannot be negative", key)
+	}
+	if e.AgeRecipient != "" {
+		_, err := age.ParseX25519Recipient(e.AgeRecipient)
+		if err != nil {
+			return fmt.Errorf("s3_upload.%s.age_recipient is not a valid age recipient: %w", key, err)
+		}
+	}
+	if e.BackupLabel == "" {
+		return nil // deactivated entry
+	}
+	_, online := backup.OnlineAPI[e.BackupLabel]
+	_, vacuum := backup.Vacuum[e.BackupLabel]
+	if !online && !vacuum {
+		return fmt.Errorf("s3_upload.%s.backup_label %q does not name an online or vacuum entry", key, e.BackupLabel)
 	}
 	return nil
 }

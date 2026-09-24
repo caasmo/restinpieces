@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"filippo.io/age"
 )
 
 // newTestCert generates a self-signed certificate and key, returning them as PEM-encoded strings.
@@ -603,6 +605,56 @@ func TestValidateBackup(t *testing.T) {
 		}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil for valid mixed config, got: %v", err)
+		}
+	})
+	t.Run("s3_upload valid", func(t *testing.T) {
+		backupDir, appDB, _ := backupLocalFixture(t)
+		identity, err := age.GenerateX25519Identity()
+		if err != nil {
+			t.Fatal(err)
+		}
+		b := &Backup{
+			OnlineAPI: BackupOnlineAPI{"app-online": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}},
+			S3Upload:  BackupS3Upload{"app-s3": {BackupLabel: "app-online", Frequency: Duration{Duration: time.Hour}, AgeRecipient: identity.Recipient().String()}},
+		}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+	})
+	t.Run("s3_upload empty backup_label deactivates", func(t *testing.T) {
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Frequency: Duration{Duration: time.Hour}}}}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("expected nil for deactivated entry, got %v", err)
+		}
+	})
+	t.Run("s3_upload unknown backup_label", func(t *testing.T) {
+		backupDir, appDB, _ := backupLocalFixture(t)
+		b := &Backup{
+			OnlineAPI: BackupOnlineAPI{"app-online": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}},
+			S3Upload:  BackupS3Upload{"app-s3": {BackupLabel: "missing", Frequency: Duration{Duration: time.Hour}}},
+		}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for unknown backup_label, got nil")
+		}
+	})
+	t.Run("s3_upload invalid age recipient", func(t *testing.T) {
+		backupDir, appDB, _ := backupLocalFixture(t)
+		b := &Backup{
+			OnlineAPI: BackupOnlineAPI{"app-online": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}},
+			S3Upload:  BackupS3Upload{"app-s3": {BackupLabel: "app-online", Frequency: Duration{Duration: time.Hour}, AgeRecipient: "not-a-key"}},
+		}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for invalid age recipient, got nil")
+		}
+	})
+	t.Run("duplicate label rejected", func(t *testing.T) {
+		backupDir, appDB, _ := backupLocalFixture(t)
+		b := &Backup{
+			OnlineAPI: BackupOnlineAPI{"app": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}},
+			Vacuum:    BackupVacuum{"app": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}}},
+		}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for duplicate label, got nil")
 		}
 	})
 	t.Run("no files configured validates ok", func(t *testing.T) {

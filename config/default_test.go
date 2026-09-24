@@ -60,6 +60,19 @@ func TestNewBackupVacuumEntryDefaults(t *testing.T) {
 	}
 }
 
+func TestNewBackupS3UploadEntryDefaults(t *testing.T) {
+	v := NewBackupS3UploadEntryDefaults()
+	if v.BackupLabel != "" {
+		t.Errorf("BackupLabel: got %q, want empty", v.BackupLabel)
+	}
+	if v.AgeRecipient != "" {
+		t.Errorf("AgeRecipient: got %q, want empty", v.AgeRecipient)
+	}
+	if v.Frequency.Duration != 5*time.Minute {
+		t.Errorf("Frequency: got %v, want 5m", v.Frequency)
+	}
+}
+
 func TestNewBackupSqliteRsyncEntryDefaults(t *testing.T) {
 	v := NewBackupSqliteRsyncEntryDefaults()
 	if v.SourcePath != "" {

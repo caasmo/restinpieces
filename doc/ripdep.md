@@ -40,6 +40,7 @@
   - [Log in and Run Manually](#2-log-in-and-run-manually)
   - [Debug the Systemd Sandbox](#3-debug-the-systemd-sandbox)
 - [Systemd Unit Contract](#systemd-unit-contract)
+- [Project Configuration Scripts](#project-configuration-scripts)
 
 ## Relationship with `ripc`
 
@@ -583,3 +584,19 @@ A project may ship more than one systemd unit in the build root, for example `my
 Commands that act on the service — `status`, `journal`, `stop`, `restart`, `reload`, and `enable` — operate on every unit the project owns, in one systemd transaction.
 
 When a unit reads a value from an environment file, write the reference as `${VAR}`. systemd expands `${VAR}` inside an argument such as `-flag=${VAR}`, but a bare `$VAR` only when it stands as a whole word. A unit written as `-flag=$VAR` is passed the literal text `$VAR` and the service fails to start.
+
+## Project Configuration Scripts
+
+The build commands create the build directory to allow for further configuration before the deploy. A project that needs it may add one or both of the scripts below.
+
+`scripts/configure.sh` configures the build. Run it after the build command and before `deploy`:
+
+```bash
+./ripdep build-binary-release /path/to/my-app /tmp
+bash scripts/configure.sh /tmp/my-app-v1.0.0
+./ripdep deploy user@server.com /tmp/my-app-v1.0.0
+```
+
+It writes the settings the operator gives it into the build directory, so the release carries them.
+
+`bin/configure-remote.sh` configures the deployed machine. It sits in `bin/` with the other executables, which the deploy installs at `/home/<app-name>/bin/configure-remote.sh`; run it there as root after the deploy for the settings that belong to the machine rather than to the application, such as firewall rules.

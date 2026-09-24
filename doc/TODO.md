@@ -204,6 +204,14 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - `ripc log tail [message]` filters by the `message` column (exact match, e.g. `http_request`)
 - refs: `cmd/ripc/log_command.go`, `cmd/ripc/log_tail.go`, `cmd/ripc/sql.go`, `sql/schema/log/logs.sql`
 
+# ripc: log search for searching logs for pattern
+
+- shape: `ripc log search <field> <pattern>` where field names a `data` key (e.g. `ripc log search status 307`, `ripc log search uri wp-content`)
+- flag for how many rows back to look, default last 1000 (e.g. `--limit 1000`)
+- no `json_extract`: SQL fetches the rows, Go unmarshals `data` and matches the pattern against the field
+- searches stored rows, past logs not just the live tail
+- refs: `cmd/ripc/log_command.go`, `cmd/ripc/log_tail.go`, `sql/schema/log/logs.sql` (`message`, `data` JSON, `created`)
+
 # metrics: Prometheus metrics is an internal feature — serve it from a daemon, never from the app router, never exposed to the internet
 
 - most important point: we do not pollute the app router; Prometheus metrics is an internal feature and should not be exposed to the internet
@@ -214,4 +222,11 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - open: `metrics.listen_addr` with a loopback default and loopback-only validation in `config/config_validate.go`, versus a fixed loopback address; default port undecided
 - refs: `core/handler_metrics.go`, `routes.go`, `config/config.go` (`Metrics`), `config/default.go`, `config/config_validate.go`, `restinpieces.go`
 - follows into the monitoring repo: the scrape target in `victoriametrics/config.yaml` moves from the app's `:8080` to the daemon's address
+
+# ripc: track all port addresses and provide maybe ripc ports
+
+- list every listener from live config in one place: `server.addr`, `server.tls.redirect_addr`, `backup.sqlite-rsync.listen_addr`, plus `metrics.listen_addr` once it lands
+- naming rule: every listener key ends in `addr`, so the command finds them by suffix instead of a hardcoded list; reuse the tree walk in `cmd/ripc/get.go` and `cmd/ripc/paths.go` (`Keys` plus `Get`, filter on last segment)
+- mark off versus set, show active entries count for sqlite-rsync, and check actual listening sockets so a clash with another app on the same VPS shows as taken
+- refs: `config/config.go` (`Server`), `config/backup.go` (`BackupSqliteRsync`), `cmd/ripc/get.go` (config read precedent), `cmd/ripc/paths.go` (path listing precedent)
 

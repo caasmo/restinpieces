@@ -492,6 +492,22 @@ copy_home_files() {
     done
 }
 
+# print_configure_step: prints the step that runs the project's
+# scripts/configure.sh, when the project has one. The script asks for the values
+# the release needs, so it comes before the deploy.
+print_configure_step() {
+    local source_dir=$1
+    local build_dir=$2
+
+    local configure_script="${source_dir}/scripts/configure.sh"
+    if [ ! -f "${configure_script}" ]; then
+        return 0
+    fi
+
+    log_info "  To configure this build:"
+    log_info "    bash ${configure_script} ${build_dir}"
+}
+
 # check_log_db_path_systemd: warns when log.batch.db_path in app.db points
 # outside the systemd-writable data/ directory.
 # Systemd runs with ProtectSystem=strict and only ReadWritePaths for
@@ -1223,7 +1239,8 @@ cmd_install() {
     deploy_systemd_services "$project_name" "$source_dir"
 
     log_success "Installation complete!"
-    log_info "To start the service: enable and start this project's units (${project_name}.service and ${project_name}-*.service)."
+    log_info "To start the systemd units:"
+    log_info "    ripdep enable <host> ${project_name}"
 }
 
 cmd_uninstall() {
@@ -1892,6 +1909,7 @@ cmd_build_release() {
 
     echo "" # Add a blank line for readability
     log_info "Next steps:"
+    print_configure_step "$project_path" "$build_dir"
     log_info "  To deploy this build to a remote host (includes packing):"
     log_info "    $0 deploy <host> ${build_dir}"
     log_info "  To package this build into a release artifact:"
@@ -1966,6 +1984,7 @@ cmd_build_binary_release() {
 
     echo "" # Add a blank line for readability
     log_info "Next steps:"
+    print_configure_step "$source_dir" "$build_dir"
     log_info "  To deploy this build to a remote host (includes packing):"
     log_info "    $0 deploy <host> ${build_dir}"
     log_info "  To package this build into a release artifact:"
@@ -2061,6 +2080,7 @@ cmd_build_bootstrap() {
 
     echo "" # Add a blank line for readability
     log_info "Next steps:"
+    print_configure_step "$project_path" "$build_dir"
     log_info "  To deploy this build to a remote host (includes packing):"
     log_info "    $0 deploy <host> ${build_dir}"
     log_info "  To package this build into a release artifact:"

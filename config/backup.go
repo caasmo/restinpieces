@@ -1,15 +1,16 @@
 package config
 
-// Backup holds the backup configuration. Each strategy has its own TOML table;
-// the one you scaffold into determines the engine. The three collections
-// are keyed by an arbitrary user-chosen label (e.g. "app1", "app2") —
-// see AGENTS.md "Config: map key rules". The engines that consume this
-// shape live in restinpieces-backup; the framework only hosts the shape
-// and its validation.
+// Backup holds the backup configuration. Each backup strategy has its own
+// TOML table, and the table you scaffold into decides which daemon makes
+// the backup. Every entry is keyed by a label you choose (for example
+// "app1"). The daemons that make the backups live in restinpieces-backup;
+// the framework only defines the configuration and validates it, and runs
+// no backup itself.
 type Backup struct {
 	OnlineAPI   BackupOnlineAPI   `toml:"online"`
 	Vacuum      BackupVacuum      `toml:"vacuum"`
 	SqliteRsync BackupSqliteRsync `toml:"sqlite-rsync"`
+	S3Upload    BackupS3Upload    `toml:"s3_upload"`
 }
 
 // BackupOnlineAPI holds per-database configuration for the Online Backup API
@@ -111,6 +112,33 @@ type BackupSqliteRsyncEntry struct {
 	SyncTimeout Duration `toml:"sync_timeout" comment:"Longest one sync may run (e.g. '15m'). Zero uses the default of 15 minutes."`
 }
 
+// BackupS3Upload holds the S3 upload entries. Each entry is keyed by a
+// label you choose (for example "app-s3"). backup_label names the online
+// or vacuum backup to upload, and the entry uploads that backup's newest
+// backup to the bucket configured in the top-level [s3] section.
+type BackupS3Upload map[string]BackupS3UploadEntry
+
+// BackupS3UploadEntry is one S3 upload entry.
+//
+// Empty backup_label deactivates the entry. Frequency is parsed via
+// time.ParseDuration (e.g. "5m"); zero means the 5m default. An empty
+// AgeRecipient uploads the backup without encryption.
+type BackupS3UploadEntry struct {
+	// BackupLabel is the label of the online or vacuum backup to upload,
+	// for example "app-online". The label must be unique across all backup
+	// tables.
+	BackupLabel string `toml:"backup_label" comment:"Label of the backup entry to upload (e.g. 'app-online')"`
+
+	// Frequency defines how often the daemon checks for a new backup to
+	// upload. Parsed via time.ParseDuration (e.g. "5m"). Zero uses the
+	// default of 5m.
+	Frequency Duration `toml:"frequency" comment:"How often to check for a new backup to upload (e.g. '5m'). Zero uses the default of 5m."`
+
+	// AgeRecipient is the age public key the backup is encrypted to
+	// before upload. Empty string uploads the backup unchanged.
+	AgeRecipient string `toml:"age_recipient" comment:"age public key the backup is encrypted to (e.g. 'age1...'). Empty uploads without encryption."`
+}
+
 func (c Config) BackupSqliteRsync() BackupSqliteRsync {
 	return c.Backup.SqliteRsync
 }
@@ -121,4 +149,8 @@ func (c Config) BackupOnlineAPI() BackupOnlineAPI {
 
 func (c Config) BackupVacuum() BackupVacuum {
 	return c.Backup.Vacuum
+}
+
+func (c Config) BackupS3Upload() BackupS3Upload {
+	return c.Backup.S3Upload
 }
