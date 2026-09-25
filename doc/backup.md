@@ -10,7 +10,7 @@ The framework has no backup code, to keep dependencies minimal. It only provides
   - [`backup.online.<label>` — Online Backup API](#backuponline-label--online-backup-api)
   - [`backup.vacuum.<label>` — VACUUM INTO](#backupvacuum-label--vacuum-into)
   - [`backup.sqlite-rsync` — sqlite-rsync origin](#backupsqlite-rsync--sqlite-rsync-origin)
-  - [`backup.s3.<label>` — S3 upload](#backups3label--s3-upload)
+  - [`backup.s3.<label>` — S3](#backups3label--s3)
 - [Stable Hardlink (`latest-`)](#stable-hardlink-latest-)
 
 ## Enabling Backups
@@ -94,7 +94,7 @@ Each `backup.sqlite-rsync.entries.<label>` entry:
 | `source_path` | string | `""` (deactivated) | SQLite file to serve. Empty deactivates. |
 | `sync_timeout` | duration | `15m` | Longest one sync may run. 0 uses default 15m. |
 
-### `backup.s3.<label>` — S3 upload
+### `backup.s3.<label>` — S3
 
 Each `s3` entry uploads the newest backup of one backup label to the bucket configured in the top-level [`s3`](s3.md) section. The map key is a label and must be unique across all backup tables.
 
@@ -104,39 +104,24 @@ Each `s3` entry uploads the newest backup of one backup label to the bucket conf
 | `frequency` | duration | `5m` | How often to check for a new backup to upload. |
 | `age_recipient` | string | `""` | age public key the backup is encrypted to before upload. Empty uploads without encryption. |
 
-Set fields via `ripc`:
+1. Choose age recipient — most probably the one from the master key is the best tradeoff: it protects the backups if S3 is breached, and if the server is breached your live database is already compromised.
 
 ```bash
-ripc set backup.online.app-online.source_path /data/app.db
-ripc set backup.online.app-online.frequency 24h
-ripc set backup.sqlite-rsync.entries.app-rsync.source_path /data/app.db
+age-keygen -y age.key | tr -d '\n' > s3-backup-recipient.txt
+ripc set backup.s3.app-s3.age_recipient @s3-backup-recipient.txt
 ```
 
-TOML examples:
+2. Scaffold the entry:
 
-```toml
-[backup.online.app1]
-source_path = "/data/app.db"
-dest_path = "/backups"
-frequency = "24h"
-compression = false
+```bash
+ripc scaffold backup-s3 app-s3
+```
 
-[backup.vacuum.app2]
-source_path = "/data/other.db"
-dest_path = "/backups"
-frequency = "24h"
+3. Point it at the local backup to upload — for example the `app-online` entry from a `backup-online` scaffold — and set the check interval (`5m` default):
 
-[backup.sqlite-rsync]
-listen_addr = "127.0.0.1:54321"
-
-[backup.sqlite-rsync.entries.app3]
-source_path = "/data/app3.db"
-sync_timeout = "15m"
-
-[backup.s3.app4]
-backup_label = "app1"
-frequency = "5m"
-age_recipient = "age1..."
+```bash
+ripc set backup.s3.app-s3.backup_label app-online
+ripc set backup.s3.app-s3.frequency 5m
 ```
 
 ## Stable Hardlink (`latest-`)

@@ -34,6 +34,12 @@ type S3 struct {
 	// name. False uses virtual-hosted addressing, which Amazon S3 uses by
 	// default; Cloudflare R2 and MinIO require true.
 	UsePathStyle bool `toml:"use_path_style" comment:"Use path-style addressing (true for Cloudflare R2 and MinIO)"`
+
+	// RequireContentLength tells the program that the service needs a
+	// length on every put. Some services, Cloudflare R2 for example, reject
+	// the chunked upload that an unknown length produces; set it to true
+	// for them.
+	RequireContentLength bool `toml:"require_content_length" comment:"Require a content length on every put (true for Cloudflare R2)"`
 }
 
 // validateS3 checks the S3 configuration section. An empty endpoint means

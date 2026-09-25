@@ -91,6 +91,12 @@ type S3 struct {
 	AccessKey    string
 	SecretKey    string
 	UsePathStyle bool
+
+	// RequireContentLength says the service needs a length on every put.
+	// Some services, Cloudflare R2 for example, reject the chunked upload
+	// that an unknown length produces. When it is set, PutObject refuses a
+	// negative value with ErrContentLengthRequired.
+	RequireContentLength bool
 }
 
 // URL constructs an S3 request URL based on the current configuration.

@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"strings"
@@ -34,7 +35,7 @@ func TestS3_PutObject(t *testing.T) {
 		})
 
 		// LimitReader keeps the HTTP client from detecting a length on
-		// its own, so the size passed to PutObject is what the request sends.
+		// its own, so the contentLength passed to PutObject is what the request sends.
 		body := io.LimitReader(strings.NewReader("ltx-bytes"), int64(len("ltx-bytes")))
 		err := client.PutObject(context.Background(), "mydb/0/12-15.ltx", body, int64(len("ltx-bytes")))
 		if err != nil {
@@ -79,7 +80,7 @@ func TestS3_PutObject(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		// A negative size must produce a chunked request; LimitReader keeps
+		// A negative contentLength must produce a chunked request; LimitReader keeps
 		// the HTTP client from detecting a length on its own.
 		body := io.LimitReader(strings.NewReader("ltx-bytes"), int64(len("ltx-bytes")))
 		err := client.PutObject(context.Background(), "mydb/0/12-15.ltx", body, -1)
@@ -95,6 +96,20 @@ func TestS3_PutObject(t *testing.T) {
 		}
 		if len(gotTransferEncoding) != 1 || gotTransferEncoding[0] != "chunked" {
 			t.Errorf("transfer encoding = %v, want [chunked]", gotTransferEncoding)
+		}
+	})
+
+	t.Run("RequireContentLength", func(t *testing.T) {
+		client := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+			t.Error("PutObject must not send a request when the length is unknown")
+			w.WriteHeader(http.StatusOK)
+		})
+		client.RequireContentLength = true
+
+		body := io.LimitReader(strings.NewReader("ltx-bytes"), int64(len("ltx-bytes")))
+		err := client.PutObject(context.Background(), "mydb/0/12-15.ltx", body, -1)
+		if !errors.Is(err, ErrContentLengthRequired) {
+			t.Fatalf("PutObject() error = %v, want %v", err, ErrContentLengthRequired)
 		}
 	})
 

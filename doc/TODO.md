@@ -230,3 +230,29 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - mark off versus set, show active entries count for sqlite-rsync, and check actual listening sockets so a clash with another app on the same VPS shows as taken
 - refs: `config/config.go` (`Server`), `config/backup.go` (`BackupSqliteRsync`), `cmd/ripc/get.go` (config read precedent), `cmd/ripc/paths.go` (path listing precedent)
 
+# ripc: remove documented as only for maps or slices
+
+- new `ripc remove <path>` drops one item from a config map or slice by dot-path (e.g. `ripc remove backup.online.logs-online`); scalar keys are refused
+- mirrors `add`, which only touches its registry of collections — scope comes from the registry, not from extra rules
+- the industry pair is add/remove (Azure CLI guidelines, PowerShell approved verbs pair Add with Remove and forbid Delete)
+- refs: `cmd/ripc/add.go` (`addFuncs` registry precedent), `cmd/ripc/set.go` (path handling precedent), `cmd/ripc/main.go` (command dispatch)
+
+# ripc: add a helper for the tree type check
+
+- the `value.(*toml.Tree)` assertion telling tables apart from plain values is copied in every command instead of living in one place
+- pull it out into a shared helper so `remove` (and whatever comes next) reuses it instead of inlining a third copy
+- refs: `cmd/ripc/paths.go` (`listTomlPathsRecursive`), `cmd/ripc/get.go` (`listTomlPathsWithValuesRecursive`), `cmd/ripc/add_block_user_agent.go` and `cmd/ripc/add_block_host.go` (slice assertions)
+
+# daemon: daemons start operation at startup, there should be a random delay
+
+- every daemon fires its first operation the moment the server starts, so after a reboot or deploy the online backup, s3 upload, vacuum and rsync daemons all hit the database and disk at once
+- stagger startup with a random initial delay (jitter) before each daemon's first run
+- open: central in the server's daemon startup so all current and future daemons are covered at once, versus per-daemon before the first tick so each tunes its own
+- refs: `server/server.go` (sequential daemon start), `restinpieces.go` (daemon registration)
+
+# s3: add PutNoChunked so unknown-size bodies always send Content-Length
+
+- `s3/put_object.go`: `PutObject` sends chunked when size is unknown; R2 rejects it with 411 MissingContentLength while AWS accepts it, so the fix is a new method, not a change to `PutObject`
+- new `PutNoChunked(ctx, key, body)`: buffer unknown-size bodies to RAM up to 5 MiB, spill larger to a temp file removed after, always PUT with Content-Length
+- refs: `s3/s3.go` (SigV4, UNSIGNED-PAYLOAD), `doc/s3.md` (uploader.go deliberately not ported), R2 error 10033 docs
+
