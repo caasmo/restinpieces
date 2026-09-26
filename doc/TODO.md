@@ -212,17 +212,6 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - searches stored rows, past logs not just the live tail
 - refs: `cmd/ripc/log_command.go`, `cmd/ripc/log_tail.go`, `sql/schema/log/logs.sql` (`message`, `data` JSON, `created`)
 
-# metrics: Prometheus metrics is an internal feature — serve it from a daemon, never from the app router, never exposed to the internet
-
-- most important point: we do not pollute the app router; Prometheus metrics is an internal feature and should not be exposed to the internet
-- remove `App.MetricsHandler` (`core/handler_metrics.go`) and its route registration in `routes.go`; the prerouter counter (`core/prerouter/metrics.go`) stays, the dashboard reads `http_server_requests_total`
-- drop `Metrics.AllowedIPs` (`config/config.go`): a loopback listener replaces the allow-list, and slices are not allowed in config (AGENTS.md)
-- new daemon in the origin shape (`restinpieces-backup/sqlitersync/origin/daemon.go`): `daemon.Base`, `Run()` binds the listener synchronously so a bind error is a startup failure, `Stop` cancels and joins, `Start()` shim for `server.Daemon`, registered via `srv.AddDaemon` (example: `restinpieces-backup/cmd/sqlite-rsync/origin/restinpieces/main.go`)
-- auto-register next to the log daemon and the scheduler in `restinpieces.go` when `metrics.enabled`, so an app needs no wiring
-- open: `metrics.listen_addr` with a loopback default and loopback-only validation in `config/config_validate.go`, versus a fixed loopback address; default port undecided
-- refs: `core/handler_metrics.go`, `routes.go`, `config/config.go` (`Metrics`), `config/default.go`, `config/config_validate.go`, `restinpieces.go`
-- follows into the monitoring repo: the scrape target in `victoriametrics/config.yaml` moves from the app's `:8080` to the daemon's address
-
 # ripc: track all port addresses and provide maybe ripc ports
 
 - list every listener from live config in one place: `server.addr`, `server.tls.redirect_addr`, `backup.sqlite-rsync.listen_addr`, plus `metrics.listen_addr` once it lands
@@ -255,4 +244,11 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - `s3/put_object.go`: `PutObject` sends chunked when size is unknown; R2 rejects it with 411 MissingContentLength while AWS accepts it, so the fix is a new method, not a change to `PutObject`
 - new `PutNoChunked(ctx, key, body)`: buffer unknown-size bodies to RAM up to 5 MiB, spill larger to a temp file removed after, always PUT with Content-Length
 - refs: `s3/s3.go` (SigV4, UNSIGNED-PAYLOAD), `doc/s3.md` (uploader.go deliberately not ported), R2 error 10033 docs
+
+# ripdep ripc: set s3.endpoint '' loses empty value
+
+- `scripts/ripdep` `cmd_ripc` joins args with `$*` then interpolates unquoted into `ssh ... sh -c '... $args'`, so `set s3.endpoint ''` arrives as one arg and `ripc set` fails with missing value argument
+- fix: quote each arg for the inner shell (`''` for empty), then escape once more for the outer `sh -c '...'`
+- workaround: `ripc ... set s3.endpoint '""'` survives the join
+- refs: `scripts/ripdep` (`cmd_ripc`), `cmd/ripc/set.go` (`parseSetArgs`)
 

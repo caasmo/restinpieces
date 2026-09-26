@@ -5,49 +5,18 @@ import (
 	"strconv"
 
 	"github.com/caasmo/restinpieces/core"
-	"github.com/prometheus/client_golang/prometheus"
-)
-
-const (
-	metricName          = "http_server_requests_total"
-	metricHelp          = "Total number of HTTP requests handled by the server, labeled by status code."
-	statusCodeLabelName = "code"
 )
 
 // Metrics is a Go middleware for collecting HTTP request metrics.
 type Metrics struct {
-	app           *core.App
-	requestsTotal *prometheus.CounterVec
+	app *core.App
 }
 
-// NewMetrics creates a new Metrics instance.
-// It registers a Prometheus counter vector for tracking requests by status code.
-// This function will panic if metric registration fails (e.g., due to a name collision with an
-// incompatible metric type or other registration errors).
+// NewMetrics creates a new Metrics middleware.
 func NewMetrics(app *core.App) *Metrics {
-	labelNames := []string{statusCodeLabelName}
-
-	counterVec := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: metricName,
-			Help: metricHelp,
-		},
-		labelNames,
-	)
-
-	// Register the counter vector with default registry
-	if err := prometheus.DefaultRegisterer.Register(counterVec); err != nil {
-		panic("metrics: failed to register requests_total counter vec: " + err.Error())
+	return &Metrics{
+		app: app,
 	}
-
-	m := &Metrics{
-		app:           app,
-		requestsTotal: counterVec,
-	}
-
-	app.Logger().Info("metrics middleware initialized")
-
-	return m
 }
 
 // Execute is the middleware handler function that wraps the next http.Handler
@@ -56,6 +25,12 @@ func (m *Metrics) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Skip metrics collection if not activated
 		if !m.app.Config().Metrics.Activated {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		metric := m.app.Metric()
+		if metric == nil {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -76,6 +51,6 @@ func (m *Metrics) Execute(next http.Handler) http.Handler {
 		next.ServeHTTP(rec, r)
 
 		status := strconv.Itoa(rec.Status)
-		m.requestsTotal.WithLabelValues(status).Inc()
+		metric.RequestsTotal.WithLabelValues(status).Inc()
 	})
 }

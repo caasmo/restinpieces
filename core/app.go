@@ -7,6 +7,7 @@ import (
 	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
+	"github.com/caasmo/restinpieces/metrics"
 	"github.com/caasmo/restinpieces/notify"
 	"github.com/caasmo/restinpieces/router"
 )
@@ -34,6 +35,7 @@ type App struct {
 	notifier      notify.Notifier
 	authenticator Authenticator
 	validator     Validator
+	metric        *metrics.Metric
 }
 
 // Router returns the application's router instance
@@ -76,6 +78,17 @@ func (a *App) SetCache(c cache.Cache[string, interface{}]) {
 
 func (a *App) Cache() cache.Cache[string, interface{}] {
 	return a.cache
+}
+
+// SetMetric sets the metrics collectors shared by the middleware and handlers.
+func (a *App) SetMetric(m *metrics.Metric) {
+	a.metric = m
+}
+
+// Metric returns the application's metrics collectors. It is nil when metrics
+// are disabled in the configuration.
+func (a *App) Metric() *metrics.Metric {
+	return a.metric
 }
 
 func (a *App) Config() *config.Config {

@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"net"
+	"net/netip"
 	"net/url"
 	"os"
 	"strconv"
@@ -49,6 +50,9 @@ func Validate(cfg *Config) error {
 	}
 	if err := validateRequestLog(&cfg.Log.Request); err != nil {
 		return fmt.Errorf("request_log config validation failed: %w", err)
+	}
+	if err := validateMetrics(&cfg.Metrics); err != nil {
+		return fmt.Errorf("metrics config validation failed: %w", err)
 	}
 	if err := validateBlockIp(&cfg.BlockIp); err != nil {
 		return fmt.Errorf("block_ip config validation failed: %w", err)
@@ -734,11 +738,35 @@ func validateServerPort(portStr string) error {
 	// If set, it must be a valid port number
 	portNum, err := strconv.Atoi(portStr)
 	if err != nil {
-		return fmt.Errorf("invalid RedirectPort '%s': must be a number: %w", portStr, err)
+		return fmt.Errorf("invalid port '%s': must be a number: %w", portStr, err)
 	}
 
 	if portNum < 1 || portNum > 65535 {
-		return fmt.Errorf("invalid RedirectPort '%d': port number must be between 1 and 65535", portNum)
+		return fmt.Errorf("invalid port '%d': port number must be between 1 and 65535", portNum)
+	}
+
+	return nil
+}
+
+// validateMetrics checks the metrics daemon address. The daemon is an
+// internal endpoint, so it must bind a loopback or private address: a public
+// address would expose the process and runtime values to the internet.
+func validateMetrics(metrics *Metrics) error {
+	if !metrics.Enabled {
+		return nil
+	}
+
+	host, port, err := net.SplitHostPort(metrics.ListenAddr)
+	if err != nil {
+		return fmt.Errorf("metrics.listen_addr '%s' is not a valid host:port: %w", metrics.ListenAddr, err)
+	}
+	if err := validateServerPort(port); err != nil {
+		return fmt.Errorf("invalid metrics.listen_addr '%s': %w", metrics.ListenAddr, err)
+	}
+
+	addr, err := netip.ParseAddr(host)
+	if err != nil || (!addr.IsLoopback() && !addr.IsPrivate()) {
+		return fmt.Errorf("metrics.listen_addr '%s' must be a loopback or private address", metrics.ListenAddr)
 	}
 
 	return nil

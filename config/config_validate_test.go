@@ -117,6 +117,8 @@ func TestValidate(t *testing.T) {
 		{"invalid block ip", func(c *Config) { c.BlockIp.Level = "" }},
 		{"invalid cache", func(c *Config) { c.Cache.Level = "" }},
 		{"invalid s3", func(c *Config) { c.S3.Endpoint = "s3.example.com" }},
+		{"wildcard metrics listen addr", func(c *Config) { c.Metrics.ListenAddr = "0.0.0.0:9119" }},
+		{"public metrics listen addr", func(c *Config) { c.Metrics.ListenAddr = "203.0.113.10:9119" }},
 	}
 
 	for _, tt := range errorCases {

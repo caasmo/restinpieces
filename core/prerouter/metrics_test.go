@@ -10,29 +10,17 @@ import (
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
-	"github.com/prometheus/client_golang/prometheus"
+	"github.com/caasmo/restinpieces/metrics"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
 // newTestMetricsMiddleware creates a Metrics middleware instance for testing.
-// It manually constructs the struct to avoid using the global Prometheus registry,
-// allowing for isolated test runs.
-func newTestMetricsMiddleware(app *core.App) (*Metrics, *prometheus.CounterVec) {
-	counterVec := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: "http_server_requests_total_test", // Use a unique name for testing
-		},
-		[]string{"code"},
-	)
+func newTestMetricsMiddleware(app *core.App) (*Metrics, *metrics.Metric) {
+	metric := metrics.NewMetric()
 
-	// Because this test file is in the same package (prerouter), we can
-	// access the unexported fields of the Metrics struct to build it manually.
-	metricsMiddleware := &Metrics{
-		app:           app,
-		requestsTotal: counterVec,
-	}
+	app.SetMetric(metric)
 
-	return metricsMiddleware, counterVec
+	return NewMetrics(app), metric
 }
 
 func TestMetricsMiddleware(t *testing.T) {
@@ -111,7 +99,7 @@ func TestMetricsMiddleware(t *testing.T) {
 			mockApp.SetConfigProvider(provider)
 
 			// Setup: Create the test middleware and its associated counter.
-			metricsMiddleware, counter := newTestMetricsMiddleware(mockApp)
+			metricsMiddleware, metric := newTestMetricsMiddleware(mockApp)
 
 			// Setup: Create the final handler that sets the desired status code.
 			finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -138,7 +126,7 @@ func TestMetricsMiddleware(t *testing.T) {
 
 			// Verification: Check the metric value.
 			statusCodeStr := strconv.Itoa(tc.responseStatusCode)
-			metricValue := testutil.ToFloat64(counter.WithLabelValues(statusCodeStr))
+			metricValue := testutil.ToFloat64(metric.RequestsTotal.WithLabelValues(statusCodeStr))
 
 			if metricValue != tc.expectedMetricValue {
 				t.Errorf("Expected metric value for code %s to be %.1f, but got %.1f",
@@ -146,32 +134,4 @@ func TestMetricsMiddleware(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestNewMetrics_PanicOnReregister(t *testing.T) {
-	// Setup: Create a mock app.
-	mockApp := &core.App{}
-	mockApp.SetLogger(slog.New(slog.NewTextHandler(io.Discard, nil)))
-
-	// This is the metric that NewMetrics will try to register.
-	expectedMetric := prometheus.NewCounterVec(
-		prometheus.CounterOpts{Name: "http_server_requests_total"},
-		[]string{"code"},
-	)
-
-	// Cleanup: Ensure the metric is unregistered from the global registry after the test.
-	defer prometheus.DefaultRegisterer.Unregister(expectedMetric)
-
-	// First call should succeed.
-	_ = NewMetrics(mockApp)
-
-	// Second call should panic. We use a defer/recover to catch it.
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("Expected NewMetrics to panic on second call, but it did not")
-		}
-	}()
-
-	// This call must panic.
-	_ = NewMetrics(mockApp)
 }

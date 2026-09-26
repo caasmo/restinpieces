@@ -461,20 +461,19 @@ type Notifier struct {
 // Metrics holds the configuration for collecting and exposing application metrics,
 // typically for monitoring purposes (e.g., with Prometheus).
 type Metrics struct {
-	// Enabled controls whether metrics collection is compiled into the binary and available.
-	// Changing this requires a server restart.
+	// Enabled controls whether the metrics daemon runs and the request
+	// counter is registered. Changing this requires a server restart.
 	Enabled bool `toml:"enabled" comment:"Enable metrics collection (requires restart)"`
 
-	// Activated controls whether metrics are actively being collected.
-	// This can be toggled via config reload without restart.
-	Activated bool `toml:"activated" comment:"Activate metrics collection (can toggle via reload)"`
+	// Activated controls whether the request counter is incremented.
+	// It can be toggled via config reload without restart.
+	Activated bool `toml:"activated" comment:"Activate request counting (can toggle via reload)"`
 
-	// Endpoint is the HTTP path where metrics are exposed (e.g. "/metrics")
-	Endpoint string `toml:"endpoint" comment:"HTTP path where metrics are exposed"`
-
-	// AllowedIPs is a list of exact IP addresses that can access the metrics endpoint
-	// Example: ["127.0.0.1", "192.168.1.100"]
-	AllowedIPs []string `toml:"allowed_ips" comment:"List of exact IP addresses allowed to access metrics endpoint (no CIDR ranges)"`
+	// ListenAddr is the address the metrics daemon listens on. It must be
+	// loopback or a private address: the endpoint is internal, for the
+	// monitoring scraper only.
+	// Changing the address requires a server restart.
+	ListenAddr string `toml:"listen_addr" comment:"Internal address for the metrics daemon, loopback or private (e.g. 127.0.0.1:9119)"`
 }
 
 // BlockOversizedRequest holds configuration for limiting the size of various request dimensions.

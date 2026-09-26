@@ -49,6 +49,5 @@ func route(cfg *config.Config, ap *core.App) {
 		// "/api/benchmark/sqlite/ratio/{ratio}/read/{reads}": router.NewChain(http.HandlerFunc(ap.BenchmarkSqliteRWRatio)),
 		// "GET /api/benchmark/sqlite/pool/ratio/{ratio}/read/{reads}": router.NewChain(http.HandlerFunc(ap.BenchmarkSqliteRWRatioPool)),
 		//"GET /index":         router.NewChain(http.HandlerFunc(ap.Index)),
-		cfg.Metrics.Endpoint: router.NewChain(http.HandlerFunc(ap.MetricsHandler)),
 	})
 }

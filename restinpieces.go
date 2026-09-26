@@ -15,6 +15,7 @@ import (
 	"github.com/caasmo/restinpieces/db/databasesql"
 	"github.com/caasmo/restinpieces/log"
 	"github.com/caasmo/restinpieces/mail"
+	"github.com/caasmo/restinpieces/metrics"
 	"github.com/caasmo/restinpieces/notify"
 	"github.com/caasmo/restinpieces/notify/discord"
 	"github.com/caasmo/restinpieces/queue/executor"
@@ -24,6 +25,8 @@ import (
 	"github.com/caasmo/restinpieces/router/servemux"
 	"github.com/caasmo/restinpieces/server"
 	"github.com/pelletier/go-toml/v2"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/collectors"
 )
 
 // initializer holds temporary state during application initialization
@@ -115,6 +118,8 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 		return nil, nil, err
 	}
 
+	metricsDaemon := init.setupMetrics(configProvider)
+
 	// Setup default notifier if none was set via options
 	if init.app.Notifier() == nil {
 		if err := init.setupDefaultNotifier(); err != nil {
@@ -139,6 +144,9 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	srv.AddDaemon(scheduler)
 	if logDaemon != nil {
 		srv.AddDaemon(logDaemon)
+	}
+	if metricsDaemon != nil {
+		srv.AddDaemon(metricsDaemon)
 	}
 
 	return init.app, srv, nil
@@ -196,7 +204,7 @@ func (i *initializer) setupPrerouter() http.Handler {
 	preRouterChain := router.NewChain(i.app.Router())
 
 	// Add Internal Middleware. Order Matters, first added are run first.
-	// Execution order is: Recovery -> Recorder -> RequestLog -> BlockIp -> Metrics -> BlockHost -> BlockUaList -> TLSHeaderSTS -> Maintenance -> BlockOversizedRequest -> BlockEndpointsMismatch -> i.app.Router()
+	// Execution order is: Recovery -> Recorder -> RequestLog -> Metrics -> BlockIp -> BlockHost -> BlockUaList -> TLSHeaderSTS -> Maintenance -> BlockOversizedRequest -> BlockEndpointsMismatch -> i.app.Router()
 
 	logger.Info(ft.Start("Setting up Prerouter Middleware Chain ..."))
 
@@ -219,7 +227,20 @@ func (i *initializer) setupPrerouter() http.Handler {
 		logger.Info(ft.Inactive("RequestLog middleware inactive"), "activated", cfg.Log.Request.Activated)
 	}
 
-	// 3. BlockIp Middleware
+	// 3. Metrics Middleware
+	if cfg.Metrics.Enabled {
+		metricsMiddleware := prerouter.NewMetrics(i.app)
+		preRouterChain.WithMiddleware(metricsMiddleware.Execute)
+		if cfg.Metrics.Activated {
+			logger.Info(ft.Active("Metrics middleware active"), "enabled", cfg.Metrics.Enabled, "activated", cfg.Metrics.Activated)
+		} else {
+			logger.Info(ft.Inactive("Metrics middleware inactive"), "enabled", cfg.Metrics.Enabled, "activated", cfg.Metrics.Activated)
+		}
+	} else {
+		logger.Info(ft.Disabled("Metrics middleware disabled"), "enabled", cfg.Metrics.Enabled)
+	}
+
+	// 4. BlockIp Middleware
 	if cfg.BlockIp.Enabled {
 		blockIp := prerouter.NewBlockIp(i.app)
 		preRouterChain.WithMiddleware(blockIp.Execute)
@@ -230,19 +251,6 @@ func (i *initializer) setupPrerouter() http.Handler {
 		}
 	} else {
 		logger.Info(ft.Disabled("BlockIp middleware disabled"), "enabled", cfg.BlockIp.Enabled)
-	}
-
-	// 4. Metrics Middleware
-	if cfg.Metrics.Enabled {
-		metrics := prerouter.NewMetrics(i.app)
-		preRouterChain.WithMiddleware(metrics.Execute)
-		if cfg.Metrics.Activated {
-			logger.Info(ft.Active("Metrics middleware active"), "enabled", cfg.Metrics.Enabled, "activated", cfg.Metrics.Activated)
-		} else {
-			logger.Info(ft.Inactive("Metrics middleware inactive"), "enabled", cfg.Metrics.Enabled, "activated", cfg.Metrics.Activated)
-		}
-	} else {
-		logger.Info(ft.Disabled("Metrics middleware disabled"), "enabled", cfg.Metrics.Enabled)
 	}
 
 	// 5. BlockHost Middleware (UA regexp costs 10x a host check, so unknown hosts fail here first)
@@ -352,6 +360,35 @@ func (i *initializer) setupScheduler(configProvider *config.Provider) (*scl.Sche
 	scheduler := scl.NewScheduler(configProvider, i.app.DbQueue(), executor.NewExecutor(hdls), logger)
 	logger.Info(ft.Complete("scheduler setup complete"), "handlers_registered", len(hdls))
 	return scheduler, nil
+}
+
+// setupMetrics prepares the metrics collectors and the internal daemon when
+// metrics are enabled. It returns the daemon for the server, or nil when
+// metrics are disabled.
+func (i *initializer) setupMetrics(configProvider *config.Provider) *metrics.Daemon {
+	ft := log.NewMessageFormatter().WithComponent("metrics", "📊 ")
+	logger := i.app.Logger()
+
+	cfg := configProvider.Get()
+	if !cfg.Metrics.Enabled {
+		logger.Info(ft.Disabled("Metrics disabled"), "enabled", cfg.Metrics.Enabled)
+		return nil
+	}
+
+	logger.Info(ft.Start("Setting up metrics..."))
+
+	metric := metrics.NewMetric()
+	i.app.SetMetric(metric)
+
+	registry := prometheus.NewRegistry()
+	registry.MustRegister(metric.RequestsTotal)
+	registry.MustRegister(collectors.NewGoCollector())
+	registry.MustRegister(collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}))
+	daemon := metrics.NewDaemon(configProvider, logger, registry)
+
+	logger.Info(ft.Complete("Metrics setup complete"), "listen_addr", cfg.Metrics.ListenAddr)
+
+	return daemon
 }
 
 var DefaultLoggerOptions = &slog.HandlerOptions{
