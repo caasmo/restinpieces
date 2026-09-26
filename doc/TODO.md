@@ -252,3 +252,9 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - workaround: `ripc ... set s3.endpoint '""'` survives the join
 - refs: `scripts/ripdep` (`cmd_ripc`), `cmd/ripc/set.go` (`parseSetArgs`)
 
+# metrics: recovered panics are not recorded
+
+- Recovery answers a panic with a 500 after the metrics middleware has already unwound, so the line after next.ServeHTTP never runs and the response is not recorded
+- decide the fix: Recovery notifies the MetricsRecorder, or the ResponseRecorder owns the recording
+- ref: core/prerouter/recovery.go, core/prerouter/metrics.go, core/metrics_recorder.go
+

@@ -5,22 +5,29 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
-	"github.com/caasmo/restinpieces/metrics"
-	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
+// fakeMetricsRecorder counts the recorded status codes, like a real recorder
+// counts responses per label.
+type fakeMetricsRecorder struct {
+	counts map[int]int
+}
+
+func (f *fakeMetricsRecorder) Record(rec *core.ResponseRecorder) {
+	f.counts[rec.Status]++
+}
+
 // newTestMetricsMiddleware creates a Metrics middleware instance for testing.
-func newTestMetricsMiddleware(app *core.App) (*Metrics, *metrics.Metric) {
-	metric := metrics.NewMetric()
+func newTestMetricsMiddleware(app *core.App) (*Metrics, *fakeMetricsRecorder) {
+	recorder := &fakeMetricsRecorder{counts: make(map[int]int)}
 
-	app.SetMetric(metric)
+	app.SetMetrics(recorder)
 
-	return NewMetrics(app), metric
+	return NewMetrics(app), recorder
 }
 
 func TestMetricsMiddleware(t *testing.T) {
@@ -30,7 +37,7 @@ func TestMetricsMiddleware(t *testing.T) {
 		responseStatusCode  int
 		requestCount        int
 		useResponseRecorder bool // To test the robustness case
-		expectedMetricValue float64
+		expectedRecordCount int
 	}{
 		{
 			name:                "Case: Metrics Activated - Successful Request (200 OK)",
@@ -38,7 +45,7 @@ func TestMetricsMiddleware(t *testing.T) {
 			responseStatusCode:  http.StatusOK,
 			requestCount:        1,
 			useResponseRecorder: true,
-			expectedMetricValue: 1,
+			expectedRecordCount: 1,
 		},
 		{
 			name:                "Case: Metrics Activated - Client Error (404 Not Found)",
@@ -46,7 +53,7 @@ func TestMetricsMiddleware(t *testing.T) {
 			responseStatusCode:  http.StatusNotFound,
 			requestCount:        1,
 			useResponseRecorder: true,
-			expectedMetricValue: 1,
+			expectedRecordCount: 1,
 		},
 		{
 			name:                "Case: Metrics Activated - Server Error (500 Internal Server Error)",
@@ -54,7 +61,7 @@ func TestMetricsMiddleware(t *testing.T) {
 			responseStatusCode:  http.StatusInternalServerError,
 			requestCount:        1,
 			useResponseRecorder: true,
-			expectedMetricValue: 1,
+			expectedRecordCount: 1,
 		},
 		{
 			name:                "Case: Metrics Deactivated",
@@ -62,7 +69,7 @@ func TestMetricsMiddleware(t *testing.T) {
 			responseStatusCode:  http.StatusOK,
 			requestCount:        1,
 			useResponseRecorder: true,
-			expectedMetricValue: 0,
+			expectedRecordCount: 0,
 		},
 		{
 			name:                "Case: Multiple Requests with the Same Status",
@@ -70,7 +77,7 @@ func TestMetricsMiddleware(t *testing.T) {
 			responseStatusCode:  http.StatusOK,
 			requestCount:        3,
 			useResponseRecorder: true,
-			expectedMetricValue: 3,
+			expectedRecordCount: 3,
 		},
 		{
 			name:                "Case: Robustness - Missing core.ResponseRecorder",
@@ -78,7 +85,7 @@ func TestMetricsMiddleware(t *testing.T) {
 			responseStatusCode:  http.StatusOK,
 			requestCount:        1,
 			useResponseRecorder: false, // This is the key for this test case
-			expectedMetricValue: 0,
+			expectedRecordCount: 0,
 		},
 	}
 
@@ -98,8 +105,8 @@ func TestMetricsMiddleware(t *testing.T) {
 			provider := config.NewProvider(cfg)
 			mockApp.SetConfigProvider(provider)
 
-			// Setup: Create the test middleware and its associated counter.
-			metricsMiddleware, metric := newTestMetricsMiddleware(mockApp)
+			// Setup: Create the test middleware and its recorder.
+			metricsMiddleware, recorder := newTestMetricsMiddleware(mockApp)
 
 			// Setup: Create the final handler that sets the desired status code.
 			finalHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -124,13 +131,11 @@ func TestMetricsMiddleware(t *testing.T) {
 				handler.ServeHTTP(rw, req)
 			}
 
-			// Verification: Check the metric value.
-			statusCodeStr := strconv.Itoa(tc.responseStatusCode)
-			metricValue := testutil.ToFloat64(metric.RequestsTotal.WithLabelValues(statusCodeStr))
-
-			if metricValue != tc.expectedMetricValue {
-				t.Errorf("Expected metric value for code %s to be %.1f, but got %.1f",
-					statusCodeStr, tc.expectedMetricValue, metricValue)
+			// Verification: Check the recorded response count.
+			got := recorder.counts[tc.responseStatusCode]
+			if got != tc.expectedRecordCount {
+				t.Errorf("recorded responses with status %d = %d, want %d",
+					tc.responseStatusCode, got, tc.expectedRecordCount)
 			}
 		})
 	}

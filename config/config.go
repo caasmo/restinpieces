@@ -458,16 +458,14 @@ type Notifier struct {
 	Discord Discord `toml:"discord" comment:"Default Discord notifier configuration"`
 }
 
-// Metrics holds the configuration for collecting and exposing application metrics,
-// typically for monitoring purposes (e.g., with Prometheus).
+// Metrics holds the configuration for the metrics middleware. The middleware
+// hands every finished response to the application's MetricsRecorder; the
+// collectors and the daemon that serves them live outside the framework, in
+// the restinpieces-metrics repository.
 type Metrics struct {
-	// Enabled controls whether the metrics daemon runs and the request
-	// counter is registered. Changing this requires a server restart.
-	Enabled bool `toml:"enabled" comment:"Enable metrics collection (requires restart)"`
-
-	// Activated controls whether the request counter is incremented.
-	// It can be toggled via config reload without restart.
-	Activated bool `toml:"activated" comment:"Activate request counting (can toggle via reload)"`
+	// Activated controls whether the middleware hands responses to the
+	// MetricsRecorder. It can be toggled via config reload without restart.
+	Activated bool `toml:"activated" comment:"Activate metrics recording (can toggle via reload)"`
 
 	// ListenAddr is the address the metrics daemon listens on. It must be
 	// loopback or a private address: the endpoint is internal, for the

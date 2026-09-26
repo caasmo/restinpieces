@@ -159,7 +159,6 @@ func NewDefaultConfig() *Config {
 			},
 		},
 		Metrics: Metrics{
-			Enabled:    true,
 			Activated:  true,
 			ListenAddr: "127.0.0.1:9119",
 		},

@@ -2,12 +2,17 @@ package prerouter
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/caasmo/restinpieces/core"
 )
 
-// Metrics is a Go middleware for collecting HTTP request metrics.
+// Metrics hands every finished response to the application's
+// core.MetricsRecorder.
+//
+// It is added right after the ResponseRecorder, so the writer it receives is
+// the framework recorder. A middleware added between the two that replaces
+// the writer makes the type check below fail; the middleware then logs an
+// error and skips recording.
 type Metrics struct {
 	app *core.App
 }
@@ -20,7 +25,7 @@ func NewMetrics(app *core.App) *Metrics {
 }
 
 // Execute is the middleware handler function that wraps the next http.Handler
-// to collect metrics.
+// and hands the finished response to the app's MetricsRecorder.
 func (m *Metrics) Execute(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Skip metrics collection if not activated
@@ -29,8 +34,8 @@ func (m *Metrics) Execute(next http.Handler) http.Handler {
 			return
 		}
 
-		metric := m.app.Metric()
-		if metric == nil {
+		metricsRecorder := m.app.Metrics()
+		if metricsRecorder == nil {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -50,7 +55,6 @@ func (m *Metrics) Execute(next http.Handler) http.Handler {
 		// Delegate to the next handler in the chain.
 		next.ServeHTTP(rec, r)
 
-		status := strconv.Itoa(rec.Status)
-		metric.RequestsTotal.WithLabelValues(status).Inc()
+		metricsRecorder.Record(rec)
 	})
 }

@@ -752,10 +752,6 @@ func validateServerPort(portStr string) error {
 // internal endpoint, so it must bind a loopback or private address: a public
 // address would expose the process and runtime values to the internet.
 func validateMetrics(metrics *Metrics) error {
-	if !metrics.Enabled {
-		return nil
-	}
-
 	host, port, err := net.SplitHostPort(metrics.ListenAddr)
 	if err != nil {
 		return fmt.Errorf("metrics.listen_addr '%s' is not a valid host:port: %w", metrics.ListenAddr, err)

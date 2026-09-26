@@ -134,7 +134,7 @@ This design allows for a clean separation of concerns and makes it straightforwa
 Engineered for high throughput, the framework is capable of handling thousands of requests per second while maintaining a minimal footprint by avoiding unnecessary external dependencies. Production-ready builds are further optimized for size and efficiency, ensuring rapid deployment and execution in resource-constrained environments.
 
 ### Metrics
-The framework provides built-in metrics collection using the `prometheus/client_golang` library. A middleware counts HTTP requests (`http_server_requests_total`, labeled by status code), alongside the Go runtime and process collectors the library reports by default. Metrics are served by a separate daemon on an internal address (`metrics.listen_addr`, loopback or private), never by the application server, and request counting can be toggled on or off via configuration without a server restart.
+The framework provides the metrics middleware and the `core.MetricsRecorder` hook, so the application defines the collectors it wants. A ready-made default — request counter, request-time histogram, and the Go and process collectors — and the internal daemon that serves them live in the `restinpieces-metrics` repository. The application sets the recorder on the app before the server starts, and the middleware hands every finished response to it. Recording can be turned on or off via `metrics.activated` without a server restart, and the daemon listens on `metrics.listen_addr`, loopback or private.
 
 ### Logger
 The framework's logging is built upon the standard `slog` library for structured logging. It includes a high-performance batching handler that writes logs to the SQLite database, with configurable flush intervals and log levels. For incoming requests, a dedicated middleware logs request details but truncates overly long URI, User-Agent, Referer, and IP values to maintain clean logs. The entire logging implementation can be replaced with a user-defined logger to accommodate custom requirements.
@@ -161,7 +161,7 @@ The framework provides a collection of built-in middleware to handle common cros
 
 -   **ResponseRecorder**: A utility middleware that wraps the standard `http.ResponseWriter` to capture the status code, response size, and timing information. This is used internally by other middleware like `Metrics` and `RequestLog` and should typically be the first middleware in the chain.
 -   **RequestLog**: Provides structured logging for every incoming HTTP request. It captures details like method, URI, status, duration, remote IP, and user agent, with configurable length limits to keep logs concise.
--   **Metrics**: Collects Prometheus-compatible metrics for HTTP requests, labeled by status code. The values are served by the internal metrics daemon, not by the application server.
+-   **Metrics**: Hands every finished HTTP response to the application's `MetricsRecorder`. The collectors and the internal daemon that serves them live in the `restinpieces-metrics` repository.
 -   **BlockIp**: Acts as a dynamic IP blocking mechanism to protect the server from traffic spikes and potential denial-of-service attacks. It uses a Top-K sketch algorithm to identify and temporarily block IP addresses that are responsible for a disproportionate amount of traffic, a circuit breaker under heavy load.
 -   **BlockHost**: Enforces security by validating the `Host` header of incoming requests against a configurable whitelist of allowed hostnames. It supports exact matches and wildcard subdomains (e.g., `*.example.com`).
 -   **BlockRequestBody**: Limits the size of incoming request bodies to a configurable maximum. This helps prevent resource exhaustion from excessively large payloads and can be configured to exclude specific URL paths.
@@ -176,6 +176,14 @@ The framework holds only the `[acme]` settings in [config/acme.go](config/acme.g
 ## Examples
 
 Detailed examples and integration guides are available to help you build with the framework. You can explore a complete **JavaScript SDK Integration** at [restinpieces-js-sdk](https://github.com/caasmo/restinpieces-js-sdk) to see how to connect your frontend, or review implementations of **Custom Routers and DB Drivers** at [restinpieces-non-default](https://github.com/caasmo/restinpieces-non-default) for advanced customization scenarios.
+
+## Run the example
+
+`cmd/example` starts a restinpieces application with the default metrics wired in:
+
+```sh
+go run ./cmd/example -dbpath app.db -agekey age.key
+```
 
 ## Extensibility
 
