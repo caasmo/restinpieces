@@ -62,6 +62,8 @@ func NewDefaultConfig() *Config {
 			ReadHeaderTimeout:       Duration{Duration: 2 * time.Second},
 			WriteTimeout:            Duration{Duration: 3 * time.Second},
 			IdleTimeout:             Duration{Duration: 1 * time.Minute},
+			WriteByteTimeout:        Duration{Duration: 5 * time.Second},
+			MaxConcurrentStreams:    32,
 			ClientIpProxyHeader:     "",
 			ClientTLSProxyHeader:    "",
 			Tls: Tls{

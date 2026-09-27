@@ -134,7 +134,11 @@ func (s *Server) Run() {
 		ReadHeaderTimeout: serverCfg.ReadHeaderTimeout.Duration,
 		WriteTimeout:      serverCfg.WriteTimeout.Duration,
 		IdleTimeout:       serverCfg.IdleTimeout.Duration,
-		ErrorLog:          errorLog,
+		HTTP2: &http.HTTP2Config{
+			WriteByteTimeout:     serverCfg.WriteByteTimeout.Duration,
+			MaxConcurrentStreams: serverCfg.MaxConcurrentStreams,
+		},
+		ErrorLog: errorLog,
 	}
 
 	var redirectServer *http.Server
@@ -329,6 +333,10 @@ func (s *Server) logServerConfig(cfg *config.Server) {
 		"readHeaderTimeout", cfg.ReadHeaderTimeout.Duration,
 		"writeTimeout", cfg.WriteTimeout.Duration,
 		"idleTimeout", cfg.IdleTimeout.Duration)
+
+	s.logger.Info("Server:",
+		"writeByteTimeout", cfg.WriteByteTimeout.Duration,
+		"maxConcurrentStreams", cfg.MaxConcurrentStreams)
 
 	s.logger.Info("Server:", "ShutdownGracefulTimeout", cfg.ShutdownGracefulTimeout)
 

@@ -258,3 +258,9 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - decide the fix: Recovery notifies the MetricsRecorder, or the ResponseRecorder owns the recording
 - ref: core/prerouter/recovery.go, core/prerouter/metrics.go, core/metrics_recorder.go
 
+# server: cap total connections with netutil.LimitListener — deferred
+
+- cap how many connections stay open at once with `golang.org/x/net/netutil.LimitListener`; zero or negative means no cap
+- would need `max_connections` in `[server]` (default 1000) and `Run` to switch from `ListenAndServeTLS`/`ListenAndServe` to `net.Listen` plus `ServeTLS`/`Serve` so the listener can be wrapped
+- refs: `server/server.go`, `config/config.go` (`Server`), `config/default.go`
+

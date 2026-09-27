@@ -230,6 +230,22 @@ type Server struct {
 	// Maximum duration for waiting for the next request on a keep-alive connection.
 	IdleTimeout Duration `toml:"idle_timeout" comment:"Max time for idle keep-alive connections"`
 
+	// WriteByteTimeout applies to HTTP/2 connections only. When the server
+	// has a response to write but the client stops reading, the writes block.
+	// If no byte can be written for this long, the server closes the
+	// connection and releases the handlers waiting on it. The timer starts
+	// when data is available to write and restarts with every byte written, so
+	// a slow client that keeps reading is never closed. Zero turns the
+	// protection off. HTTP/1.1 has the same protection through write_timeout:
+	// a blocked write fails when that deadline passes.
+	WriteByteTimeout Duration `toml:"write_byte_timeout" comment:"HTTP/2: close connection after this long with no bytes written"`
+
+	// MaxConcurrentStreams applies to HTTP/2 connections only. It limits how
+	// many requests a single connection can run at the same time. This bounds
+	// the goroutines and response buffers one slow client can hold. Zero uses
+	// Go's default (250).
+	MaxConcurrentStreams int `toml:"max_concurrent_streams" comment:"HTTP/2: max concurrent requests per connection"`
+
 	// If behind a trusted proxy, specify the header containing the real client IP.
 	// With Cloudflare, use "CF-Connecting-IP". "X-Forwarded-For" and "X-Real-IP"
 	// also work. Leave empty if not behind a proxy.

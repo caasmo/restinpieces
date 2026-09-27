@@ -148,3 +148,14 @@ func TestNewJobEntryDefaults(t *testing.T) {
 		t.Errorf("Activated: got %v, want false", v.Activated)
 	}
 }
+
+func TestNewDefaultConfigServerHTTP2Defaults(t *testing.T) {
+	cfg := NewDefaultConfig()
+
+	if cfg.Server.WriteByteTimeout.Duration != 5*time.Second {
+		t.Errorf("Server.WriteByteTimeout: got %v, want 5s", cfg.Server.WriteByteTimeout.Duration)
+	}
+	if cfg.Server.MaxConcurrentStreams != 32 {
+		t.Errorf("Server.MaxConcurrentStreams: got %d, want 32", cfg.Server.MaxConcurrentStreams)
+	}
+}
