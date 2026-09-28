@@ -16,6 +16,7 @@
   - [scopes](#scopes)
   - [set](#set-path-value)
   - [add](#add-path-value)
+  - [remove](#remove-path-value)
   - [update](#update-label)
   - [save](#save-file)
   - [scaffold](#scaffold-type-label)
@@ -142,6 +143,22 @@ Appends a value to a configuration key that holds several values.
     ripc add block_user_agent.agents SemrushBot
 
 `add` can be run again safely: adding a value that is already present leaves the configuration unchanged. For `block_user_agent.agents`, the value is appended to the slice.
+
+### `remove <path> [value]`
+
+Removes one item from a configuration collection.
+
+Tables are named by their full path:
+
+    ripc remove backup.vacuum.logs-vacuum
+
+Array items are named by value:
+
+    ripc remove block_user_agent.agents SemrushBot
+
+Removable tables are `backup.online.<label>`, `backup.vacuum.<label>`, `backup.sqlite-rsync.entries.<label>`, `backup.s3.<label>`, `scheduler.jobs.<label>`, `oauth2_providers.<label>` and `acme.dns-01.<label>`. Removable array items are `block_user_agent.agents`, `block_host.allowed_hosts`, `block_oversized_request.excluded_paths` and `acme.domains`. Scalar keys like `server.addr` are refused.
+
+Removing a stored item brings back the framework default when one exists. For example, `block_oversized_request.excluded_paths` returns to `/api/upload` and `/api/import`. To keep an array empty instead, set it to an empty array with `ripc set block_oversized_request.excluded_paths "[]"`.
 
 ### `update <label>`
 

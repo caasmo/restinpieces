@@ -16,9 +16,9 @@ func (userAgentAdder) Add(tree *toml.Tree, path, value string) error {
 		return fmt.Errorf("user agent must not be empty")
 	}
 
-	raw, ok := tree.Get(path).([]interface{})
+	raw, ok := tomlArrayOf(tree.Get(path))
 	if !ok {
-		return fmt.Errorf("%w: %s is not a list", ErrNotCollection, path)
+		return fmt.Errorf("%w: %s is not an array", ErrNotCollection, path)
 	}
 
 	for _, item := range raw {

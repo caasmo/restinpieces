@@ -219,19 +219,6 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - mark off versus set, show active entries count for sqlite-rsync, and check actual listening sockets so a clash with another app on the same VPS shows as taken
 - refs: `config/config.go` (`Server`), `config/backup.go` (`BackupSqliteRsync`), `cmd/ripc/get.go` (config read precedent), `cmd/ripc/paths.go` (path listing precedent)
 
-# ripc: remove documented as only for maps or slices
-
-- new `ripc remove <path>` drops one item from a config map or slice by dot-path (e.g. `ripc remove backup.online.logs-online`); scalar keys are refused
-- mirrors `add`, which only touches its registry of collections — scope comes from the registry, not from extra rules
-- the industry pair is add/remove (Azure CLI guidelines, PowerShell approved verbs pair Add with Remove and forbid Delete)
-- refs: `cmd/ripc/add.go` (`addFuncs` registry precedent), `cmd/ripc/set.go` (path handling precedent), `cmd/ripc/main.go` (command dispatch)
-
-# ripc: add a helper for the tree type check
-
-- the `value.(*toml.Tree)` assertion telling tables apart from plain values is copied in every command instead of living in one place
-- pull it out into a shared helper so `remove` (and whatever comes next) reuses it instead of inlining a third copy
-- refs: `cmd/ripc/paths.go` (`listTomlPathsRecursive`), `cmd/ripc/get.go` (`listTomlPathsWithValuesRecursive`), `cmd/ripc/add_block_user_agent.go` and `cmd/ripc/add_block_host.go` (slice assertions)
-
 # daemon: daemons start operation at startup, there should be a random delay
 
 - every daemon fires its first operation the moment the server starts, so after a reboot or deploy the online backup, s3 upload, vacuum and rsync daemons all hit the database and disk at once

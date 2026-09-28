@@ -10,6 +10,8 @@ var ErrUnknownHelpTopic = errors.New("unknown help topic")
 // Stored as variables to allow for easy mocking in tests.
 var (
 	printAppUsageFunc      = printAppUsage
+	printAddUsageFunc      = printAddUsage
+	printRemoveUsageFunc   = printRemoveUsage
 	printGetUsageFunc      = printGetUsage
 	printPathsUsageFunc    = printPathsUsage
 	printDumpUsageFunc     = printDumpUsage
@@ -61,6 +63,10 @@ func runHelpTopic(topic string, ui UI) error {
 		printScopesUsageFunc(ui.Out)
 	case "set":
 		printSetUsageFunc(ui.Out)
+	case "add":
+		printAddUsageFunc(ui.Out)
+	case "remove":
+		printRemoveUsageFunc(ui.Out)
 	case "update":
 		printUpdateUsageFunc(ui.Out)
 	case "save":

@@ -203,3 +203,19 @@ func TestHandleAddCommand_Help(t *testing.T) {
 		t.Errorf("expected empty stderr, got: %q", stderr.String())
 	}
 }
+
+func TestAddValue_RefusesInvalidConfig(t *testing.T) {
+	scope := "app"
+	conf := "server = \"oops\"\n[block_user_agent]\n  agents = [\"GPTBot\"]\n"
+	mockStore := NewMockAddSecureStore(map[string][]byte{scope: []byte(conf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := addValue(ui, mockStore, scope, "", "block_user_agent.agents", "SemrushBot")
+	if !errors.Is(err, ErrConfigUnmarshal) {
+		t.Fatalf("expected error to wrap ErrConfigUnmarshal, got %v", err)
+	}
+	if len(mockStore.saveHistory) != 0 {
+		t.Errorf("expected no save on invalid config, got %d saves", len(mockStore.saveHistory))
+	}
+}

@@ -454,3 +454,19 @@ func TestScaffoldConfigValue_Job(t *testing.T) {
 		t.Errorf("expected next steps command, got %q", stderr.String())
 	}
 }
+
+func TestScaffoldConfigValue_RefusesInvalidConfig(t *testing.T) {
+	scope := config.ScopeApplication
+	conf := "server = \"oops\"\n[backup]\n"
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(conf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupVacuum, "app-vacuum")
+	if !errors.Is(err, ErrConfigUnmarshal) {
+		t.Fatalf("expected error to wrap ErrConfigUnmarshal, got %v", err)
+	}
+	if len(mockStore.saveHistory) != 0 {
+		t.Errorf("expected no save on invalid config, got %d saves", len(mockStore.saveHistory))
+	}
+}

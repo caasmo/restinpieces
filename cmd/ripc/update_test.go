@@ -293,3 +293,19 @@ func TestUpdate_RefusesPartialNames(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdate_RefusesInvalidConfig(t *testing.T) {
+	scope := "app"
+	conf := "server = \"oops\"\n[jwt]\n  auth_secret = \"old\"\n"
+	mockStore := NewMockUpdateSecureStore(map[string][]byte{scope: []byte(conf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := updateValues(ui, mockStore, scope, "", "jwt.auth_secret")
+	if !errors.Is(err, ErrConfigUnmarshal) {
+		t.Fatalf("expected error to wrap ErrConfigUnmarshal, got %v", err)
+	}
+	if len(mockStore.saveHistory) != 0 {
+		t.Errorf("expected no save on invalid config, got %d saves", len(mockStore.saveHistory))
+	}
+}

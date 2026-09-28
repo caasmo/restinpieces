@@ -52,7 +52,7 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}
 
 // parentTomlKeyOf returns the parent path of a dot-separated TOML key, i.e.
 // the prefix before the last dot. It is the single place that derives
-// the parent for scaffold's `tree.Has` check.
+// the parent key from a path.
 //
 // Examples:
 //
@@ -305,6 +305,10 @@ func scaffoldConfigValue(
 	if err != nil {
 		return fmt.Errorf("%w: failed to marshal updated config: %w",
 			ErrConfigMarshal, err)
+	}
+	validationErr := validateTomlAsConfig(updatedTomlBytes, configPath)
+	if validationErr != nil {
+		return validationErr
 	}
 	if description == "" {
 		description = fmt.Sprintf("Scaffolded '%s'", configPath)

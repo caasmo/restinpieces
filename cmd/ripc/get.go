@@ -149,11 +149,12 @@ func listTomlPathsWithValuesRecursive(tree *toml.Tree, prefix string, pathsWithV
 	for _, key := range keys {
 		fullPath := currentPrefix + key
 		value := tree.Get(key)
-		if subTree, ok := value.(*toml.Tree); ok {
-			listTomlPathsWithValuesRecursive(subTree, fullPath, pathsWithValues)
-		} else {
-			(*pathsWithValues)[fullPath] = value
+		table, ok := tomlTableOf(value)
+		if ok {
+			listTomlPathsWithValuesRecursive(table, fullPath, pathsWithValues)
+			continue
 		}
+		(*pathsWithValues)[fullPath] = value
 	}
 }
 

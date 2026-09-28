@@ -29,11 +29,12 @@ func listTomlPathsRecursive(tree *toml.Tree, prefix string, paths *[]string) {
 	for _, key := range keys {
 		fullPath := currentPrefix + key
 		value := tree.Get(key)
-		if subTree, ok := value.(*toml.Tree); ok {
-			listTomlPathsRecursive(subTree, fullPath, paths)
-		} else {
-			*paths = append(*paths, fullPath)
+		table, ok := tomlTableOf(value)
+		if ok {
+			listTomlPathsRecursive(table, fullPath, paths)
+			continue
 		}
+		*paths = append(*paths, fullPath)
 	}
 }
 

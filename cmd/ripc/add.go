@@ -131,6 +131,11 @@ func addValue(ui UI, secureCfg config.SecureStore, scope string, description str
 		return fmt.Errorf("%w: failed to marshal updated config: %w", ErrConfigMarshal, err)
 	}
 
+	validationErr := validateTomlAsConfig(updatedTomlBytes, tomlPath)
+	if validationErr != nil {
+		return validationErr
+	}
+
 	if description == "" {
 		description = fmt.Sprintf("Added to '%s'", tomlPath)
 	}
