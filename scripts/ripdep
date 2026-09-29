@@ -22,8 +22,6 @@ set -euo pipefail
 
 # Base directory on remote hosts for staging deployments.
 REMOTE_BASE_DIR="/tmp"
-# Local directory for storing final release artifacts (tarballs).
-RELEASES_BASE_DIR="${HOME}/src/backup/releases"
 # Directory for hook scripts that can be run at different stages.
 HOOKS_DIR="${HOME}/src/restinpieces-litestream/hooks"
 
@@ -79,15 +77,15 @@ NC=$'\033[0m' # No Color
 # ============================================ 
 
 log_info() {
-    echo -e "${BLUE}→${NC} $1"
+    echo -e "${BLUE}→${NC} $1" >&2
 }
 
 log_success() {
-    echo -e "${GREEN}✓${NC} $1"
+    echo -e "${GREEN}✓${NC} $1" >&2
 }
 
 log_warning() {
-    echo -e "${YELLOW}⚠${NC} $1"
+    echo -e "${YELLOW}⚠${NC} $1" >&2
 }
 
 log_error() {
@@ -198,6 +196,13 @@ get_bin_dir() {
 get_data_dir() {
     local dir=$1
     echo "${dir}/${APP_DATA_DIRNAME}"
+}
+
+# get_tarball_path_from_build_dir: echoes the tarball path that deploy uses for a
+# build directory. The tarball is named after the build directory and sits next to it.
+get_tarball_path_from_build_dir() {
+    local build_dir=$1
+    echo "${build_dir%/}.tar.gz"
 }
 
 # seems_build_dir: returns 0 if the directory has bin/ and data/ subdirs.
@@ -599,26 +604,17 @@ create_systemd_conf() {
 
 
 
-# cmd_pack: Packages a build directory into a release tarball.
+# cmd_pack: Packages a build directory into a release tarball at the given path.
 #
-# General Purpose:
-# This function takes a completed build directory and creates a compressed tarball (.tar.gz).
-# The resulting tarball is placed in the standard releases directory, defined by
-# the RELEASES_BASE_DIR variable (e.g., ~/src/backup/releases/<project_name>/).
-#
-# Tarball Naming:
-# The name of the output tarball is the build directory basename plus .tar.gz
-# (e.g. /tmp/myproject-v1.2.3 packs to myproject-v1.2.3.tar.gz).
-# The tarball overwrites any existing file with the same name.
-#
-# Example Tarball Name:
-# myproject-v1.2.3.tar.gz
+# The caller decides where the tarball goes; the parent directory must exist.
+# The tarball overwrites any existing file at that path.
 cmd_pack() {
-    local build_dir=$1
+    local build_dir=${1:-}
+    local tarball_path=${2:-}
 
-    if [ -z "$build_dir" ] || [ ! -d "$build_dir" ]; then
-        log_error "Usage: $0 pack <build_dir>"
-        log_error "A valid build directory must be provided."
+    if [ -z "$build_dir" ] || [ -z "$tarball_path" ] || [ ! -d "$build_dir" ]; then
+        log_error "Usage: $0 pack <build_dir> <tarball_path>"
+        log_error "A valid build directory and a tarball path must be provided."
         exit 1
     fi
 
@@ -628,34 +624,20 @@ cmd_pack() {
     fi
     
     log_info "Packing build directory: ${build_dir}"
-
-    local build_name
-    build_name=$(basename "$build_dir") 
-
-    local project_name
-    project_name=$(get_project_name_from_file_base "$build_name")
-
-    local tarball_name="${build_name}.tar.gz"
-    
-    local output_dir="${RELEASES_BASE_DIR}/${project_name}"
-    mkdir -p "$output_dir"
-    
-    local output_path="${output_dir}/${tarball_name}"
-    
-    log_info "Creating tarball: ${output_path}"
-    if ! tar -czf "$output_path" -C "$build_dir" .; then
+    log_info "Creating tarball: ${tarball_path}"
+    if ! tar -czf "$tarball_path" -C "$build_dir" .; then
          log_error "Failed to create tarball."
          exit 1
     fi
-    
+
     local size
-    size=$(du -h "$output_path" | cut -f1)
-    log_success "Created release artifact: ${output_path} (${size})"
+    size=$(du -h "$tarball_path" | cut -f1)
+    log_success "Created release artifact: ${tarball_path} (${size})"
 
     if [ -z "${CMD_DEPLOY_CALLER:-}" ]; then
         echo "" # Add a blank line for readability
         log_info "Next step: Push the artifact to a remote host:"
-        log_info "    $0 push <host> ${output_path}"
+        log_info "    $0 push <host> ${tarball_path}"
     fi
 }
 
@@ -856,7 +838,7 @@ cmd_build_recovery() {
     log_info "  To deploy this build to a remote host (includes packing):"
     log_info "    $0 deploy <host> ${build_dir}"
     log_info "  To package this build into a release artifact:"
-    log_info "    $0 pack ${build_dir}"
+    log_info "    $0 pack ${build_dir} $(get_tarball_path_from_build_dir "${build_dir}")"
 }
 
 # ============================================ 
@@ -979,9 +961,9 @@ BLUE=$'\033[0;34m'
 NC=$'\033[0m' # No Color
 
 # --- Utility Functions ---
-log_info() { echo -e "🌐 ${BLUE}→${NC} $1"; }
-log_success() { echo -e "🌐 ${GREEN}✓${NC} $1"; }
-log_warning() { echo -e "🌐 ${YELLOW}⚠${NC} $1"; }
+log_info() { echo -e "🌐 ${BLUE}→${NC} $1" >&2; }
+log_success() { echo -e "🌐 ${GREEN}✓${NC} $1" >&2; }
+log_warning() { echo -e "🌐 ${YELLOW}⚠${NC} $1" >&2; }
 log_error() { echo -e "🌐 ${RED}✗${NC} $1" >&2; }
 
 require_root() {
@@ -1293,21 +1275,15 @@ cmd_deploy() {
         exit 1
     fi
 
-    # --- Step 1: Pack the application ---
-    log_info "Step 1: Packing application locally..."
-    CMD_DEPLOY_CALLER=true cmd_pack "$build_dir"
+    # --- Step 1: Determine the tarball path ---
+    local tarball_path
+    tarball_path=$(get_tarball_path_from_build_dir "$build_dir")
+    log_info "Step 1: Determined tarball path: $tarball_path"
 
-    # --- Step 2: Determine the tarball path ---
-    local build_name
-    build_name=$(basename "$build_dir")
-    
-    local project_name
-    project_name=$(get_project_name_from_file_base "$build_name")
-    
-    local tarball_name="${build_name}.tar.gz"
-    local tarball_path="${RELEASES_BASE_DIR}/${project_name}/${tarball_name}"
-    log_info "Step 2: Determined tarball path: $tarball_path"
-    
+    # --- Step 2: Pack the application ---
+    log_info "Step 2: Packing application locally..."
+    CMD_DEPLOY_CALLER=true cmd_pack "$build_dir" "$tarball_path"
+
     # --- Step 3: Push the application ---
     log_info "Step 3: Pushing application to ${host}..."
     CMD_DEPLOY_CALLER=true cmd_push "$host" "$tarball_path"
@@ -1671,7 +1647,7 @@ Commands:
   build-recovery <build_dir> [opts]          Build an artifact from backups (recovery).
   unpack <tarball> <dir>                     Extract a release tarball into a directory.
   restore <source> <dir>                     Restore a database into a directory.
-  pack <build_dir>                           Package a build directory into a tarball.
+  pack <build_dir> <tarball_path>            Package a build directory into a tarball.
   push <host> <tarball_path>                 Upload a specific tarball to a VM.
   install                                  Install on VM (run remotely).
   deploy <host> <build_dir>                Pack, push, and install in one command.
@@ -1913,7 +1889,7 @@ cmd_build_release() {
     log_info "  To deploy this build to a remote host (includes packing):"
     log_info "    $0 deploy <host> ${build_dir}"
     log_info "  To package this build into a release artifact:"
-    log_info "    $0 pack ${build_dir}"
+    log_info "    $0 pack ${build_dir} $(get_tarball_path_from_build_dir "${build_dir}")"
 }
 
 # cmd_build_binary_release: Builds a release artifact from existing binaries,
@@ -1988,7 +1964,7 @@ cmd_build_binary_release() {
     log_info "  To deploy this build to a remote host (includes packing):"
     log_info "    $0 deploy <host> ${build_dir}"
     log_info "  To package this build into a release artifact:"
-    log_info "    $0 pack ${build_dir}"
+    log_info "    $0 pack ${build_dir} $(get_tarball_path_from_build_dir "${build_dir}")"
 }
 
 cmd_build_bootstrap() {
@@ -2084,7 +2060,7 @@ cmd_build_bootstrap() {
     log_info "  To deploy this build to a remote host (includes packing):"
     log_info "    $0 deploy <host> ${build_dir}"
     log_info "  To package this build into a release artifact:"
-    log_info "    $0 pack ${build_dir}"
+    log_info "    $0 pack ${build_dir} $(get_tarball_path_from_build_dir "${build_dir}")"
 }
 
 # ============================================ 

@@ -110,8 +110,8 @@ HOST="user@target-server.com"
 BUILD_DIR="/tmp/my-app"
 
 # 1. Package the artifact into a tarball
-./ripdep pack "$BUILD_DIR"
-TARBALL_PATH=$(find ~/src/backup/releases/my-app -name "*.tar.gz" -print -quit)
+TARBALL_PATH="${BUILD_DIR}.tar.gz"
+./ripdep pack "$BUILD_DIR" "$TARBALL_PATH"
 
 # 2. Push the tarball to the remote server
 # 'push' stages the build under /tmp/my-app/<version>/ and prints the exact installer command
@@ -313,15 +313,16 @@ If `age.key` sits next to the `--with-db` source it is copied in. The version co
 ```
 
 ### `pack`
-Packs a build directory into `<build-dir>.tar.gz` and writes it to `~/src/backup/releases/<project>/`. The build directory must contain `bin/` and `data/`.
+Packs a build directory into a compressed tarball at the given path. The build directory must contain `bin/` and `data/`.
 
 **Arguments:**
 *   `build-dir`: the completed build directory to package.
+*   `tarball-path`: where to write the tarball. `deploy` uses `<build-dir>.tar.gz`, next to the build directory.
 
 **Example:**
 ```bash
-# Packages the contents of /tmp/my-app
-./ripdep pack /tmp/my-app
+# Packages /tmp/my-app-v1.0.0 into /tmp/my-app-v1.0.0.tar.gz
+./ripdep pack /tmp/my-app-v1.0.0 /tmp/my-app-v1.0.0.tar.gz
 ```
 
 ### `unpack`
