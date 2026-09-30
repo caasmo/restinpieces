@@ -1153,7 +1153,7 @@ cmd_undeploy() {
 
     if [[ "$force" != "-y" && "$force" != "--force" ]]; then
         log_warning "This will PERMANENTLY DELETE the service '${project_name}', its user, and all associated files from '${host}'."
-        log_warning "This action cannot be undone. Consider creating a backup first with the 'backup' command."
+        log_warning "This action cannot be undone. Consider creating a backup first."
         read -p "Are you sure you want to continue? (yes/no) " -r
         echo
         if [[ ! "$REPLY" =~ ^[Yy][Ee][Ss]$ ]]; then
@@ -1385,51 +1385,12 @@ cmd_enable() {
     log_success "Enabled and started units for '${project_name}'."
 }
 
+# cmd_backup: not implemented. The whole-home tarball mixed reproducible files
+# with a live SQLite copy that can be torn, and the databases already have
+# dedicated backups. See doc/TODO.md.
 cmd_backup() {
-    local host=${1:-}
-    local project_name=${2:-}
-
-    if [ -z "$host" ] || [ -z "$project_name" ]; then
-        log_error "Usage: $0 backup <host> <project-name>"
-        exit 1
-    fi
-
-    local backup_name="${project_name}-backup-$(date +%Y%m%d-%H%M%S).tar.gz"
-    local remote_backup_path="/tmp/${backup_name}"
-
-    log_info "Starting backup for '${project_name}' from '${host}'..."
-    log_info "Creating remote tarball at ${remote_backup_path}..."
-
-    # Consolidate remote operations: check, create, chown
-    # We chown to the current user ($USER) so scp can read it without root
-    if ! ssh -t -o LogLevel=ERROR "${host}" "
-        if [ ! -d '/home/${project_name}' ]; then
-            echo 'Home directory not found' >&2
-            exit 2
-        fi
-        sudo tar -czf '${remote_backup_path}' -C '/home/${project_name}' . && \
-        sudo chown \$(whoami) '${remote_backup_path}'
-    "; then
-        local exit_code=$?
-        if [ $exit_code -eq 2 ]; then
-            log_info "No data or logs found in /home/${project_name}, skipping backup."
-            return 0
-        else
-            log_error "Failed to create remote backup. Aborting."
-            exit 1
-        fi
-    fi
-
-    log_info "Downloading backup from ${host}:${remote_backup_path}..."
-    if ! scp "${host}:${remote_backup_path}" "./${backup_name}"; then
-        log_error "Download failed."
-        exit 1
-    fi
-    log_success "Backup saved locally to: ${PWD}/${backup_name}"
-
-    log_info "Cleaning up remote backup file..."
-    ssh -t -o LogLevel=ERROR "${host}" "rm -f '${remote_backup_path}'"
-    log_success "Backup command finished."
+    log_error "backup is not implemented yet. See doc/TODO.md."
+    exit 1
 }
 
 cmd_cp() {
@@ -1476,7 +1437,7 @@ Commands:
   install                                  Install on VM (run remotely).
   deploy <host> <build_dir>                Pack, push, and install in one command.
   undeploy <host> <project-name>             Permanently remove a project and all its data from a host.
-  backup <host> <project-name>               Creates and downloads a backup of a project.
+  backup <host> <project-name>               Not implemented; see doc/TODO.md.
   cp <host> <project-name> <local-file>       Copy a file into /home/<project-name>/.
   maintenance <host> <project-name> <true|false> Toggle maintenance mode for a project.
   ripc <host> <project-name> [args]          Run ripc commands on a remote host.

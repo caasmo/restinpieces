@@ -89,13 +89,12 @@ Commands:
 ```bash
 PROJECT_PATH="$PWD"
 PROJECT_NAME=$(basename "$PROJECT_PATH")
-BUILD_BASE="/tmp"
 HOST="user@target-server.com"
 VERSION=$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)
-BUILD_DIR="${BUILD_BASE}/${PROJECT_NAME}-${VERSION}"
+BUILD_DIR="/tmp/${PROJECT_NAME}-${VERSION}"
 
 # 1. Build a complete bootstrap artifact locally
-./ripdep build "$PROJECT_PATH" "$BUILD_BASE" --with-agekey --with-systemd-service --with-db-local "$PROJECT_PATH/app.db"
+./ripdep build "$PROJECT_PATH" --with-agekey --with-systemd-service --with-db-local "$PROJECT_PATH/app.db"
 
 # 2. Deploy to remote
 ./ripdep deploy "$HOST" "$BUILD_DIR"
@@ -134,10 +133,9 @@ Commands:
 ```bash
 PROJECT_PATH="$PWD"
 PROJECT_NAME=$(basename "$PROJECT_PATH")
-BUILD_BASE="/tmp"
 HOST="user@target-server.com"
 VERSION=$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)
-BUILD_DIR="${BUILD_BASE}/${PROJECT_NAME}-${VERSION}"
+BUILD_DIR="/tmp/${PROJECT_NAME}-${VERSION}"
 
 # 1. Build an update artifact
 ./ripdep build "$PROJECT_PATH"
@@ -354,16 +352,7 @@ Stops and disables the project's systemd units, removes them, and deletes the se
 ```
 
 ### `backup`
-Creates a tarball of `/home/<project-name>` on the server, downloads it to the current directory as `<project-name>-backup-<timestamp>.tar.gz`, and deletes the remote copy.
-
-**Arguments:**
-*   `host`: the remote server address.
-*   `project-name`: the application name.
-
-**Example:**
-```bash
-./ripdep backup user@server.com my-app
-```
+Not implemented. The command is reserved; see [doc/TODO.md](TODO.md) for the reasons and the planned rework.
 
 ### `cp`
 Copies a local file into `/home/<project-name>/` on the server, owned by the service user with `600` permissions.

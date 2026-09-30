@@ -251,3 +251,10 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - would need `max_connections` in `[server]` (default 1000) and `Run` to switch from `ListenAndServeTLS`/`ListenAndServe` to `net.Listen` plus `ServeTLS`/`Serve` so the listener can be wrapped
 - refs: `server/server.go`, `config/config.go` (`Server`), `config/default.go`
 
+# ripdep backup: the DB could be corrupt, the DB is backed up by other means, I do not see the point
+
+- `cmd_backup` in `scripts/ripdep` is now a stub that exits with "not implemented"; the whole-home tarball code was removed
+- reasons: it tarred a live `/home/<project-name>`, so the SQLite copy can be torn and is never checked, while the databases already have consistent backups in `config/backup.go` strategies, restinpieces-backup daemons, and restinpieces-litestream
+- decide: drop the command for good, or rework it to take only non-reproducible files (e.g. `data/backups/` not yet pulled), skipping the live database
+- refs: `scripts/ripdep` (`cmd_backup`), `config/backup.go`, `doc/multiapp.md` (local backup vs Litestream comparison)
+
