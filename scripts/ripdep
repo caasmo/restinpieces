@@ -1417,6 +1417,30 @@ cmd_cp() {
     log_success "Copied to /home/${project_name}/${base}"
 }
 
+# cmd_dump: prints the latest config TOML of a deployed project on stdout.
+#
+# The remote exit code becomes the script's exit code. The caller redirects
+# stdout, so ripdep keeps every own message on stderr.
+cmd_dump() {
+    local host=${1:-}
+    local project_name=${2:-}
+
+    if [ -z "$host" ] || [ -z "$project_name" ]; then
+        log_error "Usage: $0 dump <host> <project-name>"
+        exit 1
+    fi
+
+    local key_path="/home/${project_name}/${AGE_KEY_FILENAME}"
+    local db_path="/home/${project_name}/${APP_DATA_DIRNAME}/${APP_DB_FILENAME}"
+    local ripc_bin="/home/${project_name}/${APP_BIN_DIRNAME}/ripc"
+
+    log_info "Dumping the configuration of '${project_name}' from '${host}'..."
+
+    # No -t: a tty merges stderr into stdout and rewrites line endings, which
+    # would corrupt the TOML. sudo -n fails fast without passwordless sudo.
+    ssh -o LogLevel=ERROR "${host}" "sudo -n -u ${project_name} sh -c 'cd /home/${project_name} && exec ${ripc_bin} -agekey ${key_path} -dbpath ${db_path} dump'"
+}
+
 # ============================================
 # HELP AND MAIN ENTRY POINT
 # ============================================ 
@@ -1438,6 +1462,7 @@ Commands:
   deploy <host> <build_dir>                Pack, push, and install in one command.
   undeploy <host> <project-name>             Permanently remove a project and all its data from a host.
   backup <host> <project-name>               Not implemented; see doc/TODO.md.
+  dump <host> <project-name>                 Print the latest config TOML on stdout.
   cp <host> <project-name> <local-file>       Copy a file into /home/<project-name>/.
   maintenance <host> <project-name> <true|false> Toggle maintenance mode for a project.
   ripc <host> <project-name> [args]          Run ripc commands on a remote host.
@@ -1854,6 +1879,7 @@ main() {
         deploy) cmd_deploy "$@" ;; 
         undeploy) cmd_undeploy "$@" ;;
         backup) cmd_backup "$@" ;;
+        dump) cmd_dump "$@" ;;
         cp) cmd_cp "$@" ;;
         maintenance) cmd_maintenance "$@" ;; 
         ripc) cmd_ripc "$@" ;;

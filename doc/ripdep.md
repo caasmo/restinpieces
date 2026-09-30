@@ -24,6 +24,7 @@
   - [deploy](#deploy)
   - [undeploy](#undeploy)
   - [backup](#backup)
+  - [dump](#dump)
   - [cp](#cp)
   - [maintenance](#maintenance)
   - [ripc](#ripc)
@@ -391,6 +392,20 @@ Stops and disables the project's systemd units, removes them, and deletes the se
 
 ### `backup`
 Not implemented. The command is reserved; see [doc/TODO.md](TODO.md) for the reasons and the planned rework.
+
+### `dump`
+Prints the latest configuration TOML of a deployed project on stdout. Every ripdep message goes to stderr, so redirect stdout to store the TOML:
+
+**Arguments:**
+*   `host`: the remote server address.
+*   `project-name`: the application name.
+
+The SSH user must run commands as the application user without a password prompt (`sudo -n`).
+
+**Example:**
+```bash
+./ripdep dump user@target-server.com my-app > my-app.toml
+```
 
 ### `cp`
 Copies a local file into `/home/<project-name>/` on the server, owned by the service user with `600` permissions.
