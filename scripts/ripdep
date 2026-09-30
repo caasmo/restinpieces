@@ -267,28 +267,12 @@ require_clean_worktree() {
     return 0
 }
 
-# require_age_key: Checks project dir contains the age identity file.
-# Returns 0 if present, 1 otherwise.
-require_age_key() {
-    local project_path=$1
-    if [ ! -f "${project_path}/${AGE_KEY_FILENAME}" ]; then
-        log_error "${AGE_KEY_FILENAME} not found in project: ${project_path}/${AGE_KEY_FILENAME}"
-        return 1
-    fi
-    return 0
-}
-
-# copy_age_key: copies the project's age key into the build dir.
-# Exits with an error if the project has no age key.
+# copy_age_key: copies the age key into the build dir.
 copy_age_key() {
-    local project_path=$1
+    local key_path=$1
     local build_dir=$2
 
-    if ! require_age_key "$project_path"; then
-        exit 1
-    fi
-    log_info "Using existing age key from project: ${project_path}/${AGE_KEY_FILENAME}"
-    cp "${project_path}/${AGE_KEY_FILENAME}" "${build_dir}/${AGE_KEY_FILENAME}"
+    cp "$key_path" "${build_dir}/${AGE_KEY_FILENAME}"
     log_success "Added age key to ${build_dir}/${AGE_KEY_FILENAME}"
 }
 
@@ -413,55 +397,39 @@ download_sqlite() {
     log_success "SQLite tools downloaded to ${dest_dir}/sqlite3"
 }
 
-# find_project_db: locates the project database, never creates.
-# Checks <project_name>.db first, then app.db fallback.
-# Echoes full path if found, echoes "" if none.
-find_project_db() {
-    local project_path=$1
-    local project_name=$2
-    local candidate="${project_path}/${project_name}${DB_SUFFIX}"
-    if [ -f "$candidate" ]; then
-        echo "$candidate"
+# check_db_integrity: runs PRAGMA integrity_check on every database in a data/
+# directory. Does nothing when the directory has none.
+check_db_integrity() {
+    local data_dir=$1
+
+    if ! ls "${data_dir}"/*.db >/dev/null 2>&1; then
         return 0
     fi
-    candidate="${project_path}/${APP_DB_FILENAME}"
-    if [ -f "$candidate" ]; then
-        echo "$candidate"
-        return 0
-    fi
-    echo ""
-}
 
-# require_project_db: locates the project database or fails.
-# Echoes the full path if found, returns 1 otherwise.
-require_project_db() {
-    local project_path=$1
-    local project_name=$2
+    log_info "Performing integrity check on databases in data/ directory..."
 
-    local source_db
-    source_db=$(find_project_db "$project_path" "$project_name")
-    if [ -z "$source_db" ]; then
-        log_error "No project database found in ${project_path}: tried ${project_name}${DB_SUFFIX} and ${APP_DB_FILENAME}"
-        return 1
-    fi
-    echo "$source_db"
-}
+    # The RETURN trap cleans the downloaded sqlite tools when this function
+    # returns, then disarms itself so it cannot fire again up the call stack.
+    local tmp_tools=""
+    trap 'cleanup_temp_dirs "$tmp_tools"; trap - RETURN' RETURN
 
-# copy_project_db: copies the project database into the build's data/ directory.
-# Exits with an error if the project has no database.
-copy_project_db() {
-    require_command sqlite3
-    local project_path=$1
-    local project_name=$2
-    local data_dir=$3
+    tmp_tools=$(mktemp -d)
+    download_sqlite "$tmp_tools"
 
-    local source_db
-    if ! source_db=$(require_project_db "$project_path" "$project_name"); then
-        exit 1
-    fi
-    log_info "Found project database: $source_db"
-    sqlite3 "$source_db" ".backup '${data_dir}/${APP_DB_FILENAME}'"
-    log_success "Backed up $(basename "$source_db") to ${data_dir}/${APP_DB_FILENAME}"
+    local db_file
+    for db_file in "${data_dir}"/*.db; do
+        [ -e "$db_file" ] || continue
+        log_info "Checking integrity of: $(basename "$db_file")"
+        local check_result
+        check_result=$("${tmp_tools}/sqlite3" "$db_file" "PRAGMA integrity_check;")
+        echo "$check_result"
+        if [[ "$check_result" != "ok" ]]; then
+            log_error "Database integrity check failed for ${db_file}!"
+            exit 1
+        fi
+    done
+
+    log_success "All database integrity checks passed."
 }
 
 # copy_bin_files: copies every file from the source bin/ directory into the
@@ -697,148 +665,6 @@ cmd_restore_db() {
     fi
 
     log_success "Database restored to ${data_dir}/${APP_DB_FILENAME}"
-}
-
-# cmd_build_recovery: Assembles a build directory for recovery.
-cmd_build_recovery() {
-    # Check for help first
-    if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
-        show_build_recovery_help
-        exit 0
-    fi
-
-    local build_base_dir=$1
-    shift
-
-    if [ -z "$build_base_dir" ]; then
-        log_error "Usage: $0 build-recovery <build_base_dir> [options]"
-        exit 1
-    fi
-
-    local with_release=""
-    local with_db=""
-
-    # Parse flags manually
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --with-release) with_release="$2"; shift 2 ;;
-            --with-db) with_db="$2"; shift 2 ;;
-            *) shift ;;
-        esac
-    done
-
-    if [ -z "$with_release" ] && [ -z "$with_db" ]; then
-        log_error "At least --with-release or --with-db must be specified."
-        exit 1
-    fi
-
-    local tmp_tools=""
-    # The trap will cleanup the tmp_tools dir on function exit.
- 	# very tricky behavior of trap:
-	#
-    # - In bash, when you set multiple trap commands for the same signal (in
-    # this case RETURN), each new trap overwrites the previous one rather than
-    # adding to it. Make sure to have one trap call
-	# 
-    # - quotes:
-    #   Single quotes - variable expands when trap FIRES
-	#       trap 'cleanup_temp_dirs "$release_source_dir" "$tmp_tools"' RETURN
-    #   Double quotes - variable expands when trap is SET
-    #       trap "rm -rf \"$tmp_tools\"" RETURN  
-    #       # Becomes literally: trap "rm -rf \"/tmp/tmp.abc123\"" RETURN
-    #
-    # - the most tricky thing: trap ... RETURN bubbles up through the call
-    # stack like an uncaught exception, that means it triggers after each
-    # funcion ends:
-    # if Set in cmd_build → fires when cmd_build returns ✅ but Trap persists
-    # bubbling → fires AGAIN when main returns ❌ At that point, tmp_tools and
-    # release_source_dir are local variables from cmd_build which no longer
-    # exist
-    #
-    # - Best practices  
-    #   - always check you have one trap per signal in the function
-    #   - always stop bubbling up in the caller of the function with trap
-    #       trap - RETURN
-    trap 'cleanup_temp_dirs "$tmp_tools"' RETURN
-
-    local project_name
-    if ! project_name=$(get_project_name_from_recovery_flags "$with_release" "$with_db"); then
-        log_error "Aborting recovery build: Could not determine project name."
-        exit 1
-    fi
-
-    local version="recovery-$(date +%Y%m%d)" # Default version if not discoverable
-    if [ -n "$with_release" ]; then
-        local tarball_name=$(basename "$with_release")
-        local tar_base="${tarball_name%.tar.gz}"
-        version=$(get_version_from_file_base "$tar_base")
-    fi
-
-    local build_dir="${build_base_dir}/${project_name}-${version}"
-    local bin_dir
-    bin_dir=$(get_bin_dir "$build_dir")
-    local data_dir
-    data_dir=$(get_data_dir "$build_dir")
-
-    log_info "Recovery Build for project: ${GREEN}${project_name}${NC} version: ${GREEN}${version}${NC}"
-    recreate_build_dir "$build_dir"
-
-    # 1. Handle Release Unpacking
-    if [ -n "$with_release" ]; then
-        cmd_unpack "$with_release" "$build_dir"
-    fi
-
-    # 2. Handle Database Restoration
-    if [ -n "$with_db" ]; then
-        cmd_restore_db "$with_db" "$build_dir"
-        
-        # Look for the age key in the same dir as the db source
-        local source_dir=$(dirname "$with_db")
-        if [ -f "${source_dir}/${AGE_KEY_FILENAME}" ]; then
-            log_info "Found ${AGE_KEY_FILENAME} in database source directory. Copying..."
-            cp "${source_dir}/${AGE_KEY_FILENAME}" "$build_dir/"
-            log_success "Copied ${AGE_KEY_FILENAME} to ${build_dir}/${AGE_KEY_FILENAME}"
-        fi
-    fi
-
-    # ---------------------------------------------------------
-    # DB Integrity Check
-    # ---------------------------------------------------------
-    if ls "${data_dir}"/*.db >/dev/null 2>&1; then
-        log_info "Performing integrity check on databases in data/ directory..."
-        
-        # Ensure we have a clean tools directory for sqlite (HOST tools)
-        tmp_tools=$(mktemp -d)
-        download_sqlite "$tmp_tools"
-
-        for db_file in "${data_dir}"/*.db; do
-            [ -e "$db_file" ] || continue
-            log_info "Checking integrity of: $(basename "$db_file")"
-            local check_result
-            check_result=$("${tmp_tools}/sqlite3" "$db_file" "PRAGMA integrity_check;")
-            echo "$check_result"
-            if [[ "$check_result" != "ok" ]]; then
-                log_error "Database integrity check failed for ${db_file}!"
-                exit 1
-            fi
-        done
-        log_success "All database integrity checks passed."
-    fi
-
-    # 3. Ensure self-contained script
-    generate_remote_script "$project_name" "${bin_dir}/ripdep-remote"
-    log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
-
-    check_log_db_path_systemd "${bin_dir}/ripc" "${build_dir}/${AGE_KEY_FILENAME}" "${data_dir}/${APP_DB_FILENAME}" "$project_name"
-
-    log_success "Recovery build completed successfully in: ${GREEN}${build_dir}${NC}"
-
-    echo "" # Add a blank line for readability
-    log_info "Next steps:"
-    log_info "  To deploy this build to a remote host (includes packing):"
-    log_info "    $0 deploy <host> ${build_dir}"
-    log_info "  To package this build into a release artifact:"
-    log_info "    $0 pack ${build_dir} $(get_tarball_path_from_build_dir "${build_dir}")"
 }
 
 # ============================================ 
@@ -1641,10 +1467,8 @@ ${GREEN}ripdep${NC} - Deployment and operations tool
 Usage: $0 <COMMAND> [ARGS...]
 
 Commands:
-  build-release <project-path> [build-base-dir]      Build a release artifact from source code.
+  build <project-path> [build-base-dir] [opts] Build a release artifact from source code.
   build-binary-release <source-dir> [build-base-dir] Build a release artifact from existing binaries.
-  build-bootstrap <project-path> [build-base-dir]    Build a bootstrap artifact from source code.
-  build-recovery <build_dir> [opts]          Build an artifact from backups (recovery).
   unpack <tarball> <dir>                     Extract a release tarball into a directory.
   restore <source> <dir>                     Restore a database into a directory.
   pack <build_dir> <tarball_path>            Package a build directory into a tarball.
@@ -1667,15 +1491,28 @@ Commands:
 EOF
 }
 
-show_build_release_help() {
+show_build_help() {
     cat <<EOF
-${GREEN}ripdep build-release${NC} - Build a release artifact from source.
+${GREEN}ripdep build${NC} - Build a release artifact from source.
 
-Usage: $0 build-release <project-path> [build-base-dir]
+Usage: $0 build <project-path> [build-base-dir] [options]
 
 Arguments:
   <project-path>     Path to the project source code to compile.
-  <build-base-dir>  The base directory where the build output will be created (default: /tmp).
+  <build-base-dir>   Base directory for the build output (default: /tmp).
+
+Options:
+  --with-agekey            Add the project's ${AGE_KEY_FILENAME}.
+  --with-systemd-service   Add the project's ${SYSTEMD_FILENAME}, or download
+                           the framework unit.
+  --with-db-local <path>   Restore a database into data/${APP_DB_FILENAME}.
+                           A .db file is copied; a .tar.gz snapshot is
+                           extracted into data/.
+
+Description:
+  The build compiles the project binary, adds ripc and ripdep-remote, and
+  creates an empty data/. The options add the age key, the systemd unit, and
+  the database needed for a first deployment or a recovery.
 
 EOF
 }
@@ -1697,39 +1534,6 @@ Description:
   to the project home, except the *.service files, which are installed as
   systemd units. No database and no ${AGE_KEY_FILENAME} are required. The version
   is the latest git tag; the worktree must be clean and HEAD must be on the tag.
-
-EOF
-}
-
-show_build_bootstrap_help() {
-    cat <<EOF
-${GREEN}ripdep build-bootstrap${NC} - Build a bootstrap artifact from source.
-
-Usage: $0 build-bootstrap <project-path> [build-base-dir]
-
-Arguments:
-  <project-path>     Path to the project source code to compile.
-  <build-base-dir>  The base directory where the build output will be created (default: /tmp).
-
-Description:
-  Similar to build-release, but also copies the project's existing database
-  and ${AGE_KEY_FILENAME} into the build and adds the systemd service
-  configuration. Both files must already exist in the project directory;
-  the key is never generated or downloaded and the database is never created.
-  The build fails if either is missing.
-
-EOF
-}
-
-show_build_recovery_help() {
-    cat <<EOF
-${GREEN}ripdep build-recovery${NC} - Build an artifact from backups.
-
-Usage: $0 build-recovery <build-dir> [options]
-
-Options:
-  --with-release <path>      Path to an existing release tarball (.tar.gz).
-  --with-db <source>         Database file (.db) or compressed backup (.tar.gz).
 
 EOF
 }
@@ -1767,27 +1571,6 @@ get_project_name_from_project_path() {
     return 1
 }
 
-# get_project_name_from_recovery_flags: Determines project name from recovery arguments
-get_project_name_from_recovery_flags() {
-    local with_release="$1"
-    local with_db="$2"
-
-    if [ -n "$with_release" ]; then
-        local tarball_name=$(basename "$with_release")
-        local tar_base="${tarball_name%.tar.gz}"
-        echo "$(get_project_name_from_file_base "$tar_base")"
-        return 0
-    fi
-
-    if [ -n "$with_db" ]; then
-        echo "$(basename "$(dirname "$with_db")")"
-        return 0
-    fi
-
-    log_error "Could not determine project name from recovery flags."
-    return 1
-}
-
 
 cleanup_temp_dirs() {
     local exit_code=$?
@@ -1812,25 +1595,88 @@ cleanup_temp_dirs() {
     return $exit_code
 }
 
-# cmd_build_release: Builds a standard release artifact from source code.
+# cmd_build: Builds a release artifact from source code.
 #
-# This command is used for updating an existing application with a new version of the code.
-# It compiles the Go binary and includes the necessary tools (`ripc`, `ripdep-remote`)
-# but does *not* create a new database or encryption keys, ensuring that existing data is preserved on deployment.
-cmd_build_release() {
+# The default artifact carries the compiled binary, ripc, and ripdep-remote
+# with an empty data/. Optional flags add the age key, the systemd unit, and a
+# database restored from a local backup.
+#
+# Usage: ripdep build <project-path> [build-base-dir] [options]
+cmd_build() {
     # Check for help first
     if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
-        show_build_release_help
+        show_build_help
         exit 0
     fi
 
-    if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-        log_error "Usage: $0 build-release <project-path> [build-base-dir]"
+    # -------------------------------------------------------------
+    # Parse arguments
+    # -------------------------------------------------------------
+    local project_path=""
+    local build_base_dir=""
+    local with_agekey=""
+    local with_systemd_service=""
+    local db_source=""
+
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --with-agekey)
+                with_agekey=1
+                shift
+                ;;
+            --with-systemd-service)
+                with_systemd_service=1
+                shift
+                ;;
+            --with-db-local)
+                if [ $# -lt 2 ]; then
+                    log_error "--with-db-local requires a path, for example --with-db-local /backups/app.db"
+                    exit 1
+                fi
+                db_source=$2
+                shift 2
+                ;;
+            -*)
+                log_error "Unknown option: $1"
+                exit 1
+                ;;
+            *)
+                if [ -z "$project_path" ]; then
+                    project_path=$1
+                elif [ -z "$build_base_dir" ]; then
+                    build_base_dir=$1
+                else
+                    log_error "Too many arguments: $1"
+                    exit 1
+                fi
+                shift
+                ;;
+        esac
+    done
+
+    # -------------------------------------------------------------
+    # Validate arguments
+    # -------------------------------------------------------------
+    if [ -z "$project_path" ]; then
+        log_error "Usage: $0 build <project-path> [build-base-dir] [options]"
         exit 1
     fi
-    local project_path=$1
-    local build_base_dir=${2:-/tmp}
 
+    build_base_dir=${build_base_dir:-/tmp}
+
+    if [ -n "$with_agekey" ] && [ ! -f "${project_path}/${AGE_KEY_FILENAME}" ]; then
+        log_error "${AGE_KEY_FILENAME} not found: ${project_path}/${AGE_KEY_FILENAME}"
+        exit 1
+    fi
+
+    if [ -n "$db_source" ] && [ ! -f "$db_source" ]; then
+        log_error "Database source not found: ${db_source}"
+        exit 1
+    fi
+
+    # -------------------------------------------------------------
+    # Validate the project and its version
+    # -------------------------------------------------------------
     log_info "Creating a new release build..."
 
     if ! is_go_project "$project_path"; then
@@ -1854,6 +1700,9 @@ cmd_build_release() {
         exit 1
     fi
 
+    # -------------------------------------------------------------
+    # Create the build directory
+    # -------------------------------------------------------------
     local build_dir="${build_base_dir}/${project_name}-${version}"
     local bin_dir
     bin_dir=$(get_bin_dir "$build_dir")
@@ -1870,7 +1719,11 @@ cmd_build_release() {
     log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"
     log_info "  Target OS/Arch             : ${GREEN}$TARGET_GOOS/$TARGET_GOARCH${NC}"
     log_info ""
-    
+
+    # -------------------------------------------------------------
+    # Build the release payload
+    # -------------------------------------------------------------
+
     # Build project binary, naming it after the project
     build_project_binary "$bin_dir" "$project_path" "$project_name"
 
@@ -1880,6 +1733,31 @@ cmd_build_release() {
 
     log_info "Building release tools (ripc)..."
     build_ripc "$bin_dir" "$project_path"
+
+    # -------------------------------------------------------------
+    # Add the optional pieces
+    # -------------------------------------------------------------
+    if [ -n "$with_agekey" ]; then
+        copy_age_key "${project_path}/${AGE_KEY_FILENAME}" "$build_dir"
+    fi
+
+    if [ -n "$db_source" ]; then
+        cmd_restore_db "$db_source" "$build_dir"
+    fi
+
+    if [ -n "$with_systemd_service" ]; then
+        create_systemd_conf "$project_name" "$project_path" "$build_dir"
+    fi
+
+    # -------------------------------------------------------------
+    # DB integrity check
+    # -------------------------------------------------------------
+    check_db_integrity "$data_dir"
+
+    # -------------------------------------------------------------
+    # Systemd log database path check
+    # -------------------------------------------------------------
+    check_log_db_path_systemd "${bin_dir}/ripc" "${build_dir}/${AGE_KEY_FILENAME}" "${data_dir}/${APP_DB_FILENAME}" "$project_name"
 
     log_success "Release build completed successfully in: ${GREEN}${build_dir}${NC}"
 
@@ -1967,102 +1845,6 @@ cmd_build_binary_release() {
     log_info "    $0 pack ${build_dir} $(get_tarball_path_from_build_dir "${build_dir}")"
 }
 
-cmd_build_bootstrap() {
-    # Check for help first
-    if [[ "${1:-}" == "help" ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
-        show_build_bootstrap_help
-        exit 0
-    fi
-
-    if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-        log_error "Usage: $0 build-bootstrap <project-path> [build-base-dir]"
-        exit 1
-    fi
-    local project_path=$1
-    local build_base_dir=${2:-/tmp}
-
-
-    log_info "Creating a new bootstrap build..."
-
-    if ! is_go_project "$project_path"; then
-        log_error "Validation failed: Not a valid Go project."
-        exit 1
-    fi
-
-    local project_name
-    if ! project_name=$(get_project_name_from_project_path "$project_path"); then
-        log_error "Aborting bootstrap: Could not determine project name."
-        exit 1
-    fi
-
-    local version
-    if ! version=$(cd "$project_path" && get_latest_tag); then
-        log_error "Could not determine version for project: ${project_path}"
-        exit 1
-    fi
-
-    if ! require_clean_worktree "$project_path"; then
-        exit 1
-    fi
-
-    local build_dir="${build_base_dir}/${project_name}-${version}"
-    local bin_dir
-    bin_dir=$(get_bin_dir "$build_dir")
-    local data_dir
-    data_dir=$(get_data_dir "$build_dir")
-    recreate_build_dir "$build_dir"
-
-    log_info "Build configuration:"
-    log_info "  Project path               : ${project_path}"
-    log_info "  Build base directory       : $build_base_dir"
-    log_info "  Build project directory    : $build_dir"
-    log_info "  Project name               : ${GREEN}$project_name${NC}"
-    log_info "  Project version            : ${GREEN}$version${NC}"
-    log_info "  Host OS/Arch               : ${GREEN}$HOST_GOOS/$HOST_GOARCH${NC}"
-    log_info "  Target OS/Arch             : ${GREEN}$TARGET_GOOS/$TARGET_GOARCH${NC}"
-    log_info ""
-    
-    # -------------------------------------------------------------
-    # 1. Bootstrap application data from existing project
-    # -------------------------------------------------------------
-    log_info "Bootstrapping application data..."
-
-    copy_age_key "$project_path" "$build_dir"
-    copy_project_db "$project_path" "$project_name" "$data_dir"
-
-    # -------------------------------------------------------------
-    # 2. Add systemd service configuration
-    # -------------------------------------------------------------
-    create_systemd_conf "$project_name" "$project_path" "$build_dir"
-
-    # -------------------------------------------------------------
-    # 3. Assemble Target Payload (for remote deployment)
-    # -------------------------------------------------------------
-    log_info "Building and assembling target artifacts ($TARGET_GOOS/$TARGET_GOARCH)..."
-    
-    # Build project binary, naming it after the project
-    build_project_binary "$bin_dir" "$project_path" "$project_name"
-
-    # Generate the remote script to make the artifact self-contained
-    generate_remote_script "$project_name" "${bin_dir}/ripdep-remote"
-    log_info "Generated remote deploy script to ${bin_dir}/ripdep-remote"
-
-    log_info "Building target release tools (ripc)..."
-    build_ripc "$bin_dir" "$project_path"
-
-    check_log_db_path_systemd "${bin_dir}/ripc" "${build_dir}/${AGE_KEY_FILENAME}" "${data_dir}/${APP_DB_FILENAME}" "$project_name"
-
-    log_success "Bootstrap build completed successfully in: ${GREEN}${build_dir}${NC}"
-
-    echo "" # Add a blank line for readability
-    log_info "Next steps:"
-    print_configure_step "$project_path" "$build_dir"
-    log_info "  To deploy this build to a remote host (includes packing):"
-    log_info "    $0 deploy <host> ${build_dir}"
-    log_info "  To package this build into a release artifact:"
-    log_info "    $0 pack ${build_dir} $(get_tarball_path_from_build_dir "${build_dir}")"
-}
-
 # ============================================ 
 # HOOKS 
 # ============================================ 
@@ -2102,10 +1884,8 @@ main() {
     shift
     
     case "$cmd" in
-        build-release) cmd_build_release "$@" ;;
+        build) cmd_build "$@" ;;
         build-binary-release) cmd_build_binary_release "$@" ;;
-        build-bootstrap) cmd_build_bootstrap "$@" ;;
-        build-recovery) cmd_build_recovery "$@" ;;
         unpack) cmd_unpack "$@" ;;
         restore) cmd_restore_db "$@" ;;
         pack) cmd_pack "$@" ;; 
@@ -2136,6 +1916,25 @@ main() {
     #   - always check one trap per signal
     #   - always stop bubbling up in the caller of the function with the trap
     #       trap - RETURN
+    #
+    # - In bash, when you set multiple trap commands for the same signal (in
+    # this case RETURN), each new trap overwrites the previous one rather than
+    # adding to it. Make sure to have one trap call
+	# 
+    # - quotes:
+    #   Single quotes - variable expands when trap FIRES
+	#       trap 'cleanup_temp_dirs "$release_source_dir" "$tmp_tools"' RETURN
+    #   Double quotes - variable expands when trap is SET
+    #       trap "rm -rf \"$tmp_tools\"" RETURN  
+    #       # Becomes literally: trap "rm -rf \"/tmp/tmp.abc123\"" RETURN
+    #
+    # - the most tricky thing: trap ... RETURN bubbles up through the call
+    # stack like an uncaught exception, that means it triggers after each
+    # funcion ends:
+    # if Set in cmd_build → fires when cmd_build returns ✅ but Trap persists
+    # bubbling → fires AGAIN when main returns ❌ At that point, tmp_tools and
+    # release_source_dir are local variables from cmd_build which no longer
+    # exist
     trap - RETURN
 }
 

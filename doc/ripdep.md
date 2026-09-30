@@ -13,10 +13,8 @@
   - [Restore Application from Backup](#3-restore-application-from-backup)
   - [Deploy the Same Application Under a Different Name](#4-deploy-the-same-application-under-a-different-name)
 - [Commands](#commands)
-  - [build-release](#build-release)
+  - [build](#build)
   - [build-binary-release](#build-binary-release)
-  - [build-bootstrap](#build-bootstrap)
-  - [build-recovery](#build-recovery)
   - [pack](#pack)
   - [unpack](#unpack)
   - [restore](#restore)
@@ -78,12 +76,12 @@ On the remote server the application lives in `/home/<app-name>`. The build comm
 
 ### 1. First-Time Application Bootstrap
 
-Deploy a new application to a fresh server. `build-bootstrap` compiles the binary and copies the project's existing `age.key`, database, and systemd unit into the build directory. `deploy` packs the build, uploads it, and runs the remote installer, which creates the service user, the `/home/<app-name>` layout, and the systemd unit.
+Deploy a new application to a fresh server. `build` compiles the binary; `--with-agekey`, `--with-db-local`, and `--with-systemd-service` add the project's `age.key`, database, and systemd unit. `deploy` packs the build, uploads it, and runs the remote installer, which creates the service user, the `/home/<app-name>` layout, and the systemd unit.
 
 Requirements:
 
 *   The project is a git repository with no uncommitted changes and HEAD exactly on a tag; the tag is the version. `app.db` and `age.key` must be gitignored so the worktree check passes.
-*   `age.key` and the database (`app.db` or `<project-name>.db`) exist in the project directory. `build-bootstrap` copies both and fails if either is missing.
+*   `age.key` and the database exist in the project directory; the options fail when a path is missing.
 *   The target server is fresh (no application user or `/home/<app-name>` yet) and reachable over SSH with `sudo`.
 
 Commands:
@@ -97,7 +95,7 @@ VERSION=$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)
 BUILD_DIR="${BUILD_BASE}/${PROJECT_NAME}-${VERSION}"
 
 # 1. Build a complete bootstrap artifact locally
-./ripdep build-bootstrap "$PROJECT_PATH" "$BUILD_BASE"
+./ripdep build "$PROJECT_PATH" "$BUILD_BASE" --with-agekey --with-systemd-service --with-db-local "$PROJECT_PATH/app.db"
 
 # 2. Deploy to remote
 ./ripdep deploy "$HOST" "$BUILD_DIR"
@@ -123,7 +121,7 @@ ssh -t "$HOST" "sudo /tmp/my-app/v1.0.0/bin/ripdep-remote install"
 
 ### 2. Update Application
 
-Deploy a new version of the application code to an existing server, preserving all existing data. `build-release` builds an artifact with an empty `data/`, so the installer has no data files to overwrite and the live database and key stay as they are. Restart the service to run the new binary.
+Deploy a new version of the application code to an existing server, preserving all existing data. `build` builds an artifact with an empty `data/`, so the installer has no data files to overwrite and the live database and key stay as they are. Restart the service to run the new binary.
 
 Requirements:
 
@@ -142,7 +140,7 @@ VERSION=$(git -C "$PROJECT_PATH" describe --tags --abbrev=0)
 BUILD_DIR="${BUILD_BASE}/${PROJECT_NAME}-${VERSION}"
 
 # 1. Build an update artifact
-./ripdep build-release "$PROJECT_PATH"
+./ripdep build "$PROJECT_PATH"
 
 # 2. Deploy
 ./ripdep deploy "$HOST" "$BUILD_DIR"
@@ -153,28 +151,28 @@ BUILD_DIR="${BUILD_BASE}/${PROJECT_NAME}-${VERSION}"
 
 ### 3. Restore Application from Backup
 
-Provision a new server (for example, a standby replica) from an existing backup. `build-recovery` assembles an artifact from a release tarball and/or a database backup, and `deploy` ships it to a fresh server reachable over SSH with `sudo`.
+Provision a new server (for example, a standby replica) from an existing backup. Check out the release that was running, build it with the database backup, the age key, and the systemd unit, and `deploy` ships the artifact to a fresh server reachable over SSH with `sudo`.
 
 Requirements:
 
-*   At least one of `--with-release` or `--with-db` is required.
-*   `--with-release` points to a release tarball named `<project>-<version>.tar.gz`; the project name and version are read from the filename.
-*   `--with-db` points to a database file (`.db`) or a compressed snapshot (`.tar.gz`). When no release is given, the project name is taken from the database source's parent directory name.
-*   `age.key` must sit next to the `--with-db` source; without it the restored database cannot be decrypted.
+*   `--with-db-local` points to a database file (`.db`) or a compressed snapshot (`.tar.gz`). A `.db` file is copied to `data/app.db`; a snapshot is extracted into `data/`.
+*   `--with-agekey` adds the project's age key, so the restored database can be decrypted.
+*   `--with-systemd-service` adds the systemd unit, required on a fresh server.
 
 Commands:
 
 ```bash
-BUILD_BASE="/tmp"
+PROJECT_PATH="/path/to/my-app"
 HOST="user@new-server.com"
-RELEASE_PATH="/path/to/previous/release.tar.gz"
 DB_PATH="/path/to/backup/data/app.db"
+VERSION="v1.0.0"
 
-# 1. Build the recovery artifact
-./ripdep build-recovery "$BUILD_BASE" --with-release "$RELEASE_PATH" --with-db "$DB_PATH"
+# 1. Build the artifact from the release that was running
+git -C "$PROJECT_PATH" checkout "$VERSION"
+./ripdep build "$PROJECT_PATH" --with-agekey --with-systemd-service --with-db-local "$DB_PATH"
 
 # 2. Deploy
-./ripdep deploy "$HOST" "${BUILD_BASE}/my-app"
+./ripdep deploy "$HOST" "/tmp/my-app-${VERSION}"
 ```
 
 ### 4. Deploy the Same Application Under a Different Name
@@ -183,7 +181,7 @@ To run the same application twice on one server under two names, build through a
 
 The link must sit in the same parent directory as the real project, so run the commands from inside the project directory and let `../` be that parent.
 
-The second service must already exist on the server; a release build only updates it, so create it first with `build-bootstrap` or `build-recovery`.
+The second service must already exist on the server; a release build only updates it, so create it first with a build that carries the age key, the database, and the systemd unit.
 
 ```bash
 cd /path/to/my-app
@@ -191,7 +189,7 @@ APP_NAME="my-app-2"
 PROJECT_PATH="$PWD"
 
 ln -s "$PROJECT_PATH" "../${APP_NAME}"
-./ripdep build-release "../${APP_NAME}"
+./ripdep build "../${APP_NAME}"
 
 # The build prints its directory, e.g. /tmp/my-app-2-v1.0.0
 ./ripdep deploy user@server.com "/tmp/${APP_NAME}-v1.0.0"
@@ -200,8 +198,8 @@ ln -s "$PROJECT_PATH" "../${APP_NAME}"
 
 ## Commands
 
-### `build-release`
-Builds `<project>-<version>/` for updating an existing installation:
+### `build`
+Builds `<project>-<version>/` from source for a release:
 
 ```text
 <project>-<version>/
@@ -212,6 +210,12 @@ Builds `<project>-<version>/` for updating an existing installation:
 └── data/ # empty
 ```
 
+Options add the pieces a first deployment or a recovery needs:
+
+*   `--with-agekey`: copy the project's `age.key` into the build.
+*   `--with-systemd-service`: add the project's `systemd.service`, or download the framework unit when the project has none.
+*   `--with-db-local <path>`: restore a database into `data/app.db`. A `.db` file is copied; a `.tar.gz` snapshot is extracted into `data/`.
+
 **Arguments:**
 *   `project-path`: the project source to compile. It must be a Go project whose worktree is clean and whose HEAD is exactly on the latest tag; the build fails otherwise. The tag is the version. The deployed name is the last part of this path, so building through a symlink deploys under the symlink's name (see [Deploy the Same Application Under a Different Name](#4-deploy-the-same-application-under-a-different-name)).
 *   `build-base-dir`: the base directory for the build output (default `/tmp`). The build directory `<project>-<version>` is created inside it.
@@ -220,14 +224,14 @@ Cross-compile by setting `GOOS` and `GOARCH`; the host platform is the default.
 
 **Example:**
 ```bash
-# Creates a release build in /tmp/my-app
-./ripdep build-release /path/to/my-app /tmp
+# Creates a release build in /tmp/my-app-v1.0.0
+./ripdep build /path/to/my-app /tmp
 
-# The build base defaults to /tmp
-./ripdep build-release /path/to/my-app
+# A complete build for a fresh server
+./ripdep build /path/to/my-app --with-agekey --with-systemd-service --with-db-local /path/to/app.db
 
 # Cross-compile for another target
-GOOS=linux GOARCH=arm64 ./ripdep build-release /path/to/my-app
+GOOS=linux GOARCH=arm64 ./ripdep build /path/to/my-app
 ```
 
 ### `build-binary-release`
@@ -242,7 +246,7 @@ Builds `<project>-<version>/` for a project whose binaries are already built:
 └── data/ # empty
 ```
 
-Use this for projects that ship ready-to-run binaries: put them in the source `bin/` directory, put the other files (for example a Prometheus scrape file and the systemd units) in the source root, and tag the repository. The version is the latest git tag; the worktree must be clean and HEAD must be on the tag, exactly like `build-release`. No database and no `age.key` are required.
+Use this for projects that ship ready-to-run binaries: put them in the source `bin/` directory, put the other files (for example a Prometheus scrape file and the systemd units) in the source root, and tag the repository. The version is the latest git tag; the worktree must be clean and HEAD must be on the tag, exactly like `build`. No database and no `age.key` are required.
 
 **Arguments:**
 *   `source-dir`: the project directory holding the binaries and the other files. The deployed name is the last part of this path.
@@ -252,64 +256,6 @@ Use this for projects that ship ready-to-run binaries: put them in the source `b
 ```bash
 # Creates a binary release build in /tmp/my-app
 ./ripdep build-binary-release /path/to/my-app /tmp
-```
-
-### `build-bootstrap`
-First-ever deployment. Same as `build-release`, plus it copies the project's `age.key` and database and renders the systemd unit:
-
-```text
-<project>-<version>/
-├── age.key
-├── <project>.service
-├── bin/
-│   ├── <project> # compiled app binary
-│   ├── ripc # on-server config tool
-│   └── ripdep-remote # remote installer
-└── data/
-    └── app.db
-```
-
-`age.key` and the database must already exist in the project directory; the build fails if either is missing. The database is located as `<project-name>.db`, falling back to `app.db`. The systemd unit is read from `<project>/systemd.service` if present, otherwise downloaded from the framework repository.
-
-**Arguments:**
-*   `project-path`: the project source to compile, with the same git requirements as `build-release`.
-*   `build-base-dir`: the base directory for the build output (default `/tmp`).
-
-**Example:**
-```bash
-# Creates a bootstrap build in /tmp/my-app
-./ripdep build-bootstrap /path/to/my-app /tmp
-```
-
-### `build-recovery`
-Assembles an artifact from existing backups for disaster recovery or for provisioning a new server from an existing application's data. At least one flag is required:
-
-*   `--with-release <path>`: extract binaries, tools, and the systemd unit from a release tarball.
-*   `--with-db <source>`: restore a database from a `.db` file or a `.tar.gz` snapshot.
-
-If `age.key` sits next to the `--with-db` source it is copied in. The version comes from the release tarball, or `recovery-<YYYYMMDD>` if only a database is given. Every `data/*.db` is checked with `PRAGMA integrity_check` and the build fails on corruption.
-
-```text
-<project>-<version>/
-├── age.key # if found next to the --with-db source
-├── <project>.service # if from --with-release
-├── bin/
-│   ├── <project> # if from --with-release
-│   ├── ripc # if from --with-release
-│   └── ripdep-remote # remote installer
-└── data/
-    └── app.db # from --with-db
-```
-
-**Arguments:**
-*   `build-base-dir`: the base directory for the build output.
-*   `--with-release <path>`: path to a release tarball (`.tar.gz`).
-*   `--with-db <source>`: path to a database file (`.db`) or compressed backup (`.tar.gz`).
-
-**Example:**
-```bash
-# Creates a recovery build in /tmp/my-app-recovery
-./ripdep build-recovery /tmp --with-release ./release.tar.gz --with-db ./app.db
 ```
 
 ### `pack`
@@ -326,7 +272,7 @@ Packs a build directory into a compressed tarball at the given path. The build d
 ```
 
 ### `unpack`
-Extracts a release tarball into a directory. Used by `build-recovery`.
+Extracts a release tarball into a directory.
 
 **Arguments:**
 *   `tarball`: the release tarball to extract.
