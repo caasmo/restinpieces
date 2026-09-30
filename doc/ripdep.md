@@ -11,7 +11,8 @@
   - [First-Time Application Bootstrap](#1-first-time-application-bootstrap)
   - [Update Application](#2-update-application)
   - [Restore Application from Backup](#3-restore-application-from-backup)
-  - [Deploy the Same Application Under a Different Name](#4-deploy-the-same-application-under-a-different-name)
+  - [Recover a Corrupted Database](#4-recover-a-corrupted-database)
+  - [Deploy the Same Application Under a Different Name](#5-deploy-the-same-application-under-a-different-name)
 - [Commands](#commands)
   - [build](#build)
   - [build-binary-release](#build-binary-release)
@@ -153,7 +154,7 @@ Provision a new server (for example, a standby replica) from an existing backup.
 
 Requirements:
 
-*   `--with-db-local` points to a database file (`.db`) or a compressed snapshot (`.tar.gz`). A `.db` file is copied to `data/app.db`; a snapshot is extracted into `data/`.
+*   `--with-db-local` points to the database file (`.db`) or a tarball of the data directory contents (`.tar.gz`).
 *   `--with-agekey` adds the project's age key, so the restored database can be decrypted.
 *   `--with-systemd-service` adds the systemd unit, required on a fresh server.
 
@@ -173,7 +174,44 @@ git -C "$PROJECT_PATH" checkout "$VERSION"
 ./ripdep deploy "$HOST" "/tmp/my-app-${VERSION}"
 ```
 
-### 4. Deploy the Same Application Under a Different Name
+### 4. Recover a Corrupted Database
+
+The application is healthy but `data/app.db` is damaged or has been wiped (for example by a bad migration or an SQL injection) and fails its integrity check. The binaries are fine, so rebuild the artifact from the tag that is running with the last good backup. `deploy` replaces `data/app.db`; files that are not in the artifact stay untouched.
+
+Stop the service first. The installer copies the backup straight over the live database, so no process may still hold it open.
+
+Requirements:
+
+*   `--with-db-local` points to the last good backup: the database file (`.db`) or a tarball of the data directory contents (`.tar.gz`).
+*   The backup belongs to the age key already installed at `/home/<app-name>/age.key`.
+*   The project is checked out on the release that is running, with a clean worktree.
+
+`build` runs `PRAGMA integrity_check` on the restored database and stops before `deploy` when the backup is corrupt.
+
+Commands:
+
+```bash
+PROJECT_PATH="/path/to/my-app"
+HOST="user@my-server.com"
+PROJECT_NAME="my-app"
+DB_PATH="/path/to/backup/data/app.db"
+VERSION="v1.0.0"
+
+# 1. Stop the service so nothing writes while the database is replaced
+./ripdep stop "$HOST" "$PROJECT_NAME"
+
+# 2. Build the artifact from the release that is running, with the good backup
+git -C "$PROJECT_PATH" checkout "$VERSION"
+./ripdep build "$PROJECT_PATH" --with-db-local "$DB_PATH"
+
+# 3. Deploy: the installer replaces data/app.db
+./ripdep deploy "$HOST" "/tmp/${PROJECT_NAME}-${VERSION}"
+
+# 4. Start the service again
+./ripdep restart "$HOST" "$PROJECT_NAME"
+```
+
+### 5. Deploy the Same Application Under a Different Name
 
 To run the same application twice on one server under two names, build through a symlink named after the second app. The deployed name is the last part of the project path, so the symlink name becomes the service name.
 
@@ -212,10 +250,10 @@ Options add the pieces a first deployment or a recovery needs:
 
 *   `--with-agekey`: copy the project's `age.key` into the build.
 *   `--with-systemd-service`: add the project's `systemd.service`, or download the framework unit when the project has none.
-*   `--with-db-local <path>`: restore a database into `data/app.db`. A `.db` file is copied; a `.tar.gz` snapshot is extracted into `data/`.
+*   `--with-db-local <path>`: add a database to the build. A `.db` file becomes `data/app.db`; a `.tar.gz` is unpacked into `data/`, so pack the contents of the data directory, not the directory itself (`tar -czf db.tar.gz -C data .`).
 
 **Arguments:**
-*   `project-path`: the project source to compile. It must be a Go project whose worktree is clean and whose HEAD is exactly on the latest tag; the build fails otherwise. The tag is the version. The deployed name is the last part of this path, so building through a symlink deploys under the symlink's name (see [Deploy the Same Application Under a Different Name](#4-deploy-the-same-application-under-a-different-name)).
+*   `project-path`: the project source to compile. It must be a Go project whose worktree is clean and whose HEAD is exactly on the latest tag; the build fails otherwise. The tag is the version. The deployed name is the last part of this path, so building through a symlink deploys under the symlink's name (see [Deploy the Same Application Under a Different Name](#5-deploy-the-same-application-under-a-different-name)).
 *   `build-base-dir`: the base directory for the build output (default `/tmp`). The build directory `<project>-<version>` is created inside it.
 
 Cross-compile by setting `GOOS` and `GOARCH`; the host platform is the default.
@@ -282,10 +320,10 @@ Extracts a release tarball into a directory.
 ```
 
 ### `restore`
-Restores a database into `<dir>/data/app.db`. A `.db` source is copied; a `.tar.gz` source is extracted.
+Restores a database into `<dir>/data/app.db`. A `.db` source is copied there; a `.tar.gz` source is unpacked into `<dir>/data/`.
 
 **Arguments:**
-*   `source`: the database file (`.db`) or compressed snapshot (`.tar.gz`).
+*   `source`: the database file (`.db`) or a tarball of the data directory contents (`.tar.gz`).
 *   `dir`: the target directory.
 
 **Example:**

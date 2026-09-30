@@ -653,9 +653,9 @@ cmd_restore_db() {
         log_info "Copying database file: ${source}..."
         cp "$source" "${data_dir}/${APP_DB_FILENAME}"
     elif [[ "$source" == *.tar.gz ]]; then
-        log_info "Unpacking database snapshot: ${source}..."
+        log_info "Unpacking data tarball: ${source}..."
         if ! tar -xzf "$source" -C "$data_dir"; then
-            log_error "Failed to unpack database snapshot."
+            log_error "Failed to unpack the data tarball."
             exit 1
         fi
     else
@@ -1466,9 +1466,9 @@ Options:
   --with-agekey            Add the project's ${AGE_KEY_FILENAME}.
   --with-systemd-service   Add the project's ${SYSTEMD_FILENAME}, or download
                            the framework unit.
-  --with-db-local <path>   Restore a database into data/${APP_DB_FILENAME}.
-                           A .db file is copied; a .tar.gz snapshot is
-                           extracted into data/.
+  --with-db-local <path>   Add a database to the build. A .db file becomes
+                           data/${APP_DB_FILENAME}; a .tar.gz is unpacked into
+                           data/.
 
 Description:
   The build compiles the project binary, adds ripc and ripdep-remote, and
