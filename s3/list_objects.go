@@ -89,11 +89,11 @@ func (l *ListParams) Encode() string {
 	return query.Encode()
 }
 
-// ListObjects retrieves paginated objects list.
+// ListObjects retrieves the paginated objects list of bucket.
 //
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_ListObjectsV2.html
-func (s3 *S3) ListObjects(ctx context.Context, params ListParams, optReqFuncs ...func(*http.Request)) (result *ListObjectsResponse, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s3.URL("?"+params.Encode()), nil)
+func (s3 *S3) ListObjects(ctx context.Context, bucket string, params ListParams, optReqFuncs ...func(*http.Request)) (result *ListObjectsResponse, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s3.URL(bucket, "?"+params.Encode()), nil)
 	if err != nil {
 		return nil, err
 	}

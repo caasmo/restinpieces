@@ -17,7 +17,7 @@ func TestS3_DeleteObject(t *testing.T) {
 			w.WriteHeader(http.StatusNoContent)
 		})
 
-		err := client.DeleteObject(context.Background(), "mydb/0/12-15.ltx")
+		err := client.DeleteObject(context.Background(), testBucket, "mydb/0/12-15.ltx")
 		if err != nil {
 			t.Fatalf("DeleteObject() failed: %v", err)
 		}
@@ -36,7 +36,7 @@ func TestS3_DeleteObject(t *testing.T) {
 			_, _ = w.Write([]byte(`<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message></Error>`))
 		})
 
-		err := client.DeleteObject(context.Background(), "mydb/0/missing.ltx")
+		err := client.DeleteObject(context.Background(), testBucket, "mydb/0/missing.ltx")
 
 		respErr, ok := err.(*ResponseError)
 		if !ok {

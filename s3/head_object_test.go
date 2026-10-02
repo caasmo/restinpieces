@@ -25,7 +25,7 @@ func TestS3_HeadObject(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		info, err := client.HeadObject(context.Background(), "mydb/0/12-15.ltx")
+		info, err := client.HeadObject(context.Background(), testBucket, "mydb/0/12-15.ltx")
 		if err != nil {
 			t.Fatalf("HeadObject() failed: %v", err)
 		}
@@ -53,7 +53,7 @@ func TestS3_HeadObject(t *testing.T) {
 			w.WriteHeader(http.StatusNotFound)
 		})
 
-		_, err := client.HeadObject(context.Background(), "mydb/0/missing.ltx")
+		_, err := client.HeadObject(context.Background(), testBucket, "mydb/0/missing.ltx")
 
 		respErr, ok := err.(*ResponseError)
 		if !ok {

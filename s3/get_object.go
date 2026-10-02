@@ -13,13 +13,13 @@ type GetObjectResponse struct {
 	HeadObjectResponse
 }
 
-// GetObject retrieves a single object by its key.
+// GetObject retrieves the object named by key from bucket.
 //
 // NB! Make sure to call GetObjectResponse.Body.Close() after done working with the result.
 //
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_GetObject.html
-func (s3 *S3) GetObject(ctx context.Context, key string, optFuncs ...func(*http.Request)) (*GetObjectResponse, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s3.URL(key), nil)
+func (s3 *S3) GetObject(ctx context.Context, bucket, key string, optFuncs ...func(*http.Request)) (*GetObjectResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, s3.URL(bucket, key), nil)
 	if err != nil {
 		return nil, err
 	}

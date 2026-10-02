@@ -37,7 +37,7 @@ func TestS3_PutObject(t *testing.T) {
 		// LimitReader keeps the HTTP client from detecting a length on
 		// its own, so the contentLength passed to PutObject is what the request sends.
 		body := io.LimitReader(strings.NewReader("ltx-bytes"), int64(len("ltx-bytes")))
-		err := client.PutObject(context.Background(), "mydb/0/12-15.ltx", body, int64(len("ltx-bytes")))
+		err := client.PutObject(context.Background(), testBucket, "mydb/0/12-15.ltx", body, int64(len("ltx-bytes")))
 		if err != nil {
 			t.Fatalf("PutObject() failed: %v", err)
 		}
@@ -83,7 +83,7 @@ func TestS3_PutObject(t *testing.T) {
 		// A negative contentLength must produce a chunked request; LimitReader keeps
 		// the HTTP client from detecting a length on its own.
 		body := io.LimitReader(strings.NewReader("ltx-bytes"), int64(len("ltx-bytes")))
-		err := client.PutObject(context.Background(), "mydb/0/12-15.ltx", body, -1)
+		err := client.PutObject(context.Background(), testBucket, "mydb/0/12-15.ltx", body, -1)
 		if err != nil {
 			t.Fatalf("PutObject() failed: %v", err)
 		}
@@ -107,7 +107,7 @@ func TestS3_PutObject(t *testing.T) {
 		client.RequireContentLength = true
 
 		body := io.LimitReader(strings.NewReader("ltx-bytes"), int64(len("ltx-bytes")))
-		err := client.PutObject(context.Background(), "mydb/0/12-15.ltx", body, -1)
+		err := client.PutObject(context.Background(), testBucket, "mydb/0/12-15.ltx", body, -1)
 		if !errors.Is(err, ErrContentLengthRequired) {
 			t.Fatalf("PutObject() error = %v, want %v", err, ErrContentLengthRequired)
 		}
@@ -120,7 +120,7 @@ func TestS3_PutObject(t *testing.T) {
 		})
 
 		body := io.LimitReader(strings.NewReader("ltx-bytes"), int64(len("ltx-bytes")))
-		err := client.PutObject(context.Background(), "mydb/0/12-15.ltx", body, int64(len("ltx-bytes")))
+		err := client.PutObject(context.Background(), testBucket, "mydb/0/12-15.ltx", body, int64(len("ltx-bytes")))
 
 		respErr, ok := err.(*ResponseError)
 		if !ok {

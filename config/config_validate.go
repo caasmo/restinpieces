@@ -292,11 +292,11 @@ func validateBackupLabel(labels map[string]string, table, label string) error {
 }
 
 // validateBackupS3Upload checks one S3 upload entry. Path and PathPrefix
-// are mutually exclusive; an entry with both empty is deactivated. A set
-// Path must be an existing file (a "latest" selector is ignored), and a
-// set PathPrefix must use the only supported selector, "latest", and
-// point into an existing directory. The age recipient must be a valid key
-// when set.
+// are mutually exclusive; an entry with both empty is deactivated. An
+// active entry needs a bucket. A set Path must be an existing file (a
+// "latest" selector is ignored), and a set PathPrefix must use the only
+// supported selector, "latest", and point into an existing directory. The
+// age recipient must be a valid key when set.
 func validateBackupS3Upload(key string, e BackupS3UploadEntry) error {
 	if e.MinInterval.Duration <= 0 {
 		return fmt.Errorf("s3-upload.%s.min_interval must be positive", key)
@@ -309,6 +309,12 @@ func validateBackupS3Upload(key string, e BackupS3UploadEntry) error {
 	}
 	if e.Path != "" && e.PathPrefix != "" {
 		return fmt.Errorf("s3-upload.%s.path and path_prefix are mutually exclusive", key)
+	}
+	if e.Path == "" && e.PathPrefix == "" {
+		return nil // deactivated entry
+	}
+	if e.Bucket == "" {
+		return fmt.Errorf("s3-upload.%s.bucket is required", key)
 	}
 	if e.Path != "" {
 		if e.PathPrefixSelector != "" && e.PathPrefixSelector != s3UploadSelectorLatest {

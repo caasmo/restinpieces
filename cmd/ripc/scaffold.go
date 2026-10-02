@@ -107,15 +107,17 @@ func scaffoldNextSteps(scaffoldType, label string, defaults interface{}) string 
 %s
 
 Next steps:
-1. Set the file to upload, a fixed path or a prefix (required):
+1. Set the bucket that stores the uploads (required):
+	ripc set backup.s3-upload.%s.bucket my-backups
+2. Set the file to upload, a fixed path or a prefix (required):
 	ripc set backup.s3-upload.%s.path /path/to/backup.db
 	ripc set backup.s3-upload.%s.path_prefix /path/to/backups/app.db-
-2. Set the age recipient (optional, encrypts the upload):
+3. Set the age recipient (optional, encrypts the upload):
 	ripc set backup.s3-upload.%s.age_recipient age1...
-3. Reload the app:
+4. Reload the app:
 	systemctl reload myapp
 Deactivate: ripc set backup.s3-upload.%s.path ""
-	ripc set backup.s3-upload.%s.path_prefix ""`, label, block, label, label, label, label, label)
+	ripc set backup.s3-upload.%s.path_prefix ""`, label, block, label, label, label, label, label, label)
 	case ScaffoldTypeBackupSqliteRsync:
 		return fmt.Sprintf(`
 %s:

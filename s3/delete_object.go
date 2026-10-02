@@ -6,11 +6,11 @@ import (
 	"net/http"
 )
 
-// DeleteObject deletes a single object by its key.
+// DeleteObject deletes the single object named by key from bucket.
 //
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_DeleteObject.html
-func (s3 *S3) DeleteObject(ctx context.Context, key string, optFuncs ...func(*http.Request)) (err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, s3.URL(key), nil)
+func (s3 *S3) DeleteObject(ctx context.Context, bucket, key string, optFuncs ...func(*http.Request)) (err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, s3.URL(bucket, key), nil)
 	if err != nil {
 		return err
 	}

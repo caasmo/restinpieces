@@ -69,7 +69,6 @@ func run() int {
 	client := &s3.S3{
 		Endpoint:     endpoint,
 		Region:       region,
-		Bucket:       bucket,
 		AccessKey:    accessKey,
 		SecretKey:    secretKey,
 		UsePathStyle: usePathStyle,
@@ -82,7 +81,7 @@ func run() int {
 	payload := []byte("restinpieces s3 smoke test")
 
 	_, _ = fmt.Printf("PUT %s ... ", key)
-	err := client.PutObject(ctx, key, bytes.NewReader(payload), int64(len(payload)))
+	err := client.PutObject(ctx, bucket, key, bytes.NewReader(payload), int64(len(payload)))
 	if err != nil {
 		_, _ = fmt.Printf("FAIL: %v\n", err)
 		return 1
@@ -90,7 +89,7 @@ func run() int {
 	_, _ = fmt.Printf("ok\n")
 
 	_, _ = fmt.Printf("HEAD %s ... ", key)
-	info, err := client.HeadObject(ctx, key)
+	info, err := client.HeadObject(ctx, bucket, key)
 	if err != nil {
 		_, _ = fmt.Printf("FAIL: %v\n", err)
 		return 1
@@ -102,7 +101,7 @@ func run() int {
 	_, _ = fmt.Printf("ok (size %d)\n", info.ContentLength)
 
 	_, _ = fmt.Printf("GET %s ... ", key)
-	resp, err := client.GetObject(ctx, key)
+	resp, err := client.GetObject(ctx, bucket, key)
 	if err != nil {
 		_, _ = fmt.Printf("FAIL: %v\n", err)
 		return 1
@@ -124,7 +123,7 @@ func run() int {
 	_, _ = fmt.Printf("ok (%d bytes)\n", len(body))
 
 	_, _ = fmt.Printf("LIST %s ... ", key)
-	list, err := client.ListObjects(ctx, s3.ListParams{Prefix: key})
+	list, err := client.ListObjects(ctx, bucket, s3.ListParams{Prefix: key})
 	if err != nil {
 		_, _ = fmt.Printf("FAIL: %v\n", err)
 		return 1
@@ -143,7 +142,7 @@ func run() int {
 	_, _ = fmt.Printf("ok\n")
 
 	_, _ = fmt.Printf("DELETE %s ... ", key)
-	err = client.DeleteObject(ctx, key)
+	err = client.DeleteObject(ctx, bucket, key)
 	if err != nil {
 		_, _ = fmt.Printf("FAIL: %v\n", err)
 		return 1

@@ -96,10 +96,11 @@ Each `backup.sqlite-rsync.entries.<label>` entry:
 
 ### `backup.s3-upload.<label>` — S3 upload
 
-Each `s3-upload` entry uploads one file to the bucket configured in the top-level [`s3`](s3.md) section. The object key is `backup/<label>/<pad>/<filename>`, where `<pad>` is the file's modification time counted down from year 9999 and zero-padded, so a bucket listing shows the newest object first. A file whose object already exists is never uploaded twice.
+Each `s3-upload` entry uploads one file to the bucket the entry sets. The object key is `backup/<label>/<pad>/<filename>`, where `<pad>` is the file's modification time counted down from year 9999 and zero-padded, so a bucket listing shows the newest object first. A file whose object already exists is never uploaded twice.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
+| `bucket` | string | `""` | Bucket the file is uploaded to. Required when `path` or `path_prefix` is set. |
 | `path` | string | `""` | Fixed file to upload. Empty uses `path_prefix`. |
 | `path_prefix` | string | `""` | Path prefix; the newest matching file is uploaded. Requires `path_prefix_selector`. Empty uses `path`. |
 | `path_prefix_selector` | string | `"latest"` | How the match under `path_prefix` is chosen. Only `latest` is supported. |
@@ -124,6 +125,7 @@ ripc scaffold backup-s3-upload app-s3
 3. Point it at the file, either fixed or by prefix, and set the upload interval (`5m` default):
 
 ```bash
+ripc set backup.s3-upload.app-s3.bucket my-backups
 ripc set backup.s3-upload.app-s3.path_prefix /data/backups/app-online-app.db-
 ripc set backup.s3-upload.app-s3.path_prefix_selector latest
 ripc set backup.s3-upload.app-s3.min_interval 5m

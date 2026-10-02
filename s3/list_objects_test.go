@@ -52,7 +52,7 @@ func TestS3_ListObjects(t *testing.T) {
 </ListBucketResult>`))
 	})
 
-	list, err := client.ListObjects(context.Background(), ListParams{
+	list, err := client.ListObjects(context.Background(), testBucket, ListParams{
 		Prefix:            "mydb/0/",
 		ContinuationToken: "token-2",
 	})

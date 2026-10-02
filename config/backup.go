@@ -118,9 +118,8 @@ type BackupSqliteRsyncEntry struct {
 const s3UploadSelectorLatest = "latest"
 
 // BackupS3Upload holds the S3 upload entries. Each entry is keyed by a
-// label you choose (for example "app-s3"). An entry uploads one file to
-// the bucket configured in the top-level [s3] section, under the object
-// key backup/<label>/<pad>/<filename>.
+// label you choose (for example "app-s3"). An entry uploads one file to its
+// bucket, under the object key backup/<label>/<pad>/<filename>.
 type BackupS3Upload map[string]BackupS3UploadEntry
 
 // BackupS3UploadEntry is one S3 upload entry.
@@ -133,6 +132,10 @@ type BackupS3Upload map[string]BackupS3UploadEntry
 // "5m") and must be positive. An empty AgeRecipient uploads the file
 // unchanged.
 type BackupS3UploadEntry struct {
+	// Bucket is the bucket the file is uploaded to. Required when Path or
+	// PathPrefix is set.
+	Bucket string `toml:"bucket" comment:"Bucket the file is uploaded to"`
+
 	// Path is the fixed file to upload. Empty uses PathPrefix.
 	Path string `toml:"path" comment:"File to upload"`
 

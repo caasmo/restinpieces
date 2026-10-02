@@ -60,12 +60,12 @@ func (o *HeadObjectResponse) load(headers http.Header) {
 	o.Metadata = extractMetadata(headers)
 }
 
-// HeadObject sends a HEAD request for a single object to check its
-// existence and to retrieve its metadata.
+// HeadObject sends a HEAD request for a single object in bucket to check
+// its existence and to retrieve its metadata.
 //
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_HeadObject.html
-func (s3 *S3) HeadObject(ctx context.Context, key string, optFuncs ...func(*http.Request)) (result *HeadObjectResponse, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, s3.URL(key), nil)
+func (s3 *S3) HeadObject(ctx context.Context, bucket, key string, optFuncs ...func(*http.Request)) (result *HeadObjectResponse, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, s3.URL(bucket, key), nil)
 	if err != nil {
 		return nil, err
 	}

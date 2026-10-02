@@ -12,7 +12,8 @@ import (
 // caller has to find the length and pass it.
 var ErrContentLengthRequired = errors.New("the service requires a content length and none was given")
 
-// PutObject uploads the object named by key, reading its content from body.
+// PutObject uploads the object named by key to bucket, reading its content
+// from body.
 //
 // The object travels in one PUT request; an existing object with the same
 // key is replaced. Multipart upload is not implemented, so the object must
@@ -30,7 +31,7 @@ var ErrContentLengthRequired = errors.New("the service requires a content length
 // so find the length first and pass it.
 //
 // https://docs.aws.amazon.com/AmazonS3/latest/API/API_PutObject.html
-func (s3 *S3) PutObject(ctx context.Context, key string, body io.Reader, contentLength int64, optFuncs ...func(*http.Request)) (err error) {
+func (s3 *S3) PutObject(ctx context.Context, bucket, key string, body io.Reader, contentLength int64, optFuncs ...func(*http.Request)) (err error) {
 	// a service that requires a length cannot accept the chunked upload
 	// that an unknown length produces; stop before sending anything
 	if contentLength < 0 && s3.RequireContentLength {
@@ -45,7 +46,7 @@ func (s3 *S3) PutObject(ctx context.Context, key string, body io.Reader, content
 		return errors.Join(ErrContentLengthRequired, closeErr)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPut, s3.URL(key), body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, s3.URL(bucket, key), body)
 	if err != nil {
 		// The request client never receives the body, so guard for an
 		// io.Closer and close it here.

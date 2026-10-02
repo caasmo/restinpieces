@@ -23,7 +23,7 @@ func TestS3_GetObject(t *testing.T) {
 			_, _ = w.Write([]byte("ltx-bytes"))
 		})
 
-		resp, err := client.GetObject(context.Background(), "mydb/0/12-15.ltx")
+		resp, err := client.GetObject(context.Background(), testBucket, "mydb/0/12-15.ltx")
 		if err != nil {
 			t.Fatalf("GetObject() failed: %v", err)
 		}
@@ -54,7 +54,7 @@ func TestS3_GetObject(t *testing.T) {
 			_, _ = w.Write([]byte(`<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message></Error>`))
 		})
 
-		_, err := client.GetObject(context.Background(), "mydb/0/missing.ltx")
+		_, err := client.GetObject(context.Background(), testBucket, "mydb/0/missing.ltx")
 
 		respErr, ok := err.(*ResponseError)
 		if !ok {

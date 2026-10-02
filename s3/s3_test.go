@@ -19,7 +19,6 @@ func TestS3_URL(t *testing.T) {
 			name: "no scheme",
 			client: &S3{
 				Region:    "test_region",
-				Bucket:    "test_bucket",
 				Endpoint:  "example.com/",
 				AccessKey: "123",
 				SecretKey: "abc",
@@ -30,7 +29,6 @@ func TestS3_URL(t *testing.T) {
 			name: "https scheme",
 			client: &S3{
 				Region:    "test_region",
-				Bucket:    "test_bucket",
 				Endpoint:  "https://example.com/",
 				AccessKey: "123",
 				SecretKey: "abc",
@@ -41,7 +39,6 @@ func TestS3_URL(t *testing.T) {
 			name: "http scheme",
 			client: &S3{
 				Region:    "test_region",
-				Bucket:    "test_bucket",
 				Endpoint:  "http://example.com/",
 				AccessKey: "123",
 				SecretKey: "abc",
@@ -52,7 +49,6 @@ func TestS3_URL(t *testing.T) {
 			name: "path style without scheme",
 			client: &S3{
 				Region:       "test_region",
-				Bucket:       "test_bucket",
 				Endpoint:     "example.com/",
 				AccessKey:    "123",
 				SecretKey:    "abc",
@@ -64,7 +60,6 @@ func TestS3_URL(t *testing.T) {
 			name: "path style with scheme",
 			client: &S3{
 				Region:       "test_region",
-				Bucket:       "test_bucket",
 				Endpoint:     "http://example.com/",
 				AccessKey:    "123",
 				SecretKey:    "abc",
@@ -76,7 +71,7 @@ func TestS3_URL(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := tc.client.URL(path)
+			result := tc.client.URL("test_bucket", path)
 			if result != tc.expected {
 				t.Fatalf("expected URL\n%s\ngot\n%s", tc.expected, result)
 			}
@@ -96,7 +91,6 @@ func TestS3_Sign(t *testing.T) {
 			name: "minimal",
 			client: &S3{
 				Region:    "test_region",
-				Bucket:    "test_bucket",
 				Endpoint:  "https://example.com/",
 				AccessKey: "123",
 				SecretKey: "abc",
@@ -117,7 +111,6 @@ func TestS3_Sign(t *testing.T) {
 			name: "different access and secret keys",
 			client: &S3{
 				Region:    "test_region",
-				Bucket:    "test_bucket",
 				Endpoint:  "https://example.com/",
 				AccessKey: "456",
 				SecretKey: "def",
@@ -138,7 +131,6 @@ func TestS3_Sign(t *testing.T) {
 			name: "special characters in the path",
 			client: &S3{
 				Region:    "test_region",
-				Bucket:    "test_bucket",
 				Endpoint:  "https://example.com/",
 				AccessKey: "456",
 				SecretKey: "def",
@@ -159,7 +151,6 @@ func TestS3_Sign(t *testing.T) {
 			name: "extra headers",
 			client: &S3{
 				Region:    "test_region",
-				Bucket:    "test_bucket",
 				Endpoint:  "https://example.com/",
 				AccessKey: "123",
 				SecretKey: "abc",
@@ -189,7 +180,7 @@ func TestS3_Sign(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			req, err := http.NewRequest(http.MethodGet, tc.client.URL(tc.path), strings.NewReader("test_request"))
+			req, err := http.NewRequest(http.MethodGet, tc.client.URL("test_bucket", tc.path), strings.NewReader("test_request"))
 			if err != nil {
 				t.Fatalf("failed to build request: %v", err)
 			}

@@ -34,7 +34,9 @@
 // Backblaze B2 and MinIO. Only the standard library is used.
 //
 // The client covers object operations for storing and reading objects: put,
-// get, head, list and delete. Objects travel in a single request, so
+// get, head, list and delete. Every operation takes the bucket as an
+// argument; the client itself holds only the connection settings. Objects
+// travel in a single request, so
 // one object must stay under the 5 GiB S3 limit; multipart upload is
 // not implemented. PutObject reads the object from an io.Reader while
 // the request is sent, so the object does not have to fit in memory.
@@ -44,12 +46,11 @@
 //	client := &s3.S3{
 //		Endpoint:     "example.com",
 //		Region:       "us-east-1",
-//		Bucket:       "test",
 //		AccessKey:    "...",
 //		SecretKey:    "...",
 //		UsePathStyle: true,
 //	}
-//	resp, err := client.GetObject(context.Background(), "abc.txt")
+//	resp, err := client.GetObject(context.Background(), "test", "abc.txt")
 package s3
 
 import (
@@ -85,7 +86,6 @@ type S3 struct {
 	// If not explicitly set, fallbacks to http.DefaultClient.
 	Client HTTPClient
 
-	Bucket       string
 	Region       string
 	Endpoint     string // can be with or without the schema
 	AccessKey    string
@@ -99,7 +99,8 @@ type S3 struct {
 	RequireContentLength bool
 }
 
-// URL constructs an S3 request URL based on the current configuration.
+// URL constructs an S3 request URL for the bucket and path based on the
+// current configuration.
 //
 // Note that the path will be URL escaped based on the AWS [UriEncode rules]
 // for broader compatibility with some providers that expect the same
@@ -107,7 +108,7 @@ type S3 struct {
 // (see also https://github.com/pocketbase/pocketbase/issues/7153).
 //
 // [UriEncode rules]: https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_sigv-create-signed-request.html
-func (s3 *S3) URL(path string) string {
+func (s3 *S3) URL(bucket, path string) string {
 	scheme := "https"
 	endpoint := strings.TrimRight(s3.Endpoint, "/")
 
@@ -142,10 +143,10 @@ func (s3 *S3) URL(path string) string {
 	path = strings.TrimLeft(path, "/")
 
 	if s3.UsePathStyle {
-		return fmt.Sprintf("%s://%s/%s/%s", scheme, endpoint, s3.Bucket, path)
+		return fmt.Sprintf("%s://%s/%s/%s", scheme, endpoint, bucket, path)
 	}
 
-	return fmt.Sprintf("%s://%s.%s/%s", scheme, s3.Bucket, endpoint, path)
+	return fmt.Sprintf("%s://%s.%s/%s", scheme, bucket, endpoint, path)
 }
 
 // SignAndSend signs the provided request per AWS Signature v4 and sends it.
