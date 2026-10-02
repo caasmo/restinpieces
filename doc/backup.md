@@ -103,7 +103,7 @@ Each `s3-upload` entry uploads one file to the bucket configured in the top-leve
 | `path` | string | `""` | Fixed file to upload. Empty uses `path_prefix`. |
 | `path_prefix` | string | `""` | Path prefix; the newest matching file is uploaded. Requires `path_prefix_selector`. Empty uses `path`. |
 | `path_prefix_selector` | string | `""` | How the match under `path_prefix` is chosen. Only `latest` is supported. |
-| `frequency` | duration | `5m` | Minimum interval between uploads. |
+| `min_interval` | duration | `5m` | The file is skipped without calling S3 until this much time has passed since its modification. |
 | `age_recipient` | string | `""` | age public key the file is encrypted to before upload. Empty uploads without encryption. |
 
 `path` and `path_prefix` are mutually exclusive; an entry with both empty is deactivated.
@@ -126,7 +126,7 @@ ripc scaffold backup-s3-upload app-s3
 ```bash
 ripc set backup.s3-upload.app-s3.path_prefix /data/backups/app-online-app.db-
 ripc set backup.s3-upload.app-s3.path_prefix_selector latest
-ripc set backup.s3-upload.app-s3.frequency 5m
+ripc set backup.s3-upload.app-s3.min_interval 5m
 ```
 
 ## Stable Hardlink (`latest-`)

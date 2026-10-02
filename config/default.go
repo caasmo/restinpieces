@@ -196,7 +196,7 @@ func NewBackupVacuumEntryDefaults() BackupVacuumEntry {
 // PathPrefixSelector and AgeRecipient are empty, so the user sets them.
 func NewBackupS3UploadEntryDefaults() BackupS3UploadEntry {
 	return BackupS3UploadEntry{
-		Frequency: Duration{Duration: 5 * time.Minute},
+		MinInterval: Duration{Duration: 5 * time.Minute},
 	}
 }
 

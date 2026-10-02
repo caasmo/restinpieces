@@ -144,10 +144,9 @@ type BackupS3UploadEntry struct {
 	// chosen. Only "latest" is supported.
 	PathPrefixSelector string `toml:"path_prefix_selector" comment:"How the match is chosen (only 'latest' is supported)"`
 
-	// Frequency is the minimum interval between uploads. The daemon
-	// skips the entry until this much time has passed since the file's
-	// modification time.
-	Frequency Duration `toml:"frequency" comment:"Minimum interval between uploads (e.g. '5m')"`
+	// MinInterval is the minimum interval between uploads.
+	// The daemon skips the entry without calling S3 until this much time has passed since the file's modification time.
+	MinInterval Duration `toml:"min_interval" comment:"Minimum interval between uploads (e.g. '5m')"`
 
 	// AgeRecipient is the age public key the file is encrypted to
 	// before upload. Empty string uploads the file unchanged.

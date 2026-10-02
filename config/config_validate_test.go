@@ -616,7 +616,7 @@ func TestValidateBackup(t *testing.T) {
 			t.Fatal(err)
 		}
 		b := &Backup{
-			S3Upload: BackupS3Upload{"app-s3": {Path: appDB, Frequency: Duration{Duration: time.Hour}, AgeRecipient: identity.Recipient().String()}},
+			S3Upload: BackupS3Upload{"app-s3": {Path: appDB, MinInterval: Duration{Duration: time.Hour}, AgeRecipient: identity.Recipient().String()}},
 		}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil, got %v", err)
@@ -625,48 +625,48 @@ func TestValidateBackup(t *testing.T) {
 	t.Run("s3-upload valid prefix", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
 		b := &Backup{
-			S3Upload: BackupS3Upload{"app-s3": {PathPrefix: filepath.Join(backupDir, "app-"), PathPrefixSelector: s3UploadSelectorLatest, Frequency: Duration{Duration: time.Hour}}},
+			S3Upload: BackupS3Upload{"app-s3": {PathPrefix: filepath.Join(backupDir, "app-"), PathPrefixSelector: s3UploadSelectorLatest, MinInterval: Duration{Duration: time.Hour}}},
 		}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
 	})
 	t.Run("s3-upload empty paths deactivate", func(t *testing.T) {
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Frequency: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {MinInterval: Duration{Duration: time.Hour}}}}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil for deactivated entry, got %v", err)
 		}
 	})
 	t.Run("s3-upload path and prefix exclusive", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB, PathPrefix: "/data/app-", PathPrefixSelector: s3UploadSelectorLatest, Frequency: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB, PathPrefix: "/data/app-", PathPrefixSelector: s3UploadSelectorLatest, MinInterval: Duration{Duration: time.Hour}}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for path and path_prefix both set, got nil")
 		}
 	})
 	t.Run("s3-upload selector requires prefix", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB, PathPrefixSelector: s3UploadSelectorLatest, Frequency: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB, PathPrefixSelector: s3UploadSelectorLatest, MinInterval: Duration{Duration: time.Hour}}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for selector without path_prefix, got nil")
 		}
 	})
 	t.Run("s3-upload invalid selector", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {PathPrefix: filepath.Join(backupDir, "app-"), PathPrefixSelector: "oldest", Frequency: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {PathPrefix: filepath.Join(backupDir, "app-"), PathPrefixSelector: "oldest", MinInterval: Duration{Duration: time.Hour}}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for unsupported selector, got nil")
 		}
 	})
 	t.Run("s3-upload missing path", func(t *testing.T) {
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: filepath.Join(t.TempDir(), "nope.db"), Frequency: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: filepath.Join(t.TempDir(), "nope.db"), MinInterval: Duration{Duration: time.Hour}}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for missing path, got nil")
 		}
 	})
 	t.Run("s3-upload invalid age recipient", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB, Frequency: Duration{Duration: time.Hour}, AgeRecipient: "not-a-key"}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB, MinInterval: Duration{Duration: time.Hour}, AgeRecipient: "not-a-key"}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for invalid age recipient, got nil")
 		}
