@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"net/url"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -153,11 +154,11 @@ func ValidateBackup(backup *Backup) error {
 			return err
 		}
 	}
-	for key, e := range backup.S3 {
+	for key, e := range backup.S3Upload {
 		if !isValidMapKeyLabel(key) {
-			return fmt.Errorf("s3: map key %q must not contain whitespace or '.'", key)
+			return fmt.Errorf("s3-upload: map key %q must not contain whitespace or '.'", key)
 		}
-		if err := validateBackupS3(key, e, backup); err != nil {
+		if err := validateBackupS3Upload(key, e); err != nil {
 			return err
 		}
 	}
@@ -253,8 +254,7 @@ func validateBackupSqliteRsync(key string, e BackupSqliteRsyncEntry) error {
 }
 
 // validateBackupLabels checks that no two backup entries share a label.
-// Every label names exactly one backup, and S3 upload entries point at a
-// backup by its label, so a duplicate would be ambiguous.
+// Every label names exactly one entry.
 func validateBackupLabels(backup *Backup) error {
 	labels := make(map[string]string)
 	for key := range backup.OnlineAPI {
@@ -272,8 +272,8 @@ func validateBackupLabels(backup *Backup) error {
 			return err
 		}
 	}
-	for key := range backup.S3 {
-		if err := validateBackupLabel(labels, "s3", key); err != nil {
+	for key := range backup.S3Upload {
+		if err := validateBackupLabel(labels, "s3-upload", key); err != nil {
 			return err
 		}
 	}
@@ -291,29 +291,44 @@ func validateBackupLabel(labels map[string]string, table, label string) error {
 	return nil
 }
 
-// validateBackupS3 checks one S3 entry: the age recipient
-// must be a valid key and backup_label must name an online or vacuum
-// backup. An empty backup_label deactivates it. A zero frequency means
-// the daemon default; a negative one is rejected.
-func validateBackupS3(key string, e BackupS3Entry, backup *Backup) error {
-	if e.Frequency.Duration < 0 {
-		return fmt.Errorf("s3.%s.frequency cannot be negative", key)
+// validateBackupS3Upload checks one S3 upload entry. Path and PathPrefix
+// are mutually exclusive; an entry with both empty is deactivated. A set
+// Path must be an existing file, and a set PathPrefix must use the only
+// supported selector, "latest", and point into an existing directory.
+// The age recipient must be a valid key when set.
+func validateBackupS3Upload(key string, e BackupS3UploadEntry) error {
+	if e.Frequency.Duration <= 0 {
+		return fmt.Errorf("s3-upload.%s.frequency must be positive", key)
 	}
 	if e.AgeRecipient != "" {
 		_, err := age.ParseX25519Recipient(e.AgeRecipient)
 		if err != nil {
-			return fmt.Errorf("s3.%s.age_recipient is not a valid age recipient: %w", key, err)
+			return fmt.Errorf("s3-upload.%s.age_recipient is not a valid age recipient: %w", key, err)
 		}
 	}
-	if e.BackupLabel == "" {
-		return nil // deactivated entry
+	if e.Path != "" && e.PathPrefix != "" {
+		return fmt.Errorf("s3-upload.%s.path and path_prefix are mutually exclusive", key)
 	}
-	_, online := backup.OnlineAPI[e.BackupLabel]
-	_, vacuum := backup.Vacuum[e.BackupLabel]
-	if !online && !vacuum {
-		return fmt.Errorf("s3.%s.backup_label %q does not name an online or vacuum entry", key, e.BackupLabel)
+	if e.Path != "" {
+		if e.PathPrefixSelector != "" {
+			return fmt.Errorf("s3-upload.%s.path_prefix_selector requires path_prefix", key)
+		}
+		if !isFile(e.Path) {
+			return fmt.Errorf("s3-upload.%s.path must be an existing file, got %q", key, e.Path)
+		}
+		return nil
 	}
-	return nil
+	if e.PathPrefix != "" {
+		if e.PathPrefixSelector != s3UploadSelectorLatest {
+			return fmt.Errorf("s3-upload.%s.path_prefix_selector must be %q, got %q", key, s3UploadSelectorLatest, e.PathPrefixSelector)
+		}
+		dir := filepath.Dir(e.PathPrefix)
+		if !isDir(dir) {
+			return fmt.Errorf("s3-upload.%s.path_prefix directory must be an existing directory, got %q", key, dir)
+		}
+		return nil
+	}
+	return nil // deactivated entry
 }
 
 // isDir reports whether path exists and is a directory. Relative

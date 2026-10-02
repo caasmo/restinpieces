@@ -10,7 +10,7 @@ type Backup struct {
 	OnlineAPI   BackupOnlineAPI   `toml:"online"`
 	Vacuum      BackupVacuum      `toml:"vacuum"`
 	SqliteRsync BackupSqliteRsync `toml:"sqlite-rsync"`
-	S3          BackupS3          `toml:"s3"`
+	S3Upload    BackupS3Upload    `toml:"s3-upload"`
 }
 
 // BackupOnlineAPI holds per-database configuration for the Online Backup API
@@ -112,31 +112,46 @@ type BackupSqliteRsyncEntry struct {
 	SyncTimeout Duration `toml:"sync_timeout" comment:"Longest one sync may run (e.g. '15m'). Zero uses the default of 15 minutes."`
 }
 
-// BackupS3 holds the S3 entries. Each entry is keyed by a
-// label you choose (for example "app-s3"). backup_label names the online
-// or vacuum backup to upload, and the entry uploads that backup's newest
-// backup to the bucket configured in the top-level [s3] section.
-type BackupS3 map[string]BackupS3Entry
+// s3UploadSelectorLatest is the only supported PathPrefixSelector value:
+// the entry uploads the file with the newest modification time among the
+// prefix matches.
+const s3UploadSelectorLatest = "latest"
 
-// BackupS3Entry is one S3 entry.
+// BackupS3Upload holds the S3 upload entries. Each entry is keyed by a
+// label you choose (for example "app-s3"). An entry uploads one file to
+// the bucket configured in the top-level [s3] section, under the object
+// key backup/<label>/<pad>/<filename>.
+type BackupS3Upload map[string]BackupS3UploadEntry
+
+// BackupS3UploadEntry is one S3 upload entry.
 //
-// Empty backup_label deactivates the entry. Frequency is parsed via
-// time.ParseDuration (e.g. "5m"); zero means the 5m default. An empty
-// AgeRecipient uploads the backup without encryption.
-type BackupS3Entry struct {
-	// BackupLabel is the label of the online or vacuum backup to upload,
-	// for example "app-online". The label must be unique across all backup
-	// tables.
-	BackupLabel string `toml:"backup_label" comment:"Label of the backup entry to upload (e.g. 'app-online')"`
+// Path and PathPrefix are mutually exclusive. A Path entry uploads that
+// fixed file. A PathPrefix entry uploads the newest file whose name
+// starts with the prefix; PathPrefixSelector names how that match is
+// chosen and only "latest" is supported. An entry with both paths empty
+// is deactivated. Frequency is parsed via time.ParseDuration (e.g.
+// "5m") and must be positive. An empty AgeRecipient uploads the file
+// unchanged.
+type BackupS3UploadEntry struct {
+	// Path is the fixed file to upload. Empty uses PathPrefix.
+	Path string `toml:"path" comment:"File to upload"`
 
-	// Frequency defines how often the daemon checks for a new backup to
-	// upload. Parsed via time.ParseDuration (e.g. "5m"). Zero uses the
-	// default of 5m.
-	Frequency Duration `toml:"frequency" comment:"How often to check for a new backup to upload (e.g. '5m'). Zero uses the default of 5m."`
+	// PathPrefix selects a file by name prefix; the newest match is
+	// uploaded when PathPrefixSelector is "latest". Empty uses Path.
+	PathPrefix string `toml:"path_prefix" comment:"Path prefix; with path_prefix_selector 'latest' the newest match is uploaded"`
 
-	// AgeRecipient is the age public key the backup is encrypted to
-	// before upload. Empty string uploads the backup unchanged.
-	AgeRecipient string `toml:"age_recipient" comment:"age public key the backup is encrypted to (e.g. 'age1...'). Empty uploads without encryption."`
+	// PathPrefixSelector names how the match under PathPrefix is
+	// chosen. Only "latest" is supported.
+	PathPrefixSelector string `toml:"path_prefix_selector" comment:"How the match is chosen (only 'latest' is supported)"`
+
+	// Frequency is the minimum interval between uploads. The daemon
+	// skips the entry until this much time has passed since the file's
+	// modification time.
+	Frequency Duration `toml:"frequency" comment:"Minimum interval between uploads (e.g. '5m')"`
+
+	// AgeRecipient is the age public key the file is encrypted to
+	// before upload. Empty string uploads the file unchanged.
+	AgeRecipient string `toml:"age_recipient" comment:"age public key the file is encrypted to (e.g. 'age1...'). Empty uploads without encryption."`
 }
 
 func (c Config) BackupSqliteRsync() BackupSqliteRsync {
@@ -149,8 +164,4 @@ func (c Config) BackupOnlineAPI() BackupOnlineAPI {
 
 func (c Config) BackupVacuum() BackupVacuum {
 	return c.Backup.Vacuum
-}
-
-func (c Config) BackupS3() BackupS3 {
-	return c.Backup.S3
 }

@@ -10,7 +10,7 @@ The framework has no backup code, to keep dependencies minimal. It only provides
   - [`backup.online.<label>` — Online Backup API](#backuponline-label--online-backup-api)
   - [`backup.vacuum.<label>` — VACUUM INTO](#backupvacuum-label--vacuum-into)
   - [`backup.sqlite-rsync` — sqlite-rsync origin](#backupsqlite-rsync--sqlite-rsync-origin)
-  - [`backup.s3.<label>` — S3](#backups3label--s3)
+  - [`backup.s3-upload.<label>` — S3 upload](#backups3-uploadlabel--s3-upload)
 - [Stable Hardlink (`latest-`)](#stable-hardlink-latest-)
 
 ## Enabling Backups
@@ -33,7 +33,7 @@ To deactivate one entry, empty its `source_path` (or `dest_path` for online/vacu
 ```bash
 ripc set backup.online.app-online.source_path ""
 ripc set backup.sqlite-rsync.entries.app-rsync.source_path ""
-ripc set backup.s3.app-s3.backup_label ""
+ripc set backup.s3-upload.app-s3.path ""
 ```
 
 To deactivate all backups, remove every entry. Empty maps are valid and make backups a no-op. Deactivating does not delete files on disk and does not require removing the daemon. You can reactivate by setting the paths again.
@@ -48,14 +48,14 @@ systemctl reload restinpieces
 
 Configuration lives under `[backup]` in [config/backup.go](../config/backup.go). Each strategy has its own TOML table. The TOML table you scaffold into selects the engine.
 
-A label is unique across all tables: it names one backup, and `s3` entries refer to it by name. Validation rejects the same label in two tables.
+A label is unique across all tables. Validation rejects the same label in two tables.
 
 | Strategy | Description |
 |---|---|
 | `online` | Online Backup API entries. |
 | `vacuum` | VACUUM INTO entries. |
 | `sqlite-rsync` | sqlite-rsync origin. |
-| `s3` | Uploads the newest backup of an online or vacuum label to an S3-compatible bucket. |
+| `s3-upload` | Uploads one file to an S3-compatible bucket: a fixed path or the newest match under a path prefix. |
 
 ### `backup.online.<label>` — Online Backup API
 
@@ -94,34 +94,39 @@ Each `backup.sqlite-rsync.entries.<label>` entry:
 | `source_path` | string | `""` (deactivated) | SQLite file to serve. Empty deactivates. |
 | `sync_timeout` | duration | `15m` | Longest one sync may run. 0 uses default 15m. |
 
-### `backup.s3.<label>` — S3
+### `backup.s3-upload.<label>` — S3 upload
 
-Each `s3` entry uploads the newest backup of one backup label to the bucket configured in the top-level [`s3`](s3.md) section. The map key is a label and must be unique across all backup tables.
+Each `s3-upload` entry uploads one file to the bucket configured in the top-level [`s3`](s3.md) section. The object key is `backup/<label>/<pad>/<filename>`, where `<pad>` is the file's modification time counted down from year 9999 and zero-padded, so a bucket listing shows the newest object first. A file whose object already exists is never uploaded twice.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
-| `backup_label` | string | `""` (deactivated) | Label of the online or vacuum entry to upload. Empty deactivates. |
-| `frequency` | duration | `5m` | How often to check for a new backup to upload. |
-| `age_recipient` | string | `""` | age public key the backup is encrypted to before upload. Empty uploads without encryption. |
+| `path` | string | `""` | Fixed file to upload. Empty uses `path_prefix`. |
+| `path_prefix` | string | `""` | Path prefix; the newest matching file is uploaded. Requires `path_prefix_selector`. Empty uses `path`. |
+| `path_prefix_selector` | string | `""` | How the match under `path_prefix` is chosen. Only `latest` is supported. |
+| `frequency` | duration | `5m` | Minimum interval between uploads. |
+| `age_recipient` | string | `""` | age public key the file is encrypted to before upload. Empty uploads without encryption. |
+
+`path` and `path_prefix` are mutually exclusive; an entry with both empty is deactivated.
 
 1. Choose age recipient — most probably the one from the master key is the best tradeoff: it protects the backups if S3 is breached, and if the server is breached your live database is already compromised.
 
 ```bash
 age-keygen -y age.key | tr -d '\n' > s3-backup-recipient.txt
-ripc set backup.s3.app-s3.age_recipient @s3-backup-recipient.txt
+ripc set backup.s3-upload.app-s3.age_recipient @s3-backup-recipient.txt
 ```
 
 2. Scaffold the entry:
 
 ```bash
-ripc scaffold backup-s3 app-s3
+ripc scaffold backup-s3-upload app-s3
 ```
 
-3. Point it at the local backup to upload — for example the `app-online` entry from a `backup-online` scaffold — and set the check interval (`5m` default):
+3. Point it at the file, either fixed or by prefix, and set the upload interval (`5m` default):
 
 ```bash
-ripc set backup.s3.app-s3.backup_label app-online
-ripc set backup.s3.app-s3.frequency 5m
+ripc set backup.s3-upload.app-s3.path_prefix /data/backups/app-online-app.db-
+ripc set backup.s3-upload.app-s3.path_prefix_selector latest
+ripc set backup.s3-upload.app-s3.frequency 5m
 ```
 
 ## Stable Hardlink (`latest-`)

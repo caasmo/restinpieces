@@ -60,10 +60,16 @@ func TestNewBackupVacuumEntryDefaults(t *testing.T) {
 	}
 }
 
-func TestNewBackupS3EntryDefaults(t *testing.T) {
-	v := NewBackupS3EntryDefaults()
-	if v.BackupLabel != "" {
-		t.Errorf("BackupLabel: got %q, want empty", v.BackupLabel)
+func TestNewBackupS3UploadEntryDefaults(t *testing.T) {
+	v := NewBackupS3UploadEntryDefaults()
+	if v.Path != "" {
+		t.Errorf("Path: got %q, want empty", v.Path)
+	}
+	if v.PathPrefix != "" {
+		t.Errorf("PathPrefix: got %q, want empty", v.PathPrefix)
+	}
+	if v.PathPrefixSelector != "" {
+		t.Errorf("PathPrefixSelector: got %q, want empty", v.PathPrefixSelector)
 	}
 	if v.AgeRecipient != "" {
 		t.Errorf("AgeRecipient: got %q, want empty", v.AgeRecipient)

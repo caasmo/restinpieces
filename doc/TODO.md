@@ -258,3 +258,26 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - decide: drop the command for good, or rework it to take only non-reproducible files (e.g. `data/backups/` not yet pulled), skipping the live database
 - refs: `scripts/ripdep` (`cmd_backup`), `config/backup.go`, `doc/multiapp.md` (local backup vs Litestream comparison)
 
+# restinpieces-backup daemons: the idea was "users who do not want to import restinpieces can copy the structs" but implmentator and planner later forgot that by using ValidateBackup; two options, remove use of Validatebackup etc or remove the overenginereed interfaces
+
+- the generic daemons (`New[T ...Config]`) exist so an embedder can supply their own config type; the standalone mains then import restinpieces anyway (`config.Backup`, the entry types, `config.ValidateBackup`), so the decoupling never happens
+- option 1: keep the interfaces and remove the restinpieces use from the standalone paths — copy the backup structs and their validation locally, as the doc comments promise
+- option 2: drop the generics and let the daemons take `config.Config` directly; the standalone mains unmarshal the TOML into it (dependency is the norm, see the entry above)
+- refs: `restinpieces-backup/onlineapi/onlineapi.go`, `restinpieces-backup/vacuum/vacuum.go`, `restinpieces-backup/sqlitersync/origin/daemon.go`, `restinpieces-backup/cmd/onlineapi/daemon/main.go`, `restinpieces-backup/cmd/vacuum/daemon/main.go`, `restinpieces-backup/cmd/sqlite-rsync/origin/daemon/main.go`, `restinpieces-backup/cmd/*/restinpieces/main.go`, `config/config_validate.go`
+- see also: `# config: remove the exported ValidateBackup` above
+
+# sqlite-rsync replica: replica can not be uses as a daemon in a framwork app; it could be useful for a float of app deploy A B C in different VMs, eacj one of A, B C have an app daemon that calls the other two as replica in orther to have distributed storage
+
+- `ReplicaDaemon` does not satisfy `server.Daemon`: it has no `Start()`, and the interface requires `Name`/`Start`/`Stop` (`server/server.go:22`)
+- `replica.New` takes a plain `replicaconfig.Config` value plus a prebuilt client (`sqlitersync/replica/daemon.go`), so a config reload cannot reach it
+- the framework config has no replica section: `config.Backup` carries only the origin shape (`config/backup.go`), so the replica is configured from a separate standalone TOML
+- fleet shape: each app runs the origin (serving its own databases) plus one replica daemon per peer, each with its own `origin_addr`, SSH credentials and local entry paths; a peer-keyed replica map in the framework config would make it a first-class app daemon
+- client construction per peer could move inside the daemon, the way the S3 upload daemon builds its client from the config pointer on every tick (`restinpieces-backup/s3/upload/daemon.go`)
+- refs: `restinpieces-backup/sqlitersync/replica/daemon.go`, `restinpieces-backup/cmd/sqlite-rsync/replica/daemon/main.go`, `restinpieces-backup/config/sqlitersync/replica`, `config/backup.go`, `server/server.go`, `restinpieces-backup/s3/upload/daemon.go`
+
+# s3 upload: s3 backup upload daemon shoudl be a handler
+
+- the daemon only wraps a pass: `interval()` takes the smallest entry frequency capped at 10m, and `putOne` has no due logic — it checks the bucket and skips what is there. The tick is the only daemon part, and the scheduler already provides ticks.
+- shape: export a handler (`Handle(ctx, job) error`), register it with `srv.AddJobHandler`, schedule it with a `jobs.<label>` entry (interval, activated); one job per strategy walks all entries.
+- refs: `restinpieces-backup/s3/upload/daemon.go`, `restinpieces-backup/s3/entries.go`, `restinpieces-backup/cmd/s3/upload/restinpieces/main.go`, `queue/executor/executor.go`, `queue/scheduler/scheduler.go`, `config/job.go`
+

@@ -94,7 +94,7 @@ var removeTableParents = map[string]struct{}{
 	"backup.online":               {},
 	"backup.vacuum":               {},
 	"backup.sqlite-rsync.entries": {},
-	"backup.s3":                   {},
+	"backup.s3-upload":            {},
 	"scheduler.jobs":              {},
 	"oauth2_providers":            {},
 	"acme.dns-01":                 {},
