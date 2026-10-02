@@ -129,7 +129,7 @@ type BackupS3Upload map[string]BackupS3UploadEntry
 // fixed file. A PathPrefix entry uploads the newest file whose name
 // starts with the prefix; PathPrefixSelector names how that match is
 // chosen and only "latest" is supported. An entry with both paths empty
-// is deactivated. Frequency is parsed via time.ParseDuration (e.g.
+// is deactivated. MinInterval is parsed via time.ParseDuration (e.g.
 // "5m") and must be positive. An empty AgeRecipient uploads the file
 // unchanged.
 type BackupS3UploadEntry struct {

@@ -68,8 +68,8 @@ func TestNewBackupS3UploadEntryDefaults(t *testing.T) {
 	if v.PathPrefix != "" {
 		t.Errorf("PathPrefix: got %q, want empty", v.PathPrefix)
 	}
-	if v.PathPrefixSelector != "" {
-		t.Errorf("PathPrefixSelector: got %q, want empty", v.PathPrefixSelector)
+	if v.PathPrefixSelector != "latest" {
+		t.Errorf("PathPrefixSelector: got %q, want latest", v.PathPrefixSelector)
 	}
 	if v.AgeRecipient != "" {
 		t.Errorf("AgeRecipient: got %q, want empty", v.AgeRecipient)

@@ -110,13 +110,12 @@ Next steps:
 1. Set the file to upload, a fixed path or a prefix (required):
 	ripc set backup.s3-upload.%s.path /path/to/backup.db
 	ripc set backup.s3-upload.%s.path_prefix /path/to/backups/app.db-
-	ripc set backup.s3-upload.%s.path_prefix_selector latest
 2. Set the age recipient (optional, encrypts the upload):
 	ripc set backup.s3-upload.%s.age_recipient age1...
 3. Reload the app:
 	systemctl reload myapp
 Deactivate: ripc set backup.s3-upload.%s.path ""
-	ripc set backup.s3-upload.%s.path_prefix ""`, label, block, label, label, label, label, label, label)
+	ripc set backup.s3-upload.%s.path_prefix ""`, label, block, label, label, label, label, label)
 	case ScaffoldTypeBackupSqliteRsync:
 		return fmt.Sprintf(`
 %s:

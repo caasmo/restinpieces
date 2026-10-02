@@ -281,3 +281,10 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - shape: export a handler (`Handle(ctx, job) error`), register it with `srv.AddJobHandler`, schedule it with a `jobs.<label>` entry (interval, activated); one job per strategy walks all entries.
 - refs: `restinpieces-backup/s3/upload/daemon.go`, `restinpieces-backup/s3/entries.go`, `restinpieces-backup/cmd/s3/upload/restinpieces/main.go`, `queue/executor/executor.go`, `queue/scheduler/scheduler.go`, `config/job.go`
 
+# ripc scaffold: scaffolded block prints blank line before every field
+
+- `defaultFieldsAndValues` (`cmd/ripc/scaffold.go`) renders via `toml.Marshal`, whose defaults sort keys alphabetically and leave `compactComments` false
+- pelletier v1 writes `"\n"` before each `# comment`; every entry field carries a `comment:` tag, so every field gets a blank line above it and the block looks huge
+- fix: render the block with an Encoder with `CompactComments(true)`; kills the blanks for all scaffold types, comments and values stay
+- refs: `cmd/ripc/scaffold.go` (`defaultFieldsAndValues`, `scaffoldNextSteps`)
+

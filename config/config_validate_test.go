@@ -644,11 +644,18 @@ func TestValidateBackup(t *testing.T) {
 			t.Fatal("expected error for path and path_prefix both set, got nil")
 		}
 	})
-	t.Run("s3-upload selector requires prefix", func(t *testing.T) {
+	t.Run("s3-upload latest selector ignored with path", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB, PathPrefixSelector: s3UploadSelectorLatest, MinInterval: Duration{Duration: time.Hour}}}}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("expected nil for latest selector with path, got %v", err)
+		}
+	})
+	t.Run("s3-upload invalid selector with path", func(t *testing.T) {
+		_, appDB, _ := backupLocalFixture(t)
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB, PathPrefixSelector: "oldest", MinInterval: Duration{Duration: time.Hour}}}}
 		if err := ValidateBackup(b); err == nil {
-			t.Fatal("expected error for selector without path_prefix, got nil")
+			t.Fatal("expected error for unsupported selector with path, got nil")
 		}
 	})
 	t.Run("s3-upload invalid selector", func(t *testing.T) {
