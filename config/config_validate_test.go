@@ -685,6 +685,52 @@ func TestValidateBackup(t *testing.T) {
 			t.Fatal("expected error for invalid age recipient, got nil")
 		}
 	})
+	t.Run("s3-download valid prefix", func(t *testing.T) {
+		b := &Backup{
+			S3Download: BackupS3Download{"app-dl": {Bucket: "my-bucket", ObjectKeyPrefix: "backup/app-s3/", DestDir: t.TempDir(), MinInterval: Duration{Duration: time.Hour}}},
+		}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+	})
+	t.Run("s3-download valid exact key", func(t *testing.T) {
+		b := &Backup{
+			S3Download: BackupS3Download{"app-dl": {Bucket: "my-bucket", ObjectKeyPrefix: "backup/app-s3/251611468335/app.db", DestDir: t.TempDir(), MinInterval: Duration{Duration: time.Hour}}},
+		}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("expected nil, got %v", err)
+		}
+	})
+	t.Run("s3-download empty prefix deactivates", func(t *testing.T) {
+		b := &Backup{S3Download: BackupS3Download{"app-dl": {MinInterval: Duration{Duration: time.Hour}}}}
+		if err := ValidateBackup(b); err != nil {
+			t.Fatalf("expected nil for deactivated entry, got %v", err)
+		}
+	})
+	t.Run("s3-download missing bucket", func(t *testing.T) {
+		b := &Backup{
+			S3Download: BackupS3Download{"app-dl": {ObjectKeyPrefix: "backup/app-s3/", DestDir: t.TempDir(), MinInterval: Duration{Duration: time.Hour}}},
+		}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for missing bucket, got nil")
+		}
+	})
+	t.Run("s3-download missing dest_dir", func(t *testing.T) {
+		b := &Backup{
+			S3Download: BackupS3Download{"app-dl": {Bucket: "my-bucket", ObjectKeyPrefix: "backup/app-s3/", DestDir: filepath.Join(t.TempDir(), "nope"), MinInterval: Duration{Duration: time.Hour}}},
+		}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for missing dest_dir, got nil")
+		}
+	})
+	t.Run("s3-download min_interval must be positive", func(t *testing.T) {
+		b := &Backup{
+			S3Download: BackupS3Download{"app-dl": {Bucket: "my-bucket", ObjectKeyPrefix: "backup/app-s3/", DestDir: t.TempDir()}},
+		}
+		if err := ValidateBackup(b); err == nil {
+			t.Fatal("expected error for missing min_interval, got nil")
+		}
+	})
 	t.Run("duplicate label rejected", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
 		b := &Backup{

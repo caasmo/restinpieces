@@ -162,6 +162,14 @@ func ValidateBackup(backup *Backup) error {
 			return err
 		}
 	}
+	for key, e := range backup.S3Download {
+		if !isValidMapKeyLabel(key) {
+			return fmt.Errorf("s3-download: map key %q must not contain whitespace or '.'", key)
+		}
+		if err := validateBackupS3Download(key, e); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -277,6 +285,11 @@ func validateBackupLabels(backup *Backup) error {
 			return err
 		}
 	}
+	for key := range backup.S3Download {
+		if err := validateBackupLabel(labels, "s3-download", key); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -336,6 +349,25 @@ func validateBackupS3Upload(key string, e BackupS3UploadEntry) error {
 		return nil
 	}
 	return nil // deactivated entry
+}
+
+// validateBackupS3Download checks one S3 download entry. An empty
+// object_key_prefix deactivates the entry. An active entry needs a bucket
+// and an existing dest_dir. MinInterval must be positive.
+func validateBackupS3Download(key string, e BackupS3DownloadEntry) error {
+	if e.MinInterval.Duration <= 0 {
+		return fmt.Errorf("s3-download.%s.min_interval must be positive", key)
+	}
+	if e.ObjectKeyPrefix == "" {
+		return nil // deactivated entry
+	}
+	if e.Bucket == "" {
+		return fmt.Errorf("s3-download.%s.bucket is required", key)
+	}
+	if !isDir(e.DestDir) {
+		return fmt.Errorf("s3-download.%s.dest_dir must be an existing directory, got %q", key, e.DestDir)
+	}
+	return nil
 }
 
 // isDir reports whether path exists and is a directory. Relative

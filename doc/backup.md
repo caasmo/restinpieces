@@ -11,6 +11,7 @@ The framework has no backup code, to keep dependencies minimal. It only provides
   - [`backup.vacuum.<label>` — VACUUM INTO](#backupvacuum-label--vacuum-into)
   - [`backup.sqlite-rsync` — sqlite-rsync origin](#backupsqlite-rsync--sqlite-rsync-origin)
   - [`backup.s3-upload.<label>` — S3 upload](#backups3-uploadlabel--s3-upload)
+  - [`backup.s3-download.<label>` — S3 download](#backups3-downloadlabel--s3-download)
 - [Stable Hardlink (`latest-`)](#stable-hardlink-latest-)
 
 ## Enabling Backups
@@ -34,6 +35,7 @@ To deactivate one entry, empty its `source_path` (or `dest_path` for online/vacu
 ripc set backup.online.app-online.source_path ""
 ripc set backup.sqlite-rsync.entries.app-rsync.source_path ""
 ripc set backup.s3-upload.app-s3.path ""
+ripc set backup.s3-download.app-dl.object_key_prefix ""
 ```
 
 To deactivate all backups, remove every entry. Empty maps are valid and make backups a no-op. Deactivating does not delete files on disk and does not require removing the daemon. You can reactivate by setting the paths again.
@@ -56,6 +58,7 @@ A label is unique across all tables. Validation rejects the same label in two ta
 | `vacuum` | VACUUM INTO entries. |
 | `sqlite-rsync` | sqlite-rsync origin. |
 | `s3-upload` | Uploads one file to an S3-compatible bucket: a fixed path or the newest match under a path prefix. |
+| `s3-download` | Pulls the newest backup for a label from an S3-compatible bucket; an exact object key pulls just that object. |
 
 ### `backup.online.<label>` — Online Backup API
 
@@ -129,6 +132,34 @@ ripc set backup.s3-upload.app-s3.bucket my-backups
 ripc set backup.s3-upload.app-s3.path_prefix /data/backups/app-online-app.db-
 ripc set backup.s3-upload.app-s3.path_prefix_selector latest
 ripc set backup.s3-upload.app-s3.min_interval 5m
+```
+
+### `backup.s3-download.<label>` — S3 download
+
+Each `s3-download` entry lists its bucket under `object_key_prefix` and downloads the newest backup for the label. The uploader puts the inverted time in the key, so the bucket returns the newest backup for the label; the prefix `backup/app-s3/` gets the newest backup for `app-s3`. An exact object key gets just that object. The file is written into `dest_dir` as `s3download-<label>-<pad>-<name>`, and the download is skipped when that file already exists, so the same object is never downloaded twice. The file is never decrypted.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `object_key_prefix` | string | `""` (deactivated) | Start of the keys to look at; the newest backup for the label is downloaded. An exact object key gets just that object. |
+| `bucket` | string | `""` | Bucket the object is downloaded from. Required when `object_key_prefix` is set. |
+| `dest_dir` | string | `""` | Directory the downloaded file is written to. Must be an existing directory when the entry is active. |
+| `min_interval` | duration | `5m` | The entry is skipped without calling S3 until this much time has passed since the last download. |
+
+An entry with an empty `object_key_prefix` is deactivated. An active entry needs a bucket.
+
+Scaffold the entry and point it at the label:
+
+```bash
+ripc scaffold backup-s3-download app-dl
+ripc set backup.s3-download.app-dl.bucket my-backups
+ripc set backup.s3-download.app-dl.object_key_prefix backup/app-s3/
+ripc set backup.s3-download.app-dl.dest_dir /data/downloads
+```
+
+Set an exact object key instead to get just that object:
+
+```bash
+ripc set backup.s3-download.app-dl.object_key_prefix backup/app-s3/251611468335/app.db
 ```
 
 ## Stable Hardlink (`latest-`)

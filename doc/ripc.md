@@ -156,7 +156,7 @@ Array items are named by value:
 
     ripc remove block_user_agent.agents SemrushBot
 
-Removable tables are `backup.online.<label>`, `backup.vacuum.<label>`, `backup.sqlite-rsync.entries.<label>`, `backup.s3-upload.<label>`, `scheduler.jobs.<label>`, `oauth2_providers.<label>` and `acme.dns-01.<label>`. Removable array items are `block_user_agent.agents`, `block_host.allowed_hosts`, `block_oversized_request.excluded_paths` and `acme.domains`. Scalar keys like `server.addr` are refused.
+Removable tables are `backup.online.<label>`, `backup.vacuum.<label>`, `backup.sqlite-rsync.entries.<label>`, `backup.s3-upload.<label>`, `backup.s3-download.<label>`, `scheduler.jobs.<label>`, `oauth2_providers.<label>` and `acme.dns-01.<label>`. Removable array items are `block_user_agent.agents`, `block_host.allowed_hosts`, `block_oversized_request.excluded_paths` and `acme.domains`. Scalar keys like `server.addr` are refused.
 
 Removing a stored item brings back the framework default when one exists. For example, `block_oversized_request.excluded_paths` returns to `/api/upload` and `/api/import`. To keep an array empty instead, set it to an empty array with `ripc set block_oversized_request.excluded_paths "[]"`.
 

@@ -202,6 +202,15 @@ func NewBackupS3UploadEntryDefaults() BackupS3UploadEntry {
 	}
 }
 
+// NewBackupS3DownloadEntryDefaults returns an S3 download entry with
+// defaults for ripc scaffold. MinInterval defaults to 5m; ObjectKeyPrefix,
+// Bucket and DestDir are empty, so the user sets them.
+func NewBackupS3DownloadEntryDefaults() BackupS3DownloadEntry {
+	return BackupS3DownloadEntry{
+		MinInterval: Duration{Duration: 5 * time.Minute},
+	}
+}
+
 func NewBackupSqliteRsyncEntryDefaults() BackupSqliteRsyncEntry {
 	return BackupSqliteRsyncEntry{
 		SyncTimeout: Duration{Duration: 15 * time.Minute},

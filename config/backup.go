@@ -11,6 +11,7 @@ type Backup struct {
 	Vacuum      BackupVacuum      `toml:"vacuum"`
 	SqliteRsync BackupSqliteRsync `toml:"sqlite-rsync"`
 	S3Upload    BackupS3Upload    `toml:"s3-upload"`
+	S3Download  BackupS3Download  `toml:"s3-download"`
 }
 
 // BackupOnlineAPI holds per-database configuration for the Online Backup API
@@ -154,6 +155,40 @@ type BackupS3UploadEntry struct {
 	// AgeRecipient is the age public key the file is encrypted to
 	// before upload. Empty string uploads the file unchanged.
 	AgeRecipient string `toml:"age_recipient" comment:"age public key the file is encrypted to (e.g. 'age1...'). Empty uploads without encryption."`
+}
+
+// BackupS3Download holds the S3 download entries. Each entry is keyed by a
+// label you choose and downloads one object from its bucket into DestDir,
+// under the name s3download-<label>-<pad>-<name>.
+type BackupS3Download map[string]BackupS3DownloadEntry
+
+// BackupS3DownloadEntry is one S3 download entry.
+//
+// ObjectKeyPrefix is the start of the keys to look at. The job downloads
+// the newest backup for the label, or just one object when an exact key
+// is set. An empty prefix deactivates the entry; an active entry needs a
+// bucket. The job skips the entry until MinInterval has passed since its
+// last download, without calling S3. The uploader names keys in time
+// order, so the bucket returns the newest backup for the label. The local
+// file keeps the object's pad and name, so the same object is never
+// downloaded twice.
+type BackupS3DownloadEntry struct {
+	// Bucket is the bucket the object is downloaded from. Required when
+	// ObjectKeyPrefix is set.
+	Bucket string `toml:"bucket" comment:"Bucket the object is downloaded from"`
+
+	// ObjectKeyPrefix is the start of the keys to look at; the newest
+	// backup for the label is downloaded. An exact object key selects
+	// just that object. Empty deactivates the entry.
+	ObjectKeyPrefix string `toml:"object_key_prefix" comment:"Key prefix; the newest backup for the label is downloaded"`
+
+	// DestDir is the local directory the downloaded file is written to.
+	DestDir string `toml:"dest_dir" comment:"Directory the downloaded file is written to"`
+
+	// MinInterval is the minimum interval between downloads. The job
+	// skips the entry without calling S3 until this much time has passed
+	// since the last download.
+	MinInterval Duration `toml:"min_interval" comment:"Minimum interval between downloads (e.g. '5m')"`
 }
 
 func (c Config) BackupSqliteRsync() BackupSqliteRsync {

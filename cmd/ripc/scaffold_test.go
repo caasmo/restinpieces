@@ -131,6 +131,32 @@ func TestScaffoldConfigValue_BackupS3Upload(t *testing.T) {
 	}
 }
 
+func TestScaffoldConfigValue_BackupS3Download(t *testing.T) {
+	scope := config.ScopeApplication
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupS3Download, "app-dl")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	tree := getTreeFromStore(t, mockStore, scope)
+	path := "backup.s3-download.app-dl"
+	entryTree, ok := tree.Get(path).(*toml.Tree)
+	if !ok {
+		t.Fatalf("expected subtree at %s", path)
+	}
+	if got := entryTree.Get("min_interval"); got != "5m0s" {
+		t.Errorf("expected min_interval 5m, got %v", got)
+	}
+	if !entryTree.Has("object_key_prefix") {
+		t.Errorf("expected object_key_prefix field in scaffolded entry")
+	}
+	if !strings.Contains(stderr.String(), "ripc set backup.s3-download.app-dl.object_key_prefix") {
+		t.Errorf("expected next steps command, got %q", stderr.String())
+	}
+}
+
 func TestScaffoldConfigValue_LabelWithSpaceRejected(t *testing.T) {
 	scope := config.ScopeApplication
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})

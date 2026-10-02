@@ -79,6 +79,22 @@ func TestNewBackupS3UploadEntryDefaults(t *testing.T) {
 	}
 }
 
+func TestNewBackupS3DownloadEntryDefaults(t *testing.T) {
+	v := NewBackupS3DownloadEntryDefaults()
+	if v.ObjectKeyPrefix != "" {
+		t.Errorf("ObjectKeyPrefix: got %q, want empty", v.ObjectKeyPrefix)
+	}
+	if v.Bucket != "" {
+		t.Errorf("Bucket: got %q, want empty", v.Bucket)
+	}
+	if v.DestDir != "" {
+		t.Errorf("DestDir: got %q, want empty", v.DestDir)
+	}
+	if v.MinInterval.Duration != 5*time.Minute {
+		t.Errorf("MinInterval: got %v, want 5m", v.MinInterval)
+	}
+}
+
 func TestNewBackupSqliteRsyncEntryDefaults(t *testing.T) {
 	v := NewBackupSqliteRsyncEntryDefaults()
 	if v.SourcePath != "" {
