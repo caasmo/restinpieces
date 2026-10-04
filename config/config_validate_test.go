@@ -616,7 +616,7 @@ func TestValidateBackup(t *testing.T) {
 			t.Fatal(err)
 		}
 		b := &Backup{
-			S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, MinInterval: Duration{Duration: time.Hour}, AgeRecipient: identity.Recipient().String()}},
+			S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, AgeRecipient: identity.Recipient().String()}},
 		}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil, got %v", err)
@@ -625,7 +625,7 @@ func TestValidateBackup(t *testing.T) {
 	t.Run("s3-upload valid prefix", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
 		b := &Backup{
-			S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", PathPrefix: filepath.Join(backupDir, "app-"), PathPrefixSelector: s3UploadSelectorLatest, MinInterval: Duration{Duration: time.Hour}}},
+			S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", PathPrefix: filepath.Join(backupDir, "app-"), PathPrefixSelector: s3UploadSelectorLatest}},
 		}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil, got %v", err)
@@ -633,54 +633,54 @@ func TestValidateBackup(t *testing.T) {
 	})
 	t.Run("s3-upload missing bucket", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB, MinInterval: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for missing bucket, got nil")
 		}
 	})
 	t.Run("s3-upload empty paths deactivate", func(t *testing.T) {
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {MinInterval: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {}}}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil for deactivated entry, got %v", err)
 		}
 	})
 	t.Run("s3-upload path and prefix exclusive", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, PathPrefix: "/data/app-", PathPrefixSelector: s3UploadSelectorLatest, MinInterval: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, PathPrefix: "/data/app-", PathPrefixSelector: s3UploadSelectorLatest}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for path and path_prefix both set, got nil")
 		}
 	})
 	t.Run("s3-upload latest selector ignored with path", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, PathPrefixSelector: s3UploadSelectorLatest, MinInterval: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, PathPrefixSelector: s3UploadSelectorLatest}}}
 		if err := ValidateBackup(b); err != nil {
 			t.Fatalf("expected nil for latest selector with path, got %v", err)
 		}
 	})
 	t.Run("s3-upload invalid selector with path", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, PathPrefixSelector: "oldest", MinInterval: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, PathPrefixSelector: "oldest"}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for unsupported selector with path, got nil")
 		}
 	})
 	t.Run("s3-upload invalid selector", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", PathPrefix: filepath.Join(backupDir, "app-"), PathPrefixSelector: "oldest", MinInterval: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", PathPrefix: filepath.Join(backupDir, "app-"), PathPrefixSelector: "oldest"}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for unsupported selector, got nil")
 		}
 	})
 	t.Run("s3-upload missing path", func(t *testing.T) {
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: filepath.Join(t.TempDir(), "nope.db"), MinInterval: Duration{Duration: time.Hour}}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: filepath.Join(t.TempDir(), "nope.db")}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for missing path, got nil")
 		}
 	})
 	t.Run("s3-upload invalid age recipient", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, MinInterval: Duration{Duration: time.Hour}, AgeRecipient: "not-a-key"}}}
+		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, AgeRecipient: "not-a-key"}}}
 		if err := ValidateBackup(b); err == nil {
 			t.Fatal("expected error for invalid age recipient, got nil")
 		}

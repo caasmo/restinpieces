@@ -129,8 +129,7 @@ type BackupS3Upload map[string]BackupS3UploadEntry
 // fixed file. A PathPrefix entry uploads the newest file whose name
 // starts with the prefix; PathPrefixSelector names how that match is
 // chosen and only "latest" is supported. An entry with both paths empty
-// is deactivated. MinInterval is parsed via time.ParseDuration (e.g.
-// "5m") and must be positive. An empty AgeRecipient uploads the file
+// is deactivated. An empty AgeRecipient uploads the file
 // unchanged.
 type BackupS3UploadEntry struct {
 	// Bucket is the bucket the file is uploaded to. Required when Path or
@@ -147,10 +146,6 @@ type BackupS3UploadEntry struct {
 	// PathPrefixSelector names how the match under PathPrefix is
 	// chosen. Only "latest" is supported.
 	PathPrefixSelector string `toml:"path_prefix_selector" comment:"How the match is chosen (only 'latest' is supported)"`
-
-	// MinInterval is the minimum interval between uploads.
-	// The daemon skips the entry without calling S3 until this much time has passed since the file's modification time.
-	MinInterval Duration `toml:"min_interval" comment:"Minimum interval between uploads (e.g. '5m')"`
 
 	// AgeRecipient is the age public key the file is encrypted to
 	// before upload. Empty string uploads the file unchanged.

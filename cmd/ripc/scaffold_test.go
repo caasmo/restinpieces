@@ -120,9 +120,6 @@ func TestScaffoldConfigValue_BackupS3Upload(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected subtree at %s", path)
 	}
-	if got := entryTree.Get("min_interval"); got != "5m0s" {
-		t.Errorf("expected min_interval 5m, got %v", got)
-	}
 	if !entryTree.Has("path") {
 		t.Errorf("expected path field in scaffolded entry")
 	}

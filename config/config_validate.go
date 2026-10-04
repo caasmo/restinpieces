@@ -311,9 +311,6 @@ func validateBackupLabel(labels map[string]string, table, label string) error {
 // supported selector, "latest", and point into an existing directory. The
 // age recipient must be a valid key when set.
 func validateBackupS3Upload(key string, e BackupS3UploadEntry) error {
-	if e.MinInterval.Duration <= 0 {
-		return fmt.Errorf("s3-upload.%s.min_interval must be positive", key)
-	}
 	if e.AgeRecipient != "" {
 		_, err := age.ParseX25519Recipient(e.AgeRecipient)
 		if err != nil {

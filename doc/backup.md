@@ -99,7 +99,7 @@ Each `backup.sqlite-rsync.entries.<label>` entry:
 
 ### `backup.s3-upload.<label>` — S3 upload
 
-Each `s3-upload` entry uploads one file to the bucket the entry sets. The object key is `backup/<label>/<pad>/<filename>`, where `<pad>` is the file's modification time counted down from year 9999 and zero-padded, so a bucket listing shows the newest object first. A file whose object already exists is never uploaded twice.
+Each `s3-upload` entry uploads one file to the bucket the entry sets. The object key is `backup/<label>/<pad>/<filename>`, where `<pad>` is the file's modification time counted down from year 9999 and zero-padded, so a bucket listing shows the newest object first. A file whose object already exists is never uploaded twice. The app runs the entry as a job of type `s3_upload`; the interval of that `scheduler.jobs` entry sets how often the bucket is checked.
 
 | Field | Type | Default | Description |
 |---|---|---|---|
@@ -107,7 +107,6 @@ Each `s3-upload` entry uploads one file to the bucket the entry sets. The object
 | `path` | string | `""` | Fixed file to upload. Empty uses `path_prefix`. |
 | `path_prefix` | string | `""` | Path prefix; the newest matching file is uploaded. Requires `path_prefix_selector`. Empty uses `path`. |
 | `path_prefix_selector` | string | `"latest"` | How the match under `path_prefix` is chosen. Only `latest` is supported. |
-| `min_interval` | duration | `5m` | The file is skipped without calling S3 until this much time has passed since its modification. |
 | `age_recipient` | string | `""` | age public key the file is encrypted to before upload. Empty uploads without encryption. |
 
 `path` and `path_prefix` are mutually exclusive; an entry with both empty is deactivated.
@@ -125,13 +124,12 @@ ripc set backup.s3-upload.app-s3.age_recipient @s3-backup-recipient.txt
 ripc scaffold backup-s3-upload app-s3
 ```
 
-3. Point it at the file, either fixed or by prefix, and set the upload interval (`5m` default):
+3. Point it at the file, either fixed or by prefix:
 
 ```bash
 ripc set backup.s3-upload.app-s3.bucket my-backups
 ripc set backup.s3-upload.app-s3.path_prefix /data/backups/app-online-app.db-
 ripc set backup.s3-upload.app-s3.path_prefix_selector latest
-ripc set backup.s3-upload.app-s3.min_interval 5m
 ```
 
 ### `backup.s3-download.<label>` — S3 download

@@ -192,12 +192,11 @@ func NewBackupVacuumEntryDefaults() BackupVacuumEntry {
 }
 
 // NewBackupS3UploadEntryDefaults returns an S3 upload entry with defaults
-// for ripc scaffold. MinInterval defaults to 5m and PathPrefixSelector
-// defaults to "latest", the only supported selector; Path, PathPrefix
-// and AgeRecipient are empty, so the user sets them.
+// for ripc scaffold. PathPrefixSelector defaults to "latest", the only
+// supported selector; Path, PathPrefix, Bucket and AgeRecipient are
+// empty, so the user sets them.
 func NewBackupS3UploadEntryDefaults() BackupS3UploadEntry {
 	return BackupS3UploadEntry{
-		MinInterval:        Duration{Duration: 5 * time.Minute},
 		PathPrefixSelector: s3UploadSelectorLatest,
 	}
 }

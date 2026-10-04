@@ -307,3 +307,9 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - the existing `check_*` helpers (`check_db_integrity`, `check_log_db_path_systemd`) should be renamed `validate_*` too
 - refs: `scripts/ripdep` (`cmd_build`, the `check_*` helpers), `impl-ripdep-with-db-s3.md`
 
+# online api: this is a mess, online api not using mtype for each prefix, it shoudl be a job no checks
+
+- online due check uses filename timestamp (`latestBackupFiles` + `isBackupDue`), s3 upload picks latest by filesystem mtime (`fileToUpload`), so the two daemons disagree on which file is newest
+- online ticks every 10m (`MaxTickInterval`) with a scan + due check; proposal is a scheduler job that just copies on fire with no checks, same shape as `s3_download`
+- refs: `restinpieces-backup/internal/localcopy/daemon.go` (`MaxTickInterval`, `interval`), `restinpieces-backup/internal/localcopy/engine.go` (`latestBackupFiles`, `isBackupDue`, `handleFile`), `restinpieces-backup/internal/localcopy/latest.go` (`scanBackupDir`), `restinpieces-backup/onlineapi/onlineapi.go` (`Entries`), `restinpieces-backup/s3/upload/daemon.go` (`tickInterval`, `fileToUpload`, `uploadOne`)
+

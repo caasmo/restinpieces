@@ -74,9 +74,6 @@ func TestNewBackupS3UploadEntryDefaults(t *testing.T) {
 	if v.AgeRecipient != "" {
 		t.Errorf("AgeRecipient: got %q, want empty", v.AgeRecipient)
 	}
-	if v.MinInterval.Duration != 5*time.Minute {
-		t.Errorf("MinInterval: got %v, want 5m", v.MinInterval)
-	}
 }
 
 func TestNewBackupS3DownloadEntryDefaults(t *testing.T) {
