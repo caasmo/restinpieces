@@ -3,7 +3,7 @@ package config
 // Backup holds the backup configuration. Each backup strategy has its own
 // TOML table, and the table you scaffold into decides which daemon makes
 // the backup. Every entry is keyed by a label you choose (for example
-// "app1"). The daemons that make the backups live in restinpieces-backup;
+// "app1"). The code that makes the backups lives in restinpieces-backup;
 // the framework only defines the configuration and validates it, and runs
 // no backup itself.
 type Backup struct {
@@ -40,7 +40,7 @@ type BackupOnlineAPIEntry struct {
 	DestPath string `toml:"dest_path" comment:"Directory where backup files will be stored. Supports absolute and relative paths (relative to the application CWD)."`
 
 	// Frequency defines how often this database should be backed up.
-	// The daemon skips a database if its latest backup is newer than
+	// The job skips a database if its latest backup is newer than
 	// this duration. Parsed via time.ParseDuration (e.g. "24h", "6h").
 	Frequency Duration `toml:"frequency" comment:"Minimum interval between backups (e.g. '24h')."`
 
@@ -80,7 +80,7 @@ type BackupVacuumEntry struct {
 	DestPath string `toml:"dest_path" comment:"Directory where backup files will be stored. Supports absolute and relative paths (relative to the application CWD)."`
 
 	// Frequency defines how often this database should be backed up.
-	// The daemon skips a database if its latest backup is newer than
+	// The job skips a database if its latest backup is newer than
 	// this duration. Parsed via time.ParseDuration (e.g. "24h", "6h").
 	Frequency Duration `toml:"frequency" comment:"Minimum interval between backups (e.g. '24h')."`
 
@@ -188,12 +188,4 @@ type BackupS3DownloadEntry struct {
 
 func (c Config) BackupSqliteRsync() BackupSqliteRsync {
 	return c.Backup.SqliteRsync
-}
-
-func (c Config) BackupOnlineAPI() BackupOnlineAPI {
-	return c.Backup.OnlineAPI
-}
-
-func (c Config) BackupVacuum() BackupVacuum {
-	return c.Backup.Vacuum
 }

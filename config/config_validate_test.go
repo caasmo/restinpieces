@@ -524,77 +524,77 @@ func TestValidateBackup(t *testing.T) {
 	t.Run("online valid", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"app-online": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
 	})
 	t.Run("vacuum valid", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
 		b := &Backup{Vacuum: BackupVacuum{"app-vacuum": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}}}}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil for vacuum valid, got %v", err)
 		}
 	})
 	t.Run("sqlite-rsync valid", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"app-rsync": {SourcePath: appDB, SyncTimeout: Duration{Duration: 15 * time.Minute}}}}}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil for rsync, got %v", err)
 		}
 	})
 	t.Run("sqlite-rsync listen_addr empty rejected", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{SqliteRsync: BackupSqliteRsync{Entries: map[string]BackupSqliteRsyncEntry{"app-rsync": {SourcePath: appDB}}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for empty listen_addr")
 		}
 	})
 	t.Run("sqlite-rsync listen_addr invalid", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{SqliteRsync: BackupSqliteRsync{ListenAddr: "bad", Entries: map[string]BackupSqliteRsyncEntry{"app-rsync": {SourcePath: appDB}}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for invalid listen_addr")
 		}
 	})
 	t.Run("sqlite-rsync listen_addr valid", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"app-rsync": {SourcePath: appDB}}}}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil for valid listen_addr, got %v", err)
 		}
 	})
 	t.Run("label with dot rejected", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"my.label": {SourcePath: appDB, DestPath: t.TempDir(), Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for label with dot")
 		}
 	})
 	t.Run("label with space rejected", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"my label": {SourcePath: appDB, DestPath: t.TempDir(), Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for label with space")
 		}
 	})
 	t.Run("label with dot rejected vacuum", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{Vacuum: BackupVacuum{"my.label": {SourcePath: appDB, DestPath: t.TempDir(), Frequency: Duration{Duration: time.Hour}}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for label with dot in vacuum")
 		}
 	})
 	t.Run("label with dot rejected sqlite-rsync", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"my.label": {SourcePath: appDB}}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for label with dot in sqlite-rsync")
 		}
 	})
 	t.Run("empty paths deactivate entry", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: appDB, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil for empty dest_path (deactivated), got: %v", err)
 		}
 	})
@@ -605,7 +605,7 @@ func TestValidateBackup(t *testing.T) {
 			Vacuum:      BackupVacuum{"other": {SourcePath: otherDB, DestPath: backupDir, Frequency: Duration{Duration: 30 * time.Minute}}},
 			SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"rsync": {SourcePath: appDB, SyncTimeout: Duration{Duration: 15 * time.Minute}}}},
 		}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil for valid mixed config, got: %v", err)
 		}
 	})
@@ -618,7 +618,7 @@ func TestValidateBackup(t *testing.T) {
 		b := &Backup{
 			S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, AgeRecipient: identity.Recipient().String()}},
 		}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
 	})
@@ -627,61 +627,61 @@ func TestValidateBackup(t *testing.T) {
 		b := &Backup{
 			S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", PathPrefix: filepath.Join(backupDir, "app-"), PathPrefixSelector: s3UploadSelectorLatest}},
 		}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
 	})
 	t.Run("s3-upload missing bucket", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Path: appDB}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for missing bucket, got nil")
 		}
 	})
 	t.Run("s3-upload empty paths deactivate", func(t *testing.T) {
 		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {}}}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil for deactivated entry, got %v", err)
 		}
 	})
 	t.Run("s3-upload path and prefix exclusive", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, PathPrefix: "/data/app-", PathPrefixSelector: s3UploadSelectorLatest}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for path and path_prefix both set, got nil")
 		}
 	})
 	t.Run("s3-upload latest selector ignored with path", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, PathPrefixSelector: s3UploadSelectorLatest}}}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil for latest selector with path, got %v", err)
 		}
 	})
 	t.Run("s3-upload invalid selector with path", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, PathPrefixSelector: "oldest"}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for unsupported selector with path, got nil")
 		}
 	})
 	t.Run("s3-upload invalid selector", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
 		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", PathPrefix: filepath.Join(backupDir, "app-"), PathPrefixSelector: "oldest"}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for unsupported selector, got nil")
 		}
 	})
 	t.Run("s3-upload missing path", func(t *testing.T) {
 		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: filepath.Join(t.TempDir(), "nope.db")}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for missing path, got nil")
 		}
 	})
 	t.Run("s3-upload invalid age recipient", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{S3Upload: BackupS3Upload{"app-s3": {Bucket: "my-bucket", Path: appDB, AgeRecipient: "not-a-key"}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for invalid age recipient, got nil")
 		}
 	})
@@ -689,7 +689,7 @@ func TestValidateBackup(t *testing.T) {
 		b := &Backup{
 			S3Download: BackupS3Download{"app-dl": {Bucket: "my-bucket", ObjectKeyPrefix: "backup/app-s3/", DestDir: t.TempDir(), MinInterval: Duration{Duration: time.Hour}}},
 		}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
 	})
@@ -697,13 +697,13 @@ func TestValidateBackup(t *testing.T) {
 		b := &Backup{
 			S3Download: BackupS3Download{"app-dl": {Bucket: "my-bucket", ObjectKeyPrefix: "backup/app-s3/251611468335/app.db", DestDir: t.TempDir(), MinInterval: Duration{Duration: time.Hour}}},
 		}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil, got %v", err)
 		}
 	})
 	t.Run("s3-download empty prefix deactivates", func(t *testing.T) {
 		b := &Backup{S3Download: BackupS3Download{"app-dl": {MinInterval: Duration{Duration: time.Hour}}}}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil for deactivated entry, got %v", err)
 		}
 	})
@@ -711,7 +711,7 @@ func TestValidateBackup(t *testing.T) {
 		b := &Backup{
 			S3Download: BackupS3Download{"app-dl": {ObjectKeyPrefix: "backup/app-s3/", DestDir: t.TempDir(), MinInterval: Duration{Duration: time.Hour}}},
 		}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for missing bucket, got nil")
 		}
 	})
@@ -719,7 +719,7 @@ func TestValidateBackup(t *testing.T) {
 		b := &Backup{
 			S3Download: BackupS3Download{"app-dl": {Bucket: "my-bucket", ObjectKeyPrefix: "backup/app-s3/", DestDir: filepath.Join(t.TempDir(), "nope"), MinInterval: Duration{Duration: time.Hour}}},
 		}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for missing dest_dir, got nil")
 		}
 	})
@@ -727,7 +727,7 @@ func TestValidateBackup(t *testing.T) {
 		b := &Backup{
 			S3Download: BackupS3Download{"app-dl": {Bucket: "my-bucket", ObjectKeyPrefix: "backup/app-s3/", DestDir: t.TempDir()}},
 		}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for missing min_interval, got nil")
 		}
 	})
@@ -737,55 +737,55 @@ func TestValidateBackup(t *testing.T) {
 			OnlineAPI: BackupOnlineAPI{"app": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}},
 			Vacuum:    BackupVacuum{"app": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}}},
 		}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for duplicate label, got nil")
 		}
 	})
 	t.Run("no files configured validates ok", func(t *testing.T) {
 		b := &Backup{}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("expected nil for no files configured, got: %v", err)
 		}
 	})
 	t.Run("dest_path missing", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: appDB, DestPath: filepath.Join(t.TempDir(), "nope"), Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for missing dest_path, got nil")
 		}
 	})
 	t.Run("dest_path is a file", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: appDB, DestPath: appDB, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for dest_path being a file, got nil")
 		}
 	})
 	t.Run("source_path missing", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: filepath.Join(t.TempDir(), "missing.db"), DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for missing source_path, got nil")
 		}
 	})
 	t.Run("source_path is a directory", func(t *testing.T) {
 		backupDir, _, _ := backupLocalFixture(t)
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: backupDir, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for source_path being a directory, got nil")
 		}
 	})
 	t.Run("zero frequency", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: 0}, PagesPerStep: 100}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for zero frequency, got nil")
 		}
 	})
 	t.Run("negative frequency", func(t *testing.T) {
 		backupDir, appDB, _ := backupLocalFixture(t)
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: appDB, DestPath: backupDir, Frequency: Duration{Duration: -time.Hour}, PagesPerStep: 100}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for negative frequency, got nil")
 		}
 	})
@@ -805,38 +805,38 @@ func TestValidateBackup(t *testing.T) {
 				"second": {SourcePath: otherAppDB, DestPath: backupDir, Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100},
 			},
 		}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("same basename with different map keys should be valid, got: %v", err)
 		}
 	})
 	t.Run("negative pages_per_step", func(t *testing.T) {
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, PagesPerStep: -1}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for negative pages_per_step, got nil")
 		}
 	})
 	t.Run("zero pages_per_step rejected", func(t *testing.T) {
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, PagesPerStep: 0}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for zero pages_per_step, got nil")
 		}
 	})
 	t.Run("negative sleep interval", func(t *testing.T) {
 		b := &Backup{OnlineAPI: BackupOnlineAPI{"db": {SourcePath: "", DestPath: "", Frequency: Duration{Duration: time.Hour}, PagesPerStep: 100, SleepInterval: Duration{Duration: -time.Millisecond}}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for negative sleep interval, got nil")
 		}
 	})
 	t.Run("negative sync_timeout", func(t *testing.T) {
 		b := &Backup{SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"db": {SourcePath: "", SyncTimeout: Duration{Duration: -time.Minute}}}}}
-		if err := ValidateBackup(b); err == nil {
+		if err := validateBackup(b); err == nil {
 			t.Fatal("expected error for negative sync_timeout, got nil")
 		}
 	})
 	t.Run("zero sync_timeout allowed", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
 		b := &Backup{SqliteRsync: BackupSqliteRsync{ListenAddr: "127.0.0.1:54321", Entries: map[string]BackupSqliteRsyncEntry{"db": {SourcePath: appDB, SyncTimeout: Duration{Duration: 0}}}}}
-		if err := ValidateBackup(b); err != nil {
+		if err := validateBackup(b); err != nil {
 			t.Fatalf("zero sync_timeout should be allowed, got %v", err)
 		}
 	})
