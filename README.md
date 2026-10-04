@@ -111,7 +111,7 @@ A key feature is support for dynamic updates. The server listens for the `SIGHUP
 
 The framework provides **`ripdep`**, a comprehensive CLI tool designed to manage the full lifecycle of your application. It acts as a high-level wrapper around the `ripc` binary, orchestrating complex DevOps tasks and remote operations via SSH directly from your local developer machine (control plane).  In contrast, `ripc` is the server-side companion — it runs on the production machine itself, operating on the local filesystem.
 -   **Remote DevOps**: Wraps low-level `ripc` commands to handle configuration, maintenance modes, and log monitoring without needing manual server access.
--   **Disaster Recovery**: Simplifies the process of bootstrapping new servers and recovering from backups (including Litestream integration) through the `build` command's `--with-agekey`, `--with-systemd-service`, and `--with-db-local` options.
+-   **Disaster Recovery**: Simplifies the process of bootstrapping new servers and recovering from backups (including Litestream integration) through the `build` command's `--with-agekey`, `--with-systemd-service`, `--with-db-local`, and `--with-db-s3` options.
 
 This tool encourages a workflow where most configuration and operational decisions are made locally, then securely applied to the remote environment. For detailed usage, see the **[Deployment Guide](doc/ripdep.md)**.
 

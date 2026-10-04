@@ -288,3 +288,22 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - fix: render the block with an Encoder with `CompactComments(true)`; kills the blanks for all scaffold types, comments and values stay
 - refs: `cmd/ripc/scaffold.go` (`defaultFieldsAndValues`, `scaffoldNextSteps`)
 
+# backup.s3-upload: backup.s3-upload.app-s3.path = backup.s3-upload.app-s3.path_prefix = data/backups/app-online-app.db- just as with download i think we can remove path, path-prefix server both use cases
+
+- `BackupS3UploadEntry` carries both `path` and `path_prefix` plus selector (`config/backup.go`); download serves both cases with one `object_key_prefix` (prefix for newest, exact key for one object)
+- shape: single upload selector field with the same rule, exact path uploads one file, prefix uploads newest match, empty deactivates
+- refs: `config/backup.go` (`BackupS3UploadEntry`, `BackupS3DownloadEntry`), `config/config_validate.go` (`validateBackupS3Upload`, `validateBackupS3Download`), `doc/backup.md`
+
+# ripdep check_log_db_path_systemd: that is stupid, because for other architectures it will not work
+
+- `check_log_db_path_systemd` (`scripts/ripdep`) runs the just-built local `bin/ripc` against the build database to read `log.batch.db_path`
+- when cross-compiling the binary cannot execute locally; the failure is swallowed by the guard, so the check silently never runs for other targets
+- fix: run it only when target equals host, or drop the local execution
+- refs: `scripts/ripdep` (`check_log_db_path_systemd`, `cmd_build`)
+
+# ripdep: create validate functions
+
+- move the inline option validation in `scripts/ripdep` (`cmd_build`: the `--with-agekey` and `--with-db-local` file checks) into `validate_*` functions, the way `validate_s3_recovery_config` does for `--with-db-s3`
+- the existing `check_*` helpers (`check_db_integrity`, `check_log_db_path_systemd`) should be renamed `validate_*` too
+- refs: `scripts/ripdep` (`cmd_build`, the `check_*` helpers), `impl-ripdep-with-db-s3.md`
+

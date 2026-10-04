@@ -252,6 +252,7 @@ Options add the pieces a first deployment or a recovery needs:
 *   `--with-agekey`: copy the project's `age.key` into the build.
 *   `--with-systemd-service`: add the project's `systemd.service`, or download the framework unit when the project has none.
 *   `--with-db-local <path>`: add a database to the build. A `.db` file becomes `data/app.db`; a `.tar.gz` is unpacked into `data/`, so pack the contents of the data directory, not the directory itself (`tar -czf db.tar.gz -C data .`).
+*   `--with-db-s3 <path>`: add an S3 recover config. The file is shipped as `config.toml`, the `ripdep-04-s3-recover` binary is compiled into `bin/`, and the installer runs it automatically as the project user. Requires `--with-agekey` and cannot be combined with `--with-db-local`.
 
 **Arguments:**
 *   `project-path`: the project source to compile. It must be a Go project whose worktree is clean and whose HEAD is exactly on the latest tag; the build fails otherwise. The tag is the version. The deployed name is the last part of this path, so building through a symlink deploys under the symlink's name (see [Deploy the Same Application Under a Different Name](#5-deploy-the-same-application-under-a-different-name)).
@@ -266,6 +267,9 @@ Cross-compile by setting `GOOS` and `GOARCH`; the host platform is the default.
 
 # A complete build for a fresh server
 ./ripdep build /path/to/my-app --with-agekey --with-systemd-service --with-db-local /path/to/app.db
+
+# A fresh server that recovers its data from S3
+./ripdep build /path/to/my-app --with-agekey --with-systemd-service --with-db-s3 /path/to/config.toml
 
 # Cross-compile for another target
 GOOS=linux GOARCH=arm64 ./ripdep build /path/to/my-app
@@ -352,6 +356,8 @@ Permissions:
 *   `700` for `/home/<app-name>/data`.
 *   `600` for every file copied from the build root, including `/home/<app-name>/age.key`, and all database files.
 *   `700` for binaries in `/home/<app-name>/bin`.
+
+Every file in `bin/` whose name starts with `ripdep` is run at install time as the project user, from the project home, in name order, just before the systemd units are installed. `ripdep-remote` is the installer itself, so it does not run.
 
 Every `*.service` file in the build root named `<project>.service` or `<project>-*.service` is installed into `/etc/systemd/system` after `systemd-analyze verify` accepts it; any other `*.service` file is skipped.
 
