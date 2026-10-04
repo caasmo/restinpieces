@@ -38,7 +38,7 @@ ripc set backup.s3-upload.app-s3.path ""
 ripc set backup.s3-download.app-dl.object_key_prefix ""
 ```
 
-To deactivate all backups, remove every entry. Empty maps are valid and make backups a no-op. Deactivating does not delete files on disk and does not require removing the daemon. You can reactivate by setting the paths again.
+To deactivate all backups, remove every entry. Empty maps are valid and make backups a no-op. Deactivating does not delete files on disk and does not require removing the job. You can reactivate by setting the paths again.
 
 Config changes apply on `SIGHUP` reload (no restart). With the canonical systemd service ([systemd.service](../systemd.service)):
 
@@ -73,6 +73,8 @@ Each `online` entry is the sync configuration of one database. Fields:
 | `pages_per_step` | int | `100` | Pages copied per step. Must be ≥1. |
 | `sleep_interval` | duration | `10ms` | Pause between steps. 0 means no throttling. Must be ≥0. |
 
+The app runs each entry as a job of type `online`; the interval of that `scheduler.jobs` entry is the check tick, and an entry is only backed up when its `frequency` has elapsed.
+
 ### `backup.vacuum.<label>` — VACUUM INTO
 
 Each `vacuum` entry is the sync configuration of one database. Fields:
@@ -83,6 +85,8 @@ Each `vacuum` entry is the sync configuration of one database. Fields:
 | `dest_path` | string | `""` (deactivated) | Directory for backups. Same rules as `online`. |
 | `frequency` | duration | — (required) | Minimum interval between backups. |
 | `compression` | bool | `false` | Gzip the snapshot. |
+
+The app runs each entry as a job of type `vacuum`; the interval of that `scheduler.jobs` entry is the check tick, and an entry is only backed up when its `frequency` has elapsed.
 
 ### `backup.sqlite-rsync` — sqlite-rsync origin
 

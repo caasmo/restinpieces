@@ -67,7 +67,7 @@ func Validate(cfg *Config) error {
 	if err := ValidateJobs(cfg.Scheduler.Jobs); err != nil {
 		return fmt.Errorf("scheduler jobs config validation failed: %w", err)
 	}
-	if err := ValidateBackup(&cfg.Backup); err != nil {
+	if err := validateBackup(&cfg.Backup); err != nil {
 		return fmt.Errorf("backup config validation failed: %w", err)
 	}
 	return nil
@@ -117,7 +117,7 @@ func isValidMapKeyLabel(label string) bool {
 	return true
 }
 
-func ValidateBackup(backup *Backup) error {
+func validateBackup(backup *Backup) error {
 	if err := validateBackupLabels(backup); err != nil {
 		return err
 	}
