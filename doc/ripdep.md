@@ -10,9 +10,10 @@
 - [Use Cases](#use-cases)
   - [First-Time Application Bootstrap](#1-first-time-application-bootstrap)
   - [Update Application](#2-update-application)
-  - [Restore Application from Backup](#3-restore-application-from-backup)
-  - [Recover a Corrupted Database](#4-recover-a-corrupted-database)
-  - [Deploy the Same Application Under a Different Name](#5-deploy-the-same-application-under-a-different-name)
+  - [Restore Application from Local Backup](#3-restore-application-from-local-backup)
+  - [Restore Application from S3 Backup](#4-restore-application-from-s3-backup)
+  - [Recover a Corrupted Database](#5-recover-a-corrupted-database)
+  - [Deploy the Same Application Under a Different Name](#6-deploy-the-same-application-under-a-different-name)
 - [Commands](#commands)
   - [build](#build)
   - [build-binary-release](#build-binary-release)
@@ -149,15 +150,9 @@ BUILD_DIR="/tmp/${PROJECT_NAME}-${VERSION}"
 ./ripdep restart "$HOST" "$PROJECT_NAME"
 ```
 
-### 3. Restore Application from Backup
+### 3. Restore Application from Local Backup
 
 Provision a new server (for example, a standby replica) from an existing backup. Check out the release that was running, build it with the database backup, the age key, and the systemd unit, and `deploy` ships the artifact to a fresh server reachable over SSH with `sudo`.
-
-Requirements:
-
-*   `--with-db-local` points to the database file (`.db`) or a tarball of the data directory contents (`.tar.gz`).
-*   `--with-agekey` adds the project's age key, so the restored database can be decrypted.
-*   `--with-systemd-service` adds the systemd unit, required on a fresh server.
 
 Commands:
 
@@ -175,7 +170,37 @@ git -C "$PROJECT_PATH" checkout "$VERSION"
 ./ripdep deploy "$HOST" "/tmp/my-app-${VERSION}"
 ```
 
-### 4. Recover a Corrupted Database
+### 4. Restore Application from S3 Backup
+
+The S3 settings normally live inside `app.db`, which is exactly what is missing, so they are handed in as a plain TOML file. Save one before disaster strikes:
+
+```bash
+./ripdep dump user@old-server.com my-app > my-app.toml
+```
+
+Commands:
+
+```bash
+PROJECT_PATH="/path/to/my-app"
+PROJECT_NAME="my-app"
+HOST="user@new-server.com"
+CONFIG_PATH="/path/to/config.toml"
+VERSION="v1.0.0"
+
+# 1. Build the artifact from the release that was running, with the S3 config
+git -C "$PROJECT_PATH" checkout "$VERSION"
+./ripdep build "$PROJECT_PATH" --with-agekey --with-systemd-service --with-db-s3 "$CONFIG_PATH"
+
+# 2. Deploy: the installer recovers data/app.db from S3 on the new server
+./ripdep deploy "$HOST" "/tmp/${PROJECT_NAME}-${VERSION}"
+
+# 3. Enable and start the service
+./ripdep enable "$HOST" "$PROJECT_NAME"
+```
+
+Re-running the install is safe: when `data/app.db` already exists the recover step leaves it alone.
+
+### 5. Recover a Corrupted Database
 
 The application is healthy but `data/app.db` is damaged or has been wiped (for example by a bad migration or an SQL injection) and fails its integrity check. The binaries are fine, so rebuild the artifact from the tag that is running with the last good backup. `deploy` replaces `data/app.db`; files that are not in the artifact stay untouched.
 
@@ -183,7 +208,6 @@ Stop the service first. The installer copies the backup straight over the live d
 
 Requirements:
 
-*   `--with-db-local` points to the last good backup: the database file (`.db`) or a tarball of the data directory contents (`.tar.gz`).
 *   The backup belongs to the age key already installed at `/home/<app-name>/age.key`.
 *   The project is checked out on the release that is running, with a clean worktree.
 
@@ -212,7 +236,7 @@ git -C "$PROJECT_PATH" checkout "$VERSION"
 ./ripdep restart "$HOST" "$PROJECT_NAME"
 ```
 
-### 5. Deploy the Same Application Under a Different Name
+### 6. Deploy the Same Application Under a Different Name
 
 To run the same application twice on one server under two names, build through a symlink named after the second app. The deployed name is the last part of the project path, so the symlink name becomes the service name.
 
@@ -255,7 +279,7 @@ Options add the pieces a first deployment or a recovery needs:
 *   `--with-db-s3 <path>`: add an S3 recover config. The file is shipped as `config.toml`, the `ripdep-04-s3-recover` binary is compiled into `bin/`, and the installer runs it automatically as the project user. Requires `--with-agekey` and cannot be combined with `--with-db-local`.
 
 **Arguments:**
-*   `project-path`: the project source to compile. It must be a Go project whose worktree is clean and whose HEAD is exactly on the latest tag; the build fails otherwise. The tag is the version. The deployed name is the last part of this path, so building through a symlink deploys under the symlink's name (see [Deploy the Same Application Under a Different Name](#5-deploy-the-same-application-under-a-different-name)).
+*   `project-path`: the project source to compile. It must be a Go project whose worktree is clean and whose HEAD is exactly on the latest tag; the build fails otherwise. The tag is the version. The deployed name is the last part of this path, so building through a symlink deploys under the symlink's name (see [Deploy the Same Application Under a Different Name](#6-deploy-the-same-application-under-a-different-name)).
 *   `build-base-dir`: the base directory for the build output (default `/tmp`). The build directory `<project>-<version>` is created inside it.
 
 Cross-compile by setting `GOOS` and `GOARCH`; the host platform is the default.
