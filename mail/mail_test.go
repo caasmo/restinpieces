@@ -247,6 +247,27 @@ func TestSendOtpEmail(t *testing.T) {
 	assertContains(t, decodedData, otp)
 }
 
+func TestSendOtpEmailMissingHost(t *testing.T) {
+	cfg := config.NewDefaultConfig()
+	cfg.Smtp.Host = ""
+	provider := config.NewProvider(cfg)
+
+	mailer, err := New(provider)
+	if err != nil {
+		t.Fatalf("Failed to create mailer: %v", err)
+	}
+
+	err = mailer.SendOtpEmail(context.Background(), "otp@example.com", "123456")
+
+	want := "failed to send OTP email: SMTP host is not configured"
+	if err == nil {
+		t.Fatal("SendOtpEmail should fail when the SMTP host is missing")
+	}
+	if err.Error() != want {
+		t.Fatalf("SendOtpEmail error = %q, want %q", err.Error(), want)
+	}
+}
+
 func TestSendPasswordResetOtpEmail(t *testing.T) {
 	server, mailer, cfg := setupTest(t)
 	defer server.Close()
