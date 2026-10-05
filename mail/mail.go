@@ -46,12 +46,14 @@ func createMailClient(smtpCfg config.Smtp) (*mailyak.MailYak, error) {
 
 	var auth smtp.Auth
 	switch smtpCfg.AuthMethod {
+	case "plain", "":
+		auth = smtp.PlainAuth("", smtpCfg.Username, smtpCfg.Password, smtpCfg.Host)
 	case "cram-md5":
 		auth = smtp.CRAMMD5Auth(smtpCfg.Username, smtpCfg.Password)
 	case "none":
 		auth = nil
-	default: // "plain" or empty
-		auth = smtp.PlainAuth("", smtpCfg.Username, smtpCfg.Password, smtpCfg.Host)
+	default:
+		return nil, fmt.Errorf("unsupported SMTP auth method %q", smtpCfg.AuthMethod)
 	}
 
 	addr := fmt.Sprintf("%s:%d", smtpCfg.Host, smtpCfg.Port)

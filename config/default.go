@@ -102,7 +102,6 @@ func NewDefaultConfig() *Config {
 			LocalName:   "",
 			AuthMethod:  "plain",
 			UseTLS:      false,
-			UseStartTLS: true,
 			Username:    "",
 			Password:    "",
 		},

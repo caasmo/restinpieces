@@ -694,6 +694,14 @@ func validateSmtp(smtp *Smtp) error {
 	if smtp.Password == "" {
 		return fmt.Errorf("smtp.password cannot be empty when enabled")
 	}
+	switch smtp.AuthMethod {
+	case "", "plain", "cram-md5", "none":
+	default:
+		return fmt.Errorf("smtp.auth_method %q is not supported", smtp.AuthMethod)
+	}
+	if (smtp.AuthMethod == "cram-md5" || smtp.AuthMethod == "none") && !smtp.UseTLS {
+		return fmt.Errorf("smtp.auth_method %q requires smtp.use_tls", smtp.AuthMethod)
+	}
 	return nil
 }
 

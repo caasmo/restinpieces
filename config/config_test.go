@@ -6,6 +6,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 func TestProvider_GetAndUpdate(t *testing.T) {
@@ -214,5 +216,17 @@ func TestEndpoints_ConfirmHtml(t *testing.T) {
 				t.Errorf("ConfirmHtml() = %v, want %v", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestConfig_UnmarshalIgnoresRemovedStartTLS(t *testing.T) {
+	t.Parallel()
+
+	data := []byte("[smtp]\nuse_start_tls = true\n")
+	cfg := NewDefaultConfig()
+
+	err := toml.Unmarshal(data, cfg)
+	if err != nil {
+		t.Fatalf("Unmarshal() with removed use_start_tls key failed: %v", err)
 	}
 }

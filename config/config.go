@@ -331,12 +331,10 @@ type Smtp struct {
 	FromAddress string `toml:"from_address" comment:"Sender email address"`
 	// LocalName is the domain name sent during the HELO/EHLO handshake. Defaults to "localhost".
 	LocalName string `toml:"local_name" comment:"HELO/EHLO domain name"`
-	// AuthMethod specifies the authentication mechanism, e.g., "plain", "login", "cram-md5".
-	AuthMethod string `toml:"auth_method" comment:"Auth method (plain/login/cram-md5)"`
+	// AuthMethod specifies the authentication mechanism: "plain" (default), "cram-md5", or "none".
+	AuthMethod string `toml:"auth_method" comment:"Auth method (plain/cram-md5/none)"`
 	// UseTLS enables a direct TLS connection (SMTPS), typically on port 465.
 	UseTLS bool `toml:"use_tls" comment:"Use direct TLS (port 465)"`
-	// UseStartTLS enables the STARTTLS command to upgrade an insecure connection to a secure one, typically on port 587.
-	UseStartTLS bool `toml:"use_start_tls" comment:"Use STARTTLS (port 587)"`
 }
 
 // Endpoints defines the API endpoint paths for various authentication and account management actions.
