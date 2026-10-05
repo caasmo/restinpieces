@@ -325,6 +325,14 @@ func TestValidateSmtp(t *testing.T) {
 	if err := validateSmtp(&valid); err != nil {
 		t.Errorf("valid case failed: %v", err)
 	}
+	validCramMD5 := Smtp{Enabled: true, Host: "h", Port: 1, FromAddress: "f", Username: "u", Password: "p", AuthMethod: "cram-md5", UseTLS: true}
+	if err := validateSmtp(&validCramMD5); err != nil {
+		t.Errorf("valid cram-md5 case failed: %v", err)
+	}
+	validNone := Smtp{Enabled: true, Host: "h", Port: 1, FromAddress: "f", Username: "u", Password: "p", AuthMethod: "none", UseTLS: true}
+	if err := validateSmtp(&validNone); err != nil {
+		t.Errorf("valid none case failed: %v", err)
+	}
 	if err := validateSmtp(&Smtp{Enabled: false}); err != nil {
 		t.Errorf("disabled case failed: %v", err)
 	}
@@ -335,6 +343,9 @@ func TestValidateSmtp(t *testing.T) {
 		{Enabled: true, Host: "h", Port: 1, Username: "u", Password: "p"},
 		{Enabled: true, Host: "h", Port: 1, FromAddress: "f", Password: "p"},
 		{Enabled: true, Host: "h", Port: 1, FromAddress: "f", Username: "u"},
+		{Enabled: true, Host: "h", Port: 1, FromAddress: "f", Username: "u", Password: "p", AuthMethod: "login"},
+		{Enabled: true, Host: "h", Port: 1, FromAddress: "f", Username: "u", Password: "p", AuthMethod: "cram-md5"},
+		{Enabled: true, Host: "h", Port: 1, FromAddress: "f", Username: "u", Password: "p", AuthMethod: "none"},
 	}
 	for _, cfg := range invalidCases {
 		if err := validateSmtp(&cfg); err == nil {

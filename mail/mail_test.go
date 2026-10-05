@@ -268,6 +268,27 @@ func TestSendOtpEmailMissingHost(t *testing.T) {
 	}
 }
 
+func TestSendOtpEmailUnsupportedAuthMethod(t *testing.T) {
+	cfg := config.NewDefaultConfig()
+	cfg.Smtp.AuthMethod = "login"
+	provider := config.NewProvider(cfg)
+
+	mailer, err := New(provider)
+	if err != nil {
+		t.Fatalf("Failed to create mailer: %v", err)
+	}
+
+	err = mailer.SendOtpEmail(context.Background(), "otp@example.com", "123456")
+
+	want := `failed to send OTP email: unsupported SMTP auth method "login"`
+	if err == nil {
+		t.Fatal("SendOtpEmail should fail for an unsupported auth method")
+	}
+	if err.Error() != want {
+		t.Fatalf("SendOtpEmail error = %q, want %q", err.Error(), want)
+	}
+}
+
 func TestSendPasswordResetOtpEmail(t *testing.T) {
 	server, mailer, cfg := setupTest(t)
 	defer server.Close()
