@@ -63,6 +63,13 @@ func TestUserFromUserInfoURL(t *testing.T) {
 			wantUser:     nil,
 			wantErr:      errors.New("failed to decode google user info: EOF"),
 		},
+		{
+			name:         "body exceeds read limit",
+			providerName: config.OAuth2ProviderGoogle,
+			responseBody: `{"sub": "123", "name": "` + strings.Repeat("a", userInfoMaxBytes) + `", "email": "test@example.com", "email_verified": true}`,
+			wantUser:     nil,
+			wantErr:      errors.New("failed to decode google user info: unexpected EOF"),
+		},
 	}
 
 	for _, tc := range testCases {

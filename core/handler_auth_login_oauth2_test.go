@@ -284,7 +284,34 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 				}
 			},
 			wantStatus: http.StatusBadRequest,
-			wantCode:   CodeErrorOAuth2UserInfoProcessingFailed,
+			wantCode:   CodeErrorOAuth2UserInfoFailed,
+		},
+		{
+			name: "user info error status with valid body",
+			dbSetup: func(m *mock.Db) {
+				existingUser := testUser
+				existingUser.Oauth2 = true
+				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
+					return &existingUser, nil
+				}
+			},
+			tokenHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				if err := json.NewEncoder(w).Encode(map[string]string{"access_token": "mock_access_token", "token_type": "Bearer"}); err != nil {
+					t.Fatalf("failed to write mock token response: %v", err)
+				}
+			},
+			userInfoHandler: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusForbidden)
+				if err := json.NewEncoder(w).Encode(map[string]interface{}{
+					"sub": "user123", "email": "test@example.com", "email_verified": true,
+				}); err != nil {
+					t.Fatalf("failed to write mock user info response: %v", err)
+				}
+			},
+			wantStatus: http.StatusBadRequest,
+			wantCode:   CodeErrorOAuth2UserInfoFailed,
 		},
 		{
 			name:    "user info lacks email",
@@ -594,5 +621,81 @@ func TestAuthWithOAuth2Handler_Security_RedirectURI(t *testing.T) {
 	expectedRedirectURI := "https://myapp.com/auth/callback"
 	if capturedRedirectURI != expectedRedirectURI {
 		t.Errorf("expected server-side redirect URI %q, got %q", expectedRedirectURI, capturedRedirectURI)
+	}
+}
+
+// closeTrackingBody records whether its Close method was called.
+type closeTrackingBody struct {
+	io.Reader
+	closed bool
+}
+
+func (b *closeTrackingBody) Close() error {
+	b.closed = true
+	return nil
+}
+
+// roundTripFunc adapts a function to an http.RoundTripper for tests.
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) {
+	return f(r)
+}
+
+// TestAuthWithOAuth2Handler_UserInfoBodyClosedOnErrorStatus verifies that the
+// user-info response body is closed even when the handler aborts on a non-200
+// status, before the body is decoded.
+func TestAuthWithOAuth2Handler_UserInfoBodyClosedOnErrorStatus(t *testing.T) {
+	trackedBody := &closeTrackingBody{Reader: strings.NewReader(`{"error": "server error"}`)}
+
+	transport := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.URL.Path == "/token" {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+				Body:       io.NopCloser(strings.NewReader(`{"access_token": "at", "token_type": "Bearer"}`)),
+			}, nil
+		}
+		return &http.Response{
+			StatusCode: http.StatusInternalServerError,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       trackedBody,
+		}, nil
+	})
+
+	cfg := config.NewDefaultConfig()
+	cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
+	cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
+	cfg.OAuth2Providers = map[string]config.OAuth2Provider{
+		config.OAuth2ProviderGoogle: {
+			TokenURL:    "https://example.com/token",
+			UserInfoURL: "https://example.com/userinfo",
+			Name:        config.OAuth2ProviderGoogle,
+		},
+	}
+
+	app := &App{
+		configProvider: config.NewProvider(cfg),
+		validator:      &DefaultValidator{},
+		logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+
+	state, _ := crypto.NewJwtOauth2StateToken(validCodeVerifier, cfg.Jwt.Oauth2StateSecret, 10*time.Minute)
+	body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "state": "` + state + `", "redirect_uri": "ru"}`
+	req := httptest.NewRequest("POST", "/auth-with-oauth2", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Transport: transport}
+	ctx := context.WithValue(req.Context(), oauth2.HTTPClient, client)
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	app.AuthWithOAuth2Handler(rr, req)
+
+	if rr.Code != http.StatusBadRequest {
+		t.Errorf("expected status %d, got %d", http.StatusBadRequest, rr.Code)
+	}
+	if !trackedBody.closed {
+		t.Error("expected user info response body to be closed on non-200 status")
 	}
 }

@@ -313,3 +313,12 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - online ticks every 10m (`MaxTickInterval`) with a scan + due check; proposal is a scheduler job that just copies on fire with no checks, same shape as `s3_download`
 - refs: `restinpieces-backup/internal/localcopy/daemon.go` (`MaxTickInterval`, `interval`), `restinpieces-backup/internal/localcopy/engine.go` (`latestBackupFiles`, `isBackupDue`, `handleFile`), `restinpieces-backup/internal/localcopy/latest.go` (`scanBackupDir`), `restinpieces-backup/onlineapi/onlineapi.go` (`Entries`), `restinpieces-backup/s3/upload/daemon.go` (`tickInterval`, `fileToUpload`, `uploadOne`)
 
+# config: validate an config code is getting big, i am thinking in split each section of the config in its own file as backup.go and backup_validate.go
+
+- `config/config_validate.go` is 877 lines: the `Validate()` dispatcher plus 27 section validators, while `config/s3.go`, `config/acme.go` and `config/job.go` already keep their validator in the section file
+- first moves: `config/backup_validate.go` (all `validateBackup*`, ~265 lines) and `config/server_validate.go` (`validateServer*`, ~180 lines); keep `Validate()` and the small validators (jwt, smtp, oauth2, block\*, logger, cache, notifier, metrics) in `config_validate.go`
+- tests follow the validators: `config/config_validate_test.go` (1090 lines) splits into `config/backup_validate_test.go` and `config/server_validate_test.go`
+- do it as a pure-movement commit after the OAuth2 audit fixes land, so review and `git blame` stay clean
+- runtime users of the section validators: `config/reload.go`, `config/config.go`
+
+

@@ -230,6 +230,7 @@ func TestValidateOAuth2Providers(t *testing.T) {
 	validCases := []map[string]OAuth2Provider{
 		{"google": {RedirectURLPath: "/cb"}},
 		{"google": {RedirectURLPath: "/oauth2/google/callback"}},
+		{"google": {RedirectURLPath: "/cb", AuthURL: "https://accounts.example.com/auth", TokenURL: "https://accounts.example.com/token", UserInfoURL: "https://accounts.example.com/userinfo"}},
 	}
 	for _, cfg := range validCases {
 		if err := validateOAuth2Providers(cfg); err != nil {
@@ -241,6 +242,8 @@ func TestValidateOAuth2Providers(t *testing.T) {
 		{"google": {}},
 		{"google": {RedirectURLPath: "cb"}},
 		{"google": {RedirectURLPath: "//example.com/cb"}},
+		{"google": {RedirectURLPath: "/cb", AuthURL: "http://example.com/auth"}},
+		{"google": {RedirectURLPath: "/cb", TokenURL: "http://example.com/token"}},
 		{"google": {RedirectURLPath: "/cb", UserInfoURL: "http://example.com"}},
 	}
 	for _, cfg := range invalidCases {
@@ -300,17 +303,33 @@ func TestValidateJwt(t *testing.T) {
 		VerificationEmailOtpSecret:        "e",
 		VerificationEmailOtpTokenDuration: Duration{Duration: 1},
 		Oauth2StateSecret:                 "f",
+		Oauth2StateTokenDuration:          Duration{Duration: 1},
 	}
 	if err := validateJwt(&valid); err != nil {
 		t.Errorf("valid case failed: %v", err)
 	}
+
+	zeroAuthDuration := valid
+	zeroAuthDuration.AuthTokenDuration = Duration{Duration: 0}
+	zeroPasswordResetDuration := valid
+	zeroPasswordResetDuration.PasswordResetTokenDuration = Duration{Duration: 0}
+	zeroVerificationOtpDuration := valid
+	zeroVerificationOtpDuration.VerificationEmailOtpTokenDuration = Duration{Duration: 0}
+	zeroOauth2StateDuration := valid
+	zeroOauth2StateDuration.Oauth2StateTokenDuration = Duration{Duration: 0}
+	negativeOauth2StateDuration := valid
+	negativeOauth2StateDuration.Oauth2StateTokenDuration = Duration{Duration: -time.Minute}
 
 	invalidCases := []Jwt{
 		{PasswordResetSecret: "c", EmailChangeOtpSecret: "d", VerificationEmailOtpSecret: "e"},
 		{AuthSecret: "a", EmailChangeOtpSecret: "d", VerificationEmailOtpSecret: "e"},
 		{AuthSecret: "a", PasswordResetSecret: "c", VerificationEmailOtpSecret: "e"},
 		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeOtpSecret: "d"},
-		{AuthSecret: "a", PasswordResetSecret: "c", EmailChangeOtpSecret: "d", VerificationEmailOtpSecret: "e", VerificationEmailOtpTokenDuration: Duration{Duration: 0}},
+		zeroAuthDuration,
+		zeroPasswordResetDuration,
+		zeroVerificationOtpDuration,
+		zeroOauth2StateDuration,
+		negativeOauth2StateDuration,
 	}
 	for _, cfg := range invalidCases {
 		if err := validateJwt(&cfg); err == nil {

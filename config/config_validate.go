@@ -475,6 +475,12 @@ func validateOAuth2Providers(providers map[string]OAuth2Provider) error {
 		if !strings.HasPrefix(provider.RedirectURLPath, "/") || strings.HasPrefix(provider.RedirectURLPath, "//") {
 			return fmt.Errorf("oauth2 provider '%s' redirect_url_path '%s' must start with a single '/'", name, provider.RedirectURLPath)
 		}
+		if provider.AuthURL != "" && !strings.HasPrefix(provider.AuthURL, "https://") {
+			return fmt.Errorf("oauth2 provider '%s' AuthURL must use HTTPS: %s", name, provider.AuthURL)
+		}
+		if provider.TokenURL != "" && !strings.HasPrefix(provider.TokenURL, "https://") {
+			return fmt.Errorf("oauth2 provider '%s' TokenURL must use HTTPS: %s", name, provider.TokenURL)
+		}
 		if provider.UserInfoURL != "" && !strings.HasPrefix(provider.UserInfoURL, "https://") {
 			return fmt.Errorf("oauth2 provider '%s' UserInfoURL must use HTTPS: %s", name, provider.UserInfoURL)
 		}
@@ -654,8 +660,14 @@ func validateJwt(jwt *Jwt) error {
 	if jwt.AuthSecret == "" {
 		return fmt.Errorf("jwt.auth_secret cannot be empty")
 	}
+	if jwt.AuthTokenDuration.Duration <= 0 {
+		return fmt.Errorf("jwt.auth_token_duration must be positive")
+	}
 	if jwt.PasswordResetSecret == "" {
 		return fmt.Errorf("jwt.password_reset_secret cannot be empty")
+	}
+	if jwt.PasswordResetTokenDuration.Duration <= 0 {
+		return fmt.Errorf("jwt.password_reset_token_duration must be positive")
 	}
 	if jwt.EmailChangeOtpSecret == "" {
 		return fmt.Errorf("jwt.email_change_otp_secret cannot be empty")
@@ -671,6 +683,9 @@ func validateJwt(jwt *Jwt) error {
 	}
 	if jwt.Oauth2StateSecret == "" {
 		return fmt.Errorf("jwt.oauth2_state_secret cannot be empty")
+	}
+	if jwt.Oauth2StateTokenDuration.Duration <= 0 {
+		return fmt.Errorf("jwt.oauth2_state_token_duration must be positive")
 	}
 	return nil
 }

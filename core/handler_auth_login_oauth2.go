@@ -171,6 +171,16 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// the body is fully drained and closed.
 	defer func() { _ = resp.Body.Close() }()
 
+	// SECURITY: Only HTTP 200 carries user info. A redirect (followed silently
+	// by http.Client) or a provider error page would otherwise reach the
+	// decoder and surface as a misleading "processing" error, hiding the real
+	// cause.
+	if resp.StatusCode != http.StatusOK {
+		a.Logger().Error("failed to fetch oauth2 user info", "provider", provider.Name, "status", resp.StatusCode)
+		WriteJsonError(w, errorOAuth2UserInfoFailed)
+		return
+	}
+
 	oauthUser, err := oauth2provider.UserFromUserInfoURL(resp, provider.Name)
 	if err != nil {
 		WriteJsonError(w, errorOAuth2UserInfoProcessingFailed)
