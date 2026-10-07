@@ -118,7 +118,7 @@ func TestAuthWithOAuth2Handler_Validation(t *testing.T) {
 			localCfg := config.NewDefaultConfig()
 			localCfg.Jwt.Oauth2StateSecret = cfg.Jwt.Oauth2StateSecret
 			if tc.providerInCfg {
-				localCfg.OAuth2Providers = map[string]config.OAuth2Provider{"google": {Name: config.OAuth2ProviderGoogle}}
+				localCfg.OAuth2 = config.OAuth2{"my_google": {Name: config.OAuth2Google}}
 			}
 
 			app := &App{
@@ -342,8 +342,8 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 			cfg := config.NewDefaultConfig()
 			cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
 			cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
-			cfg.OAuth2Providers = map[string]config.OAuth2Provider{
-				config.OAuth2ProviderGoogle: {TokenURL: tokenURL, UserInfoURL: userInfoURL, Name: config.OAuth2ProviderGoogle},
+			cfg.OAuth2 = config.OAuth2{
+				"my_google": {Name: config.OAuth2Google, TokenURL: tokenURL, UserInfoURL: userInfoURL},
 			}
 
 			mockDb := &mock.Db{}
@@ -467,8 +467,8 @@ func TestAuthWithOAuth2Handler_DependencyFailures(t *testing.T) {
 			cfg.Jwt.AuthSecret = tc.jwtSecret
 			cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 			cfg.Jwt.AuthTokenDuration = config.Duration{Duration: 15 * time.Minute}
-			cfg.OAuth2Providers = map[string]config.OAuth2Provider{
-				config.OAuth2ProviderGoogle: {TokenURL: tokenURL, UserInfoURL: userInfoURL, Name: config.OAuth2ProviderGoogle},
+			cfg.OAuth2 = config.OAuth2{
+				"my_google": {Name: config.OAuth2Google, TokenURL: tokenURL, UserInfoURL: userInfoURL},
 			}
 
 			mockDb := &mock.Db{}
@@ -529,8 +529,8 @@ func TestAuthWithOAuth2Handler_Security_EmailNormalization(t *testing.T) {
 	cfg := config.NewDefaultConfig()
 	cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
 	cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
-	cfg.OAuth2Providers = map[string]config.OAuth2Provider{
-		"google": {TokenURL: tokenURL, UserInfoURL: userInfoURL, Name: config.OAuth2ProviderGoogle},
+	cfg.OAuth2 = config.OAuth2{
+		"my_google": {Name: config.OAuth2Google, TokenURL: tokenURL, UserInfoURL: userInfoURL},
 	}
 
 	mockDb := &mock.Db{}
@@ -587,9 +587,11 @@ func TestAuthWithOAuth2Handler_Security_RedirectURI(t *testing.T) {
 	cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
 	cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 	cfg.Server.PublicURL = "https://myapp.com"
-	cfg.OAuth2Providers = map[string]config.OAuth2Provider{
-		"google": {
-			TokenURL: tokenURL, UserInfoURL: userInfoURL, Name: config.OAuth2ProviderGoogle,
+	cfg.OAuth2 = config.OAuth2{
+		"my_google": {
+			Name:            config.OAuth2Google,
+			TokenURL:        tokenURL,
+			UserInfoURL:     userInfoURL,
 			RedirectURLPath: "/auth/callback",
 		},
 	}
@@ -666,11 +668,11 @@ func TestAuthWithOAuth2Handler_UserInfoBodyClosedOnErrorStatus(t *testing.T) {
 	cfg := config.NewDefaultConfig()
 	cfg.Jwt.AuthSecret = "test_secret_that_is_long_enough_for_hs256"
 	cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
-	cfg.OAuth2Providers = map[string]config.OAuth2Provider{
-		config.OAuth2ProviderGoogle: {
+	cfg.OAuth2 = config.OAuth2{
+		"my_google": {
+			Name:        config.OAuth2Google,
 			TokenURL:    "https://example.com/token",
 			UserInfoURL: "https://example.com/userinfo",
-			Name:        config.OAuth2ProviderGoogle,
 		},
 	}
 

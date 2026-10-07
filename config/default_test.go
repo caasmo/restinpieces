@@ -119,8 +119,8 @@ func TestNewDefaultConfigWiresSqliteRsyncDefaults(t *testing.T) {
 	}
 }
 
-func TestNewOAuth2ProviderDefaults(t *testing.T) {
-	v := NewOAuth2ProviderDefaults()
+func TestNewOAuth2EntryDefaults(t *testing.T) {
+	v := NewOAuth2EntryDefaults()
 	if v.Name != "" {
 		t.Errorf("Name: got %q, want empty", v.Name)
 	}

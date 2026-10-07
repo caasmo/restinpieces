@@ -15,7 +15,7 @@ public_dir = "/var/www/public"
 [server]
   addr = ":8080"
 [backup]
-[oauth2_providers]
+[oauth2]
 [scheduler]
 `
 
@@ -192,7 +192,7 @@ func TestScaffoldConfigValue_OAuth2(t *testing.T) {
 	}
 
 	tree := getTreeFromStore(t, mockStore, scope)
-	path := "oauth2_providers.my_github"
+	path := "oauth2.my_github"
 	if !tree.Has(path) {
 		t.Fatalf("expected path %s to exist", path)
 	}
@@ -377,10 +377,10 @@ func TestScaffoldNextSteps(t *testing.T) {
 			t.Fatalf("expected frequency command, got %q", got)
 		}
 	})
-	t.Run("oauth2 empty", func(t *testing.T) {
-		got := scaffoldNextSteps(ScaffoldTypeOAuth2, "my_google", config.NewOAuth2ProviderDefaults())
-		if got != "" {
-			t.Fatalf("expected empty for oauth2, got %q", got)
+	t.Run("oauth2", func(t *testing.T) {
+		got := scaffoldNextSteps(ScaffoldTypeOAuth2, "my_google", config.NewOAuth2EntryDefaults())
+		if !strings.Contains(got, "\tripc set oauth2.my_google.name google") {
+			t.Fatalf("expected name command, got %q", got)
 		}
 	})
 	t.Run("job", func(t *testing.T) {

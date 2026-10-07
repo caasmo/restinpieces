@@ -49,7 +49,7 @@ func UserFromUserInfo(client *http.Client, userInfoURL, providerName string) (*d
 	limitedBody := io.LimitReader(resp.Body, userInfoMaxBytes)
 
 	switch providerName {
-	case config.OAuth2ProviderGoogle:
+	case config.OAuth2Google:
 
 		// raw info endpoint response fields (info from pocketbase)
 		var raw struct {

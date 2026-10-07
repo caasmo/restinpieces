@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-const (
-	OAuth2ProviderGoogle = "google"
-	OAuth2ProviderGitHub = "github"
-)
-
 // Config holds the application configuration.
 //
 // Configuration fields use specific naming conventions for their behavior:
@@ -26,26 +21,24 @@ type Config struct {
 	Scheduler  Scheduler  `toml:"scheduler" comment:"Background job scheduler settings"`
 	Server     Server     `toml:"server" comment:"HTTP server configuration"`
 	RateLimits RateLimits `toml:"rate_limits" comment:"Rate limiting settings"`
-	// TODO: refactor so map keys are labels, not domain identifiers.
-	//       The Name field inside OAuth2Provider already holds the provider
-	//       identifier. After refactor, lookup is by Name field, not map key.
-	//       See AGENTS.md "Config: map key rules".
-	OAuth2Providers        map[string]OAuth2Provider `toml:"oauth2_providers" comment:"OAuth2 provider configurations"`
-	Smtp                   Smtp                      `toml:"smtp" comment:"SMTP email settings"`
-	Endpoints              Endpoints                 `toml:"endpoints" comment:"API endpoint paths"`
-	Maintenance            Maintenance               `toml:"maintenance" comment:"Maintenance mode settings"`
-	BlockIp                BlockIp                   `toml:"block_ip" comment:"IP blocking settings"`
-	BlockUserAgent         BlockUserAgent            `toml:"block_user_agent" comment:"User-Agent blocking settings"`
-	BlockHost              BlockHost                 `toml:"block_host" comment:"Host blocking settings"`
-	BlockOversizedRequest  BlockOversizedRequest     `toml:"block_oversized_request" comment:"Request size limiting configuration"`
-	EndpointsBlockMismatch EndpointsBlockMismatch    `toml:"endpoints_block_mismatch" comment:"Endpoints hash mismatch blocking settings"`
-	Notifier               Notifier                  `toml:"notifier"`
-	Log                    Log                       `toml:"log" comment:"Logging configuration"`
-	Metrics                Metrics                   `toml:"metrics" comment:"Metrics collection configuration"`
-	Backup                 Backup                    `toml:"backup" comment:"Backup configuration"`
-	Acme                   Acme                      `toml:"acme" comment:"ACME certificate settings"`
-	Cache                  Cache                     `toml:"cache" comment:"Cache system settings"`
-	S3                     S3                        `toml:"s3" comment:"S3 object storage settings"`
+	// OAuth2 lists the configured providers keyed by a label you choose. The
+	// provider identifier is OAuth2Entry.Name, not the key.
+	OAuth2                 OAuth2                 `toml:"oauth2" comment:"OAuth2 provider configurations"`
+	Smtp                   Smtp                   `toml:"smtp" comment:"SMTP email settings"`
+	Endpoints              Endpoints              `toml:"endpoints" comment:"API endpoint paths"`
+	Maintenance            Maintenance            `toml:"maintenance" comment:"Maintenance mode settings"`
+	BlockIp                BlockIp                `toml:"block_ip" comment:"IP blocking settings"`
+	BlockUserAgent         BlockUserAgent         `toml:"block_user_agent" comment:"User-Agent blocking settings"`
+	BlockHost              BlockHost              `toml:"block_host" comment:"Host blocking settings"`
+	BlockOversizedRequest  BlockOversizedRequest  `toml:"block_oversized_request" comment:"Request size limiting configuration"`
+	EndpointsBlockMismatch EndpointsBlockMismatch `toml:"endpoints_block_mismatch" comment:"Endpoints hash mismatch blocking settings"`
+	Notifier               Notifier               `toml:"notifier"`
+	Log                    Log                    `toml:"log" comment:"Logging configuration"`
+	Metrics                Metrics                `toml:"metrics" comment:"Metrics collection configuration"`
+	Backup                 Backup                 `toml:"backup" comment:"Backup configuration"`
+	Acme                   Acme                   `toml:"acme" comment:"ACME certificate settings"`
+	Cache                  Cache                  `toml:"cache" comment:"Cache system settings"`
+	S3                     S3                     `toml:"s3" comment:"S3 object storage settings"`
 }
 
 // Cache contains settings for the cache system.
@@ -295,22 +288,6 @@ type RateLimits struct {
 	EmailChangeCooldown Duration `toml:"email_change_cooldown" comment:"Min time between email change requests"`
 	// Minimum time a user must wait between requesting email OTP verifications.
 	EmailVerificationOtpCooldown Duration `toml:"email_verification_otp_cooldown" comment:"Min time between email OTP verification requests"`
-}
-
-type OAuth2Provider struct {
-	Name         string `toml:"name" comment:"Provider identifier (e.g. 'google')"`
-	ClientID     string `toml:"client_id" comment:"OAuth2 client ID (set via env)"`
-	ClientSecret string `toml:"client_secret" comment:"OAuth2 client secret (set via env)"`
-	DisplayName  string `toml:"display_name" comment:"User-facing provider name"`
-	// RedirectURLPath is the callback path the provider sends the visitor back
-	// to, for example "/oauth2/google/callback". The complete callback address
-	// is this path added to server.public_url.
-	RedirectURLPath string   `toml:"redirect_url_path" comment:"Callback path added to server.public_url (e.g. '/oauth2/google/callback')"`
-	AuthURL         string   `toml:"auth_url" comment:"OAuth2 authorization endpoint"`
-	TokenURL        string   `toml:"token_url" comment:"OAuth2 token endpoint"`
-	UserInfoURL     string   `toml:"user_info_url" comment:"User info API endpoint"`
-	Scopes          []string `toml:"scopes" comment:"Requested OAuth2 scopes"`
-	PKCE            bool     `toml:"pkce" comment:"Enable PKCE flow"`
 }
 
 // Smtp holds the configuration for sending emails via an SMTP server.

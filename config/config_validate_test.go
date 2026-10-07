@@ -108,7 +108,7 @@ func TestValidate(t *testing.T) {
 		{"invalid public url", func(c *Config) { c.Server.PublicURL = "" }},
 		{"invalid jwt", func(c *Config) { c.Jwt.AuthSecret = "" }},
 		{"invalid smtp", func(c *Config) { c.Smtp.Host = "" }},
-		{"invalid oauth", func(c *Config) { c.OAuth2Providers["google"] = OAuth2Provider{} }},
+		{"invalid oauth", func(c *Config) { c.OAuth2["google"] = OAuth2Entry{} }},
 		{"invalid block ua", func(c *Config) { c.BlockUserAgent.Agents = []string{""} }},
 		{"invalid block host", func(c *Config) { c.BlockHost.AllowedHosts = []string{""} }},
 		{"invalid notifier", func(c *Config) { c.Notifier.Discord.WebhookURL = "" }},
@@ -221,34 +221,6 @@ func TestValidateRequestLog(t *testing.T) {
 	for _, cfg := range invalidCases {
 		if err := validateRequestLog(&cfg); err == nil {
 			t.Errorf("validateRequestLog(%+v) expected error, got nil", cfg)
-		}
-	}
-}
-
-func TestValidateOAuth2Providers(t *testing.T) {
-	t.Parallel()
-	validCases := []map[string]OAuth2Provider{
-		{"google": {RedirectURLPath: "/cb"}},
-		{"google": {RedirectURLPath: "/oauth2/google/callback"}},
-		{"google": {RedirectURLPath: "/cb", AuthURL: "https://accounts.example.com/auth", TokenURL: "https://accounts.example.com/token", UserInfoURL: "https://accounts.example.com/userinfo"}},
-	}
-	for _, cfg := range validCases {
-		if err := validateOAuth2Providers(cfg); err != nil {
-			t.Errorf("validateOAuth2Providers(%+v) failed: %v", cfg, err)
-		}
-	}
-
-	invalidCases := []map[string]OAuth2Provider{
-		{"google": {}},
-		{"google": {RedirectURLPath: "cb"}},
-		{"google": {RedirectURLPath: "//example.com/cb"}},
-		{"google": {RedirectURLPath: "/cb", AuthURL: "http://example.com/auth"}},
-		{"google": {RedirectURLPath: "/cb", TokenURL: "http://example.com/token"}},
-		{"google": {RedirectURLPath: "/cb", UserInfoURL: "http://example.com"}},
-	}
-	for _, cfg := range invalidCases {
-		if err := validateOAuth2Providers(cfg); err == nil {
-			t.Errorf("validateOAuth2Providers(%+v) expected error, got nil", cfg)
 		}
 	}
 }

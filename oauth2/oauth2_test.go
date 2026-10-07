@@ -32,7 +32,7 @@ func TestUserFromUserInfo(t *testing.T) {
 	}{
 		{
 			name:         "google valid user",
-			providerName: config.OAuth2ProviderGoogle,
+			providerName: config.OAuth2Google,
 			statusCode:   http.StatusOK,
 			responseBody: `{"sub": "123", "name": "Test User", "picture": "http://example.com/avatar.png", "email": "test@example.com", "email_verified": true}`,
 			wantUser: &db.User{
@@ -46,7 +46,7 @@ func TestUserFromUserInfo(t *testing.T) {
 		},
 		{
 			name:         "google email not verified",
-			providerName: config.OAuth2ProviderGoogle,
+			providerName: config.OAuth2Google,
 			statusCode:   http.StatusOK,
 			responseBody: `{"sub": "123", "name": "Test User", "picture": "http://example.com/avatar.png", "email": "test@example.com", "email_verified": false}`,
 			wantErrText:  "google email not verified",
@@ -60,28 +60,28 @@ func TestUserFromUserInfo(t *testing.T) {
 		},
 		{
 			name:         "malformed json",
-			providerName: config.OAuth2ProviderGoogle,
+			providerName: config.OAuth2Google,
 			statusCode:   http.StatusOK,
 			responseBody: `{"sub": "123", "name": "Test User",`,
 			wantErrText:  "failed to decode google user info: unexpected EOF",
 		},
 		{
 			name:         "empty response body",
-			providerName: config.OAuth2ProviderGoogle,
+			providerName: config.OAuth2Google,
 			statusCode:   http.StatusOK,
 			responseBody: ``,
 			wantErrText:  "failed to decode google user info: EOF",
 		},
 		{
 			name:         "body exceeds read limit",
-			providerName: config.OAuth2ProviderGoogle,
+			providerName: config.OAuth2Google,
 			statusCode:   http.StatusOK,
 			responseBody: `{"sub": "123", "name": "` + strings.Repeat("a", userInfoMaxBytes) + `", "email": "test@example.com", "email_verified": true}`,
 			wantErrText:  "failed to decode google user info: unexpected EOF",
 		},
 		{
 			name:         "non-200 status",
-			providerName: config.OAuth2ProviderGoogle,
+			providerName: config.OAuth2Google,
 			statusCode:   http.StatusInternalServerError,
 			responseBody: `{"error": "server error"}`,
 			wantErrIs:    ErrUserInfoFetch,
@@ -130,7 +130,7 @@ func TestUserFromUserInfo_TransportError(t *testing.T) {
 		}),
 	}
 
-	_, err := UserFromUserInfo(client, "https://example.com/userinfo", config.OAuth2ProviderGoogle)
+	_, err := UserFromUserInfo(client, "https://example.com/userinfo", config.OAuth2Google)
 	if !errors.Is(err, ErrUserInfoFetch) {
 		t.Errorf("UserFromUserInfo() error = %v, want errors.Is %v", err, ErrUserInfoFetch)
 	}

@@ -79,7 +79,7 @@ func NewDefaultConfig() *Config {
 			EmailChangeCooldown:          Duration{Duration: 1 * time.Hour},
 			EmailVerificationOtpCooldown: Duration{Duration: 2 * time.Minute},
 		},
-		OAuth2Providers: map[string]OAuth2Provider{
+		OAuth2: OAuth2{
 			"google": {
 				Name:            "google",
 				DisplayName:     "Google",
@@ -222,12 +222,11 @@ func NewBackupSqliteRsyncDefaults() BackupSqliteRsync {
 	}
 }
 
-// NewOAuth2ProviderDefaults returns an OAuth2Provider with sensible defaults
+// NewOAuth2EntryDefaults returns an OAuth2Entry with sensible defaults
 // for use by ripc scaffold. PKCE is enabled by default. Name,
 // ClientID, ClientSecret, and URLs are empty — the user must configure them.
-// Note: see TODO on OAuth2Providers in config.go regarding map key refactoring.
-func NewOAuth2ProviderDefaults() OAuth2Provider {
-	return OAuth2Provider{
+func NewOAuth2EntryDefaults() OAuth2Entry {
+	return OAuth2Entry{
 		PKCE: true,
 	}
 }

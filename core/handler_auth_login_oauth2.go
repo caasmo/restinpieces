@@ -113,7 +113,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	provider, ok := cfg.OAuth2Providers[req.Provider]
+	entry, ok := cfg.OAuth2.Get(req.Provider)
 	if !ok {
 		WriteJsonError(w, errorInvalidOAuth2Provider)
 		return
@@ -125,16 +125,16 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// this endpoint (bypassing the JS CSRF check) to substitute their own URI
 	// and potentially intercept authorization codes. The client-supplied value
 	// is intentionally ignored here; redirectUrl() is the only source of truth.
-	serverRedirectURI := redirectUrl(cfg.Server, provider)
+	serverRedirectURI := redirectUrl(cfg.Server, entry)
 
 	oauth2Config := oauth2.Config{
-		ClientID:     provider.ClientID,
-		ClientSecret: provider.ClientSecret,
+		ClientID:     entry.ClientID,
+		ClientSecret: entry.ClientSecret,
 		RedirectURL:  serverRedirectURI,
-		Scopes:       provider.Scopes,
+		Scopes:       entry.Scopes,
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  provider.AuthURL,
-			TokenURL: provider.TokenURL,
+			AuthURL:  entry.AuthURL,
+			TokenURL: entry.TokenURL,
 		},
 	}
 
@@ -158,10 +158,10 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	defer infoCancel()
 
 	client := oauth2Config.Client(infoCtx, token)
-	oauthUser, err := oauth2provider.UserFromUserInfo(client, provider.UserInfoURL, provider.Name)
+	oauthUser, err := oauth2provider.UserFromUserInfo(client, entry.UserInfoURL, entry.Name)
 	if err != nil {
 		if errors.Is(err, oauth2provider.ErrUserInfoFetch) {
-			a.Logger().Error("failed to fetch oauth2 user info", "provider", provider.Name, "error", err)
+			a.Logger().Error("failed to fetch oauth2 user info", "provider", entry.Name, "error", err)
 			WriteJsonError(w, errorOAuth2UserInfoFetchFailed)
 			return
 		}
@@ -230,6 +230,6 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 // A caller could send their own address and intercept the authorization code.
 // Both the provider list and the sign-in completion use this function, so the
 // address is the same in both steps.
-func redirectUrl(srvConf config.Server, provider config.OAuth2Provider) string {
-	return srvConf.PublicURL + provider.RedirectURLPath
+func redirectUrl(srvConf config.Server, entry config.OAuth2Entry) string {
+	return srvConf.PublicURL + entry.RedirectURLPath
 }

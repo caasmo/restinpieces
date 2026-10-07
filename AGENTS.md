@@ -41,9 +41,6 @@ Config structs **MUST NOT** contain slices for collections of items. Use `map[st
 - Keys are arbitrary user-chosen labels (e.g. `app_db`, `my_google`), never domain identifiers.
 - Domain identifiers belong as struct fields inside the map value (e.g. `OAuth2Provider.Name = "google"`).
 
-Current violations (to be refactored):
-- `OAuth2Providers` is `map[string]OAuth2Provider` but uses the key as the provider identifier — must move identifier into the struct and make the key a label
-
 ### Config: path fields
 
 All config path fields (e.g. `dest_path`, `source_path`, `db_path`, `public_dir`) are absolute paths or relative paths resolved against the binary's current working directory (CWD). Absolute paths are used as-is. No path in config is ever resolved against a config file location — there is no config file, only a database. When deployed via the canonical systemd service, the CWD is `/home/<app>`, so relative paths typically start with `data/`.

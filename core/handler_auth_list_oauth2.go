@@ -33,21 +33,22 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 
 	// Loop through configured providers
 	cfg := a.Config() // Get the current config
-	for name, provider := range cfg.OAuth2Providers {
+	for label, entry := range cfg.OAuth2 {
 
-		rUrl := redirectUrl(cfg.Server, provider)
+		rUrl := redirectUrl(cfg.Server, entry)
 		a.Logger().Debug("OAuth2 fields",
-			"provider", name,
+			"provider", entry.Name,
+			"label", label,
 			"redirectURI", rUrl)
 
 		oauth2Config := oauth2.Config{
-			ClientID:     provider.ClientID,
-			ClientSecret: provider.ClientSecret,
+			ClientID:     entry.ClientID,
+			ClientSecret: entry.ClientSecret,
 			RedirectURL:  rUrl,
-			Scopes:       provider.Scopes,
+			Scopes:       entry.Scopes,
 			Endpoint: oauth2.Endpoint{
-				AuthURL:  provider.AuthURL,
-				TokenURL: provider.TokenURL,
+				AuthURL:  entry.AuthURL,
+				TokenURL: entry.TokenURL,
 			},
 		}
 
@@ -69,15 +70,15 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 
 		// Create base provider info
 		info := OAuth2ProviderInfo{
-			Name:         name,
-			DisplayName:  provider.DisplayName,
+			Name:         entry.Name,
+			DisplayName:  entry.DisplayName,
 			State:        state,
 			RedirectURL:  rUrl,
 			CodeVerifier: codeVerifier,
 		}
 
 		// 3. Provider-Specific PKCE Handling
-		if provider.PKCE {
+		if entry.PKCE {
 			// If the provider supports PKCE natively, we calculate the S256 challenge
 			// and append it to the AuthURL so the provider can verify it on their end.
 			codeChallenge := crypto.S256Challenge(codeVerifier)

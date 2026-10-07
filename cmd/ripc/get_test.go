@@ -53,7 +53,7 @@ public_dir = "/var/www/public"
     batch_size = 200
     db_path = "/var/log/app.db"
 
-[oauth2_providers.github]
+[oauth2.github]
   name = "github"
   display_name = "GitHub"
   pkce = true
@@ -79,9 +79,9 @@ func TestGetAndPrintConfigPaths_Success_NoFilter(t *testing.T) {
 		`log.batch.db_path = /var/log/app.db`,
 		`log.batch.batch_size = 200`,
 		`log.level = info`,
-		`oauth2_providers.github.display_name = GitHub`,
-		`oauth2_providers.github.name = github`,
-		`oauth2_providers.github.pkce = true`,
+		`oauth2.github.display_name = GitHub`,
+		`oauth2.github.name = github`,
+		`oauth2.github.pkce = true`,
 		`public_dir = /var/www/public`,
 		`server.addr = :8080`,
 		`server.enable_tls = true`,
@@ -118,7 +118,7 @@ func TestGetAndPrintConfigPaths_Success_WithFilter(t *testing.T) {
 	}
 	unexpectedSubstrings := []string{
 		"log",
-		"oauth2_providers",
+		"oauth2",
 	}
 
 	for _, sub := range expectedSubstrings {

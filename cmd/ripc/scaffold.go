@@ -43,7 +43,7 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}
 	case ScaffoldTypeBackupS3Download:
 		return "backup.s3-download", config.NewBackupS3DownloadEntryDefaults(), nil, nil
 	case ScaffoldTypeOAuth2:
-		return "oauth2_providers", config.NewOAuth2ProviderDefaults(), nil, nil
+		return "oauth2", config.NewOAuth2EntryDefaults(), nil, nil
 	case ScaffoldTypeAcmeDNS01:
 		return "acme.dns-01", config.NewAcmeDNS01EntryDefaults(), config.NewAcmeDefaults(), nil
 	case ScaffoldTypeJob:
@@ -61,7 +61,7 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}
 //
 //	parentTomlKeyOf("backup.online") == "backup"
 //	parentTomlKeyOf("backup.sqlite-rsync.entries") == "backup.sqlite-rsync"
-//	parentTomlKeyOf("oauth2_providers") == ""
+//	parentTomlKeyOf("oauth2") == ""
 //	parentTomlKeyOf("backup") == ""
 func parentTomlKeyOf(tomlKey string) string {
 	idx := strings.LastIndex(tomlKey, ".")
@@ -207,6 +207,25 @@ Next steps:
 4. Reload the app:
 	systemctl reload myapp
 Deactivate: ripc set scheduler.jobs.%s.activated false`, label, block, label, label, label, label)
+	case ScaffoldTypeOAuth2:
+		return fmt.Sprintf(`
+%s:
+%s
+
+Next steps:
+1. Set the provider identifier the endpoints dispatch on (required):
+	ripc set oauth2.%s.name google
+2. Set the client ID and secret (required):
+	ripc set oauth2.%s.client_id google-client-id
+	ripc set oauth2.%s.client_secret @/path/to/secret
+3. Set the callback path (required):
+	ripc set oauth2.%s.redirect_url_path /oauth2/google/callback
+4. Set the endpoints (required):
+	ripc set oauth2.%s.auth_url https://accounts.google.com/o/oauth2/v2/auth
+	ripc set oauth2.%s.token_url https://oauth2.googleapis.com/token
+	ripc set oauth2.%s.user_info_url https://www.googleapis.com/oauth2/v3/userinfo
+5. Reload the app:
+	systemctl reload myapp`, label, block, label, label, label, label, label, label, label)
 	default:
 		return ""
 	}
@@ -229,7 +248,7 @@ func printScaffoldUsage(w io.Writer) {
 					{"backup-sqlite-rsync", "Scaffold a backup.sqlite-rsync.entries entry for sqlite-rsync (origin serve)"},
 					{"backup-s3-upload", "Scaffold a backup.s3-upload entry that uploads one file to S3"},
 					{"backup-s3-download", "Scaffold a backup.s3-download entry that pulls the newest backup for a label from S3"},
-					{"oauth2", "Scaffold an oauth2_providers entry"},
+					{"oauth2", "Scaffold an oauth2 entry"},
 					{"acme-dns-01", "Scaffold an acme.dns-01 entry for the DNS-01 challenge"},
 					{"job", "Scaffold a scheduler.jobs entry for a job that runs on a schedule"},
 				},

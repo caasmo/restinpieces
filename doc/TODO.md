@@ -38,12 +38,6 @@ And it's not even the interesting part. Your point is the interesting part: if y
 - a `get --runtime` flag would apply the same merge then filter by path, so operators see the effective value for one key
 - ref: `cmd/ripc/get.go`, `cmd/ripc/dump.go` (runtime merge precedent), `cmd/ripc/main.go` (shared `--runtime` opt), `config/default.go` (defaults source)
 
-## OAuth2 providers map key refactor
-
-Map keys currently carry domain logic (e.g. `"google"` is the provider identifier). Refactor so keys are arbitrary labels and `OAuth2Provider.Name` holds the identifier. After refactor, `cfg.OAuth2Providers[req.Provider]` becomes a lookup by `Name` field.
-
-See AGENTS.md "Config: map key rules".
-
 ## ripc handlers: add invalid-flag tests
 
 The `handleXCommand` functions still have an uncovered error branch — `printXUsage(ui.Err)` + `return err` when parsing fails with a non-`ErrHelp` error (e.g. an unknown flag). Add one invalid-flag test per command to close the remaining gap (~37% of each handler).

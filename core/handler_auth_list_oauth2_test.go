@@ -28,8 +28,9 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 			setupConfig: func() *config.Config {
 				cfg := config.NewDefaultConfig()
 				cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
-				cfg.OAuth2Providers = map[string]config.OAuth2Provider{
-					"google": {
+				cfg.OAuth2 = config.OAuth2{
+					"my_google": {
+						Name:            "google",
 						DisplayName:     "Google",
 						ClientID:        "google-client-id",
 						ClientSecret:    "google-client-secret",
@@ -75,7 +76,7 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 				}
 
 				pInfo := providers[0]
-				pConfig := cfg.OAuth2Providers["google"]
+				pConfig := cfg.OAuth2["my_google"]
 
 				if pInfo.Name != "google" {
 					t.Errorf("expected provider name 'google', got '%s'", pInfo.Name)
@@ -109,8 +110,9 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 			setupConfig: func() *config.Config {
 				cfg := config.NewDefaultConfig()
 				cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
-				cfg.OAuth2Providers = map[string]config.OAuth2Provider{
-					"github": {
+				cfg.OAuth2 = config.OAuth2{
+					"my_github": {
+						Name:            "github",
 						DisplayName:     "GitHub",
 						ClientID:        "github-client-id",
 						RedirectURLPath: "/oauth2/github/callback",
@@ -169,8 +171,9 @@ func TestListOAuth2ProvidersHandler_Success(t *testing.T) {
 				cfg := config.NewDefaultConfig()
 				cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
 				cfg.Server.PublicURL = "https://test.com"
-				cfg.OAuth2Providers = map[string]config.OAuth2Provider{
-					"providerWithPath": {
+				cfg.OAuth2 = config.OAuth2{
+					"my_google": {
+						Name:            "google",
 						RedirectURLPath: "/callback/path",
 					},
 				}
@@ -243,7 +246,7 @@ func TestListOAuth2ProvidersHandler_Errors(t *testing.T) {
 			name: "no providers configured",
 			setupConfig: func() *config.Config {
 				cfg := config.NewDefaultConfig()
-				cfg.OAuth2Providers = map[string]config.OAuth2Provider{} // Empty map
+				cfg.OAuth2 = config.OAuth2{} // Empty map
 				return cfg
 			},
 			setupRequest: func(r *http.Request) {},

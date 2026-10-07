@@ -31,8 +31,8 @@ func Validate(cfg *Config) error {
 	if err := ValidateAcme(&cfg.Acme); err != nil {
 		return fmt.Errorf("acme config validation failed: %w", err)
 	}
-	if err := validateOAuth2Providers(cfg.OAuth2Providers); err != nil {
-		return fmt.Errorf("oauth2 providers validation failed: %w", err)
+	if err := validateOAuth2(cfg.OAuth2); err != nil {
+		return fmt.Errorf("oauth2 config validation failed: %w", err)
 	}
 	if err := validateBlockUserAgent(&cfg.BlockUserAgent); err != nil {
 		return fmt.Errorf("block_user_agent config validation failed: %w", err)
@@ -464,27 +464,6 @@ func validateRequestLog(requestLog *LogRequest) error {
 		return fmt.Errorf("remote_ip length limit must be at least %d", minLimits["remote_ip"])
 	}
 
-	return nil
-}
-
-func validateOAuth2Providers(providers map[string]OAuth2Provider) error {
-	for name, provider := range providers {
-		if provider.RedirectURLPath == "" {
-			return fmt.Errorf("oauth2 provider '%s' must have redirect_url_path configured", name)
-		}
-		if !strings.HasPrefix(provider.RedirectURLPath, "/") || strings.HasPrefix(provider.RedirectURLPath, "//") {
-			return fmt.Errorf("oauth2 provider '%s' redirect_url_path '%s' must start with a single '/'", name, provider.RedirectURLPath)
-		}
-		if provider.AuthURL != "" && !strings.HasPrefix(provider.AuthURL, "https://") {
-			return fmt.Errorf("oauth2 provider '%s' AuthURL must use HTTPS: %s", name, provider.AuthURL)
-		}
-		if provider.TokenURL != "" && !strings.HasPrefix(provider.TokenURL, "https://") {
-			return fmt.Errorf("oauth2 provider '%s' TokenURL must use HTTPS: %s", name, provider.TokenURL)
-		}
-		if provider.UserInfoURL != "" && !strings.HasPrefix(provider.UserInfoURL, "https://") {
-			return fmt.Errorf("oauth2 provider '%s' UserInfoURL must use HTTPS: %s", name, provider.UserInfoURL)
-		}
-	}
 	return nil
 }
 
