@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -157,32 +158,13 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	defer infoCancel()
 
 	client := oauth2Config.Client(infoCtx, token)
-	resp, err := client.Get(provider.UserInfoURL)
+	oauthUser, err := oauth2provider.UserFromUserInfo(client, provider.UserInfoURL, provider.Name)
 	if err != nil {
-		WriteJsonError(w, errorOAuth2UserInfoFailed)
-		return
-	}
-
-	// http.Client.Get() returns a response whose body is an open network
-	// stream. Even if you've finished reading it, the underlying TCP
-	// connection stays open and occupied until the body is explicitly closed
-	//
-	// Go's http.Transport can reuse TCP connections (keep-alive), but only if
-	// the body is fully drained and closed.
-	defer func() { _ = resp.Body.Close() }()
-
-	// SECURITY: Only HTTP 200 carries user info. A redirect (followed silently
-	// by http.Client) or a provider error page would otherwise reach the
-	// decoder and surface as a misleading "processing" error, hiding the real
-	// cause.
-	if resp.StatusCode != http.StatusOK {
-		a.Logger().Error("failed to fetch oauth2 user info", "provider", provider.Name, "status", resp.StatusCode)
-		WriteJsonError(w, errorOAuth2UserInfoFailed)
-		return
-	}
-
-	oauthUser, err := oauth2provider.UserFromUserInfoURL(resp, provider.Name)
-	if err != nil {
+		if errors.Is(err, oauth2provider.ErrUserInfoFetch) {
+			a.Logger().Error("failed to fetch oauth2 user info", "provider", provider.Name, "error", err)
+			WriteJsonError(w, errorOAuth2UserInfoFetchFailed)
+			return
+		}
 		WriteJsonError(w, errorOAuth2UserInfoProcessingFailed)
 		return
 	}

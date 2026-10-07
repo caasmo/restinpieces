@@ -17,15 +17,35 @@ import (
 // the process memory without bound.
 const userInfoMaxBytes = 1 << 20 // 1 MiB (1,048,576 bytes)
 
-// UserFromUserInfo maps provider-specific user info to our standard User struct.
-// The response body is read through userInfoMaxBytes; anything larger fails to
-// decode.
+// ErrUserInfoFetch reports that the user-info request itself failed: it could
+// not be made, or the provider answered with a status other than 200.
+var ErrUserInfoFetch = errors.New("failed to fetch oauth2 user info")
+
+// UserFromUserInfo fetches the provider's user-info document from userInfoURL
+// and maps it to our standard User struct. The response body is read through
+// userInfoMaxBytes; anything larger fails to decode.
 //
 // When integrating a new OAuth2 provider, first add a case statement for the new provider name.
 // Then create a raw struct that matches the provider's user info JSON response.
 // Map the fields to the standard db.User struct while ensuring required fields
 // like email verification are properly validated before returning.
-func UserFromUserInfoURL(resp *http.Response, providerName string) (*db.User, error) {
+func UserFromUserInfo(client *http.Client, userInfoURL, providerName string) (*db.User, error) {
+	resp, err := client.Get(userInfoURL)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrUserInfoFetch, err)
+	}
+
+	// The response body is an open network stream; closing it lets the
+	// transport reuse the connection.
+	defer func() { _ = resp.Body.Close() }()
+
+	// SECURITY: Only HTTP 200 carries user info. A redirect (followed silently
+	// by http.Client) or a provider error page would otherwise reach the
+	// decoder and surface as a misleading decoding error.
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%w: provider %s returned HTTP status %d", ErrUserInfoFetch, providerName, resp.StatusCode)
+	}
+
 	limitedBody := io.LimitReader(resp.Body, userInfoMaxBytes)
 
 	switch providerName {
@@ -40,9 +60,9 @@ func UserFromUserInfoURL(resp *http.Response, providerName string) (*db.User, er
 			EmailVerified bool   `json:"email_verified"`
 		}
 
-		err := json.NewDecoder(limitedBody).Decode(&raw)
-		if err != nil {
-			return nil, fmt.Errorf("failed to decode google user info: %w", err)
+		decodeErr := json.NewDecoder(limitedBody).Decode(&raw)
+		if decodeErr != nil {
+			return nil, fmt.Errorf("failed to decode google user info: %w", decodeErr)
 		}
 
 		if !raw.EmailVerified {

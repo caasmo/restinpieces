@@ -284,7 +284,7 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 				}
 			},
 			wantStatus: http.StatusBadRequest,
-			wantCode:   CodeErrorOAuth2UserInfoFailed,
+			wantCode:   CodeErrorOAuth2UserInfoFetchFailed,
 		},
 		{
 			name: "user info error status with valid body",
@@ -311,7 +311,7 @@ func TestAuthWithOAuth2Handler_Flow(t *testing.T) {
 				}
 			},
 			wantStatus: http.StatusBadRequest,
-			wantCode:   CodeErrorOAuth2UserInfoFailed,
+			wantCode:   CodeErrorOAuth2UserInfoFetchFailed,
 		},
 		{
 			name:    "user info lacks email",

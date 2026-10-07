@@ -40,7 +40,7 @@ const (
 	CodeErrorOtpFailed                            = "err_otp_failed"
 	CodeErrorInvalidOAuth2Provider                = "err_invalid_oauth2_provider"
 	CodeErrorOAuth2TokenExchangeFailed            = "err_oauth2_token_exchange_failed"
-	CodeErrorOAuth2UserInfoFailed                 = "err_oauth2_user_info_failed"
+	CodeErrorOAuth2UserInfoFetchFailed            = "err_oauth2_user_info_fetch_failed"
 	CodeErrorOAuth2UserInfoProcessingFailed       = "err_oauth2_user_info_processing_failed"
 	CodeErrorOAuth2DatabaseError                  = "err_oauth2_database_error"
 	CodeErrorAuthDatabaseError                    = "err_auth_database_error"
@@ -95,7 +95,7 @@ var (
 	errorOtpFailed                            = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorOtpFailed, "OTP verification process failed")
 	errorInvalidOAuth2Provider                = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorInvalidOAuth2Provider, "Invalid OAuth2 provider specified")
 	errorOAuth2TokenExchangeFailed            = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2TokenExchangeFailed, "Failed to exchange OAuth2 token")
-	errorOAuth2UserInfoFailed                 = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFailed, "Failed to get user info from OAuth2 provider")
+	errorOAuth2UserInfoFetchFailed            = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoFetchFailed, "Failed to fetch user info from OAuth2 provider")
 	errorOAuth2UserInfoProcessingFailed       = PrecomputeBasicResponse(http.StatusBadRequest, CodeErrorOAuth2UserInfoProcessingFailed, "Failed to process user info from OAuth2 provider")
 	errorOAuth2DatabaseError                  = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorOAuth2DatabaseError, "Database error during OAuth2 authentication")
 	errorAuthDatabaseError                    = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorAuthDatabaseError, "Database error during authentication")
