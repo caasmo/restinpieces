@@ -39,7 +39,7 @@ Config structs **MUST NOT** contain slices for collections of items. Use `map[st
 ### Config: map key rules
 
 - Keys are arbitrary user-chosen labels (e.g. `app_db`, `my_google`), never domain identifiers.
-- Domain identifiers belong as struct fields inside the map value (e.g. `OAuth2Provider.Name = "google"`).
+- Domain identifiers belong as struct fields inside the map value (e.g. `OAuth2Entry.Name = "google"`).
 
 ### Config: path fields
 

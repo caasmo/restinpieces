@@ -23,6 +23,7 @@ func TestValidateOAuth2(t *testing.T) {
 		{"google": {Name: "google", RedirectURLPath: "/cb", TokenURL: "http://example.com/token"}},
 		{"google": {Name: "google", RedirectURLPath: "/cb", UserInfoURL: "http://example.com"}},
 		{"my_google": {RedirectURLPath: "/cb"}},
+		{"my_github": {Name: OAuth2GitHub, RedirectURLPath: "/cb"}},
 		{"my google": {Name: "google", RedirectURLPath: "/cb"}},
 		{"my.google": {Name: "google", RedirectURLPath: "/cb"}},
 		{"first": {Name: "google", RedirectURLPath: "/a"}, "second": {Name: "google", RedirectURLPath: "/b"}},

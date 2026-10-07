@@ -8,9 +8,14 @@ import (
 // validateOAuth2 checks every entry in the OAuth2 section.
 //
 // A map key is a label you choose; the provider identifier lives in
-// OAuth2Entry.Name. The name must be set and unique, because the login
-// endpoint finds entries by name.
+// OAuth2Entry.Name. The name must be set, unique, and supported: the
+// user-info mapping in oauth2.UserFromUserInfo implements google only, so
+// an unsupported name is rejected here instead of failing after the token
+// exchange has burned the authorization code.
 func validateOAuth2(oauth2 OAuth2) error {
+	allowedNames := map[string]struct{}{
+		OAuth2Google: {},
+	}
 	entryNames := make(map[string]string, len(oauth2))
 	for label, entry := range oauth2 {
 		if !isValidMapKeyLabel(label) {
@@ -18,6 +23,9 @@ func validateOAuth2(oauth2 OAuth2) error {
 		}
 		if entry.Name == "" {
 			return fmt.Errorf("oauth2 entry '%s' must have name configured", label)
+		}
+		if _, ok := allowedNames[entry.Name]; !ok {
+			return fmt.Errorf("oauth2 entry '%s' name %q is not supported (supported: %s)", label, entry.Name, OAuth2Google)
 		}
 		if other, ok := entryNames[entry.Name]; ok {
 			return fmt.Errorf("oauth2 entry '%s' name %q is already used by entry '%s'", label, entry.Name, other)

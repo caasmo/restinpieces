@@ -2,6 +2,10 @@ package config
 
 const (
 	OAuth2Google = "google"
+
+	// OAuth2GitHub is a known provider name the framework does not map yet.
+	// validateOAuth2 rejects it until a mapping is added to
+	// oauth2.UserFromUserInfo.
 	OAuth2GitHub = "github"
 )
 

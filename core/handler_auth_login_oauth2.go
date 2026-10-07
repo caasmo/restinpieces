@@ -50,7 +50,6 @@ type oauth2Request struct {
 	Code         string `json:"code"`
 	CodeVerifier string `json:"code_verifier"`
 	State        string `json:"state"`
-	RedirectURI  string `json:"redirect_uri"`
 }
 
 // AuthWithOAuth2Handler handles OAuth2 authentication and first-time registration.
@@ -89,7 +88,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Provider == "" || req.Code == "" || req.CodeVerifier == "" || req.State == "" || req.RedirectURI == "" {
+	if req.Provider == "" || req.Code == "" || req.CodeVerifier == "" || req.State == "" {
 		WriteJsonError(w, errorMissingFields)
 		return
 	}
