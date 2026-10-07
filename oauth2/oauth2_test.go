@@ -36,7 +36,6 @@ func TestUserFromUserInfo(t *testing.T) {
 			statusCode:   http.StatusOK,
 			responseBody: `{"sub": "123", "name": "Test User", "picture": "http://example.com/avatar.png", "email": "test@example.com", "email_verified": true}`,
 			wantUser: &db.User{
-				ID:       "123",
 				Email:    "test@example.com",
 				Name:     "Test User",
 				Avatar:   "http://example.com/avatar.png",

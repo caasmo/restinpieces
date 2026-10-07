@@ -37,6 +37,9 @@ func validateOAuth2(oauth2 OAuth2) error {
 		if !strings.HasPrefix(entry.RedirectURLPath, "/") || strings.HasPrefix(entry.RedirectURLPath, "//") {
 			return fmt.Errorf("oauth2 entry '%s' redirect_url_path '%s' must start with a single '/'", label, entry.RedirectURLPath)
 		}
+		if strings.HasSuffix(entry.RedirectURLPath, "/") {
+			return fmt.Errorf("oauth2 entry '%s' redirect_url_path '%s' must not end with '/'", label, entry.RedirectURLPath)
+		}
 		if entry.AuthURL != "" && !strings.HasPrefix(entry.AuthURL, "https://") {
 			return fmt.Errorf("oauth2 entry '%s' AuthURL must use HTTPS: %s", label, entry.AuthURL)
 		}

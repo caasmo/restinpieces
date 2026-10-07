@@ -19,6 +19,8 @@ func TestValidateOAuth2(t *testing.T) {
 		{"google": {Name: "google"}},
 		{"google": {Name: "google", RedirectURLPath: "cb"}},
 		{"google": {Name: "google", RedirectURLPath: "//example.com/cb"}},
+		{"google": {Name: "google", RedirectURLPath: "/cb/"}},
+		{"google": {Name: "google", RedirectURLPath: "/"}},
 		{"google": {Name: "google", RedirectURLPath: "/cb", AuthURL: "http://example.com/auth"}},
 		{"google": {Name: "google", RedirectURLPath: "/cb", TokenURL: "http://example.com/token"}},
 		{"google": {Name: "google", RedirectURLPath: "/cb", UserInfoURL: "http://example.com"}},

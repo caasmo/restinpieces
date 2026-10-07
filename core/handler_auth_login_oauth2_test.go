@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
@@ -474,10 +475,11 @@ func TestAuthWithOAuth2Handler_DependencyFailures(t *testing.T) {
 			mockDb := &mock.Db{}
 			tc.dbSetup(mockDb)
 
+			var logs bytes.Buffer
 			app := &App{
 				configProvider: config.NewProvider(cfg),
 				validator:      &DefaultValidator{},
-				logger:         slog.New(slog.NewTextHandler(io.Discard, nil)),
+				logger:         slog.New(slog.NewTextHandler(&logs, nil)),
 				dbAuth:         mockDb,
 			}
 
@@ -508,7 +510,60 @@ func TestAuthWithOAuth2Handler_DependencyFailures(t *testing.T) {
 			if !reflect.DeepEqual(gotBody, wantBody) {
 				t.Errorf("handler returned unexpected body:\ngot:  %+v\nwant: %+v", gotBody, wantBody)
 			}
+
+			logOutput := logs.String()
+			if !strings.Contains(logOutput, "oauth2 login failed") || !strings.Contains(logOutput, "provider=google") {
+				t.Errorf("expected a failure log with the provider, got %q", logOutput)
+			}
 		})
+	}
+}
+
+func TestAuthWithOAuth2Handler_LogsTokenExchangeFailure(t *testing.T) {
+	server, tokenURL, userInfoURL := mockOAuth2Server(t,
+		func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "invalid_grant"})
+		},
+		func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		},
+	)
+
+	cfg := config.NewDefaultConfig()
+	cfg.Jwt.Oauth2StateSecret = "test_state_secret_32_chars_long_exactly"
+	cfg.OAuth2 = config.OAuth2{
+		"my_google": {Name: config.OAuth2Google, TokenURL: tokenURL, UserInfoURL: userInfoURL},
+	}
+
+	var logs bytes.Buffer
+	app := &App{
+		configProvider: config.NewProvider(cfg),
+		validator:      &DefaultValidator{},
+		logger:         slog.New(slog.NewTextHandler(&logs, nil)),
+	}
+
+	state, _ := crypto.NewJwtOauth2StateToken(validCodeVerifier, cfg.Jwt.Oauth2StateSecret, 10*time.Minute)
+	body := `{"provider": "google", "code": "c", "code_verifier": "` + validCodeVerifier + `", "state": "` + state + `"}`
+	req := httptest.NewRequest("POST", "/auth-with-oauth2", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	ctx := context.WithValue(req.Context(), oauth2.HTTPClient, server.Client())
+	req = req.WithContext(ctx)
+
+	rr := httptest.NewRecorder()
+	app.AuthWithOAuth2Handler(rr, req)
+
+	if rr.Code != errorOAuth2TokenExchangeFailed.status {
+		t.Errorf("expected status %d, got %d", errorOAuth2TokenExchangeFailed.status, rr.Code)
+	}
+
+	logOutput := logs.String()
+	if !strings.Contains(logOutput, "oauth2 login failed") || !strings.Contains(logOutput, "provider=google") {
+		t.Errorf("expected a failure log with the provider, got %q", logOutput)
+	}
+	if strings.Contains(logOutput, "code_verifier") {
+		t.Errorf("log must not carry the code_verifier: %q", logOutput)
 	}
 }
 

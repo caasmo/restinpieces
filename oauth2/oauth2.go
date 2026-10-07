@@ -53,7 +53,6 @@ func UserFromUserInfo(client *http.Client, userInfoURL, providerName string) (*d
 
 		// raw info endpoint response fields (info from pocketbase)
 		var raw struct {
-			Id            string `json:"sub"`
 			Name          string `json:"name"`
 			Picture       string `json:"picture"`
 			Email         string `json:"email"`
@@ -69,8 +68,9 @@ func UserFromUserInfo(client *http.Client, userInfoURL, providerName string) (*d
 			return nil, errors.New("google email not verified")
 		}
 
+		// The provider's sub is intentionally not stored: the DB assigns
+		// User.ID and accounts are deduplicated by email.
 		return &db.User{
-			ID:       raw.Id,
 			Email:    raw.Email,
 			Name:     raw.Name,
 			Avatar:   raw.Picture,

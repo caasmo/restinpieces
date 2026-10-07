@@ -83,6 +83,13 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req oauth2Request
+	var loginErr error
+	defer func() {
+		if loginErr != nil {
+			a.Logger().Error("oauth2 login failed", "provider", req.Provider, "error", loginErr)
+		}
+	}()
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteJsonError(w, errorInvalidRequest)
 		return
@@ -148,6 +155,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 		oauth2.SetAuthURLParam("code_verifier", req.CodeVerifier),
 	)
 	if err != nil {
+		loginErr = err
 		WriteJsonError(w, errorOAuth2TokenExchangeFailed)
 		return
 	}
@@ -159,8 +167,8 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	client := oauth2Config.Client(infoCtx, token)
 	oauthUser, err := oauth2provider.UserFromUserInfo(client, entry.UserInfoURL, entry.Name)
 	if err != nil {
+		loginErr = err
 		if errors.Is(err, oauth2provider.ErrUserInfoFetch) {
-			a.Logger().Error("failed to fetch oauth2 user info", "provider", entry.Name, "error", err)
 			WriteJsonError(w, errorOAuth2UserInfoFetchFailed)
 			return
 		}
@@ -187,6 +195,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 
 	user, err := a.DbAuth().GetUserByEmail(oauthUser.Email)
 	if err != nil {
+		loginErr = err
 		WriteJsonError(w, errorOAuth2DatabaseError)
 		return
 	}
@@ -198,6 +207,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 			// ErrConstraintUnique here means a simultaneous signup for the
 			// same address won the race. Surface as a generic error; the
 			// client can retry and will hit the login path on the next attempt.
+			loginErr = err
 			WriteJsonError(w, errorOAuth2DatabaseError)
 			return
 		}
@@ -215,6 +225,7 @@ func (a *App) AuthWithOAuth2Handler(w http.ResponseWriter, r *http.Request) {
 	// it included in the signing key.
 	jwtToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration.Duration)
 	if err != nil {
+		loginErr = err
 		WriteJsonError(w, errorTokenGeneration)
 		return
 	}

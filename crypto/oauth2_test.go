@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -8,22 +9,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func TestOauth2State(t *testing.T) {
-	state := Oauth2State()
-	if len(state) != Oauth2StateLength {
-		t.Errorf("Oauth2State() length = %d, want %d", len(state), Oauth2StateLength)
-	}
-	for _, char := range state {
-		if !strings.ContainsRune(AlphanumericAlphabet, char) {
-			t.Errorf("Oauth2State() contains invalid character: %c", char)
-		}
-	}
-}
-
 func TestOauth2CodeVerifier(t *testing.T) {
 	verifier := Oauth2CodeVerifier()
-	if len(verifier) != OauthCodeVerifierLength {
-		t.Errorf("Oauth2CodeVerifier() length = %d, want %d", len(verifier), OauthCodeVerifierLength)
+	if len(verifier) != OauthCodeVerifierMinLength {
+		t.Errorf("Oauth2CodeVerifier() length = %d, want %d", len(verifier), OauthCodeVerifierMinLength)
 	}
 	for _, char := range verifier {
 		if !strings.ContainsRune(pkceAlphabet, char) {
@@ -50,8 +39,18 @@ func TestValidateCodeVerifier(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "valid 43 characters",
+			name:    "valid minimum length",
 			input:   strings.Repeat("a", 43),
+			wantErr: false,
+		},
+		{
+			name:    "valid 64 characters",
+			input:   strings.Repeat("a", 64),
+			wantErr: false,
+		},
+		{
+			name:    "valid maximum length",
+			input:   strings.Repeat("a", 128),
 			wantErr: false,
 		},
 		{
@@ -61,7 +60,7 @@ func TestValidateCodeVerifier(t *testing.T) {
 		},
 		{
 			name:    "invalid too long",
-			input:   strings.Repeat("a", 44),
+			input:   strings.Repeat("a", 129),
 			wantErr: true,
 		},
 		{
@@ -102,8 +101,8 @@ func TestOauth2StateJWT(t *testing.T) {
 		token, _ := NewJwtOauth2StateToken(cv, secret, duration)
 		wrongCv := Oauth2CodeVerifier()
 		err := VerifyOauth2StateToken(token, wrongCv, secret)
-		if err == nil {
-			t.Error("VerifyOauth2StateToken should have failed with mismatched CV")
+		if !errors.Is(err, ErrOauth2CodeVerifierMismatch) {
+			t.Errorf("expected ErrOauth2CodeVerifierMismatch, got %v", err)
 		}
 	})
 
