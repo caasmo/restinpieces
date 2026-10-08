@@ -62,8 +62,20 @@ func getRemoveTreeFromStore(t *testing.T, store *MockRemoveSecureStore, scope st
 	return tree
 }
 
+// getRemoveTreeWithComments parses the saved document the way ripc stores it, so
+// the comments written above the keys are still there to check.
+func getRemoveTreeWithComments(t *testing.T, store *MockRemoveSecureStore, scope string) *toml.Tree {
+	t.Helper()
+	data, _, err := store.Get(scope, 0)
+	if err != nil {
+		t.Fatalf("failed to get data from mock store: %v", err)
+	}
+	return parseDoc(t, string(data))
+}
+
 const removeTestConf = `
 [backup.vacuum.logs-vacuum]
+  # Database the vacuum backs up
   source_path = ""
   dest_path = ""
   frequency = "15m"
@@ -71,10 +83,12 @@ const removeTestConf = `
 
 [block_user_agent]
   activated = true
+  # User agents blocked from every request
   agents = ["GPTBot", "SemrushBot"]
 
 [block_host]
   activated = true
+  # Hosts allowed to reach the app
   allowed_hosts = ["example.com"]
 `
 
@@ -153,6 +167,19 @@ func TestRemoveValue_TableEntry(t *testing.T) {
 	if tree.Has("backup.vacuum.logs-vacuum") {
 		t.Error("expected backup.vacuum.logs-vacuum to be removed")
 	}
+	saved := getRemoveTreeWithComments(t, mockStore, scope)
+	commentTests := []struct {
+		path string
+		want string
+	}{
+		{path: "block_user_agent.agents", want: "User agents blocked from every request"},
+		{path: "block_host.allowed_hosts", want: "Hosts allowed to reach the app"},
+	}
+	for _, tt := range commentTests {
+		if got := commentAt(t, saved, tt.path); got != tt.want {
+			t.Errorf("comment at %q = %q, want %q", tt.path, got, tt.want)
+		}
+	}
 	if len(mockStore.saveHistory) == 0 || mockStore.saveHistory[0] != "Removed 'backup.vacuum.logs-vacuum'" {
 		t.Errorf("expected default save description, got %v", mockStore.saveHistory)
 	}
@@ -176,6 +203,9 @@ func TestRemoveValue_ArrayItem(t *testing.T) {
 	}
 	if len(raw) != 1 || raw[0] != "GPTBot" {
 		t.Errorf("expected [GPTBot], got %v", raw)
+	}
+	if got := commentAt(t, getRemoveTreeWithComments(t, mockStore, scope), "block_user_agent.agents"); got != "User agents blocked from every request" {
+		t.Errorf("comment lost on remove: %q", got)
 	}
 	if len(mockStore.saveHistory) == 0 || mockStore.saveHistory[0] != "Removed 'SemrushBot' from 'block_user_agent.agents'" {
 		t.Errorf("expected default save description, got %v", mockStore.saveHistory)

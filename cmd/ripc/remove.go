@@ -123,7 +123,12 @@ func removeValue(ui UI, secureCfg config.SecureStore, scope string, description 
 		return fmt.Errorf("%w: failed to retrieve latest config for scope '%s': %w", ErrSecureStoreGet, scope, err)
 	}
 
-	tree, err := toml.LoadBytes(decryptedData)
+	parser, err := NewTomlParser(decryptedData, "")
+	if err != nil {
+		return fmt.Errorf("%w: failed to load config data for scope '%s': %w", ErrConfigUnmarshal, scope, err)
+	}
+
+	tree, _, err := parser.Parse()
 	if err != nil {
 		return fmt.Errorf("%w: failed to load config data for scope '%s': %w", ErrConfigUnmarshal, scope, err)
 	}
@@ -201,7 +206,7 @@ func removeArrayItem(tree *toml.Tree, tomlPath, value string) error {
 		if !ok || str != value {
 			continue
 		}
-		tree.Set(tomlPath, append(raw[:i], raw[i+1:]...))
+		SetWithComment(tree, tomlPath, append(raw[:i], raw[i+1:]...))
 		return nil
 	}
 	return fmt.Errorf("%w: '%s' in '%s'", ErrValueNotFound, value, tomlPath)
