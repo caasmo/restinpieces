@@ -27,6 +27,6 @@ func (blockHostAdder) Add(tree *toml.Tree, path, value string) error {
 		}
 	}
 
-	tree.Set(path, append(raw, value))
+	SetWithComment(tree, path, append(raw, value))
 	return nil
 }

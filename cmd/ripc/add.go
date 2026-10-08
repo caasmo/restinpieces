@@ -108,7 +108,12 @@ func addValue(ui UI, secureCfg config.SecureStore, scope string, description str
 		return fmt.Errorf("%w: failed to retrieve latest config for scope '%s': %w", ErrSecureStoreGet, scope, err)
 	}
 
-	tree, err := toml.LoadBytes(decryptedData)
+	parser, err := NewTomlParser(decryptedData, "")
+	if err != nil {
+		return fmt.Errorf("%w: failed to load config data for scope '%s': %w", ErrConfigUnmarshal, scope, err)
+	}
+
+	tree, _, err := parser.Parse()
 	if err != nil {
 		return fmt.Errorf("%w: failed to load config data for scope '%s': %w", ErrConfigUnmarshal, scope, err)
 	}

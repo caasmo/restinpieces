@@ -44,6 +44,10 @@ func TestAddValue_BlockHost_Append(t *testing.T) {
 			t.Errorf("expected %q in %v", want, got)
 		}
 	}
+
+	if got := commentAt(t, getAddTreeWithComments(t, mockStore, scope), "block_host.allowed_hosts"); got != "Hosts allowed to reach the app" {
+		t.Errorf("comment lost on add: %q", got)
+	}
 }
 
 func TestAddValue_BlockHost_DuplicateSkip(t *testing.T) {

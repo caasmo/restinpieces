@@ -62,13 +62,26 @@ func getAddTreeFromStore(t *testing.T, store *MockAddSecureStore, scope string) 
 	return tree
 }
 
+// getAddTreeWithComments parses the saved document the way ripc stores it, so
+// the comments written above the keys are still there to check.
+func getAddTreeWithComments(t *testing.T, store *MockAddSecureStore, scope string) *toml.Tree {
+	t.Helper()
+	data, _, err := store.Get(scope, 0)
+	if err != nil {
+		t.Fatalf("failed to get data from mock store: %v", err)
+	}
+	return parseDoc(t, string(data))
+}
+
 const addTestConf = `
 [block_user_agent]
   activated = true
+  # User agents blocked from every request
   agents = ["GPTBot"]
 
 [block_host]
   activated = true
+  # Hosts allowed to reach the app
   allowed_hosts = ["example.com"]
 `
 

@@ -324,4 +324,29 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - update `TestTomlParser_DateTimes` (`cmd/ripc/loadbytes_v1_polifill_test.go`) from string expectations to the typed values (`toml.LocalDate{...}`, `time.Time` via `.Equal`); `get`/`walk` print `%v` and `String()` yields the same text, so display does not change
 - refs: `cmd/ripc/loadbytes_v1_polifill.go` (`tomlValueOf`), `cmd/ripc/validate.go` (`validateTomlAsConfig`), `cmd/ripc/loadbytes_v1_polifill_test.go` (`TestTomlParser_DateTimes`)
 
+# ripc: the other mutating commands still strip the config comments
+
+- `set` and `walk` now load through the comment-preserving parser and write with `SetWithComment`; every other command that reloads the stored document still uses `toml.LoadBytes`, so one edit there wipes every comment in the config
+- the plain `tree.Set` call sites drop the comment and the string style above the key, same as `set` did before
+
+| command | load | mutation | fix |
+|---|---|---|---|
+| `set` | done | done | done |
+| `add` | `cmd/ripc/add.go:111` | `cmd/ripc/add_block_user_agent.go:30`, `cmd/ripc/add_block_host.go:30` | loader swap + `SetWithComment` in both adders |
+| `remove` | `cmd/ripc/remove.go:126` | `cmd/ripc/remove.go:204` | same |
+| `update` | `cmd/ripc/update.go:152` | `cmd/ripc/update_jwt.go:17`, `cmd/ripc/update_tls.go:59-60`, `cmd/ripc/update_user_agent.go:84` | same |
+| `log_init` | `cmd/ripc/log_init.go:76` | `cmd/ripc/log_init.go:81` | same |
+| `scaffold` | `cmd/ripc/scaffold.go:313` | `cmd/ripc/scaffold.go:331,348` | loader swap (nothing to preserve on the new keys) |
+
+- `get` and `paths` only read, so they need nothing; `migrate`, `save`, `rollback` and `app_create` write a whole document and never reload one
+- suggested order: `add` first (same shape as `set`), then `remove`/`update`/`log_init` (loader swap plus `SetWithComment`), then the `scaffold` loader swap
+
+# ripc scaffold: a scaffolded entry is stored without the comments its defaults declare
+
+- `scaffoldDefaults` returns structs that all carry `comment:` tags, but `scaffold.go` marshals them (`:323`, `:338`) and then reloads the bytes with `toml.LoadBytes` (`:327`, `:343`), which throws those comments away
+- the result is inconsistent: `migrate` saves the marshaled defaults with their comments, while the entries added later by `scaffold` have none
+- fix: build the section and the entry subtrees with `NewTomlParser` + `Parse` instead of `toml.LoadBytes`, so the comments survive into the stored document
+- this writes new content rather than preserving it, so it is its own change and its own decision
+- refs: `cmd/ripc/scaffold.go` (`scaffoldConfigValue`, `scaffoldDefaults`), `config/default.go` (`comment:` tags), `cmd/ripc/loadbytes_v1_polifill.go` (`TomlParser`)
+
 

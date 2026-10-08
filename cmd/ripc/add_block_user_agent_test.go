@@ -44,6 +44,20 @@ func TestAddValue_UserAgent_Append(t *testing.T) {
 			t.Errorf("expected %q in %v", want, got)
 		}
 	}
+
+	commentTests := []struct {
+		path string
+		want string
+	}{
+		{path: "block_user_agent.agents", want: "User agents blocked from every request"},
+		{path: "block_host.allowed_hosts", want: "Hosts allowed to reach the app"},
+	}
+	saved := getAddTreeWithComments(t, mockStore, scope)
+	for _, tt := range commentTests {
+		if got := commentAt(t, saved, tt.path); got != tt.want {
+			t.Errorf("comment at %q = %q, want %q", tt.path, got, tt.want)
+		}
+	}
 }
 
 func TestAddValue_UserAgent_DuplicateSkip(t *testing.T) {
