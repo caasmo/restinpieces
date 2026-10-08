@@ -73,12 +73,17 @@ func updateLogPathInConfig(secureStore config.SecureStore, logPath string) error
 		return fmt.Errorf("%w: failed to retrieve config for log path update: %w", ErrSecureStoreGet, err)
 	}
 
-	tree, err := toml.LoadBytes(decryptedBytes)
+	parser, err := NewTomlParser(decryptedBytes, "")
 	if err != nil {
 		return fmt.Errorf("%w: failed to parse config for log path update: %w", ErrUpdateLogPath, err)
 	}
 
-	tree.Set("log.batch.db_path", logPath)
+	tree, _, err := parser.Parse()
+	if err != nil {
+		return fmt.Errorf("%w: failed to parse config for log path update: %w", ErrUpdateLogPath, err)
+	}
+
+	SetWithComment(tree, "log.batch.db_path", logPath)
 
 	tomlBytes, err := toml.Marshal(tree)
 	if err != nil {

@@ -47,6 +47,24 @@ func TestUpdateLogPathInConfig(t *testing.T) {
 			t.Errorf("expected db_path /custom/logs.db, got %q", cfg.Log.Batch.DbPath)
 		}
 	})
+
+	t.Run("SuccessKeepsComment", func(t *testing.T) {
+		conf := "[log.batch]\n  # Database the batch logger writes to\n  db_path = \"/old/logs.db\"\n"
+		mockStore := &MockLogInitSecureStore{data: []byte(conf)}
+
+		err := updateLogPathInConfig(mockStore, "/new/logs.db")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		tree := parseDoc(t, string(mockStore.savedData))
+		if got := tree.Get("log.batch.db_path"); got != "/new/logs.db" {
+			t.Errorf("db_path = %v, want /new/logs.db", got)
+		}
+		if got := commentAt(t, tree, "log.batch.db_path"); got != "Database the batch logger writes to" {
+			t.Errorf("comment lost on log path update: %q", got)
+		}
+	})
 }
 
 func TestLogInit(t *testing.T) {
