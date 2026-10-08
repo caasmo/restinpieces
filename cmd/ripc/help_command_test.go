@@ -12,7 +12,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 
 	// Replace the real print functions with test fakes.
 	originalPrintAdd := printAddUsageFunc
-	originalPrintRemove := printRemoveUsageFunc
+	originalPrintRemove := printRmUsageFunc
 	originalPrintApp := printAppUsageFunc
 	originalPrintGet := printGetUsageFunc
 	originalPrintPaths := printPathsUsageFunc
@@ -31,7 +31,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 	originalPrintVersion := printVersionUsageFunc
 	defer func() {
 		printAddUsageFunc = originalPrintAdd
-		printRemoveUsageFunc = originalPrintRemove
+		printRmUsageFunc = originalPrintRemove
 		printAppUsageFunc = originalPrintApp
 		printGetUsageFunc = originalPrintGet
 		printPathsUsageFunc = originalPrintPaths
@@ -51,7 +51,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 	}()
 
 	printAddUsageFunc = func(w io.Writer) { calledTopic = "add" }
-	printRemoveUsageFunc = func(w io.Writer) { calledTopic = "remove" }
+	printRmUsageFunc = func(w io.Writer) { calledTopic = "rm" }
 	printAppUsageFunc = func(w io.Writer) { calledTopic = "app" }
 	printGetUsageFunc = func(w io.Writer) { calledTopic = "get" }
 	printPathsUsageFunc = func(w io.Writer) { calledTopic = "paths" }
@@ -74,7 +74,7 @@ func TestRunHelpTopic_Success(t *testing.T) {
 		expectTopic string
 	}{
 		{topic: "add", expectTopic: "add"},
-		{topic: "remove", expectTopic: "remove"},
+		{topic: "rm", expectTopic: "rm"},
 		{topic: "app", expectTopic: "app"},
 		{topic: "get", expectTopic: "get"},
 		{topic: "paths", expectTopic: "paths"},

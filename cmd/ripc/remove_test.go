@@ -9,8 +9,8 @@ import (
 	toml "github.com/pelletier/go-toml"
 )
 
-// MockRemoveSecureStore is a test-only implementation of config.SecureStore for remove command tests.
-type MockRemoveSecureStore struct {
+// MockRmSecureStore is a test-only implementation of config.SecureStore for rm command tests.
+type MockRmSecureStore struct {
 	data           map[string][]byte
 	format         string
 	saveHistory    []string
@@ -18,17 +18,17 @@ type MockRemoveSecureStore struct {
 	ForceSaveError bool
 }
 
-func NewMockRemoveSecureStore(initialData map[string][]byte) *MockRemoveSecureStore {
+func NewMockRmSecureStore(initialData map[string][]byte) *MockRmSecureStore {
 	if initialData == nil {
 		initialData = make(map[string][]byte)
 	}
-	return &MockRemoveSecureStore{
+	return &MockRmSecureStore{
 		data:   initialData,
 		format: "toml",
 	}
 }
 
-func (m *MockRemoveSecureStore) Get(scope string, generation int) ([]byte, string, error) {
+func (m *MockRmSecureStore) Get(scope string, generation int) ([]byte, string, error) {
 	if m.ForceGetError {
 		return nil, "", fmt.Errorf("forced get error: %w", ErrSecureStoreGet)
 	}
@@ -39,7 +39,7 @@ func (m *MockRemoveSecureStore) Get(scope string, generation int) ([]byte, strin
 	return data, m.format, nil
 }
 
-func (m *MockRemoveSecureStore) Save(scope string, data []byte, format string, description string) error {
+func (m *MockRmSecureStore) Save(scope string, data []byte, format string, description string) error {
 	if m.ForceSaveError {
 		return fmt.Errorf("forced save error: %w", ErrSecureStoreSave)
 	}
@@ -49,7 +49,7 @@ func (m *MockRemoveSecureStore) Save(scope string, data []byte, format string, d
 	return nil
 }
 
-func getRemoveTreeFromStore(t *testing.T, store *MockRemoveSecureStore, scope string) *toml.Tree {
+func getRmTreeFromStore(t *testing.T, store *MockRmSecureStore, scope string) *toml.Tree {
 	t.Helper()
 	data, _, err := store.Get(scope, 0)
 	if err != nil {
@@ -62,9 +62,9 @@ func getRemoveTreeFromStore(t *testing.T, store *MockRemoveSecureStore, scope st
 	return tree
 }
 
-// getRemoveTreeWithComments parses the saved document the way ripc stores it, so
+// getRmTreeWithComments parses the saved document the way ripc stores it, so
 // the comments written above the keys are still there to check.
-func getRemoveTreeWithComments(t *testing.T, store *MockRemoveSecureStore, scope string) *toml.Tree {
+func getRmTreeWithComments(t *testing.T, store *MockRmSecureStore, scope string) *toml.Tree {
 	t.Helper()
 	data, _, err := store.Get(scope, 0)
 	if err != nil {
@@ -73,7 +73,7 @@ func getRemoveTreeWithComments(t *testing.T, store *MockRemoveSecureStore, scope
 	return parseDoc(t, string(data))
 }
 
-const removeTestConf = `
+const rmTestConf = `
 [backup.vacuum.logs-vacuum]
   # Database the vacuum backs up
   source_path = ""
@@ -92,7 +92,7 @@ const removeTestConf = `
   allowed_hosts = ["example.com"]
 `
 
-func TestParseRemoveArgs(t *testing.T) {
+func TestParseRmArgs(t *testing.T) {
 	testCases := []struct {
 		name         string
 		args         []string
@@ -127,7 +127,7 @@ func TestParseRemoveArgs(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			opts, err := parseRemoveArgs(tc.args)
+			opts, err := parseRmArgs(tc.args)
 
 			if tc.expectedErr != nil {
 				if err == nil {
@@ -152,9 +152,9 @@ func TestParseRemoveArgs(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_TableEntry(t *testing.T) {
+func TestRmValue_TableEntry(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockRemoveSecureStore(map[string][]byte{scope: []byte(removeTestConf)})
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -163,11 +163,11 @@ func TestRemoveValue_TableEntry(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	tree := getRemoveTreeFromStore(t, mockStore, scope)
+	tree := getRmTreeFromStore(t, mockStore, scope)
 	if tree.Has("backup.vacuum.logs-vacuum") {
 		t.Error("expected backup.vacuum.logs-vacuum to be removed")
 	}
-	saved := getRemoveTreeWithComments(t, mockStore, scope)
+	saved := getRmTreeWithComments(t, mockStore, scope)
 	commentTests := []struct {
 		path string
 		want string
@@ -185,9 +185,9 @@ func TestRemoveValue_TableEntry(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_ArrayItem(t *testing.T) {
+func TestRmValue_ArrayItem(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockRemoveSecureStore(map[string][]byte{scope: []byte(removeTestConf)})
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -196,7 +196,7 @@ func TestRemoveValue_ArrayItem(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	tree := getRemoveTreeFromStore(t, mockStore, scope)
+	tree := getRmTreeFromStore(t, mockStore, scope)
 	raw, ok := tree.Get("block_user_agent.agents").([]interface{})
 	if !ok {
 		t.Fatalf("expected block_user_agent.agents to be an array, got %T", tree.Get("block_user_agent.agents"))
@@ -204,7 +204,7 @@ func TestRemoveValue_ArrayItem(t *testing.T) {
 	if len(raw) != 1 || raw[0] != "GPTBot" {
 		t.Errorf("expected [GPTBot], got %v", raw)
 	}
-	if got := commentAt(t, getRemoveTreeWithComments(t, mockStore, scope), "block_user_agent.agents"); got != "User agents blocked from every request" {
+	if got := commentAt(t, getRmTreeWithComments(t, mockStore, scope), "block_user_agent.agents"); got != "User agents blocked from every request" {
 		t.Errorf("comment lost on remove: %q", got)
 	}
 	if len(mockStore.saveHistory) == 0 || mockStore.saveHistory[0] != "Removed 'SemrushBot' from 'block_user_agent.agents'" {
@@ -212,9 +212,9 @@ func TestRemoveValue_ArrayItem(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_Failure_MissingValueForArray(t *testing.T) {
+func TestRmValue_Failure_MissingValueForArray(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockRemoveSecureStore(map[string][]byte{scope: []byte(removeTestConf)})
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -224,9 +224,9 @@ func TestRemoveValue_Failure_MissingValueForArray(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_Failure_ValueNotInArray(t *testing.T) {
+func TestRmValue_Failure_ValueNotInArray(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockRemoveSecureStore(map[string][]byte{scope: []byte(removeTestConf)})
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -236,9 +236,9 @@ func TestRemoveValue_Failure_ValueNotInArray(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_Failure_ValueOnTableEntry(t *testing.T) {
+func TestRmValue_Failure_ValueOnTableEntry(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockRemoveSecureStore(map[string][]byte{scope: []byte(removeTestConf)})
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -248,9 +248,9 @@ func TestRemoveValue_Failure_ValueOnTableEntry(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_Failure_ScalarPath(t *testing.T) {
+func TestRmValue_Failure_ScalarPath(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockRemoveSecureStore(map[string][]byte{scope: []byte(removeTestConf)})
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -260,9 +260,9 @@ func TestRemoveValue_Failure_ScalarPath(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_Failure_MissingPath(t *testing.T) {
+func TestRmValue_Failure_MissingPath(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockRemoveSecureStore(map[string][]byte{scope: []byte(removeTestConf)})
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -272,9 +272,9 @@ func TestRemoveValue_Failure_MissingPath(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_Failure_MalformedTOML(t *testing.T) {
+func TestRmValue_Failure_MalformedTOML(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockRemoveSecureStore(map[string][]byte{scope: []byte("[block_user_agent")})
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte("[block_user_agent")})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -284,8 +284,8 @@ func TestRemoveValue_Failure_MalformedTOML(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_Failure_StoreGetError(t *testing.T) {
-	mockStore := NewMockRemoveSecureStore(nil)
+func TestRmValue_Failure_StoreGetError(t *testing.T) {
+	mockStore := NewMockRmSecureStore(nil)
 	mockStore.ForceGetError = true
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -296,9 +296,9 @@ func TestRemoveValue_Failure_StoreGetError(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_Failure_StoreSaveError(t *testing.T) {
+func TestRmValue_Failure_StoreSaveError(t *testing.T) {
 	scope := "app"
-	mockStore := NewMockRemoveSecureStore(map[string][]byte{scope: []byte(removeTestConf)})
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
 	mockStore.ForceSaveError = true
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
@@ -309,10 +309,10 @@ func TestRemoveValue_Failure_StoreSaveError(t *testing.T) {
 	}
 }
 
-func TestRemoveValue_RefusesInvalidConfig(t *testing.T) {
+func TestRmValue_RefusesInvalidConfig(t *testing.T) {
 	scope := "app"
 	conf := "server = \"oops\"\n[backup.vacuum.logs-vacuum]\n  source_path = \"\"\n"
-	mockStore := NewMockRemoveSecureStore(map[string][]byte{scope: []byte(conf)})
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(conf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
@@ -325,12 +325,12 @@ func TestRemoveValue_RefusesInvalidConfig(t *testing.T) {
 	}
 }
 
-func TestHandleRemoveCommand_Help(t *testing.T) {
-	mockStore := NewMockRemoveSecureStore(nil)
+func TestHandleRmCommand_Help(t *testing.T) {
+	mockStore := NewMockRmSecureStore(nil)
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := handleRemoveCommand(mockStore, []string{"-h"}, ui)
+	err := handleRmCommand(mockStore, []string{"-h"}, ui)
 	if err != nil {
 		t.Fatalf("expected no error for -h, got %v", err)
 	}

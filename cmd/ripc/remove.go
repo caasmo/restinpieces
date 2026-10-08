@@ -13,9 +13,9 @@ import (
 // ErrValueNotFound reports an array value that remove did not find.
 var ErrValueNotFound = errors.New("value not found in array")
 
-func printRemoveUsage(w io.Writer) {
+func printRmUsage(w io.Writer) {
 	help := Spec{
-		Usage:       "remove [options] <path> [value]",
+		Usage:       "rm [options] <path> [value]",
 		Description: "Removes one item from a configuration collection. A table is named by its path, for example 'backup.vacuum.logs-vacuum'. An array item is named by value, for example 'block_user_agent.agents SemrushBot'. Scalar keys like 'server.addr' are refused.",
 		Args: []ArgSpec{
 			{"path", "Configuration path of the table or array"},
@@ -26,63 +26,63 @@ func printRemoveUsage(w io.Writer) {
 			commandOptions.Opt("desc"),
 		},
 		Examples: []string{
-			"ripc remove backup.vacuum.logs-vacuum",
-			"ripc remove block_user_agent.agents SemrushBot",
+			"ripc rm backup.vacuum.logs-vacuum",
+			"ripc rm block_user_agent.agents SemrushBot",
 		},
 	}
 	help.Print(w, prog)
 }
 
-// RemoveOptions holds the parsed options for the 'remove' command.
-type RemoveOptions struct {
+// RmOptions holds the parsed options for the 'rm' command.
+type RmOptions struct {
 	Scope string // --scope
 	Desc  string // --desc
 	Path  string // positional path argument
 	Value string // optional positional value argument
 }
 
-// handleRemoveCommand parses the arguments for the 'remove' command and calls
+// handleRmCommand parses the arguments for the 'rm' command and calls
 // removeValue, returning any error to the caller.
-func handleRemoveCommand(secureStore config.SecureStore, args []string, ui UI) error {
-	opts, err := parseRemoveArgs(args)
+func handleRmCommand(secureStore config.SecureStore, args []string, ui UI) error {
+	opts, err := parseRmArgs(args)
 	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {
-			printRemoveUsage(ui.Out)
+			printRmUsage(ui.Out)
 			return nil
 		}
-		printRemoveUsage(ui.Err)
+		printRmUsage(ui.Err)
 		return err
 	}
 	return removeValue(ui, secureStore, opts.Scope, opts.Desc, opts.Path, opts.Value)
 }
 
-// parseRemoveArgs parses the arguments for the 'remove' command.
-func parseRemoveArgs(args []string) (RemoveOptions, error) {
-	removeCmd := flag.NewFlagSet("remove", flag.ContinueOnError)
-	removeCmd.SetOutput(io.Discard)
+// parseRmArgs parses the arguments for the 'rm' command.
+func parseRmArgs(args []string) (RmOptions, error) {
+	rmCmd := flag.NewFlagSet("rm", flag.ContinueOnError)
+	rmCmd.SetOutput(io.Discard)
 	scopeOpt := commandOptions.Opt("scope")
 	descOpt := commandOptions.Opt("desc")
 
-	var opts RemoveOptions
-	removeCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
-	removeCmd.StringVar(&opts.Desc, "desc", descOpt.DefaultValue, descOpt.Usage)
+	var opts RmOptions
+	rmCmd.StringVar(&opts.Scope, "scope", scopeOpt.DefaultValue, scopeOpt.Usage)
+	rmCmd.StringVar(&opts.Desc, "desc", descOpt.DefaultValue, descOpt.Usage)
 
-	err := removeCmd.Parse(args)
+	err := rmCmd.Parse(args)
 	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {
-			return RemoveOptions{}, flag.ErrHelp
+			return RmOptions{}, flag.ErrHelp
 		}
-		return RemoveOptions{}, fmt.Errorf("parsing remove flags: %w: %v", ErrInvalidFlag, err)
+		return RmOptions{}, fmt.Errorf("parsing rm flags: %w: %v", ErrInvalidFlag, err)
 	}
-	if removeCmd.NArg() < 1 {
-		return RemoveOptions{}, fmt.Errorf("'remove' requires path argument: %w", ErrMissingArgument)
+	if rmCmd.NArg() < 1 {
+		return RmOptions{}, fmt.Errorf("'rm' requires path argument: %w", ErrMissingArgument)
 	}
-	if removeCmd.NArg() > 2 {
-		return RemoveOptions{}, fmt.Errorf("'remove' command takes at most two arguments (path and value): %w", ErrTooManyArguments)
+	if rmCmd.NArg() > 2 {
+		return RmOptions{}, fmt.Errorf("'rm' command takes at most two arguments (path and value): %w", ErrTooManyArguments)
 	}
-	opts.Path = removeCmd.Arg(0)
-	if removeCmd.NArg() == 2 {
-		opts.Value = removeCmd.Arg(1)
+	opts.Path = rmCmd.Arg(0)
+	if rmCmd.NArg() == 2 {
+		opts.Value = rmCmd.Arg(1)
 	}
 	return opts, nil
 }

@@ -211,10 +211,10 @@ func TestPrintUsageFuncs(t *testing.T) {
 			},
 		},
 		{
-			name:  "remove",
-			usage: printRemoveUsage,
+			name:  "rm",
+			usage: printRmUsage,
 			want: []string{
-				"remove [options] <path> [value]",
+				"rm [options] <path> [value]",
 				"Removes one item from a configuration collection.",
 				"Arguments:",
 				"path",
@@ -224,8 +224,8 @@ func TestPrintUsageFuncs(t *testing.T) {
 				"Options:",
 				"-scope string",
 				"-desc string",
-				"ripc remove backup.vacuum.logs-vacuum",
-				"ripc remove block_user_agent.agents SemrushBot",
+				"ripc rm backup.vacuum.logs-vacuum",
+				"ripc rm block_user_agent.agents SemrushBot",
 			},
 		},
 		{

@@ -11,7 +11,7 @@ var ErrUnknownHelpTopic = errors.New("unknown help topic")
 var (
 	printAppUsageFunc      = printAppUsage
 	printAddUsageFunc      = printAddUsage
-	printRemoveUsageFunc   = printRemoveUsage
+	printRmUsageFunc       = printRmUsage
 	printGetUsageFunc      = printGetUsage
 	printPathsUsageFunc    = printPathsUsage
 	printDumpUsageFunc     = printDumpUsage
@@ -68,8 +68,8 @@ func runHelpTopic(topic string, ui UI) error {
 		printWalkUsageFunc(ui.Out)
 	case "add":
 		printAddUsageFunc(ui.Out)
-	case "remove":
-		printRemoveUsageFunc(ui.Out)
+	case "rm":
+		printRmUsageFunc(ui.Out)
 	case "update":
 		printUpdateUsageFunc(ui.Out)
 	case "save":

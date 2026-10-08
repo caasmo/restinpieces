@@ -100,7 +100,7 @@ func run(args []string, output io.Writer) error {
 						{"set", "Set a configuration value"},
 						{"walk", "Walk through configuration values one at a time"},
 						{"add", "Append a value to a collection configuration key"},
-						{"remove", "Remove an item from a configuration collection"},
+						{"rm", "Remove an item from a configuration collection"},
 						{"update", "Generate secrets, bot list, or TLS certificate"},
 						{"save", "Save file contents to the configuration"},
 						{"scaffold", "Scaffold a configuration entry with defaults"},
@@ -218,8 +218,8 @@ func run(args []string, output io.Writer) error {
 		return handleWalkCommand(secureStore, os.Stdin, commandArgs, ui)
 	case "add":
 		return handleAddCommand(secureStore, commandArgs, ui)
-	case "remove":
-		return handleRemoveCommand(secureStore, commandArgs, ui)
+	case "rm":
+		return handleRmCommand(secureStore, commandArgs, ui)
 	case "update":
 		return handleUpdateCommand(secureStore, commandArgs, ui)
 	case "save":
