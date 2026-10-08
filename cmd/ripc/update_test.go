@@ -51,13 +51,19 @@ func (m *MockUpdateSecureStore) Save(scope string, data []byte, format string, d
 
 const updateTestConf = `
 [server]
+  # Address the server listens on
   addr = ":8080"
 
 [jwt]
+  # Secret used to sign the auth token
   auth_secret = "old"
+  # Secret used to sign the password reset token
   password_reset_secret = "old"
+  # Secret used to sign the email change otp token
   email_change_otp_secret = "old"
+  # Secret used to sign the email verification otp token
   verification_email_otp_secret = "old"
+  # Secret used to sign the oauth2 state token
   oauth2_state_secret = "old"
 `
 
@@ -81,6 +87,28 @@ func getUpdateTreeFromStore(t *testing.T, store *MockUpdateSecureStore, scope st
 		t.Fatalf("failed to load toml from store data: %v", err)
 	}
 	return tree
+}
+
+// getUpdateTreeWithComments parses the saved document the way ripc stores it, so
+// the comments written above the keys are still there to check.
+func getUpdateTreeWithComments(t *testing.T, store *MockUpdateSecureStore, scope string) *toml.Tree {
+	t.Helper()
+	data, _, err := store.Get(scope, 0)
+	if err != nil {
+		t.Fatalf("failed to get data from mock store: %v", err)
+	}
+	return parseDoc(t, string(data))
+}
+
+// getUpdateTomlFromStore returns the saved document as text, so string styles
+// are still there to check.
+func getUpdateTomlFromStore(t *testing.T, store *MockUpdateSecureStore, scope string) string {
+	t.Helper()
+	data, _, err := store.Get(scope, 0)
+	if err != nil {
+		t.Fatalf("failed to get data from mock store: %v", err)
+	}
+	return string(data)
 }
 
 func TestUpdate_SingleKey(t *testing.T) {
@@ -123,6 +151,20 @@ func TestUpdate_SingleKey(t *testing.T) {
 	for _, path := range untouched {
 		if got := tree.Get(path); got != "old" {
 			t.Errorf("expected %s to stay 'old', got %v", path, got)
+		}
+	}
+
+	saved := getUpdateTreeWithComments(t, mockStore, scope)
+	commentTests := []struct {
+		path string
+		want string
+	}{
+		{path: "jwt.auth_secret", want: "Secret used to sign the auth token"},
+		{path: "server.addr", want: "Address the server listens on"},
+	}
+	for _, tt := range commentTests {
+		if got := commentAt(t, saved, tt.path); got != tt.want {
+			t.Errorf("comment at %q = %q, want %q", tt.path, got, tt.want)
 		}
 	}
 }

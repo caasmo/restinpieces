@@ -9,13 +9,12 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"math/big"
 	"net"
 	"strings"
 	"testing"
 	"time"
-
-	toml "github.com/pelletier/go-toml"
 )
 
 func newTlsTestPair(t *testing.T, notBefore, notAfter time.Time) (string, string) {
@@ -67,22 +66,26 @@ func updateTlsTestConf(certificatePEM string, privateKeyPEM string) string {
 }
 
 // updateTlsTestConfWithLive builds a config with the staged pair under acme and
-// the given live pair under server.tls.
+// the given live pair under server.tls. The staged pair is written the way the
+// acme daemon stores it, as a multi-line string.
 func updateTlsTestConfWithLive(certificatePEM string, privateKeyPEM string, liveCertificate string, livePrivateKey string) string {
-	tree, err := toml.Load("")
-	if err != nil {
-		panic(err)
-	}
-	tree.Set("acme.certificate", certificatePEM)
-	tree.Set("acme.private_key", privateKeyPEM)
-	tree.Set("server.tls.certificate", liveCertificate)
-	tree.Set("server.tls.private_key", livePrivateKey)
-	tree.Set("server.addr", ":8080")
-	out, err := toml.Marshal(tree)
-	if err != nil {
-		panic(err)
-	}
-	return string(out)
+	return fmt.Sprintf(`# Staged certificate and key, written by the acme daemon
+[acme]
+  certificate = """
+%s"""
+  private_key = """
+%s"""
+
+[server]
+  # Address the server listens on
+  addr = ":8080"
+
+  [server.tls]
+    # Certificate the server serves to clients
+    certificate = %q
+    # Key the server serves to clients
+    private_key = %q
+`, certificatePEM, privateKeyPEM, liveCertificate, livePrivateKey)
 }
 
 func TestUpdate_TlsHappyPath(t *testing.T) {
@@ -108,6 +111,24 @@ func TestUpdate_TlsHappyPath(t *testing.T) {
 	}
 	if got := tree.Get("server.tls.private_key"); got != privateKeyPEM {
 		t.Errorf("expected server.tls.private_key to match staged private key")
+	}
+
+	saved := getUpdateTreeWithComments(t, mockStore, scope)
+	commentTests := []struct {
+		path string
+		want string
+	}{
+		{path: "server.tls.certificate", want: "Certificate the server serves to clients"},
+		{path: "server.addr", want: "Address the server listens on"},
+	}
+	for _, tt := range commentTests {
+		if got := commentAt(t, saved, tt.path); got != tt.want {
+			t.Errorf("comment at %q = %q, want %q", tt.path, got, tt.want)
+		}
+	}
+
+	if raw := getUpdateTomlFromStore(t, mockStore, scope); !strings.Contains(raw, "certificate = \"\"\"") {
+		t.Errorf("staged certificate lost its multiline form:\n%s", raw)
 	}
 
 	output := stderr.String()

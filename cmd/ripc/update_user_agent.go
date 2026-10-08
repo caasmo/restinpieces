@@ -81,7 +81,7 @@ func (userAgentUpdater) Update(tree *toml.Tree, arg string) error {
 		return err
 	}
 
-	tree.Set(tomlPathBlockUserAgentAgents, agents)
+	SetWithComment(tree, tomlPathBlockUserAgentAgents, agents)
 	return nil
 }
 

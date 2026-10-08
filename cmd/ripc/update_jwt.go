@@ -14,7 +14,7 @@ type jwtUpdater struct{}
 
 func (jwtUpdater) Update(tree *toml.Tree, arg string) error {
 	for _, path := range tomlPaths(arg) {
-		tree.Set(path, crypto.RandomString(32, crypto.AlphanumericAlphabet))
+		SetWithComment(tree, path, crypto.RandomString(32, crypto.AlphanumericAlphabet))
 	}
 	return nil
 }

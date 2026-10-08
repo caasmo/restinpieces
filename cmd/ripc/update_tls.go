@@ -56,8 +56,8 @@ func (tlsUpdater) Update(tree *toml.Tree, arg string) error {
 		return err
 	}
 
-	tree.Set(tomlPathServerTLSCertificate, certificatePEM)
-	tree.Set(tomlPathServerTLSPrivateKey, privateKeyPEM)
+	SetWithComment(tree, tomlPathServerTLSCertificate, certificatePEM)
+	SetWithComment(tree, tomlPathServerTLSPrivateKey, privateKeyPEM)
 	return nil
 }
 
