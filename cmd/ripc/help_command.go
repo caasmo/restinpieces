@@ -17,6 +17,7 @@ var (
 	printDumpUsageFunc     = printDumpUsage
 	printScopesUsageFunc   = printScopesUsage
 	printSetUsageFunc      = printSetUsage
+	printWalkUsageFunc     = printWalkUsage
 	printUpdateUsageFunc   = printUpdateUsage
 	printSaveUsageFunc     = printSaveUsage
 	printScaffoldUsageFunc = printScaffoldUsage
@@ -63,6 +64,8 @@ func runHelpTopic(topic string, ui UI) error {
 		printScopesUsageFunc(ui.Out)
 	case "set":
 		printSetUsageFunc(ui.Out)
+	case "walk":
+		printWalkUsageFunc(ui.Out)
 	case "add":
 		printAddUsageFunc(ui.Out)
 	case "remove":

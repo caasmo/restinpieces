@@ -18,6 +18,7 @@ func TestParseArgs(t *testing.T) {
 	testRollbackParsing(t)
 	testSaveParsing(t)
 	testGetParsing(t)
+	testWalkParsing(t)
 	testMigrateParsing(t)
 	testUpdateParsing(t)
 }
@@ -365,6 +366,41 @@ func testUpdateParsing(t *testing.T) {
 		}
 		if !errors.Is(err, ErrMissingArgument) {
 			t.Fatalf("expected error to wrap %v, but got %v", ErrMissingArgument, err)
+		}
+	})
+}
+
+func testWalkParsing(t *testing.T) {
+	t.Run("WalkSuccess", func(t *testing.T) {
+		opts, err := parseWalkArgs([]string{"--scope", "test", "filter"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if opts.Scope != "test" {
+			t.Errorf("expected scope 'test', got %q", opts.Scope)
+		}
+		if opts.Filter != "filter" {
+			t.Errorf("expected filter 'filter', got %q", opts.Filter)
+		}
+	})
+
+	t.Run("WalkMissingFilter", func(t *testing.T) {
+		_, err := parseWalkArgs([]string{})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrMissingArgument) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrMissingArgument, err)
+		}
+	})
+
+	t.Run("WalkTooManyArgs", func(t *testing.T) {
+		_, err := parseWalkArgs([]string{"filter", "extra"})
+		if err == nil {
+			t.Fatal("expected error, but got nil")
+		}
+		if !errors.Is(err, ErrTooManyArguments) {
+			t.Fatalf("expected error to wrap %v, but got %v", ErrTooManyArguments, err)
 		}
 	})
 }

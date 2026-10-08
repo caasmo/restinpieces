@@ -180,6 +180,20 @@ func TestPrintUsageFuncs(t *testing.T) {
 			},
 		},
 		{
+			name:  "walk",
+			usage: printWalkUsage,
+			want: []string{
+				"walk [options] <filter>",
+				"Walks through configuration values and updates them one at a time.",
+				"Arguments:",
+				"filter",
+				"Substring filter on configuration paths; only matching values are walked",
+				"Options:",
+				"-scope string",
+				"ripc walk server",
+			},
+		},
+		{
 			name:  "add",
 			usage: printAddUsage,
 			want: []string{
