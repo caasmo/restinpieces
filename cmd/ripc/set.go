@@ -89,7 +89,12 @@ func setConfigValue(
 		return fmt.Errorf("%w: failed to retrieve latest config for scope '%s': %w", ErrSecureStoreGet, scope, err)
 	}
 
-	tree, err := toml.LoadBytes(decryptedData)
+	parser, err := NewTomlParser(decryptedData, "")
+	if err != nil {
+		return fmt.Errorf("%w: failed to load config data for scope '%s': %w", ErrConfigUnmarshal, scope, err)
+	}
+
+	tree, _, err := parser.Parse()
 	if err != nil {
 		return fmt.Errorf("%w: failed to load config data for scope '%s': %w", ErrConfigUnmarshal, scope, err)
 	}
@@ -119,7 +124,7 @@ func setConfigValue(
 		return fmt.Errorf("%w: path '%s' not found in config for scope '%s'", ErrPathNotFound, configPath, scope)
 	}
 
-	tree.Set(configPath, valueToSet)
+	SetWithComment(tree, configPath, valueToSet)
 
 	updatedTomlBytes, err := toml.Marshal(tree)
 	if err != nil {

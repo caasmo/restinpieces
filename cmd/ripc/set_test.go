@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/pelletier/go-toml"
@@ -70,6 +71,17 @@ func getTreeFromStore(t *testing.T, store *MockSetSecureStore, scope string) *to
 		t.Fatalf("failed to load toml from store data: %v", err)
 	}
 	return tree
+}
+
+// savedToml returns the document the mock store holds for scope, parsed the
+// way ripc saves it, so comments and string styles are still there to check.
+func savedToml(t *testing.T, store *MockSetSecureStore, scope string) string {
+	t.Helper()
+	data, _, err := store.Get(scope, 0)
+	if err != nil {
+		t.Fatalf("failed to get data from mock store: %v", err)
+	}
+	return string(data)
 }
 
 func TestSetConfigValue_Success_String(t *testing.T) {
@@ -183,6 +195,56 @@ func TestSetConfigValue_Success_CustomDescription(t *testing.T) {
 	}
 	if len(mockStore.saveHistory) == 0 || mockStore.saveHistory[0] != description {
 		t.Errorf("expected save history to contain %q, got %v", description, mockStore.saveHistory)
+	}
+}
+
+// TestSetConfigValue_Success_KeepsComment verifies the comment written above a
+// value survives the edit: the parser keeps it and SetWithComment changes the
+// value through the wrapper that carries it.
+func TestSetConfigValue_Success_KeepsComment(t *testing.T) {
+	scope := "app"
+	conf := "# The public directory\npublic_dir = \"/var/www/public\"\n[server]\n  # Address the server listens on\n  addr = \":8080\"\n"
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(conf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := setConfigValue(ui, mockStore, scope, "toml", "", "server.addr", `":9090"`)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	tree := parseDoc(t, savedToml(t, mockStore, scope))
+	if got := tree.Get("server.addr"); got != ":9090" {
+		t.Errorf("server.addr = %v, want :9090", got)
+	}
+	if got := commentAt(t, tree, "server.addr"); got != "Address the server listens on" {
+		t.Errorf("comment lost on edit: %q", got)
+	}
+	if got := commentAt(t, tree, "public_dir"); got != "The public directory" {
+		t.Errorf("comment lost on an untouched key: %q", got)
+	}
+}
+
+// TestSetConfigValue_Success_KeepsMultilineString verifies a multi-line value
+// stays multi-line after an edit, the way get's export and set's re-import
+// round-trip relies on.
+func TestSetConfigValue_Success_KeepsMultilineString(t *testing.T) {
+	scope := "app"
+	conf := "pem = \"\"\"\n-----BEGIN-----\nline\n-----END-----\n\"\"\"\n"
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(conf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := setConfigValue(ui, mockStore, scope, "toml", "", "pem", `"-----BEGIN-----"`)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := parseDoc(t, savedToml(t, mockStore, scope)).Get("pem"); got != "-----BEGIN-----" {
+		t.Errorf("pem = %v, want -----BEGIN-----", got)
+	}
+	if saved := savedToml(t, mockStore, scope); !strings.Contains(saved, "pem = \"\"\"") {
+		t.Errorf("pem lost its multiline form:\n%s", saved)
 	}
 }
 

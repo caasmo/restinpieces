@@ -315,4 +315,13 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - do it as a pure-movement commit after the OAuth2 audit fixes land, so review and `git blame` stay clean
 - runtime users of the section validators: `config/reload.go`, `config/config.go`
 
+# ripc toml parser: date-time values are read as plain strings, so a set re-saves them quoted and changes their type
+
+- `tomlValueOf` (`cmd/ripc/loadbytes_v1_polifill.go`) falls back to `string(node.Data)` for `unstable.LocalDate`, `LocalTime`, `LocalDateTime` and `DateTime`; go-toml v1's `LoadBytes` returns `toml.LocalDate`, `toml.LocalTime`, `toml.LocalDateTime` and `time.Time` for the same input, and `toml.Marshal` writes those bare
+- the string fallback breaks round-trip: after a `set` (or `walk`), a date-time is re-saved as `field = "1979-05-27T07:32:00Z"` and `validateTomlAsConfig` then fails on a type mismatch
+- fix: return the v1 types — `toml.ParseLocalDate`, `toml.ParseLocalTime`, `toml.ParseLocalDateTime`, `time.Parse(time.RFC3339Nano, ...)` for the offset case (`unstable.DateTime` carries the offset, `LocalDateTime` does not)
+- trap: TOML accepts a space as the date/time delimiter (`1979-05-27 07:32:00`) and v2's `scanDateTime` keeps that space in `node.Data`, while Go's `time.Parse` needs `T` — v1 accepted the space form, so normalize it before parsing or `set` newly rejects such a document
+- update `TestTomlParser_DateTimes` (`cmd/ripc/loadbytes_v1_polifill_test.go`) from string expectations to the typed values (`toml.LocalDate{...}`, `time.Time` via `.Equal`); `get`/`walk` print `%v` and `String()` yields the same text, so display does not change
+- refs: `cmd/ripc/loadbytes_v1_polifill.go` (`tomlValueOf`), `cmd/ripc/validate.go` (`validateTomlAsConfig`), `cmd/ripc/loadbytes_v1_polifill_test.go` (`TestTomlParser_DateTimes`)
+
 
