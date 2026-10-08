@@ -310,7 +310,13 @@ func scaffoldConfigValue(
 		return fmt.Errorf("%w: failed to retrieve latest config for scope '%s': %w",
 			ErrSecureStoreGet, scope, err)
 	}
-	tree, err := toml.LoadBytes(decryptedData)
+	parser, err := NewTomlParser(decryptedData, "")
+	if err != nil {
+		return fmt.Errorf("%w: failed to load config data for scope '%s': %w",
+			ErrConfigUnmarshal, scope, err)
+	}
+
+	tree, _, err := parser.Parse()
 	if err != nil {
 		return fmt.Errorf("%w: failed to load config data for scope '%s': %w",
 			ErrConfigUnmarshal, scope, err)
@@ -324,7 +330,12 @@ func scaffoldConfigValue(
 		if err != nil {
 			return fmt.Errorf("%w: failed to marshal scaffold section defaults: %w", ErrConfigMarshal, err)
 		}
-		sectionTree, err := toml.LoadBytes(sectionBytes)
+		sectionParser, err := NewTomlParser(sectionBytes, "")
+		if err != nil {
+			return fmt.Errorf("%w: failed to load scaffold section defaults: %w", ErrConfigUnmarshal, err)
+		}
+
+		sectionTree, _, err := sectionParser.Parse()
 		if err != nil {
 			return fmt.Errorf("%w: failed to load scaffold section defaults: %w", ErrConfigUnmarshal, err)
 		}
@@ -340,7 +351,13 @@ func scaffoldConfigValue(
 		return fmt.Errorf("%w: failed to marshal scaffold defaults: %w",
 			ErrConfigMarshal, err)
 	}
-	subtree, err := toml.LoadBytes(subtreeBytes)
+	subtreeParser, err := NewTomlParser(subtreeBytes, "")
+	if err != nil {
+		return fmt.Errorf("%w: failed to load scaffold subtree: %w",
+			ErrConfigUnmarshal, err)
+	}
+
+	subtree, _, err := subtreeParser.Parse()
 	if err != nil {
 		return fmt.Errorf("%w: failed to load scaffold subtree: %w",
 			ErrConfigUnmarshal, err)

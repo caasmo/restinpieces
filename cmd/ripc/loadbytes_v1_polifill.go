@@ -176,13 +176,11 @@ func commentLine(pending string, node *unstable.Node) string {
 }
 
 // setTableComment attaches comment to the table named by tableKey, creating
-// the table when the document has not created it yet.
+// the table when the document has not created it yet. A table with no keys is
+// created as well: the document declares it, so the tree must answer for it.
 func (p *TomlParser) setTableComment(tableKey string, comment string) error {
 	value := p.tree.Get(tableKey)
 	if value == nil {
-		if comment == "" {
-			return nil
-		}
 		sub, err := toml.TreeFromMap(map[string]interface{}{})
 		if err != nil {
 			return err

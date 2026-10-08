@@ -258,6 +258,36 @@ y = 2
 	}
 }
 
+func TestTomlParser_EmptyTable(t *testing.T) {
+	const doc = `[backup]
+[oauth2]
+
+[server]
+  addr = ":8080"
+`
+
+	tree := parseDoc(t, doc)
+
+	if !tree.Has("backup") {
+		t.Error("a table with no keys vanished from the tree")
+	}
+	if !tree.Has("oauth2") {
+		t.Error("an empty table vanished from the tree")
+	}
+	for _, key := range []string{"backup", "oauth2"} {
+		sub, ok := tree.Get(key).(*toml.Tree)
+		if !ok {
+			t.Fatalf("%s is not a table", key)
+		}
+		if len(sub.Keys()) != 0 {
+			t.Errorf("%s = %v, want no keys", key, sub.Keys())
+		}
+	}
+	if got := tree.Get("server.addr"); got != ":8080" {
+		t.Errorf("server.addr = %v, want :8080", got)
+	}
+}
+
 func TestTomlParser_CommentRoundTrip(t *testing.T) {
 	const doc = `# The public directory
 public_dir = "/var/www"
