@@ -31,7 +31,30 @@ func commentAt(t *testing.T, tree *toml.Tree, path string) string {
 	return ""
 }
 
-func TestLoadBytes_Values(t *testing.T) {
+// parseDoc parses doc with no filter and returns the tree.
+func parseDoc(t *testing.T, doc string) *toml.Tree {
+	t.Helper()
+
+	tree, _ := parseFiltered(t, doc, "")
+	return tree
+}
+
+// parseFiltered parses doc with filter and returns the tree and matched entries.
+func parseFiltered(t *testing.T, doc string, filter string) (*toml.Tree, map[string]TomlEntry) {
+	t.Helper()
+
+	parser, err := NewTomlParser([]byte(doc), filter)
+	if err != nil {
+		t.Fatalf("NewTomlParser failed: %v", err)
+	}
+	tree, entries, err := parser.Parse()
+	if err != nil {
+		t.Fatalf("Parse failed: %v", err)
+	}
+	return tree, entries
+}
+
+func TestTomlParser_Values(t *testing.T) {
 	const doc = `title = "hello"
 count = 42
 ratio = 1.5
@@ -47,10 +70,7 @@ addr = ":8080"
 size = 200
 `
 
-	tree, err := LoadBytes([]byte(doc))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, doc)
 
 	tests := []struct {
 		path string
@@ -74,7 +94,33 @@ size = 200
 	}
 }
 
-func TestLoadBytes_Arrays(t *testing.T) {
+func TestTomlParser_DateTimes(t *testing.T) {
+	const doc = `d = 1979-05-27
+t = 07:32:00
+dt = 1979-05-27T07:32:00
+instant = 1979-05-27T07:32:00Z
+`
+
+	tree := parseDoc(t, doc)
+
+	tests := []struct {
+		path string
+		want string
+	}{
+		{path: "d", want: "1979-05-27"},
+		{path: "t", want: "07:32:00"},
+		{path: "dt", want: "1979-05-27T07:32:00"},
+		{path: "instant", want: "1979-05-27T07:32:00Z"},
+	}
+
+	for _, tt := range tests {
+		if got := tree.Get(tt.path); got != tt.want {
+			t.Errorf("tree.Get(%q) = %v, want %q", tt.path, got, tt.want)
+		}
+	}
+}
+
+func TestTomlParser_Arrays(t *testing.T) {
 	const doc = `tags = ["a", "b"]
 block_user_agent.agents = ["SemrushBot"]
 empty = []
@@ -85,10 +131,7 @@ commented = [1, # note
   2]
 `
 
-	tree, err := LoadBytes([]byte(doc))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, doc)
 
 	if !equalItems(tree.Get("tags"), "a", "b") {
 		t.Errorf("tags = %v, want [a b]", tree.Get("tags"))
@@ -146,7 +189,7 @@ func equalItems(got interface{}, want ...interface{}) bool {
 	return true
 }
 
-func TestLoadBytes_CommentsAboveKeys(t *testing.T) {
+func TestTomlParser_CommentsAboveKeys(t *testing.T) {
 	const doc = `# Directory containing static web assets
 public_dir = "/var/www"
 
@@ -158,10 +201,7 @@ addr = ":8080"
 read_timeout = "5s"
 `
 
-	tree, err := LoadBytes([]byte(doc))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, doc)
 
 	tests := []struct {
 		path string
@@ -179,7 +219,7 @@ read_timeout = "5s"
 	}
 }
 
-func TestLoadBytes_CommentAboveTableHeader(t *testing.T) {
+func TestTomlParser_CommentAboveTableHeader(t *testing.T) {
 	const doc = `# HTTP server configuration
 [server]
 addr = ":8080"
@@ -189,10 +229,7 @@ addr = ":8080"
 size = 200
 `
 
-	tree, err := LoadBytes([]byte(doc))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, doc)
 
 	if got := commentAt(t, tree, "server"); got != "HTTP server configuration" {
 		t.Errorf("server comment = %q, want %q", got, "HTTP server configuration")
@@ -202,15 +239,31 @@ size = 200
 	}
 }
 
-func TestLoadBytes_CommentRoundTrip(t *testing.T) {
+func TestTomlParser_CommentOnExistingTable(t *testing.T) {
+	const doc = `[a.b]
+x = 1
+
+# Parent
+[a]
+y = 2
+`
+
+	tree := parseDoc(t, doc)
+
+	if got := commentAt(t, tree, "a"); got != "Parent" {
+		t.Errorf("a comment = %q, want %q", got, "Parent")
+	}
+	if got := tree.Get("a.y"); got != int64(2) {
+		t.Errorf("a.y = %v, want 2", got)
+	}
+}
+
+func TestTomlParser_CommentRoundTrip(t *testing.T) {
 	const doc = `# The public directory
 public_dir = "/var/www"
 `
 
-	tree, err := LoadBytes([]byte(doc))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, doc)
 
 	out, err := tree.ToTomlString()
 	if err != nil {
@@ -223,7 +276,7 @@ public_dir = "/var/www"
 	}
 }
 
-func TestLoadBytes_StringStyles(t *testing.T) {
+func TestTomlParser_StringStyles(t *testing.T) {
 	const doc = `pem = """
 -----BEGIN-----
 line
@@ -234,10 +287,7 @@ C:\path
 '''
 `
 
-	tree, err := LoadBytes([]byte(doc))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, doc)
 
 	if got, want := tree.Get("pem"), "-----BEGIN-----\nline\n-----END-----\n"; got != want {
 		t.Errorf("pem = %q, want %q", got, want)
@@ -258,26 +308,31 @@ C:\path
 	}
 }
 
-func TestLoadBytes_SameLineCommentDropped(t *testing.T) {
-	tree, err := LoadBytes([]byte("addr = \":8080\" # inline note\n"))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+func TestTomlParser_SameLineCommentDropped(t *testing.T) {
+	tree := parseDoc(t, "addr = \":8080\" # inline note\n")
 
 	if got := commentAt(t, tree, "addr"); got != "" {
 		t.Errorf("same-line comment kept: %q", got)
 	}
 }
 
-func TestLoadBytes_MalformedToml(t *testing.T) {
-	_, err := LoadBytes([]byte("[server"))
+func TestTomlParser_MalformedToml(t *testing.T) {
+	parser, err := NewTomlParser([]byte("[server"), "")
+	if err != nil {
+		t.Fatalf("NewTomlParser failed: %v", err)
+	}
+	_, _, err = parser.Parse()
 	if err == nil {
 		t.Fatal("expected an error, got nil")
 	}
 }
 
-func TestLoadBytes_ArrayTable(t *testing.T) {
-	_, err := LoadBytes([]byte("[[jobs]]\nname = \"first\"\n"))
+func TestTomlParser_ArrayTable(t *testing.T) {
+	parser, err := NewTomlParser([]byte("[[jobs]]\nname = \"first\"\n"), "")
+	if err != nil {
+		t.Fatalf("NewTomlParser failed: %v", err)
+	}
+	_, _, err = parser.Parse()
 	if err == nil {
 		t.Fatal("expected an error, got nil")
 	}
@@ -286,13 +341,87 @@ func TestLoadBytes_ArrayTable(t *testing.T) {
 	}
 }
 
-func TestLoadBytes_Empty(t *testing.T) {
-	tree, err := LoadBytes([]byte(""))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+func TestTomlParser_Empty(t *testing.T) {
+	tree := parseDoc(t, "")
 	if len(tree.Keys()) != 0 {
 		t.Errorf("expected an empty tree, got keys %v", tree.Keys())
+	}
+}
+
+func TestTomlParser_Filter(t *testing.T) {
+	const doc = `oauth2 = { github = { name = "github" } }
+
+[server]
+# Port
+port = 8080
+addr = ":8080"
+
+[log]
+# Keep
+size = 200
+`
+
+	cases := []struct {
+		name    string
+		filter  string
+		want    []string
+		missing []string
+	}{
+		{
+			name:   "empty keeps all",
+			filter: "",
+			want:   []string{"server.port", "server.addr", "log.size", "oauth2.github.name"},
+		},
+		{
+			name:    "substring match",
+			filter:  "server",
+			want:    []string{"server.port", "server.addr"},
+			missing: []string{"log.size", "oauth2.github.name"},
+		},
+		{
+			name:    "no match",
+			filter:  "absent",
+			missing: []string{"server.port", "log.size", "oauth2.github.name"},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			tree, entries := parseFiltered(t, doc, tt.filter)
+
+			for _, path := range tt.want {
+				if _, ok := entries[path]; !ok {
+					t.Errorf("entries missing %q", path)
+				}
+			}
+			for _, path := range tt.missing {
+				if _, ok := entries[path]; ok {
+					t.Errorf("entries should not have %q", path)
+				}
+				if tree.Get(path) == nil {
+					t.Errorf("tree lost %q", path)
+				}
+			}
+		})
+	}
+
+	tree, entries := parseFiltered(t, doc, "")
+
+	port, ok := entries["server.port"]
+	if !ok {
+		t.Fatal("entries missing server.port")
+	}
+	if port.Value != int64(8080) {
+		t.Errorf("server.port value = %v, want 8080", port.Value)
+	}
+	if port.Comment != "Port" {
+		t.Errorf("server.port comment = %q, want %q", port.Comment, "Port")
+	}
+	if _, ok := entries["oauth2.github.name"]; !ok {
+		t.Error("entries missing flattened inline leaf oauth2.github.name")
+	}
+	if got := tree.Get("log.size"); got != int64(200) {
+		t.Errorf("tree lost log.size, got %v", got)
 	}
 }
 
@@ -301,10 +430,7 @@ func TestSetWithComment_KeepsComment(t *testing.T) {
 public_dir = "/var/www"
 `
 
-	tree, err := LoadBytes([]byte(doc))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, doc)
 
 	SetWithComment(tree, "public_dir", "/srv/www")
 
@@ -321,10 +447,7 @@ func TestSetWithComment_PlainSetDropsComment(t *testing.T) {
 public_dir = "/var/www"
 `
 
-	tree, err := LoadBytes([]byte(doc))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, doc)
 
 	tree.Set("public_dir", "/srv/www")
 
@@ -334,10 +457,7 @@ public_dir = "/var/www"
 }
 
 func TestSetWithComment_NoComment(t *testing.T) {
-	tree, err := LoadBytes([]byte("addr = \":8080\"\n"))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, "addr = \":8080\"\n")
 
 	SetWithComment(tree, "addr", ":9090")
 
@@ -350,10 +470,7 @@ func TestSetWithComment_NoComment(t *testing.T) {
 }
 
 func TestSetWithComment_NewPath(t *testing.T) {
-	tree, err := LoadBytes([]byte("[server]\naddr = \":8080\"\n"))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, "[server]\naddr = \":8080\"\n")
 
 	SetWithComment(tree, "server.port", int64(8080))
 
@@ -365,6 +482,16 @@ func TestSetWithComment_NewPath(t *testing.T) {
 	}
 }
 
+func TestSetWithComment_NewTable(t *testing.T) {
+	tree := parseDoc(t, "addr = \":8080\"\n")
+
+	SetWithComment(tree, "server.port", int64(8080))
+
+	if got := tree.Get("server.port"); got != int64(8080) {
+		t.Errorf("server.port = %v, want 8080", got)
+	}
+}
+
 func TestSetWithComment_MultilineValue(t *testing.T) {
 	const doc = `pem = """
 -----BEGIN-----
@@ -372,10 +499,7 @@ func TestSetWithComment_MultilineValue(t *testing.T) {
 """
 `
 
-	tree, err := LoadBytes([]byte(doc))
-	if err != nil {
-		t.Fatalf("LoadBytes failed: %v", err)
-	}
+	tree := parseDoc(t, doc)
 
 	SetWithComment(tree, "pem", "new\nvalue")
 

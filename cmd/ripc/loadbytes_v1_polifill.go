@@ -8,11 +8,12 @@
 // comments (the unstable package), but the editor that would change a
 // document and write it back has not been developed yet.
 //
-// This file adds that missing pair with two functions:
+// This file adds that missing pair:
 //
-//   - LoadBytes reads a TOML document and returns the *toml.Tree type ripc
-//     already uses, with the comments kept on their keys and tables. It
-//     replaces toml.LoadBytes.
+//   - TomlParser parses a TOML document and returns the *toml.Tree type ripc
+//     already uses, with the comments kept on their keys and tables, plus the
+//     matched leaves with their comments and values. It replaces
+//     toml.LoadBytes.
 //   - SetWithComment changes the value at a path in that tree and keeps the
 //     comment written above that value.
 package main
@@ -26,18 +27,45 @@ import (
 	"github.com/pelletier/go-toml/v2/unstable"
 )
 
-// LoadBytes parses a TOML document with the v2 unstable parser and returns a
-// v1 tree that carries the comments written above keys and table headers. It
-// is the comment-preserving stand-in for toml.LoadBytes.
-func LoadBytes(b []byte) (*toml.Tree, error) {
+// TomlEntry is one filtered leaf: the value shown to the user and the comment
+// written above it.
+type TomlEntry struct {
+	Comment string
+	Value   interface{}
+}
+
+// TomlParser parses one TOML document. NewTomlParser builds it with the
+// document and an empty tree, and Parse fills that tree and the entries.
+type TomlParser struct {
+	tomlBytes []byte
+	filter    string
+	tree      *toml.Tree
+	entries   map[string]TomlEntry
+}
+
+// NewTomlParser returns a parser for the one TOML document in tomlBytes, with
+// an empty tree and entries ready for Parse.
+func NewTomlParser(tomlBytes []byte, filter string) (*TomlParser, error) {
 	tree, err := toml.TreeFromMap(map[string]interface{}{})
 	if err != nil {
 		return nil, err
 	}
+	return &TomlParser{
+		tomlBytes: tomlBytes,
+		filter:    filter,
+		tree:      tree,
+		entries:   make(map[string]TomlEntry),
+	}, nil
+}
 
+// Parse parses the document with the v2 unstable parser and returns a v1 tree
+// that carries the comments written above keys and table headers, plus the
+// matched leaves in the entries map. It is the comment-preserving stand-in
+// for toml.LoadBytes.
+func (p *TomlParser) Parse() (*toml.Tree, map[string]TomlEntry, error) {
 	var parser unstable.Parser
 	parser.KeepComments = true
-	parser.Reset(b)
+	parser.Reset(p.tomlBytes)
 
 	var tableKey string
 	var pendingComment string
@@ -49,9 +77,9 @@ func LoadBytes(b []byte) (*toml.Tree, error) {
 			pendingComment = commentLine(pendingComment, expr)
 		case unstable.Table:
 			tableKey = dottedKeyOf(expr)
-			err := setTableComment(tree, tableKey, pendingComment)
+			err := p.setTableComment(tableKey, pendingComment)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			pendingComment = ""
 		case unstable.KeyValue:
@@ -63,21 +91,21 @@ func LoadBytes(b []byte) (*toml.Tree, error) {
 				opts.Multiline = strings.HasPrefix(raw, `"""`) || strings.HasPrefix(raw, `'''`)
 				opts.Literal = strings.HasPrefix(raw, `'`)
 			}
-			err := setKeyValue(tree, dottedKey, value, opts)
+			err := p.setKeyValue(dottedKey, value, opts)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			pendingComment = ""
 		case unstable.ArrayTable:
-			return nil, fmt.Errorf("array table '%s' is not supported", dottedKeyOf(expr))
+			return nil, nil, fmt.Errorf("array table '%s' is not supported", dottedKeyOf(expr))
 		}
 	}
 
-	err = parser.Error()
+	err := parser.Error()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return tree, nil
+	return p.tree, p.entries, nil
 }
 
 // SetWithComment changes the value at path and keeps the comment that sits on
@@ -106,10 +134,11 @@ func SetWithComment(tree *toml.Tree, path string, value interface{}) {
 	leaf.SetValue(value)
 }
 
-// setKeyValue stores value in tree under dottedKey, with the comment and
-// string style written above the key. An inline table is flattened so each of
-// its keys becomes its own dotted key.
-func setKeyValue(tree *toml.Tree, dottedKey string, value *unstable.Node, opts toml.SetOptions) error {
+// setKeyValue stores value in the parser's tree under dottedKey, with the
+// comment and string style written above the key. An inline table is flattened
+// so each of its keys becomes its own dotted key. Matched leaves are recorded
+// in entries with their comment and value.
+func (p *TomlParser) setKeyValue(dottedKey string, value *unstable.Node, opts toml.SetOptions) error {
 	if value.Kind == unstable.InlineTable {
 		for child := value.Children(); child.Next(); {
 			if child.Node().Kind == unstable.Comment {
@@ -117,7 +146,7 @@ func setKeyValue(tree *toml.Tree, dottedKey string, value *unstable.Node, opts t
 			}
 			keyValue := child.Node()
 			childKey := joinDottedKey(dottedKey, dottedKeyOf(keyValue))
-			err := setKeyValue(tree, childKey, keyValue.Value(), toml.SetOptions{})
+			err := p.setKeyValue(childKey, keyValue.Value(), toml.SetOptions{})
 			if err != nil {
 				return err
 			}
@@ -129,7 +158,10 @@ func setKeyValue(tree *toml.Tree, dottedKey string, value *unstable.Node, opts t
 	if err != nil {
 		return err
 	}
-	tree.SetWithOptions(dottedKey, opts, goValue)
+	if strings.Contains(dottedKey, p.filter) {
+		p.entries[dottedKey] = TomlEntry{Comment: opts.Comment, Value: goValue}
+	}
+	p.tree.SetWithOptions(dottedKey, opts, goValue)
 	return nil
 }
 
@@ -145,8 +177,8 @@ func commentLine(pending string, node *unstable.Node) string {
 
 // setTableComment attaches comment to the table named by tableKey, creating
 // the table when the document has not created it yet.
-func setTableComment(tree *toml.Tree, tableKey string, comment string) error {
-	value := tree.Get(tableKey)
+func (p *TomlParser) setTableComment(tableKey string, comment string) error {
+	value := p.tree.Get(tableKey)
 	if value == nil {
 		if comment == "" {
 			return nil
@@ -155,7 +187,7 @@ func setTableComment(tree *toml.Tree, tableKey string, comment string) error {
 		if err != nil {
 			return err
 		}
-		tree.SetWithComment(tableKey, comment, false, sub)
+		p.tree.SetWithComment(tableKey, comment, false, sub)
 		return nil
 	}
 
