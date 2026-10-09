@@ -31,18 +31,18 @@ type BackupOnlineAPIEntry struct {
 	// Supports absolute and relative paths. Relative paths resolve against
 	// the application's current working directory (CWD).
 	// Empty string deactivates this entry.
-	SourcePath string `toml:"source_path" comment:"Path to the source database file. Supports absolute and relative paths (relative to the application CWD)."`
+	SourcePath string `toml:"source_path" comment:"Source database file. Absolute, or relative to the application CWD."`
 
 	// DestPath is the directory where the backup files are written.
 	// Supports absolute and relative paths. Relative paths resolve against
 	// the application's current working directory (CWD).
 	// Empty string deactivates this entry.
-	DestPath string `toml:"dest_path" comment:"Directory where backup files will be stored. Supports absolute and relative paths (relative to the application CWD)."`
+	DestPath string `toml:"dest_path" comment:"Directory where backups are written. Absolute, or relative to the application CWD."`
 
 	// Frequency defines how often this database should be backed up.
 	// The job skips a database if its latest backup is newer than
 	// this duration. Parsed via time.ParseDuration (e.g. "24h", "6h").
-	Frequency Duration `toml:"frequency" comment:"Minimum interval between backups (e.g. '24h')."`
+	Frequency Duration `toml:"frequency" comment:"Minimum interval between backups, e.g. '24h'."`
 
 	// Compression enables gzip compression of the backup file.
 	// When true, backup files use the ".bck.gz" extension.
@@ -51,11 +51,11 @@ type BackupOnlineAPIEntry struct {
 
 	// PagesPerStep controls the number of pages copied in each step.
 	// Must be >= 1: Step(0) would copy nothing and never finish.
-	PagesPerStep int `toml:"pages_per_step" comment:"Pages to copy in each step (must be >= 1)."`
+	PagesPerStep int `toml:"pages_per_step" comment:"Pages copied per step; must be at least 1."`
 
 	// SleepInterval is the duration to sleep between online backup steps.
 	// 0 means no throttling.
-	SleepInterval Duration `toml:"sleep_interval" comment:"Duration to sleep between steps (0 = no throttling)."`
+	SleepInterval Duration `toml:"sleep_interval" comment:"Sleep between steps; 0 means no throttling."`
 }
 
 // BackupVacuum holds per-database configuration for the VACUUM INTO strategy.
@@ -71,18 +71,18 @@ type BackupVacuumEntry struct {
 	// Supports absolute and relative paths. Relative paths resolve against
 	// the application's current working directory (CWD).
 	// Empty string deactivates this entry.
-	SourcePath string `toml:"source_path" comment:"Path to the source database file. Supports absolute and relative paths (relative to the application CWD)."`
+	SourcePath string `toml:"source_path" comment:"Source database file. Absolute, or relative to the application CWD."`
 
 	// DestPath is the directory where the backup files are written.
 	// Supports absolute and relative paths. Relative paths resolve against
 	// the application's current working directory (CWD).
 	// Empty string deactivates this entry.
-	DestPath string `toml:"dest_path" comment:"Directory where backup files will be stored. Supports absolute and relative paths (relative to the application CWD)."`
+	DestPath string `toml:"dest_path" comment:"Directory where backups are written. Absolute, or relative to the application CWD."`
 
 	// Frequency defines how often this database should be backed up.
 	// The job skips a database if its latest backup is newer than
 	// this duration. Parsed via time.ParseDuration (e.g. "24h", "6h").
-	Frequency Duration `toml:"frequency" comment:"Minimum interval between backups (e.g. '24h')."`
+	Frequency Duration `toml:"frequency" comment:"Minimum interval between backups, e.g. '24h'."`
 
 	// Compression enables gzip compression of the backup file.
 	// When true, backup files use the ".bck.gz" extension.
@@ -94,7 +94,7 @@ type BackupVacuumEntry struct {
 // section because it needs topology (listen_addr) in addition to the
 // per-database entries.
 type BackupSqliteRsync struct {
-	ListenAddr string                            `toml:"listen_addr" comment:"TCP address the origin daemon listens on (e.g. '127.0.0.1:54321')."`
+	ListenAddr string                            `toml:"listen_addr" comment:"TCP address the origin daemon listens on, e.g. '127.0.0.1:54321'."`
 	Entries    map[string]BackupSqliteRsyncEntry `toml:"entries"`
 }
 
@@ -107,10 +107,10 @@ type BackupSqliteRsyncEntry struct {
 	// Supports absolute and relative paths. Relative paths resolve against
 	// the application's current working directory (CWD).
 	// Empty string deactivates this entry.
-	SourcePath string `toml:"source_path" comment:"Path to the source database file. Supports absolute and relative paths (relative to the application CWD)."`
+	SourcePath string `toml:"source_path" comment:"Source database file. Absolute, or relative to the application CWD."`
 
 	// SyncTimeout is the longest one sync may run. Zero uses the default of 15 minutes.
-	SyncTimeout Duration `toml:"sync_timeout" comment:"Longest one sync may run (e.g. '15m'). Zero uses the default of 15 minutes."`
+	SyncTimeout Duration `toml:"sync_timeout" comment:"Longest one sync may run, e.g. '15m'. 0 uses the 15 minute default."`
 }
 
 // s3UploadSelectorLatest is the only supported PathPrefixSelector value:
@@ -141,15 +141,15 @@ type BackupS3UploadEntry struct {
 
 	// PathPrefix selects a file by name prefix; the newest match is
 	// uploaded when PathPrefixSelector is "latest". Empty uses Path.
-	PathPrefix string `toml:"path_prefix" comment:"Path prefix; with path_prefix_selector 'latest' the newest match is uploaded"`
+	PathPrefix string `toml:"path_prefix" comment:"Matches all files on disk with this prefix"`
 
 	// PathPrefixSelector names how the match under PathPrefix is
 	// chosen. Only "latest" is supported.
-	PathPrefixSelector string `toml:"path_prefix_selector" comment:"How the match is chosen (only 'latest' is supported)"`
+	PathPrefixSelector string `toml:"path_prefix_selector" comment:"Selects which file matching path_prefix is uploaded; only 'latest' is supported"`
 
 	// AgeRecipient is the age public key the file is encrypted to
 	// before upload. Empty string uploads the file unchanged.
-	AgeRecipient string `toml:"age_recipient" comment:"age public key the file is encrypted to (e.g. 'age1...'). Empty uploads without encryption."`
+	AgeRecipient string `toml:"age_recipient" comment:"age public key to encrypt to, e.g. 'age1...'. Empty uploads unencrypted."`
 }
 
 // BackupS3Download holds the S3 download entries. Each entry is keyed by a
@@ -183,7 +183,7 @@ type BackupS3DownloadEntry struct {
 	// MinInterval is the minimum interval between downloads. The job
 	// skips the entry without calling S3 until this much time has passed
 	// since the last download.
-	MinInterval Duration `toml:"min_interval" comment:"Minimum interval between downloads (e.g. '5m')"`
+	MinInterval Duration `toml:"min_interval" comment:"Minimum interval between downloads, e.g. '5m'."`
 }
 
 func (c Config) BackupSqliteRsync() BackupSqliteRsync {

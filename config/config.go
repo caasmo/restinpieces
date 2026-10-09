@@ -57,7 +57,7 @@ type BlockHost struct {
 	// An entry matches exactly (e.g., "example.com"); a leading "*" (e.g., "*example.com")
 	// matches the domain and all of its subdomains.
 	// Entries are lowercase; matching the request host ignores case, the port, and a trailing dot.
-	AllowedHosts []string `toml:"allowed_hosts" comment:"List of allowed hostnames (e.g., 'example.com', '*example.com')"`
+	AllowedHosts []string `toml:"allowed_hosts" comment:"Allowed hostnames, e.g. 'example.com' or '*example.com' for all subdomains"`
 }
 
 // Log contains Default (Batch) log configuration
@@ -74,10 +74,10 @@ type LogRequest struct {
 
 // LogRequestLimits defines maximum lengths for request log fields
 type LogRequestLimits struct {
-	URILength       int `toml:"uri" comment:"Max URI length (path + query) (minimum 64)"`
-	UserAgentLength int `toml:"user_agent" comment:"Max User-Agent length (minimum 32)"`
-	RefererLength   int `toml:"referer" comment:"Max Referer length (minimum 64)"`
-	RemoteIPLength  int `toml:"remote_ip" comment:"Max IP address length (minimum 15). IPv4 max=15, IPv6 max=45 chars. 64 allows for ports/proxy info while preventing log injection"`
+	URILength       int `toml:"uri" comment:"Max URI length including query, minimum 64"`
+	UserAgentLength int `toml:"user_agent" comment:"Max User-Agent length, minimum 32"`
+	RefererLength   int `toml:"referer" comment:"Max Referer length, minimum 64"`
+	RemoteIPLength  int `toml:"remote_ip" comment:"Max IP address length; 64 allows for ports and proxy info while blocking log injection"`
 }
 
 // BatchLogger contains batch logging configuration
@@ -85,7 +85,7 @@ type BatchLogger struct {
 	BatchSize     int      `toml:"batch_size" comment:"Records to batch before writing"`
 	ChanSize      int      `toml:"chan_size" comment:"Log record channel buffer size"`
 	FlushInterval Duration `toml:"flush_interval" comment:"Max time between flushes"`
-	Level         LogLevel `toml:"level" comment:"Minimum log level (debug, info, warn, error)"`
+	Level         LogLevel `toml:"level" comment:"Minimum log level: debug, info, warn, error"`
 	DbPath        string   `toml:"db_path" comment:"SQLite database path for logs"`
 }
 
@@ -182,7 +182,7 @@ type Scheduler struct {
 	// ConcurrencyMultiplier sets the number of concurrent workers per CPU core.
 	// For I/O-bound tasks, a value between 2 and 8 is recommended.
 	// For CPU-bound tasks, this should typically be 1.
-	ConcurrencyMultiplier int `toml:"concurrency_multiplier" comment:"Workers per CPU core (2-8 for I/O bound)"`
+	ConcurrencyMultiplier int `toml:"concurrency_multiplier" comment:"Workers per CPU core; 2-8 for I/O bound work"`
 	// Jobs lists the jobs that run on a schedule. The scheduler adds one run
 	// per activated job and adds the next run after every completion.
 	Jobs Jobs `toml:"jobs" comment:"Scheduled job definitions"`
@@ -193,7 +193,7 @@ type Server struct {
 	// server accepts connections; it is not the address visitors use, which is
 	// PublicURL.
 	// Examples: ":8080" (all interfaces, port 8080), "localhost:9000"
-	Addr string `toml:"addr" comment:"HTTP listen address (e.g. ':8080')"`
+	Addr string `toml:"addr" comment:"HTTP listen address, e.g. ':8080'"`
 
 	// PublicURL is the address visitors use to reach the application, for
 	// example "https://example.com". It does not have to match Addr or the TLS
@@ -206,7 +206,7 @@ type Server struct {
 	// a reload applies a change without a restart. Use "https://" when visitors
 	// use HTTPS: with TLS and the redirect server both on, "http://" loops, and
 	// most providers reject an "http://" callback except for localhost.
-	PublicURL string `toml:"public_url" comment:"Address visitors use (e.g. 'https://example.com')"`
+	PublicURL string `toml:"public_url" comment:"Address visitors use, e.g. 'https://example.com'"`
 
 	// Maximum duration the server waits for ongoing requests to complete before shutting down.
 	ShutdownGracefulTimeout Duration `toml:"shutdown_graceful_timeout" comment:"Max time to wait for graceful shutdown"`
@@ -242,13 +242,13 @@ type Server struct {
 	// If behind a trusted proxy, specify the header containing the real client IP.
 	// With Cloudflare, use "CF-Connecting-IP". "X-Forwarded-For" and "X-Real-IP"
 	// also work. Leave empty if not behind a proxy.
-	ClientIpProxyHeader string `toml:"client_ip_proxy_header" comment:"Header to trust for client IP (e.g. 'CF-Connecting-IP')"`
+	ClientIpProxyHeader string `toml:"client_ip_proxy_header" comment:"Header to trust for client IP, e.g. 'CF-Connecting-IP'"`
 
 	// ClientTLSProxyHeader is the name of the request header a trusted proxy
 	// fills with whether the visitor's connection used TLS. Most proxies use
 	// "X-Forwarded-Proto"; the value "https" means the visitor used TLS.
 	// Leave empty when this server terminates TLS itself.
-	ClientTLSProxyHeader string `toml:"client_tls_proxy_header" comment:"Header saying whether the visitor used TLS (e.g. 'X-Forwarded-Proto')"`
+	ClientTLSProxyHeader string `toml:"client_tls_proxy_header" comment:"Header saying whether the visitor used TLS, e.g. 'X-Forwarded-Proto'"`
 
 	// Tls holds the server's TLS settings.
 	Tls Tls `toml:"tls" comment:"TLS settings"`
@@ -267,7 +267,7 @@ type Tls struct {
 
 	// Address for HTTP->HTTPS redirect server (e.g. ":80").
 	// Only used when Enabled is true.
-	RedirectAddr string `toml:"redirect_addr" comment:"HTTP->HTTPS redirect address (e.g. ':80')"`
+	RedirectAddr string `toml:"redirect_addr" comment:"HTTP->HTTPS redirect address, e.g. ':80'"`
 
 	// MTLSCertificates is a PEM bundle of public certificates this
 	// server accepts as proof of identity from the programs or servers that
@@ -278,7 +278,7 @@ type Tls struct {
 	// The usual use is a proxy in front of this server, such as Cloudflare's
 	// Authenticated Origin Pulls: paste the certificate Cloudflare publishes
 	// for that feature into this bundle. An empty bundle turns the check off.
-	MTLSCertificates string `toml:"mtls_certificates" comment:"PEM bundle of accepted client certificates (Cloudflare AOP)"`
+	MTLSCertificates string `toml:"mtls_certificates" comment:"PEM bundle of accepted client certificates, e.g. Cloudflare AOP"`
 }
 
 type RateLimits struct {
@@ -297,7 +297,7 @@ type Smtp struct {
 	// Host is the SMTP server hostname or IP address.
 	Host string `toml:"host" comment:"SMTP server hostname"`
 	// Port is the SMTP server port. Common values are 587 (STARTTLS), 465 (TLS), or 25 (unencrypted).
-	Port int `toml:"port" comment:"SMTP server port (587/465/25)"`
+	Port int `toml:"port" comment:"SMTP port: 587, 465 or 25"`
 	// Username for SMTP authentication.
 	Username string `toml:"username" comment:"SMTP username"`
 	// Password for SMTP authentication.
@@ -309,9 +309,9 @@ type Smtp struct {
 	// LocalName is the domain name sent during the HELO/EHLO handshake. Defaults to "localhost".
 	LocalName string `toml:"local_name" comment:"HELO/EHLO domain name"`
 	// AuthMethod specifies the authentication mechanism: "plain" (default), "cram-md5", or "none".
-	AuthMethod string `toml:"auth_method" comment:"Auth method (plain/cram-md5/none)"`
+	AuthMethod string `toml:"auth_method" comment:"Auth method: plain, cram-md5, none"`
 	// UseTLS enables a direct TLS connection (SMTPS), typically on port 465.
-	UseTLS bool `toml:"use_tls" comment:"Use direct TLS (port 465)"`
+	UseTLS bool `toml:"use_tls" comment:"Use direct TLS on port 465"`
 }
 
 // Endpoints defines the API endpoint paths for various authentication and account management actions.
@@ -435,11 +435,11 @@ type Discord struct {
 	// WebhookURL is the URL of the Discord webhook to which notifications will be sent.
 	WebhookURL string `toml:"webhook_url" comment:"Discord webhook URL"`
 	// APIRateLimit specifies the minimum time between API calls to avoid rate limiting.
-	APIRateLimit Duration `toml:"api_rate_limit" comment:"API call rate limit (e.g., '2s'). Discord webhooks generally allow ~30 requests/minute."`
+	APIRateLimit Duration `toml:"api_rate_limit" comment:"Rate limit between API calls; Discord allows about 30 requests a minute"`
 	// APIBurst allows for a certain number of requests to be made in quick succession before rate limiting is enforced.
-	APIBurst int `toml:"api_burst" comment:"API call burst allowance (e.g., 1, 5)"`
+	APIBurst int `toml:"api_burst" comment:"API calls allowed in a burst, e.g. 1 or 5"`
 	// SendTimeout is the maximum time to wait for a single notification to be sent to Discord.
-	SendTimeout Duration `toml:"send_timeout" comment:"Timeout for sending a single notification via Discord (e.g., '10s')"`
+	SendTimeout Duration `toml:"send_timeout" comment:"Timeout for one notification, e.g. '10s'"`
 }
 
 // Notifier holds the configuration for various notification services.
@@ -462,7 +462,7 @@ type Metrics struct {
 	// loopback or a private address: the endpoint is internal, for the
 	// monitoring scraper only.
 	// Changing the address requires a server restart.
-	ListenAddr string `toml:"listen_addr" comment:"Internal address for the metrics daemon, loopback or private (e.g. 127.0.0.1:9119)"`
+	ListenAddr string `toml:"listen_addr" comment:"Metrics daemon address; loopback or private only, e.g. 127.0.0.1:9119"`
 }
 
 // BlockOversizedRequest holds configuration for limiting the size of various request dimensions.
