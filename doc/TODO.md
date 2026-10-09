@@ -319,34 +319,13 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 
 - `tomlValueOf` (`cmd/ripc/loadbytes_v1_polifill.go`) falls back to `string(node.Data)` for `unstable.LocalDate`, `LocalTime`, `LocalDateTime` and `DateTime`; go-toml v1's `LoadBytes` returns `toml.LocalDate`, `toml.LocalTime`, `toml.LocalDateTime` and `time.Time` for the same input, and `toml.Marshal` writes those bare
 - the string fallback breaks round-trip: after a `set` (or `walk`), a date-time is re-saved as `field = "1979-05-27T07:32:00Z"` and `validateTomlAsConfig` then fails on a type mismatch
+- verified: `toml.Marshal` writes all four types bare and unquoted (`d = 1979-05-27`, `instant = 1979-05-27T07:32:00Z`), and marshals the same values as strings quoted, so returning the v1 types really does close the round-trip
+- verified: v2 keeps the source text in `node.Data` for every one of the four kinds, so the polyfill sees the delimiter the document actually used
 - fix: return the v1 types — `toml.ParseLocalDate`, `toml.ParseLocalTime`, `toml.ParseLocalDateTime`, `time.Parse(time.RFC3339Nano, ...)` for the offset case (`unstable.DateTime` carries the offset, `LocalDateTime` does not)
-- trap: TOML accepts a space as the date/time delimiter (`1979-05-27 07:32:00`) and v2's `scanDateTime` keeps that space in `node.Data`, while Go's `time.Parse` needs `T` — v1 accepted the space form, so normalize it before parsing or `set` newly rejects such a document
+- trap: TOML accepts a space as the date/time delimiter (`1979-05-27 07:32:00`) and v1's lexer loads it, but v1's own `ParseLocalDateTime` rejects it (it retries lowercase `t`, never a space) and so does `time.Parse` — normalize the delimiter before parsing, or `set` newly rejects a document v1 used to accept
+- blocker: v1 1.9.5 cannot parse a bare local date followed by a newline. Its lexer (`lexer.go:355`) peeks one rune after the day digits and a `\n` is neither eof, `' '` nor `'T'`, so it errors; `d = 1979-05-27` loads only at end of input or before a comment. `toml.Marshal` writes the newline, so after this fix `set` saves a bare local date that every v1-based reader can no longer read
+- the mutating commands are already safe: `set`, `add`, `remove`, `update`, `log_init`, `scaffold` and `walk` load through `NewTomlParser`, so they can read back whatever `set` wrote
+- the remaining exposure is the read-only v1 readers: `get` (`cmd/ripc/get.go:60`) and `paths` (`cmd/ripc/paths.go:86`) call `toml.LoadBytes`; `dump` (`cmd/ripc/dump.go:60,78`), `diff` (`cmd/ripc/diff.go:83,86`) and `migrate` (`cmd/ripc/migrate.go:70`) call `toml.Unmarshal`. Same lexer, so all five hard-fail on a config holding a bare local date. Move them onto `NewTomlParser` in this change, or keep bare local dates as strings and accept the quote
+- exposure is otherwise small: no struct in `config/` has a `time.Time` or `toml.Local*` field, so no live config can hit this. `TestTomlParser_DateTimes` does exercise `d = 1979-05-27`, so the test still has to pass
 - update `TestTomlParser_DateTimes` (`cmd/ripc/loadbytes_v1_polifill_test.go`) from string expectations to the typed values (`toml.LocalDate{...}`, `time.Time` via `.Equal`); `get`/`walk` print `%v` and `String()` yields the same text, so display does not change
 - refs: `cmd/ripc/loadbytes_v1_polifill.go` (`tomlValueOf`), `cmd/ripc/validate.go` (`validateTomlAsConfig`), `cmd/ripc/loadbytes_v1_polifill_test.go` (`TestTomlParser_DateTimes`)
-
-# ripc: the other mutating commands still strip the config comments
-
-- `set` and `walk` now load through the comment-preserving parser and write with `SetWithComment`; every other command that reloads the stored document still uses `toml.LoadBytes`, so one edit there wipes every comment in the config
-- the plain `tree.Set` call sites drop the comment and the string style above the key, same as `set` did before
-
-| command | load | mutation | fix |
-|---|---|---|---|
-| `set` | done | done | done |
-| `add` | `cmd/ripc/add.go:111` | `cmd/ripc/add_block_user_agent.go:30`, `cmd/ripc/add_block_host.go:30` | loader swap + `SetWithComment` in both adders |
-| `remove` | `cmd/ripc/remove.go:126` | `cmd/ripc/remove.go:204` | same |
-| `update` | `cmd/ripc/update.go:152` | `cmd/ripc/update_jwt.go:17`, `cmd/ripc/update_tls.go:59-60`, `cmd/ripc/update_user_agent.go:84` | same |
-| `log_init` | `cmd/ripc/log_init.go:76` | `cmd/ripc/log_init.go:81` | same |
-| `scaffold` | `cmd/ripc/scaffold.go:313` | `cmd/ripc/scaffold.go:331,348` | loader swap (nothing to preserve on the new keys) |
-
-- `get` and `paths` only read, so they need nothing; `migrate`, `save`, `rollback` and `app_create` write a whole document and never reload one
-- suggested order: `add` first (same shape as `set`), then `remove`/`update`/`log_init` (loader swap plus `SetWithComment`), then the `scaffold` loader swap
-
-# ripc scaffold: a scaffolded entry is stored without the comments its defaults declare
-
-- `scaffoldDefaults` returns structs that all carry `comment:` tags, but `scaffold.go` marshals them (`:323`, `:338`) and then reloads the bytes with `toml.LoadBytes` (`:327`, `:343`), which throws those comments away
-- the result is inconsistent: `migrate` saves the marshaled defaults with their comments, while the entries added later by `scaffold` have none
-- fix: build the section and the entry subtrees with `NewTomlParser` + `Parse` instead of `toml.LoadBytes`, so the comments survive into the stored document
-- this writes new content rather than preserving it, so it is its own change and its own decision
-- refs: `cmd/ripc/scaffold.go` (`scaffoldConfigValue`, `scaffoldDefaults`), `config/default.go` (`comment:` tags), `cmd/ripc/loadbytes_v1_polifill.go` (`TomlParser`)
-
-

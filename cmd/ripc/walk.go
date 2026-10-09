@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"sort"
-	"strings"
 
 	"github.com/caasmo/restinpieces/config"
 	toml "github.com/pelletier/go-toml"
@@ -157,25 +156,19 @@ func walkConfig(ui UI, in io.Reader, secureStore config.SecureStore, scope strin
 	return nil
 }
 
-// printWalkEntry writes one walk screen: the path, the comment written above
-// it, the stored value, and the input prompt.
+// printWalkEntry writes one walk screen: the path with its comment next to it,
+// then the stored value as the default for the prompt.
 func printWalkEntry(ui UI, path string, entry TomlEntry) error {
-	_, err := fmt.Fprintf(ui.Out, "%s\n", path)
+	header := path
+	if entry.Comment != "" {
+		header += "  (" + entry.Comment + ")"
+	}
+	_, err := fmt.Fprintf(ui.Out, "%s\n", header)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
 
-	for _, line := range strings.Split(entry.Comment, "\n") {
-		if line == "" {
-			continue
-		}
-		_, err = fmt.Fprintf(ui.Out, "  # %s\n", line)
-		if err != nil {
-			return fmt.Errorf("%w: %w", ErrWriteOutput, err)
-		}
-	}
-
-	_, err = fmt.Fprintf(ui.Out, "  %v\n> ", entry.Value)
+	_, err = fmt.Fprintf(ui.Out, "New value [%v]: ", entry.Value)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}

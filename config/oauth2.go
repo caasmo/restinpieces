@@ -12,8 +12,8 @@ const (
 // OAuth2Entry describes one OAuth2 provider configuration.
 type OAuth2Entry struct {
 	Name         string `toml:"name" comment:"Provider identifier the login endpoint dispatches on (e.g. 'google')"`
-	ClientID     string `toml:"client_id" comment:"OAuth2 client ID (set via env)"`
-	ClientSecret string `toml:"client_secret" comment:"OAuth2 client secret (set via env)"`
+	ClientID     string `toml:"client_id" comment:"OAuth2 client ID"`
+	ClientSecret string `toml:"client_secret" comment:"OAuth2 client secret"`
 	DisplayName  string `toml:"display_name" comment:"User-facing provider name"`
 	// RedirectURLPath is the callback path the provider sends the visitor back
 	// to, for example "/oauth2/google/callback". The complete callback address

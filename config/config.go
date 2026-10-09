@@ -298,10 +298,10 @@ type Smtp struct {
 	Host string `toml:"host" comment:"SMTP server hostname"`
 	// Port is the SMTP server port. Common values are 587 (STARTTLS), 465 (TLS), or 25 (unencrypted).
 	Port int `toml:"port" comment:"SMTP server port (587/465/25)"`
-	// Username for SMTP authentication. It is recommended to set this via an environment variable.
-	Username string `toml:"username" comment:"SMTP username (set via env)"`
-	// Password for SMTP authentication. It is recommended to set this via an environment variable.
-	Password string `toml:"password" comment:"SMTP password (set via env)"`
+	// Username for SMTP authentication.
+	Username string `toml:"username" comment:"SMTP username"`
+	// Password for SMTP authentication.
+	Password string `toml:"password" comment:"SMTP password"`
 	// FromName is the display name for the sender (e.g., "My Application").
 	FromName string `toml:"from_name" comment:"Sender display name"`
 	// FromAddress is the email address from which emails are sent (e.g., "noreply@example.com").

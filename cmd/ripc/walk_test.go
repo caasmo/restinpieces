@@ -32,7 +32,7 @@ func TestWalkConfig_Success_KeepsValue(t *testing.T) {
 	if len(mockStore.saveHistory) != 0 {
 		t.Errorf("expected no save, got %d", len(mockStore.saveHistory))
 	}
-	for _, want := range []string{"server.addr", "  # Address the server listens on", ":8080", "> "} {
+	for _, want := range []string{"server.addr  (Address the server listens on)", "New value [:8080]: "} {
 		if !strings.Contains(stdout.String(), want) {
 			t.Errorf("expected output to contain %q, got %q", want, stdout.String())
 		}
