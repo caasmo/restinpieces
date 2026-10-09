@@ -101,134 +101,47 @@ func defaultFieldsAndValues(defaults interface{}) string {
 	return strings.Join(lines, "\n")
 }
 
-func scaffoldNextSteps(scaffoldType, label string, defaults interface{}) string {
-	block := defaultFieldsAndValues(defaults)
-	switch scaffoldType {
-	case ScaffoldTypeBackupS3Download:
-		return fmt.Sprintf(`
+// scaffoldNextSteps returns the closing instructions printed after an entry is
+// scaffolded: the fields the operator now owns, the walk that fills them one at
+// a time, the reload that applies them, and the command that turns the entry off.
+//
+// The walk filter is the entry path, so every key under the new entry is shown
+// in turn with the comment written above it and its current value.
+func scaffoldNextSteps(tomlKey string, label string, defaults interface{}) string {
+	steps := fmt.Sprintf(`
 %s:
 %s
 
-Next steps:
-1. Set the bucket the object is downloaded from (required):
-	ripc set backup.s3-download.%s.bucket my-backups
-2. Set the key prefix to pull from (required); it gets the newest backup for the label:
-	ripc set backup.s3-download.%s.object_key_prefix backup/app-s3/
-	Set an exact object key instead to get only that object:
-	ripc set backup.s3-download.%s.object_key_prefix backup/app-s3/251611468335/app.db
-3. Set the destination directory (required):
-	ripc set backup.s3-download.%s.dest_dir /path/to/downloads
-4. Reload the app:
-	systemctl reload myapp
-Deactivate: ripc set backup.s3-download.%s.object_key_prefix ""`, label, block, label, label, label, label, label)
-	case ScaffoldTypeBackupS3Upload:
-		return fmt.Sprintf(`
-%s:
-%s
+Set each value in turn:
+	ripc walk %s.%s
 
-Next steps:
-1. Set the bucket that stores the uploads (required):
-	ripc set backup.s3-upload.%s.bucket my-backups
-2. Set the file to upload, a fixed path or a prefix (required):
-	ripc set backup.s3-upload.%s.path /path/to/backup.db
-	ripc set backup.s3-upload.%s.path_prefix /path/to/backups/app.db-
-3. Set the age recipient (optional, encrypts the upload):
-	ripc set backup.s3-upload.%s.age_recipient age1...
-4. Reload the app:
-	systemctl reload myapp
-Deactivate: ripc set backup.s3-upload.%s.path ""
-	ripc set backup.s3-upload.%s.path_prefix ""`, label, block, label, label, label, label, label, label)
-	case ScaffoldTypeBackupSqliteRsync:
-		return fmt.Sprintf(`
-%s:
-%s
+Reload the app:
+	systemctl reload myapp`, label, defaultFieldsAndValues(defaults), tomlKey, label)
 
-Next steps:
-1. Set the origin file to replicate (required):
-	ripc set backup.sqlite-rsync.entries.%s.source_path /path/to/app.db
-2. Reload the app:
-	systemctl reload myapp
-Deactivate: ripc set backup.sqlite-rsync.entries.%s.source_path ""`, label, block, label, label)
-	case ScaffoldTypeBackupVacuum:
-		return fmt.Sprintf(`
-%s:
-%s
-
-Next steps:
-1. Set the origin file to back up (required):
-	ripc set backup.vacuum.%s.source_path /path/to/app.db
-2. Set the backup destination directory (required):
-	ripc set backup.vacuum.%s.dest_path /var/backups
-3. Optionally modify above values (frequency, compression) as needed:
-	ripc set backup.vacuum.%s.frequency 24h
-4. Reload the app:
-	systemctl reload myapp
-Deactivate: ripc set backup.vacuum.%s.source_path ""`, label, block, label, label, label, label)
-	case ScaffoldTypeBackupOnline:
-		return fmt.Sprintf(`
-%s:
-%s
-
-Next steps:
-1. Set the origin file to back up (required):
-	ripc set backup.online.%s.source_path /path/to/app.db
-2. Set the backup destination directory (required):
-	ripc set backup.online.%s.dest_path /var/backups
-3. Optionally modify above values (frequency, compression, tuning) as needed:
-	ripc set backup.online.%s.frequency 24h
-4. Reload the app:
-	systemctl reload myapp
-Deactivate: ripc set backup.online.%s.source_path ""`, label, block, label, label, label, label)
-	case ScaffoldTypeAcmeDNS01:
-		return fmt.Sprintf(`
-%s:
-%s
-
-Next steps:
-1. Set the DNS provider implementation (required):
-	ripc set acme.dns-01.%s.provider cloudflare
-2. Set the provider's credentials (required):
-	ripc set acme.dns-01.%s.credentials.api_token @/path/to/token
-3. Reload the app:
-	systemctl reload myapp
-Deactivate: ripc set acme.dns-01.%s.provider ""`, label, block, label, label, label)
-	case ScaffoldTypeJob:
-		return fmt.Sprintf(`
-%s:
-%s
-
-Next steps:
-1. Set the job handler type (required):
-	ripc set scheduler.jobs.%s.job_type acme_cert
-2. Activate it (required):
-	ripc set scheduler.jobs.%s.activated true
-3. Optionally adjust the interval:
-	ripc set scheduler.jobs.%s.interval 1h
-4. Reload the app:
-	systemctl reload myapp
-Deactivate: ripc set scheduler.jobs.%s.activated false`, label, block, label, label, label, label)
-	case ScaffoldTypeOAuth2:
-		return fmt.Sprintf(`
-%s:
-%s
-
-Next steps:
-1. Set the provider identifier the endpoints dispatch on (required):
-	ripc set oauth2.%s.name google
-2. Set the client ID and secret (required):
-	ripc set oauth2.%s.client_id google-client-id
-	ripc set oauth2.%s.client_secret @/path/to/secret
-3. Set the callback path (required):
-	ripc set oauth2.%s.redirect_url_path /oauth2/google/callback
-4. Set the endpoints (required):
-	ripc set oauth2.%s.auth_url https://accounts.google.com/o/oauth2/v2/auth
-	ripc set oauth2.%s.token_url https://oauth2.googleapis.com/token
-	ripc set oauth2.%s.user_info_url https://www.googleapis.com/oauth2/v3/userinfo
-5. Reload the app:
-	systemctl reload myapp`, label, block, label, label, label, label, label, label, label)
-	default:
-		return ""
+	if deactivate := scaffoldDeactivate(tomlKey, label); deactivate != "" {
+		steps += "\n" + deactivate
 	}
+	return steps
+}
+
+// scaffoldDeactivate returns the command that turns a scaffolded entry off. An
+// empty path or prefix deactivates a backup entry, an empty provider an acme
+// entry and false a job. It is empty for the types with nothing to turn off,
+// such as oauth2.
+func scaffoldDeactivate(tomlKey string, label string) string {
+	switch tomlKey {
+	case "backup.online", "backup.vacuum", "backup.sqlite-rsync.entries":
+		return fmt.Sprintf("Deactivate: ripc set %s.%s.source_path \"\"", tomlKey, label)
+	case "backup.s3-upload":
+		return fmt.Sprintf("Deactivate: ripc set %s.%s.path \"\"\n	ripc set %s.%s.path_prefix \"\"", tomlKey, label, tomlKey, label)
+	case "backup.s3-download":
+		return fmt.Sprintf("Deactivate: ripc set %s.%s.object_key_prefix \"\"", tomlKey, label)
+	case "acme.dns-01":
+		return fmt.Sprintf("Deactivate: ripc set %s.%s.provider \"\"", tomlKey, label)
+	case "scheduler.jobs":
+		return fmt.Sprintf("Deactivate: ripc set %s.%s.activated false", tomlKey, label)
+	}
+	return ""
 }
 
 func printScaffoldUsage(w io.Writer) {
@@ -384,7 +297,7 @@ func scaffoldConfigValue(
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrWriteOutput, err)
 	}
-	nextSteps := scaffoldNextSteps(scaffoldType, key, defaults)
+	nextSteps := scaffoldNextSteps(tomlKey, key, defaults)
 	if nextSteps != "" {
 		_, err = fmt.Fprintf(ui.Err, "%s\n", nextSteps)
 		if err != nil {

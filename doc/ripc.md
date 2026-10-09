@@ -184,6 +184,8 @@ Saves the contents of a file to the configuration store.
 
 Creates a complete configuration section with defaults. `set` changes a single field; `scaffold` creates an entire section at once. `<label>` is the label you choose for the new section and must not already exist.
 
+After scaffolding, `ripc walk <path>` shows each field of the new section one at a time — path, the comment above it and its current value — and lets you fill them in a single pass.
+
 | Type | Path | Description |
 |------|------|-------------|
 | `backup-online` | `backup.online.<label>` | Online Backup API ([restinpieces-backup](https://github.com/caasmo/restinpieces-backup)) |
@@ -208,10 +210,10 @@ myapp:
   source_path = ""
   sync_timeout = "15m"
 
-Next steps:
-1. Set the origin file to replicate (required):
-	ripc set backup.sqlite-rsync.entries.myapp.source_path /path/to/app.db
-2. Reload the app:
+Set each value in turn:
+	ripc walk backup.sqlite-rsync.entries.myapp
+
+Reload the app:
 	systemctl reload myapp
 Deactivate: ripc set backup.sqlite-rsync.entries.myapp.source_path ""
 ```
@@ -245,14 +247,10 @@ acme_cert:
   interval = "1h0m0s"
   activated = false
 
-Next steps:
-1. Set the job handler type (required):
-	ripc set scheduler.jobs.acme_cert.job_type acme_cert
-2. Activate it (required):
-	ripc set scheduler.jobs.acme_cert.activated true
-3. Optionally adjust the interval:
-	ripc set scheduler.jobs.acme_cert.interval 1h
-4. Reload the app:
+Set each value in turn:
+	ripc walk scheduler.jobs.acme_cert
+
+Reload the app:
 	systemctl reload myapp
 Deactivate: ripc set scheduler.jobs.acme_cert.activated false
 ```
