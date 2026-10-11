@@ -46,7 +46,8 @@ func NewDefaultAuthenticator(dbAuth db.DbAuth, logger *slog.Logger, configProvid
 	}
 }
 
-// Authenticate implements the Authenticator interface
+// Authenticate verifies the bearer token and returns the identified user.
+// It checks identity, not account state: Verified is not checked here.
 func (a *DefaultAuthenticator) Authenticate(r *http.Request) (*db.User, jsonResponse, error) {
 	errAuth := errors.New("Auth error")
 	authHeader := r.Header.Get("Authorization")

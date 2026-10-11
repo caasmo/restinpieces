@@ -46,6 +46,13 @@ func (a *App) ConfirmEmailChangeOtpHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Sessions belong to verified accounts. An account that is no longer
+	// verified must not complete an email change.
+	if !user.Verified {
+		WriteJsonError(w, errorJwtInvalidToken)
+		return
+	}
+
 	var req struct {
 		Otp               string `json:"otp"`
 		VerificationToken string `json:"verification_token"`

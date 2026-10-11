@@ -25,6 +25,13 @@ func (a *App) RefreshAuthHandler(w http.ResponseWriter, r *http.Request) {
 	// If authentication is successful, 'user' is the authenticated user object.
 	// No need to fetch the user again.
 
+	// Sessions belong to verified accounts. An account that is no longer
+	// verified must not have its session extended.
+	if !user.Verified {
+		WriteJsonError(w, errorJwtInvalidToken)
+		return
+	}
+
 	// Generate new token with fresh expiration using NewJwtSession
 	cfg := a.Config() // Get the current config
 	newToken, err := crypto.NewJwtSessionToken(user.ID, user.Email, user.Password, cfg.Jwt.AuthSecret, cfg.Jwt.AuthTokenDuration.Duration)

@@ -17,6 +17,7 @@ func TestRefreshAuthHandlerValid(t *testing.T) {
 		ID:       "testuser123",
 		Email:    "test@example.com",
 		Password: "hashed_password",
+		Verified: true,
 	}
 
 	testCases := []struct {
@@ -112,6 +113,16 @@ func TestRefreshAuthHandlerError(t *testing.T) {
 				}
 			},
 			desc: "When authentication fails, should return error",
+		},
+		{
+			name:      "unverified user",
+			wantError: errorJwtInvalidToken,
+			authSetup: func(m *MockAuth) {
+				m.AuthenticateFunc = func(r *http.Request) (*db.User, jsonResponse, error) {
+					return &db.User{ID: "testuser123", Email: "test@example.com", Password: "hashed_password", Verified: false}, jsonResponse{}, nil
+				}
+			},
+			desc: "When the user is no longer verified, should not mint a new token",
 		},
 	}
 
