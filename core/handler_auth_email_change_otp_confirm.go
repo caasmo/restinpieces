@@ -63,7 +63,7 @@ func (a *App) ConfirmEmailChangeOtpHandler(w http.ResponseWriter, r *http.Reques
 
 	cfg := a.Config()
 
-	newEmail, err := crypto.VerifyEmailOtpToken(req.Otp, req.VerificationToken, cfg.Jwt.EmailChangeOtpSecret)
+	newEmail, err := crypto.VerifyOtpToken(req.Otp, req.VerificationToken, cfg.Jwt.EmailChangeOtpSecret, crypto.ClaimTypeEmailChangeOtp)
 	if err != nil {
 		WriteJsonError(w, errorInvalidOtp)
 		return

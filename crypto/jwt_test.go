@@ -288,6 +288,7 @@ func TestNewTypedTokens(t *testing.T) {
 			expectedClaims: map[string]any{
 				ClaimUserID: userID,
 				ClaimUidMac: GenerateUserMac(userID, secret),
+				ClaimType:   ClaimTypeSession,
 			},
 		},
 		{
@@ -299,7 +300,7 @@ func TestNewTypedTokens(t *testing.T) {
 				ClaimUserID: userID,
 				ClaimUidMac: GenerateUserMac(userID, secret),
 				ClaimEmail:  email,
-				ClaimType:   ClaimPasswordResetValue,
+				ClaimType:   ClaimTypePasswordReset,
 			},
 		},
 		{
@@ -311,7 +312,7 @@ func TestNewTypedTokens(t *testing.T) {
 				ClaimUserID: userID,
 				ClaimUidMac: GenerateUserMac(userID, secret),
 				ClaimEmail:  email,
-				ClaimType:   ClaimVerificationValue,
+				ClaimType:   ClaimTypeVerification,
 			},
 		},
 	}

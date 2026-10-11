@@ -162,7 +162,7 @@ func TestOauth2StateJWT(t *testing.T) {
 
 	t.Run("fails with empty cv_hash claim", func(t *testing.T) {
 		claims := jwt.MapClaims{
-			ClaimType:                   ClaimOauth2StateValue,
+			ClaimType:                   ClaimTypeOauth2State,
 			ClaimOauth2CodeVerifierHash: "",
 		}
 		token, _ := NewJwt(claims, []byte(secret), duration)

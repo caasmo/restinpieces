@@ -3,6 +3,7 @@ package config
 import (
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -666,6 +667,30 @@ func validateJwt(jwt *Jwt) error {
 	if jwt.Oauth2StateTokenDuration.Duration <= 0 {
 		return fmt.Errorf("jwt.oauth2_state_token_duration must be positive")
 	}
+	return validateJwtSecretsDistinct(jwt)
+}
+
+// ErrJwtDuplicateSecrets is returned when two JWT secrets are equal.
+var ErrJwtDuplicateSecrets = errors.New("jwt secrets must all be different")
+
+func validateJwtSecretsDistinct(jwt *Jwt) error {
+	secrets := []string{
+		jwt.AuthSecret,
+		jwt.PasswordResetSecret,
+		jwt.EmailChangeOtpSecret,
+		jwt.VerificationEmailOtpSecret,
+		jwt.Oauth2StateSecret,
+	}
+
+	unique := make(map[string]struct{}, len(secrets))
+	for _, secret := range secrets {
+		unique[secret] = struct{}{}
+	}
+
+	if len(unique) != len(secrets) {
+		return ErrJwtDuplicateSecrets
+	}
+
 	return nil
 }
 

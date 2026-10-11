@@ -137,7 +137,8 @@ func (a *App) RequestEmailVerificationOtpHandler(w http.ResponseWriter, r *http.
 	cfg := a.Config()
 
 	// Generate the OTP token.
-	otp, verificationToken, err := crypto.NewJwtEmailOtpToken(
+	otp, verificationToken, err := crypto.NewJwtOtpToken(
+		crypto.ClaimTypeEmailVerificationOtp,
 		req.Email,
 		cfg.Jwt.VerificationEmailOtpSecret,
 		cfg.Jwt.VerificationEmailOtpTokenDuration.Duration,

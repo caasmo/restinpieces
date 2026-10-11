@@ -25,15 +25,21 @@ const (
 	// Stateless cryptographic proof of the user_id
 	ClaimUidMac = "uid_mac" // JWT User ID MAC claim key
 
-	// Email verification specific claims
-	ClaimEmail              = "email"          // Email address being verified
-	ClaimType               = "type"           // Verification type claim
-	ClaimVerificationValue  = "verification"   // Value for verification type claim
-	ClaimPasswordResetValue = "password_reset" // Value for password reset type claim
+	// Claims used by more than one token type
+	ClaimEmail = "email" // Email address the token was issued for
+	ClaimType  = "type"  // Token type claim
+
+	// Values for the type claim
+	ClaimTypeSession              = "session"                // Session token
+	ClaimTypeVerification         = "verification"           // Email verification token
+	ClaimTypePasswordReset        = "password_reset"         // Password reset grant token
+	ClaimTypePasswordResetOtp     = "password_reset_otp"     // Password reset OTP token
+	ClaimTypeEmailChangeOtp       = "email_change_otp"       // Email change OTP token
+	ClaimTypeEmailVerificationOtp = "email_verification_otp" // Email verification OTP token
+	ClaimTypeOauth2State          = "oauth2_state"           // OAuth2 state token
 
 	// OTP verification specific claims
-	ClaimEmailOtpHash  = "otp_hash" // SHA256 hash of the OTP code
-	ClaimEmailOtpValue = "otp"      // Value for OTP verification type claim
+	ClaimOtpHash = "otp_hash" // SHA256 hash of the OTP code
 
 	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)
 	MaxTokenAge = 7 * 24 * 60 * 60
@@ -44,8 +50,8 @@ var (
 	ErrJwtTokenExpired = errors.New("token expired")
 	// ErrJwtInvalidToken is returned when the token is invalid
 	ErrJwtInvalidToken = errors.New("invalid token")
-	// ErrInvalidEmailOtpToken is returned when email OTP verification token is invalid
-	ErrInvalidEmailOtpToken = errors.New("invalid email otp token")
+	// ErrInvalidOtpToken is returned when an OTP token is invalid
+	ErrInvalidOtpToken = errors.New("invalid otp token")
 	// ErrInvalidVerificationToken is returned when verification token is invalid
 	ErrInvalidVerificationToken = errors.New("invalid verification token")
 	// ErrJwtInvalidSigningMethod is returned when the signing method is not HS256
@@ -124,6 +130,7 @@ func NewJwtSessionToken(userID, email, passwordHash, secret string, duration tim
 	claims := jwt.MapClaims{
 		ClaimUserID: userID,
 		ClaimUidMac: GenerateUserMac(userID, secret),
+		ClaimType:   ClaimTypeSession,
 	}
 
 	return NewJwt(claims, signingKey, duration)
@@ -140,7 +147,7 @@ func NewJwtPasswordResetToken(userID, email, passwordHash, secret string, durati
 		ClaimUserID: userID,
 		ClaimUidMac: GenerateUserMac(userID, secret), // Inject MAC
 		ClaimEmail:  email,
-		ClaimType:   ClaimPasswordResetValue,
+		ClaimType:   ClaimTypePasswordReset,
 	}
 
 	return NewJwt(claims, signingKey, duration)
@@ -157,13 +164,16 @@ func NewJwtEmailVerificationToken(userID, email, passwordHash, secret string, du
 		ClaimUserID: userID,
 		ClaimUidMac: GenerateUserMac(userID, secret), // Inject MAC
 		ClaimEmail:  email,
-		ClaimType:   ClaimVerificationValue,
+		ClaimType:   ClaimTypeVerification,
 	}
 
 	return NewJwt(claims, signingKey, duration)
 }
 
-func NewJwtEmailOtpToken(email, secret string, duration time.Duration) (otp string, token string, err error) {
+// NewJwtOtpToken creates an OTP and a JWT holding its hash. tokenType selects
+// the flow: ClaimTypePasswordResetOtp, ClaimTypeEmailChangeOtp, or
+// ClaimTypeEmailVerificationOtp. The verify call must pass the same value.
+func NewJwtOtpToken(tokenType, email, secret string, duration time.Duration) (otp string, token string, err error) {
 	if len(secret) < MinKeyLength {
 		return "", "", ErrJwtInvalidSecretLength
 	}
@@ -173,9 +183,9 @@ func NewJwtEmailOtpToken(email, secret string, duration time.Duration) (otp stri
 
 	// Note: OTP tokens do not contain a UserID, so we do not generate a UidMac here.
 	claims := jwt.MapClaims{
-		ClaimEmail:        email,
-		ClaimEmailOtpHash: otpHash,
-		ClaimType:         ClaimEmailOtpValue,
+		ClaimEmail:   email,
+		ClaimOtpHash: otpHash,
+		ClaimType:    tokenType,
 	}
 
 	token, err = NewJwt(claims, []byte(secret), duration)
@@ -186,7 +196,7 @@ func NewJwtEmailOtpToken(email, secret string, duration time.Duration) (otp stri
 	return otp, token, nil
 }
 
-func VerifyEmailOtpToken(userOtp, tokenString, secret string) (string, error) {
+func VerifyOtpToken(userOtp, tokenString, secret, expectedType string) (string, error) {
 	if len(secret) < MinKeyLength {
 		return "", ErrJwtInvalidSecretLength
 	}
@@ -196,15 +206,15 @@ func VerifyEmailOtpToken(userOtp, tokenString, secret string) (string, error) {
 		return "", err
 	}
 
-	if err := ValidateEmailOtpClaims(claims); err != nil {
+	if err := ValidateOtpClaims(claims, expectedType); err != nil {
 		return "", err
 	}
 
-	expectedHash, _ := claims[ClaimEmailOtpHash].(string)
+	expectedHash, _ := claims[ClaimOtpHash].(string)
 	userHash := HashOtp(userOtp, secret)
 
 	if !hmac.Equal([]byte(userHash), []byte(expectedHash)) {
-		return "", ErrInvalidEmailOtpToken
+		return "", ErrInvalidOtpToken
 	}
 
 	email, _ := claims[ClaimEmail].(string)

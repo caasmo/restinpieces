@@ -276,6 +276,7 @@ func generateToken(email, passwordHash string, secret string, expiresIn time.Dur
 	claims := map[string]any{
 		crypto.ClaimUserID: "r1a2b3c4d5e6f70", // Use fixed test user ID
 		crypto.ClaimUidMac: crypto.GenerateUserMac("r1a2b3c4d5e6f70", secret),
+		crypto.ClaimType:   crypto.ClaimTypeSession,
 	}
 	token, err := crypto.NewJwt(claims, signingKey, expiresIn)
 	if err != nil {

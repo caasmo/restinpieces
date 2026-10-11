@@ -92,7 +92,8 @@ func (a *App) RequestEmailChangeOtpHandler(w http.ResponseWriter, r *http.Reques
 	cfg := a.Config()
 
 	// 1. Unconditional Crypto Generation (Timing Equalizer)
-	otp, verificationToken, err := crypto.NewJwtEmailOtpToken(
+	otp, verificationToken, err := crypto.NewJwtOtpToken(
+		crypto.ClaimTypeEmailChangeOtp,
 		req.NewEmail,
 		cfg.Jwt.EmailChangeOtpSecret,
 		cfg.Jwt.EmailChangeOtpTokenDuration.Duration,

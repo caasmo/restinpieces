@@ -148,7 +148,7 @@ func TestValidateTypedClaims(t *testing.T) {
 			name: "Valid Email Verification",
 			claims: func() jwt.MapClaims {
 				c := cloneClaims(validClaims)
-				c[ClaimType] = ClaimVerificationValue
+				c[ClaimType] = ClaimTypeVerification
 				return c
 			}(),
 			validationFunc: ValidateEmailVerificationClaims,
@@ -158,7 +158,7 @@ func TestValidateTypedClaims(t *testing.T) {
 			name: "Invalid Email Verification - Missing iat",
 			claims: func() jwt.MapClaims {
 				c := cloneClaims(validClaims)
-				c[ClaimType] = ClaimVerificationValue
+				c[ClaimType] = ClaimTypeVerification
 				delete(c, ClaimIssuedAt)
 				return c
 			}(),
@@ -171,7 +171,7 @@ func TestValidateTypedClaims(t *testing.T) {
 			name: "Valid Password Reset",
 			claims: func() jwt.MapClaims {
 				c := cloneClaims(validClaims)
-				c[ClaimType] = ClaimPasswordResetValue
+				c[ClaimType] = ClaimTypePasswordReset
 				return c
 			}(),
 			validationFunc: ValidatePasswordResetClaims,
@@ -180,8 +180,12 @@ func TestValidateTypedClaims(t *testing.T) {
 
 		// Session
 		{
-			name:           "Valid Session",
-			claims:         validClaims,
+			name: "Valid Session",
+			claims: func() jwt.MapClaims {
+				c := cloneClaims(validClaims)
+				c[ClaimType] = ClaimTypeSession
+				return c
+			}(),
 			validationFunc: ValidateSessionClaims,
 			wantError:      nil,
 		},
@@ -189,11 +193,31 @@ func TestValidateTypedClaims(t *testing.T) {
 			name: "Invalid Session - Missing iat",
 			claims: func() jwt.MapClaims {
 				c := cloneClaims(validClaims)
+				c[ClaimType] = ClaimTypeSession
 				delete(c, ClaimIssuedAt)
 				return c
 			}(),
 			validationFunc: ValidateSessionClaims,
 			wantError:      ErrClaimNotFound,
+		},
+		{
+			name: "Invalid Session - Missing type",
+			claims: func() jwt.MapClaims {
+				c := cloneClaims(validClaims)
+				return c
+			}(),
+			validationFunc: ValidateSessionClaims,
+			wantError:      ErrClaimNotFound,
+		},
+		{
+			name: "Invalid Session - Wrong type",
+			claims: func() jwt.MapClaims {
+				c := cloneClaims(validClaims)
+				c[ClaimType] = ClaimTypePasswordReset
+				return c
+			}(),
+			validationFunc: ValidateSessionClaims,
+			wantError:      ErrInvalidClaimFormat,
 		},
 	}
 

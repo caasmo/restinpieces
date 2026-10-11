@@ -24,7 +24,6 @@ const OauthCodeVerifierMinLength = 43
 const OauthCodeVerifierMaxLength = 128
 
 const ClaimOauth2CodeVerifierHash = "cv_hash"
-const ClaimOauth2StateValue = "oauth2_state"
 
 var (
 	// ErrInvalidCodeVerifier is returned when a PKCE code_verifier is malformed.
@@ -95,7 +94,7 @@ func NewJwtOauth2StateToken(codeVerifier, secret string, duration time.Duration)
 
 	claims := jwt.MapClaims{
 		ClaimOauth2CodeVerifierHash: cvHash,
-		ClaimType:                   ClaimOauth2StateValue,
+		ClaimType:                   ClaimTypeOauth2State,
 	}
 
 	return NewJwt(claims, []byte(secret), duration)
@@ -115,7 +114,7 @@ func VerifyOauth2StateToken(tokenString, codeVerifier, secret string) error {
 	}
 
 	// Verify the token type to prevent token confusion
-	if typ, ok := claims[ClaimType].(string); !ok || typ != ClaimOauth2StateValue {
+	if err := validateClaimType(claims[ClaimType], ClaimTypeOauth2State); err != nil {
 		return ErrInvalidVerificationToken
 	}
 

@@ -28,7 +28,7 @@ func ValidateEmailVerificationClaims(claims jwt.MapClaims) error {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
-	if err := validateClaimType(claims[ClaimType], ClaimVerificationValue); err != nil {
+	if err := validateClaimType(claims[ClaimType], ClaimTypeVerification); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
@@ -56,7 +56,7 @@ func ValidatePasswordResetClaims(claims jwt.MapClaims) error {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
-	if err := validateClaimType(claims[ClaimType], ClaimPasswordResetValue); err != nil {
+	if err := validateClaimType(claims[ClaimType], ClaimTypePasswordReset); err != nil {
 		return fmt.Errorf("%w: %v", ErrInvalidVerificationToken, err)
 	}
 
@@ -155,34 +155,39 @@ func ValidateSessionClaims(claims jwt.MapClaims) error {
 		return err
 	}
 
+	// Validate type claim
+	if err := validateClaimType(claims[ClaimType], ClaimTypeSession); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func ValidateEmailOtpClaims(claims jwt.MapClaims) error {
+func ValidateOtpClaims(claims jwt.MapClaims, expectedType string) error {
 	if err := validateClaimIssuedAt(claims[ClaimIssuedAt]); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidEmailOtpToken, err)
+		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
 	}
 
 	if err := validateClaimExpiresAt(claims[ClaimExpiresAt]); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidEmailOtpToken, err)
+		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
 	}
 
 	if err := validateClaimEmail(claims[ClaimEmail]); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidEmailOtpToken, err)
+		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
 	}
 
-	if err := validateClaimType(claims[ClaimType], ClaimEmailOtpValue); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidEmailOtpToken, err)
+	if err := validateClaimType(claims[ClaimType], expectedType); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
 	}
 
-	if err := validateClaimEmailOtpHash(claims[ClaimEmailOtpHash]); err != nil {
-		return fmt.Errorf("%w: %v", ErrInvalidEmailOtpToken, err)
+	if err := validateClaimOtpHash(claims[ClaimOtpHash]); err != nil {
+		return fmt.Errorf("%w: %v", ErrInvalidOtpToken, err)
 	}
 
 	return nil
 }
 
-func validateClaimEmailOtpHash(otpHash any) error {
+func validateClaimOtpHash(otpHash any) error {
 	if otpHash == nil {
 		return ErrClaimNotFound
 	}

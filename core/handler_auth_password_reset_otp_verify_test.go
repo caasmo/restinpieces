@@ -84,7 +84,7 @@ func TestVerifyPasswordResetOtpHandler_Validation(t *testing.T) {
 func TestVerifyPasswordResetOtpHandler_Logic(t *testing.T) {
 	secret := "test_secret_32_bytes_long_xxxxxx"
 	email := "test@example.com"
-	otp, token, _ := crypto.NewJwtEmailOtpToken(email, secret, time.Minute)
+	otp, token, _ := crypto.NewJwtOtpToken(crypto.ClaimTypePasswordResetOtp, email, secret, time.Minute)
 
 	testConfig := &config.Config{
 		Jwt: config.Jwt{

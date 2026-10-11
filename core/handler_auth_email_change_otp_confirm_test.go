@@ -105,7 +105,7 @@ func TestConfirmEmailChangeOtpHandler_Logic(t *testing.T) {
 	oldEmail := "old@example.com"
 	userID := "user123"
 
-	otp, token, _ := crypto.NewJwtEmailOtpToken(newEmail, secret, time.Minute)
+	otp, token, _ := crypto.NewJwtOtpToken(crypto.ClaimTypeEmailChangeOtp, newEmail, secret, time.Minute)
 
 	testConfig := &config.Config{
 		Jwt: config.Jwt{
@@ -252,7 +252,7 @@ func TestConfirmEmailChangeOtpHandler_Logic(t *testing.T) {
 func TestConfirmEmailChangeOtpHandler_InvalidEmailInToken(t *testing.T) {
 	secret := "test_secret_32_bytes_long_xxxxxx"
 	invalidEmail := "not-an-email"
-	otp, token, _ := crypto.NewJwtEmailOtpToken(invalidEmail, secret, time.Minute)
+	otp, token, _ := crypto.NewJwtOtpToken(crypto.ClaimTypeEmailChangeOtp, invalidEmail, secret, time.Minute)
 
 	testConfig := &config.Config{
 		Jwt: config.Jwt{

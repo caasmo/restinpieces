@@ -308,6 +308,19 @@ func TestValidateJwt(t *testing.T) {
 			t.Errorf("validateJwt() expected error, got nil")
 		}
 	}
+	duplicates := []func(*Jwt){
+		func(j *Jwt) { j.PasswordResetSecret = j.AuthSecret },
+		func(j *Jwt) { j.EmailChangeOtpSecret = j.AuthSecret },
+		func(j *Jwt) { j.VerificationEmailOtpSecret = j.AuthSecret },
+		func(j *Jwt) { j.Oauth2StateSecret = j.AuthSecret },
+	}
+	for _, mutate := range duplicates {
+		cfg := valid
+		mutate(&cfg)
+		if err := validateJwt(&cfg); err == nil {
+			t.Error("validateJwt() expected error for equal secrets, got nil")
+		}
+	}
 }
 
 func TestValidateSmtp(t *testing.T) {

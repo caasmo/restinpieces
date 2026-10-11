@@ -128,7 +128,7 @@ func TestConfirmEmailVerificationOtpHandler_ConfirmationLogic(t *testing.T) {
 	hashedPassword, _ := crypto.GenerateHash("password123")
 
 	// Generate a valid OTP + verification token pair for testing.
-	otp, validToken, err := crypto.NewJwtEmailOtpToken("test@example.com", secret, 15*time.Minute)
+	otp, validToken, err := crypto.NewJwtOtpToken(crypto.ClaimTypeEmailVerificationOtp, "test@example.com", secret, 15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate test OTP token: %v", err)
 	}
@@ -266,7 +266,7 @@ func TestConfirmEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 	secret := "test_secret_32_bytes_long_xxxxxx"
 	hashedPassword, _ := crypto.GenerateHash("password123")
 
-	otp, validToken, err := crypto.NewJwtEmailOtpToken("test@example.com", secret, 15*time.Minute)
+	otp, validToken, err := crypto.NewJwtOtpToken(crypto.ClaimTypeEmailVerificationOtp, "test@example.com", secret, 15*time.Minute)
 	if err != nil {
 		t.Fatalf("failed to generate test OTP token: %v", err)
 	}
