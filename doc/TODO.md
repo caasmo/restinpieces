@@ -329,3 +329,10 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - exposure is otherwise small: no struct in `config/` has a `time.Time` or `toml.Local*` field, so no live config can hit this. `TestTomlParser_DateTimes` does exercise `d = 1979-05-27`, so the test still has to pass
 - update `TestTomlParser_DateTimes` (`cmd/ripc/loadbytes_v1_polifill_test.go`) from string expectations to the typed values (`toml.LocalDate{...}`, `time.Time` via `.Equal`); `get`/`walk` print `%v` and `String()` yields the same text, so display does not change
 - refs: `cmd/ripc/loadbytes_v1_polifill.go` (`tomlValueOf`), `cmd/ripc/validate.go` (`validateTomlAsConfig`), `cmd/ripc/loadbytes_v1_polifill_test.go` (`TestTomlParser_DateTimes`)
+
+# auth: put the iat and exp as fast check
+
+- in `Authenticate`, read `iat` and `exp` from the fast payload and reject expired or too-old tokens before the database lookup; cheap spam filtering, not a security gate (the payload is unauthenticated until the signature check)
+- the fixed 7-day `MaxTokenAge` constant is removed; the fast check should use the configured session duration (`auth_token_duration`)
+- the signed post-DB validation stays as the authoritative layer
+- refs: `core/auth.go` (`Authenticate`, `extractAndVerifyUserID`, `fastJwtPayload`), `crypto/jwt.go` (`NewJwt`), `crypto/jwt_validate.go` (`validateClaimIssuedAt`, `ValidateSessionClaims`), `config/config.go` (`Jwt.AuthTokenDuration`), `config/default.go`

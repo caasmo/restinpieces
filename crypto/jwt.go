@@ -40,9 +40,6 @@ const (
 
 	// OTP verification specific claims
 	ClaimOtpHash = "otp_hash" // SHA256 hash of the OTP code
-
-	// MaxTokenAge is the maximum age a JWT token can be before it's considered too old (7 days in seconds)
-	MaxTokenAge = 7 * 24 * 60 * 60
 )
 
 var (
@@ -67,9 +64,6 @@ var (
 	ErrInvalidClaimFormat = errors.New("invalid claim format")
 	// ErrClaimNotFound is returned when a required claim is missing
 	ErrClaimNotFound = errors.New("claim not found")
-	// ErrTokenTooOld is returned when a token's "iat" (issued at) claim
-	// is older than the maximum allowed age (one week)
-	ErrTokenTooOld = errors.New("token too old")
 )
 
 // ====================================================================================

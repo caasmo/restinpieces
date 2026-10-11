@@ -74,9 +74,6 @@ func validateClaimIssuedAt(iat any) error {
 		if iatUnix > nowUnix {
 			return ErrTokenUsedBeforeIssued
 		}
-		if nowUnix-iatUnix > MaxTokenAge {
-			return ErrTokenTooOld
-		}
 		return nil
 	}
 	return ErrInvalidClaimFormat
