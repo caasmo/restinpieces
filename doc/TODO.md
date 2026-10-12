@@ -330,9 +330,56 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - update `TestTomlParser_DateTimes` (`cmd/ripc/loadbytes_v1_polifill_test.go`) from string expectations to the typed values (`toml.LocalDate{...}`, `time.Time` via `.Equal`); `get`/`walk` print `%v` and `String()` yields the same text, so display does not change
 - refs: `cmd/ripc/loadbytes_v1_polifill.go` (`tomlValueOf`), `cmd/ripc/validate.go` (`validateTomlAsConfig`), `cmd/ripc/loadbytes_v1_polifill_test.go` (`TestTomlParser_DateTimes`)
 
+# ripc log: `log [filter]` with `-t`/`-n` plus writer logLabel column in logs.sql
+
+- `ripc log [filter] [-t] [-n N]`: no filter means all rows; no `-t` prints last N and exits; `-t` prints last N then follows (`ripc log -t -n 20` = last 20, then tail); the `tail` subcommand goes away, flags replace it
+- same for jobs: `ripc job [filter] [-t] [-n N]`
+- every writer to the log db (middleware, handler, daemon, job) stamps a stable unique logLabel on every row it emits and documents it in its own doc; the filter matches that label directly, no chasing message strings
+- logLabel is a new indexed column on `logs`, not a data-json attr: first-class query dimension like `level`/`message`, equality filter stays index-backed at any table size
+- cost: one-time `ALTER TABLE logs ADD COLUMN` plus index for existing deployed DBs, homed in `ripc log init` or the startup ensure; old rows keep empty label and simply never match
+- refs: `cmd/ripc/log_command.go` (dispatch, drop `tail` case), `cmd/ripc/log_tail.go` (generalize to filter+n+follow), `cmd/ripc/sql.go` (`logDb`, `logRecord`), `sql/schema/log/logs.sql` (new column + index), `db/databasesql/log.go` (batch insert must stamp the label), `log/` (record path from slog to row)
+
 # auth: put the iat and exp as fast check
 
 - in `Authenticate`, read `iat` and `exp` from the fast payload and reject expired or too-old tokens before the database lookup; cheap spam filtering, not a security gate (the payload is unauthenticated until the signature check)
 - the fixed 7-day `MaxTokenAge` constant is removed; the fast check should use the configured session duration (`auth_token_duration`)
 - the signed post-DB validation stays as the authoritative layer
 - refs: `core/auth.go` (`Authenticate`, `extractAndVerifyUserID`, `fastJwtPayload`), `crypto/jwt.go` (`NewJwt`), `crypto/jwt_validate.go` (`validateClaimIssuedAt`, `ValidateSessionClaims`), `config/config.go` (`Jwt.AuthTokenDuration`), `config/default.go`
+
+# security: app deletes age.key after startup; restart and reload borrow the key from the plane machine
+
+- operator keeps the canonical age.key on the local (plane) machine; the server holds it only transiently at boot, then the app unlinks it
+- new config setting makes it optional; when on, restarts, reloads and ripc ops push the key, run, then verify deletion
+- unlink immediately after successful config decrypt, not after N minutes — a delay only widens the window, reload can re-push the key anyway
+- real gain is disk-only: file-read bugs, whole-home backups/snapshots and disk theft yield ciphertext; nothing against RCE (plaintext config lives in memory) or root
+- price: no unattended recovery — `Restart=on-failure` becomes a crash loop, set `Restart=no` and rely on monitoring plus operator restart; a failed boot must delete the pushed key and alert, never leave it lying
+- transport hygiene first: `cmd_cp` stages via world-readable /tmp today, fix with umask 077 plus mktemp or the transport undoes the whole idea
+- unit needs a writable bind for the key path so the app can unlink it under `ProtectSystem=strict`
+- refs: `config/secure.go` (key re-read per Get/Save), `restinpieces.go` (setupConfig, boot key requirement), `config/reload.go` (SIGHUP needs key), `systemd.service` (ProtectSystem=strict, Restart=on-failure), `scripts/ripdep` (cmd_cp, cmd_restart, cmd_reload, cmd_ripc, cmd_maintenance, cmd_dump), `doc/ripdep.md` (restart/reload/cp contract)
+
+# crypto/rand: RandomID with base64url or hex, rename randomstring to PKCE or something
+
+- per https://words.filippo.io/right-answers/ §Random IDs: 32 random bytes, a.k.a. 256-bit random numbers
+- add `RandomID()`: one `crypto/rand.Read` of 32 bytes encoded as base64url or hex (not Std `+/=` like `Nonce()`, not `rand.Text` ~128 bits); share one private 32-byte reader with `Nonce()`
+- `DummyID` and new JWT secrets use `RandomID()`; stored secrets are opaque strings, so there is no branch for old values
+- deprecate exported `RandomString(length, alphabet)`: mark `// Deprecated:` and move its last internal caller off it — `Oauth2CodeVerifier()` gets its own bulk-`Read` with rejection sampling; anything else needing a custom alphabet gets its own function
+- refs: `crypto/rand.go` (`RandomString`, `Nonce`), `crypto/oauth2.go` (`Oauth2CodeVerifier`, `pkceAlphabet`), `core/handler_auth_password_reset_otp_request.go`, `core/handler_auth_email_change_otp_request.go` (`DummyID`), `cmd/ripc/app_create.go`, `cmd/ripc/update_jwt.go` (secrets)
+
+# crypto/password: concrete setting is we go argin
+
+- per https://words.filippo.io/right-answers/ §Password handling: Argon2id or scrypt, bcrypt dropped for 72-byte truncation
+- `GenerateHash` uses `argon2.IDKey` with time 2, memory 65536 (64 MiB, Go counts KiB), threads 1, key length 32, fresh 16-byte salt from `crypto/rand`, version 19
+- store as `$argon2id$v=19$m=65536,t=2,p=1$<salt>$<hash>` with base64 without padding
+- `CheckPassword` parses prefix: `$argon2id$` re-runs same params with constant-time compare, `$2a$` falls back to bcrypt so old logins still work
+- replace `DummyPasswordHash` with an Argon2id hash made once with the same numbers so the not-found path costs the same
+- raise the 72-byte top limit (was only for bcrypt), allow up to 128 bytes
+- refs: `crypto/password.go` (`GenerateHash`, `CheckPassword`, `DummyPasswordHash`), `core/validation.go` (`Password`), `golang.org/x/crypto/argon2`
+
+# config/secure: move to pq age
+
+- per https://words.filippo.io/right-answers/ §Asymmetric encryption: age with PQ keys (`age1pq`, MLKEM768-X25519); the C2SP age spec already carries the `mlkem768x25519` stanza
+- bump `filippo.io/age` to v1.3+ (`restinpieces-backup` and `restinpieces-acme` tidy too); one key with `age-keygen -pq`, no legacy X25519 path
+- `loadAndParseIdentities` requires `*age.HybridIdentity` only, `Save` encrypts to its recipient only; old rows do not open — operator re-encrypts once, `diff`/`rollback` across the change are dead
+- second age spot: `config/config_validate.go` accepts only `age.ParseX25519Recipient` for `backup.s3-upload` recipients — switch to `ParseHybridRecipient`; `restinpieces-backup/s3/upload/handler.go` encrypts with that recipient and must move in the same change
+- update tests and scripts that make X25519 test keys
+- refs: `config/secure.go` (`loadAndParseIdentities`, `Get`, `Save`), `config/config_validate.go`, `config/backup.go` (`AgeRecipient`), `restinpieces_test.go`, `config/secure_test.go`, `config/config_validate_test.go`, `scripts/smtp_probe.go`, `scripts/s3_probe.go`, `restinpieces-backup/s3/upload/handler.go`, `restinpieces-backup/cmd/s3/download/recover/main.go`

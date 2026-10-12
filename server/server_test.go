@@ -499,6 +499,68 @@ func TestCreateTLSConfig_Success(t *testing.T) {
 	}
 }
 
+func TestCreateTLSConfig_NegotiatesX25519MLKEM768(t *testing.T) {
+	certPEM, keyPEM := generateTestCert(t)
+	cfg := &config.Server{
+		Tls: config.Tls{
+			Certificate: string(certPEM),
+			PrivateKey:  string(keyPEM),
+		},
+	}
+
+	serverConfig, err := createTLSConfig(cfg)
+	if err != nil {
+		t.Fatalf("createTLSConfig returned an unexpected error: %v", err)
+	}
+
+	listener, err := net.Listen("tcp", "localhost:0")
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	defer func() {
+		if err := listener.Close(); err != nil {
+			t.Logf("failed to close listener (non-fatal): %v", err)
+		}
+	}()
+
+	tlsListener := tls.NewListener(listener, serverConfig)
+	serverErr := make(chan error, 1)
+	go func() {
+		conn, acceptErr := tlsListener.Accept()
+		if acceptErr != nil {
+			serverErr <- acceptErr
+			return
+		}
+		handshakeErr := conn.(*tls.Conn).Handshake()
+		closeErr := conn.Close()
+		serverErr <- errors.Join(handshakeErr, closeErr)
+	}()
+
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(certPEM) {
+		t.Fatal("failed to add server certificate to pool")
+	}
+
+	addr := fmt.Sprintf("localhost:%d", listener.Addr().(*net.TCPAddr).Port)
+	clientConn, err := tls.Dial("tcp", addr, &tls.Config{RootCAs: certPool})
+	if err != nil {
+		t.Fatalf("tls.Dial failed: %v", err)
+	}
+	defer func() {
+		if err := clientConn.Close(); err != nil {
+			t.Logf("failed to close client connection (non-fatal): %v", err)
+		}
+	}()
+
+	if got := clientConn.ConnectionState().CurveID; got != tls.X25519MLKEM768 {
+		t.Errorf("negotiated key exchange = %v, want %v", got, tls.X25519MLKEM768)
+	}
+
+	if err := <-serverErr; err != nil {
+		t.Errorf("server handshake failed: %v", err)
+	}
+}
+
 func TestCreateTLSConfig_MTLSCertificates(t *testing.T) {
 	certPEM, keyPEM := generateTestCert(t)
 	clientCAPEM, _ := generateTestCert(t)

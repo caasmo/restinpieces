@@ -365,11 +365,9 @@ func createTLSConfig(cfg *config.Server) (*tls.Config, error) {
 		Certificates: []tls.Certificate{cert},
 		MinVersion:   tls.VersionTLS13,           // Enforce TLS 1.3
 		NextProtos:   []string{"h2", "http/1.1"}, // Keep HTTP/2 support
-		CurvePreferences: []tls.CurveID{
-			tls.X25519,
-			tls.CurveP256,
-			tls.CurveP384,
-		},
+		// CurvePreferences stays unset: Go's default key exchange list is
+		// already post-quantum (X25519MLKEM768 first) and moves with the
+		// toolchain. Setting it here would replace that curated list.
 	}
 
 	if cfg.Tls.MTLSCertificates != "" {
