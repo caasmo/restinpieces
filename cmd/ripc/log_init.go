@@ -10,11 +10,8 @@ import (
 
 var ErrUpdateLogPath = errors.New("failed to update log path")
 
-// handleLogInitCommand is the command-level wrapper. It executes the core logic
-// and returns any error to the caller.
-func handleLogInitCommand(secureStore config.SecureStore, appDbPath string, logPath string, ui UI) error {
-	return logInit(ui, secureStore, appDbPath, logPath)
-}
+// TODO: turn this file into the 'ripc init logs' command. Until that command
+// exists, logInit is not wired into the CLI.
 
 // logInit contains the testable core logic for initializing the log database.
 // logPathArg must be provided explicitly — no silent default to appDbPath.

@@ -164,8 +164,54 @@ func (db *logDb) maxID() (int64, error) {
 
 // tail returns every log record with an id greater than afterID, oldest
 // first. The id range keeps the query on the primary key index with no sort.
-func (db *logDb) tail(afterID int64) (records []logRecord, err error) {
-	qrows, err := db.db.Query("SELECT id, created, level, message, data FROM logs WHERE id > ? ORDER BY id ASC;", afterID)
+// An empty filter matches every record.
+func (db *logDb) tail(afterID int64, filter string) (records []logRecord, err error) {
+	query := "SELECT id, created, level, message, data FROM logs WHERE id > ? ORDER BY id ASC;"
+	args := []any{afterID}
+	if filter != "" {
+		query = "SELECT id, created, level, message, data FROM logs WHERE id > ? AND data LIKE ? ORDER BY id ASC;"
+		args = append(args, "%"+filter+"%")
+	}
+
+	qrows, err := db.db.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to query log records: %w", ErrQueryPrepare, err)
+	}
+	defer func() {
+		if cerr := qrows.Close(); cerr != nil {
+			err = errors.Join(err, fmt.Errorf("%w: failed to close log records: %w", ErrDbFinalize, cerr))
+		}
+	}()
+
+	for qrows.Next() {
+		var record logRecord
+		scanErr := qrows.Scan(&record.ID, &record.Created, &record.Level, &record.Message, &record.Data)
+		if scanErr != nil {
+			return nil, fmt.Errorf("%w: failed to scan log record: %w", ErrDbStep, scanErr)
+		}
+		records = append(records, record)
+	}
+	iterErr := qrows.Err()
+	if iterErr != nil {
+		return nil, fmt.Errorf("%w: failed to iterate log records: %w", ErrDbStep, iterErr)
+	}
+
+	return records, nil
+}
+
+// tailBackwards returns up to chunk log records with an id below cursor and
+// at or above the chunk lower bound, newest first. An empty filter matches
+// every record. The id range keeps the query on the primary key index with
+// no sort, so every chunk costs the same no matter how old it is.
+func (db *logDb) tailBackwards(cursor int64, chunk int, filter string) (records []logRecord, err error) {
+	query := "SELECT id, created, level, message, data FROM logs WHERE id < ? AND id >= ? ORDER BY id DESC;"
+	args := []any{cursor, cursor - int64(chunk)}
+	if filter != "" {
+		query = "SELECT id, created, level, message, data FROM logs WHERE id < ? AND id >= ? AND data LIKE ? ORDER BY id DESC;"
+		args = append(args, "%"+filter+"%")
+	}
+
+	qrows, err := db.db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to query log records: %w", ErrQueryPrepare, err)
 	}

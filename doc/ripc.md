@@ -317,12 +317,14 @@ Manages background jobs in the queue.
 
 ### `log`
 
-Manages the log database.
+Reads the log database, printing one line per record, oldest first: creation time, level, message, and the stored JSON data. The optional filter matches the data column with SQL LIKE, so `%` and `_` work as wildcards, and `log.batch.db_path` in the configuration selects the database file.
 
--   **`init`**: Initializes the log database and schema.
-    -   `ripc log init`
--   **`tail`**: Follows new records from the log database, printing one line per record. It reads `log.batch.db_path` from the configuration and runs until interrupted.
-    -   `ripc log tail`
+-   `ripc log` prints the last 20 records.
+-   `ripc log 404` prints the last 20 records whose data contains `404`.
+-   `ripc log -n 50` prints the last 50 records.
+-   `ripc log -f` prints the last 20 records, then keeps printing new records until interrupted.
+
+Write the flags before the filter, for example `ripc log -n 50 404`: the flag parser stops at the first value that is not a flag.
 
 ### `help`
 

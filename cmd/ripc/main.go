@@ -120,7 +120,7 @@ func run(args []string, output io.Writer) error {
 					Subcommands: []Subcommand{
 						{"app", "Manage application lifecycle (e.g., creating the database)"},
 						{"job", "Manage background jobs"},
-						{"log", "Manage the log database"},
+						{"log", "Read the log database"},
 						{"version", "Print the build tag and commit"},
 						{"help", "Show help for a specific command"},
 					},
@@ -237,7 +237,7 @@ func run(args []string, output io.Writer) error {
 	case "job":
 		return handleJobCommand(db, commandArgs, ui)
 	case "log":
-		return handleLogCommand(secureStore, *dbPathFlag, commandArgs, ui)
+		return handleLogCommand(secureStore, commandArgs, ui)
 	case "version":
 		return handleVersionCommand(commandArgs, ui)
 	case "help":
