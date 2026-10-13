@@ -330,14 +330,22 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - update `TestTomlParser_DateTimes` (`cmd/ripc/loadbytes_v1_polifill_test.go`) from string expectations to the typed values (`toml.LocalDate{...}`, `time.Time` via `.Equal`); `get`/`walk` print `%v` and `String()` yields the same text, so display does not change
 - refs: `cmd/ripc/loadbytes_v1_polifill.go` (`tomlValueOf`), `cmd/ripc/validate.go` (`validateTomlAsConfig`), `cmd/ripc/loadbytes_v1_polifill_test.go` (`TestTomlParser_DateTimes`)
 
-# ripc log: `log [filter]` with `-t`/`-n` plus writer logLabel column in logs.sql
+# ripc log: `log [-f] [-n N] [filter]`
 
-- `ripc log [filter] [-t] [-n N]`: no filter means all rows; no `-t` prints last N and exits; `-t` prints last N then follows (`ripc log -t -n 20` = last 20, then tail); the `tail` subcommand goes away, flags replace it
-- same for jobs: `ripc job [filter] [-t] [-n N]`
-- every writer to the log db (middleware, handler, daemon, job) stamps a stable unique logLabel on every row it emits and documents it in its own doc; the filter matches that label directly, no chasing message strings
-- logLabel is a new indexed column on `logs`, not a data-json attr: first-class query dimension like `level`/`message`, equality filter stays index-backed at any table size
-- cost: one-time `ALTER TABLE logs ADD COLUMN` plus index for existing deployed DBs, homed in `ripc log init` or the startup ensure; old rows keep empty label and simply never match
-- refs: `cmd/ripc/log_command.go` (dispatch, drop `tail` case), `cmd/ripc/log_tail.go` (generalize to filter+n+follow), `cmd/ripc/sql.go` (`logDb`, `logRecord`), `sql/schema/log/logs.sql` (new column + index), `db/databasesql/log.go` (batch insert must stamp the label), `log/` (record path from slog to row)
+- `ripc log [-f] [-n N] [filter]`: flags must come before the filter (Go's flag package stops at the first positional argument); no filter means all rows; no `-f` prints last N and exits; `-f` prints last N then follows (`ripc log -f -n 20` = last 20, then tail)
+- the `tail` subcommand goes away, flags replace it; `init` stays for now and moves to `ripc init logs` in a later change, not this iteration
+- same for jobs: `ripc job [-f] [-n N] [filter]`
+- filter matches like `%filter%` (SQL `LIKE`) against the `data` column only: no new column, no index, no schema change
+- AGENTS.md convention: every object that takes a logger in its constructor stamps a stable label once with `logger.With("log_label", "llm:request_log")` and logs through the returned logger — `llm:` middleware, `llh:` handler, `llj:` job, `lld:` daemon; the value names who writes the log (lowercase snake_case, permanent because operators filter on it), no stamping at call sites
+- refs: `cmd/ripc/log_command.go` (dispatch, drop `tail` case, keep `init` for now), `cmd/ripc/log_tail.go` (generalize to filter+n+follow), `cmd/ripc/sql.go` (`logDb`, `logRecord`), `sql/schema/log/logs.sql` (`data`), `log/` (record path from slog to row), `AGENTS.md`, `log/daemon.go:45` (existing `opLogger.With("daemon_component", "Daemon")` to convert)
+
+# ripc: `init app` / `init logs` replace `app create` / `log init`
+
+- `ripc init app` replaces `ripc app create`: creates the app db, applies the app schema, writes the initial encrypted config; the db must not exist yet, as today
+- `ripc init logs <path>` replaces `ripc log init <path>`: creates the log db, applies the log schema, writes `log.batch.db_path`; it still needs the app db and the age key
+- `ripc log` becomes a pure reader (loses both `init` and `tail` subcommands); the `app` command disappears (`create` was its only subcommand)
+- update the old command names in messages and docs: `cmd/ripc/main.go` (usage example, "Please create it first using 'ripc app create'", the no-db special case keyed on `app create`), `config/config_validate.go` ("run 'ripc log init'"), `restinpieces.go` (two errors and a comment), `cmd/ripc/log_tail.go` ("run 'ripc log init <logpath>' first"), `scripts/ripdep` (warning text), `doc/ripc.md`, `doc/bootstrap.md`, `doc/post-deploy-config.md`
+- refs: `cmd/ripc/main.go`, `cmd/ripc/app_command.go` (delete), `cmd/ripc/app_create.go`, `cmd/ripc/log_command.go`, `cmd/ripc/log_init.go`, tests `app_command_test.go`, `app_create_test.go`, `log_command_test.go`, `log_init_test.go`
 
 # auth: put the iat and exp as fast check
 

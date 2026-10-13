@@ -45,6 +45,7 @@ type Scheduler struct {
 
 func NewScheduler(configProvider *config.Provider, db db.DbQueue, executor executor.JobExecutor, logger *slog.Logger) *Scheduler {
 	ctx, cancel := context.WithCancel(context.Background())
+	logger = logger.With("log_label", "lld:scheduler")
 	return &Scheduler{
 		configProvider: configProvider,
 		db:             db,

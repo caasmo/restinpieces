@@ -42,7 +42,7 @@ func New(configProvider *config.Provider, opLogger *slog.Logger, db db.DbLog) (*
 		name:           "LoggerDaemon", // Constant name for this daemon type
 		recordChan:     make(chan slog.Record, cfg.Log.Batch.ChanSize),
 		db:             db,
-		opLogger:       opLogger.With("daemon_component", "Daemon"),
+		opLogger:       opLogger.With("log_label", "lld:log_batch"),
 		configProvider: configProvider,
 		ctx:            ctx,
 		cancel:         cancel,

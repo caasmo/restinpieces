@@ -63,6 +63,14 @@ Help is data-driven: every command declares a `Spec` literal next to its
 command file, and `Spec.Opt(name)` is the single source of truth for flag
 defaults and usage text at flag-registration time.
 
+### Logging: stable log_label on every logger
+
+Every object that takes a logger in its constructor stamps a stable label once with `logger.With("log_label", "...")` and logs through the returned logger — never stamp a label at a call site.
+
+The value starts with the object's kind: `llm:` middleware, `llh:` handler, `llj:` job, `lld:` daemon. The rest names who writes the log in lowercase snake_case, module first: `lld:log_batch`, `lld:scheduler`, `llj:backup_onlineapi`, `lld:backup_sqlitersync_origin`.
+
+**Why**: operators filter the log database with `ripc log [filter]`, which matches the stored label. Renaming a label breaks saved filters, so labels are permanent.
+
 ### Benchmarks: component-scenario naming
 
 A benchmark name starts with the component being tested, then the scenario,
