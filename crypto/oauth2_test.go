@@ -9,15 +9,15 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func TestOauth2CodeVerifier(t *testing.T) {
-	verifier := Oauth2CodeVerifier()
-	if len(verifier) != OauthCodeVerifierMinLength {
-		t.Errorf("Oauth2CodeVerifier() length = %d, want %d", len(verifier), OauthCodeVerifierMinLength)
+func TestGenerateOauth2CodeVerifier(t *testing.T) {
+	verifier := GenerateOauth2CodeVerifier()
+
+	err := ValidateCodeVerifier(verifier)
+	if err != nil {
+		t.Errorf("ValidateCodeVerifier(GenerateOauth2CodeVerifier()) = %v, want nil", err)
 	}
-	for _, char := range verifier {
-		if !strings.ContainsRune(pkceAlphabet, char) {
-			t.Errorf("Oauth2CodeVerifier() contains invalid character: %c", char)
-		}
+	if len(verifier) != OauthCodeVerifierMinLength {
+		t.Errorf("GenerateOauth2CodeVerifier() length = %d, want %d", len(verifier), OauthCodeVerifierMinLength)
 	}
 }
 
@@ -82,7 +82,7 @@ func TestValidateCodeVerifier(t *testing.T) {
 
 func TestOauth2StateJWT(t *testing.T) {
 	secret := "test-secret-32-characters-long-!!!!"
-	cv := Oauth2CodeVerifier()
+	cv := GenerateOauth2CodeVerifier()
 	duration := 1 * time.Minute
 
 	t.Run("successful generation and verification", func(t *testing.T) {
@@ -99,7 +99,7 @@ func TestOauth2StateJWT(t *testing.T) {
 
 	t.Run("fails with mismatched code_verifier", func(t *testing.T) {
 		token, _ := NewJwtOauth2StateToken(cv, secret, duration)
-		wrongCv := Oauth2CodeVerifier()
+		wrongCv := GenerateOauth2CodeVerifier()
 		err := VerifyOauth2StateToken(token, wrongCv, secret)
 		if !errors.Is(err, ErrOauth2CodeVerifierMismatch) {
 			t.Errorf("expected ErrOauth2CodeVerifierMismatch, got %v", err)

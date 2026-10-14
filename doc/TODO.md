@@ -179,6 +179,11 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 # auth: proof-of-work challenge for login/signup (in-house)
 
 - server issues nonce+difficulty, client JS solves it, handler verifies before processing; gate signup and login after failures
+- PoW is passed in HTTP headers (e.g. `X-Pow-Token`, `X-Pow-Counter`); every protected endpoint requires the header when PoW is enabled, otherwise it returns `err_pow_required`
+- `VerifyPow` is called directly inside each handler, gated by config (no middleware/route injection); challenge is served by a dedicated `PowChallengeHandler`
+- if disabled, handlers skip verification and the SDK ignores missing headers; on `err_pow_required` the SDK solves the challenge and retries with the built headers
+- difficulty is a config value expressed in simple levels with approximate CPU seconds (like TopK settings), e.g. L1≈0.1s, L2≈0.5s, L3≈1s, L4≈2s, L5≈5s; ops can raise it under load without code changes
+- SDK contains the PoW solver (browser `crypto.subtle` SHA-256, worker-based); it exposes `solvePoW()` and optional `onProgress`/duration so the UI can show a "checking your browser" page/spinner when solving exceeds ~200 ms, and otherwise stays silent
 - refs: `core/handler_auth_register_password.go`, `core/handler_auth_login_password.go`, `core/prerouter/`, `restinpieces-js-sdk`
 
 # json: update to go json v2
@@ -365,11 +370,11 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - unit needs a writable bind for the key path so the app can unlink it under `ProtectSystem=strict`
 - refs: `config/secure.go` (key re-read per Get/Save), `restinpieces.go` (setupConfig, boot key requirement), `config/reload.go` (SIGHUP needs key), `systemd.service` (ProtectSystem=strict, Restart=on-failure), `scripts/ripdep` (cmd_cp, cmd_restart, cmd_reload, cmd_ripc, cmd_maintenance, cmd_dump), `doc/ripdep.md` (restart/reload/cp contract)
 
-# crypto/rand: RandomID with base64url or hex, rename randomstring to PKCE or something
+# crypto/rand: ID (256-bit) with base64url or hex, rename randomstring to PKCE or something
 
 - per https://words.filippo.io/right-answers/ §Random IDs: 32 random bytes, a.k.a. 256-bit random numbers
-- add `RandomID()`: one `crypto/rand.Read` of 32 bytes encoded as base64url or hex (not Std `+/=` like `Nonce()`, not `rand.Text` ~128 bits); share one private 32-byte reader with `Nonce()`
-- `DummyID` and new JWT secrets use `RandomID()`; stored secrets are opaque strings, so there is no branch for old values
+- add `ID()`: one `crypto/rand.Read` of 32 bytes encoded as base64url or hex (not Std `+/=` like `Nonce()`, not `rand.Text` ~128 bits); share one private 32-byte reader with `Nonce()`
+- `DummyID` and new JWT secrets use `ID()`; stored secrets are opaque strings, so there is no branch for old values
 - deprecate exported `RandomString(length, alphabet)`: mark `// Deprecated:` and move its last internal caller off it — `Oauth2CodeVerifier()` gets its own bulk-`Read` with rejection sampling; anything else needing a custom alphabet gets its own function
 - refs: `crypto/rand.go` (`RandomString`, `Nonce`), `crypto/oauth2.go` (`Oauth2CodeVerifier`, `pkceAlphabet`), `core/handler_auth_password_reset_otp_request.go`, `core/handler_auth_email_change_otp_request.go` (`DummyID`), `cmd/ripc/app_create.go`, `cmd/ripc/update_jwt.go` (secrets)
 

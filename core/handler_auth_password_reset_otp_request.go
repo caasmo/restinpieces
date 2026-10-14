@@ -109,7 +109,7 @@ func (a *App) RequestPasswordResetOtpHandler(w http.ResponseWriter, r *http.Requ
 	} else {
 		jobType = handlers.JobTypeDummy
 		// Ensure it never hits a unique constraint by using random data
-		randomID := crypto.RandomString(32, crypto.AlphanumericAlphabet)
+		randomID := crypto.ID()
 		payload, _ = json.Marshal(handlers.PayloadDummy{
 			DummyID: randomID,
 		})

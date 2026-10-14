@@ -2,60 +2,45 @@ package crypto
 
 import (
 	"encoding/base64"
-	"strings"
 	"testing"
 )
 
-func TestRandomString(t *testing.T) {
-	testCases := []struct {
-		name     string
-		length   int
-		alphabet string
-	}{
-		{
-			name:     "alphanumeric",
-			length:   32,
-			alphabet: AlphanumericAlphabet,
-		},
-		{
-			name:     "pkce",
-			length:   64,
-			alphabet: pkceAlphabet,
-		},
+func TestID(t *testing.T) {
+	id1 := ID()
+	id2 := ID()
+
+	if id1 == id2 {
+		t.Errorf("ID() returned same value twice: %s", id1)
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			s := RandomString(tc.length, tc.alphabet)
-			if len(s) != tc.length {
-				t.Errorf("RandomString() length = %d, want %d", len(s), tc.length)
-			}
-			for _, char := range s {
-				if !strings.ContainsRune(tc.alphabet, char) {
-					t.Errorf("RandomString() contains invalid character: %c", char)
-				}
-			}
-		})
+	// 32 bytes base64url encoded without padding should be 43 characters
+	if len(id1) != 43 {
+		t.Errorf("ID() length = %d, want 43", len(id1))
+	}
+
+	_, err := base64.RawURLEncoding.DecodeString(id1)
+	if err != nil {
+		t.Errorf("ID() returned invalid base64url: %v", err)
 	}
 }
 
-func TestNonce(t *testing.T) {
-	n1 := Nonce()
-	n2 := Nonce()
+func TestCSPNonce(t *testing.T) {
+	n1 := CSPNonce()
+	n2 := CSPNonce()
 
 	if n1 == n2 {
-		t.Errorf("Nonce() returned same value twice: %s", n1)
+		t.Errorf("CSPNonce() returned same value twice: %s", n1)
 	}
 
 	// 32 bytes base64 encoded should be 44 characters
 	if len(n1) != 44 {
-		t.Errorf("Nonce() length = %d, want 44", len(n1))
+		t.Errorf("CSPNonce() length = %d, want 44", len(n1))
 	}
 
 	// Verify it's valid base64
 	_, err := base64.StdEncoding.DecodeString(n1)
 	if err != nil {
-		t.Errorf("Nonce() returned invalid base64: %v", err)
+		t.Errorf("CSPNonce() returned invalid base64: %v", err)
 	}
 }
 
@@ -70,14 +55,4 @@ func TestRandomNumericOTP(t *testing.T) {
 			t.Errorf("RandomNumericOTP() contains non-digit character: %c", char)
 		}
 	}
-}
-
-func TestRandomStringPanics(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("The code did not panic")
-		}
-	}()
-
-	RandomString(10, "")
 }

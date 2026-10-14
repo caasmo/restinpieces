@@ -34,8 +34,14 @@ var (
 	ErrOauth2CodeVerifierMismatch = errors.New("invalid oauth2 state token: cv mismatch")
 )
 
-func Oauth2CodeVerifier() string {
-	return RandomString(OauthCodeVerifierMinLength, pkceAlphabet)
+// GenerateOauth2CodeVerifier returns a fresh PKCE code verifier.
+//
+// RFC 7636 §4.1 recommends creating the verifier from 32 random octets and
+// encoding them with base64url, which produces the 43 characters of its
+// minimum length. base64url uses only characters from the unreserved set
+// that PKCE allows, so ID() already returns a valid verifier.
+func GenerateOauth2CodeVerifier() string {
+	return ID()
 }
 
 // S256Challenge creates base64 encoded sha256 challenge string derived from code.

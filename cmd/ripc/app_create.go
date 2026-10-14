@@ -30,11 +30,11 @@ func createApplication(ui UI, secureStore config.SecureStore, db *appDb, dbPath 
 
 	// Generate Default Config Struct
 	defaultCfg := config.NewDefaultConfig()
-	defaultCfg.Jwt.AuthSecret = crypto.RandomString(32, crypto.AlphanumericAlphabet)
-	defaultCfg.Jwt.PasswordResetSecret = crypto.RandomString(32, crypto.AlphanumericAlphabet)
-	defaultCfg.Jwt.EmailChangeOtpSecret = crypto.RandomString(32, crypto.AlphanumericAlphabet)
-	defaultCfg.Jwt.VerificationEmailOtpSecret = crypto.RandomString(32, crypto.AlphanumericAlphabet)
-	defaultCfg.Jwt.Oauth2StateSecret = crypto.RandomString(32, crypto.AlphanumericAlphabet)
+	defaultCfg.Jwt.AuthSecret = crypto.ID()
+	defaultCfg.Jwt.PasswordResetSecret = crypto.ID()
+	defaultCfg.Jwt.EmailChangeOtpSecret = crypto.ID()
+	defaultCfg.Jwt.VerificationEmailOtpSecret = crypto.ID()
+	defaultCfg.Jwt.Oauth2StateSecret = crypto.ID()
 
 	// Marshal Config to TOML
 	tomlBytes, err := toml.Marshal(defaultCfg)

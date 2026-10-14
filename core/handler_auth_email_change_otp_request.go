@@ -127,7 +127,7 @@ func (a *App) RequestEmailChangeOtpHandler(w http.ResponseWriter, r *http.Reques
 		})
 	} else {
 		jobType = handlers.JobTypeDummy
-		randomID := crypto.RandomString(32, crypto.AlphanumericAlphabet)
+		randomID := crypto.ID()
 		payload, _ = json.Marshal(handlers.PayloadDummy{
 			DummyID: randomID,
 		})

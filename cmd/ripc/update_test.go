@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"testing"
@@ -67,15 +68,6 @@ const updateTestConf = `
   oauth2_state_secret = "old"
 `
 
-func isAlphanumeric(s string) bool {
-	for _, c := range s {
-		if (c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && (c < '0' || c > '9') {
-			return false
-		}
-	}
-	return true
-}
-
 func getUpdateTreeFromStore(t *testing.T, store *MockUpdateSecureStore, scope string) *toml.Tree {
 	t.Helper()
 	data, _, err := store.Get(scope, 0)
@@ -132,11 +124,12 @@ func TestUpdate_SingleKey(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected jwt.auth_secret to be string, got %T", fresh)
 	}
-	if len(freshStr) != 32 {
-		t.Errorf("expected fresh secret length 32, got %d", len(freshStr))
+	if len(freshStr) != 43 {
+		t.Errorf("expected fresh secret length 43, got %d", len(freshStr))
 	}
-	if !isAlphanumeric(freshStr) {
-		t.Errorf("expected fresh secret to be alphanumeric, got %q", freshStr)
+	_, decodeErr := base64.RawURLEncoding.DecodeString(freshStr)
+	if decodeErr != nil {
+		t.Errorf("expected fresh secret to be base64url, got %q", freshStr)
 	}
 	if freshStr == "old" {
 		t.Errorf("expected fresh secret to differ from old value")
@@ -202,8 +195,12 @@ func TestUpdate_JwtLabel(t *testing.T) {
 			t.Errorf("expected %s to be string, got %T", path, tree.Get(path))
 			continue
 		}
-		if len(got) != 32 || !isAlphanumeric(got) {
-			t.Errorf("expected %s to be 32-char alphanumeric, got %q", path, got)
+		if len(got) != 43 {
+			t.Errorf("expected %s to be 43 characters, got %q", path, got)
+		}
+		_, decodeErr := base64.RawURLEncoding.DecodeString(got)
+		if decodeErr != nil {
+			t.Errorf("expected %s to be base64url, got %q", path, got)
 		}
 		if got == "old" {
 			t.Errorf("expected %s to be regenerated, still 'old'", path)

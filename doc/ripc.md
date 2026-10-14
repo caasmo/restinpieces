@@ -15,6 +15,7 @@
   - [dump](#dump)
   - [scopes](#scopes)
   - [set](#set-path-value)
+  - [walk](#walk-filter)
   - [add](#add-path-value)
   - [rm](#rm-path-value)
   - [update](#update-label)
@@ -136,6 +137,22 @@ Sets a configuration value at a given path.
 
     ripc set -desc "Update port" server.http_port 8080
 
+### `walk <filter>`
+
+Walks through matching configuration values one at a time.
+
+    ripc walk server
+    ripc walk --scope myapp backup
+
+`filter` is required; only paths containing the filter string are walked, in sorted order. Each step shows the path, the comment above it, and the stored value:
+
+```
+server.addr  (Address the server listens on)
+New value [:8080]:
+```
+
+An empty line keeps the stored value. Any other line replaces it, parsed the same way as `set`: a leading `@` reads the value from a file, otherwise the line is parsed as a TOML value with a quoted string fallback. End of input stops the walk early. With no edits, the command prints `No changes.` and saves nothing. With at least one edit, the result is validated and saved with the description `Walk updates`.
+
 ### `add <path> <value>`
 
 Appends a value to a configuration key that holds several values.
@@ -166,7 +183,7 @@ Removing a stored item brings back the framework default when one exists. For ex
 
 | Label | What it does |
 |-------|----------------|
-| `jwt` | Generates 32-char random secrets that sign auth tokens, password reset links, email change codes, verification mail, and OAuth2 state. |
+| `jwt` | Generates 43-character random secrets that sign auth tokens, password reset links, email change codes, verification mail, and OAuth2 state. |
 | `tls` | Moves the staged `acme.certificate` and `acme.private_key` into the live `server.tls.certificate` and `server.tls.private_key`. |
 | `block_user_agent` | Downloads the upstream bot list into `block_user_agent.agents`. |
 

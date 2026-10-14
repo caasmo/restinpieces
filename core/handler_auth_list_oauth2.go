@@ -56,7 +56,7 @@ func (a *App) ListOAuth2ProvidersHandler(w http.ResponseWriter, r *http.Request)
 		// We ALWAYS generate a high-entropy code_verifier (43-128 chars), regardless
 		// of whether the provider natively supports PKCE. This acts as our backend-enforced
 		// cryptographic nonce to protect our endpoint from CSRF and Confused Deputy attacks.
-		codeVerifier := crypto.Oauth2CodeVerifier()
+		codeVerifier := crypto.GenerateOauth2CodeVerifier()
 
 		// 2. Cryptographic State Binding
 		// The JWT state is strictly bound to the codeVerifier. The client must return

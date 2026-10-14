@@ -7,8 +7,6 @@ import (
 	"math/big"
 )
 
-const AlphanumericAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-
 func RandomNumericOTP() string {
 	max := big.NewInt(1000000)
 	n, err := rand.Int(rand.Reader, max)
@@ -18,37 +16,29 @@ func RandomNumericOTP() string {
 	return fmt.Sprintf("%06d", n.Int64())
 }
 
-func RandomString(length int, alphabet string) string {
-
-	b := make([]byte, length)
-
-	// The crypto/rand.Int() function specifically requires a *big.Int
-	// parameter to define the upper bound of the random number.
-	// big.Int is used in cryptography contexts because it can handle
-	// arbitrarily large integers with precision, which is important for
-	// cryptographic operations.
-	max := big.NewInt(int64(len(alphabet)))
-
-	for i := range b {
-		// The first parameter rand is an io.Reader that provides the random bytes.
-		// Here, cryptoRand.Reader is used, which is a globally shared source of
-		// cryptographic randomness.
-		n, err := rand.Int(rand.Reader, max)
-		if err != nil {
-			// The Go documentation specifically states that the function
-			// returns an error if the random number generator fails, which is
-			// a critical security condition. The error should never be
-			// ignored, as doing so could lead to using predictable values in
-			// security-sensitive contexts.
-			panic(err)
-		}
-		b[i] = alphabet[n.Int64()]
+// randomBytes returns 32 random bytes from the operating system CSPRNG.
+// It panics on failure because a broken entropy source makes every security
+// guarantee in this package void.
+func randomBytes() [32]byte {
+	var b [32]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		panic(err)
 	}
-
-	return string(b)
+	return b
 }
 
-// Nonce generates a cryptographically secure random nonce suitable for use
+// ID returns a 256-bit random identifier encoded with base64.RawURLEncoding.
+// The result is 43 URL-safe characters, suitable for configuration secrets
+// and for any value that must be unique and unguessable.
+//
+// The 32-byte size follows the "Random IDs" advice in
+// https://words.filippo.io/right-answers/.
+func ID() string {
+	b := randomBytes()
+	return base64.RawURLEncoding.EncodeToString(b[:])
+}
+
+// CSPNonce generates a cryptographically secure random nonce suitable for use
 // in Content Security Policy (CSP) script-src and style-src directives.
 //
 // # Standards and Requirements
@@ -95,10 +85,7 @@ func RandomString(length int, alphabet string) string {
 // stdlib conventions for CSPRNG failures: a broken entropy source means the
 // security guarantees of the entire system are void, and continuing execution
 // would be more dangerous than crashing.
-func Nonce() string {
-	b := make([]byte, 32) // 256 bits
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-	return base64.StdEncoding.EncodeToString(b)
+func CSPNonce() string {
+	b := randomBytes()
+	return base64.StdEncoding.EncodeToString(b[:])
 }
