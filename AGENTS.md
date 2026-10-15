@@ -87,6 +87,13 @@ like `BenchmarkLog_InsertBatch_Serial` and `BenchmarkQueue_Claim_Parallel`.
 Benchmark names appear in the comparison reports. Renaming one loses its
 history, so once a benchmark is released, its name stays.
 
+### Naming: never invent a word
+
+Before a word that does not already exist in the project becomes part of a
+name — function, variable, config key, command, or doc term — reuse the
+existing vocabulary. If no existing word fits, ask the user and wait for
+ACK. New names are hated. New vocabulary will be rejected.
+
 ### Docs: writing style
 
 Docs speak to a junior developer or a DevOps operator: plain outcome words, never framework jargon. Say what to do first, then why. Never introduce a new noun when a simple word exists — reaching for a synonym means the sentence needs restructuring, not rewording.

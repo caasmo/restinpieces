@@ -238,6 +238,12 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - workaround: `ripc ... set s3.endpoint '""'` survives the join
 - refs: `scripts/ripdep` (`cmd_ripc`), `cmd/ripc/set.go` (`parseSetArgs`)
 
+# metrics: add a WithMetrics option
+
+- the recorder is the only piece set after `New` (`app.SetMetrics`); give it `WithMetrics(m core.MetricsRecorder)` next to `WithNotifier` — `New` installs no default, so no nil-check
+- the recorder comes from `restinpieces-metrics` in the app's main
+- refs: `options.go`, `core/app.go` (`SetMetrics`, `Metrics`)
+
 # metrics: recovered panics are not recorded
 
 - Recovery answers a panic with a 500 after the metrics middleware has already unwound, so the line after next.ServeHTTP never runs and the response is not recorded
@@ -370,23 +376,161 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - unit needs a writable bind for the key path so the app can unlink it under `ProtectSystem=strict`
 - refs: `config/secure.go` (key re-read per Get/Save), `restinpieces.go` (setupConfig, boot key requirement), `config/reload.go` (SIGHUP needs key), `systemd.service` (ProtectSystem=strict, Restart=on-failure), `scripts/ripdep` (cmd_cp, cmd_restart, cmd_reload, cmd_ripc, cmd_maintenance, cmd_dump), `doc/ripdep.md` (restart/reload/cp contract)
 
-# crypto/rand: ID (256-bit) with base64url or hex, rename randomstring to PKCE or something
-
-- per https://words.filippo.io/right-answers/ §Random IDs: 32 random bytes, a.k.a. 256-bit random numbers
-- add `ID()`: one `crypto/rand.Read` of 32 bytes encoded as base64url or hex (not Std `+/=` like `Nonce()`, not `rand.Text` ~128 bits); share one private 32-byte reader with `Nonce()`
-- `DummyID` and new JWT secrets use `ID()`; stored secrets are opaque strings, so there is no branch for old values
-- deprecate exported `RandomString(length, alphabet)`: mark `// Deprecated:` and move its last internal caller off it — `Oauth2CodeVerifier()` gets its own bulk-`Read` with rejection sampling; anything else needing a custom alphabet gets its own function
-- refs: `crypto/rand.go` (`RandomString`, `Nonce`), `crypto/oauth2.go` (`Oauth2CodeVerifier`, `pkceAlphabet`), `core/handler_auth_password_reset_otp_request.go`, `core/handler_auth_email_change_otp_request.go` (`DummyID`), `cmd/ripc/app_create.go`, `cmd/ripc/update_jwt.go` (secrets)
-
 # crypto/password: concrete setting is we go argin
 
 - per https://words.filippo.io/right-answers/ §Password handling: Argon2id or scrypt, bcrypt dropped for 72-byte truncation
 - `GenerateHash` uses `argon2.IDKey` with time 2, memory 65536 (64 MiB, Go counts KiB), threads 1, key length 32, fresh 16-byte salt from `crypto/rand`, version 19
 - store as `$argon2id$v=19$m=65536,t=2,p=1$<salt>$<hash>` with base64 without padding
+- template (PHC string format): `$argon2id$v=<version>$m=<memory>,t=<time>,p=<threads>$<salt>$<key>` — salt 16 bytes, key 32 bytes, both base64 RawStdEncoding (no padding)
 - `CheckPassword` parses prefix: `$argon2id$` re-runs same params with constant-time compare, `$2a$` falls back to bcrypt so old logins still work
 - replace `DummyPasswordHash` with an Argon2id hash made once with the same numbers so the not-found path costs the same
 - raise the 72-byte top limit (was only for bcrypt), allow up to 128 bytes
 - refs: `crypto/password.go` (`GenerateHash`, `CheckPassword`, `DummyPasswordHash`), `core/validation.go` (`Password`), `golang.org/x/crypto/argon2`
+
+# options: every With function marks itself on the initializer
+
+- `New` checks the app for nil (`Cache()`, `Router()`, `Notifier()`, `Logger()`) to decide whether to install a default; each `With...` should record itself on the initializer instead, e.g. `initializer.with map[<const>]struct{}`
+- the decision belongs to the initializer, not the app; whether a getter is used elsewhere does not matter
+- then add `WithMetrics` and `WithLimiter`
+- refs: `restinpieces.go`, `options.go`
+
+# auth: cap concurrent password verifications
+
+we will offer a factory of ratelimiters app.Limiter
+
+Yes — the App exposes one factory method and everything else stays behind it:
+
+```go
+limiter, err := a.Limiter(PasswordHashing)
+if err != nil {
+    return err
+}
+if !limiter.Limit() {
+    return busy
+}
+```
+
+For password we will have `Limiter(PasswordHashing)`, name `password_hashing`, the TOML key is `limiter.password_hashing`:
+
+```go
+const PasswordHashing = "password_hashing"
+```
+
+- we will follow `core/auth.go`: `core/limiter.go` has an interface and a default implementation with go rate limiter, user can have its own
+- we do not leak `Allow`, we expose `Limit() bool` to be consistent — stutters (`Limiter.Limit`) though but the same as auth (`Auth.Authenticate`)
+- Argon2id allocates 64 MiB per verification, so concurrent verifications multiply RSS (peak ≈ capacity × 64 MiB); a login flood without a cap can exhaust the server memory
+- endpoints that verify passwords call the cap directly from the handler, like `Authenticate()`; no middleware, no route injection
+- `a.Limiter(name)` returns `(Limiter, error)`; a name that is not in `limiter.<name>` is an error, no silent fallback
+
+  ```go
+  type Limiter interface {
+      Limit() bool
+  }
+
+  type Limiters interface {
+      Get(name string) (Limiter, error)
+  }
+
+  type DefaultLimiter struct {
+      limiter *rate.Limiter
+  }
+
+  func (d *DefaultLimiter) Limit() bool {
+      return d.limiter.Allow()
+  }
+
+  type defaultLimiters struct {
+      config   *config.Provider
+      mu       sync.Mutex
+      limiters map[string]Limiter
+  }
+
+  // App owns one Limiters and exposes it through the factory. An undefined
+  // name is an error.
+  func (a *App) Limiter(name string) (Limiter, error) {
+      return a.limiters.Get(name)
+  }
+
+  func (l *defaultLimiters) Get(name string) (Limiter, error) {
+      l.mu.Lock()
+      defer l.mu.Unlock()
+
+      limiter, ok := l.limiters[name]
+      if ok {
+          return limiter, nil
+      }
+
+      entry, ok := l.config.Get().Limiters[name]
+      if !ok {
+          return nil, fmt.Errorf("limiter %q is not defined", name)
+      }
+
+      newLimiter := &DefaultLimiter{
+          limiter: rate.NewLimiter(rate.Every(entry.Limit.Duration), entry.Burst),
+      }
+      l.limiters[name] = newLimiter
+      return newLimiter, nil
+  }
+  ```
+
+  ```go
+  // options.go
+  func WithLimiter(l core.Limiters) Option {
+      return func(i *initializer) { i.app.SetLimiters(l) }
+  }
+  ```
+- naming is horrendous
+- custom concurrency limits are possible from a user's own handlers; framework constants are prefixed `rip_`, so collisions are unlikely, and config validation can reject any `rip_`-prefixed key that is not a known framework constant
+- config shape will be `limiter.<label>` with struct limit and burst:
+
+  ```toml
+  [limiter.password_hashing]
+  limit = '2s'
+  burst = 5
+  ```
+
+  ```go
+  type Limiter struct {
+      Limit Duration `toml:"limit"`
+      Burst int      `toml:"burst"`
+  }
+  ```
+
+- top-level field on `config.Config`: `Limiter Limiter` `toml:"limiter"`
+- validate each `limiter.<label>` entry: both `limit` and `burst` must be positive
+- validation also rejects a duplicate key inside the single `limiter` map
+- `ripc scaffold limiter <key>` refuses a key that already exists, reusing the `ErrScaffoldKeyExists` check in `cmd/ripc/scaffold.go`; the `limiter` section needs a `NewLimitersDefaults()` like the backup sections
+
+- `config/default.go` seeds `limiter.password_hashing` by default; the framework owns that entry
+- `limiter.password_hashing` must not be removable: `ripc rm` only removes paths listed in `removeTableParents`/`removeArrayPaths`, so keep the `limiter` section out of both allowlists (ref `cmd/ripc/remove.go`)
+- rename `cmd/ripc/remove.go` to `cmd/ripc/rm.go` to match the `rm` command name
+
+- ripc:
+
+  ```sh
+  ripc scaffold limiter upload
+  ripc walk limiter.upload
+  ```
+
+- because limit and burst is complicated we can offer a ripc update for password hashing, it gets the memory/cpu from cgroups or something, computes argon run and sets the values
+- or maybe just a `scripts/argon_probe.go` like the other probes to be run in the machine that does it
+- call sites: `core/handler_auth_login_password.go`, `core/handler_auth_register_password.go`, `core/handler_auth_email_change_otp_request.go`, `core/handler_auth_password_reset_otp_confirm.go`, `core/handler_auth_email_verification_otp_request.go`
+- refs: `crypto/password.go` (`CheckPassword`, `GenerateHash`), `core/app.go` (App fields, NewApp), `core/response_precomputed.go` (busy response), `config/config.go` (`Config`, `Limiter`), `config/config_validate.go`, `config/default.go`
+
+# notifier: async delivery daemon
+
+- backends have different throughput — discord, telegram, email, etc.
+- that bookkeeping is not possible with sync: for example trade for aggregation
+- also a notion of importance, to be delivered right away or it can wait, same as slog => levels
+- a standalone async daemon, not even dependent on restinpieces, with `go-daemon-runner` and the discord implementation first
+- async also allows for listening notifiers like telegram to ask for more
+- refs: `notify/`, `notify/discord/discord.go`, `go-daemon-runner`, the `# notify/discord: move rate params to the limiter section` entry below
+
+# notify/discord: move rate params to the limiter section
+
+- drop `config.Discord.APIRateLimit`/`APIBurst` and discord's private `rate.NewLimiter` (`notify/discord/discord.go:53-72`); use `[limiter.discord]` via `const Discord = "discord"` and take the limiter from the app factory
+- seed `limiter.discord` in `config/default.go`
+- refs: `notify/discord/discord.go`, `config/config.go` (`Discord`), `config/default.go`, `restinpieces.go`
 
 # config/secure: move to pq age
 
@@ -396,3 +540,65 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - second age spot: `config/config_validate.go` accepts only `age.ParseX25519Recipient` for `backup.s3-upload` recipients — switch to `ParseHybridRecipient`; `restinpieces-backup/s3/upload/handler.go` encrypts with that recipient and must move in the same change
 - update tests and scripts that make X25519 test keys
 - refs: `config/secure.go` (`loadAndParseIdentities`, `Get`, `Save`), `config/config_validate.go`, `config/backup.go` (`AgeRecipient`), `restinpieces_test.go`, `config/secure_test.go`, `config/config_validate_test.go`, `scripts/smtp_probe.go`, `scripts/s3_probe.go`, `restinpieces-backup/s3/upload/handler.go`, `restinpieces-backup/cmd/s3/download/recover/main.go`
+
+# rate limits: possible refactor from one-per-cooldown to a general interval gate
+
+- instant frame — elements active at the same time
+- interval frame — elements inside a duration
+- lifetime frame — elements ever occurring
+- Yes — two different kinds of gate:
+  - at the same time: `how many concurrent` — max N in flight (e.g. password verification)
+  - in an interval: `how many per window` — max M in N seconds, or today's simpler form, one per cooldown bucket per account/email
+- current `RateLimits` is the second, but only the one-per-bucket variant. It is not yet a general "M per interval".
+- refs: `config/config.go` (`RateLimits`), `queue/queue.go` (`CoolDownBucket`), `sql/schema/app/job_queue.sql` (`idx_job_queue_incomplete`), `core/handler_auth_password_reset_otp_request.go`, `core/handler_auth_email_change_otp_request.go`, `core/handler_auth_email_verification_otp_request.go`, `queue/handlers/password_reset_otp.go`, `queue/handlers/email_change_otp.go`, `queue/handlers/email_verification_otp.go`
+- see also: `# auth: cap concurrent password verifications` above
+- the thins to dfierenciate is those limits are for someting, that something determine the implmenttion of the limit, in case of collodown is the creating of job to send emails, generalizing a concept of limit taht is usable by different use cases will prove mos rprobably not possible,
+- possibility 1:
+
+  ```toml
+  [limiter.password_verify]
+  frame = "instant"
+  max = 8
+
+  [limiter.password_reset_otp]
+  frame = "interval"
+  max = 1
+  window = "1h"
+  ```
+
+  ```go
+  type Limiter struct {
+      Frame  string   `toml:"frame"`
+      Max    int      `toml:"max"`
+      Window Duration `toml:"window"`
+  }
+  ```
+
+- possibility 2:
+
+  ```toml
+  [limiter.instant.password_verify]
+  max = 8
+
+  [limiter.interval.password_reset_otp]
+  max = 1
+  window = "1h"
+
+  [limiter.lifetime.<label>]
+  max = 1000
+  ```
+
+  ```go
+  type Limiter struct {
+      Instant  map[string]LimiterInstant  `toml:"instant"`
+      Interval map[string]LimiterInterval `toml:"interval"`
+      Lifetime map[string]LimiterLifetime `toml:"lifetime"`
+  }
+  ```
+
+- if we go thei "label" route we have to make sure framwork toml paths are not deletable see ripc rm
+- because implmentation is related to the kind of limits, is not generalizable, those colldown are not even to be mixed in configuration with the others, rateLimits just recevive a rename
+
+# config.ratelimits naming is wrong this is colldown protection for email server
+
+consideer if is possible to use genreal Limiter (not) or just naming

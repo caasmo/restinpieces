@@ -35,3 +35,21 @@ Run it from the project home:
 ```sh
 ./s3-probe <bucket>
 ```
+
+## argon_probe
+
+Measures the server and how long one password hash takes, then prints a recommended `limit` and `burst` for the `password_hashing` limiter, at 10%, 30%, 50%, 70% and 90% of the machine. It reads no config, takes no arguments and changes nothing.
+
+```sh
+go build -o /tmp/argon-probe scripts/argon_probe.go
+```
+
+```sh
+./ripdep cp <host> <project> /tmp/argon-probe
+```
+
+Run it on the server:
+
+```sh
+./argon-probe
+```
