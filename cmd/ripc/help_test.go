@@ -275,7 +275,7 @@ func TestPrintUsageFuncs(t *testing.T) {
 				"Scaffolds a new configuration entry",
 				"Arguments:",
 				"type",
-				"Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync, backup-s3-upload, backup-s3-download, oauth2, acme-dns-01 or job)",
+				"Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync, backup-s3-upload, backup-s3-download, oauth2, acme-dns-01, job or limiter)",
 				"key",
 				"Key of the new entry — required backup label",
 				"Scaffold Types:",

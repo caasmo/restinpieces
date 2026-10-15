@@ -103,6 +103,7 @@ func TestRequestEmailChangeOtpHandler_Validation(t *testing.T) {
 				validator:     mockValidator,
 				authenticator: mockAuth,
 				dbAuth:        &mock.Db{},
+				limiters:      &MockLimiters{},
 			}
 
 			app.RequestEmailChangeOtpHandler(rr, req)
@@ -258,6 +259,7 @@ func TestRequestEmailChangeOtpHandler_Logic(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(testConfig),
+				limiters:       &MockLimiters{},
 			}
 
 			app.RequestEmailChangeOtpHandler(rr, req)
@@ -358,6 +360,7 @@ func TestRequestEmailChangeOtpHandler_Failures(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(tc.config),
+				limiters:       &MockLimiters{},
 			}
 
 			app.RequestEmailChangeOtpHandler(rr, req)
@@ -372,5 +375,31 @@ func TestRequestEmailChangeOtpHandler_Failures(t *testing.T) {
 				t.Errorf("expected code %q, got %q", tc.wantCode, code)
 			}
 		})
+	}
+}
+
+func TestRequestEmailChangeOtpHandler_LimiterDenied(t *testing.T) {
+	req := httptest.NewRequest("POST", "/api/request-email-change-otp", strings.NewReader(`{"new_email":"new@example.com","password":"password123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	app := &App{
+		validator: &DefaultValidator{},
+		authenticator: &MockAuth{
+			AuthenticateFunc: func(r *http.Request) (*db.User, jsonResponse, error) {
+				return &db.User{ID: "user123", Email: "old@example.com", Verified: true}, jsonResponse{}, nil
+			},
+		},
+		limiters: &MockLimiters{
+			GetFunc: func(name string) (Limiter, error) {
+				return &MockLimiter{LimitFunc: func() bool { return false }}, nil
+			},
+		},
+	}
+
+	app.RequestEmailChangeOtpHandler(rr, req)
+
+	if rr.Code != errorTooManyRequests.status {
+		t.Errorf("expected status %d, got %d", errorTooManyRequests.status, rr.Code)
 	}
 }

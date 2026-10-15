@@ -175,6 +175,8 @@ Array items are named by value:
 
 Removable tables are `backup.online.<label>`, `backup.vacuum.<label>`, `backup.sqlite-rsync.entries.<label>`, `backup.s3-upload.<label>`, `backup.s3-download.<label>`, `scheduler.jobs.<label>`, `oauth2.<label>` and `acme.dns-01.<label>`. Removable array items are `block_user_agent.agents`, `block_host.allowed_hosts`, `block_oversized_request.excluded_paths` and `acme.domains`. Scalar keys like `server.addr` are refused.
 
+Framework-owned entries such as `limiter.<label>` are refused as well.
+
 Removing a stored item brings back the framework default when one exists. For example, `block_oversized_request.excluded_paths` returns to `/api/upload` and `/api/import`. To keep an array empty instead, set it to an empty array with `ripc set block_oversized_request.excluded_paths "[]"`.
 
 ### `update <label>`
@@ -211,6 +213,7 @@ After scaffolding, `ripc walk <path>` shows each field of the new section one at
 | `oauth2` | `oauth2.<label>` | OAuth2 provider |
 | `acme-dns-01` | `acme.dns-01.<label>` | DNS-01 challenge (Cloudflare, [restinpieces-acme](https://github.com/caasmo/restinpieces-acme)) |
 | `job` | `scheduler.jobs.<label>` | Job that runs on a schedule |
+| `limiter` | `limiter.<label>` | Rate limiter with `limit` and `burst` |
 
 **Example: configure backup of type `sqlite-rsync` for application SQLite file `/tmp/app.db`**
 

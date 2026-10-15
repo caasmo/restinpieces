@@ -230,3 +230,21 @@ func TestConfig_UnmarshalIgnoresRemovedStartTLS(t *testing.T) {
 		t.Fatalf("Unmarshal() with removed use_start_tls key failed: %v", err)
 	}
 }
+
+func TestConfigLimiterDuplicateKeyRejected(t *testing.T) {
+	stored := []byte(`
+[limiter.password_hashing]
+limit = '2s'
+burst = 5
+
+[limiter.password_hashing]
+limit = '1s'
+burst = 1
+`)
+
+	cfg := NewDefaultConfig()
+	err := toml.Unmarshal(stored, cfg)
+	if err == nil {
+		t.Fatal("expected an error for a duplicate limiter key")
+	}
+}

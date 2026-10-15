@@ -65,6 +65,9 @@ func Validate(cfg *Config) error {
 	if err := validateS3(&cfg.S3); err != nil {
 		return fmt.Errorf("s3 config validation failed: %w", err)
 	}
+	if err := validateLimiters(cfg.Limiter); err != nil {
+		return fmt.Errorf("limiter config validation failed: %w", err)
+	}
 	if err := ValidateJobs(cfg.Scheduler.Jobs); err != nil {
 		return fmt.Errorf("scheduler jobs config validation failed: %w", err)
 	}

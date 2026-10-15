@@ -96,6 +96,12 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	limiter, _ := a.Limiter(PasswordHashing)
+	if !limiter.Limit() {
+		WriteJsonError(w, errorTooManyRequests)
+		return
+	}
+
 	// Always hash, every code path — including when the email already exists.
 	// Skipping the hash on conflict would make that path faster, leaking
 	// email existence via response timing.

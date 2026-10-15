@@ -178,3 +178,37 @@ func TestNewDefaultConfigServerHTTP2Defaults(t *testing.T) {
 		t.Errorf("Server.MaxConcurrentStreams: got %d, want 32", cfg.Server.MaxConcurrentStreams)
 	}
 }
+
+func TestNewLimiterEntryDefaults(t *testing.T) {
+	entry := NewLimiterEntryDefaults()
+
+	if entry.Limit.Duration != 2*time.Second {
+		t.Errorf("Limit = %v, want 2s", entry.Limit.Duration)
+	}
+	if entry.Burst != 5 {
+		t.Errorf("Burst = %d, want 5", entry.Burst)
+	}
+}
+
+func TestNewLimitersDefaults(t *testing.T) {
+	limiters := NewLimitersDefaults()
+
+	entry, ok := limiters["password_hashing"]
+	if !ok {
+		t.Fatal("Limiters does not contain password_hashing")
+	}
+	if entry.Limit.Duration != 2*time.Second {
+		t.Errorf("password_hashing limit = %v, want 2s", entry.Limit.Duration)
+	}
+	if entry.Burst != 5 {
+		t.Errorf("password_hashing burst = %d, want 5", entry.Burst)
+	}
+}
+
+func TestNewDefaultConfigSeedsPasswordHashing(t *testing.T) {
+	cfg := NewDefaultConfig()
+
+	if _, ok := cfg.Limiter["password_hashing"]; !ok {
+		t.Fatal("NewDefaultConfig().Limiter does not contain password_hashing")
+	}
+}

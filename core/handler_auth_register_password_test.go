@@ -70,6 +70,7 @@ func TestRegisterWithPasswordHandler_Validation(t *testing.T) {
 
 			app := &App{
 				validator: &DefaultValidator{},
+				limiters:  &MockLimiters{},
 			}
 
 			app.RegisterWithPasswordHandler(rr, req)
@@ -220,6 +221,7 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 				validator: &DefaultValidator{},
 				dbAuth:    mockDb,
 				dbQueue:   mockDb,
+				limiters:  &MockLimiters{},
 			}
 
 			app.RegisterWithPasswordHandler(rr, req)
@@ -281,6 +283,7 @@ func TestRegisterWithPasswordHandler_DependencyFailures(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(tc.config),
+				limiters:       &MockLimiters{},
 			}
 
 			app.RegisterWithPasswordHandler(rr, req)
@@ -301,5 +304,26 @@ func TestRegisterWithPasswordHandler_DependencyFailures(t *testing.T) {
 				t.Errorf("expected error code %q, got %q", wantBody["code"], gotBody["code"])
 			}
 		})
+	}
+}
+
+func TestRegisterWithPasswordHandler_LimiterDenied(t *testing.T) {
+	req := httptest.NewRequest("POST", "/register-with-password", strings.NewReader(`{"identity":"new@example.com", "password":"password123", "password_confirm":"password123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	app := &App{
+		validator: &DefaultValidator{},
+		limiters: &MockLimiters{
+			GetFunc: func(name string) (Limiter, error) {
+				return &MockLimiter{LimitFunc: func() bool { return false }}, nil
+			},
+		},
+	}
+
+	app.RegisterWithPasswordHandler(rr, req)
+
+	if rr.Code != errorTooManyRequests.status {
+		t.Errorf("expected status %d, got %d", errorTooManyRequests.status, rr.Code)
 	}
 }

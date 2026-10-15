@@ -123,6 +123,7 @@ func TestRequestEmailVerificationOtpHandler_Validation(t *testing.T) {
 			app := &App{
 				validator: mockValidator,
 				dbAuth:    &mockDbApp{},
+				limiters:  &MockLimiters{},
 			}
 
 			app.RequestEmailVerificationOtpHandler(rr, req)
@@ -295,6 +296,7 @@ func TestRequestEmailVerificationOtpHandler_RequestLogic(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(testConfig),
+				limiters:       &MockLimiters{},
 			}
 
 			app.RequestEmailVerificationOtpHandler(rr, req)
@@ -399,6 +401,7 @@ func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(tc.config),
+				limiters:       &MockLimiters{},
 			}
 
 			app.RequestEmailVerificationOtpHandler(rr, req)
@@ -419,5 +422,33 @@ func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 				t.Errorf("expected error code %q, got %q", wantBody["code"], gotBody["code"])
 			}
 		})
+	}
+}
+
+func TestRequestEmailVerificationOtpHandler_LimiterDenied(t *testing.T) {
+	req := httptest.NewRequest("POST", "/request-email-otp-verification", strings.NewReader(`{"email":"test@example.com","password":"password123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	dbMock := &mock.Db{
+		GetUserByEmailFunc: func(email string) (*db.User, error) {
+			return &db.User{ID: "user123", Email: "test@example.com", Verified: false}, nil
+		},
+	}
+
+	app := &App{
+		validator: &DefaultValidator{},
+		dbAuth:    dbMock,
+		limiters: &MockLimiters{
+			GetFunc: func(name string) (Limiter, error) {
+				return &MockLimiter{LimitFunc: func() bool { return false }}, nil
+			},
+		},
+	}
+
+	app.RequestEmailVerificationOtpHandler(rr, req)
+
+	if rr.Code != errorTooManyRequests.status {
+		t.Errorf("expected status %d, got %d", errorTooManyRequests.status, rr.Code)
 	}
 }

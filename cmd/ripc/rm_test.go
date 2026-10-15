@@ -90,6 +90,10 @@ const rmTestConf = `
   activated = true
   # Hosts allowed to reach the app
   allowed_hosts = ["example.com"]
+
+[limiter.password_hashing]
+  limit = "2s"
+  burst = 5
 `
 
 func TestParseRmArgs(t *testing.T) {
@@ -339,5 +343,17 @@ func TestHandleRmCommand_Help(t *testing.T) {
 	}
 	if stderr.Len() != 0 {
 		t.Errorf("expected empty stderr, got: %q", stderr.String())
+	}
+}
+
+func TestRmValue_Failure_LimiterPath(t *testing.T) {
+	scope := "app"
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := removeValue(ui, mockStore, scope, "", "limiter.password_hashing", "")
+	if !errors.Is(err, ErrNotCollection) {
+		t.Fatalf("expected error to wrap %v, but got %v", ErrNotCollection, err)
 	}
 }

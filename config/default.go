@@ -173,6 +173,7 @@ func NewDefaultConfig() *Config {
 		Cache: Cache{
 			Level: "medium",
 		},
+		Limiter: NewLimitersDefaults(),
 	}
 }
 
@@ -262,4 +263,21 @@ func NewJobEntryDefaults() JobEntry {
 // scaffold.
 func NewJobsDefaults() Jobs {
 	return Jobs{}
+}
+
+// NewLimiterEntryDefaults returns a limiter entry with default values for use
+// by ripc scaffold.
+func NewLimiterEntryDefaults() LimiterEntry {
+	return LimiterEntry{
+		Limit: Duration{Duration: 2 * time.Second},
+		Burst: 5,
+	}
+}
+
+// NewLimitersDefaults returns the limiter section with the framework's own
+// entry. Other entries are created via ripc scaffold.
+func NewLimitersDefaults() Limiter {
+	return Limiter{
+		"password_hashing": NewLimiterEntryDefaults(),
+	}
 }

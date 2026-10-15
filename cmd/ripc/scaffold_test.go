@@ -538,3 +538,49 @@ func TestScaffoldConfigValue_RefusesInvalidConfig(t *testing.T) {
 		t.Errorf("expected no save on invalid config, got %d saves", len(mockStore.saveHistory))
 	}
 }
+
+func TestScaffoldConfigValue_Limiter(t *testing.T) {
+	scope := config.ScopeApplication
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeLimiter, "upload")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tree := getTreeFromStore(t, mockStore, scope)
+	if !tree.Has("limiter.upload") {
+		t.Fatal("expected limiter.upload to be scaffolded")
+	}
+	if !tree.Has("limiter.password_hashing") {
+		t.Fatal("expected the limiter section defaults to contain password_hashing")
+	}
+
+	subtree, ok := tree.Get("limiter.upload").(*toml.Tree)
+	if !ok {
+		t.Fatal("expected a subtree at limiter.upload")
+	}
+	if got := subtree.Get("limit"); got != "2s" {
+		t.Errorf("expected limit %q, got %v", "2s", got)
+	}
+	if got := subtree.Get("burst"); got != int64(5) {
+		t.Errorf("expected burst 5, got %v", got)
+	}
+	if !strings.Contains(stderr.String(), "ripc walk limiter.upload") {
+		t.Errorf("expected next steps command, got %q", stderr.String())
+	}
+}
+
+func TestScaffoldConfigValue_LimiterKeyExists(t *testing.T) {
+	scope := config.ScopeApplication
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeLimiter, "password_hashing")
+	if !errors.Is(err, ErrScaffoldKeyExists) {
+		t.Fatalf("expected error to wrap %v, but got %v", ErrScaffoldKeyExists, err)
+	}
+}

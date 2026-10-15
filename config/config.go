@@ -39,6 +39,7 @@ type Config struct {
 	Acme                   Acme                   `toml:"acme" comment:"ACME certificate settings"`
 	Cache                  Cache                  `toml:"cache" comment:"Cache system settings"`
 	S3                     S3                     `toml:"s3" comment:"S3 object storage settings"`
+	Limiter                Limiter                `toml:"limiter" comment:"Rate limiter settings"`
 }
 
 // Cache contains settings for the cache system.

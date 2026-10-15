@@ -79,6 +79,12 @@ func (a *App) RequestEmailChangeOtpHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	limiter, _ := a.Limiter(PasswordHashing)
+	if !limiter.Limit() {
+		WriteJsonError(w, errorTooManyRequests)
+		return
+	}
+
 	if !crypto.CheckPassword(req.Password, user.Password) {
 		WriteJsonError(w, errorInvalidCredentials)
 		return

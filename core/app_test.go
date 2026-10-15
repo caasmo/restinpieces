@@ -39,6 +39,9 @@ func TestAppInitialization(t *testing.T) {
 	if app.Validator() != nil {
 		t.Error("expected Validator to be nil on initialization")
 	}
+	if app.limiters != nil {
+		t.Error("expected limiters to be nil on initialization")
+	}
 	// configProvider is not checked because Config() would panic.
 	// Its test is separate.
 }
@@ -57,6 +60,7 @@ func TestAppSettersAndGetters(t *testing.T) {
 	mockAuthenticator := &MockAuth{}
 	mockValidator := &MockValidator{}
 	mockProvider := config.NewProvider(&config.Config{})
+	mockLimiters := &MockLimiters{}
 
 	testCases := []struct {
 		name     string
@@ -111,6 +115,12 @@ func TestAppSettersAndGetters(t *testing.T) {
 			setter:   func() { app.SetConfigProvider(mockProvider) },
 			getter:   func() interface{} { return app.configProvider },
 			expected: mockProvider,
+		},
+		{
+			name:     "Limiters",
+			setter:   func() { app.SetLimiters(mockLimiters) },
+			getter:   func() interface{} { return app.limiters },
+			expected: mockLimiters,
 		},
 	}
 

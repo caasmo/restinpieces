@@ -95,6 +95,12 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		passwordHash = user.Password
 	}
 
+	limiter, _ := a.Limiter(PasswordHashing)
+	if !limiter.Limit() {
+		WriteJsonError(w, errorTooManyRequests)
+		return
+	}
+
 	// Always runs — see timing attack doc above.
 	passwordValid := crypto.CheckPassword(req.Password, passwordHash)
 

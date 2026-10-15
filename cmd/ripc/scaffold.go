@@ -26,9 +26,10 @@ const (
 	ScaffoldTypeOAuth2            = "oauth2"
 	ScaffoldTypeAcmeDNS01         = "acme-dns-01"
 	ScaffoldTypeJob               = "job"
+	ScaffoldTypeLimiter           = "limiter"
 )
 
-var knownScaffoldTypes = []string{ScaffoldTypeBackupOnline, ScaffoldTypeBackupVacuum, ScaffoldTypeBackupSqliteRsync, ScaffoldTypeBackupS3Upload, ScaffoldTypeBackupS3Download, ScaffoldTypeOAuth2, ScaffoldTypeAcmeDNS01, ScaffoldTypeJob}
+var knownScaffoldTypes = []string{ScaffoldTypeBackupOnline, ScaffoldTypeBackupVacuum, ScaffoldTypeBackupSqliteRsync, ScaffoldTypeBackupS3Upload, ScaffoldTypeBackupS3Download, ScaffoldTypeOAuth2, ScaffoldTypeAcmeDNS01, ScaffoldTypeJob, ScaffoldTypeLimiter}
 
 func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}, sectionDefaults interface{}, err error) {
 	switch scaffoldType {
@@ -48,6 +49,8 @@ func scaffoldDefaults(scaffoldType string) (tomlKey string, defaults interface{}
 		return "acme.dns-01", config.NewAcmeDNS01EntryDefaults(), config.NewAcmeDefaults(), nil
 	case ScaffoldTypeJob:
 		return "scheduler.jobs", config.NewJobEntryDefaults(), nil, nil
+	case ScaffoldTypeLimiter:
+		return "limiter", config.NewLimiterEntryDefaults(), config.NewLimitersDefaults(), nil
 	default:
 		return "", nil, nil, fmt.Errorf("%w: '%s'. Known types: %s", ErrScaffoldTypeUnknown, scaffoldType, strings.Join(knownScaffoldTypes, ", "))
 	}
@@ -147,10 +150,10 @@ func scaffoldDeactivate(tomlKey string, label string) string {
 func printScaffoldUsage(w io.Writer) {
 	help := Spec{
 		Usage:       "scaffold [options] <type> <key>",
-		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key>, backup.sqlite-rsync.entries.<key>, backup.s3-upload.<key>, backup.s3-download.<key>, acme.dns-01.<key> or scheduler.jobs.<key>; use a best-practice label that reveals what the entry is for (e.g. app-online, analytics-vacuum, app-rsync, my_cf).",
+		Description: "Scaffolds a new configuration entry with sensible defaults under the given type and key. Requires the parent config section to exist — run 'migrate' first if needed. The key is required and becomes backup.online.<key>, backup.vacuum.<key>, backup.sqlite-rsync.entries.<key>, backup.s3-upload.<key>, backup.s3-download.<key>, acme.dns-01.<key>, scheduler.jobs.<key> or limiter.<key>; use a best-practice label that reveals what the entry is for (e.g. app-online, analytics-vacuum, app-rsync, my_cf, upload).",
 		Args: []ArgSpec{
-			{"type", "Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync, backup-s3-upload, backup-s3-download, oauth2, acme-dns-01 or job)"},
-			{"key", "Key of the new entry — required backup label, acme dns-01 label or job label, e.g. app-online, app-rsync, my_cf, acme_cert"},
+			{"type", "Scaffold type (backup-online, backup-vacuum, backup-sqlite-rsync, backup-s3-upload, backup-s3-download, oauth2, acme-dns-01, job or limiter)"},
+			{"key", "Key of the new entry — required backup label, acme dns-01 label, job label or limiter label, e.g. app-online, app-rsync, my_cf, acme_cert, upload"},
 		},
 		Subcommands: []SubcommandGroup{
 			{
@@ -164,6 +167,7 @@ func printScaffoldUsage(w io.Writer) {
 					{"oauth2", "Scaffold an oauth2 entry"},
 					{"acme-dns-01", "Scaffold an acme.dns-01 entry for the DNS-01 challenge"},
 					{"job", "Scaffold a scheduler.jobs entry for a job that runs on a schedule"},
+					{"limiter", "Scaffold a limiter entry with limit and burst"},
 				},
 			},
 		},
@@ -179,6 +183,7 @@ func printScaffoldUsage(w io.Writer) {
 			"ripc scaffold oauth2 my_google",
 			"ripc scaffold acme-dns-01 my_cf",
 			"ripc scaffold job acme_cert",
+			"ripc scaffold limiter upload",
 		},
 	}
 	help.Print(w, prog)

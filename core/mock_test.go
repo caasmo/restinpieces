@@ -94,3 +94,30 @@ func (m *MockRouter) HandleFunc(path string, handler func(http.ResponseWriter, *
 func (m *MockRouter) ServeHTTP(w http.ResponseWriter, r *http.Request)                         {}
 func (m *MockRouter) Param(req *http.Request, key string) string                               { return "" }
 func (m *MockRouter) Register(chains router.Chains)                                            {}
+
+// MockLimiter implements the Limiter interface for testing.
+type MockLimiter struct {
+	// LimitFunc allows customizing the decision. The default allows the call.
+	LimitFunc func() bool
+}
+
+func (m *MockLimiter) Limit() bool {
+	if m.LimitFunc != nil {
+		return m.LimitFunc()
+	}
+	return true
+}
+
+// MockLimiters implements the Limiters interface for testing.
+type MockLimiters struct {
+	// GetFunc allows customizing the lookup. The default returns an allowing
+	// MockLimiter.
+	GetFunc func(name string) (Limiter, error)
+}
+
+func (m *MockLimiters) Get(name string) (Limiter, error) {
+	if m.GetFunc != nil {
+		return m.GetFunc(name)
+	}
+	return &MockLimiter{}, nil
+}

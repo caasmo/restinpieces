@@ -100,6 +100,7 @@ func TestAuthWithPasswordHandler_Validation(t *testing.T) {
 			app := &App{
 				validator: mockValidator,
 				dbAuth:    &mockDbApp{},
+				limiters:  &MockLimiters{},
 			}
 
 			app.AuthWithPasswordHandler(rr, req)
@@ -256,6 +257,7 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 						AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
 					},
 				}),
+				limiters: &MockLimiters{},
 			}
 
 			app.AuthWithPasswordHandler(rr, req)
@@ -345,6 +347,7 @@ func TestAuthWithPasswordHandler_DependencyFailures(t *testing.T) {
 				validator:      &DefaultValidator{},
 				dbAuth:         mockDb,
 				configProvider: config.NewProvider(tc.config),
+				limiters:       &MockLimiters{},
 			}
 
 			app.AuthWithPasswordHandler(rr, req)
@@ -365,5 +368,35 @@ func TestAuthWithPasswordHandler_DependencyFailures(t *testing.T) {
 				t.Errorf("expected error code %q, got %q", wantBody["code"], gotBody["code"])
 			}
 		})
+	}
+}
+
+func TestAuthWithPasswordHandler_LimiterDenied(t *testing.T) {
+	req := httptest.NewRequest("POST", "/auth-with-password", strings.NewReader(`{"identity":"test@example.com", "password":"password123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	app := &App{
+		validator: &DefaultValidator{},
+		dbAuth:    &mock.Db{},
+		limiters: &MockLimiters{
+			GetFunc: func(name string) (Limiter, error) {
+				return &MockLimiter{LimitFunc: func() bool { return false }}, nil
+			},
+		},
+	}
+
+	app.AuthWithPasswordHandler(rr, req)
+
+	if rr.Code != errorTooManyRequests.status {
+		t.Errorf("expected status %d, got %d", errorTooManyRequests.status, rr.Code)
+	}
+
+	var body map[string]interface{}
+	if err := json.NewDecoder(rr.Body).Decode(&body); err != nil {
+		t.Fatalf("failed to decode response body: %v", err)
+	}
+	if body["code"] != CodeErrorTooManyRequests {
+		t.Errorf("expected error code %q, got %q", CodeErrorTooManyRequests, body["code"])
 	}
 }

@@ -96,6 +96,7 @@ func TestConfirmPasswordResetOtpHandler_Validation(t *testing.T) {
 			app := &App{
 				validator: mockValidator,
 				dbAuth:    &mock.Db{},
+				limiters:  &MockLimiters{},
 			}
 
 			app.ConfirmPasswordResetOtpHandler(rr, req)
@@ -228,6 +229,7 @@ func TestConfirmPasswordResetOtpHandler_Logic(t *testing.T) {
 				validator:      &DefaultValidator{},
 				dbAuth:         mockDb,
 				configProvider: config.NewProvider(testConfig),
+				limiters:       &MockLimiters{},
 			}
 
 			app.ConfirmPasswordResetOtpHandler(rr, req)
@@ -287,6 +289,7 @@ func TestConfirmPasswordResetOtpHandler_Failures(t *testing.T) {
 				validator:      &DefaultValidator{},
 				dbAuth:         mockDb,
 				configProvider: config.NewProvider(&config.Config{Jwt: config.Jwt{PasswordResetSecret: secret}}),
+				limiters:       &MockLimiters{},
 			}
 
 			app.ConfirmPasswordResetOtpHandler(rr, req)
@@ -295,5 +298,43 @@ func TestConfirmPasswordResetOtpHandler_Failures(t *testing.T) {
 				t.Errorf("%s: expected status %d, got %d", tc.name, tc.wantStatus, rr.Code)
 			}
 		})
+	}
+}
+
+func TestConfirmPasswordResetOtpHandler_LimiterDenied(t *testing.T) {
+	secret := "test_secret_32_bytes_long_xxxxxx"
+	email := "test@example.com"
+	oldPasswordHash, _ := crypto.GenerateHash("old-password")
+	token, _ := crypto.NewJwtPasswordResetToken("user123", email, string(oldPasswordHash), secret, time.Minute)
+
+	req := httptest.NewRequest("POST", "/confirm-password-reset-otp", strings.NewReader(`{"token":"`+token+`","password":"NewPassword123!","password_confirm":"NewPassword123!"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	dbMock := &mock.Db{
+		GetUserByIdFunc: func(id string) (*db.User, error) {
+			return &db.User{ID: "user123", Email: email, Password: string(oldPasswordHash)}, nil
+		},
+	}
+
+	app := &App{
+		validator: &DefaultValidator{},
+		dbAuth:    dbMock,
+		configProvider: config.NewProvider(&config.Config{
+			Jwt: config.Jwt{
+				PasswordResetSecret: secret,
+			},
+		}),
+		limiters: &MockLimiters{
+			GetFunc: func(name string) (Limiter, error) {
+				return &MockLimiter{LimitFunc: func() bool { return false }}, nil
+			},
+		},
+	}
+
+	app.ConfirmPasswordResetOtpHandler(rr, req)
+
+	if rr.Code != errorTooManyRequests.status {
+		t.Errorf("expected status %d, got %d", errorTooManyRequests.status, rr.Code)
 	}
 }

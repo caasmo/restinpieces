@@ -104,6 +104,12 @@ func (a *App) ConfirmPasswordResetOtpHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	limiter, _ := a.Limiter(PasswordHashing)
+	if !limiter.Limit() {
+		WriteJsonError(w, errorTooManyRequests)
+		return
+	}
+
 	// 4. Update Database
 	hashedPassword, err := crypto.GenerateHash(req.Password)
 	if err != nil {

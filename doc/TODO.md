@@ -502,8 +502,7 @@ const PasswordHashing = "password_hashing"
 - `ripc scaffold limiter <key>` refuses a key that already exists, reusing the `ErrScaffoldKeyExists` check in `cmd/ripc/scaffold.go`; the `limiter` section needs a `NewLimitersDefaults()` like the backup sections
 
 - `config/default.go` seeds `limiter.password_hashing` by default; the framework owns that entry
-- `limiter.password_hashing` must not be removable: `ripc rm` only removes paths listed in `removeTableParents`/`removeArrayPaths`, so keep the `limiter` section out of both allowlists (ref `cmd/ripc/remove.go`)
-- rename `cmd/ripc/remove.go` to `cmd/ripc/rm.go` to match the `rm` command name
+- `limiter.password_hashing` must not be removable: `ripc rm` only removes paths listed in `removeTableParents`/`removeArrayPaths`, so keep the `limiter` section out of both allowlists (ref `cmd/ripc/rm.go`)
 
 - ripc:
 

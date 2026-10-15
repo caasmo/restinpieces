@@ -35,6 +35,7 @@ type App struct {
 	authenticator Authenticator
 	validator     Validator
 	metrics       MetricsRecorder
+	limiters      Limiters
 }
 
 // Router returns the application's router instance
@@ -142,4 +143,15 @@ func (a *App) SetValidator(v Validator) {
 // Validator returns the validator instance
 func (a *App) Validator() Validator {
 	return a.validator
+}
+
+// SetLimiters sets the limiter registry implementation
+func (a *App) SetLimiters(l Limiters) {
+	a.limiters = l
+}
+
+// Limiter returns the limiter registered under name. An undefined name is an
+// error.
+func (a *App) Limiter(name string) (Limiter, error) {
+	return a.limiters.Get(name)
 }

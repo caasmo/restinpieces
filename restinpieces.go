@@ -106,6 +106,7 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	// Setup authenticator and validator
 	init.app.SetAuthenticator(core.NewDefaultAuthenticator(init.app.DbAuth(), init.app.Logger(), configProvider))
 	init.app.SetValidator(core.NewValidator())
+	init.app.SetLimiters(core.NewDefaultLimiters(configProvider))
 
 	// Setup custom routes
 	route(cfg, init.app)

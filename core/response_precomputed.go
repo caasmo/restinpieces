@@ -86,6 +86,7 @@ var (
 	errorEmailVerificationOtpAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationOtpAlreadyRequested, "Email verification code already requested. Please check your inbox.")
 	errorPasswordHashingFailed                = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordHashingFailed, "Failed to hash password")
 	errorServiceUnavailable                   = PrecomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
+	errorTooManyRequests                      = PrecomputeBasicResponse(http.StatusTooManyRequests, CodeErrorTooManyRequests, "Too many requests, please try again later")
 	errorNoAuthHeader                         = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")
 	errorJwtInvalidSignMethod                 = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtInvalidSignMethod, "Invalid JWT signing method")
 	errorJwtTokenExpired                      = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorJwtTokenExpired, "Authentication token has expired")
