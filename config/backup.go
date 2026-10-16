@@ -147,9 +147,10 @@ type BackupS3UploadEntry struct {
 	// chosen. Only "latest" is supported.
 	PathPrefixSelector string `toml:"path_prefix_selector" comment:"Selects which file matching path_prefix is uploaded; only 'latest' is supported"`
 
-	// AgeRecipient is the age public key the file is encrypted to
-	// before upload. Empty string uploads the file unchanged.
-	AgeRecipient string `toml:"age_recipient" comment:"age public key to encrypt to, e.g. 'age1...'. Empty uploads unencrypted."`
+	// AgeRecipient is the post-quantum age public key the file is
+	// encrypted to before upload. Empty string uploads the file
+	// unchanged.
+	AgeRecipient string `toml:"age_recipient" comment:"age public key to encrypt to, e.g. 'age1pq1...'. Empty uploads unencrypted."`
 }
 
 // BackupS3Download holds the S3 download entries. Each entry is keyed by a

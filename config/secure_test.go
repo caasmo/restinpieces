@@ -14,7 +14,7 @@ import (
 // and returns the path to the file.
 func newTestKey(t *testing.T) string {
 	t.Helper()
-	key, err := age.GenerateX25519Identity()
+	key, err := age.GenerateHybridIdentity()
 	if err != nil {
 		t.Fatalf("Failed to generate key: %v", err)
 	}
@@ -183,4 +183,22 @@ func TestLoadAndParseIdentities_Failures(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("X25519 Key", func(t *testing.T) {
+		key, err := age.GenerateX25519Identity()
+		if err != nil {
+			t.Fatal(err)
+		}
+		tempDir := t.TempDir()
+		keyPath := filepath.Join(tempDir, "key.txt")
+		writeErr := os.WriteFile(keyPath, []byte(key.String()), 0600)
+		if writeErr != nil {
+			t.Fatalf("Failed to write key file: %v", writeErr)
+		}
+
+		_, err = loadAndParseIdentities(keyPath, "test")
+		if err == nil {
+			t.Error("loadAndParseIdentities() expected an error for an X25519 key, but got nil")
+		}
+	})
 }

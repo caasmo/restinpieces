@@ -316,7 +316,7 @@ func validateBackupLabel(labels map[string]string, table, label string) error {
 // age recipient must be a valid key when set.
 func validateBackupS3Upload(key string, e BackupS3UploadEntry) error {
 	if e.AgeRecipient != "" {
-		_, err := age.ParseX25519Recipient(e.AgeRecipient)
+		_, err := age.ParseHybridRecipient(e.AgeRecipient)
 		if err != nil {
 			return fmt.Errorf("s3-upload.%s.age_recipient is not a valid age recipient: %w", key, err)
 		}

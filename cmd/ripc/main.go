@@ -73,7 +73,7 @@ func run(args []string, output io.Writer) error {
 	fs.SetOutput(output)
 
 	// Global flags
-	ageIdentityPathFlag := fs.String("agekey", os.Getenv("RIPC_AGE_KEY_PATH"), "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')")
+	ageIdentityPathFlag := fs.String("agekey", os.Getenv("RIPC_AGE_KEY_PATH"), "Path to the age identity file (private key 'AGE-SECRET-KEY-PQ-1...')")
 	dbPathFlag := fs.String("dbpath", os.Getenv("RIPC_DB"), "Path to the SQLite database file")
 
 	fs.Usage = func() {
@@ -81,7 +81,7 @@ func run(args []string, output io.Writer) error {
 			Usage:       "[global options] <command> [command-specific options]",
 			Description: "A tool for managing the Rip application, including configuration, authentication, and jobs.",
 			GlobalOptions: []OptSpec{
-				{Name: "agekey", Meta: "string", Usage: "Path to the age identity file (private key 'AGE-SECRET-KEY-1...')"},
+				{Name: "agekey", Meta: "string", Usage: "Path to the age identity file (private key 'AGE-SECRET-KEY-PQ-1...')"},
 				{Name: "dbpath", Meta: "string", Usage: "Path to the SQLite database file"},
 			},
 			Subcommands: []SubcommandGroup{

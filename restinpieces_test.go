@@ -19,11 +19,12 @@ import (
 
 // --- Test Helpers ---
 
-// newTestAgeIdentity creates a new age identity and saves the private key to a
-// temporary file. It returns the identity and the path to the key file.
-func newTestAgeIdentity(t *testing.T) (*age.X25519Identity, string) {
+// newTestAgeIdentity creates a new post-quantum age identity and saves the
+// private key to a temporary file. It returns the identity and the path to
+// the key file.
+func newTestAgeIdentity(t *testing.T) (*age.HybridIdentity, string) {
 	t.Helper()
-	key, err := age.GenerateX25519Identity()
+	key, err := age.GenerateHybridIdentity()
 	if err != nil {
 		t.Fatalf("Failed to generate age key: %v", err)
 	}

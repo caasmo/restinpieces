@@ -137,8 +137,6 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
         - users of secureConfig: create the secure config?
             -  we still need dbconfig
         - dbConfig
-- add prometheus.
-- s3 integration
 - ETag or Last-Modified: Enables efficient cache validation for performance. -> no: user
     - no we are talking about html.
     - at most a weak etag like deploy tag
@@ -190,18 +188,6 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 
 - migrate from `encoding/json` to `encoding/json/v2` (`go 1.25.0` in `go.mod`)
 - refs: `core/auth.go`, `db/types.go`, `db/databasesql/queue.go`, `oauth2/oauth2.go`, `log/daemon.go`, `notify/discord/discord.go`, `queue/handlers/`
-
-# config: remove the exported ValidateBackup
-
-- `ValidateBackup` is exported only so the restinpieces-backup daemons can validate their `[backup]` section on their own
-- the framework owns the shape and its validation, so the section validator should not be part of the public API
-- decide the replacement before changing the call sites: validate through the framework's `Validate`, or through a loader that validates the section
-- refs: `config/config_validate.go`, `config/backup.go`, `restinpieces-backup/cmd/vacuum/daemon/main.go`, `restinpieces-backup/sqlitersync/origin/daemon.go`
-
-# ripc log tail: create filter for tail as argument it matches message field
-
-- `ripc log tail [message]` filters by the `message` column (exact match, e.g. `http_request`)
-- refs: `cmd/ripc/log_command.go`, `cmd/ripc/log_tail.go`, `cmd/ripc/sql.go`, `sql/schema/log/logs.sql`
 
 # ripc: log search for searching logs for pattern
 
@@ -269,7 +255,6 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - option 1: keep the interfaces and remove the restinpieces use from the standalone paths — copy the backup structs and their validation locally, as the doc comments promise
 - option 2: drop the generics and let the daemons take `config.Config` directly; the standalone mains unmarshal the TOML into it (dependency is the norm, see the entry above)
 - refs: `restinpieces-backup/onlineapi/onlineapi.go`, `restinpieces-backup/vacuum/vacuum.go`, `restinpieces-backup/sqlitersync/origin/daemon.go`, `restinpieces-backup/cmd/onlineapi/daemon/main.go`, `restinpieces-backup/cmd/vacuum/daemon/main.go`, `restinpieces-backup/cmd/sqlite-rsync/origin/daemon/main.go`, `restinpieces-backup/cmd/*/restinpieces/main.go`, `config/config_validate.go`
-- see also: `# config: remove the exported ValidateBackup` above
 
 # sqlite-rsync replica: replica can not be uses as a daemon in a framwork app; it could be useful for a float of app deploy A B C in different VMs, eacj one of A, B C have an app daemon that calls the other two as replica in orther to have distributed storage
 
@@ -279,12 +264,6 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - fleet shape: each app runs the origin (serving its own databases) plus one replica daemon per peer, each with its own `origin_addr`, SSH credentials and local entry paths; a peer-keyed replica map in the framework config would make it a first-class app daemon
 - client construction per peer could move inside the daemon, the way the S3 upload daemon builds its client from the config pointer on every tick (`restinpieces-backup/s3/upload/daemon.go`)
 - refs: `restinpieces-backup/sqlitersync/replica/daemon.go`, `restinpieces-backup/cmd/sqlite-rsync/replica/daemon/main.go`, `restinpieces-backup/config/sqlitersync/replica`, `config/backup.go`, `server/server.go`, `restinpieces-backup/s3/upload/daemon.go`
-
-# s3 upload: s3 backup upload daemon shoudl be a handler
-
-- the daemon only wraps a pass: `interval()` takes the smallest entry frequency capped at 10m, and `putOne` has no due logic — it checks the bucket and skips what is there. The tick is the only daemon part, and the scheduler already provides ticks.
-- shape: export a handler (`Handle(ctx, job) error`), register it with `srv.AddJobHandler`, schedule it with a `jobs.<label>` entry (interval, activated); one job per strategy walks all entries.
-- refs: `restinpieces-backup/s3/upload/daemon.go`, `restinpieces-backup/s3/entries.go`, `restinpieces-backup/cmd/s3/upload/restinpieces/main.go`, `queue/executor/executor.go`, `queue/scheduler/scheduler.go`, `config/job.go`
 
 # ripc scaffold: scaffolded block prints blank line before every field
 
@@ -341,15 +320,6 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - update `TestTomlParser_DateTimes` (`cmd/ripc/loadbytes_v1_polifill_test.go`) from string expectations to the typed values (`toml.LocalDate{...}`, `time.Time` via `.Equal`); `get`/`walk` print `%v` and `String()` yields the same text, so display does not change
 - refs: `cmd/ripc/loadbytes_v1_polifill.go` (`tomlValueOf`), `cmd/ripc/validate.go` (`validateTomlAsConfig`), `cmd/ripc/loadbytes_v1_polifill_test.go` (`TestTomlParser_DateTimes`)
 
-# ripc log: `log [-f] [-n N] [filter]`
-
-- `ripc log [-f] [-n N] [filter]`: flags must come before the filter (Go's flag package stops at the first positional argument); no filter means all rows; no `-f` prints last N and exits; `-f` prints last N then follows (`ripc log -f -n 20` = last 20, then tail)
-- the `tail` subcommand goes away, flags replace it; `init` stays for now and moves to `ripc init logs` in a later change, not this iteration
-- same for jobs: `ripc job [-f] [-n N] [filter]`
-- filter matches like `%filter%` (SQL `LIKE`) against the `data` column only: no new column, no index, no schema change
-- AGENTS.md convention: every object that takes a logger in its constructor stamps a stable label once with `logger.With("log_label", "llm:request_log")` and logs through the returned logger — `llm:` middleware, `llh:` handler, `llj:` job, `lld:` daemon; the value names who writes the log (lowercase snake_case, permanent because operators filter on it), no stamping at call sites
-- refs: `cmd/ripc/log_command.go` (dispatch, drop `tail` case, keep `init` for now), `cmd/ripc/log_tail.go` (generalize to filter+n+follow), `cmd/ripc/sql.go` (`logDb`, `logRecord`), `sql/schema/log/logs.sql` (`data`), `log/` (record path from slog to row), `AGENTS.md`, `log/daemon.go:45` (existing `opLogger.With("daemon_component", "Daemon")` to convert)
-
 # ripc: `init app` / `init logs` replace `app create` / `log init`
 
 - `ripc init app` replaces `ripc app create`: creates the app db, applies the app schema, writes the initial encrypted config; the db must not exist yet, as today
@@ -382,128 +352,6 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - the decision belongs to the initializer, not the app; whether a getter is used elsewhere does not matter
 - then add `WithMetrics` and `WithLimiter`
 - refs: `restinpieces.go`, `options.go`
-
-# auth: cap concurrent password verifications
-
-we will offer a factory of ratelimiters app.Limiter
-
-Yes — the App exposes one factory method and everything else stays behind it:
-
-```go
-limiter, err := a.Limiter(PasswordHashing)
-if err != nil {
-    return err
-}
-if !limiter.Limit() {
-    return busy
-}
-```
-
-For password we will have `Limiter(PasswordHashing)`, name `password_hashing`, the TOML key is `limiter.password_hashing`:
-
-```go
-const PasswordHashing = "password_hashing"
-```
-
-- we will follow `core/auth.go`: `core/limiter.go` has an interface and a default implementation with go rate limiter, user can have its own
-- we do not leak `Allow`, we expose `Limit() bool` to be consistent — stutters (`Limiter.Limit`) though but the same as auth (`Auth.Authenticate`)
-- Argon2id allocates 64 MiB per verification, so concurrent verifications multiply RSS (peak ≈ capacity × 64 MiB); a login flood without a cap can exhaust the server memory
-- endpoints that verify passwords call the cap directly from the handler, like `Authenticate()`; no middleware, no route injection
-- `a.Limiter(name)` returns `(Limiter, error)`; a name that is not in `limiter.<name>` is an error, no silent fallback
-
-  ```go
-  type Limiter interface {
-      Limit() bool
-  }
-
-  type Limiters interface {
-      Get(name string) (Limiter, error)
-  }
-
-  type DefaultLimiter struct {
-      limiter *rate.Limiter
-  }
-
-  func (d *DefaultLimiter) Limit() bool {
-      return d.limiter.Allow()
-  }
-
-  type defaultLimiters struct {
-      config   *config.Provider
-      mu       sync.Mutex
-      limiters map[string]Limiter
-  }
-
-  // App owns one Limiters and exposes it through the factory. An undefined
-  // name is an error.
-  func (a *App) Limiter(name string) (Limiter, error) {
-      return a.limiters.Get(name)
-  }
-
-  func (l *defaultLimiters) Get(name string) (Limiter, error) {
-      l.mu.Lock()
-      defer l.mu.Unlock()
-
-      limiter, ok := l.limiters[name]
-      if ok {
-          return limiter, nil
-      }
-
-      entry, ok := l.config.Get().Limiters[name]
-      if !ok {
-          return nil, fmt.Errorf("limiter %q is not defined", name)
-      }
-
-      newLimiter := &DefaultLimiter{
-          limiter: rate.NewLimiter(rate.Every(entry.Limit.Duration), entry.Burst),
-      }
-      l.limiters[name] = newLimiter
-      return newLimiter, nil
-  }
-  ```
-
-  ```go
-  // options.go
-  func WithLimiter(l core.Limiters) Option {
-      return func(i *initializer) { i.app.SetLimiters(l) }
-  }
-  ```
-- naming is horrendous
-- custom concurrency limits are possible from a user's own handlers; framework constants are prefixed `rip_`, so collisions are unlikely, and config validation can reject any `rip_`-prefixed key that is not a known framework constant
-- config shape will be `limiter.<label>` with struct limit and burst:
-
-  ```toml
-  [limiter.password_hashing]
-  limit = '2s'
-  burst = 5
-  ```
-
-  ```go
-  type Limiter struct {
-      Limit Duration `toml:"limit"`
-      Burst int      `toml:"burst"`
-  }
-  ```
-
-- top-level field on `config.Config`: `Limiter Limiter` `toml:"limiter"`
-- validate each `limiter.<label>` entry: both `limit` and `burst` must be positive
-- validation also rejects a duplicate key inside the single `limiter` map
-- `ripc scaffold limiter <key>` refuses a key that already exists, reusing the `ErrScaffoldKeyExists` check in `cmd/ripc/scaffold.go`; the `limiter` section needs a `NewLimitersDefaults()` like the backup sections
-
-- `config/default.go` seeds `limiter.password_hashing` by default; the framework owns that entry
-- `limiter.password_hashing` must not be removable: `ripc rm` only removes paths listed in `removeTableParents`/`removeArrayPaths`, so keep the `limiter` section out of both allowlists (ref `cmd/ripc/rm.go`)
-
-- ripc:
-
-  ```sh
-  ripc scaffold limiter upload
-  ripc walk limiter.upload
-  ```
-
-- because limit and burst is complicated we can offer a ripc update for password hashing, it gets the memory/cpu from cgroups or something, computes argon run and sets the values
-- or maybe just a `scripts/argon_probe.go` like the other probes to be run in the machine that does it
-- call sites: `core/handler_auth_login_password.go`, `core/handler_auth_register_password.go`, `core/handler_auth_email_change_otp_request.go`, `core/handler_auth_password_reset_otp_confirm.go`, `core/handler_auth_email_verification_otp_request.go`
-- refs: `crypto/password.go` (`VerifyPassword`, `HashPassword`), `core/app.go` (App fields, NewApp), `core/response_precomputed.go` (busy response), `config/config.go` (`Config`, `Limiter`), `config/config_validate.go`, `config/default.go`
 
 # notifier: async delivery daemon
 
@@ -539,7 +387,6 @@ const PasswordHashing = "password_hashing"
   - in an interval: `how many per window` — max M in N seconds, or today's simpler form, one per cooldown bucket per account/email
 - current `RateLimits` is the second, but only the one-per-bucket variant. It is not yet a general "M per interval".
 - refs: `config/config.go` (`RateLimits`), `queue/queue.go` (`CoolDownBucket`), `sql/schema/app/job_queue.sql` (`idx_job_queue_incomplete`), `core/handler_auth_password_reset_otp_request.go`, `core/handler_auth_email_change_otp_request.go`, `core/handler_auth_email_verification_otp_request.go`, `queue/handlers/password_reset_otp.go`, `queue/handlers/email_change_otp.go`, `queue/handlers/email_verification_otp.go`
-- see also: `# auth: cap concurrent password verifications` above
 - the thins to dfierenciate is those limits are for someting, that something determine the implmenttion of the limit, in case of collodown is the creating of job to send emails, generalizing a concept of limit taht is usable by different use cases will prove mos rprobably not possible,
 - possibility 1:
 

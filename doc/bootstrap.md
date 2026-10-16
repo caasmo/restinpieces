@@ -20,9 +20,23 @@ Before you begin, ensure you have the following tools installed:
 The first and most critical step is to generate a master encryption key. **All framework configuration—including secrets like JWT keys, SMTP passwords, and TLS certificates—is encrypted at rest within the main application's SQLite database file.** This `age` key is the root of trust used to secure that data. You will need the private key to start the server and to manage its configuration via the `ripc` tool. Guard it carefully.
 
 ```bash
-age-keygen -o age.key
+age-keygen -pq -o age.key
 ```
 This will create `age.key` containing your private key and print the corresponding public key to the console.
+
+An existing deployment moves to this key type once. Generate the new key and re-encrypt every stored configuration record with the migration script. The script opens `data/app.db` in the project home, so build it from a checkout of the restinpieces source and run the binary there.
+
+```bash
+# in a checkout of the restinpieces source
+go build -o /tmp/age_pq_migrate ./scripts/age_pq_migrate.go
+
+# in the project home
+age-keygen -pq -o age-pq.key
+/tmp/age_pq_migrate age.key age-pq.key
+mv age-pq.key age.key
+```
+
+Archive the old key instead of deleting it: backups already uploaded to S3 stay encrypted to its recipient. If `backup.s3-upload.<label>.age_recipient` is set, point it at the new public key (`age-keygen -y age.key` prints it) before restarting.
 
 ### 2. Create the Application Instance
 

@@ -66,9 +66,9 @@ func loadAndParseIdentities(keyPath string, operation string) ([]age.Identity, e
 		return nil, fmt.Errorf("securestore: no age identities found in key file '%s' for %s", keyPath, operation)
 	}
 
-	// Ensure the first identity is the supported X25519 type
-	if _, ok := identities[0].(*age.X25519Identity); !ok {
-		err := fmt.Errorf("unsupported age identity type '%T' - must be X25519", identities[0])
+	// Ensure the first identity is the supported MLKEM768-X25519 type
+	if _, ok := identities[0].(*age.HybridIdentity); !ok {
+		err := fmt.Errorf("unsupported age identity type '%T' - must be MLKEM768-X25519", identities[0])
 		return nil, fmt.Errorf("securestore: %w", err)
 	}
 
@@ -119,7 +119,7 @@ func (s *secureStoreAge) Save(scope string, plaintextData []byte, format string,
 	}
 
 	// Derive recipient from the first loaded identity.
-	recipient := identities[0].(*age.X25519Identity).Recipient()
+	recipient := identities[0].(*age.HybridIdentity).Recipient()
 
 	encryptedOutput := &bytes.Buffer{}
 	encryptWriter, err := age.Encrypt(encryptedOutput, recipient)

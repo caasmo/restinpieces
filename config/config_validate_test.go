@@ -626,7 +626,7 @@ func TestValidateBackup(t *testing.T) {
 	})
 	t.Run("s3-upload valid fixed path", func(t *testing.T) {
 		_, appDB, _ := backupLocalFixture(t)
-		identity, err := age.GenerateX25519Identity()
+		identity, err := age.GenerateHybridIdentity()
 		if err != nil {
 			t.Fatal(err)
 		}
