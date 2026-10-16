@@ -604,3 +604,10 @@ consideer if is possible to use genreal Limiter (not) or just naming
 - alternative: fail closed (refuse and skip the update)
 - context: identity is already proven by the grant token from the email OTP step; the password comparison here is only the "same password, skip the update" optimization
 - refs: `core/handler_auth_password_reset_otp_confirm.go` (`VerifyPassword`, `UpdatePassword`), `crypto/password.go` (`VerifyPassword`, `ErrArgon2id`)
+
+# crypto/password.go: validateArgon2id message for bad thread counts — later
+
+- current: the memory-floor check reads `parsed.threads` before the threads range checks, so a record with out-of-range threads logs the memory-floor error instead of a threads error
+- decision: review nit, consequence-free — every record with bad threads is still rejected, nothing wrong is accepted, the uint32 cast cannot overflow; only the chosen error message differs
+- alternative: move the two threads checks above the memory check
+- refs: `crypto/password.go` (`validateArgon2id` lines 133, 145-150)
