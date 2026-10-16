@@ -50,17 +50,20 @@ import (
 //
 // # Security: Enumeration & timing attacks
 //
-// The dominant cost in this handler is crypto.CheckPassword (bcrypt, ~100ms).
-// If the user lookup fails and we return immediately — skipping CheckPassword —
+// The dominant cost in this handler is crypto.VerifyPassword (argon2id, ~100ms).
+// If the user lookup fails and we return immediately — skipping VerifyPassword —
 // the response time is orders of magnitude shorter than a failed password check.
 // An attacker can exploit this difference to enumerate valid emails with high
 // confidence: fast response means the email does not exist, slow response means
 // it does.
 //
-// Mitigation: crypto.CheckPassword is always called, even when the user is not
+// Mitigation: crypto.VerifyPassword is always called, even when the user is not
 // found. On the not-found path it runs against a static dummy hash and its
-// result is discarded. This ensures both paths pay the same bcrypt cost and
-// are indistinguishable by response time.
+// result is discarded. This ensures both paths pay the same argon2id cost and
+// are indistinguishable by response time. VerifyPassword itself also burns one
+// comparison when the stored record is unusable, so a corrupt record does not
+// short-circuit the cost; the handler logs that detail and returns the same
+// generic error as the not-found path.
 //
 // # Security: errorWeakPassword response
 //
@@ -109,6 +112,15 @@ func (a *App) RequestEmailVerificationOtpHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
+	// One global bucket for the whole app, not a per-account throttle, so its
+	// rejection is the same for every account. Placed before the lookup, a
+	// blocked request costs no DB hit and no argon2id work.
+	limiter, _ := a.Limiter(PasswordHashing)
+	if !limiter.Limit() {
+		WriteJsonError(w, errorTooManyRequests)
+		return
+	}
+
 	user, userErr := a.DbAuth().GetUserByEmail(req.Email)
 
 	passwordHash := crypto.DummyPasswordHash
@@ -116,16 +128,18 @@ func (a *App) RequestEmailVerificationOtpHandler(w http.ResponseWriter, r *http.
 		passwordHash = user.Password
 	}
 
-	limiter, _ := a.Limiter(PasswordHashing)
-	if !limiter.Limit() {
-		WriteJsonError(w, errorTooManyRequests)
+	// Always runs — see timing attack doc above.
+	passwordValid, verifyErr := crypto.VerifyPassword(req.Password, passwordHash)
+
+	if userErr != nil || user == nil {
+		WriteJsonError(w, errorInvalidRequest)
 		return
 	}
 
-	// Always runs — see timing attack doc above.
-	passwordValid := crypto.CheckPassword(req.Password, passwordHash)
-
-	if userErr != nil || user == nil {
+	// An unusable record is a data bug, not a wrong password. VerifyPassword
+	// equalized the cost; log the detail and answer like the not-found path.
+	if verifyErr != nil {
+		a.Logger().Error("stored password record is unusable", "error", verifyErr)
 		WriteJsonError(w, errorInvalidRequest)
 		return
 	}

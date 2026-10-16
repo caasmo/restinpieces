@@ -79,13 +79,22 @@ func (a *App) RequestEmailChangeOtpHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// One global bucket for the whole app, not a per-account throttle, so its
+	// rejection is the same for every account. Placed before the password
+	// check, the OTP work and the lookup, a blocked request costs none of them.
 	limiter, _ := a.Limiter(PasswordHashing)
 	if !limiter.Limit() {
 		WriteJsonError(w, errorTooManyRequests)
 		return
 	}
 
-	if !crypto.CheckPassword(req.Password, user.Password) {
+	passwordValid, verifyErr := crypto.VerifyPassword(req.Password, user.Password)
+	if verifyErr != nil {
+		a.Logger().Error("stored password record is unusable", "error", verifyErr)
+		WriteJsonError(w, errorInvalidCredentials)
+		return
+	}
+	if !passwordValid {
 		WriteJsonError(w, errorInvalidCredentials)
 		return
 	}

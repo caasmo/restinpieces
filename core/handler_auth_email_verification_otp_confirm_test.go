@@ -125,7 +125,7 @@ func TestConfirmEmailVerificationOtpHandler_Validation(t *testing.T) {
 // errorInvalidOtp to prevent email enumeration.
 func TestConfirmEmailVerificationOtpHandler_ConfirmationLogic(t *testing.T) {
 	secret := "test_secret_32_bytes_long_xxxxxx"
-	hashedPassword, _ := crypto.GenerateHash("password123")
+	hashedPassword := crypto.HashPassword("password123")
 
 	// Generate a valid OTP + verification token pair for testing.
 	otp, validToken, err := crypto.NewJwtOtpToken(crypto.ClaimTypeEmailVerificationOtp, "test@example.com", secret, 15*time.Minute)
@@ -136,7 +136,7 @@ func TestConfirmEmailVerificationOtpHandler_ConfirmationLogic(t *testing.T) {
 	unverifiedUser := &db.User{
 		ID:       "user123",
 		Email:    "test@example.com",
-		Password: string(hashedPassword),
+		Password: hashedPassword,
 		Verified: false,
 	}
 
@@ -206,7 +206,7 @@ func TestConfirmEmailVerificationOtpHandler_ConfirmationLogic(t *testing.T) {
 					return &db.User{
 						ID:       "user456",
 						Email:    "test@example.com",
-						Password: string(hashedPassword),
+						Password: hashedPassword,
 						Verified: true,
 					}, nil
 				}
@@ -264,7 +264,7 @@ func TestConfirmEmailVerificationOtpHandler_ConfirmationLogic(t *testing.T) {
 // dependencies, such as the database and token generation.
 func TestConfirmEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 	secret := "test_secret_32_bytes_long_xxxxxx"
-	hashedPassword, _ := crypto.GenerateHash("password123")
+	hashedPassword := crypto.HashPassword("password123")
 
 	otp, validToken, err := crypto.NewJwtOtpToken(crypto.ClaimTypeEmailVerificationOtp, "test@example.com", secret, 15*time.Minute)
 	if err != nil {
@@ -310,7 +310,7 @@ func TestConfirmEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 					return &db.User{
 						ID:       "user123",
 						Email:    "test@example.com",
-						Password: string(hashedPassword),
+						Password: hashedPassword,
 						Verified: true,
 					}, nil
 				}

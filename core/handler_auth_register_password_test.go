@@ -99,11 +99,11 @@ func TestRegisterWithPasswordHandler_Validation(t *testing.T) {
 // for an existing user with a password, and the scenario where an existing verified
 // user (e.g., from OAuth2) adds a password.
 func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
-	hashedPassword, _ := crypto.GenerateHash("password123")
+	hashedPassword := crypto.HashPassword("password123")
 	newUser := db.User{
 		ID:       "user123",
 		Email:    "new@example.com",
-		Password: string(hashedPassword),
+		Password: hashedPassword,
 		Verified: false,
 	}
 
@@ -117,7 +117,7 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 	existingVerifiedUserNoPassword := db.User{
 		ID:       "user789",
 		Email:    "verified@example.com",
-		Password: string(hashedPassword), // This will be set by the handler
+		Password: hashedPassword, // This will be set by the handler
 		Verified: true,
 	}
 
@@ -134,7 +134,7 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 			requestBody: `{"identity":"new@example.com", "password":"password123", "password_confirm":"password123"}`,
 			dbSetup: func(m *mock.Db, jobInserted *bool) {
 				m.CreateUserWithPasswordFunc = func(user db.User) (*db.User, error) {
-					if !strings.HasPrefix(user.Password, "$2a$") {
+					if !strings.HasPrefix(user.Password, "$argon2id$") {
 						t.Error("password was not hashed before CreateUserWithPassword")
 					}
 					newUser.Password = user.Password
@@ -180,8 +180,8 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 					}
 					// We can't easily check the plaintext password because it's hashed,
 					// but we can verify it hashes correctly against the trimmed version.
-					if !crypto.CheckPassword("password123", user.Password) {
-						t.Error("password was not trimmed correctly before hashing")
+					if valid, verifyErr := crypto.VerifyPassword("password123", user.Password); verifyErr != nil || !valid {
+						t.Errorf("password was not trimmed correctly before hashing (err=%v, valid=%v)", verifyErr, valid)
 					}
 					return &newUser, nil
 				}

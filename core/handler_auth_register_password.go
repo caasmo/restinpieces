@@ -23,7 +23,7 @@ import (
 // This is intentional. Revealing different responses per case would allow an
 // attacker to enumerate valid emails by observing response bodies.
 //
-// Timing attacks are also mitigated: crypto.GenerateHash (bcrypt/argon2) is
+// Timing attacks are also mitigated: crypto.HashPassword (argon2id) is
 // always executed before the DB write, so the response time is dominated by
 // the hash cost in all code paths. An attacker cannot infer email existence
 // from response latency.
@@ -96,6 +96,9 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// One global bucket for the whole app, not a per-account throttle, so its
+	// rejection is the same for every account. Placed before the hash and the
+	// DB write, a blocked request costs neither.
 	limiter, _ := a.Limiter(PasswordHashing)
 	if !limiter.Limit() {
 		WriteJsonError(w, errorTooManyRequests)
@@ -105,15 +108,11 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// Always hash, every code path — including when the email already exists.
 	// Skipping the hash on conflict would make that path faster, leaking
 	// email existence via response timing.
-	hashedPassword, err := crypto.GenerateHash(req.Password)
-	if err != nil {
-		WriteJsonError(w, errorPasswordHashingFailed)
-		return
-	}
+	hashedPassword := crypto.HashPassword(req.Password)
 
 	newUser := db.User{
 		Email:           req.Identity,
-		Password:        string(hashedPassword),
+		Password:        hashedPassword,
 		Verified:        false,
 		Oauth2:          false,
 		EmailVisibility: false,

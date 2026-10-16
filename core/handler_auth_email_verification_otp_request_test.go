@@ -152,17 +152,17 @@ func TestRequestEmailVerificationOtpHandler_Validation(t *testing.T) {
 // generation, already verified user, user not found, wrong password, DB
 // cooldown constraint, and input normalization scenarios.
 func TestRequestEmailVerificationOtpHandler_RequestLogic(t *testing.T) {
-	hashedPassword, _ := crypto.GenerateHash("password123")
+	hashedPassword := crypto.HashPassword("password123")
 	testUser := &db.User{
 		ID:       "user123",
 		Email:    "test@example.com",
-		Password: string(hashedPassword),
+		Password: hashedPassword,
 		Verified: false,
 	}
 	verifiedUser := &db.User{
 		ID:       "user456",
 		Email:    "verified@example.com",
-		Password: string(hashedPassword),
+		Password: hashedPassword,
 		Verified: true,
 	}
 
@@ -331,11 +331,11 @@ func TestRequestEmailVerificationOtpHandler_RequestLogic(t *testing.T) {
 // request-email-otp-verification handler responds to failures in its dependencies
 // such as OTP token generation and job queue insertion.
 func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
-	hashedPassword, _ := crypto.GenerateHash("password123")
+	hashedPassword := crypto.HashPassword("password123")
 	testUser := &db.User{
 		ID:       "user123",
 		Email:    "test@example.com",
-		Password: string(hashedPassword),
+		Password: hashedPassword,
 		Verified: false,
 	}
 

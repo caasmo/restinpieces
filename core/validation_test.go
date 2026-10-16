@@ -2,6 +2,7 @@ package core
 
 import (
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -127,9 +128,10 @@ func TestPasswordValidation(t *testing.T) {
 		{"valid password", "secure-password-123", false},
 		{"too short", "short", true},
 		{"exactly 8 chars", "1234567a", false},
-		{"exactly 72 bytes", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrtu", false},
-		{"too long (73 bytes)", "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrtuv", true},
-		{"too long with multi-byte (73 bytes)", "世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界世界!", true},
+		{"exactly 128 bytes", strings.Repeat("a", 128), false},
+		{"too long (129 bytes)", strings.Repeat("a", 129), true},
+		{"exactly 128 bytes with multi-byte", strings.Repeat("世", 42) + "ab", false},
+		{"too long with multi-byte (129 bytes)", strings.Repeat("世", 43), true},
 		{"contains null byte", "pass\x00word", true},
 		{"common password", "password", true},
 		{"common password case insensitive", "Password", true},

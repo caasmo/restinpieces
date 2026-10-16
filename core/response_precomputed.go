@@ -26,7 +26,6 @@ const (
 	CodeErrorEmailConflict                        = "err_email_conflict"
 	CodeErrorNotFound                             = "err_not_found"
 	CodeErrorEmailVerificationOtpAlreadyRequested = "err_email_verification_otp_already_requested"
-	CodeErrorPasswordHashingFailed                = "err_password_hashing_failed"
 	CodeErrorRegistrationFailed                   = "err_registration_failed"
 	CodeErrorTooManyRequests                      = "err_too_many_requests"
 	CodeErrorServiceUnavailable                   = "err_service_unavailable"
@@ -84,7 +83,6 @@ var (
 	errorEmailConflict                        = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailConflict, "Email address is already registered")
 	errorNotFound                             = PrecomputeBasicResponse(http.StatusNotFound, CodeErrorNotFound, "Requested resource not found")
 	errorEmailVerificationOtpAlreadyRequested = PrecomputeBasicResponse(http.StatusConflict, CodeErrorEmailVerificationOtpAlreadyRequested, "Email verification code already requested. Please check your inbox.")
-	errorPasswordHashingFailed                = PrecomputeBasicResponse(http.StatusInternalServerError, CodeErrorPasswordHashingFailed, "Failed to hash password")
 	errorServiceUnavailable                   = PrecomputeBasicResponse(http.StatusServiceUnavailable, CodeErrorServiceUnavailable, "Service is temporarily unavailable")
 	errorTooManyRequests                      = PrecomputeBasicResponse(http.StatusTooManyRequests, CodeErrorTooManyRequests, "Too many requests, please try again later")
 	errorNoAuthHeader                         = PrecomputeBasicResponse(http.StatusUnauthorized, CodeErrorNoAuthHeader, "Authorization header is required")

@@ -116,11 +116,11 @@ func TestRequestEmailChangeOtpHandler_Validation(t *testing.T) {
 }
 
 func TestRequestEmailChangeOtpHandler_Logic(t *testing.T) {
-	hashedPassword, _ := crypto.GenerateHash("password123")
+	hashedPassword := crypto.HashPassword("password123")
 	testUser := &db.User{
 		ID:       "user123",
 		Email:    "old@example.com",
-		Password: string(hashedPassword),
+		Password: hashedPassword,
 		Verified: true,
 	}
 
@@ -284,11 +284,11 @@ func TestRequestEmailChangeOtpHandler_Logic(t *testing.T) {
 }
 
 func TestRequestEmailChangeOtpHandler_Failures(t *testing.T) {
-	hashedPassword, _ := crypto.GenerateHash("password123")
+	hashedPassword := crypto.HashPassword("password123")
 	testUser := &db.User{
 		ID:       "user123",
 		Email:    "old@example.com",
-		Password: string(hashedPassword),
+		Password: hashedPassword,
 		Verified: true,
 	}
 

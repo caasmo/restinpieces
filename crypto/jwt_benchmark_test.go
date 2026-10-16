@@ -13,7 +13,7 @@ func setupCryptoBenchmark(b *testing.B) (userID, email, passwordHash, secret str
 
 	userID = "user-test-123"
 	email = "test@example.com"
-	passwordHash = "$2a$10$VGE8iAnq4vS7g0/0cT/G.u2J5.C.6A3sJ/A6B.zY9C.X7D.E5F.G"
+	passwordHash = DummyPasswordHash
 	secret = "a_super_secret_key_that_is_at_least_32_bytes_long"
 
 	var err error

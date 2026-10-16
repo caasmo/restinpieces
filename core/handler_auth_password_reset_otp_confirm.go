@@ -58,6 +58,15 @@ func (a *App) ConfirmPasswordResetOtpHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// One global bucket for the whole app, not a per-account throttle, so its
+	// rejection is the same for every account. Placed before the token parse,
+	// the lookup and the hash, a blocked request costs none of them.
+	limiter, _ := a.Limiter(PasswordHashing)
+	if !limiter.Limit() {
+		WriteJsonError(w, errorTooManyRequests)
+		return
+	}
+
 	// 1. Parse Token Unverified
 	claims, err := crypto.ParseJwtUnverified(req.Token)
 	if err != nil {
@@ -104,25 +113,22 @@ func (a *App) ConfirmPasswordResetOtpHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	limiter, _ := a.Limiter(PasswordHashing)
-	if !limiter.Limit() {
-		WriteJsonError(w, errorTooManyRequests)
-		return
-	}
-
 	// 4. Update Database
-	hashedPassword, err := crypto.GenerateHash(req.Password)
-	if err != nil {
-		WriteJsonError(w, errorPasswordHashingFailed)
-		return
-	}
+	hashedPassword := crypto.HashPassword(req.Password)
 
-	if crypto.CheckPassword(req.Password, user.Password) {
+	// A record that does not parse is a data bug: log it and continue to the
+	// update, so the reset repairs the stored hash instead of locking the
+	// account out.
+	passwordValid, verifyErr := crypto.VerifyPassword(req.Password, user.Password)
+	if verifyErr != nil {
+		a.Logger().Error("stored password record is unusable", "error", verifyErr)
+	}
+	if passwordValid {
 		WriteJsonOk(w, okPasswordResetNotNeeded)
 		return
 	}
 
-	err = a.DbAuth().UpdatePassword(user.ID, string(hashedPassword))
+	err = a.DbAuth().UpdatePassword(user.ID, hashedPassword)
 	if err != nil {
 		WriteJsonError(w, errorServiceUnavailable)
 		return

@@ -26,25 +26,29 @@ import (
 //
 // # Security: Timing attack
 //
-// The dominant cost in this handler is crypto.CheckPassword (bcrypt, ~100ms).
-// If the user lookup fails and we return immediately — skipping CheckPassword —
+// The dominant cost in this handler is crypto.VerifyPassword (argon2id, ~100ms).
+// If the user lookup fails and we return immediately — skipping VerifyPassword —
 // the response time is orders of magnitude shorter than a failed password check.
 // An attacker can exploit this difference to enumerate valid emails with high
 // confidence without ever needing the correct password: fast response means the
 // email does not exist, slow response means it does.
 //
-// Mitigation: crypto.CheckPassword is always called, even when the user is not
+// Mitigation: crypto.VerifyPassword is always called, even when the user is not
 // found. On the not-found path it runs against a static dummy hash and its
-// result is discarded. This ensures both paths pay the same bcrypt cost and
-// are indistinguishable by response time.
+// result is discarded. This ensures both paths pay the same argon2id cost and
+// are indistinguishable by response time. VerifyPassword itself also burns one
+// comparison when the stored record is unusable, so a corrupt record does not
+// short-circuit the cost; the handler logs that detail and answers with the
+// same errorInvalidCredentials as a wrong password.
 //
 // # Security: Verified check ordering
 //
-// The verified check runs after CheckPassword deliberately. Checking it before
+// The verified check runs after VerifyPassword deliberately. Checking it before
 // would re-introduce a timing leak: a fast rejection for unverified accounts
-// (before bcrypt) vs a slow rejection for wrong passwords (after bcrypt) would
-// again allow email enumeration for accounts that exist but are unverified.
-// Paying the full bcrypt cost before checking verified status closes that gap.
+// (before argon2id) vs a slow rejection for wrong passwords (after argon2id)
+// would again allow email enumeration for accounts that exist but are
+// unverified. Paying the full argon2id cost before checking verified status
+// closes that gap.
 //
 // errorRequiredEmailVerificationOtp is the intentional UX escape for users who
 // registered but did not complete email verification. It confirms the email
@@ -88,6 +92,15 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// One global bucket for the whole app, not a per-account throttle, so its
+	// rejection is the same for every account. Placed before the lookup, a
+	// blocked request costs no DB hit and no argon2id work.
+	limiter, _ := a.Limiter(PasswordHashing)
+	if !limiter.Limit() {
+		WriteJsonError(w, errorTooManyRequests)
+		return
+	}
+
 	user, err := a.DbAuth().GetUserByEmail(req.Identity)
 
 	passwordHash := crypto.DummyPasswordHash
@@ -95,16 +108,18 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		passwordHash = user.Password
 	}
 
-	limiter, _ := a.Limiter(PasswordHashing)
-	if !limiter.Limit() {
-		WriteJsonError(w, errorTooManyRequests)
+	// Always runs — see timing attack doc above.
+	passwordValid, verifyErr := crypto.VerifyPassword(req.Password, passwordHash)
+
+	if err != nil || user == nil {
+		WriteJsonError(w, errorInvalidCredentials)
 		return
 	}
 
-	// Always runs — see timing attack doc above.
-	passwordValid := crypto.CheckPassword(req.Password, passwordHash)
-
-	if err != nil || user == nil {
+	// An unusable record is a data bug, not a wrong password. VerifyPassword
+	// equalized the cost; log the detail and answer like a wrong password.
+	if verifyErr != nil {
+		a.Logger().Error("stored password record is unusable", "error", verifyErr)
 		WriteJsonError(w, errorInvalidCredentials)
 		return
 	}

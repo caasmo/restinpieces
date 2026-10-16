@@ -376,17 +376,6 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - unit needs a writable bind for the key path so the app can unlink it under `ProtectSystem=strict`
 - refs: `config/secure.go` (key re-read per Get/Save), `restinpieces.go` (setupConfig, boot key requirement), `config/reload.go` (SIGHUP needs key), `systemd.service` (ProtectSystem=strict, Restart=on-failure), `scripts/ripdep` (cmd_cp, cmd_restart, cmd_reload, cmd_ripc, cmd_maintenance, cmd_dump), `doc/ripdep.md` (restart/reload/cp contract)
 
-# crypto/password: concrete setting is we go argin
-
-- per https://words.filippo.io/right-answers/ §Password handling: Argon2id or scrypt, bcrypt dropped for 72-byte truncation
-- `GenerateHash` uses `argon2.IDKey` with time 2, memory 65536 (64 MiB, Go counts KiB), threads 1, key length 32, fresh 16-byte salt from `crypto/rand`, version 19
-- store as `$argon2id$v=19$m=65536,t=2,p=1$<salt>$<hash>` with base64 without padding
-- template (PHC string format): `$argon2id$v=<version>$m=<memory>,t=<time>,p=<threads>$<salt>$<key>` — salt 16 bytes, key 32 bytes, both base64 RawStdEncoding (no padding)
-- `CheckPassword` parses prefix: `$argon2id$` re-runs same params with constant-time compare, `$2a$` falls back to bcrypt so old logins still work
-- replace `DummyPasswordHash` with an Argon2id hash made once with the same numbers so the not-found path costs the same
-- raise the 72-byte top limit (was only for bcrypt), allow up to 128 bytes
-- refs: `crypto/password.go` (`GenerateHash`, `CheckPassword`, `DummyPasswordHash`), `core/validation.go` (`Password`), `golang.org/x/crypto/argon2`
-
 # options: every With function marks itself on the initializer
 
 - `New` checks the app for nil (`Cache()`, `Router()`, `Notifier()`, `Logger()`) to decide whether to install a default; each `With...` should record itself on the initializer instead, e.g. `initializer.with map[<const>]struct{}`
@@ -514,7 +503,7 @@ const PasswordHashing = "password_hashing"
 - because limit and burst is complicated we can offer a ripc update for password hashing, it gets the memory/cpu from cgroups or something, computes argon run and sets the values
 - or maybe just a `scripts/argon_probe.go` like the other probes to be run in the machine that does it
 - call sites: `core/handler_auth_login_password.go`, `core/handler_auth_register_password.go`, `core/handler_auth_email_change_otp_request.go`, `core/handler_auth_password_reset_otp_confirm.go`, `core/handler_auth_email_verification_otp_request.go`
-- refs: `crypto/password.go` (`CheckPassword`, `GenerateHash`), `core/app.go` (App fields, NewApp), `core/response_precomputed.go` (busy response), `config/config.go` (`Config`, `Limiter`), `config/config_validate.go`, `config/default.go`
+- refs: `crypto/password.go` (`VerifyPassword`, `HashPassword`), `core/app.go` (App fields, NewApp), `core/response_precomputed.go` (busy response), `config/config.go` (`Config`, `Limiter`), `config/config_validate.go`, `config/default.go`
 
 # notifier: async delivery daemon
 
@@ -601,3 +590,17 @@ const PasswordHashing = "password_hashing"
 # config.ratelimits naming is wrong this is colldown protection for email server
 
 consideer if is possible to use genreal Limiter (not) or just naming
+
+# core handlers: llh: log_label — separate task
+
+- AGENTS.md logging rule: every object that takes a logger in its constructor stamps a stable label once with `logger.With("log_label", "...")`; `llh:` for handlers, and labels are permanent
+- no core handler stamps one today; handlers call `a.Logger()` at the call site, so this needs App wiring (a per-handler logger) plus a label for every handler, not only the password handlers
+- existing `log_label` users are daemons and jobs only: `log/daemon.go` (`lld:log_batch`), `queue/scheduler/scheduler.go` (`lld:scheduler`)
+- refs: `AGENTS.md`, `core/` (all handlers), `core/app.go` (`Logger`), `log/daemon.go`, `queue/scheduler/scheduler.go`
+
+# core/handler_auth_password_reset_otp_confirm: reset-confirm verifyErr path — evaluate later
+
+- current: on an unusable stored password record `crypto.VerifyPassword` returns `ErrArgon2id`; the handler logs it and falls through to `UpdatePassword`, so a password reset repairs the record instead of locking the account out
+- alternative: fail closed (refuse and skip the update)
+- context: identity is already proven by the grant token from the email OTP step; the password comparison here is only the "same password, skip the update" optimization
+- refs: `core/handler_auth_password_reset_otp_confirm.go` (`VerifyPassword`, `UpdatePassword`), `crypto/password.go` (`VerifyPassword`, `ErrArgon2id`)

@@ -30,11 +30,12 @@ func setupAuthBenchmark(b *testing.B) (*DefaultAuthenticator, *mock.Db, *config.
 	auth := NewDefaultAuthenticator(mockDB, logger, provider)
 
 	// A standard user for generating tokens and for the mock DB to return.
-	// The password hash is a realistic bcrypt hash.
+	// The password hash is a valid argon2id record; here it is only HMAC key
+	// material for token signing, never parsed as a KDF record.
 	testUser := &db.User{
 		ID:       "r2e4d72d378c747", // Use an ID that matches the format expected by parseJwtUserID.
 		Email:    "test@example.com",
-		Password: "$2a$10$VGE8iAnq4vS7g0/0cT/G.u2J5.C.6A3sJ/A6B.zY9C.X7D.E5F.G",
+		Password: crypto.DummyPasswordHash,
 	}
 
 	return auth, mockDB, cfg, testUser

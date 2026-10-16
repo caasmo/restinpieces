@@ -129,11 +129,11 @@ func TestAuthWithPasswordHandler_Validation(t *testing.T) {
 // These tests verify anti-enumeration and timing attack hardening by ensuring
 // uniform response codes for different failure paths.
 func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
-	hashedPassword, _ := crypto.GenerateHash("password123")
+	hashedPassword := crypto.HashPassword("password123")
 	testUser := &db.User{
 		ID:       "user123",
 		Email:    "test@example.com",
-		Password: string(hashedPassword),
+		Password: hashedPassword,
 		Verified: true,
 	}
 
@@ -185,7 +185,7 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 					return &db.User{
 						ID:       "user123",
 						Email:    "test@example.com",
-						Password: string(hashedPassword),
+						Password: hashedPassword,
 						Verified: false,
 					}, nil
 				}
@@ -201,7 +201,7 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 					return &db.User{
 						ID:       "user123",
 						Email:    "test@example.com",
-						Password: string(hashedPassword),
+						Password: hashedPassword,
 						Verified: false,
 					}, nil
 				}
@@ -314,12 +314,12 @@ func TestAuthWithPasswordHandler_DependencyFailures(t *testing.T) {
 		{
 			name: "jwt generation failure",
 			dbSetup: func(m *mock.Db) {
-				hashedPassword, _ := crypto.GenerateHash("password123")
+				hashedPassword := crypto.HashPassword("password123")
 				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
 					return &db.User{
 						ID:       "user123",
 						Email:    "test@example.com",
-						Password: string(hashedPassword),
+						Password: hashedPassword,
 						Verified: true,
 					}, nil
 				}

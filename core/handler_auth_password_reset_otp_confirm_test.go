@@ -113,9 +113,9 @@ func TestConfirmPasswordResetOtpHandler_Logic(t *testing.T) {
 	email := "test@example.com"
 	userID := "user123"
 	oldPassword := "old-password"
-	oldPasswordHash, _ := crypto.GenerateHash(oldPassword)
+	oldPasswordHash := crypto.HashPassword(oldPassword)
 
-	token, _ := crypto.NewJwtPasswordResetToken(userID, email, string(oldPasswordHash), secret, time.Minute)
+	token, _ := crypto.NewJwtPasswordResetToken(userID, email, oldPasswordHash, secret, time.Minute)
 
 	// Token with missing claims
 	t2 := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{"email": email})
@@ -144,7 +144,7 @@ func TestConfirmPasswordResetOtpHandler_Logic(t *testing.T) {
 			password: "NewPassword123!",
 			dbSetup: func(m *mock.Db) {
 				m.GetUserByIdFunc = func(id string) (*db.User, error) {
-					return &db.User{ID: userID, Email: email, Password: string(oldPasswordHash)}, nil
+					return &db.User{ID: userID, Email: email, Password: oldPasswordHash}, nil
 				}
 				m.UpdatePasswordFunc = func(id, hash string) error {
 					return nil
@@ -207,7 +207,7 @@ func TestConfirmPasswordResetOtpHandler_Logic(t *testing.T) {
 			password: oldPassword,
 			dbSetup: func(m *mock.Db) {
 				m.GetUserByIdFunc = func(id string) (*db.User, error) {
-					return &db.User{ID: userID, Email: email, Password: string(oldPasswordHash)}, nil
+					return &db.User{ID: userID, Email: email, Password: oldPasswordHash}, nil
 				}
 			},
 			wantStatus: http.StatusOK,
@@ -251,8 +251,8 @@ func TestConfirmPasswordResetOtpHandler_Failures(t *testing.T) {
 	secret := "test_secret_32_bytes_long_xxxxxx"
 	email := "test@example.com"
 	userID := "user123"
-	oldPasswordHash, _ := crypto.GenerateHash("old-password")
-	token, _ := crypto.NewJwtPasswordResetToken(userID, email, string(oldPasswordHash), secret, time.Minute)
+	oldPasswordHash := crypto.HashPassword("old-password")
+	token, _ := crypto.NewJwtPasswordResetToken(userID, email, oldPasswordHash, secret, time.Minute)
 
 	testCases := []struct {
 		name       string
@@ -264,7 +264,7 @@ func TestConfirmPasswordResetOtpHandler_Failures(t *testing.T) {
 			name: "database update failure",
 			dbSetup: func(m *mock.Db) {
 				m.GetUserByIdFunc = func(id string) (*db.User, error) {
-					return &db.User{ID: userID, Email: email, Password: string(oldPasswordHash)}, nil
+					return &db.User{ID: userID, Email: email, Password: oldPasswordHash}, nil
 				}
 				m.UpdatePasswordFunc = func(id, hash string) error {
 					return errors.New("db error")
@@ -304,8 +304,8 @@ func TestConfirmPasswordResetOtpHandler_Failures(t *testing.T) {
 func TestConfirmPasswordResetOtpHandler_LimiterDenied(t *testing.T) {
 	secret := "test_secret_32_bytes_long_xxxxxx"
 	email := "test@example.com"
-	oldPasswordHash, _ := crypto.GenerateHash("old-password")
-	token, _ := crypto.NewJwtPasswordResetToken("user123", email, string(oldPasswordHash), secret, time.Minute)
+	oldPasswordHash := crypto.HashPassword("old-password")
+	token, _ := crypto.NewJwtPasswordResetToken("user123", email, oldPasswordHash, secret, time.Minute)
 
 	req := httptest.NewRequest("POST", "/confirm-password-reset-otp", strings.NewReader(`{"token":"`+token+`","password":"NewPassword123!","password_confirm":"NewPassword123!"}`))
 	req.Header.Set("Content-Type", "application/json")
@@ -313,7 +313,7 @@ func TestConfirmPasswordResetOtpHandler_LimiterDenied(t *testing.T) {
 
 	dbMock := &mock.Db{
 		GetUserByIdFunc: func(id string) (*db.User, error) {
-			return &db.User{ID: "user123", Email: email, Password: string(oldPasswordHash)}, nil
+			return &db.User{ID: "user123", Email: email, Password: oldPasswordHash}, nil
 		},
 	}
 

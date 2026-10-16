@@ -105,11 +105,21 @@ func (v *DefaultValidator) Email(email string) error {
 func (v *DefaultValidator) Password(password string) error {
 	const (
 		minLength = 8
-		// bcrypt silently truncates input at 72 bytes. A password longer than
-		// this would hash identically to its 72-byte prefix, giving a false
-		// sense of security. We measure bytes, not runes, for the same reason
-		// bcrypt does.
-		maxBytes = 72
+		// argon2id hashes the whole input, so there is no truncation; this
+		// cap is purely a cost guard — it stops a giant password from making
+		// every verification spend needless CPU. We measure bytes, since the
+		// KDF does.
+		//
+		// OWASP Authentication Cheat Sheet: "Maximum password length should
+		// be at least 64 characters to allow passphrases (NIST SP800-63B).
+		// Note that certain implementations of hashing algorithms may cause
+		// long password denial of service."
+		//
+		// NIST SP 800-63B §5.1.1.2: "Verifiers SHOULD permit
+		// subscriber-chosen memorized secrets at least 64 characters in
+		// length" and "each Unicode code point SHALL be counted as a single
+		// character."
+		maxBytes = 128
 	)
 
 	if len(password) < minLength {
