@@ -53,3 +53,21 @@ Run it on the server:
 ```sh
 ./argon-probe
 ```
+
+## adduser
+
+Creates or updates a password user directly in the application database at the conventional path data/app.db (doc/layout-best-practices.md), so a working login exists without going through registration and email verification. The email and password are the two arguments; both are normalised and validated with the app's own rules, the password is hashed with the same argon2id the app verifies with, and the account is marked verified. Running it again with the same email just replaces the password.
+
+```sh
+go build -o /tmp/adduser scripts/adduser.go
+```
+
+```sh
+./ripdep cp <host> <project> /tmp/adduser
+```
+
+Run it from the project home:
+
+```sh
+./adduser you@example.com '<password>'
+```
