@@ -41,6 +41,8 @@ func TestTomlValueFromText_Values(t *testing.T) {
 	}
 }
 
+// TestTomlValueFromFile_Contents verifies the file is read as a plain string
+// and the line break a text file ends with is not part of the value.
 func TestTomlValueFromFile_Contents(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "value.txt")
 	content := "line1\nline2\n"
@@ -54,8 +56,42 @@ func TestTomlValueFromFile_Contents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if got != content {
-		t.Errorf("file value = %q, want %q", got, content)
+	want := "line1\nline2"
+	if got != want {
+		t.Errorf("file value = %q, want %q", got, want)
+	}
+}
+
+// TestTomlValueFromFile_LineEndings verifies one final line break is dropped,
+// for both endings a text file can use, and that a file with none is kept as it
+// is.
+func TestTomlValueFromFile_LineEndings(t *testing.T) {
+	tests := []struct {
+		name    string
+		content string
+		want    string
+	}{
+		{name: "LF", content: "value\n", want: "value"},
+		{name: "CRLF", content: "value\r\n", want: "value"},
+		{name: "NoLineEnding", content: "value", want: "value"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "value.txt")
+			writeErr := os.WriteFile(path, []byte(tt.content), 0o600)
+			if writeErr != nil {
+				t.Fatalf("failed to write test file: %v", writeErr)
+			}
+
+			got, err := tomlValueFromFile(path)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if got != tt.want {
+				t.Errorf("file value = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 

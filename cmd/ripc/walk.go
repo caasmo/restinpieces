@@ -180,7 +180,7 @@ func printWalkEntry(ui UI, path string, entry TomlEntry) error {
 // file whose contents are read as a string, anything else is parsed as a TOML
 // value with a quoted string as fallback.
 func parseWalkValue(line string) (interface{}, error) {
-	if strings.HasPrefix(line, "@") {
+	if isFileArgument(line) {
 		return tomlValueFromFile(strings.TrimPrefix(line, "@"))
 	}
 	return tomlValueFromText(line)

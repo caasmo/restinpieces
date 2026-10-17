@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/caasmo/restinpieces/config"
@@ -100,24 +99,16 @@ func setConfigValue(
 	}
 
 	var valueToSet interface{}
-	if strings.HasPrefix(rawValue, "@") {
-		filePath := strings.TrimPrefix(rawValue, "@")
-		fileContent, err := os.ReadFile(filePath)
+	if isFileArgument(rawValue) {
+		valueToSet, err = tomlValueFromFile(strings.TrimPrefix(rawValue, "@"))
 		if err != nil {
-			return fmt.Errorf("%w: failed to read from path '%s': %w", ErrReadFile, filePath, err)
+			return err
 		}
-		valueToSet = string(fileContent)
 	} else {
-		tempTomlString := fmt.Sprintf("temp_key = %s", rawValue)
-		tempTree, err := toml.Load(tempTomlString)
+		valueToSet, err = tomlValueFromText(rawValue)
 		if err != nil {
-			tempTomlString = fmt.Sprintf("temp_key = %q", rawValue)
-			tempTree, err = toml.Load(tempTomlString)
-			if err != nil {
-				return fmt.Errorf("%w: could not parse '%s': %w", ErrParseValue, rawValue, err)
-			}
+			return err
 		}
-		valueToSet = tempTree.Get("temp_key")
 	}
 
 	if !tree.Has(configPath) {

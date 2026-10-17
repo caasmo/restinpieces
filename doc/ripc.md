@@ -91,6 +91,8 @@ If a string is given, only values whose path contains that string are shown. For
 
     ripc get backup
 
+A single match prints the value itself followed by one newline, so `ripc get <path> > file` writes a normal text file that `ripc set <path> @file` reads back unchanged.
+
 ### `paths [filter]`
 
 Lists all available TOML paths in the configuration.

@@ -96,10 +96,11 @@ func getAndPrintConfigPaths(ui UI, secureStore config.SecureStore, scopeName str
 
 	if len(filteredPaths) == 1 {
 		value := allPathsWithValues[filteredPaths[0]]
-		// Single value is an export path: `get <path> > file` followed by
-		// `set <path> @file` must round-trip byte-exact. Print the stored
-		// bytes as-is, never add a newline.
-		_, err := fmt.Fprint(ui.Out, value)
+		// A single value is the export path: `get <path> > file` followed by
+		// `set <path> @file` must round-trip. The value is written with one
+		// final line break, so the file it writes is a normal text file;
+		// tomlValueFromFile drops that one break again.
+		_, err := fmt.Fprintln(ui.Out, value)
 		if err != nil {
 			return fmt.Errorf("%w: failed to write output: %w", ErrWriteOutput, err)
 		}

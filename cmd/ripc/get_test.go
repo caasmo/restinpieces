@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -133,9 +135,9 @@ func TestGetAndPrintConfigPaths_Success_WithFilter(t *testing.T) {
 	}
 }
 
-// TestGetAndPrintConfigPaths_Success_SingleMatch verifies a single match prints
-// the value byte-exact with no added newline, so `get > file` + `set @file`
-// round-trips.
+// TestGetAndPrintConfigPaths_Success_SingleMatch verifies a single match is the
+// export path: the value followed by one line break, so the file it writes is a
+// normal text file that `set @file` reads back.
 func TestGetAndPrintConfigPaths_Success_SingleMatch(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockGetSecureStore(map[string][]byte{
@@ -151,15 +153,15 @@ func TestGetAndPrintConfigPaths_Success_SingleMatch(t *testing.T) {
 	}
 
 	output := stdout.String()
-	expectedOutput := ":8080"
+	expectedOutput := ":8080\n"
 	if output != expectedOutput {
 		t.Errorf("Expected single value output %q, got %q", expectedOutput, output)
 	}
 }
 
 // TestGetAndPrintConfigPaths_SingleMatchRoundTrip verifies a single-line value
-// exported with get can be stored again byte-exact: no trailing newline is
-// added that would poison header values like API tokens.
+// exported with get carries exactly one added line break, the break set drops
+// when the file is stored again.
 func TestGetAndPrintConfigPaths_SingleMatchRoundTrip(t *testing.T) {
 	scope := "app"
 	mockStore := NewMockGetSecureStore(map[string][]byte{
@@ -175,9 +177,46 @@ func TestGetAndPrintConfigPaths_SingleMatchRoundTrip(t *testing.T) {
 	}
 
 	output := stdout.String()
-	expectedOutput := "tlsserver"
+	expectedOutput := "tlsserver\n"
 	if output != expectedOutput {
 		t.Errorf("Expected round-trip safe output %q, got %q", expectedOutput, output)
+	}
+}
+
+// TestGetSetRoundTrip_MultilineValue verifies the export and import pair keeps
+// a value that itself ends with a line break unchanged: get adds one break, set
+// drops one, so the value comes back exactly as it was stored.
+func TestGetSetRoundTrip_MultilineValue(t *testing.T) {
+	scope := "app"
+	const certificate = "-----BEGIN-----\nline\n-----END-----\n"
+	doc := "[acme]\n  certificate = \"-----BEGIN-----\\nline\\n-----END-----\\n\"\n"
+
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	getStore := NewMockGetSecureStore(map[string][]byte{scope: []byte(doc)})
+	err := getAndPrintConfigPaths(ui, getStore, scope, "acme.certificate")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if stdout.String() != certificate+"\n" {
+		t.Fatalf("get wrote %q, want the value and one line break", stdout.String())
+	}
+
+	exportPath := filepath.Join(t.TempDir(), "certificate.pem")
+	writeErr := os.WriteFile(exportPath, stdout.Bytes(), 0o600)
+	if writeErr != nil {
+		t.Fatalf("failed to write export file: %v", writeErr)
+	}
+
+	setStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(doc)})
+	err = setConfigValue(ui, setStore, scope, "toml", "", "acme.certificate", "@"+exportPath)
+	if err != nil {
+		t.Fatalf("set: %v", err)
+	}
+	got := getTreeFromStore(t, setStore, scope).Get("acme.certificate")
+	if got != certificate {
+		t.Errorf("round-trip stored %q, want %q", got, certificate)
 	}
 }
 
