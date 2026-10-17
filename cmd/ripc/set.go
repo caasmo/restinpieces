@@ -33,8 +33,8 @@ func printSetUsage(w io.Writer) {
 			commandOptions.Opt("desc"),
 		},
 		Examples: []string{
-			"ripc set server.host localhost",
-			`ripc set --scope webapp features.beta true --desc "Enable beta feature"`,
+			`ripc set server.addr ":9090"`,
+			`ripc set --desc "Enable request logging" log.request.activated true`,
 		},
 	}
 	help.Print(w, prog)

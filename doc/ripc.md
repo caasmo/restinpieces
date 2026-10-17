@@ -27,6 +27,7 @@
   - [rollback](#rollback-generation)
   - [job](#job)
   - [log](#log)
+  - [version](#version)
   - [help](#help)
 
 ## Relationship with `ripdep`
@@ -72,6 +73,8 @@ ripc list
 
 `ripc` uses flat top-level commands, one per operation. For example, to list configuration versions, you would use `ripc list`.
 
+Commands that work on configuration take a `--scope` option to choose which document they read or write. When it is not given, the command uses `application`, the scope the server reads at startup. Scopes sit side by side in the same database, and a value stored in one is not visible in another. `ripc scopes` lists the scopes that have stored configuration.
+
 ### `app`
 
 Manages the application lifecycle.
@@ -83,25 +86,30 @@ Manages the application lifecycle.
 
 ### `get [filter]`
 
-Retrieves configuration values by path.
+Retrieves stored configuration values by path.
 
     ripc get "server.addr"
 
-If a string is given, only values whose path contains that string are shown. For example, `ripc get backup` shows all configuration whose path contains `backup`.
+With no filter, every stored value is printed. With a filter, only values whose path contains the filter string are shown; for example, `ripc get backup` shows every value whose path contains `backup`.
 
+    ripc get
     ripc get backup
 
-A single match prints the value itself followed by one newline, so `ripc get <path> > file` writes a normal text file that `ripc set <path> @file` reads back unchanged.
+A single match prints the value itself followed by one newline, so `ripc get <path> > file` writes a normal text file that `ripc set <path> @file` reads back unchanged. Two or more matches print one `path = value` line per match, sorted by path.
+
+Only values stored in the scope are shown; keys the framework fills in with defaults are not. Use `ripc dump --runtime` for the full configuration the server uses.
 
 ### `paths [filter]`
 
-Lists all available TOML paths in the configuration.
+Lists the path of every stored configuration value, one per line.
 
     ripc paths
 
 If a string is given, only paths containing that string are shown. For example, `ripc paths backup` shows all paths containing `backup`.
 
     ripc paths backup
+
+Like `get`, it only sees values stored in the scope, not defaults filled in by the framework.
 
 ### `dump`
 
@@ -114,7 +122,7 @@ Writes the decrypted TOML configuration exactly as it was saved to the database,
     ripc dump --scope myapp
 
 **`--zero`**:
-Fills in zero values (`0`, `""`, `false`, `null`) for every configuration key not present in the stored TOML, producing a complete TOML document where only the keys that were explicitly configured carry non-zero values. Useful for seeing which fields are explicitly configured vs left at their zero value.
+Prints every configuration key: stored keys keep their value, and keys not present in the stored TOML are filled in with zero values (`0`, `""`, `false`). Useful for seeing which fields are explicitly configured.
 
     ripc dump --zero
     ripc dump --zero --scope myapp
@@ -129,19 +137,25 @@ Merges the stored TOML configuration with the framework's built-in defaults.  Ev
 
 ### `scopes`
 
-Lists all unique configuration scopes.
+Lists the scopes that have stored configuration, one per line.
 
     ripc scopes
 
 ### `set <path> <value>`
 
-Sets a configuration value at a given path.
+Sets an existing configuration value.
 
-    ripc set -desc "Update port" server.http_port 8080
+    ripc set server.addr ":9090"
+
+The path must already exist; `set` refuses unknown paths. Use [`paths`](#paths-filter) to find one and [`scaffold`](#scaffold-type-label) to create a new section. `--desc` records a description for the saved version, shown by [`list`](#list-scope).
+
+The value is parsed as a TOML value, falling back to a plain string when it is not valid TOML. A value that starts with `@` is read from the named file instead.
+
+To set several values in a loop, see [`walk`](#walk-filter).
 
 ### `walk <filter>`
 
-Walks through matching configuration values one at a time.
+Sets matching configuration values in a loop, one at a time. It is the bulk form of `set`.
 
     ripc walk server
     ripc walk --scope myapp backup
@@ -157,11 +171,14 @@ An empty line keeps the stored value. Any other line replaces it, parsed the sam
 
 ### `add <path> <value>`
 
-Appends a value to a configuration key that holds several values.
+Appends a value to a list key.
 
     ripc add block_user_agent.agents SemrushBot
+    ripc add block_host.allowed_hosts example.com
 
-`add` can be run again safely: adding a value that is already present leaves the configuration unchanged. For `block_user_agent.agents`, the value is appended to the slice.
+Only `block_user_agent.agents` and `block_host.allowed_hosts` can be added to. Other list keys, such as `acme.domains`, are changed with [`set`](#set-path-value).
+
+`add` can be run again safely: adding a value that is already present leaves the configuration unchanged.
 
 ### `rm <path> [value]`
 
@@ -197,13 +214,16 @@ Removing a stored item brings back the framework default when one exists. For ex
 
 ### `save <file>`
 
-Saves the contents of a file to the configuration store.
+Replaces the stored configuration for a scope with the contents of a file.
 
-    ripc save -scope myapp config.toml
+    ripc save config.toml
+    ripc save --scope myapp config.toml
+
+The format is taken from the file extension (`.toml` for `config.toml`) unless `--format` is given. Unlike the other writing commands, `save` neither merges nor validates: the file becomes the stored document as-is, so it must be a complete configuration.
 
 ### `scaffold <type> <label>`
 
-Creates a complete configuration section with defaults. `set` changes a single field; `scaffold` creates an entire section at once. `<label>` is the label you choose for the new section and must not already exist.
+Creates a complete configuration section with defaults. `set` changes a single field; `scaffold` creates an entire section at once. `<label>` is the label you choose for the new section; it must not already exist and must not contain dots or spaces. `scaffold` always writes to the `application` scope. If the parent section is missing, run [`migrate`](#migrate) first.
 
 After scaffolding, `ripc walk <path>` shows each field of the new section one at a time — path, the comment above it and its current value — and lets you fill them in a single pass.
 
@@ -212,6 +232,8 @@ After scaffolding, `ripc walk <path>` shows each field of the new section one at
 | `backup-online` | `backup.online.<label>` | Online Backup API ([restinpieces-backup](https://github.com/caasmo/restinpieces-backup)) |
 | `backup-vacuum` | `backup.vacuum.<label>` | VACUUM INTO ([restinpieces-backup](https://github.com/caasmo/restinpieces-backup)) |
 | `backup-sqlite-rsync` | `backup.sqlite-rsync.entries.<label>` | sqlite-rsync ([restinpieces-backup](https://github.com/caasmo/restinpieces-backup)) |
+| `backup-s3-upload` | `backup.s3-upload.<label>` | Uploads one file to S3 ([restinpieces-backup](https://github.com/caasmo/restinpieces-backup)) |
+| `backup-s3-download` | `backup.s3-download.<label>` | Downloads the newest backup for a label from S3 ([restinpieces-backup](https://github.com/caasmo/restinpieces-backup)) |
 | `oauth2` | `oauth2.<label>` | OAuth2 provider |
 | `acme-dns-01` | `acme.dns-01.<label>` | DNS-01 challenge (Cloudflare, [restinpieces-acme](https://github.com/caasmo/restinpieces-acme)) |
 | `job` | `scheduler.jobs.<label>` | Job that runs on a schedule |
@@ -298,35 +320,46 @@ The scheduler adds one pending run. When it completes, the next run is added aut
 
 Migrates the stored configuration to the current framework version:
 
-- it removes stale configuration that no longer exist in the framework
-- adds the new framework configuration with their default values
-- preserves all existing configured values
+- removes configuration keys that no longer exist in the framework
+- adds newly introduced configuration keys with their default values
+- preserves every configured value
 
 
 ```
 ripc migrate
 ```
 
-The command is safe to run at any time — it never overwrites existing values with defaults unless the field was newly added to the framework.
+The command is safe to run at any time — it never overwrites existing values with defaults unless the field was newly added to the framework. It only touches the `application` scope.
 
 ### `list [scope]`
 
-Lists configuration versions, optionally filtered by scope.
+Lists configuration versions, newest first.
 
     ripc list
     ripc list myapp
 
+The scope is a positional argument here, not an option. The output looks like this:
+
+```
+Gen  Scope        Created At             Format  Description
+---  ------------ ---------------------  ------  -----------
+  0  application  2026-06-01T12:00:00Z   toml    Updated field 'server.addr'
+  1  application  2026-06-01T11:59:00Z   toml    Initial default configuration
+```
+
+`Gen` numbers the versions from newest (`0`) to oldest. [`diff`](#diff-generation) and [`rollback`](#rollback-generation) take these numbers; rollback requires `1` or higher, because `0` is already the latest. `Description` is the `--desc` value given when the version was saved, or a default chosen by the command that saved it; `Format` is the format it was saved in.
+
 ### `diff <generation>`
 
-Shows differences between the latest configuration and a previous version.
+Shows a unified diff between a previous version and the latest configuration: `-` lines are the previous version, `+` lines are the latest.
 
-    ripc diff -scope myapp 1
+    ripc diff --scope myapp 1
 
 ### `rollback <generation>`
 
-Rolls back to a previous configuration version by its generation number (from `list`).
+Restores a previous version as the new latest. The generation number comes from [`list`](#list-scope) and must be `1` or higher; generation `0` is already the latest.
 
-    ripc rollback -scope myapp 3
+    ripc rollback --scope myapp 3
 
 ### `job`
 
@@ -347,6 +380,12 @@ Reads the log database, printing one line per record, oldest first: creation tim
 -   `ripc log -f` prints the last 20 records, then keeps printing new records until interrupted.
 
 Write the flags before the filter, for example `ripc log -n 50 404`: the flag parser stops at the first value that is not a flag.
+
+### `version`
+
+Prints the `ripc` build tag and commit. It runs without a database or age key.
+
+    ripc version
 
 ### `help`
 

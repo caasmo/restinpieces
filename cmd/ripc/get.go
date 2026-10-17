@@ -25,7 +25,7 @@ func printGetUsage(w io.Writer) {
 		Examples: []string{
 			"ripc get",
 			"ripc get server",
-			"ripc get --scope my-app server.port",
+			"ripc get --scope my-app server.addr",
 		},
 	}
 	help.Print(w, prog)

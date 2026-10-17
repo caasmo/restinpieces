@@ -21,7 +21,7 @@ var (
 func printWalkUsage(w io.Writer) {
 	help := Spec{
 		Usage:       "walk [options] <filter>",
-		Description: "Walks through configuration values and updates them one at a time.",
+		Description: "Sets matching configuration values in a loop, one at a time.",
 		Args: []ArgSpec{
 			{"filter", "Substring filter on configuration paths; only matching values are walked"},
 		},

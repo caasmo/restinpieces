@@ -98,7 +98,7 @@ func run(args []string, output io.Writer) error {
 					Title: "Modifying Configuration",
 					Subcommands: []Subcommand{
 						{"set", "Set a configuration value"},
-						{"walk", "Walk through configuration values one at a time"},
+						{"walk", "Set configuration values one at a time"},
 						{"add", "Append a value to a collection configuration key"},
 						{"rm", "Remove an item from a configuration collection"},
 						{"update", "Generate secrets, bot list, or TLS certificate"},
@@ -128,7 +128,7 @@ func run(args []string, output io.Writer) error {
 			},
 			Examples: []string{
 				"ripc app create",
-				"ripc set server.port 8080",
+				`ripc set server.addr ":9090"`,
 			},
 		}
 		help.Print(output, prog)

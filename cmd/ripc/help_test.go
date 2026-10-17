@@ -129,7 +129,7 @@ func TestPrintUsageFuncs(t *testing.T) {
 				"Optional substring filter on configuration paths",
 				"Options:",
 				"-scope string",
-				"ripc get --scope my-app server.port",
+				"ripc get --scope my-app server.addr",
 			},
 		},
 		{
@@ -183,7 +183,7 @@ func TestPrintUsageFuncs(t *testing.T) {
 				"-scope string",
 				"-format string",
 				"-desc string",
-				"ripc set server.host localhost",
+				`ripc set server.addr ":9090"`,
 			},
 		},
 		{
@@ -191,7 +191,7 @@ func TestPrintUsageFuncs(t *testing.T) {
 			usage: printWalkUsage,
 			want: []string{
 				"walk [options] <filter>",
-				"Walks through configuration values and updates them one at a time.",
+				"Sets matching configuration values in a loop, one at a time.",
 				"Arguments:",
 				"filter",
 				"Substring filter on configuration paths; only matching values are walked",

@@ -458,3 +458,10 @@ consideer if is possible to use genreal Limiter (not) or just naming
 - decision: review nit, consequence-free — every record with bad threads is still rejected, nothing wrong is accepted, the uint32 cast cannot overflow; only the chosen error message differs
 - alternative: move the two threads checks above the memory check
 - refs: `crypto/password.go` (`validateArgon2id` lines 133, 145-150)
+
+# config/config_validate.go: reject short JWT secrets at startup
+
+- current: `validateJwt` checks secrets for empty and duplicate only; a value shorter than `crypto.MinKeyLength` (32 bytes) passes startup and fails at the first token issue with `ErrJwtInvalidSecretLength`
+- change: fail fast in `validateJwt` — reject `len(secret) < crypto.MinKeyLength` for all five JWT secrets
+- rationale: https://words.filippo.io/right-answers/ §Symmetric key length — 256-bit keys; app secrets are generated with `crypto.ID()` (32 random bytes)
+- refs: `config/config_validate.go` (`validateJwt`, `validateJwtSecretsDistinct`), `crypto/jwt.go` (`MinKeyLength`), `config/config_validate_test.go` (short-secret fixtures need updating)
