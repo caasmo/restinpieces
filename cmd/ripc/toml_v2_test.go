@@ -41,20 +41,6 @@ func TestTomlValueFromText_Values(t *testing.T) {
 	}
 }
 
-func TestTomlValueFromFile_NotAFileArgument(t *testing.T) {
-	got, isFile, err := tomlValueFromFile("hello")
-
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if isFile {
-		t.Error("expected isFile false for a plain value")
-	}
-	if got != nil {
-		t.Errorf("expected nil value, got %#v", got)
-	}
-}
-
 func TestTomlValueFromFile_Contents(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "value.txt")
 	content := "line1\nline2\n"
@@ -63,13 +49,10 @@ func TestTomlValueFromFile_Contents(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", writeErr)
 	}
 
-	got, isFile, err := tomlValueFromFile("@" + path)
+	got, err := tomlValueFromFile(path)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
-	}
-	if !isFile {
-		t.Error("expected isFile true for an @ argument")
 	}
 	if got != content {
 		t.Errorf("file value = %q, want %q", got, content)
@@ -85,13 +68,10 @@ func TestTomlValueFromFile_ContentIsNotParsed(t *testing.T) {
 		t.Fatalf("failed to write test file: %v", writeErr)
 	}
 
-	got, isFile, err := tomlValueFromFile("@" + path)
+	got, err := tomlValueFromFile(path)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
-	}
-	if !isFile {
-		t.Error("expected isFile true for an @ argument")
 	}
 	if got != "42" {
 		t.Errorf("file value = %#v, want the string \"42\"", got)
@@ -101,12 +81,9 @@ func TestTomlValueFromFile_ContentIsNotParsed(t *testing.T) {
 func TestTomlValueFromFile_MissingFile(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "missing.txt")
 
-	_, isFile, err := tomlValueFromFile("@" + path)
+	_, err := tomlValueFromFile(path)
 
 	if !errors.Is(err, ErrReadFile) {
 		t.Fatalf("expected error to wrap ErrReadFile, got %v", err)
-	}
-	if !isFile {
-		t.Error("expected isFile true for an @ argument")
 	}
 }

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	toml "github.com/pelletier/go-toml/v2"
 )
@@ -22,17 +21,11 @@ func tomlValueFromText(text string) (interface{}, error) {
 	return parsed["temp_key"], nil
 }
 
-// tomlValueFromFile returns the contents of the file named by an "@" argument
-// as a string value. The bool is false when the argument is not a file
-// argument, so the caller parses it as text instead.
-func tomlValueFromFile(rawValue string) (interface{}, bool, error) {
-	if !strings.HasPrefix(rawValue, "@") {
-		return nil, false, nil
-	}
-	filePath := strings.TrimPrefix(rawValue, "@")
+// tomlValueFromFile returns the contents of the named file as a string value.
+func tomlValueFromFile(filePath string) (string, error) {
 	fileContent, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, true, fmt.Errorf("%w: failed to read from path '%s': %w", ErrReadFile, filePath, err)
+		return "", fmt.Errorf("%w: failed to read from path '%s': %w", ErrReadFile, filePath, err)
 	}
-	return string(fileContent), true, nil
+	return string(fileContent), nil
 }

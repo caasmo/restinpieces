@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 
 	"github.com/caasmo/restinpieces/config"
 	toml "github.com/pelletier/go-toml"
@@ -175,16 +176,12 @@ func printWalkEntry(ui UI, path string, entry TomlEntry) error {
 	return nil
 }
 
-// parseWalkValue turns one input line into a value the way set does it: an "@"
-// argument reads the file contents, anything else is parsed as a TOML value
-// with a quoted string as fallback.
+// parseWalkValue turns one input line into a value: an "@" argument names a
+// file whose contents are read as a string, anything else is parsed as a TOML
+// value with a quoted string as fallback.
 func parseWalkValue(line string) (interface{}, error) {
-	value, isFile, err := tomlValueFromFile(line)
-	if err != nil {
-		return nil, err
-	}
-	if isFile {
-		return value, nil
+	if strings.HasPrefix(line, "@") {
+		return tomlValueFromFile(strings.TrimPrefix(line, "@"))
 	}
 	return tomlValueFromText(line)
 }
