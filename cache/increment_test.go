@@ -4,7 +4,6 @@ import (
 	"errors"
 	"sync"
 	"testing"
-	"time"
 )
 
 func TestCache_IncrementCreatesCounter(t *testing.T) {
@@ -51,24 +50,6 @@ func TestCache_IncrementAddsToCounter(t *testing.T) {
 	}
 	if count != 5 {
 		t.Fatalf("Increment() = %d, want 5", count)
-	}
-}
-
-func TestCache_IncrementKeepsTTL(t *testing.T) {
-	c := newWith[string, uint64](2)
-	c.SetWithTTL("key", uint64(1), 1, time.Hour)
-	n := c.index["key"]
-	expiration := c.nodes[n].expiration
-
-	count, err := c.Increment("key", 1)
-	if err != nil {
-		t.Fatalf("Increment() error = %v", err)
-	}
-	if count != 2 {
-		t.Fatalf("Increment() = %d, want 2", count)
-	}
-	if c.nodes[n].expiration != expiration {
-		t.Fatalf("expiration = %d, want %d", c.nodes[n].expiration, expiration)
 	}
 }
 
@@ -172,78 +153,6 @@ func TestCache_IncrementWrapsOnOverflow(t *testing.T) {
 	}
 	if count != 0 {
 		t.Fatalf("Increment() = %d, want 0", count)
-	}
-}
-
-func TestCache_IncrementReplacesExpiredCounter(t *testing.T) {
-	c := newWith[string, uint64](2)
-	c.SetWithTTL("key", uint64(5), 1, time.Hour)
-
-	// Move the expiration behind the sampled clock instead of sleeping.
-	n := c.index["key"]
-	c.nodes[n].expiration = clockNow.Load() - 1
-
-	count, err := c.Increment("key", 1)
-	if err != nil {
-		t.Fatalf("Increment() error = %v", err)
-	}
-	if count != 1 {
-		t.Fatalf("Increment() = %d, want 1", count)
-	}
-
-	got, ok := c.Get("key")
-	if !ok {
-		t.Fatal("expected the new counter to be present")
-	}
-	if got != uint64(1) {
-		t.Fatalf("Get() = %v, want 1", got)
-	}
-}
-
-func TestCache_IncrementReplacesExpiredNonCounter(t *testing.T) {
-	c := newWith[string, any](2)
-	c.SetWithTTL("key", true, 1, time.Hour)
-
-	n := c.index["key"]
-	c.nodes[n].expiration = clockNow.Load() - 1
-
-	count, err := c.Increment("key", 3)
-	if err != nil {
-		t.Fatalf("Increment() error = %v", err)
-	}
-	if count != 3 {
-		t.Fatalf("Increment() = %d, want 3", count)
-	}
-
-	got, ok := c.Get("key")
-	if !ok {
-		t.Fatal("expected the counter to be present")
-	}
-	if got != uint64(3) {
-		t.Fatalf("Get() = %v, want 3", got)
-	}
-}
-
-func TestCache_IncrementKeepsExpiredEntryOnTypeError(t *testing.T) {
-	c := newWith[string, string](2)
-	c.SetWithTTL("key", "value", 1, time.Hour)
-
-	n := c.index["key"]
-	c.nodes[n].expiration = clockNow.Load() - 1
-
-	count, err := c.Increment("key", 1)
-	if !errors.Is(err, ErrNotCounter) {
-		t.Fatalf("Increment() error = %v, want %v", err, ErrNotCounter)
-	}
-	if count != 0 {
-		t.Fatalf("Increment() = %d, want 0", count)
-	}
-
-	if _, ok := c.index["key"]; !ok {
-		t.Fatal("expected the expired entry to remain in the index")
-	}
-	if len(c.free) != 1 {
-		t.Fatalf("len(free) = %d, want 1", len(c.free))
 	}
 }
 

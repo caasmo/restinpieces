@@ -111,6 +111,10 @@ gofmt -l .
 
 `gofmt -l .` must print nothing.
 
+### Git: never use worktrees
+
+Never run `git worktree` in this repo. Copy the tree to `/tmp/opencode` instead.
+
 ### Tag a release
 
 1. Run the generating-release-notes skill to write `RELEASE_<short-hash>.md`.
