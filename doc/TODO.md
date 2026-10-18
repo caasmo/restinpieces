@@ -465,3 +465,190 @@ consideer if is possible to use genreal Limiter (not) or just naming
 - change: fail fast in `validateJwt` — reject `len(secret) < crypto.MinKeyLength` for all five JWT secrets
 - rationale: https://words.filippo.io/right-answers/ §Symmetric key length — 256-bit keys; app secrets are generated with `crypto.ID()` (32 random bytes)
 - refs: `config/config_validate.go` (`validateJwt`, `validateJwtSecretsDistinct`), `crypto/jwt.go` (`MinKeyLength`), `config/config_validate_test.go` (short-secret fixtures need updating)
+
+# keyed fixed-window rate limiter
+
+keyed — the state is per identity (email, IP, user id, or one global key).
+fixed-window — the timeline is cut into non-overlapping buckets, e.g. floor(now / window).
+counter — for each (key, window) you store a count and compare it to max.
+When N = 1, that same primitive is called a cooldown. That's the domain word, not a different mechanism.
+
+- config: the `limiter` section splits into two branches, named after the two standard rate-limiting algorithms — `token_bucket` (the existing one: `limit`, `burst`) and `fixed_window` (this one: `prefix`, `window`, `max`).
+- the names are the literature names, not invented. The Go source names the existing one itself: `golang.org/x/time/rate/rate.go` — "It implements a 'token bucket' of size b, initially full and refilled at rate r tokens per second" (https://github.com/golang/time/blob/master/rate/rate.go). The other is the "fixed window counter" algorithm listed with token bucket under standard algorithms (https://en.wikipedia.org/wiki/Rate_limiting).
+- entries and the section struct:
+
+```go
+// TokenBucketEntry is one token-bucket limiter. Tokens refill at Limit and
+// the bucket holds Burst of them.
+type TokenBucketEntry struct {
+	Limit Duration `toml:"limit" comment:"Wait between calls once the burst is gone, e.g. '2s'"`
+	Burst int      `toml:"burst" comment:"Calls allowed without waiting, e.g. 5"`
+}
+
+// FixedWindowEntry is one keyed fixed-window limiter. Prefix namespaces the
+// cache key; each identity gets Max calls per Window.
+type FixedWindowEntry struct {
+	Prefix string   `toml:"prefix" comment:"Cache key prefix, e.g. 'password_reset'"`
+	Window Duration `toml:"window" comment:"Bucket width, e.g. '1h'"`
+	Max    int64    `toml:"max" comment:"Calls allowed per window per identity, e.g. 1"`
+}
+
+// Limiter is the rate limiter section. Each branch is keyed by a label you
+// choose and looked up by name.
+type Limiter struct {
+	TokenBucket map[string]TokenBucketEntry `toml:"token_bucket"`
+	FixedWindow map[string]FixedWindowEntry `toml:"fixed_window"`
+}
+```
+
+Yes. The limiter only needs the cache.
+
+`Limit(label, identity)` — the caller names the label (`PasswordReset`) and hands over the identity (`email`); the prefix, window and max are read from the `limiter.fixed_window.<label>` entry, so the call site no longer builds `"password_reset:" + email` itself.
+
+```go
+func (l *Limiters) Limit(label, identity string) bool {
+    e, ok := l.config.Get().Limiter.FixedWindow[label]
+    if !ok {
+        return false
+    }
+    bucket := time.Now().UnixNano() / int64(e.Window.Duration)
+    cacheKey := e.Prefix + ":" + identity + ":" + strconv.FormatInt(bucket, 10)
+
+    count, ok := l.cache.Increment(cacheKey, 1)
+    if !ok {
+        return false
+    }
+    return count <= e.Max
+}
+```
+
+```go
+ok := limiters.Limit(PasswordReset, email)
+```
+
+- `max = 1` is a cooldown, so this replaces the current cooldown logic: `rate_limits` (`RateLimits`: `password_reset_cooldown`, `email_change_cooldown`, `email_verification_otp_cooldown`), `queue.CoolDownBucket`, and the `job_queue` unique index that today enforces "one unfinished job per email per bucket" at OTP-job creation. The OTP request handlers would call `Limit(<label>, identity)` before enqueueing and those three go away; state then lives in the cache, not the DB, which also drops the current cooldown bug (the cooldown is broken today — see the `BUG queue` entry below).
+
+Agreed — build the map once. `Limiter` walks both branches at construction and fills `map[label]object`, each object being the matching default (`DefaultTokenBucketLimiter` or `DefaultFixedWindowLimiter`, the latter holding the cache). After that, `app.Limiter(label)` is a plain map read — no config read, no reload, nothing extra per call.
+
+That fits the other fact too: a new label is only useful once code names it with a const, and naming it means a deploy — so the map is built from whatever config is present at startup, and changing `window`/`max`/`burst` on an existing label needs a restart.
+
+So the hot path is `app.Limiter(label)` → map hit → `Limit(...)`. A label code names but config lacks is the error `app.Limiter` already returns; the built-ins (`password_hashing`, and the cooldowns once they move over) are seeded so they always resolve.
+
+Yes — with the map built at startup, `App.Limiter()` can just return the registry and the whole public surface becomes one method: `Limit(label string, identity ...string) bool`. Token bucket ignores the identity; fixed window reads it (exactly one, else panic). No per-label accessor, no assertion at the call site, and `Limit(PasswordHashing)` / `Limit(PasswordReset, email)` read the same.
+
+Right, and it hangs together: the token bucket keeps per-label state (its own tokens), so it needs one object per label; the fixed window keeps no state in the object (the count lives in the cache), so a single object serves every fixed-window label. That's why `FixedWindow` is just `map[label]struct{}` — a marker of which labels are that kind — `TokenBucket` is `map[label]object` — the per-label token buckets — and `FW` is the one shared object.
+
+On `Limit(label, identity...)`: if `label` is in `FixedWindow`, call `FW` with `(label, identity)` —
+
+```go
+type TokenBucketLimiter interface { Limit() bool }                // per label, holds its own tokens
+type FixedWindowLimiter interface { Limit(identity string) bool } // one shared, cache-backed
+
+type Limiter struct {
+	FixedWindow map[string]struct{}           // labels that are fixed-window
+	TokenBucket map[string]TokenBucketLimiter // label -> its own token bucket
+	FW          FixedWindowLimiter            // the one shared fixed-window object
+}
+
+func (l *Limiter) Limit(label string, identity ...string) bool
+```
+
+following the backup types (`backup-online`, `backup-vacuum`, …) — it would become `ripc scaffold limiter-token-bucket <key>` and `ripc scaffold limiter-fixed-window <key>`
+
+- increment must be not in cache interface, it is not supported by go caches like ristretto
+
+Yes. That is the clean refactor.
+
+`Get` and `SetWithTTL` become thin lock wrappers. `Increment` takes the lock once and calls the unlocked helpers.
+
+```
+Get(key):
+    lock
+    defer unlock
+    return get(key)
+
+SetWithTTL(key, value, ttl):
+    if ttl < 0:
+        return false
+    lock
+    defer unlock
+    return set(key, value, ttl)
+
+Increment(key, delta):
+    lock
+    defer unlock
+
+    current, found = get(key)
+    if not found:
+        set(key, delta, 0)
+        return delta, true
+
+    if current is not int64:
+        return 0, false
+
+    count = current + delta
+    set(key, count, 0)
+    return count, true
+```
+
+`set` takes `ttl = 0` for counters, so they never expire. The bucket in the key is what resets the count.
+
+```
+Increment(key, delta):            // func (c *Default[K, V]) Increment(key K, delta uint64) (uint64, bool)
+    lock
+    defer unlock
+
+    n, ok = c.index[key]
+    if not ok:                                       // no counter yet
+        n = c.alloc()
+        if n == -1:                                  // full: evict the LRU tail
+            tail = c.tail
+            c.unlink(tail)
+            delete(c.index, c.nodes[tail].key)
+            c.dealloc(tail)
+            n = c.alloc()
+        c.nodes[n].key = key
+        c.nodes[n].value = any(delta).(V)            // box delta, assert back to V
+        c.nodes[n].expiration = 0
+        c.index[key] = n
+        c.linkToHead(n)
+        return delta, true
+
+    current, ok = any(c.nodes[n].value).(uint64)     // box V, assert to uint64
+    if not ok:
+        return 0, false
+
+    count = current + delta
+    c.nodes[n].value = any(count).(V)                // box count, assert back to V
+    if n != c.head:
+        c.unlink(n)
+        c.linkToHead(n)
+    return count, true
+```
+
+# BUG queue: we added WHERE status != 'completed' and broke the cooldown
+
+- the unique index only covers pending, processing and failed rows; once the scheduler marks the email job completed, a new request for the same email and bucket inserts another job and sends another email
+- the rule is "one unfinished job per key per bucket", not "one event per key per window"
+- the cooldown is broken today. The `# keyed fixed-window rate limiter` design replaces it with a cache-backed `fixed_window` entry (`max = 1`), removing this bug together with `rate_limits`, `CoolDownBucket` and the unique index
+- refs: `sql/schema/app/job_queue.sql` (`idx_job_queue_incomplete`), `db/databasesql/queue.go` (`StmtInsertJob`, `MarkCompleted`), `queue/scheduler/scheduler.go`, `queue/queue.go` (`CoolDownBucket`), `core/handler_auth_password_reset_otp_request.go`, `core/handler_auth_email_change_otp_request.go`, `core/handler_auth_email_verification_otp_request.go`
+
+# cache: make a smoke test with struct and no struct for memory vs time
+
+- one smoke test comparing a struct key against the composed string key, measuring memory and time
+- refs: `cache/default.go` (`node`, `index`), `cache/benchmark_test.go`
+
+# limiter: limiter uses Default, no interface
+
+- refs: `core/limiter.go`, `cache/default.go`
+
+# limiter: fixed-window cache key — one allocation, no buffer pool
+
+- the sketch in `# keyed fixed-window rate limiter` builds `cacheKey := e.Prefix + ":" + identity + ":" + strconv.FormatInt(bucket, 10)`; `FormatInt` plus the concatenation is two allocations per call
+- preferred: one local `strings.Builder` with `Grow`, append the prefix, identity and bucket with `strconv.AppendUint` into a stack `[20]byte`, then `String()`. One allocation, and the cache owns a stable string
+- do not pool `[]byte` or `bytes.Buffer`: `string(buf)` still copies and allocates, so the pool does not remove the allocation that matters and adds `Get`/`Put` overhead
+- do not pool `strings.Builder`: `String()` aliases the builder buffer, and the cache stores the key in the map and node; reusing the buffer would corrupt the stored keys
+- never use `unsafe.String` over a pooled buffer for the same reason
+- if a profile shows the key build dominating: add a `[]byte` lookup path (`m[string(b)]` map lookups do not allocate; allocate only on a miss) or a purpose-built window structure
+- measure with `-benchmem`
+- refs: `doc/TODO.md` (`# keyed fixed-window rate limiter`), `cache/increment.go`, `core/limiter.go`, `cache/benchmark_test.go`
