@@ -16,7 +16,9 @@ func newTestProvider(limiters config.Limiter) *config.Provider {
 
 func TestDefaultLimiters_Get(t *testing.T) {
 	provider := newTestProvider(config.Limiter{
-		PasswordHashing: {Limit: config.Duration{Duration: 2 * time.Second}, Burst: 5},
+		TokenBucket: config.TokenBucket{
+			PasswordHashing: {Limit: config.Duration{Duration: 2 * time.Second}, Burst: 5},
+		},
 	})
 	limiters := NewDefaultLimiters(provider)
 
@@ -36,7 +38,7 @@ func TestDefaultLimiters_Get(t *testing.T) {
 }
 
 func TestDefaultLimiters_GetNotDefined(t *testing.T) {
-	limiters := NewDefaultLimiters(newTestProvider(nil))
+	limiters := NewDefaultLimiters(newTestProvider(config.Limiter{}))
 
 	_, err := limiters.Get("upload")
 	if err == nil {

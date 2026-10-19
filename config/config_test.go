@@ -233,11 +233,11 @@ func TestConfig_UnmarshalIgnoresRemovedStartTLS(t *testing.T) {
 
 func TestConfigLimiterDuplicateKeyRejected(t *testing.T) {
 	stored := []byte(`
-[limiter.password_hashing]
+[limiter.token_bucket.password_hashing]
 limit = '2s'
 burst = 5
 
-[limiter.password_hashing]
+[limiter.token_bucket.password_hashing]
 limit = '1s'
 burst = 1
 `)

@@ -265,19 +265,47 @@ func NewJobsDefaults() Jobs {
 	return Jobs{}
 }
 
-// NewLimiterEntryDefaults returns a limiter entry with default values for use
-// by ripc scaffold.
-func NewLimiterEntryDefaults() LimiterEntry {
-	return LimiterEntry{
+// NewTokenBucketEntryDefaults returns a token-bucket entry with default values
+// for use by ripc scaffold.
+func NewTokenBucketEntryDefaults() TokenBucketEntry {
+	return TokenBucketEntry{
 		Limit: Duration{Duration: 2 * time.Second},
 		Burst: 5,
 	}
 }
 
+// NewFixedWindowEntryDefaults returns a fixed-window entry with default values
+// for use by ripc scaffold and the framework's own entries. The prefix is the
+// CHANGE_ME placeholder the user replaces with their own.
+func NewFixedWindowEntryDefaults() FixedWindowEntry {
+	return FixedWindowEntry{
+		Prefix: "CHANGE_ME",
+		Window: Duration{Duration: 1 * time.Hour},
+		Max:    1,
+	}
+}
+
 // NewLimitersDefaults returns the limiter section with the framework's own
-// entry. Other entries are created via ripc scaffold.
+// entries: the password hashing limiter and the three email fixed-window
+// entries. Other entries are created via ripc scaffold.
 func NewLimitersDefaults() Limiter {
+	passwordReset := NewFixedWindowEntryDefaults()
+	passwordReset.Prefix = "pr_"
+
+	emailChange := NewFixedWindowEntryDefaults()
+	emailChange.Prefix = "ec_"
+
+	emailVerificationOTP := NewFixedWindowEntryDefaults()
+	emailVerificationOTP.Prefix = "ev_"
+
 	return Limiter{
-		"password_hashing": NewLimiterEntryDefaults(),
+		TokenBucket: TokenBucket{
+			"password_hashing": NewTokenBucketEntryDefaults(),
+		},
+		FixedWindow: FixedWindow{
+			"password_reset":         passwordReset,
+			"email_change":           emailChange,
+			"email_verification_otp": emailVerificationOTP,
+		},
 	}
 }

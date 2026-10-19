@@ -364,8 +364,8 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 
 # notify/discord: move rate params to the limiter section
 
-- drop `config.Discord.APIRateLimit`/`APIBurst` and discord's private `rate.NewLimiter` (`notify/discord/discord.go:53-72`); use `[limiter.discord]` via `const Discord = "discord"` and take the limiter from the app factory
-- seed `limiter.discord` in `config/default.go`
+- drop `config.Discord.APIRateLimit`/`APIBurst` and discord's private `rate.NewLimiter` (`notify/discord/discord.go:53-72`); use `[limiter.token_bucket.discord]` via `const Discord = "discord"` and take the limiter from the app factory
+- seed `limiter.token_bucket.discord` in `config/default.go`
 - refs: `notify/discord/discord.go`, `config/config.go` (`Discord`), `config/default.go`, `restinpieces.go`
 
 # config/secure: move to pq age
@@ -652,3 +652,22 @@ Increment(key, delta):            // func (c *Default[K, V]) Increment(key K, de
 - if a profile shows the key build dominating: add a `[]byte` lookup path (`m[string(b)]` map lookups do not allocate; allocate only on a miss) or a purpose-built window structure
 - measure with `-benchmem`
 - refs: `doc/TODO.md` (`# keyed fixed-window rate limiter`), `cache/increment.go`, `core/limiter.go`, `cache/benchmark_test.go`
+
+# cmd/ripc: set/walk/scaffols all mutating conf op shoudl be validated before saving, its stupid to move that to relaod, restart!
+
+- current: `validateTomlAsConfig` only unmarshals into `config.Config` (a type check), so a writer can save a semantically invalid document; the full `config.Validate` runs only at app startup and on SIGHUP reload
+- decided: every mutating command — `set`, `walk`, `scaffold`, `rm` — validates the final document with `config.Validate` before saving, based on `config.NewDefaultConfig()` like the loader does
+- blockers to work out: `oauth2` entries have no deactivated state (`name` is required), so no sequence of single-field `set`s builds one; `walk` writes once, so only the final document must pass; scaffold defaults must validate as written; once in place, the limiter duplicate-label rule falls out of `validateLimiters` at save time
+- refs: `cmd/ripc/validate.go` (`validateTomlAsConfig`), `cmd/ripc/set.go` (`setConfigValue`), `cmd/ripc/walk.go` (`walkConfig`), `cmd/ripc/scaffold.go` (`scaffoldConfigValue`), `cmd/ripc/rm.go` (`removeValue`), `config/config_validate.go` (`Validate`), `config/reload.go`, `restinpieces.go` (`setupConfig`)
+
+# oauth2: scaffold writes an entry validation rejects
+
+- `ripc scaffold oauth2 <label>` writes `NewOAuth2EntryDefaults` (PKCE only); `validateOAuth2` requires every entry to have a supported unique `name` and a `redirect_url_path`, so a validated save refuses the scaffold as written
+- fix: fill the string fields with the `CHANGE_ME` placeholder the operator cannot miss (`client_id = "CHANGE_ME"`, `client_secret = "CHANGE_ME"`, `redirect_url_path = "/CHANGE_ME"`); `name` cannot hold a placeholder because a name must be a supported provider, so an empty `name` deactivates the entry (skip it in `validateOAuth2`, same as an acme dns-01 entry with an empty `provider`), and the walk fills it
+- refs: `config/oauth2_validate.go` (`validateOAuth2`), `config/default.go` (`NewOAuth2EntryDefaults`), `cmd/ripc/scaffold.go` (`scaffoldDefaults`)
+
+# backup.sqlite-rsync: scaffold writes an invalid entry when listen_addr is empty
+
+- `ripc scaffold backup-sqlite-rsync <label>` seeds `listen_addr` only when the parent section is missing; if `[backup.sqlite-rsync]` exists with an empty `listen_addr`, the new entry makes `validateBackup` fail and a validated save refuses it
+- decide: refuse and make the operator repair the section first, or seed missing fields, not only missing parent sections
+- refs: `config/config_validate.go` (`validateBackup`), `config/default.go` (`NewBackupSqliteRsyncDefaults`), `cmd/ripc/scaffold.go` (`scaffoldConfigValue`)

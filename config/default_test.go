@@ -179,8 +179,8 @@ func TestNewDefaultConfigServerHTTP2Defaults(t *testing.T) {
 	}
 }
 
-func TestNewLimiterEntryDefaults(t *testing.T) {
-	entry := NewLimiterEntryDefaults()
+func TestNewTokenBucketEntryDefaults(t *testing.T) {
+	entry := NewTokenBucketEntryDefaults()
 
 	if entry.Limit.Duration != 2*time.Second {
 		t.Errorf("Limit = %v, want 2s", entry.Limit.Duration)
@@ -190,12 +190,26 @@ func TestNewLimiterEntryDefaults(t *testing.T) {
 	}
 }
 
+func TestNewFixedWindowEntryDefaults(t *testing.T) {
+	entry := NewFixedWindowEntryDefaults()
+
+	if entry.Prefix != "CHANGE_ME" {
+		t.Errorf("Prefix = %q, want CHANGE_ME", entry.Prefix)
+	}
+	if entry.Window.Duration != time.Hour {
+		t.Errorf("Window = %v, want 1h", entry.Window.Duration)
+	}
+	if entry.Max != 1 {
+		t.Errorf("Max = %d, want 1", entry.Max)
+	}
+}
+
 func TestNewLimitersDefaults(t *testing.T) {
 	limiters := NewLimitersDefaults()
 
-	entry, ok := limiters["password_hashing"]
+	entry, ok := limiters.TokenBucket["password_hashing"]
 	if !ok {
-		t.Fatal("Limiters does not contain password_hashing")
+		t.Fatal("TokenBucket does not contain password_hashing")
 	}
 	if entry.Limit.Duration != 2*time.Second {
 		t.Errorf("password_hashing limit = %v, want 2s", entry.Limit.Duration)
@@ -203,12 +217,36 @@ func TestNewLimitersDefaults(t *testing.T) {
 	if entry.Burst != 5 {
 		t.Errorf("password_hashing burst = %d, want 5", entry.Burst)
 	}
+
+	fixedWindowSeeds := []struct {
+		label  string
+		prefix string
+	}{
+		{"password_reset", "pr_"},
+		{"email_change", "ec_"},
+		{"email_verification_otp", "ev_"},
+	}
+	for _, tc := range fixedWindowSeeds {
+		seed, ok := limiters.FixedWindow[tc.label]
+		if !ok {
+			t.Fatalf("FixedWindow does not contain %s", tc.label)
+		}
+		if seed.Prefix != tc.prefix {
+			t.Errorf("%s prefix = %q, want %q", tc.label, seed.Prefix, tc.prefix)
+		}
+		if seed.Window.Duration != time.Hour {
+			t.Errorf("%s window = %v, want 1h", tc.label, seed.Window.Duration)
+		}
+		if seed.Max != 1 {
+			t.Errorf("%s max = %d, want 1", tc.label, seed.Max)
+		}
+	}
 }
 
 func TestNewDefaultConfigSeedsPasswordHashing(t *testing.T) {
 	cfg := NewDefaultConfig()
 
-	if _, ok := cfg.Limiter["password_hashing"]; !ok {
-		t.Fatal("NewDefaultConfig().Limiter does not contain password_hashing")
+	if _, ok := cfg.Limiter.TokenBucket["password_hashing"]; !ok {
+		t.Fatal("NewDefaultConfig().Limiter.TokenBucket does not contain password_hashing")
 	}
 }

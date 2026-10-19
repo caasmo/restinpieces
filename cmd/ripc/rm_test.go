@@ -91,9 +91,23 @@ const rmTestConf = `
   # Hosts allowed to reach the app
   allowed_hosts = ["example.com"]
 
-[limiter.password_hashing]
+[limiter.token_bucket.password_hashing]
   limit = "2s"
   burst = 5
+
+[limiter.token_bucket.upload]
+  limit = "1s"
+  burst = 1
+
+[limiter.fixed_window.password_reset]
+  prefix = "pr_"
+  window = "1h"
+  max = 1
+
+[limiter.fixed_window.upload]
+  prefix = "upload"
+  window = "1h"
+  max = 5
 `
 
 func TestParseRmArgs(t *testing.T) {
@@ -352,8 +366,60 @@ func TestRmValue_Failure_LimiterPath(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := removeValue(ui, mockStore, scope, "", "limiter.password_hashing", "")
+	err := removeValue(ui, mockStore, scope, "", "limiter.token_bucket.password_hashing", "")
 	if !errors.Is(err, ErrNotCollection) {
 		t.Fatalf("expected error to wrap %v, but got %v", ErrNotCollection, err)
+	}
+}
+
+func TestRmValue_Failure_LimiterFixedWindowPath(t *testing.T) {
+	scope := "app"
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := removeValue(ui, mockStore, scope, "", "limiter.fixed_window.password_reset", "")
+	if !errors.Is(err, ErrNotCollection) {
+		t.Fatalf("expected error to wrap %v, but got %v", ErrNotCollection, err)
+	}
+}
+
+func TestRmValue_LimiterTokenBucket(t *testing.T) {
+	scope := "app"
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := removeValue(ui, mockStore, scope, "", "limiter.token_bucket.upload", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tree := getRmTreeFromStore(t, mockStore, scope)
+	if tree.Has("limiter.token_bucket.upload") {
+		t.Error("expected limiter.token_bucket.upload to be removed")
+	}
+	if !tree.Has("limiter.token_bucket.password_hashing") {
+		t.Error("expected limiter.token_bucket.password_hashing to stay")
+	}
+}
+
+func TestRmValue_LimiterFixedWindow(t *testing.T) {
+	scope := "app"
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := removeValue(ui, mockStore, scope, "", "limiter.fixed_window.upload", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tree := getRmTreeFromStore(t, mockStore, scope)
+	if tree.Has("limiter.fixed_window.upload") {
+		t.Error("expected limiter.fixed_window.upload to be removed")
+	}
+	if !tree.Has("limiter.fixed_window.password_reset") {
+		t.Error("expected limiter.fixed_window.password_reset to stay")
 	}
 }

@@ -62,7 +62,7 @@ func (l *defaultLimiters) Get(name string) (Limiter, error) {
 		return limiter, nil
 	}
 
-	cfg, ok := l.config.Get().Limiter[name]
+	cfg, ok := l.config.Get().Limiter.TokenBucket[name]
 	if !ok {
 		return nil, fmt.Errorf("limiter %q is not defined", name)
 	}

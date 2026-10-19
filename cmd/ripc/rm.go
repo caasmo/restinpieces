@@ -99,6 +99,19 @@ var removeTableParents = map[string]struct{}{
 	"scheduler.jobs":              {},
 	"oauth2":                      {},
 	"acme.dns-01":                 {},
+	"limiter.token_bucket":        {},
+	"limiter.fixed_window":        {},
+}
+
+// frameworkOwnedPaths lists entries the framework seeds into the limiter
+// section. Their parent tables are removable, but these paths are not: the
+// running app needs them, and a removed seed returns from the defaults on the
+// next load anyway.
+var frameworkOwnedPaths = map[string]struct{}{
+	"limiter.token_bucket.password_hashing":       {},
+	"limiter.fixed_window.password_reset":         {},
+	"limiter.fixed_window.email_change":           {},
+	"limiter.fixed_window.email_verification_otp": {},
 }
 
 // removeArrayPaths lists the keys that hold removable array items. An item is
@@ -181,6 +194,10 @@ func removeItem(tree *toml.Tree, tomlPath, value string) error {
 			return fmt.Errorf("%w: '%s' needs a value to remove", ErrMissingArgument, tomlPath)
 		}
 		return removeArrayItem(tree, tomlPath, value)
+	}
+
+	if _, ok := frameworkOwnedPaths[tomlPath]; ok {
+		return fmt.Errorf("%w: path '%s' is not removable", ErrNotCollection, tomlPath)
 	}
 
 	parentPath := parentTomlKeyOf(tomlPath)

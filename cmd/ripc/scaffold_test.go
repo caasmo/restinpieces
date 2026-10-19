@@ -14,6 +14,14 @@ const scaffoldTestConf = `
 public_dir = "/var/www/public"
 [server]
   addr = ":8080"
+[jwt]
+  auth_secret = "auth"
+  password_reset_secret = "reset"
+  email_change_otp_secret = "change"
+  verification_email_otp_secret = "verify"
+  oauth2_state_secret = "state"
+[log.batch]
+  db_path = "data/log.db"
 [backup]
 [oauth2]
 [scheduler]
@@ -169,18 +177,14 @@ func TestScaffoldConfigValue_LabelWithSpaceRejected(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for label with space")
 	}
+	err = scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeBackupOnline, "my.label")
+	if err == nil {
+		t.Fatal("expected error for label with dot")
+	}
 }
 
-func TestParseScaffoldArgs_RejectsLabelWithWhitespace(t *testing.T) {
-	_, err := parseScaffoldArgs([]string{ScaffoldTypeBackupSqliteRsync, "my label"})
-	if err == nil {
-		t.Fatal("expected error for label with space via parse")
-	}
-	_, err = parseScaffoldArgs([]string{ScaffoldTypeBackupOnline, "my.label"})
-	if err == nil {
-		t.Fatal("expected error for label with dot via parse")
-	}
-	_, err = parseScaffoldArgs([]string{"--scope", "my-app", ScaffoldTypeBackupOnline, "app-online"})
+func TestParseScaffoldArgs_RejectsScopeFlag(t *testing.T) {
+	_, err := parseScaffoldArgs([]string{"--scope", "my-app", ScaffoldTypeBackupOnline, "app-online"})
 	if err == nil {
 		t.Fatal("expected error for --scope flag — scaffold does not support scope")
 	}
@@ -193,18 +197,11 @@ func TestScaffoldConfigValue_OAuth2(t *testing.T) {
 	ui := UI{Out: &stdout, Err: &stderr}
 
 	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeOAuth2, "my_github")
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	if !errors.Is(err, ErrConfigInvalid) {
+		t.Fatalf("expected error to wrap %v, but got %v", ErrConfigInvalid, err)
 	}
-
-	tree := getTreeFromStore(t, mockStore, scope)
-	path := "oauth2.my_github"
-	if !tree.Has(path) {
-		t.Fatalf("expected path %s to exist", path)
-	}
-	subtree, _ := tree.Get(path).(*toml.Tree)
-	if got := subtree.Get("pkce"); got != true {
-		t.Errorf("expected pkce true, got %v", got)
+	if len(mockStore.saveHistory) != 0 {
+		t.Errorf("expected no save on invalid config, got %d saves", len(mockStore.saveHistory))
 	}
 }
 
@@ -539,28 +536,28 @@ func TestScaffoldConfigValue_RefusesInvalidConfig(t *testing.T) {
 	}
 }
 
-func TestScaffoldConfigValue_Limiter(t *testing.T) {
+func TestScaffoldConfigValue_LimiterTokenBucket(t *testing.T) {
 	scope := config.ScopeApplication
 	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeLimiter, "upload")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeLimiterTokenBucket, "upload")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	tree := getTreeFromStore(t, mockStore, scope)
-	if !tree.Has("limiter.upload") {
-		t.Fatal("expected limiter.upload to be scaffolded")
+	if !tree.Has("limiter.token_bucket.upload") {
+		t.Fatal("expected limiter.token_bucket.upload to be scaffolded")
 	}
-	if !tree.Has("limiter.password_hashing") {
+	if !tree.Has("limiter.token_bucket.password_hashing") {
 		t.Fatal("expected the limiter section defaults to contain password_hashing")
 	}
 
-	subtree, ok := tree.Get("limiter.upload").(*toml.Tree)
+	subtree, ok := tree.Get("limiter.token_bucket.upload").(*toml.Tree)
 	if !ok {
-		t.Fatal("expected a subtree at limiter.upload")
+		t.Fatal("expected a subtree at limiter.token_bucket.upload")
 	}
 	if got := subtree.Get("limit"); got != "2s" {
 		t.Errorf("expected limit %q, got %v", "2s", got)
@@ -568,7 +565,44 @@ func TestScaffoldConfigValue_Limiter(t *testing.T) {
 	if got := subtree.Get("burst"); got != int64(5) {
 		t.Errorf("expected burst 5, got %v", got)
 	}
-	if !strings.Contains(stderr.String(), "ripc walk limiter.upload") {
+	if !strings.Contains(stderr.String(), "ripc walk limiter.token_bucket.upload") {
+		t.Errorf("expected next steps command, got %q", stderr.String())
+	}
+}
+
+func TestScaffoldConfigValue_LimiterFixedWindow(t *testing.T) {
+	scope := config.ScopeApplication
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeLimiterFixedWindow, "upload")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	tree := getTreeFromStore(t, mockStore, scope)
+	if !tree.Has("limiter.fixed_window.upload") {
+		t.Fatal("expected limiter.fixed_window.upload to be scaffolded")
+	}
+	if !tree.Has("limiter.fixed_window.password_reset") {
+		t.Fatal("expected the limiter section defaults to contain password_reset")
+	}
+
+	subtree, ok := tree.Get("limiter.fixed_window.upload").(*toml.Tree)
+	if !ok {
+		t.Fatal("expected a subtree at limiter.fixed_window.upload")
+	}
+	if got := subtree.Get("prefix"); got != "CHANGE_ME" {
+		t.Errorf("expected prefix CHANGE_ME, got %v", got)
+	}
+	if got := subtree.Get("window"); got != "1h0m0s" {
+		t.Errorf("expected window 1h, got %v", got)
+	}
+	if got := subtree.Get("max"); got != int64(1) {
+		t.Errorf("expected max 1, got %v", got)
+	}
+	if !strings.Contains(stderr.String(), "ripc walk limiter.fixed_window.upload") {
 		t.Errorf("expected next steps command, got %q", stderr.String())
 	}
 }
@@ -579,8 +613,23 @@ func TestScaffoldConfigValue_LimiterKeyExists(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	ui := UI{Out: &stdout, Err: &stderr}
 
-	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeLimiter, "password_hashing")
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeLimiterTokenBucket, "password_hashing")
 	if !errors.Is(err, ErrScaffoldKeyExists) {
 		t.Fatalf("expected error to wrap %v, but got %v", ErrScaffoldKeyExists, err)
+	}
+}
+
+func TestScaffoldConfigValue_DuplicateLimiterLabel(t *testing.T) {
+	scope := config.ScopeApplication
+	mockStore := NewMockSetSecureStore(map[string][]byte{scope: []byte(scaffoldTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := scaffoldConfigValue(ui, mockStore, "", ScaffoldTypeLimiterFixedWindow, "password_hashing")
+	if !errors.Is(err, ErrConfigInvalid) {
+		t.Fatalf("expected error to wrap %v, but got %v", ErrConfigInvalid, err)
+	}
+	if len(mockStore.saveHistory) != 0 {
+		t.Errorf("expected no save on invalid config, got %d saves", len(mockStore.saveHistory))
 	}
 }

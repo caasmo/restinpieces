@@ -14,20 +14,68 @@ func TestValidateLimiters(t *testing.T) {
 		{
 			name: "valid",
 			limiters: Limiter{
-				"password_hashing": {Limit: Duration{Duration: 2 * time.Second}, Burst: 5},
+				TokenBucket: TokenBucket{
+					"password_hashing": {Limit: Duration{Duration: 2 * time.Second}, Burst: 5},
+				},
+				FixedWindow: FixedWindow{
+					"password_reset": {Prefix: "password_reset", Window: Duration{Duration: 2 * time.Hour}, Max: 1},
+				},
 			},
 		},
 		{
 			name: "zero limit",
 			limiters: Limiter{
-				"password_hashing": {Limit: Duration{}, Burst: 5},
+				TokenBucket: TokenBucket{
+					"password_hashing": {Limit: Duration{}, Burst: 5},
+				},
 			},
 			wantErr: true,
 		},
 		{
 			name: "zero burst",
 			limiters: Limiter{
-				"password_hashing": {Limit: Duration{Duration: 2 * time.Second}, Burst: 0},
+				TokenBucket: TokenBucket{
+					"password_hashing": {Limit: Duration{Duration: 2 * time.Second}, Burst: 0},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "fixed window zero window",
+			limiters: Limiter{
+				FixedWindow: FixedWindow{
+					"password_reset": {Prefix: "password_reset", Window: Duration{}, Max: 1},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "fixed window zero max",
+			limiters: Limiter{
+				FixedWindow: FixedWindow{
+					"password_reset": {Prefix: "password_reset", Window: Duration{Duration: 2 * time.Hour}, Max: 0},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "fixed window empty prefix is rejected",
+			limiters: Limiter{
+				FixedWindow: FixedWindow{
+					"upload": {Window: Duration{Duration: time.Hour}, Max: 1},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "label used by both branches",
+			limiters: Limiter{
+				TokenBucket: TokenBucket{
+					"upload": {Limit: Duration{Duration: time.Second}, Burst: 1},
+				},
+				FixedWindow: FixedWindow{
+					"upload": {Prefix: "upload", Window: Duration{Duration: time.Hour}, Max: 1},
+				},
 			},
 			wantErr: true,
 		},

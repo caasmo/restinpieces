@@ -22,3 +22,56 @@ func TestValidateTomlAsConfig_Invalid(t *testing.T) {
 		t.Fatalf("expected error to wrap ErrConfigUnmarshal, got %v", err)
 	}
 }
+
+func TestValidateConfig_Valid(t *testing.T) {
+	data := []byte(`
+[server]
+  addr = ":8080"
+
+[jwt]
+  auth_secret = "auth"
+  password_reset_secret = "reset"
+  email_change_otp_secret = "change"
+  verification_email_otp_secret = "verify"
+  oauth2_state_secret = "state"
+
+[log.batch]
+  db_path = "data/log.db"
+`)
+
+	err := validateConfig(data, "server.addr")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestValidateConfig_DuplicateLimiterLabel(t *testing.T) {
+	data := []byte(`
+[server]
+  addr = ":8080"
+
+[jwt]
+  auth_secret = "auth"
+  password_reset_secret = "reset"
+  email_change_otp_secret = "change"
+  verification_email_otp_secret = "verify"
+  oauth2_state_secret = "state"
+
+[log.batch]
+  db_path = "data/log.db"
+
+[limiter.token_bucket.upload]
+  limit = "1s"
+  burst = 1
+
+[limiter.fixed_window.upload]
+  prefix = "upload"
+  window = "1h"
+  max = 1
+`)
+
+	err := validateConfig(data, "limiter")
+	if !errors.Is(err, ErrConfigInvalid) {
+		t.Fatalf("expected error to wrap ErrConfigInvalid, got %v", err)
+	}
+}
