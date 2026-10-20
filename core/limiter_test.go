@@ -5,54 +5,102 @@ import (
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
-	"golang.org/x/time/rate"
 )
 
-func newTestProvider(limiters config.Limiter) *config.Provider {
-	cfg := config.NewDefaultConfig()
-	cfg.Limiter = limiters
-	return config.NewProvider(cfg)
-}
-
-func TestDefaultLimiters_Get(t *testing.T) {
-	provider := newTestProvider(config.Limiter{
-		TokenBucket: config.TokenBucket{
-			PasswordHashing: {Limit: config.Duration{Duration: 2 * time.Second}, Burst: 5},
+func TestNewLimiter(t *testing.T) {
+	tokenBuckets := map[string]*TokenBucketLimiter{
+		"upload": NewTokenBucketLimiter(config.TokenBucketEntry{
+			Limit: config.Duration{Duration: time.Hour},
+			Burst: 2,
+		}),
+	}
+	fixedWindow := NewFixedWindowLimiter(config.FixedWindow{
+		"password_reset": {
+			Prefix: "pr_",
+			Window: config.Duration{Duration: time.Hour},
+			Max:    1,
 		},
-	})
-	limiters := NewDefaultLimiters(provider)
+	}, newTestCounterCache(t))
 
-	first, err := limiters.Get(PasswordHashing)
-	if err != nil {
-		t.Fatalf("Get() error = %v", err)
+	limiter := NewLimiter(tokenBuckets, fixedWindow)
+
+	if _, ok := limiter.TokenBucket["upload"]; !ok {
+		t.Error("TokenBucket does not contain upload")
 	}
-
-	second, err := limiters.Get(PasswordHashing)
-	if err != nil {
-		t.Fatalf("Get() error = %v", err)
-	}
-
-	if first != second {
-		t.Error("Get() returned a new limiter while the config entry did not change")
+	if limiter.FixedWindow != fixedWindow {
+		t.Error("FixedWindow does not hold the fixed-window object passed to NewLimiter")
 	}
 }
 
-func TestDefaultLimiters_GetNotDefined(t *testing.T) {
-	limiters := NewDefaultLimiters(newTestProvider(config.Limiter{}))
+func TestLimiter_LimitFixedWindow(t *testing.T) {
+	entries := config.FixedWindow{
+		"password_reset": {
+			Prefix: "pr_",
+			Window: config.Duration{Duration: time.Hour},
+			Max:    1,
+		},
+	}
+	fixedWindow := NewFixedWindowLimiter(entries, newTestCounterCache(t))
+	limiter := NewLimiter(map[string]*TokenBucketLimiter{}, fixedWindow)
 
-	_, err := limiters.Get("upload")
-	if err == nil {
-		t.Fatal("Get() expected an error for an undefined name")
+	if limiter.Limit("password_reset", "user@example.com") {
+		t.Error("first Limit() = true, want false")
+	}
+	if !limiter.Limit("password_reset", "user@example.com") {
+		t.Error("second Limit() = false, want true after max is reached")
 	}
 }
 
-func TestDefaultLimiter_Limit(t *testing.T) {
-	limiter := &DefaultLimiter{limiter: rate.NewLimiter(rate.Every(time.Hour), 1)}
+func TestLimiter_LimitFixedWindowIdentityCount(t *testing.T) {
+	limiter := NewLimiter(
+		map[string]*TokenBucketLimiter{},
+		NewFixedWindowLimiter(config.FixedWindow{}, nil),
+	)
 
-	if !limiter.Limit() {
-		t.Error("Limit() = false, want true for the first call")
+	testCases := []struct {
+		name       string
+		identities []string
+	}{
+		{name: "no identity"},
+		{name: "two identities", identities: []string{"first@example.com", "second@example.com"}},
 	}
-	if limiter.Limit() {
-		t.Error("Limit() = true, want false after the burst is exhausted")
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			if !limiter.Limit("password_reset", tc.identities...) {
+				t.Error("Limit() = false with the wrong identity count, want true")
+			}
+		})
+	}
+}
+
+func TestLimiter_LimitTokenBucket(t *testing.T) {
+	tokenBuckets := map[string]*TokenBucketLimiter{
+		"upload": NewTokenBucketLimiter(config.TokenBucketEntry{
+			Limit: config.Duration{Duration: time.Hour},
+			Burst: 2,
+		}),
+	}
+	limiter := NewLimiter(tokenBuckets, NewFixedWindowLimiter(config.FixedWindow{}, nil))
+
+	if limiter.Limit("upload") {
+		t.Error("first Limit() = true, want false")
+	}
+	if limiter.Limit("upload", "ignored@example.com") {
+		t.Error("second Limit() with an identity = true, want false")
+	}
+	if !limiter.Limit("upload") {
+		t.Error("third Limit() = false, want true after the burst is gone")
+	}
+}
+
+func TestLimiter_LimitUndefinedLabel(t *testing.T) {
+	limiter := NewLimiter(
+		map[string]*TokenBucketLimiter{},
+		NewFixedWindowLimiter(config.FixedWindow{}, nil),
+	)
+
+	if !limiter.Limit("upload") {
+		t.Error("Limit() = false for an undefined label, want true")
 	}
 }

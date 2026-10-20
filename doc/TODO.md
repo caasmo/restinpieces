@@ -528,26 +528,23 @@ ok := limiters.Limit(PasswordReset, email)
 
 - `max = 1` is a cooldown, so this replaces the current cooldown logic: `rate_limits` (`RateLimits`: `password_reset_cooldown`, `email_change_cooldown`, `email_verification_otp_cooldown`), `queue.CoolDownBucket`, and the `job_queue` unique index that today enforces "one unfinished job per email per bucket" at OTP-job creation. The OTP request handlers would call `Limit(<label>, identity)` before enqueueing and those three go away; state then lives in the cache, not the DB, which also drops the current cooldown bug (the cooldown is broken today — see the `BUG queue` entry below).
 
-Agreed — build the map once. `Limiter` walks both branches at construction and fills `map[label]object`, each object being the matching default (`DefaultTokenBucketLimiter` or `DefaultFixedWindowLimiter`, the latter holding the cache). After that, `app.Limiter(label)` is a plain map read — no config read, no reload, nothing extra per call.
+Agreed — build the map once. `Limiter` walks both branches at construction and fills `map[label]object`, each object being the matching type (`TokenBucketLimiter` or `FixedWindowLimiter`, the latter holding the cache). After that, `app.Limiter(label)` is a plain map read — no config read, no reload, nothing extra per call.
 
 That fits the other fact too: a new label is only useful once code names it with a const, and naming it means a deploy — so the map is built from whatever config is present at startup, and changing `window`/`max`/`burst` on an existing label needs a restart.
 
 So the hot path is `app.Limiter(label)` → map hit → `Limit(...)`. A label code names but config lacks is the error `app.Limiter` already returns; the built-ins (`password_hashing`, and the cooldowns once they move over) are seeded so they always resolve.
 
-Yes — with the map built at startup, `App.Limiter()` can just return the registry and the whole public surface becomes one method: `Limit(label string, identity ...string) bool`. Token bucket ignores the identity; fixed window reads it (exactly one, else panic). No per-label accessor, no assertion at the call site, and `Limit(PasswordHashing)` / `Limit(PasswordReset, email)` read the same.
+Yes — with the map built at startup, `App.Limiter()` can just return the registry and the whole public surface becomes one method: `Limit(label string, identity ...string) bool`. Token bucket ignores the identity; fixed window reads it (exactly one, else false). No per-label accessor, no assertion at the call site, and `Limit(PasswordHashing)` / `Limit(PasswordReset, email)` read the same.
 
 Right, and it hangs together: the token bucket keeps per-label state (its own tokens), so it needs one object per label; the fixed window keeps no state in the object (the count lives in the cache), so a single object serves every fixed-window label. That's why `FixedWindow` is just `map[label]struct{}` — a marker of which labels are that kind — `TokenBucket` is `map[label]object` — the per-label token buckets — and `FW` is the one shared object.
 
 On `Limit(label, identity...)`: if `label` is in `FixedWindow`, call `FW` with `(label, identity)` —
 
 ```go
-type TokenBucketLimiter interface { Limit() bool }                // per label, holds its own tokens
-type FixedWindowLimiter interface { Limit(identity string) bool } // one shared, cache-backed
-
 type Limiter struct {
-	FixedWindow map[string]struct{}           // labels that are fixed-window
-	TokenBucket map[string]TokenBucketLimiter // label -> its own token bucket
-	FW          FixedWindowLimiter            // the one shared fixed-window object
+	FixedWindow map[string]struct{}            // labels that are fixed-window
+	TokenBucket map[string]*TokenBucketLimiter // label -> its own token bucket, built at startup
+	FW          *FixedWindowLimiter            // the one shared fixed-window object
 }
 
 func (l *Limiter) Limit(label string, identity ...string) bool
@@ -626,6 +623,87 @@ Increment(key, delta):            // func (c *Default[K, V]) Increment(key K, de
     return count, true
 ```
 
+Settled shape: both branches are built at startup. No mutex.
+
+```go
+type Limiter struct {
+	FixedWindow map[string]struct{}            // labels that are fixed-window
+	TokenBucket map[string]*TokenBucketLimiter // label -> its own token bucket, built at startup
+	FW          *FixedWindowLimiter            // one shared fixed-window object, built at startup
+}
+
+func (l *Limiter) Limit(label string, identities ...string) bool {
+	if _, ok := l.FixedWindow[label]; ok {
+		if len(identities) != 1 {
+			return false
+		}
+		return l.FW.Limit(label, identities[0])
+	}
+
+	tb, ok := l.TokenBucket[label]
+	if !ok {
+		return false
+	}
+	return tb.Limit()
+}
+```
+
+- `setupLimiter` reads the config once and builds both branches; `Limit` only reads the maps
+- the fixed window map is read-only after startup and the cache handles its own locking
+- call sites: `app.Limiter().Limit(PasswordHashing)` and `app.Limiter().Limit(PasswordReset, email)`
+
+Setup in `restinpieces.go`: `setupDefaultCache` always builds the framework cache, fills the app cache slot only when `WithCache` was not used, and the limiter always gets it:
+
+```go
+defaultCache, err := init.setupDefaultCache(cfg)
+if err != nil {
+	return nil, nil, err
+}
+
+// ...
+
+// 1. fixed window object: the fixed_window entries plus the concrete cache
+fixedWindow := core.NewFixedWindowLimiter(cfg.Limiter.FixedWindow, defaultCache)
+
+// 2. token buckets, one per token_bucket entry
+tokenBuckets := make(map[string]*core.TokenBucketLimiter, len(cfg.Limiter.TokenBucket))
+for label, entry := range cfg.Limiter.TokenBucket {
+	tokenBuckets[label] = core.NewTokenBucketLimiter(entry)
+}
+
+// 3. the fixed-window labels
+fixedWindowLabels := make(map[string]struct{}, len(cfg.Limiter.FixedWindow))
+for label := range cfg.Limiter.FixedWindow {
+	fixedWindowLabels[label] = struct{}{}
+}
+
+// 4. assemble: NewLimiter takes the built objects, never the config
+limiter := core.NewLimiter(fixedWindowLabels, tokenBuckets, fixedWindow)
+
+// 5. hand it to the app
+init.app.SetLimiter(limiter)
+```
+
+```go
+type FixedWindowLimiter struct {
+	cache   *cache.Default[string, any] // concrete Default, no cache.Cache interface
+	entries map[string]config.FixedWindowEntry
+}
+```
+
+- `defaultCache, err := cache.New[any](cfg.Cache.Level)`
+- `New` returns the concrete `*Default`, so `Increment` is callable without a cast
+- `NewLimiter` takes the built token buckets, the fixed-window label map and the fixed-window object; it never reads the config
+- `initializer.withCache` records whether `WithCache` supplied the app cache; `New` never reads `App.Cache()`
+- with `WithCache`, the app keeps the user cache and the limiter still uses the framework default (two caches)
+
+# initializer: options record state, New wires the app
+
+- each `With*` option sets a flag on `initializer` next to the app setter (`withCache` is the first)
+- `New` reads the flags, never the app getters, when deciding whether to install defaults
+- next: `withRouter`, `withLogger`, `withNotifier`
+- refs: `options.go`, `restinpieces.go` (`New`, `setupDefaultCache`, `setupDefaultRouter`, `setupDefaultLogger`, `setupDefaultNotifier`)
+
 # BUG queue: we added WHERE status != 'completed' and broke the cooldown
 
 - the unique index only covers pending, processing and failed rows; once the scheduler marks the email job completed, a new request for the same email and bucket inserts another job and sends another email
@@ -671,3 +749,19 @@ Increment(key, delta):            // func (c *Default[K, V]) Increment(key K, de
 - `ripc scaffold backup-sqlite-rsync <label>` seeds `listen_addr` only when the parent section is missing; if `[backup.sqlite-rsync]` exists with an empty `listen_addr`, the new entry makes `validateBackup` fail and a validated save refuses it
 - decide: refuse and make the operator repair the section first, or seed missing fields, not only missing parent sections
 - refs: `config/config_validate.go` (`validateBackup`), `config/default.go` (`NewBackupSqliteRsyncDefaults`), `cmd/ripc/scaffold.go` (`scaffoldConfigValue`)
+
+# core/auth: limiter lookup error ignored, auth handlers can nil-panic
+
+- handle the `a.Limiter(PasswordHashing)` error and fail closed
+- refs: `core/handler_auth_*.go`, `core/limiter.go`
+
+# limiter: fixed-window counter expires by TTL, no window number in the key
+
+- alternative to the window-in-key design in `impl-core-limiter.md`: the key is `prefix + identity`; the cache holds the counter for exactly one window and drops it when the window ends
+- add `IncrementWithTTL(key, delta, ttl)` next to `Increment` (same pattern as `Set`/`SetWithTTL`); `Increment` becomes the zero-TTL wrapper
+- on create, `expiration = fastNow() + ttl` and `startClock()` runs; on an existing expired key, unlink it, delete it from the index, free the node, then create a fresh counter; a live counter keeps its original expiration, so the window is fixed, not sliding
+- `SetWithTTL` does not clean expired entries and the cache has no sweep; only `Get` (and this new path) removes them on touch, so the expiry check must live in `IncrementWithTTL`
+- the window starts at the identity's first call instead of a wall-clock boundary, and is off by up to the sampled clock's 100 ms
+- removes the per-call `time.Now()` (~40 ns vs ~2 ns for the sampled clock) and the `fixedWindowKey` builder; also one key per identity instead of one dead key per window
+- costs a cache API change, a new expiry check under the lock, and `startClock` now starts on the first limiter call
+- refs: `cache/increment.go`, `cache/default.go` (`Get` lazy expiry, `fastNow`, `startClock`), `cache/increment_test.go`, `core/limiter_fixed_window.go`, `core/limiter_fixed_window_test.go`, `core/limiter_fixed_window_bench_test.go`

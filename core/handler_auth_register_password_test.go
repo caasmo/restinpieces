@@ -70,7 +70,7 @@ func TestRegisterWithPasswordHandler_Validation(t *testing.T) {
 
 			app := &App{
 				validator: &DefaultValidator{},
-				limiters:  &MockLimiters{},
+				limiter:   newTestLimiter(true),
 			}
 
 			app.RegisterWithPasswordHandler(rr, req)
@@ -221,7 +221,7 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 				validator: &DefaultValidator{},
 				dbAuth:    mockDb,
 				dbQueue:   mockDb,
-				limiters:  &MockLimiters{},
+				limiter:   newTestLimiter(true),
 			}
 
 			app.RegisterWithPasswordHandler(rr, req)
@@ -283,7 +283,7 @@ func TestRegisterWithPasswordHandler_DependencyFailures(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(tc.config),
-				limiters:       &MockLimiters{},
+				limiter:        newTestLimiter(true),
 			}
 
 			app.RegisterWithPasswordHandler(rr, req)
@@ -314,11 +314,7 @@ func TestRegisterWithPasswordHandler_LimiterDenied(t *testing.T) {
 
 	app := &App{
 		validator: &DefaultValidator{},
-		limiters: &MockLimiters{
-			GetFunc: func(name string) (Limiter, error) {
-				return &MockLimiter{LimitFunc: func() bool { return false }}, nil
-			},
-		},
+		limiter:   newTestLimiter(false),
 	}
 
 	app.RegisterWithPasswordHandler(rr, req)

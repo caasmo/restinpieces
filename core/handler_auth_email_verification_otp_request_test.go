@@ -123,7 +123,7 @@ func TestRequestEmailVerificationOtpHandler_Validation(t *testing.T) {
 			app := &App{
 				validator: mockValidator,
 				dbAuth:    &mockDbApp{},
-				limiters:  &MockLimiters{},
+				limiter:   newTestLimiter(true),
 			}
 
 			app.RequestEmailVerificationOtpHandler(rr, req)
@@ -296,7 +296,7 @@ func TestRequestEmailVerificationOtpHandler_RequestLogic(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(testConfig),
-				limiters:       &MockLimiters{},
+				limiter:        newTestLimiter(true),
 			}
 
 			app.RequestEmailVerificationOtpHandler(rr, req)
@@ -401,7 +401,7 @@ func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(tc.config),
-				limiters:       &MockLimiters{},
+				limiter:        newTestLimiter(true),
 			}
 
 			app.RequestEmailVerificationOtpHandler(rr, req)
@@ -439,11 +439,7 @@ func TestRequestEmailVerificationOtpHandler_LimiterDenied(t *testing.T) {
 	app := &App{
 		validator: &DefaultValidator{},
 		dbAuth:    dbMock,
-		limiters: &MockLimiters{
-			GetFunc: func(name string) (Limiter, error) {
-				return &MockLimiter{LimitFunc: func() bool { return false }}, nil
-			},
-		},
+		limiter:   newTestLimiter(false),
 	}
 
 	app.RequestEmailVerificationOtpHandler(rr, req)

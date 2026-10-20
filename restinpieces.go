@@ -30,6 +30,9 @@ import (
 type initializer struct {
 	app *core.App
 
+	// withCache records whether WithCache supplied the app cache.
+	withCache bool
+
 	// temp state during init
 	dbConfig   db.DbConfig
 	ageKeyPath string // Path to age identity file for config decryption
@@ -90,10 +93,9 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	cfg := configProvider.Get()
 
 	// Setup default cache if none was set via options
-	if init.app.Cache() == nil {
-		if err := init.setupDefaultCache(cfg); err != nil {
-			return nil, nil, err
-		}
+	defaultCache, err := init.setupDefaultCache(cfg)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	// Setup default logger if non of user
@@ -106,7 +108,11 @@ func New(opts ...Option) (*core.App, *server.Server, error) {
 	// Setup authenticator and validator
 	init.app.SetAuthenticator(core.NewDefaultAuthenticator(init.app.DbAuth(), init.app.Logger(), configProvider))
 	init.app.SetValidator(core.NewValidator())
-	init.app.SetLimiters(core.NewDefaultLimiters(configProvider))
+
+	err = init.setupLimiter(configProvider, defaultCache)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// Setup custom routes
 	route(cfg, init.app)
@@ -361,18 +367,39 @@ var DefaultLoggerOptions = &slog.HandlerOptions{
 	},
 }
 
-func (i *initializer) setupDefaultCache(cfg *config.Config) error {
+func (i *initializer) setupDefaultCache(cfg *config.Config) (*cache.Default[string, any], error) {
 	ft := log.NewMessageFormatter().WithComponent("cache", "🛠️")
 	i.app.Logger().Info(ft.Start("Initializing cache..."), "level", cfg.Cache.Level)
 
-	cacheInstance, err := cache.New[any](cfg.Cache.Level) // Explicit string keys and interface{} values
+	defaultCache, err := cache.New[any](cfg.Cache.Level)
 	if err != nil {
 		i.app.Logger().Error(ft.Fail("cache initialization failed"), "error", err)
-		return fmt.Errorf("failed to initialize cache: %w", err)
+		return nil, fmt.Errorf("failed to initialize cache: %w", err)
 	}
-	i.app.SetCache(cacheInstance)
+
+	if !i.withCache {
+		i.app.SetCache(defaultCache)
+	}
 
 	i.app.Logger().Info(ft.Complete("cache initialized successfully"))
+	return defaultCache, nil
+}
+
+// setupLimiter builds both limiter branches from the config and assembles the
+// limiter. The fixed window uses the framework cache: its counters need
+// Increment, which a user cache set through WithCache does not provide.
+func (i *initializer) setupLimiter(configProvider *config.Provider, defaultCache *cache.Default[string, any]) error {
+	cfg := configProvider.Get()
+
+	tokenBuckets := make(map[string]*core.TokenBucketLimiter, len(cfg.Limiter.TokenBucket))
+	for label, entry := range cfg.Limiter.TokenBucket {
+		tokenBuckets[label] = core.NewTokenBucketLimiter(entry)
+	}
+
+	fixedWindow := core.NewFixedWindowLimiter(cfg.Limiter.FixedWindow, defaultCache)
+
+	i.app.SetLimiter(core.NewLimiter(tokenBuckets, fixedWindow))
+
 	return nil
 }
 

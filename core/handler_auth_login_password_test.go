@@ -100,7 +100,7 @@ func TestAuthWithPasswordHandler_Validation(t *testing.T) {
 			app := &App{
 				validator: mockValidator,
 				dbAuth:    &mockDbApp{},
-				limiters:  &MockLimiters{},
+				limiter:   newTestLimiter(true),
 			}
 
 			app.AuthWithPasswordHandler(rr, req)
@@ -257,7 +257,7 @@ func TestAuthWithPasswordHandler_Authentication(t *testing.T) {
 						AuthTokenDuration: config.Duration{Duration: 15 * time.Minute},
 					},
 				}),
-				limiters: &MockLimiters{},
+				limiter: newTestLimiter(true),
 			}
 
 			app.AuthWithPasswordHandler(rr, req)
@@ -347,7 +347,7 @@ func TestAuthWithPasswordHandler_DependencyFailures(t *testing.T) {
 				validator:      &DefaultValidator{},
 				dbAuth:         mockDb,
 				configProvider: config.NewProvider(tc.config),
-				limiters:       &MockLimiters{},
+				limiter:        newTestLimiter(true),
 			}
 
 			app.AuthWithPasswordHandler(rr, req)
@@ -379,11 +379,7 @@ func TestAuthWithPasswordHandler_LimiterDenied(t *testing.T) {
 	app := &App{
 		validator: &DefaultValidator{},
 		dbAuth:    &mock.Db{},
-		limiters: &MockLimiters{
-			GetFunc: func(name string) (Limiter, error) {
-				return &MockLimiter{LimitFunc: func() bool { return false }}, nil
-			},
-		},
+		limiter:   newTestLimiter(false),
 	}
 
 	app.AuthWithPasswordHandler(rr, req)

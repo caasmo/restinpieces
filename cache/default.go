@@ -115,7 +115,8 @@ var cacheLevels = map[string]int{
 
 // New creates a cache for string keys based on a predefined level.
 // It translates the level to a max-entry cap using cacheLevels.
-func New[V any](level string) (Cache[string, V], error) {
+// It returns the concrete *Default so callers that need Increment can use it.
+func New[V any](level string) (*Default[string, V], error) {
 	num, ok := cacheLevels[level]
 	if !ok {
 		return nil, fmt.Errorf("invalid cache level provided: %s", level)
@@ -123,8 +124,8 @@ func New[V any](level string) (Cache[string, V], error) {
 	return newWith[string, V](num), nil
 }
 
-// newWith creates a cache with num preallocated nodes.
-// For tests only; production uses New(level).
+// newWith creates a cache with num preallocated nodes. New calls it in
+// production; tests call it directly to choose the node count.
 func newWith[K comparable, V any](num int) *Default[K, V] {
 	c := &Default[K, V]{
 		nodes: make([]node[K, V], num),

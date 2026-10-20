@@ -96,7 +96,7 @@ func TestConfirmPasswordResetOtpHandler_Validation(t *testing.T) {
 			app := &App{
 				validator: mockValidator,
 				dbAuth:    &mock.Db{},
-				limiters:  &MockLimiters{},
+				limiter:   newTestLimiter(true),
 			}
 
 			app.ConfirmPasswordResetOtpHandler(rr, req)
@@ -229,7 +229,7 @@ func TestConfirmPasswordResetOtpHandler_Logic(t *testing.T) {
 				validator:      &DefaultValidator{},
 				dbAuth:         mockDb,
 				configProvider: config.NewProvider(testConfig),
-				limiters:       &MockLimiters{},
+				limiter:        newTestLimiter(true),
 			}
 
 			app.ConfirmPasswordResetOtpHandler(rr, req)
@@ -289,7 +289,7 @@ func TestConfirmPasswordResetOtpHandler_Failures(t *testing.T) {
 				validator:      &DefaultValidator{},
 				dbAuth:         mockDb,
 				configProvider: config.NewProvider(&config.Config{Jwt: config.Jwt{PasswordResetSecret: secret}}),
-				limiters:       &MockLimiters{},
+				limiter:        newTestLimiter(true),
 			}
 
 			app.ConfirmPasswordResetOtpHandler(rr, req)
@@ -325,11 +325,7 @@ func TestConfirmPasswordResetOtpHandler_LimiterDenied(t *testing.T) {
 				PasswordResetSecret: secret,
 			},
 		}),
-		limiters: &MockLimiters{
-			GetFunc: func(name string) (Limiter, error) {
-				return &MockLimiter{LimitFunc: func() bool { return false }}, nil
-			},
-		},
+		limiter: newTestLimiter(false),
 	}
 
 	app.ConfirmPasswordResetOtpHandler(rr, req)

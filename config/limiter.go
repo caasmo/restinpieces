@@ -3,7 +3,7 @@ package config
 // Limiter holds the rate limiter configuration. The section splits into the
 // two standard algorithms, each with its own table: token_bucket and
 // fixed_window. Every entry is keyed by a label you choose, for example
-// "upload", and code looks it up with App.Limiter(label); callers that use
+// "upload", and code calls App.Limiter().Limit(label); callers that use
 // the same label share it. The framework seeds its own entries; other
 // entries are created via ripc scaffold.
 type Limiter struct {

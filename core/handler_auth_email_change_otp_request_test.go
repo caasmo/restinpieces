@@ -103,7 +103,7 @@ func TestRequestEmailChangeOtpHandler_Validation(t *testing.T) {
 				validator:     mockValidator,
 				authenticator: mockAuth,
 				dbAuth:        &mock.Db{},
-				limiters:      &MockLimiters{},
+				limiter:       newTestLimiter(true),
 			}
 
 			app.RequestEmailChangeOtpHandler(rr, req)
@@ -259,7 +259,7 @@ func TestRequestEmailChangeOtpHandler_Logic(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(testConfig),
-				limiters:       &MockLimiters{},
+				limiter:        newTestLimiter(true),
 			}
 
 			app.RequestEmailChangeOtpHandler(rr, req)
@@ -360,7 +360,7 @@ func TestRequestEmailChangeOtpHandler_Failures(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(tc.config),
-				limiters:       &MockLimiters{},
+				limiter:        newTestLimiter(true),
 			}
 
 			app.RequestEmailChangeOtpHandler(rr, req)
@@ -390,11 +390,7 @@ func TestRequestEmailChangeOtpHandler_LimiterDenied(t *testing.T) {
 				return &db.User{ID: "user123", Email: "old@example.com", Verified: true}, jsonResponse{}, nil
 			},
 		},
-		limiters: &MockLimiters{
-			GetFunc: func(name string) (Limiter, error) {
-				return &MockLimiter{LimitFunc: func() bool { return false }}, nil
-			},
-		},
+		limiter: newTestLimiter(false),
 	}
 
 	app.RequestEmailChangeOtpHandler(rr, req)

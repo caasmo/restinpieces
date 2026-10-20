@@ -14,6 +14,7 @@ type Option func(*initializer)
 // WithCache sets the cache implementation
 func WithCache(c cache.Cache[string, interface{}]) Option {
 	return func(i *initializer) {
+		i.withCache = true
 		i.app.SetCache(c)
 	}
 }

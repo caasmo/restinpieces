@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"filippo.io/age"
+	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/core"
 	"github.com/caasmo/restinpieces/db/mock"
@@ -74,14 +75,16 @@ func TestSetupDefaultRouter(t *testing.T) {
 	var _ http.Handler = app.Router()
 }
 
-func TestSetupDefaultCache(t *testing.T) {
-	t.Run("Successful cache creation", func(t *testing.T) {
+func TestSetupLimiter(t *testing.T) {
+	t.Run("Successful limiter creation", func(t *testing.T) {
 		app := &core.App{}
 		app.SetLogger(newTestLogger())
-		init := &initializer{app: app}
 		cfg := newTestConfig()
+		cfg.Cache.Level = "small"
+		provider := config.NewProvider(cfg)
+		init := &initializer{app: app}
 
-		err := init.setupDefaultCache(cfg)
+		defaultCache, err := init.setupDefaultCache(cfg)
 		if err != nil {
 			t.Fatalf("setupDefaultCache() returned an unexpected error: %v", err)
 		}
@@ -89,17 +92,53 @@ func TestSetupDefaultCache(t *testing.T) {
 		if app.Cache() == nil {
 			t.Fatal("app.Cache() is nil after calling setupDefaultCache()")
 		}
+
+		if err := init.setupLimiter(provider, defaultCache); err != nil {
+			t.Fatalf("setupLimiter() returned an unexpected error: %v", err)
+		}
+
+		limiter := app.Limiter()
+		if limiter == nil {
+			t.Fatal("app.Limiter() is nil after calling setupLimiter()")
+		}
+		if limiter.Limit(core.PasswordHashing) {
+			t.Error("Limit(PasswordHashing) = true, want false")
+		}
+		if limiter.Limit("password_reset", "user@example.com") {
+			t.Error("Limit(password_reset) = true, want false")
+		}
+	})
+
+	t.Run("WithCache keeps the app cache", func(t *testing.T) {
+		app := &core.App{}
+		app.SetLogger(newTestLogger())
+		cfg := newTestConfig()
+		cfg.Cache.Level = "small"
+
+		userCache, err := cache.New[any]("small")
+		if err != nil {
+			t.Fatalf("cache.New() error = %v", err)
+		}
+		app.SetCache(userCache)
+
+		init := &initializer{app: app, withCache: true}
+		if _, err := init.setupDefaultCache(cfg); err != nil {
+			t.Fatalf("setupDefaultCache() returned an unexpected error: %v", err)
+		}
+
+		if app.Cache() != userCache {
+			t.Error("setupDefaultCache() replaced the cache supplied through WithCache")
+		}
 	})
 
 	t.Run("Failure on invalid cache level", func(t *testing.T) {
 		app := &core.App{}
 		app.SetLogger(newTestLogger())
-		init := &initializer{app: app}
 		cfg := newTestConfig()
-		cfg.Cache.Level = "invalid-level" // This should cause cache.New to fail
+		cfg.Cache.Level = "invalid-level"
+		init := &initializer{app: app}
 
-		err := init.setupDefaultCache(cfg)
-		if err == nil {
+		if _, err := init.setupDefaultCache(cfg); err == nil {
 			t.Fatal("setupDefaultCache() did not return an error on invalid cache level")
 		}
 	})

@@ -82,8 +82,7 @@ func (a *App) RequestEmailChangeOtpHandler(w http.ResponseWriter, r *http.Reques
 	// One global bucket for the whole app, not a per-account throttle, so its
 	// rejection is the same for every account. Placed before the password
 	// check, the OTP work and the lookup, a blocked request costs none of them.
-	limiter, _ := a.Limiter(PasswordHashing)
-	if !limiter.Limit() {
+	if a.Limiter().Limit(PasswordHashing) {
 		WriteJsonError(w, errorTooManyRequests)
 		return
 	}

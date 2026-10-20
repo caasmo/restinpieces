@@ -115,8 +115,7 @@ func (a *App) RequestEmailVerificationOtpHandler(w http.ResponseWriter, r *http.
 	// One global bucket for the whole app, not a per-account throttle, so its
 	// rejection is the same for every account. Placed before the lookup, a
 	// blocked request costs no DB hit and no argon2id work.
-	limiter, _ := a.Limiter(PasswordHashing)
-	if !limiter.Limit() {
+	if a.Limiter().Limit(PasswordHashing) {
 		WriteJsonError(w, errorTooManyRequests)
 		return
 	}

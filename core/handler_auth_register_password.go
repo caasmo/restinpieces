@@ -99,8 +99,7 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 	// One global bucket for the whole app, not a per-account throttle, so its
 	// rejection is the same for every account. Placed before the hash and the
 	// DB write, a blocked request costs neither.
-	limiter, _ := a.Limiter(PasswordHashing)
-	if !limiter.Limit() {
+	if a.Limiter().Limit(PasswordHashing) {
 		WriteJsonError(w, errorTooManyRequests)
 		return
 	}
