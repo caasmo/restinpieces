@@ -231,6 +231,18 @@ func TestConfig_UnmarshalIgnoresRemovedStartTLS(t *testing.T) {
 	}
 }
 
+func TestConfig_UnmarshalIgnoresRemovedRateLimits(t *testing.T) {
+	t.Parallel()
+
+	data := []byte("[rate_limits]\npassword_reset_window = '5m'\n")
+	cfg := NewDefaultConfig()
+
+	err := toml.Unmarshal(data, cfg)
+	if err != nil {
+		t.Fatalf("Unmarshal() with removed rate_limits key failed: %v", err)
+	}
+}
+
 func TestConfigLimiterDuplicateKeyRejected(t *testing.T) {
 	stored := []byte(`
 [limiter.token_bucket.password_hashing]

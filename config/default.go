@@ -74,11 +74,6 @@ func NewDefaultConfig() *Config {
 				MTLSCertificates: "",
 			},
 		},
-		RateLimits: RateLimits{
-			PasswordResetCooldown:        Duration{Duration: 2 * time.Hour},
-			EmailChangeCooldown:          Duration{Duration: 1 * time.Hour},
-			EmailVerificationOtpCooldown: Duration{Duration: 2 * time.Minute},
-		},
 		OAuth2: OAuth2{
 			"google": {
 				Name:            "google",
@@ -297,15 +292,16 @@ func NewLimitersDefaults() Limiter {
 
 	emailVerificationOTP := NewFixedWindowEntryDefaults()
 	emailVerificationOTP.Prefix = "ev_"
+	emailVerificationOTP.Window = Duration{Duration: 2 * time.Minute}
 
 	return Limiter{
 		TokenBucket: TokenBucket{
-			"password_hashing": NewTokenBucketEntryDefaults(),
+			LimiterPasswordHashing: NewTokenBucketEntryDefaults(),
 		},
 		FixedWindow: FixedWindow{
-			"password_reset":         passwordReset,
-			"email_change":           emailChange,
-			"email_verification_otp": emailVerificationOTP,
+			LimiterPasswordReset:        passwordReset,
+			LimiterEmailChange:          emailChange,
+			LimiterEmailVerificationOtp: emailVerificationOTP,
 		},
 	}
 }

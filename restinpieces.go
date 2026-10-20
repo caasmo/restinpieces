@@ -385,6 +385,15 @@ func (i *initializer) setupDefaultCache(cfg *config.Config) (*cache.Default[stri
 	return defaultCache, nil
 }
 
+// limiterLabelsFromConfig holds the limiter label for each config key.
+// Labels the map does not name pass through unchanged.
+var limiterLabelsFromConfig = map[string]string{
+	config.LimiterPasswordHashing:      core.LimiterPasswordHashing,
+	config.LimiterPasswordReset:        core.LimiterPasswordReset,
+	config.LimiterEmailChange:          core.LimiterEmailChange,
+	config.LimiterEmailVerificationOtp: core.LimiterEmailVerificationOtp,
+}
+
 // setupLimiter builds both limiter branches from the config and assembles the
 // limiter. The fixed window uses the framework cache: its counters need
 // Increment, which a user cache set through WithCache does not provide.
@@ -393,10 +402,23 @@ func (i *initializer) setupLimiter(configProvider *config.Provider, defaultCache
 
 	tokenBuckets := make(map[string]*core.TokenBucketLimiter, len(cfg.Limiter.TokenBucket))
 	for label, entry := range cfg.Limiter.TokenBucket {
-		tokenBuckets[label] = core.NewTokenBucketLimiter(entry)
+		limiterLabel, ok := limiterLabelsFromConfig[label]
+		if !ok {
+			limiterLabel = label
+		}
+		tokenBuckets[limiterLabel] = core.NewTokenBucketLimiter(entry)
 	}
 
-	fixedWindow := core.NewFixedWindowLimiter(cfg.Limiter.FixedWindow, defaultCache)
+	fixedWindowEntries := make(config.FixedWindow, len(cfg.Limiter.FixedWindow))
+	for label, entry := range cfg.Limiter.FixedWindow {
+		limiterLabel, ok := limiterLabelsFromConfig[label]
+		if !ok {
+			limiterLabel = label
+		}
+		fixedWindowEntries[limiterLabel] = entry
+	}
+
+	fixedWindow := core.NewFixedWindowLimiter(fixedWindowEntries, defaultCache)
 
 	i.app.SetLimiter(core.NewLimiter(tokenBuckets, fixedWindow))
 

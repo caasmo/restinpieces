@@ -6,12 +6,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// PasswordHashing is the name of the built-in limiter that caps how many
-// password hashes and verifications may run at the same time. Argon2id
-// reserves 64 MiB per call, so without a cap a login flood can exhaust the
-// server memory.
-const PasswordHashing = "password_hashing"
-
 // TokenBucketLimiter wraps a token bucket. Burst tokens are available right
 // away and one token refills every Limit.
 type TokenBucketLimiter struct {

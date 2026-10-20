@@ -27,8 +27,7 @@ func TestEmailChangeOtpHandler_Handle(t *testing.T) {
 		handler := NewEmailChangeOtpHandler(mockMailer)
 
 		payload := PayloadEmailChangeOtp{
-			NewEmail:       "new@example.com",
-			CooldownBucket: 123456,
+			NewEmail: "new@example.com",
 		}
 		payloadBytes, _ := json.Marshal(payload)
 		payloadExtra := PayloadEmailChangeOtpExtra{

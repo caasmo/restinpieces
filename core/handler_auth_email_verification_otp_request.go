@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/handlers"
 )
 
@@ -47,6 +45,12 @@ import (
 // Unlike the register endpoint, CreateUserWithPassword never overwrites an
 // existing password on conflict, so the real user's secret is always intact
 // and cannot be poisoned by an attacker registering the same email.
+//
+// # Security: Email rate limiting
+//
+// A fixed-window limiter keyed by email sends one verification email per
+// window by default. A second request returns
+// errorEmailVerificationOtpAlreadyRequested.
 //
 // # Security: Enumeration & timing attacks
 //
@@ -115,7 +119,7 @@ func (a *App) RequestEmailVerificationOtpHandler(w http.ResponseWriter, r *http.
 	// One global bucket for the whole app, not a per-account throttle, so its
 	// rejection is the same for every account. Placed before the lookup, a
 	// blocked request costs no DB hit and no argon2id work.
-	if a.Limiter().Limit(PasswordHashing) {
+	if a.Limiter().Limit(LimiterPasswordHashing) {
 		WriteJsonError(w, errorTooManyRequests)
 		return
 	}
@@ -167,11 +171,16 @@ func (a *App) RequestEmailVerificationOtpHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.EmailVerificationOtpCooldown.Duration, time.Now())
+	// One verification email per address per window. The check runs after the
+	// OTP token so a limited request does the same cryptographic work.
+	limited := a.Limiter().Limit(LimiterEmailVerificationOtp, req.Email)
+	if limited {
+		WriteJsonError(w, errorEmailVerificationOtpAlreadyRequested)
+		return
+	}
 
 	payload, err := json.Marshal(handlers.PayloadEmailVerificationOtp{
-		Email:          req.Email,
-		CooldownBucket: cooldownBucket,
+		Email: req.Email,
 	})
 	if err != nil {
 		WriteJsonError(w, errorServiceUnavailable)
@@ -192,11 +201,8 @@ func (a *App) RequestEmailVerificationOtpHandler(w http.ResponseWriter, r *http.
 		PayloadExtra: payloadExtra,
 	}
 
-	if err := a.DbQueue().InsertJob(job); err != nil {
-		if err == db.ErrConstraintUnique {
-			WriteJsonError(w, errorEmailVerificationOtpAlreadyRequested)
-			return
-		}
+	err = a.DbQueue().InsertJob(job)
+	if err != nil {
 		WriteJsonError(w, errorAuthDatabaseError)
 		return
 	}

@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/handlers"
 )
 
@@ -24,9 +22,9 @@ import (
 //
 // # Security: Harassment and Rate Limiting
 // Because this endpoint sits completely unauthenticated and does not require the
-// user's password, we cannot prevent harassment entirely. Our defense is strictly
-// bounded by the queue Cooldown Bucket (e.g., 1 email every 5 minutes). Successive
-// requests within the cooldown window hit a unique constraint and are silently ignored.
+// user's password, we cannot prevent harassment entirely. Our defense is a
+// fixed-window limiter keyed by email: one email per address per window by
+// default. Successive requests within that window are silently ignored.
 //
 // # Security: Enumeration hardening
 // If we return errors for invalid states (e.g., email not found, unverified), an
@@ -90,6 +88,8 @@ func (a *App) RequestPasswordResetOtpHandler(w http.ResponseWriter, r *http.Requ
 		shouldSendEmail = false
 	} else if user.Password == "" {
 		shouldSendEmail = false
+	} else if a.Limiter().Limit(LimiterPasswordReset, req.Email) {
+		shouldSendEmail = false
 	}
 
 	// 4. Unconditional Queue Insertion (Timing Equalizer)
@@ -98,10 +98,8 @@ func (a *App) RequestPasswordResetOtpHandler(w http.ResponseWriter, r *http.Requ
 
 	if shouldSendEmail {
 		jobType = handlers.JobTypePasswordResetOtp
-		cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.PasswordResetCooldown.Duration, time.Now())
 		payload, _ = json.Marshal(handlers.PayloadPasswordResetOtp{
-			Email:          req.Email,
-			CooldownBucket: cooldownBucket,
+			Email: req.Email,
 		})
 		payloadExtra, _ = json.Marshal(handlers.PayloadPasswordResetOtpExtra{
 			Otp: otp,

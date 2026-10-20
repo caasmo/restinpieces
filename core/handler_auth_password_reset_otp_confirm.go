@@ -61,7 +61,7 @@ func (a *App) ConfirmPasswordResetOtpHandler(w http.ResponseWriter, r *http.Requ
 	// One global bucket for the whole app, not a per-account throttle, so its
 	// rejection is the same for every account. Placed before the token parse,
 	// the lookup and the hash, a blocked request costs none of them.
-	if a.Limiter().Limit(PasswordHashing) {
+	if a.Limiter().Limit(LimiterPasswordHashing) {
 		WriteJsonError(w, errorTooManyRequests)
 		return
 	}

@@ -15,12 +15,11 @@ import (
 // - Fields named "Enabled" require a server restart to take effect
 // - Other boolean fields typically require restart unless documented otherwise
 type Config struct {
-	PublicDir  string     `toml:"public_dir" comment:"Directory containing static web assets"`
-	Source     string     `toml:"-" comment:"[READONLY] Source of config - 'file:<path>' or 'db'"`
-	Jwt        Jwt        `toml:"jwt" comment:"JSON Web Token settings"`
-	Scheduler  Scheduler  `toml:"scheduler" comment:"Background job scheduler settings"`
-	Server     Server     `toml:"server" comment:"HTTP server configuration"`
-	RateLimits RateLimits `toml:"rate_limits" comment:"Rate limiting settings"`
+	PublicDir string    `toml:"public_dir" comment:"Directory containing static web assets"`
+	Source    string    `toml:"-" comment:"[READONLY] Source of config - 'file:<path>' or 'db'"`
+	Jwt       Jwt       `toml:"jwt" comment:"JSON Web Token settings"`
+	Scheduler Scheduler `toml:"scheduler" comment:"Background job scheduler settings"`
+	Server    Server    `toml:"server" comment:"HTTP server configuration"`
 	// OAuth2 lists the configured providers keyed by a label you choose. The
 	// provider identifier is OAuth2Entry.Name, not the key.
 	OAuth2                 OAuth2                 `toml:"oauth2" comment:"OAuth2 provider configurations"`
@@ -280,15 +279,6 @@ type Tls struct {
 	// Authenticated Origin Pulls: paste the certificate Cloudflare publishes
 	// for that feature into this bundle. An empty bundle turns the check off.
 	MTLSCertificates string `toml:"mtls_certificates" comment:"PEM bundle of accepted client certificates, e.g. Cloudflare AOP"`
-}
-
-type RateLimits struct {
-	// Minimum time a user must wait between requesting password resets for the same account.
-	PasswordResetCooldown Duration `toml:"password_reset_cooldown" comment:"Min time between password reset requests"`
-	// Minimum time a user must wait between requesting email address changes.
-	EmailChangeCooldown Duration `toml:"email_change_cooldown" comment:"Min time between email change requests"`
-	// Minimum time a user must wait between requesting email OTP verifications.
-	EmailVerificationOtpCooldown Duration `toml:"email_verification_otp_cooldown" comment:"Min time between email OTP verification requests"`
 }
 
 // Smtp holds the configuration for sending emails via an SMTP server.

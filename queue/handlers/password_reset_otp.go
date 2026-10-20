@@ -12,8 +12,7 @@ import (
 const JobTypePasswordResetOtp = "password_reset_otp"
 
 type PayloadPasswordResetOtp struct {
-	Email          string `json:"email"`
-	CooldownBucket int    `json:"cooldown_bucket"`
+	Email string `json:"email"`
 }
 
 type PayloadPasswordResetOtpExtra struct {

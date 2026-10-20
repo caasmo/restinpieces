@@ -27,8 +27,7 @@ func TestEmailVerificationOtpHandler_Handle(t *testing.T) {
 		handler := NewEmailVerificationOtpHandler(mockMailer)
 
 		payload := PayloadEmailVerificationOtp{
-			Email:          "user@example.com",
-			CooldownBucket: 12345,
+			Email: "user@example.com",
 		}
 		payloadBytes, _ := json.Marshal(payload)
 		payloadExtra := PayloadEmailVerificationOtpExtra{

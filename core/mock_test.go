@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"net/http"
+	"testing"
 	"time"
 
 	"github.com/caasmo/restinpieces/config"
@@ -107,10 +108,44 @@ func newTestLimiter(allowed bool) *Limiter {
 
 	return &Limiter{
 		TokenBucket: map[string]*TokenBucketLimiter{
-			PasswordHashing: &TokenBucketLimiter{
+			LimiterPasswordHashing: &TokenBucketLimiter{
 				limiter: rate.NewLimiter(rate.Every(time.Hour), burst),
 			},
 		},
 		FixedWindow: NewFixedWindowLimiter(config.FixedWindow{}, nil),
 	}
+}
+
+// newTestOtpLimiter returns a limiter for the OTP handlers. The password
+// hashing gate always allows and each email fixed-window label allows one request
+// per identity per hour. A test that needs a limited request calls Limit once
+// before the handler to spend that request.
+func newTestOtpLimiter(tb testing.TB) *Limiter {
+	tb.Helper()
+
+	return NewLimiter(
+		map[string]*TokenBucketLimiter{
+			LimiterPasswordHashing: NewTokenBucketLimiter(config.TokenBucketEntry{
+				Limit: config.Duration{Duration: time.Hour},
+				Burst: 1000,
+			}),
+		},
+		NewFixedWindowLimiter(config.FixedWindow{
+			LimiterPasswordReset: {
+				Prefix: "pr_",
+				Window: config.Duration{Duration: time.Hour},
+				Max:    1,
+			},
+			LimiterEmailChange: {
+				Prefix: "ec_",
+				Window: config.Duration{Duration: time.Hour},
+				Max:    1,
+			},
+			LimiterEmailVerificationOtp: {
+				Prefix: "ev_",
+				Window: config.Duration{Duration: time.Hour},
+				Max:    1,
+			},
+		}, newTestCounterCache(tb)),
+	)
 }

@@ -123,7 +123,7 @@ func TestRequestEmailVerificationOtpHandler_Validation(t *testing.T) {
 			app := &App{
 				validator: mockValidator,
 				dbAuth:    &mockDbApp{},
-				limiter:   newTestLimiter(true),
+				limiter:   newTestOtpLimiter(t),
 			}
 
 			app.RequestEmailVerificationOtpHandler(rr, req)
@@ -149,8 +149,8 @@ func TestRequestEmailVerificationOtpHandler_Validation(t *testing.T) {
 
 // TestRequestEmailVerificationOtpHandler_RequestLogic tests the core business logic
 // of the request-email-otp-verification handler. It covers successful OTP
-// generation, already verified user, user not found, wrong password, DB
-// cooldown constraint, and input normalization scenarios.
+// generation, already verified user, user not found, wrong password, and input
+// normalization scenarios.
 func TestRequestEmailVerificationOtpHandler_RequestLogic(t *testing.T) {
 	hashedPassword := crypto.HashPassword("password123")
 	testUser := &db.User{
@@ -172,9 +172,6 @@ func TestRequestEmailVerificationOtpHandler_RequestLogic(t *testing.T) {
 			AuthTokenDuration:                 config.Duration{Duration: 15 * time.Minute},
 			VerificationEmailOtpSecret:        "test_secret_32_bytes_long_xxxxxx",
 			VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
-		},
-		RateLimits: config.RateLimits{
-			EmailVerificationOtpCooldown: config.Duration{Duration: 2 * time.Minute},
 		},
 	}
 
@@ -233,20 +230,6 @@ func TestRequestEmailVerificationOtpHandler_RequestLogic(t *testing.T) {
 			wantCode:   CodeErrorInvalidRequest,
 		},
 		{
-			name:        "job cooldown (unique constraint) returns conflict",
-			requestBody: `{"email":"test@example.com","password":"password123"}`,
-			dbSetup: func(m *mock.Db) {
-				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
-					return testUser, nil
-				}
-				m.InsertJobFunc = func(job db.Job) error {
-					return db.ErrConstraintUnique
-				}
-			},
-			wantStatus: http.StatusConflict,
-			wantCode:   CodeErrorEmailVerificationOtpAlreadyRequested,
-		},
-		{
 			name:        "successful request with whitespace trimming",
 			requestBody: `{"email":"  test@example.com  ","password":"  password123  "}`,
 			dbSetup: func(m *mock.Db) {
@@ -296,7 +279,7 @@ func TestRequestEmailVerificationOtpHandler_RequestLogic(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(testConfig),
-				limiter:        newTestLimiter(true),
+				limiter:        newTestOtpLimiter(t),
 			}
 
 			app.RequestEmailVerificationOtpHandler(rr, req)
@@ -352,9 +335,6 @@ func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 					VerificationEmailOtpSecret:        "short",
 					VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
 				},
-				RateLimits: config.RateLimits{
-					EmailVerificationOtpCooldown: config.Duration{Duration: 2 * time.Minute},
-				},
 			},
 			dbSetup: func(m *mock.Db) {
 				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
@@ -369,9 +349,6 @@ func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 				Jwt: config.Jwt{
 					VerificationEmailOtpSecret:        "test_secret_32_bytes_long_xxxxxx",
 					VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
-				},
-				RateLimits: config.RateLimits{
-					EmailVerificationOtpCooldown: config.Duration{Duration: 2 * time.Minute},
 				},
 			},
 			dbSetup: func(m *mock.Db) {
@@ -401,7 +378,7 @@ func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(tc.config),
-				limiter:        newTestLimiter(true),
+				limiter:        newTestOtpLimiter(t),
 			}
 
 			app.RequestEmailVerificationOtpHandler(rr, req)
@@ -422,6 +399,61 @@ func TestRequestEmailVerificationOtpHandler_DependencyFailures(t *testing.T) {
 				t.Errorf("expected error code %q, got %q", wantBody["code"], gotBody["code"])
 			}
 		})
+	}
+}
+
+func TestRequestEmailVerificationOtpHandler_RateLimited(t *testing.T) {
+	hashedPassword := crypto.HashPassword("password123")
+	testUser := &db.User{
+		ID:       "user123",
+		Email:    "test@example.com",
+		Password: hashedPassword,
+		Verified: false,
+	}
+
+	req := httptest.NewRequest("POST", "/request-email-otp-verification", strings.NewReader(`{"email":"test@example.com","password":"password123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	dbMock := &mock.Db{
+		GetUserByEmailFunc: func(email string) (*db.User, error) {
+			return testUser, nil
+		},
+	}
+
+	limiter := newTestOtpLimiter(t)
+	limited := limiter.Limit(LimiterEmailVerificationOtp, "test@example.com")
+	if limited {
+		t.Fatal("first call was limited")
+	}
+
+	app := &App{
+		validator: &DefaultValidator{},
+		dbAuth:    dbMock,
+		dbQueue:   dbMock,
+		configProvider: config.NewProvider(&config.Config{
+			Jwt: config.Jwt{
+				VerificationEmailOtpSecret:        "test_secret_32_bytes_long_xxxxxx",
+				VerificationEmailOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
+			},
+		}),
+		limiter: limiter,
+	}
+
+	app.RequestEmailVerificationOtpHandler(rr, req)
+
+	if rr.Code != errorEmailVerificationOtpAlreadyRequested.status {
+		t.Errorf("expected status %d, got %d", errorEmailVerificationOtpAlreadyRequested.status, rr.Code)
+	}
+
+	var body map[string]interface{}
+	err := json.NewDecoder(rr.Body).Decode(&body)
+	if err != nil {
+		t.Fatalf("failed to decode response body: %v", err)
+	}
+
+	if code, _ := body["code"].(string); code != CodeErrorEmailVerificationOtpAlreadyRequested {
+		t.Errorf("expected code %q, got %q", CodeErrorEmailVerificationOtpAlreadyRequested, code)
 	}
 }
 

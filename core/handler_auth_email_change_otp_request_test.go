@@ -103,7 +103,7 @@ func TestRequestEmailChangeOtpHandler_Validation(t *testing.T) {
 				validator:     mockValidator,
 				authenticator: mockAuth,
 				dbAuth:        &mock.Db{},
-				limiter:       newTestLimiter(true),
+				limiter:       newTestOtpLimiter(t),
 			}
 
 			app.RequestEmailChangeOtpHandler(rr, req)
@@ -128,9 +128,6 @@ func TestRequestEmailChangeOtpHandler_Logic(t *testing.T) {
 		Jwt: config.Jwt{
 			EmailChangeOtpSecret:        "test_secret_32_bytes_long_xxxxxx",
 			EmailChangeOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
-		},
-		RateLimits: config.RateLimits{
-			EmailChangeCooldown: config.Duration{Duration: 5 * time.Minute},
 		},
 	}
 
@@ -259,7 +256,7 @@ func TestRequestEmailChangeOtpHandler_Logic(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(testConfig),
-				limiter:        newTestLimiter(true),
+				limiter:        newTestOtpLimiter(t),
 			}
 
 			app.RequestEmailChangeOtpHandler(rr, req)
@@ -321,9 +318,6 @@ func TestRequestEmailChangeOtpHandler_Failures(t *testing.T) {
 					EmailChangeOtpSecret:        "test_secret_32_bytes_long_xxxxxx",
 					EmailChangeOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
 				},
-				RateLimits: config.RateLimits{
-					EmailChangeCooldown: config.Duration{Duration: 5 * time.Minute},
-				},
 			},
 			dbSetup: func(m *mock.Db) {
 				m.GetUserByEmailFunc = func(email string) (*db.User, error) {
@@ -360,7 +354,7 @@ func TestRequestEmailChangeOtpHandler_Failures(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(tc.config),
-				limiter:        newTestLimiter(true),
+				limiter:        newTestOtpLimiter(t),
 			}
 
 			app.RequestEmailChangeOtpHandler(rr, req)
@@ -375,6 +369,65 @@ func TestRequestEmailChangeOtpHandler_Failures(t *testing.T) {
 				t.Errorf("expected code %q, got %q", tc.wantCode, code)
 			}
 		})
+	}
+}
+
+func TestRequestEmailChangeOtpHandler_RateLimited(t *testing.T) {
+	hashedPassword := crypto.HashPassword("password123")
+	testUser := &db.User{
+		ID:       "user123",
+		Email:    "old@example.com",
+		Password: hashedPassword,
+		Verified: true,
+	}
+
+	req := httptest.NewRequest("POST", "/api/request-email-change-otp", strings.NewReader(`{"new_email":"new@example.com","password":"password123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	mockDb := &mock.Db{}
+	mockDb.GetUserByEmailFunc = func(email string) (*db.User, error) {
+		return nil, nil
+	}
+
+	var capturedJob db.Job
+	mockDb.InsertJobFunc = func(job db.Job) error {
+		capturedJob = job
+		return nil
+	}
+
+	limiter := newTestOtpLimiter(t)
+	limited := limiter.Limit(LimiterEmailChange, "new@example.com")
+	if limited {
+		t.Fatal("first call was limited")
+	}
+
+	app := &App{
+		validator: &DefaultValidator{},
+		authenticator: &MockAuth{
+			AuthenticateFunc: func(r *http.Request) (*db.User, jsonResponse, error) {
+				return testUser, jsonResponse{}, nil
+			},
+		},
+		dbAuth:  mockDb,
+		dbQueue: mockDb,
+		configProvider: config.NewProvider(&config.Config{
+			Jwt: config.Jwt{
+				EmailChangeOtpSecret:        "test_secret_32_bytes_long_xxxxxx",
+				EmailChangeOtpTokenDuration: config.Duration{Duration: 15 * time.Minute},
+			},
+		}),
+		limiter: limiter,
+	}
+
+	app.RequestEmailChangeOtpHandler(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rr.Code)
+	}
+
+	if capturedJob.JobType != handlers.JobTypeDummy {
+		t.Errorf("expected job type %s, got %s", handlers.JobTypeDummy, capturedJob.JobType)
 	}
 }
 

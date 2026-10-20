@@ -11,11 +11,10 @@ import (
 
 const JobTypeEmailVerificationOtp = "email_verification_otp"
 
-// PayloadEmailVerificationOtp contains the details for deduplicating queued email tasks
+// PayloadEmailVerificationOtp contains the address to send the verification
+// email to.
 type PayloadEmailVerificationOtp struct {
 	Email string `json:"email"`
-	// CooldownBucket prevents rapid duplicate requests
-	CooldownBucket int `json:"cooldown_bucket"`
 }
 
 // PayloadEmailVerificationOtpExtra contains the unique OTP code data to act upon

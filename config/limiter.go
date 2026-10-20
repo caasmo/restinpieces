@@ -1,5 +1,13 @@
 package config
 
+// Config keys for the framework's built-in limiter entries.
+const (
+	LimiterPasswordHashing      = "password_hashing"
+	LimiterPasswordReset        = "password_reset"
+	LimiterEmailChange          = "email_change"
+	LimiterEmailVerificationOtp = "email_verification_otp"
+)
+
 // Limiter holds the rate limiter configuration. The section splits into the
 // two standard algorithms, each with its own table: token_bucket and
 // fixed_window. Every entry is keyed by a label you choose, for example

@@ -4,11 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/caasmo/restinpieces/crypto"
 	"github.com/caasmo/restinpieces/db"
-	"github.com/caasmo/restinpieces/queue"
 	"github.com/caasmo/restinpieces/queue/handlers"
 )
 
@@ -30,6 +28,10 @@ import (
 // sessions or physical access to an unlocked device. This follows the
 // industry standard (Google, Apple, Microsoft, GitHub all require password
 // re-entry for email changes).
+//
+// # Security: Rate limiting
+// A fixed-window limiter keyed by the new email address sends at most one email
+// per window by default. A limited request follows the silent path.
 //
 // # Security: Enumeration hardening
 // If the new email already belongs to another account, the handler enters the
@@ -82,7 +84,7 @@ func (a *App) RequestEmailChangeOtpHandler(w http.ResponseWriter, r *http.Reques
 	// One global bucket for the whole app, not a per-account throttle, so its
 	// rejection is the same for every account. Placed before the password
 	// check, the OTP work and the lookup, a blocked request costs none of them.
-	if a.Limiter().Limit(PasswordHashing) {
+	if a.Limiter().Limit(LimiterPasswordHashing) {
 		WriteJsonError(w, errorTooManyRequests)
 		return
 	}
@@ -123,6 +125,8 @@ func (a *App) RequestEmailChangeOtpHandler(w http.ResponseWriter, r *http.Reques
 	existingUser, existingErr := a.DbAuth().GetUserByEmail(req.NewEmail)
 	if existingErr == nil && existingUser != nil {
 		shouldSendEmail = false
+	} else if a.Limiter().Limit(LimiterEmailChange, req.NewEmail) {
+		shouldSendEmail = false
 	}
 
 	// 3. Unconditional Queue Insertion (Timing Equalizer)
@@ -131,10 +135,8 @@ func (a *App) RequestEmailChangeOtpHandler(w http.ResponseWriter, r *http.Reques
 
 	if shouldSendEmail {
 		jobType = handlers.JobTypeEmailChangeOtp
-		cooldownBucket := queue.CoolDownBucket(cfg.RateLimits.EmailChangeCooldown.Duration, time.Now())
 		payload, _ = json.Marshal(handlers.PayloadEmailChangeOtp{
-			NewEmail:       req.NewEmail,
-			CooldownBucket: cooldownBucket,
+			NewEmail: req.NewEmail,
 		})
 		payloadExtra, _ = json.Marshal(handlers.PayloadEmailChangeOtpExtra{
 			Otp: otp,

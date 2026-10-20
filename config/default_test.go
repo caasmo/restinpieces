@@ -207,7 +207,7 @@ func TestNewFixedWindowEntryDefaults(t *testing.T) {
 func TestNewLimitersDefaults(t *testing.T) {
 	limiters := NewLimitersDefaults()
 
-	entry, ok := limiters.TokenBucket["password_hashing"]
+	entry, ok := limiters.TokenBucket[LimiterPasswordHashing]
 	if !ok {
 		t.Fatal("TokenBucket does not contain password_hashing")
 	}
@@ -221,10 +221,11 @@ func TestNewLimitersDefaults(t *testing.T) {
 	fixedWindowSeeds := []struct {
 		label  string
 		prefix string
+		window time.Duration
 	}{
-		{"password_reset", "pr_"},
-		{"email_change", "ec_"},
-		{"email_verification_otp", "ev_"},
+		{"password_reset", "pr_", 1 * time.Hour},
+		{"email_change", "ec_", 1 * time.Hour},
+		{"email_verification_otp", "ev_", 2 * time.Minute},
 	}
 	for _, tc := range fixedWindowSeeds {
 		seed, ok := limiters.FixedWindow[tc.label]
@@ -234,8 +235,8 @@ func TestNewLimitersDefaults(t *testing.T) {
 		if seed.Prefix != tc.prefix {
 			t.Errorf("%s prefix = %q, want %q", tc.label, seed.Prefix, tc.prefix)
 		}
-		if seed.Window.Duration != time.Hour {
-			t.Errorf("%s window = %v, want 1h", tc.label, seed.Window.Duration)
+		if seed.Window.Duration != tc.window {
+			t.Errorf("%s window = %v, want %v", tc.label, seed.Window.Duration, tc.window)
 		}
 		if seed.Max != 1 {
 			t.Errorf("%s max = %d, want 1", tc.label, seed.Max)
@@ -246,7 +247,7 @@ func TestNewLimitersDefaults(t *testing.T) {
 func TestNewDefaultConfigSeedsPasswordHashing(t *testing.T) {
 	cfg := NewDefaultConfig()
 
-	if _, ok := cfg.Limiter.TokenBucket["password_hashing"]; !ok {
+	if _, ok := cfg.Limiter.TokenBucket[LimiterPasswordHashing]; !ok {
 		t.Fatal("NewDefaultConfig().Limiter.TokenBucket does not contain password_hashing")
 	}
 }

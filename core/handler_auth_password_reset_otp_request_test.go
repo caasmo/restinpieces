@@ -101,9 +101,6 @@ func TestRequestPasswordResetOtpHandler_Logic(t *testing.T) {
 			PasswordResetSecret:        "test_secret_32_bytes_long_xxxxxx",
 			PasswordResetTokenDuration: config.Duration{Duration: 15 * time.Minute},
 		},
-		RateLimits: config.RateLimits{
-			PasswordResetCooldown: config.Duration{Duration: 5 * time.Minute},
-		},
 	}
 
 	testCases := []struct {
@@ -175,6 +172,7 @@ func TestRequestPasswordResetOtpHandler_Logic(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(testConfig),
+				limiter:        newTestOtpLimiter(t),
 			}
 
 			app.RequestPasswordResetOtpHandler(rr, req)
@@ -236,6 +234,7 @@ func TestRequestPasswordResetOtpHandler_Failures(t *testing.T) {
 				dbAuth:         mockDb,
 				dbQueue:        mockDb,
 				configProvider: config.NewProvider(tc.config),
+				limiter:        newTestOtpLimiter(t),
 			}
 
 			app.RequestPasswordResetOtpHandler(rr, req)
@@ -244,5 +243,53 @@ func TestRequestPasswordResetOtpHandler_Failures(t *testing.T) {
 				t.Errorf("expected status %d, got %d", tc.wantStatus, rr.Code)
 			}
 		})
+	}
+}
+
+func TestRequestPasswordResetOtpHandler_RateLimited(t *testing.T) {
+	testConfig := &config.Config{
+		Jwt: config.Jwt{
+			PasswordResetSecret:        "test_secret_32_bytes_long_xxxxxx",
+			PasswordResetTokenDuration: config.Duration{Duration: 15 * time.Minute},
+		},
+	}
+
+	req := httptest.NewRequest("POST", "/request-password-reset-otp", strings.NewReader(`{"email":"test@example.com"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	mockDb := &mock.Db{}
+	mockDb.GetUserByEmailFunc = func(email string) (*db.User, error) {
+		return &db.User{Email: email, Verified: true, Password: "hashed-password"}, nil
+	}
+
+	var capturedJob db.Job
+	mockDb.InsertJobFunc = func(job db.Job) error {
+		capturedJob = job
+		return nil
+	}
+
+	limiter := newTestOtpLimiter(t)
+	limited := limiter.Limit(LimiterPasswordReset, "test@example.com")
+	if limited {
+		t.Fatal("first call was limited")
+	}
+
+	app := &App{
+		validator:      &DefaultValidator{},
+		dbAuth:         mockDb,
+		dbQueue:        mockDb,
+		configProvider: config.NewProvider(testConfig),
+		limiter:        limiter,
+	}
+
+	app.RequestPasswordResetOtpHandler(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("expected status 200, got %d", rr.Code)
+	}
+
+	if capturedJob.JobType != handlers.JobTypeDummy {
+		t.Errorf("expected job type %s, got %s", handlers.JobTypeDummy, capturedJob.JobType)
 	}
 }

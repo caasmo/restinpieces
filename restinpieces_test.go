@@ -101,8 +101,8 @@ func TestSetupLimiter(t *testing.T) {
 		if limiter == nil {
 			t.Fatal("app.Limiter() is nil after calling setupLimiter()")
 		}
-		if limiter.Limit(core.PasswordHashing) {
-			t.Error("Limit(PasswordHashing) = true, want false")
+		if limiter.Limit(core.LimiterPasswordHashing) {
+			t.Error("Limit(LimiterPasswordHashing) = true, want false")
 		}
 		if limiter.Limit("password_reset", "user@example.com") {
 			t.Error("Limit(password_reset) = true, want false")

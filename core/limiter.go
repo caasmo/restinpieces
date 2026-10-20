@@ -1,5 +1,16 @@
 package core
 
+// Limiter labels for the framework's built-in entries.
+const (
+	// LimiterPasswordHashing caps how many password hashes and verifications
+	// may run at the same time. Argon2id reserves 64 MiB per call, so without
+	// a cap a login flood can exhaust the server memory.
+	LimiterPasswordHashing      = "password_hashing"
+	LimiterPasswordReset        = "password_reset"
+	LimiterEmailChange          = "email_change"
+	LimiterEmailVerificationOtp = "email_verification_otp"
+)
+
 // Limiter answers rate-limit checks. Both branches are built by the caller at
 // startup; Limit is the only method callers use. Changing the limiter config
 // needs a restart.

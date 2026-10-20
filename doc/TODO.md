@@ -172,7 +172,7 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 # auth: failed-login throttle for login/signup (in-house)
 
 - per-IP and per-email failure counters in `app.Cache()`; lock after N with a TTL
-- refs: `core/handler_auth_login_password.go`, `core/handler_auth_register_password.go`, `cache/default.go` (`SetWithTTL`), `core/prerouter/block_ip.go` (middleware shape, `app.ClientIP`), `queue/queue.go` (`CoolDownBucket`), `config/config.go` (`RateLimits`)
+- refs: `core/handler_auth_login_password.go`, `core/handler_auth_register_password.go`, `cache/default.go` (`SetWithTTL`), `core/prerouter/block_ip.go` (middleware shape, `app.ClientIP`)
 
 # auth: proof-of-work challenge for login/signup (in-house)
 
@@ -385,8 +385,8 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 - Yes — two different kinds of gate:
   - at the same time: `how many concurrent` — max N in flight (e.g. password verification)
   - in an interval: `how many per window` — max M in N seconds, or today's simpler form, one per cooldown bucket per account/email
-- current `RateLimits` is the second, but only the one-per-bucket variant. It is not yet a general "M per interval".
-- refs: `config/config.go` (`RateLimits`), `queue/queue.go` (`CoolDownBucket`), `sql/schema/app/job_queue.sql` (`idx_job_queue_incomplete`), `core/handler_auth_password_reset_otp_request.go`, `core/handler_auth_email_change_otp_request.go`, `core/handler_auth_email_verification_otp_request.go`, `queue/handlers/password_reset_otp.go`, `queue/handlers/email_change_otp.go`, `queue/handlers/email_verification_otp.go`
+- the old `RateLimits` cooldown was the second, but only the one-per-bucket variant. It is not yet a general "M per interval".
+- refs: `config/limiter.go` (`Limiter`), `core/handler_auth_password_reset_otp_request.go`, `core/handler_auth_email_change_otp_request.go`, `core/handler_auth_email_verification_otp_request.go`, `queue/handlers/password_reset_otp.go`, `queue/handlers/email_change_otp.go`, `queue/handlers/email_verification_otp.go`
 - the thins to dfierenciate is those limits are for someting, that something determine the implmenttion of the limit, in case of collodown is the creating of job to send emails, generalizing a concept of limit taht is usable by different use cases will prove mos rprobably not possible,
 - possibility 1:
 
@@ -526,7 +526,7 @@ func (l *Limiters) Limit(label, identity string) bool {
 ok := limiters.Limit(PasswordReset, email)
 ```
 
-- `max = 1` is a cooldown, so this replaces the current cooldown logic: `rate_limits` (`RateLimits`: `password_reset_cooldown`, `email_change_cooldown`, `email_verification_otp_cooldown`), `queue.CoolDownBucket`, and the `job_queue` unique index that today enforces "one unfinished job per email per bucket" at OTP-job creation. The OTP request handlers would call `Limit(<label>, identity)` before enqueueing and those three go away; state then lives in the cache, not the DB, which also drops the current cooldown bug (the cooldown is broken today — see the `BUG queue` entry below).
+- `max = 1` is a cooldown, so this replaces the old cooldown logic: `rate_limits` (`RateLimits`: `password_reset_cooldown`, `email_change_cooldown`, `email_verification_otp_cooldown`) and `queue.CoolDownBucket` are gone. The OTP request handlers call `Limit(<label>, identity)` before enqueueing; state then lives in the cache, not the DB, which also drops the old cooldown bug. The `job_queue` unique index stays for recurrent jobs; see the narrowing TODO.
 
 Agreed — build the map once. `Limiter` walks both branches at construction and fills `map[label]object`, each object being the matching type (`TokenBucketLimiter` or `FixedWindowLimiter`, the latter holding the cache). After that, `app.Limiter(label)` is a plain map read — no config read, no reload, nothing extra per call.
 
@@ -704,12 +704,14 @@ type FixedWindowLimiter struct {
 - next: `withRouter`, `withLogger`, `withNotifier`
 - refs: `options.go`, `restinpieces.go` (`New`, `setupDefaultCache`, `setupDefaultRouter`, `setupDefaultLogger`, `setupDefaultNotifier`)
 
-# BUG queue: we added WHERE status != 'completed' and broke the cooldown
+# queue: narrow idx_job_queue_incomplete to recurrent jobs
 
-- the unique index only covers pending, processing and failed rows; once the scheduler marks the email job completed, a new request for the same email and bucket inserts another job and sends another email
-- the rule is "one unfinished job per key per bucket", not "one event per key per window"
-- the cooldown is broken today. The `# keyed fixed-window rate limiter` design replaces it with a cache-backed `fixed_window` entry (`max = 1`), removing this bug together with `rate_limits`, `CoolDownBucket` and the unique index
-- refs: `sql/schema/app/job_queue.sql` (`idx_job_queue_incomplete`), `db/databasesql/queue.go` (`StmtInsertJob`, `MarkCompleted`), `queue/scheduler/scheduler.go`, `queue/queue.go` (`CoolDownBucket`), `core/handler_auth_password_reset_otp_request.go`, `core/handler_auth_email_change_otp_request.go`, `core/handler_auth_email_verification_otp_request.go`
+- the index is wider than the scheduler needs: it covers every job with `status != 'completed'`, so two unfinished one-shot jobs with the same payload and job type collide
+- only recurrent jobs need it: `SeedRecurrent` inserts them with an empty payload and relies on the conflict target to keep one unfinished row per `job_type`
+- narrow the predicate to `status != 'completed' AND payload = ''`
+- update the `ON CONFLICT (payload, job_type) WHERE status != 'completed'` clause in `SeedRecurrent` to the same predicate
+- apply the change with a one-time `DROP INDEX idx_job_queue_incomplete;` then `CREATE UNIQUE INDEX idx_job_queue_incomplete ON job_queue (payload, job_type) WHERE status != 'completed' AND payload = '';`
+- refs: `sql/schema/app/job_queue.sql`, `db/databasesql/queue.go` (`SeedRecurrent`), `queue/scheduler/scheduler.go`
 
 # cache: make a smoke test with struct and no struct for memory vs time
 
@@ -752,7 +754,7 @@ type FixedWindowLimiter struct {
 
 # core/auth: limiter lookup error ignored, auth handlers can nil-panic
 
-- handle the `a.Limiter(PasswordHashing)` error and fail closed
+- handle the `a.Limiter(LimiterPasswordHashing)` error and fail closed
 - refs: `core/handler_auth_*.go`, `core/limiter.go`
 
 # limiter: fixed-window counter expires by TTL, no window number in the key

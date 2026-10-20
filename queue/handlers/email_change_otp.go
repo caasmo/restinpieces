@@ -12,8 +12,7 @@ import (
 const JobTypeEmailChangeOtp = "email_change_otp"
 
 type PayloadEmailChangeOtp struct {
-	NewEmail       string `json:"new_email"`
-	CooldownBucket int    `json:"cooldown_bucket"`
+	NewEmail string `json:"new_email"`
 }
 
 type PayloadEmailChangeOtpExtra struct {
