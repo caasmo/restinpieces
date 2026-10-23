@@ -281,10 +281,26 @@ func targetLimit(percent int, hashesPerSecond float64) time.Duration {
 	return time.Duration(milliseconds) * time.Millisecond
 }
 
-// targetBurst returns the burst for a target that uses percent of the RAM.
-func targetBurst(percent int) int {
-	allowed := totalRAM() * uint64(percent) / 100
-	return int(allowed / hashMemory())
+// targetBurst returns the burst for a target that may use percent of the
+// available memory. The core count caps the result: a hash occupies one core
+// for its whole run, so a burst above the core count only multiplies the time
+// each request waits and does not raise throughput. Available memory, not
+// total memory, is the ceiling, because the rest belongs to the running
+// application. The result is at least one, because a burst of zero would
+// refuse every login while leaving the hash itself just as large.
+func targetBurst(percent int, available uint64) int {
+	byRAM := int(available * uint64(percent) / 100 / hashMemory())
+	byCPU := cpuCount()
+
+	burst := byRAM
+	if byCPU < burst {
+		burst = byCPU
+	}
+	if burst < 1 {
+		burst = 1
+	}
+
+	return burst
 }
 
 func main() {
@@ -323,6 +339,6 @@ func main() {
 	_, _ = fmt.Printf("\n")
 	_, _ = fmt.Printf("recommendation\n")
 	for _, percent := range targetPercents {
-		_, _ = fmt.Printf("  at most %d%% of RAM and CPU    limit=%s  burst=%d\n", percent, targetLimit(percent, busy), targetBurst(percent))
+		_, _ = fmt.Printf("  at most %d%% of RAM and CPU    limit=%s  burst=%d\n", percent, targetLimit(percent, busy), targetBurst(percent, ramAvailable))
 	}
 }

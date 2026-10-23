@@ -767,3 +767,51 @@ type FixedWindowLimiter struct {
 - removes the per-call `time.Now()` (~40 ns vs ~2 ns for the sampled clock) and the `fixedWindowKey` builder; also one key per identity instead of one dead key per window
 - costs a cache API change, a new expiry check under the lock, and `startClock` now starts on the first limiter call
 - refs: `cache/increment.go`, `cache/default.go` (`Get` lazy expiry, `fastNow`, `startClock`), `cache/increment_test.go`, `core/limiter_fixed_window.go`, `core/limiter_fixed_window_test.go`, `core/limiter_fixed_window_bench_test.go`
+
+# block_ip: current blo ip could be considered a limiter and moved to the limiter
+
+- `BlockIp` observes every request in the topk sketch and returns IPs to block at tick boundaries; `Limiter.Limit` is a synchronous per-call bool, so a move needs a separate `Observe` branch while the middleware keeps the 429 and the block-cache writes
+- do not replace it with the fixed-window branch: exact counters are for per-IP auth limits, while topk's fixed memory is the global circuit breaker
+- auth protection is the smaller separate step: a fixed-window entry per auth endpoint keyed by IP, checked before `password_hashing`
+- refs: `core/prerouter/block_ip.go`, `core/limiter.go`, `core/limiter_fixed_window.go`, `config/config.go` (`BlockIp`), `config/limiter.go`
+
+# cache: export FastNow, the topk could also use it
+
+- `fastNow`/`clockNow` in `cache/default.go` are unexported; `startClock` runs only on the first `SetWithTTL`, so an exported `FastNow` must start it or it returns 0
+- `core/limiter_fixed_window.go` calls `time.Now()` per `Limit`; candidate consumer
+- refs: `cache/default.go`, `cache/benchmark_test.go`, `core/limiter_fixed_window.go`, `topk/sketch.go`, `doc/TODO.md` (`# limiter: fixed-window counter expires by TTL, no window number in the key`)
+
+# auth: evaluation of all solutions for per-IP counting
+
+- evaluate the Count-Min implementations before choosing: BoomFilters, ryanfowler/limits, kelindar/approx, shenwei356/countminsketch, jehiah/countmin, Ristretto, Loki
+- current best code: ryanfowler/limits `Estimator` with atomic int64 counters, two maphash seeds, no per-call allocation, Apache-2.0
+- rejected: BoomFilters (inverted delta, float64 Count), kelindar/approx (16-bit counters, go:linkname), shenwei (per-call allocation), jehiah (reused FNV state, no license), Ristretto (4-bit cap), Loki (AGPL, app-internal)
+- Loki `pkg/logql/sketch/cms.go` has `ConservativeIncrement` and `ConservativeAdd`; use as algorithm reference only because Loki is AGPL and the package is app-internal
+- smoke test the copied estimator at low/medium/high RPS in a temporary program outside the repo before choosing; no dependency yet
+- refs: `topk/sketch.go`, `core/prerouter/block_ip.go`, `https://github.com/ryanfowler/limits/blob/main/estimator.go`
+
+# auth: use estimator + adhoc simple CU under a mutex
+
+- use the ryanfowler/limits `Estimator` base and add a small `ConservativeIncrement` method
+- CU reads the current minimum, targets minimum+1, and raises only counters below the target
+- guard CU with one mutex; plain `Incr`/`IncrN` stay concurrent-safe but are not covered by that mutex, so use CU as the only update path
+- use one event per CU call; conservative batch add can undercount
+- refs: `doc/TODO.md` (`# auth: evaluation of all solutions for per-IP counting`), `https://github.com/ryanfowler/limits/blob/main/estimator.go`
+
+# limiter: accept an optional clock, use it for AllowN and fixed windows
+
+- add an optional clock to the limiter constructors; default to `time.Now`
+- token bucket: call `rate.Limiter.AllowN(clock.Now(), 1)` instead of `Allow()`
+- fixed window: use `clock.Now()` for the window bucket instead of `time.Now()`
+- production clock can wrap `cache.FastNow` as `time.Unix(0, cache.FastNow())`; export `FastNow` with lazy `startClock` and accept its 100ms resolution
+- refs: `core/limiter_token_bucket.go`, `core/limiter_fixed_window.go`, `cache/default.go`, `doc/TODO.md` (`# cache: export FastNow`)
+
+# framework: provide one configurable clock and inject it into cache, limiter, topk
+
+- framework owns an optional clock; default to `time.Now`
+- cache: use it for TTL time and the sampled now; `FastNow` starts the clock
+- limiter: token bucket uses `AllowN(clock.Now(), 1)`; fixed window uses `clock.Now()` for the bucket
+- topk: `New` and `ProcessTick` use `clock.Now()` for `lastTickTime` and tick duration
+- handlers: no direct `time.Now`; auth time enters through the limiter and JWT (`crypto/jwt.go`, `crypto/jwt_validate.go`)
+- configurable means the caller can inject a clock at construction; production can use the sampled cache clock, tests can use a fake clock
+- refs: `cache/default.go`, `core/limiter_token_bucket.go`, `core/limiter_fixed_window.go`, `topk/sketch.go`, `doc/TODO.md` (`# limiter: accept an optional clock, use it for AllowN and fixed windows`)

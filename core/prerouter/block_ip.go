@@ -25,9 +25,9 @@ type BlockIp struct {
 
 // sketchLevels defines the parameter presets for different sensitivity levels.
 // These presets balance memory usage against detection accuracy.
-// - "low":    ~10 KB memory. For low-traffic sites (< 50 RPS). Less accurate.
-// - "medium": ~120 KB memory. Balanced profile for most use cases (50-500 RPS).
-// - "high":   ~640 KB memory. For high-traffic sites (> 500 RPS) needing max accuracy.
+// - "low":    ~31 KiB memory. For low-traffic sites (< 50 RPS). Less accurate.
+// - "medium": ~241 KiB memory. Balanced profile for most use cases (50-500 RPS).
+// - "high":   ~1.25 MiB memory. For high-traffic sites (> 500 RPS) needing max accuracy.
 var sketchLevels = map[string]topk.SketchParams{
 	"low": {
 		K:          2,
@@ -35,12 +35,12 @@ var sketchLevels = map[string]topk.SketchParams{
 		TickSize:   100,
 		Width:      256,
 		Depth:      2,
-		// ActivationRPS (100): A tick (100 requests) must occur in 1s. This is a high load for a
+		// ActivationRPS (100): A tick (100 requests) must occur within 1s. This is a high load for a
 		// low-traffic site, ensuring the blocker only acts during significant request spikes.
 		ActivationRPS: 100,
-		// MaxSharePercent (50%): A single IP must be responsible for 50% of the window's capacity
-		// (250 out of 500 requests). This is a very lenient setting to avoid blocking legitimate
-		// heavy users, prioritizing caution over aggressive blocking.
+		// MaxSharePercent (50%): A single IP must exceed 50% of the window's capacity
+		// (more than 250 out of 500 requests). This is a very lenient setting to avoid blocking
+		// legitimate heavy users, prioritizing caution over aggressive blocking.
 		MaxSharePercent: 50,
 	},
 	"medium": {
@@ -49,13 +49,13 @@ var sketchLevels = map[string]topk.SketchParams{
 		TickSize:   100,
 		Width:      1024,
 		Depth:      3,
-		// ActivationRPS (500): A tick (100 requests) must occur in 200ms. This corresponds to the
+		// ActivationRPS (500): A tick (100 requests) must occur within 200ms. This corresponds to the
 		// upper range of this level's traffic guideline, ensuring the blocker only activates
 		// when the server is truly busy.
 		ActivationRPS: 500,
-		// MaxSharePercent (35%): A single IP must account for 35% of the window's capacity
-		// (350 out of 1000 requests). A balanced value that catches dominant clients without being
-		// overly sensitive to normal power-user traffic.
+		// MaxSharePercent (35%): A single IP must exceed 35% of the window's capacity
+		// (more than 350 out of 1000 requests). A balanced value that catches dominant clients
+		// without being overly sensitive to normal power-user traffic.
 		MaxSharePercent: 35,
 	},
 	"high": {
@@ -64,13 +64,13 @@ var sketchLevels = map[string]topk.SketchParams{
 		TickSize:   200,
 		Width:      4096,
 		Depth:      4,
-		// ActivationRPS (1000): A tick (200 requests) must occur in 200ms. This high threshold
+		// ActivationRPS (1000): A tick (200 requests) must occur within 200ms. This high threshold
 		// ensures the circuit breaker only engages during very significant load, typical of a
 		// large-scale attack.
 		ActivationRPS: 1000,
-		// MaxSharePercent (20%): A single IP must account for 20% of the window's capacity
-		// (400 out of 2000 requests). This is an aggressive setting, as no single client on a
-		// high-traffic site should be responsible for 1/5th of all traffic.
+		// MaxSharePercent (20%): A single IP must exceed 20% of the window's capacity
+		// (more than 400 out of 2000 requests). This is an aggressive setting, as no single client
+		// on a high-traffic site should be responsible for more than 1/5th of all traffic.
 		MaxSharePercent: 20,
 	},
 }
