@@ -96,6 +96,13 @@ func (a *App) RegisterWithPasswordHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// One window shared by login and signup, keyed by the visitor's address.
+	// A refused request costs no hash and no database write.
+	if a.Limiter().Limit(LimiterAuthAttempts, a.ClientIP(r)) {
+		WriteJsonError(w, errorTooManyRequests)
+		return
+	}
+
 	// One global bucket for the whole app, not a per-account throttle, so its
 	// rejection is the same for every account. Placed before the hash and the
 	// DB write, a blocked request costs neither.

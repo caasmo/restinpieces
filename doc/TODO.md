@@ -176,10 +176,59 @@ References: config/secure.go, cmd/ripc/diff.go, cmd/ripc/update.go, cmd/ripc/get
 
 # auth: proof-of-work challenge for login/signup (in-house)
 
+This TODO is the ongoing source of truth for PoW. Ignore contradicting statements in other files.
+
+Config decides whether PoW is required.
+GET /auth-challenge checks the config. If PoW is off, it answers “no challenge required”. If on, it returns a signed challenge with nonce, difficulty and expires_at.
+Protected handlers read X-Pow-Token and X-Pow-Counter, verify signature, expiry and the hash. Missing, invalid or expired → err_challenge_required.
+Got it: the SDK is transport plus error reporting. No retry, no auto-solving, no hidden state machine.
+
+- SDK calls the endpoint and surfaces `err_challenge_required` to the caller.
+- The page decides what happens: prefetch and solve on load, catch the error on submit, show a button, reload, or whatever.
+- Calling `/auth-challenge` and solving is the developer’s job, outside the SDK’s control flow.
+
+Login pages can call /auth-challenge on load and start solving immediately. Before submit, check expires_at; if stale, fetch and solve again.
+
+- activated — global on/off.
+- difficulty — challenge level or raw bits; reloadable.
+- challenge_ttl — how long the signed challenge stays valid.
+
+Related, outside the PoW block:
+
+- Signing secret and token duration, if it follows the existing JWT pattern where each token type has its own secret.
+
+**Framework**
+
+- `config`: new `[pow]` with `activated` and `difficulty`; `[jwt]` gets `pow_challenge_secret` and `pow_challenge_token_duration`; defaults and validation.
+- `config.Endpoints`: new `auth_challenge` path, default value, included in `Endpoints.Hash()`.
+- `core`: new `err_challenge_required` precomputed response.
+- `core`: `PowChallengeHandler` returns “not required” when off, otherwise a signed challenge with nonce, difficulty and `expires_at`.
+- `crypto`: helpers to create and parse the challenge JWT.
+- `core`: `Authenticator.VerifyPow(r)` reads config, checks headers, signature, expiry and hash, returns `err_challenge_required` on failure.
+- handlers: call `VerifyPow` first in login and register, before the limiter, DB and password hash.
+- `routes.go`: register the challenge endpoint.
+
+**SDK**
+
+- New `AUTH_CHALLENGE` capability and a `getChallenge()` call that returns the payload.
+- `err_challenge_required` is surfaced to the caller unchanged.
+- No retry, no auto-solving, no state machine.
+- The page prefetches and solves on load, catches the error on submit, then retries or shows UI.
+
+Right. Both workflows end at the same place: a module-level promise created when the page bundle loads.
+
+- Shell page: the promise calls `/auth-challenge`, gets the token, solves.
+- SSR page: the promise takes the injected token and solves.
+- The page awaits it on submit. No `useEffect`, no state machine, and no SDK orchestration.
+
+The only difference is where the token comes from. The framework provides the token primitive and the SSR injection; the SDK provides the endpoint call and surfaces errors; the page owns the promise.
+
+If the token is stale by submit time, the page handles `err_challenge_required` itself: refresh the promise, show a button, or reload. The promise is page-scoped and resets on navigation, so it is not application-wide state.
+
 - server issues nonce+difficulty, client JS solves it, handler verifies before processing; gate signup and login after failures
 - PoW is passed in HTTP headers (e.g. `X-Pow-Token`, `X-Pow-Counter`); every protected endpoint requires the header when PoW is enabled, otherwise it returns `err_pow_required`
 - `VerifyPow` is called directly inside each handler, gated by config (no middleware/route injection); challenge is served by a dedicated `PowChallengeHandler`
-- if disabled, handlers skip verification and the SDK ignores missing headers; on `err_pow_required` the SDK solves the challenge and retries with the built headers
+- if disabled, handlers skip verification and the SDK ignores missing headers
 - difficulty is a config value expressed in simple levels with approximate CPU seconds (like TopK settings), e.g. L1≈0.1s, L2≈0.5s, L3≈1s, L4≈2s, L5≈5s; ops can raise it under load without code changes
 - SDK contains the PoW solver (browser `crypto.subtle` SHA-256, worker-based); it exposes `solvePoW()` and optional `onProgress`/duration so the UI can show a "checking your browser" page/spinner when solving exceeds ~200 ms, and otherwise stays silent
 - refs: `core/handler_auth_register_password.go`, `core/handler_auth_login_password.go`, `core/prerouter/`, `restinpieces-js-sdk`
@@ -815,3 +864,14 @@ type FixedWindowLimiter struct {
 - handlers: no direct `time.Now`; auth time enters through the limiter and JWT (`crypto/jwt.go`, `crypto/jwt_validate.go`)
 - configurable means the caller can inject a clock at construction; production can use the sampled cache clock, tests can use a fake clock
 - refs: `cache/default.go`, `core/limiter_token_bucket.go`, `core/limiter_fixed_window.go`, `topk/sketch.go`, `doc/TODO.md` (`# limiter: accept an optional clock, use it for AllowN and fixed windows`)
+
+# limiter: move authatemps imiter to a MC sketch
+
+- refs: `core/handler_auth_login_password.go`, `core/handler_auth_register_password.go`, `core/limiter.go`, `core/limiter_fixed_window.go`, `cache/increment.go`, `cache/default.go`, `topk/sketch.go`
+
+# systemd.service: enable ProtectHome=tmpfs with a read-only home and a writable data hole
+
+- `ProtectHome=tmpfs` hides `/home`, `/root`, and `/run/user`; expose `/home/<app>` read-only and keep `/home/<app>/data` writable
+- use `tmpfs`, not `yes`, because `yes` does not allow bind mounts under `/home`
+- closes binary overwrite, `~/.ssh/authorized_keys` persistence, and other-home reads; does not protect `age.key` from reads, and blocks the planned age.key deletion after startup
+- refs: `systemd.service`, `scripts/ripdep` (`create_service_user`, `create_directory_structure`), `doc/ripdep.md`

@@ -104,6 +104,11 @@ const rmTestConf = `
   window = "1h"
   max = 1
 
+[limiter.fixed_window.auth_attempts]
+  prefix = "aa_"
+  window = "1m"
+  max = 3
+
 [limiter.fixed_window.upload]
   prefix = "upload"
   window = "1h"
@@ -379,6 +384,18 @@ func TestRmValue_Failure_LimiterFixedWindowPath(t *testing.T) {
 	ui := UI{Out: &stdout, Err: &stderr}
 
 	err := removeValue(ui, mockStore, scope, "", "limiter.fixed_window.password_reset", "")
+	if !errors.Is(err, ErrNotCollection) {
+		t.Fatalf("expected error to wrap %v, but got %v", ErrNotCollection, err)
+	}
+}
+
+func TestRmValue_Failure_LimiterAuthAttemptsPath(t *testing.T) {
+	scope := "app"
+	mockStore := NewMockRmSecureStore(map[string][]byte{scope: []byte(rmTestConf)})
+	var stdout, stderr bytes.Buffer
+	ui := UI{Out: &stdout, Err: &stderr}
+
+	err := removeValue(ui, mockStore, scope, "", "limiter.fixed_window.auth_attempts", "")
 	if !errors.Is(err, ErrNotCollection) {
 		t.Fatalf("expected error to wrap %v, but got %v", ErrNotCollection, err)
 	}

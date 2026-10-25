@@ -9,6 +9,9 @@ const (
 	LimiterPasswordReset        = "password_reset"
 	LimiterEmailChange          = "email_change"
 	LimiterEmailVerificationOtp = "email_verification_otp"
+
+	// LimiterAuthAttempts caps login and signup attempts per client IP.
+	LimiterAuthAttempts = "auth_attempts"
 )
 
 // Limiter answers rate-limit checks. Both branches are built by the caller at

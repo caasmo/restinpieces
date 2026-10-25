@@ -107,6 +107,9 @@ func TestSetupLimiter(t *testing.T) {
 		if limiter.Limit("password_reset", "user@example.com") {
 			t.Error("Limit(password_reset) = true, want false")
 		}
+		if limiter.Limit(core.LimiterAuthAttempts, "192.0.2.1") {
+			t.Error("Limit(LimiterAuthAttempts) = true, want false")
+		}
 	})
 
 	t.Run("WithCache keeps the app cache", func(t *testing.T) {

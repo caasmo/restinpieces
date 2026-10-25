@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/caasmo/restinpieces/cache"
 	"github.com/caasmo/restinpieces/config"
 	"github.com/caasmo/restinpieces/db"
 	"github.com/caasmo/restinpieces/notify"
@@ -98,12 +99,19 @@ func (m *MockRouter) ServeHTTP(w http.ResponseWriter, r *http.Request)          
 func (m *MockRouter) Param(req *http.Request, key string) string                               { return "" }
 func (m *MockRouter) Register(chains router.Chains)                                            {}
 
-// newTestLimiter returns a limiter with one password_hashing bucket. A burst
-// of zero refuses every call; a larger burst allows them.
+// newTestLimiter returns a limiter with one password_hashing bucket and one
+// auth attempt window. A burst of zero refuses every password hash; a larger
+// burst allows them. The auth attempt window is wide enough that a test reaches
+// the path it is checking.
 func newTestLimiter(allowed bool) *Limiter {
 	burst := 1000
 	if !allowed {
 		burst = 0
+	}
+
+	counterCache, err := cache.New[any]("small")
+	if err != nil {
+		panic(err)
 	}
 
 	return &Limiter{
@@ -112,8 +120,36 @@ func newTestLimiter(allowed bool) *Limiter {
 				limiter: rate.NewLimiter(rate.Every(time.Hour), burst),
 			},
 		},
-		FixedWindow: NewFixedWindowLimiter(config.FixedWindow{}, nil),
+		FixedWindow: NewFixedWindowLimiter(config.FixedWindow{
+			LimiterAuthAttempts: {
+				Prefix: "aa_",
+				Window: config.Duration{Duration: time.Minute},
+				Max:    1000,
+			},
+		}, counterCache),
 	}
+}
+
+// newTestAuthAttemptsLimiter returns a limiter whose auth attempt window
+// refuses calls above max. The password hashing bucket always allows.
+func newTestAuthAttemptsLimiter(tb testing.TB, max int64) *Limiter {
+	tb.Helper()
+
+	return NewLimiter(
+		map[string]*TokenBucketLimiter{
+			LimiterPasswordHashing: NewTokenBucketLimiter(config.TokenBucketEntry{
+				Limit: config.Duration{Duration: time.Hour},
+				Burst: 1000,
+			}),
+		},
+		NewFixedWindowLimiter(config.FixedWindow{
+			LimiterAuthAttempts: {
+				Prefix: "aa_",
+				Window: config.Duration{Duration: time.Hour},
+				Max:    max,
+			},
+		}, newTestCounterCache(tb)),
+	)
 }
 
 // newTestOtpLimiter returns a limiter for the OTP handlers. The password

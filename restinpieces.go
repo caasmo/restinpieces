@@ -392,6 +392,7 @@ var limiterLabelsFromConfig = map[string]string{
 	config.LimiterPasswordReset:        core.LimiterPasswordReset,
 	config.LimiterEmailChange:          core.LimiterEmailChange,
 	config.LimiterEmailVerificationOtp: core.LimiterEmailVerificationOtp,
+	config.LimiterAuthAttempts:         core.LimiterAuthAttempts,
 }
 
 // setupLimiter builds both limiter branches from the config and assembles the

@@ -222,10 +222,12 @@ func TestNewLimitersDefaults(t *testing.T) {
 		label  string
 		prefix string
 		window time.Duration
+		max    int64
 	}{
-		{"password_reset", "pr_", 1 * time.Hour},
-		{"email_change", "ec_", 1 * time.Hour},
-		{"email_verification_otp", "ev_", 2 * time.Minute},
+		{"password_reset", "pr_", 1 * time.Hour, 1},
+		{"email_change", "ec_", 1 * time.Hour, 1},
+		{"email_verification_otp", "ev_", 2 * time.Minute, 1},
+		{"auth_attempts", "aa_", 1 * time.Minute, 3},
 	}
 	for _, tc := range fixedWindowSeeds {
 		seed, ok := limiters.FixedWindow[tc.label]
@@ -238,8 +240,8 @@ func TestNewLimitersDefaults(t *testing.T) {
 		if seed.Window.Duration != tc.window {
 			t.Errorf("%s window = %v, want %v", tc.label, seed.Window.Duration, tc.window)
 		}
-		if seed.Max != 1 {
-			t.Errorf("%s max = %d, want 1", tc.label, seed.Max)
+		if seed.Max != tc.max {
+			t.Errorf("%s max = %d, want %d", tc.label, seed.Max, tc.max)
 		}
 	}
 }

@@ -92,6 +92,13 @@ func (a *App) AuthWithPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// One window shared by login and signup, keyed by the visitor's address.
+	// A refused request costs no database lookup and no argon2id work.
+	if a.Limiter().Limit(LimiterAuthAttempts, a.ClientIP(r)) {
+		WriteJsonError(w, errorTooManyRequests)
+		return
+	}
+
 	// One global bucket for the whole app, not a per-account throttle, so its
 	// rejection is the same for every account. Placed before the lookup, a
 	// blocked request costs no DB hit and no argon2id work.

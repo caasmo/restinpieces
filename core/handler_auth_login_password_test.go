@@ -377,9 +377,42 @@ func TestAuthWithPasswordHandler_LimiterDenied(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	app := &App{
-		validator: &DefaultValidator{},
-		dbAuth:    &mock.Db{},
-		limiter:   newTestLimiter(false),
+		validator:      &DefaultValidator{},
+		dbAuth:         &mock.Db{},
+		configProvider: config.NewProvider(config.NewDefaultConfig()),
+		limiter:        newTestLimiter(false),
+	}
+
+	app.AuthWithPasswordHandler(rr, req)
+
+	if rr.Code != errorTooManyRequests.status {
+		t.Errorf("expected status %d, got %d", errorTooManyRequests.status, rr.Code)
+	}
+
+	var body map[string]interface{}
+	if err := json.NewDecoder(rr.Body).Decode(&body); err != nil {
+		t.Fatalf("failed to decode response body: %v", err)
+	}
+	if body["code"] != CodeErrorTooManyRequests {
+		t.Errorf("expected error code %q, got %q", CodeErrorTooManyRequests, body["code"])
+	}
+}
+
+func TestAuthWithPasswordHandler_AuthAttemptsDenied(t *testing.T) {
+	req := httptest.NewRequest("POST", "/auth-with-password", strings.NewReader(`{"identity":"test@example.com", "password":"password123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.RemoteAddr = "192.0.2.1:1234"
+	rr := httptest.NewRecorder()
+
+	app := &App{
+		validator:      &DefaultValidator{},
+		dbAuth:         &mock.Db{},
+		configProvider: config.NewProvider(config.NewDefaultConfig()),
+		limiter:        newTestAuthAttemptsLimiter(t, 1),
+	}
+
+	if app.Limiter().Limit(LimiterAuthAttempts, app.ClientIP(req)) {
+		t.Fatal("first auth attempt was refused")
 	}
 
 	app.AuthWithPasswordHandler(rr, req)

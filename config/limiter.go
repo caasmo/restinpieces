@@ -6,6 +6,7 @@ const (
 	LimiterPasswordReset        = "password_reset"
 	LimiterEmailChange          = "email_change"
 	LimiterEmailVerificationOtp = "email_verification_otp"
+	LimiterAuthAttempts         = "auth_attempts"
 )
 
 // Limiter holds the rate limiter configuration. The section splits into the

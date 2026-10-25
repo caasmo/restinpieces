@@ -218,10 +218,11 @@ func TestRegisterWithPasswordHandler_RegistrationLogic(t *testing.T) {
 			tc.dbSetup(mockDb, &jobInserted)
 
 			app := &App{
-				validator: &DefaultValidator{},
-				dbAuth:    mockDb,
-				dbQueue:   mockDb,
-				limiter:   newTestLimiter(true),
+				validator:      &DefaultValidator{},
+				dbAuth:         mockDb,
+				dbQueue:        mockDb,
+				configProvider: config.NewProvider(config.NewDefaultConfig()),
+				limiter:        newTestLimiter(true),
 			}
 
 			app.RegisterWithPasswordHandler(rr, req)
@@ -313,13 +314,45 @@ func TestRegisterWithPasswordHandler_LimiterDenied(t *testing.T) {
 	rr := httptest.NewRecorder()
 
 	app := &App{
-		validator: &DefaultValidator{},
-		limiter:   newTestLimiter(false),
+		validator:      &DefaultValidator{},
+		configProvider: config.NewProvider(config.NewDefaultConfig()),
+		limiter:        newTestLimiter(false),
 	}
 
 	app.RegisterWithPasswordHandler(rr, req)
 
 	if rr.Code != errorTooManyRequests.status {
 		t.Errorf("expected status %d, got %d", errorTooManyRequests.status, rr.Code)
+	}
+}
+
+func TestRegisterWithPasswordHandler_AuthAttemptsDenied(t *testing.T) {
+	req := httptest.NewRequest("POST", "/register-with-password", strings.NewReader(`{"identity":"new@example.com", "password":"password123", "password_confirm":"password123"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.RemoteAddr = "192.0.2.1:1234"
+	rr := httptest.NewRecorder()
+
+	app := &App{
+		validator:      &DefaultValidator{},
+		configProvider: config.NewProvider(config.NewDefaultConfig()),
+		limiter:        newTestAuthAttemptsLimiter(t, 1),
+	}
+
+	if app.Limiter().Limit(LimiterAuthAttempts, app.ClientIP(req)) {
+		t.Fatal("first auth attempt was refused")
+	}
+
+	app.RegisterWithPasswordHandler(rr, req)
+
+	if rr.Code != errorTooManyRequests.status {
+		t.Errorf("expected status %d, got %d", errorTooManyRequests.status, rr.Code)
+	}
+
+	var body map[string]interface{}
+	if err := json.NewDecoder(rr.Body).Decode(&body); err != nil {
+		t.Fatalf("failed to decode response body: %v", err)
+	}
+	if body["code"] != CodeErrorTooManyRequests {
+		t.Errorf("expected error code %q, got %q", CodeErrorTooManyRequests, body["code"])
 	}
 }

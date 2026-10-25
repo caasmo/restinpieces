@@ -281,8 +281,9 @@ func NewFixedWindowEntryDefaults() FixedWindowEntry {
 }
 
 // NewLimitersDefaults returns the limiter section with the framework's own
-// entries: the password hashing limiter and the three email fixed-window
-// entries. Other entries are created via ripc scaffold.
+// entries: the password hashing limiter, the three email fixed-window entries
+// and the auth attempt fixed-window entry. Other entries are created via ripc
+// scaffold.
 func NewLimitersDefaults() Limiter {
 	passwordReset := NewFixedWindowEntryDefaults()
 	passwordReset.Prefix = "pr_"
@@ -294,6 +295,13 @@ func NewLimitersDefaults() Limiter {
 	emailVerificationOTP.Prefix = "ev_"
 	emailVerificationOTP.Window = Duration{Duration: 2 * time.Minute}
 
+	authAttempts := NewFixedWindowEntryDefaults()
+	authAttempts.Prefix = "aa_"
+	authAttempts.Window = Duration{Duration: time.Minute}
+	// Three attempts per minute is enough for a person to retry and keeps
+	// automated guessing slow.
+	authAttempts.Max = 3
+
 	return Limiter{
 		TokenBucket: TokenBucket{
 			LimiterPasswordHashing: NewTokenBucketEntryDefaults(),
@@ -302,6 +310,7 @@ func NewLimitersDefaults() Limiter {
 			LimiterPasswordReset:        passwordReset,
 			LimiterEmailChange:          emailChange,
 			LimiterEmailVerificationOtp: emailVerificationOTP,
+			LimiterAuthAttempts:         authAttempts,
 		},
 	}
 }

@@ -112,6 +112,7 @@ var frameworkOwnedPaths = map[string]struct{}{
 	"limiter.fixed_window.password_reset":         {},
 	"limiter.fixed_window.email_change":           {},
 	"limiter.fixed_window.email_verification_otp": {},
+	"limiter.fixed_window.auth_attempts":          {},
 }
 
 // removeArrayPaths lists the keys that hold removable array items. An item is
