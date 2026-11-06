@@ -231,6 +231,15 @@ If the token is stale by submit time, the page handles `err_challenge_required` 
 - if disabled, handlers skip verification and the SDK ignores missing headers
 - difficulty is a config value expressed in simple levels with approximate CPU seconds (like TopK settings), e.g. L1≈0.1s, L2≈0.5s, L3≈1s, L4≈2s, L5≈5s; ops can raise it under load without code changes
 - SDK contains the PoW solver (browser `crypto.subtle` SHA-256, worker-based); it exposes `solvePoW()` and optional `onProgress`/duration so the UI can show a "checking your browser" page/spinner when solving exceeds ~200 ms, and otherwise stays silent
+- the challenge jwt, this is two different things and must be clearly separated, the challenge and the jwt. some endpoinst require a previous jwt, it can contain a pow chanllenge but also i can imagine a fingerprinting chanllenge
+- a jwt token whitout any challenge at all but a shot lease like 1 minute provides some degree of protection against static bots
+- fressness is a challenge
+- probably config shape is challenge with subsections
+- Anubis (`https://github.com/TecharoHQ/anubis`, Go, MIT) is the closest existing implementation: a reverse proxy that gates pages with SHA-256 proof-of-work; the browser hashes `challenge + nonce` until the hex digest has N leading zeroes (default 5), the server verifies once and sets a signed JWT cookie (ed25519, 1 week, claims `challenge`, `nonce`, `response`, `iat`, `nbf`, `exp`); per-rule `difficulty` and `algorithm` (`fast` is multithreaded, `slow` is legacy)
+- the cookie only records that the challenge passed, it is not a session, so it matches the challenge/JWT split above; it needs JS and targets Go 1.27.3 (ours is 1.25.0), so treat it as reference code, not a drop-in package
+- implementation links (TypeScript source, bundled to `.mjs` by `web/build.sh`): [`web/js/worker/sha256.ts`](https://github.com/TecharoHQ/anubis/blob/main/web/js/worker/sha256.ts) — hash loop; [`web/js/lib/worker.ts`](https://github.com/TecharoHQ/anubis/blob/main/web/js/lib/worker.ts) — worker pool; [`web/js/main.ts`](https://github.com/TecharoHQ/anubis/blob/main/web/js/main.ts) — page wiring
+- the JS implementation supports progress through a callback: lane 0 posts the nonce every 1024 iterations, and `main.ts` turns it into kH/s plus a probability bar; it is an attempt count, not a percentage, and there is no ETA
+- server-side hash validation: [`lib/challenge/proofofwork/proofofwork.go`](https://github.com/TecharoHQ/anubis/blob/main/lib/challenge/proofofwork/proofofwork.go) — `Validate` streams `challenge + nonce` into SHA-256, compares the hex digest with `subtle.ConstantTimeCompare`, then checks `Difficulty` leading zeroes; called from `PassChallenge` in `lib/anubis.go`
 - refs: `core/handler_auth_register_password.go`, `core/handler_auth_login_password.go`, `core/prerouter/`, `restinpieces-js-sdk`
 
 # json: update to go json v2
@@ -875,3 +884,11 @@ type FixedWindowLimiter struct {
 - use `tmpfs`, not `yes`, because `yes` does not allow bind mounts under `/home`
 - closes binary overwrite, `~/.ssh/authorized_keys` persistence, and other-home reads; does not protect `age.key` from reads, and blocks the planned age.key deletion after startup
 - refs: `systemd.service`, `scripts/ripdep` (`create_service_user`, `create_directory_structure`), `doc/ripdep.md`
+
+# limiter: waiting room, it has a atomic counter/s and last time and queue if it offers dinamyc intervals to assign time, it just output last time, companion a jwt signed with ip and queue id, handler decodes, ask the waitin room, receives new time or no changes, waiting room has also interval is the new time to add to the last given. setInterval modifies dinamically. or can be configuration,
+
+- refs: `core/limiter.go`, `core/limiter_token_bucket.go`, `config/limiter.go`, `config/limiter_validate.go`, `config/default.go`, `crypto/jwt.go`, `crypto/jwt_validate.go`, `core/app.go`, `restinpieces.go`, `core/handler_auth_login_password.go`, `core/handler_auth_register_password.go`, `cache/increment.go`
+- example of use: the ARI component of Let's Encrypt — ACME Renewal Information (RFC 9773). It gives two next times: `suggestedWindow.start`/`end` says when to renew the certificate, and the `Retry-After` header says when to ask ARI again; see `restinpieces-acme/acme_cert.go` and `restinpieces-acme/impl-acme-ari-algo.md`
+- the same two-time shape generalizes to the simple waiting room: (1) "you will have access on this time" — the admission time the token carries; (2) "do not ask again until this time" — the next-ask time, enforced and cheaply discarded when a request arrives early
+- JS client: poll on `Retry-After`, count down to the access time locally, and render the position/wait as a counter; keep the displayed count non-increasing and jitter the poll
+- the room can return an approximate "users ahead" number, mapped before display with an offset and a step (`displayed = offset + actual * step`), so 1000 can show as 100 or 100 as 1000; it is UI only, the token's access and next-ask times stay authoritative

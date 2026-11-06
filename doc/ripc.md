@@ -194,7 +194,7 @@ Array items are named by value:
 
 Removable tables are `backup.online.<label>`, `backup.vacuum.<label>`, `backup.sqlite-rsync.entries.<label>`, `backup.s3-upload.<label>`, `backup.s3-download.<label>`, `scheduler.jobs.<label>`, `oauth2.<label>`, `acme.dns-01.<label>`, `limiter.token_bucket.<label>` and `limiter.fixed_window.<label>`. Removable array items are `block_user_agent.agents`, `block_host.allowed_hosts`, `block_oversized_request.excluded_paths` and `acme.domains`. Scalar keys like `server.addr` are refused.
 
-Framework-owned entries such as `limiter.token_bucket.password_hashing` are refused as well.
+Framework-owned entries are refused as well: the framework seeds `limiter.token_bucket.password_hashing` and `limiter.fixed_window.auth_attempts`, so neither can be removed.
 
 Removing a stored item brings back the framework default when one exists. For example, `block_oversized_request.excluded_paths` returns to `/api/upload` and `/api/import`. To keep an array empty instead, set it to an empty array with `ripc set block_oversized_request.excluded_paths "[]"`.
 
