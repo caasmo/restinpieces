@@ -68,6 +68,8 @@ To address this, the framework provides pure Go implementations of all available
 | [sqlite3_rsync](https://github.com/caasmo/go-sqlite-rsync) | remote backup, delta-based | [`cmd/sqlite-rsync`](https://github.com/caasmo/restinpieces-backup/tree/master/cmd/sqlite-rsync) |
 | rsync pull client | remote backup, incremental | [`cmd/rsync`](https://github.com/caasmo/restinpieces-backup/tree/master/cmd/rsync) |
 | sftp pull client | remote backup | [`cmd/sftp`](https://github.com/caasmo/restinpieces-backup/tree/master/cmd/sftp) |
+| S3 upload | remote backup | [`cmd/s3/upload/restinpieces`](https://github.com/caasmo/restinpieces-backup/tree/master/cmd/s3/upload/restinpieces) |
+| S3 download | remote backup | [`cmd/s3/download/recover`](https://github.com/caasmo/restinpieces-backup/tree/master/cmd/s3/download/recover) |
 | [litestream](https://github.com/benbjohnson/litestream) | continuous replication, point-in-time | [restinpieces-litestream](https://github.com/caasmo/restinpieces-litestream) |
 
 For the framework-side `backup` configuration, see [doc/backup.md](doc/backup.md).
